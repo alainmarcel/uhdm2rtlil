@@ -1,0 +1,83 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -16,6 +16,7 @@
+ .A(q),
+ .Y(_0_)
+ );
++(* \"has_async_reset"  = 32'd1 *)
+ (* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:9.3-9.74" *)
+ \$_DFF_PP0_  q_reg /* _2_ */ (
+@@ -25,9 +26,8 @@
+ .R(rst)
+ );
+ endmodule
+-(* top =  1  *)
+-(* interfaces_replaced_in_module =  1  *)
+ (* src = "dut.sv:15.1-18.10" *)
++(* top =  1  *)
+ module dut(clk, rst, q);
+ (* src = "dut.sv:15.25-15.28" *)
+ input clk;
+@@ -38,40 +38,36 @@
+ (* src = "dut.sv:15.60-15.61" *)
+ output q;
+ wire q;
+-(* src = "dut.sv:15.1-18.10" *)
+-wire [0:0] \mif.clk ;
+-(* src = "dut.sv:15.1-18.10" *)
+-wire [0:0] \mif.rst ;
+-(* src = "dut.sv:15.1-18.10" *)
++(* src = "dut.sv:4.29-4.32" *)
++wire \mif.clk ;
++(* src = "dut.sv:4.46-4.49" *)
++wire \mif.rst ;
++(* src = "dut.sv:5.9-5.12" *)
+ (* unused_bits = "0" *)
+-wire [0:0] \mif.sig ;
+-(* src = "dut.sv:17.7-17.27" *)
+-\mid$interfaces$myif  m (
++wire \mif.sig ;
++mid m (
+ .q(q),
+-.\sub.clk (1'hx),
+-.\sub.rst (1'hx),
++.\sub.clk (clk),
++.\sub.rst (rst),
+ .\sub.sig (\mif.sig )
+ );
+-assign \mif.clk  = 1'hx;
+-assign \mif.rst  = 1'hx;
++assign \mif.rst  = rst;
++assign \mif.clk  = clk;
+ endmodule
+-(* interfaces_replaced_in_module =  1  *)
+ (* src = "dut.sv:11.1-14.10" *)
+-module \mid$interfaces$myif (q, \sub.clk , \sub.rst , \sub.sig );
++module mid(q, \sub.sig , \sub.rst , \sub.clk );
+ (* src = "dut.sv:11.38-11.39" *)
+ output q;
+ wire q;
+-(* src = "dut.sv:11.1-14.10" *)
+-input [0:0] \sub.clk ;
+-wire [0:0] \sub.clk ;
+-(* src = "dut.sv:11.1-14.10" *)
+-input [0:0] \sub.rst ;
+-wire [0:0] \sub.rst ;
+-(* src = "dut.sv:11.1-14.10" *)
+-output [0:0] \sub.sig ;
+-wire [0:0] \sub.sig ;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:12.9-12.48" *)
++(* src = "dut.sv:5.9-5.12" *)
++output \sub.sig ;
++wire \sub.sig ;
++(* src = "dut.sv:4.46-4.49" *)
++input \sub.rst ;
++wire \sub.rst ;
++(* src = "dut.sv:4.29-4.32" *)
++input \sub.clk ;
++wire \sub.clk ;
+ child c (
+ .clk(\sub.clk ),
+ .q(q),

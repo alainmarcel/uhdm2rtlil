@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv  ../rp32/tcb/tcb_lite_pkg.sv ../rp32/tcb/tcb_lite_if.sv ../rp32/riscv/riscv_isa_pkg.sv ../rp32/riscv/riscv_priv_pkg.sv ../rp32/riscv/riscv_isa_i_pkg.sv ../rp32/riscv/riscv_isa_c_pkg.sv ../rp32/riscv/rv32_csr_pkg.sv ../rp32/riscv/rv64_csr_pkg.sv ../rp32/degu/r5p_pkg.sv ../rp32/degu/r5p_degu_pkg.sv ../rp32/core/r5p_gpr_2r1w.sv ../rp32/degu/r5p_bru.sv ../rp32/degu/r5p_alu.sv ../rp32/degu/r5p_mdu.sv ../rp32/degu/r5p_lsu.sv ../rp32/degu/r5p_wbu.sv ../rp32/degu/r5p_degu.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil rp32_r5p_degu_from_verilog_nohier.il
+hierarchy -check -auto-top
+stat
+proc
+opt
+stat
+write_rtlil rp32_r5p_degu_from_verilog.il
+# Synthesize to gate-level netlist
+synth -auto-top
+write_verilog -noexpr rp32_r5p_degu_from_verilog_synth.v

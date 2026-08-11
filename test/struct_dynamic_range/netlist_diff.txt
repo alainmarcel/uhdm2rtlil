@@ -167,7 +167,6 @@
 -wire _049_;
 -wire _050_;
 -wire _051_;
--(* nowrshmsk = 32'd0 *)
 +wire _00_;
 +wire _01_;
 +wire _02_;
@@ -180,7 +179,7 @@
 +wire _09_;
 +wire _10_;
 +wire _11_;
-+(* nowrshmsk = 32'd1 *)
+ (* nowrshmsk = 32'd0 *)
  (* src = "dut.sv:12.7-12.8" *)
  (* unused_bits = "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39" *)
  wire [47:0] s;
@@ -190,7 +189,8 @@
 -.Y(_000_)
 -);
 -\$_NOR_  _053_ (
--.A(addr_o[0]),
++\$_XOR_  _12_ (
+ .A(addr_o[0]),
 -.B(addr_i[2]),
 -.Y(_001_)
 -);
@@ -210,8 +210,7 @@
 -.Y(_004_)
 -);
 -\$_ANDNOT_  _057_ (
-+\$_XOR_  _12_ (
- .A(addr_o[0]),
+-.A(addr_o[0]),
 -.B(addr_i[1]),
 -.Y(_005_)
 -);
@@ -576,295 +575,7 @@
  wire _03_;
  wire _04_;
  wire _05_;
-@@ -539,156 +295,222 @@
- wire _25_;
- wire _26_;
- wire _27_;
-+wire _28_;
-+wire _29_;
-+wire _30_;
-+wire _31_;
-+wire _32_;
-+wire _33_;
-+wire _34_;
-+wire _35_;
-+wire _36_;
-+wire _37_;
- (* src = "dut.sv:55.17-55.27" *)
- wire [7:0] data_case1;
- (* src = "dut.sv:57.17-57.27" *)
- wire [7:0] data_case2;
-+(* src = "dut.sv:59.17-59.27" *)
-+(* unused_bits = "0 1" *)
-+wire [7:0] data_case3;
- (* src = "dut.sv:42.17-42.33" *)
- wire [7:0] data_shift_mask1;
- (* src = "dut.sv:44.17-44.33" *)
- wire [7:0] data_shift_mask2;
--\$_AND_  _28_ (
--.A(data_case2[3]),
--.B(data_case2[2]),
--.Y(_04_)
--);
--\$_AND_  _29_ (
--.A(data_case2[0]),
--.B(data_case2[7]),
--.Y(_05_)
--);
--\$_AND_  _30_ (
--.A(_04_),
--.B(_05_),
-+(* src = "dut.sv:46.17-46.33" *)
-+(* unused_bits = "0 1" *)
-+wire [7:0] data_shift_mask3;
-+\$_NOR_  _38_ (
-+.A(data_case3[4]),
-+.B(data_case3[5]),
- .Y(_06_)
- );
--\$_AND_  _31_ (
--.A(data_case2[4]),
--.B(data_case2[5]),
-+\$_NOR_  _39_ (
-+.A(data_case3[6]),
-+.B(data_case3[7]),
- .Y(_07_)
- );
--\$_AND_  _32_ (
--.A(data_case2[1]),
--.B(data_case2[6]),
-+\$_NOR_  _40_ (
-+.A(data_case3[2]),
-+.B(data_case3[3]),
- .Y(_08_)
- );
--\$_AND_  _33_ (
-+\$_AND_  _41_ (
- .A(_07_),
- .B(_08_),
- .Y(_09_)
- );
--\$_AND_  _34_ (
-+\$_AND_  _42_ (
- .A(_06_),
- .B(_09_),
--.Y(_03_)
-+.Y(_05_)
- );
--\$_ANDNOT_  _35_ (
--.A(data_case1[1]),
--.B(data_case1[7]),
-+\$_AND_  _43_ (
-+.A(data_case2[2]),
-+.B(data_case2[1]),
- .Y(_10_)
- );
--\$_ANDNOT_  _36_ (
--.A(data_case1[6]),
--.B(data_case1[0]),
-+\$_AND_  _44_ (
-+.A(data_case2[0]),
-+.B(data_case2[7]),
- .Y(_11_)
- );
--\$_AND_  _37_ (
-+\$_AND_  _45_ (
- .A(_10_),
- .B(_11_),
- .Y(_12_)
- );
--\$_AND_  _38_ (
--.A(data_case1[5]),
--.B(data_case1[4]),
-+\$_AND_  _46_ (
-+.A(data_case2[6]),
-+.B(data_case2[5]),
- .Y(_13_)
- );
--\$_AND_  _39_ (
--.A(data_case1[3]),
--.B(data_case1[2]),
-+\$_AND_  _47_ (
-+.A(data_case2[4]),
-+.B(data_case2[3]),
- .Y(_14_)
- );
--\$_AND_  _40_ (
-+\$_AND_  _48_ (
- .A(_13_),
- .B(_14_),
- .Y(_15_)
- );
--\$_AND_  _41_ (
-+\$_AND_  _49_ (
- .A(_12_),
- .B(_15_),
--.Y(_02_)
-+.Y(_04_)
- );
--\$_AND_  _42_ (
--.A(data_shift_mask2[2]),
--.B(data_shift_mask2[1]),
-+\$_AND_  _50_ (
-+.A(data_case1[4]),
-+.B(data_case1[3]),
- .Y(_16_)
- );
--\$_AND_  _43_ (
--.A(data_shift_mask2[0]),
--.B(data_shift_mask2[7]),
-+\$_AND_  _51_ (
-+.A(data_case1[2]),
-+.B(data_case1[1]),
- .Y(_17_)
- );
--\$_AND_  _44_ (
-+\$_AND_  _52_ (
- .A(_16_),
- .B(_17_),
- .Y(_18_)
- );
--\$_AND_  _45_ (
--.A(data_shift_mask2[6]),
--.B(data_shift_mask2[5]),
-+\$_NOR_  _53_ (
-+.A(data_case1[7]),
-+.B(data_case1[0]),
- .Y(_19_)
- );
--\$_AND_  _46_ (
--.A(data_shift_mask2[4]),
--.B(data_shift_mask2[3]),
-+\$_AND_  _54_ (
-+.A(data_case1[6]),
-+.B(data_case1[5]),
- .Y(_20_)
- );
--\$_AND_  _47_ (
-+\$_AND_  _55_ (
- .A(_19_),
- .B(_20_),
- .Y(_21_)
- );
--\$_AND_  _48_ (
-+\$_AND_  _56_ (
- .A(_18_),
- .B(_21_),
-+.Y(_03_)
-+);
-+\$_NOR_  _57_ (
-+.A(data_shift_mask3[6]),
-+.B(data_shift_mask3[7]),
-+.Y(_22_)
-+);
-+\$_NOR_  _58_ (
-+.A(data_shift_mask3[4]),
-+.B(data_shift_mask3[5]),
-+.Y(_23_)
-+);
-+\$_NOR_  _59_ (
-+.A(data_shift_mask3[3]),
-+.B(data_shift_mask3[2]),
-+.Y(_24_)
-+);
-+\$_AND_  _60_ (
-+.A(_23_),
-+.B(_24_),
-+.Y(_25_)
-+);
-+\$_AND_  _61_ (
-+.A(_22_),
-+.B(_25_),
-+.Y(_02_)
-+);
-+\$_AND_  _62_ (
-+.A(data_shift_mask2[2]),
-+.B(data_shift_mask2[1]),
-+.Y(_26_)
-+);
-+\$_AND_  _63_ (
-+.A(data_shift_mask2[0]),
-+.B(data_shift_mask2[7]),
-+.Y(_27_)
-+);
-+\$_AND_  _64_ (
-+.A(_26_),
-+.B(_27_),
-+.Y(_28_)
-+);
-+\$_AND_  _65_ (
-+.A(data_shift_mask2[6]),
-+.B(data_shift_mask2[5]),
-+.Y(_29_)
-+);
-+\$_AND_  _66_ (
-+.A(data_shift_mask2[4]),
-+.B(data_shift_mask2[3]),
-+.Y(_30_)
-+);
-+\$_AND_  _67_ (
-+.A(_29_),
-+.B(_30_),
-+.Y(_31_)
-+);
-+\$_AND_  _68_ (
-+.A(_28_),
-+.B(_31_),
- .Y(_01_)
- );
--\$_AND_  _49_ (
-+\$_AND_  _69_ (
- .A(data_shift_mask1[4]),
- .B(data_shift_mask1[3]),
--.Y(_22_)
-+.Y(_32_)
- );
--\$_AND_  _50_ (
-+\$_AND_  _70_ (
- .A(data_shift_mask1[2]),
- .B(data_shift_mask1[1]),
--.Y(_23_)
-+.Y(_33_)
- );
--\$_AND_  _51_ (
--.A(_22_),
--.B(_23_),
--.Y(_24_)
-+\$_AND_  _71_ (
-+.A(_32_),
-+.B(_33_),
-+.Y(_34_)
- );
--\$_NOR_  _52_ (
-+\$_NOR_  _72_ (
- .A(data_shift_mask1[7]),
- .B(data_shift_mask1[0]),
--.Y(_25_)
-+.Y(_35_)
- );
--\$_AND_  _53_ (
-+\$_AND_  _73_ (
- .A(data_shift_mask1[6]),
- .B(data_shift_mask1[5]),
--.Y(_26_)
-+.Y(_36_)
- );
--\$_AND_  _54_ (
--.A(_25_),
--.B(_26_),
--.Y(_27_)
--);
--\$_AND_  _55_ (
--.A(_24_),
--.B(_27_),
-+\$_AND_  _74_ (
-+.A(_35_),
-+.B(_36_),
-+.Y(_37_)
-+);
-+\$_AND_  _75_ (
-+.A(_34_),
-+.B(_37_),
+@@ -688,7 +444,7 @@
  .Y(_00_)
  );
  (* keep = 32'd1 *)
@@ -873,15 +584,7 @@
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -697,14 +519,14 @@
- .TRG_ENABLE(32'd0),
- .TRG_POLARITY(),
- .TRG_WIDTH(32'd0)
--) _56_ (
-+) _76_ (
- .A(_00_),
- .ARGS(),
- .EN(1'h1),
+@@ -704,7 +460,7 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -890,15 +593,7 @@
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -713,14 +535,14 @@
- .TRG_ENABLE(32'd0),
- .TRG_POLARITY(),
- .TRG_WIDTH(32'd0)
--) _57_ (
-+) _77_ (
- .A(_01_),
- .ARGS(),
- .EN(1'h1),
+@@ -720,7 +476,7 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -907,16 +602,7 @@
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -729,90 +551,94 @@
- .TRG_ENABLE(32'd0),
- .TRG_POLARITY(),
- .TRG_WIDTH(32'd0)
--) _58_ (
--.A(1'h1),
-+) _78_ (
-+.A(_02_),
- .ARGS(),
- .EN(1'h1),
+@@ -736,12 +492,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -931,12 +617,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
--) _59_ (
--.A(_02_),
-+) _79_ (
-+.A(_03_),
- .ARGS(),
- .EN(1'h1),
+@@ -752,12 +508,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -951,12 +632,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
--) _60_ (
--.A(_03_),
-+) _80_ (
-+.A(_04_),
- .ARGS(),
- .EN(1'h1),
+@@ -768,12 +524,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -971,11 +647,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
--) _61_ (
--.A(1'h1),
-+) _81_ (
-+.A(_05_),
- .ARGS(),
+@@ -783,32 +539,24 @@
  .EN(1'h1),
  .TRG()
  );
@@ -997,12 +669,6 @@
  );
 -(* module_not_derived = 32'd1 *)
 -(* src = "dut.sv:43.22-43.76" *)
-+range_case range_case3 (
-+.addr_i(3'h1),
-+.addr_o(3'h4),
-+.data_i(8'h7e),
-+.data_o(data_case3)
-+);
  range_shift_mask range_shift_mask1 (
  .addr_i(3'h1),
  .addr_o(3'h1),
@@ -1014,13 +680,3 @@
  range_shift_mask range_shift_mask2 (
  .addr_i(3'h1),
  .addr_o(3'h2),
- .data_i(8'h7e),
- .data_o(data_shift_mask2)
- );
-+range_shift_mask range_shift_mask3 (
-+.addr_i(3'h1),
-+.addr_o(3'h4),
-+.data_i(8'h7e),
-+.data_o(data_shift_mask3)
-+);
- endmodule
