@@ -313,6 +313,13 @@ struct UhdmImporter {
     const UHDM::module_inst* current_instance = nullptr;
     const UHDM::scope* current_scope = nullptr;
 
+    // Module DEFINITION name (work@ stripped) -> first-seen ELABORATED instance
+    // of that def in the TopModules hierarchy.  AllModules defs carry only
+    // DECLARATION-DEFAULT parameter values (e.g. CVA6's `CVA6Cfg =
+    // cva6_cfg_empty`), so anything that needs a real parameter VALUE while a
+    // def is being imported must consult the elaborated instance instead.
+    std::map<std::string, const UHDM::module_inst*> elab_inst_by_def;
+
     // Current generate scope for naming (deprecated - use gen_scope_stack)
     std::string current_gen_scope;
     
@@ -884,9 +891,15 @@ struct UhdmImporter {
     void collect_for_loop_var_names(const any* stmt, std::set<std::string>& names);
     // Collect names of signals with at least one LIVE (not statically
     // dead-guarded by a const-false/true `if`) assignment.  A register assigned
-    // ONLY in dead branches must not become an (async-reset) FF.
+    // ONLY in dead branches must not become an (async-reset) FF, and a comb
+    // signal assigned only in dead branches must not get a self-hold temp
+    // (spurious latch).  With fold_guards=false every branch is treated as
+    // live — the two runs' set difference is exactly the dead-guarded names,
+    // so LHS shapes this scan can't see (concats, var_selects) land in
+    // neither set and are never pruned.
     void collect_live_assigned_signals(const UHDM::any* stmt, bool live,
-                                       std::set<std::string>& out);
+                                       std::set<std::string>& out,
+                                       bool fold_guards = true);
     // Evaluate an `if` condition to a compile-time constant WITHOUT creating
     // cells: 0 (false), 1 (true), or -1 (not a resolvable constant).
     int const_cond_value(const UHDM::any* cond);

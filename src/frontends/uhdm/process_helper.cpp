@@ -346,52 +346,98 @@ int UhdmImporter::const_cond_value(const any* cond) {
         if (!v.empty())
             return atoi(v.c_str()) == 0 ? 0 : 1;
     }
+    // Logical operations over resolvable constants (`if (!CVA6Cfg.RVC)` in CVA6
+    // branch_unit, `if (FPGA_EN && FPGA_ALTERA)` in cva6_fifo_v3) — fold
+    // recursively, still without creating cells.  Short-circuit so one
+    // resolvable dominant operand (0 for &&, 1 for ||) suffices.
+    if (cond->UhdmType() == uhdmoperation) {
+        auto op = any_cast<const operation*>(cond);
+        auto ops = op->Operands();
+        if (!ops || ops->empty()) return -1;
+        int a0 = const_cond_value((*ops)[0]);
+        switch (op->VpiOpType()) {
+        case vpiNotOp:
+            return a0 < 0 ? -1 : (a0 ? 0 : 1);
+        case vpiLogAndOp: {
+            if (ops->size() < 2) return -1;
+            int a1 = const_cond_value((*ops)[1]);
+            if (a0 == 0 || a1 == 0) return 0;
+            if (a0 == 1 && a1 == 1) return 1;
+            return -1;
+        }
+        case vpiLogOrOp: {
+            if (ops->size() < 2) return -1;
+            int a1 = const_cond_value((*ops)[1]);
+            if (a0 == 1 || a1 == 1) return 1;
+            if (a0 == 0 && a1 == 0) return 0;
+            return -1;
+        }
+        default: return -1;
+        }
+    }
     return -1;
 }
 
 void UhdmImporter::collect_live_assigned_signals(const any* stmt, bool live,
-                                                 std::set<std::string>& out) {
+                                                 std::set<std::string>& out,
+                                                 bool fold_guards) {
     if (!stmt) return;
     switch (stmt->VpiType()) {
         case vpiAssignment: {
             if (!live) break;
             auto a = any_cast<const assignment*>(stmt);
-            if (a->Lhs() && !a->Lhs()->VpiName().empty())
-                out.insert(std::string(a->Lhs()->VpiName()));
+            if (a->Lhs() && !a->Lhs()->VpiName().empty()) {
+                // Record the LHS name AND every dot-prefix of it: a struct-FIELD
+                // write (`branch_exception_o.cause = …`, hier_path LHS) has
+                // VpiName "branch_exception_o.cause", but the temp-wire pre-pass
+                // (extract_assigned_signals) records the BASE wire name
+                // ("branch_exception_o") — the prune compares against that name,
+                // so a base assigned only through its fields must still count as
+                // assigned.
+                std::string nm = std::string(a->Lhs()->VpiName());
+                out.insert(nm);
+                for (size_t dot = nm.rfind('.'); dot != std::string::npos;
+                     dot = nm.rfind('.'))
+                    { nm = nm.substr(0, dot); out.insert(nm); }
+            }
             break;
         }
         case vpiBegin:
         case vpiNamedBegin:
             if (auto stmts = begin_block_stmts(stmt))
-                for (auto s : *stmts) collect_live_assigned_signals(s, live, out);
+                for (auto s : *stmts)
+                    collect_live_assigned_signals(s, live, out, fold_guards);
             break;
         case vpiIf: {
             auto ist = any_cast<const if_stmt*>(stmt);
             bool tk = live;
-            if (live && const_cond_value(ist->VpiCondition()) == 0) tk = false;
-            collect_live_assigned_signals(ist->VpiStmt(), tk, out);
+            if (fold_guards && live && const_cond_value(ist->VpiCondition()) == 0)
+                tk = false;
+            collect_live_assigned_signals(ist->VpiStmt(), tk, out, fold_guards);
             break;
         }
         case vpiIfElse: {
             auto ie = any_cast<const if_else*>(stmt);
             bool tk = live, ek = live;
-            if (live) {
+            if (fold_guards && live) {
                 int c = const_cond_value(ie->VpiCondition());
                 if (c == 0) tk = false;
                 else if (c == 1) ek = false;
             }
-            collect_live_assigned_signals(ie->VpiStmt(), tk, out);
-            collect_live_assigned_signals(ie->VpiElseStmt(), ek, out);
+            collect_live_assigned_signals(ie->VpiStmt(), tk, out, fold_guards);
+            collect_live_assigned_signals(ie->VpiElseStmt(), ek, out, fold_guards);
             break;
         }
         case vpiFor:
-            collect_live_assigned_signals(any_cast<const for_stmt*>(stmt)->VpiStmt(), live, out);
+            collect_live_assigned_signals(any_cast<const for_stmt*>(stmt)->VpiStmt(),
+                                          live, out, fold_guards);
             break;
         case vpiCase: {
             auto cs = any_cast<const case_stmt*>(stmt);
             if (cs->Case_items())
                 for (auto item : *cs->Case_items())
-                    collect_live_assigned_signals(item->Stmt(), live, out);
+                    collect_live_assigned_signals(item->Stmt(), live, out,
+                                                  fold_guards);
             break;
         }
         default: break;

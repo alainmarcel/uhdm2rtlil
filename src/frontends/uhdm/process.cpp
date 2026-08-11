@@ -1069,16 +1069,19 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // so making them async-reset FFs gives a non-constant (self)
                 // reset value that `proc` rejects ("Async reset yields
                 // non-constant value 32'mmm..m", CVA6 cva6_fifo_v3).  Match slang
-                // and leave them undriven.  Only prune when we found at least one
-                // live assignment somewhere (empty set => couldn't fold guards,
-                // so keep everything to stay conservative).
-                std::set<std::string> live_signals;
+                // and leave them undriven.  Prune only names PRESENT in the
+                // unfolded scan but ABSENT from the live scan, so LHS shapes the
+                // scan can't name (concats, var_selects) are never pruned.
+                std::set<std::string> live_signals, all_signals;
                 collect_live_assigned_signals(stmt, true, live_signals);
-                if (!live_signals.empty())
+                collect_live_assigned_signals(stmt, true, all_signals,
+                                              /*fold_guards=*/false);
+                if (live_signals.size() < all_signals.size())
                     assigned_signals.erase(
                         std::remove_if(assigned_signals.begin(), assigned_signals.end(),
                             [&](const AssignedSignal& s){
-                                return live_signals.count(s.name) == 0;
+                                return all_signals.count(s.name) > 0 &&
+                                       live_signals.count(s.name) == 0;
                             }),
                         assigned_signals.end());
 
@@ -2733,6 +2736,29 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         block_local_promoted.clear();
         create_block_local_wires(actual_stmt);
         extract_assigned_signals(actual_stmt, assigned_signals);
+
+        // Drop signals assigned ONLY under a compile-time-FALSE guard
+        // (`if (CVA6Cfg.RVH) lsu_tinst_n = …` with RVH==0, CVA6 cva6_mmu
+        // data_interface).  The body import folds the dead branch away, but
+        // without this prune the pre-pass below still creates a `$0\sig` temp
+        // with a self-hold default plus an STa update — net effect `sig = sig`,
+        // which proc_dlatch turns into a spurious latch (read_verilog/slang
+        // leave the signal undriven; slang infers 0 latches on all of CVA6).
+        // Prune only names PRESENT in the unfolded scan but ABSENT from the
+        // live scan: LHS shapes the scan can't name land in neither set and
+        // are kept (conservative).
+        std::set<std::string> live_assigned, all_assigned;
+        collect_live_assigned_signals(actual_stmt, true, live_assigned);
+        collect_live_assigned_signals(actual_stmt, true, all_assigned,
+                                      /*fold_guards=*/false);
+        if (live_assigned.size() < all_assigned.size())
+            assigned_signals.erase(
+                std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                    [&](const AssignedSignal& s){
+                        return all_assigned.count(s.name) > 0 &&
+                               live_assigned.count(s.name) == 0;
+                    }),
+                assigned_signals.end());
     }
     
     // Create temporary wires for assigned signals (one per unique signal name)
@@ -7210,6 +7236,27 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             int width = get_width(var, current_instance);
             if (width <= 0) width = 16;
 
+            // Reuse the simple-named wire create_block_local_wires() already
+            // made for this always-block block-local (same gating as the
+            // CaseRule vpiBegin handler): the enclosing always block's $0-temp
+            // machinery drives and reads that wire, so creating a second
+            // scoped wire here SPLITS the writes — the block's top-level init
+            // (`sgn = 1'b0`) targets the scoped wire while a nested-if write
+            // (`sgn = 1'b1`) targets the bare one, whose self-hold default
+            // then survives every path and proc_dlatch infers a spurious
+            // latch (CVA6 alu.sv:199 `sgn`, lsu_bypass.sv:67 status_cnt/
+            // read_pointer/write_pointer; slang infers none).  Gate on
+            // block_local_promoted so a block-local merely SHADOWING a module
+            // signal still gets its own scoped wire.
+            if (block_local_promoted.count(var_name))
+            if (RTLIL::Wire* pre = module->wire(RTLIL::escape_id(var_name))) {
+                if (name_map.count(var_name) && name_map[var_name] != pre)
+                    saved_name_map[var_name] = name_map[var_name];
+                name_map[var_name] = pre;
+                block_local_vars.insert(var_name);
+                continue;
+            }
+
             // Create hierarchical wire: \blockname.varname
             std::string hier_name = block_name + "." + var_name;
             RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);
@@ -10666,12 +10713,20 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
         add_src_attribute(true_case->attributes, uhdm_if_else);
 
+        // Snapshot current_comb_values around each branch import (see
+        // import_if_stmt_comb): the branch bodies record their blocking
+        // writes LIVE, so without restores the then-branch's values leak
+        // into the else-branch import AND thread_comb_if's "pre" lookup
+        // reads a branch's own value instead of the pre-if value.
+        auto saved_ccv = current_comb_values;
+
         // Import then statement
         if (auto then_stmt = uhdm_if_else->VpiStmt()) {
             if (mode_debug)
                 log("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
+        current_comb_values = saved_ccv;
 
         sw->cases.push_back(true_case);
 
@@ -10687,6 +10742,7 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             import_statement_comb(else_stmt, else_case);
             log("    Else case has %d actions after import\n", (int)else_case->actions.size());
             log("    Else case has %d switches after import\n", (int)else_case->switches.size());
+            current_comb_values = saved_ccv;
 
             sw->cases.push_back(else_case);
             thread_comb_if(condition_sig, true_case, else_case);
@@ -10766,14 +10822,25 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
         add_src_attribute(true_case->attributes, uhdm_if);
-        
+
+        // Snapshot current_comb_values around the branch import (same
+        // discipline as the CaseRule vpiIf path): the branch body records its
+        // blocking writes LIVE into current_comb_values, so without a restore
+        // thread_comb_if's "pre" lookup reads the branch's own value (tv == ev
+        // -> no merge) and the conditional value leaks to later same-block
+        // reads as if unconditional — `sgn = 1'b0; if (op==…) sgn = 1'b1;
+        // less = …sgn…` read sgn as constant 1 (CVA6 alu.sv:199; UHDM != slang
+        // SAT miter, masked by a read_verilog blind spot).
+        auto saved_ccv = current_comb_values;
+
         // Import then statement
         if (auto then_stmt = uhdm_if->VpiStmt()) {
             if (mode_debug)
                 log("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
-        
+        current_comb_values = saved_ccv;
+
         sw->cases.push_back(true_case);
         
         // For simple if statements (not if_else), create empty default case

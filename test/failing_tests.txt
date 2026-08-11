@@ -194,7 +194,7 @@ svtypes_struct_array
 # miter (SUCCESS).  These are the reproducers for the CVA6 alu_wrapper
 # `fu_data_i[0]` packed-array element-select fixes.
 packed_array_elem_select
-packed_array_struct_port_sel
+# packed_array_struct_port_sel  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- `parameter type` struct with function-computed CVA6Cfg.FIELD widths ---
 # Native read_verilog cannot parse `parameter type fu_data_t` (SV type params),
@@ -202,7 +202,7 @@ packed_array_struct_port_sel
 # via a sound from-reset SAT miter (SUCCESS).  Reproducer for the CVA6
 # `fu_data_i.operand_a` struct-member port-width fix (build_config() struct
 # param → member widths resolved from the elaborated typespec's member exprs).
-struct_member_cfg_width
+# struct_member_cfg_width  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- `parameter type` port bound to a computed-width logic vector ---
 # Native read_verilog cannot parse `parameter type dtype` (SV type params), so
@@ -212,7 +212,7 @@ struct_member_cfg_width
 # PORT typespec stays at the default `logic` (1 bit) while the port VARIABLE
 # carries the resolved range — import_port now recovers the width from the
 # logic_var/enum_var when the port typespec collapsed to <=1.
-param_type_logic_width
+# param_type_logic_width  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- `parameter type` module instantiated inside a generate block ---
 # Native read_verilog cannot parse `parameter type T` (SV type params), so there
@@ -222,7 +222,7 @@ param_type_logic_width
 # per-type-binding $typaram signature, so the cell referenced bare `\leaf` while
 # the module was imported as `\leaf$typaram_...` -> unresolved blackbox that
 # `hierarchy -check` rejects.
-gen_scope_typaram
+# gen_scope_typaram  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- Yosys v0.67 upstream check_mem / memories additions ---
 # check_mem/init.sv (dynamic read of a 2D unpacked array), check_mem/non_zero.sv
@@ -282,3 +282,14 @@ rp32_r5p_mouse
 #   sva/extnets — external-net SVA harness; equiv_induct-only Induct-Formal.
 simple/module_scope_case.v
 sva/extnets.sv
+
+# --- def-context struct-param staleness reproducer (CVA6 branch_unit) ---
+# Native read_verilog cannot parse the CVA6-realistic shapes (cfg_t'(0) cast
+# default, automatic function with member writes + return), so there is no
+# Verilog reference; the UHDM output is VERIFIED equal to slang via a sound SAT
+# miter (test_slang_equiv.ys in the test dir, SUCCESS).  Reproducer for the
+# AllModules-def import reading the DECLARATION-DEFAULT struct-param value
+# (cva6_cfg_empty) instead of the elaborated override — eval_param_struct_field
+# now re-resolves from a representative elaborated instance (elab_inst_by_def).
+# def_ctx_struct_param  (PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass;
+#   kept documented here for the slang-miter verification pointer)
