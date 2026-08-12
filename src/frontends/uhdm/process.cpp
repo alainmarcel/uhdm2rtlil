@@ -6619,6 +6619,24 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
         auto alias_it = comb_value_aliases.find(signal_name);
         if (alias_it != comb_value_aliases.end())
             current_comb_values[alias_it->second] = rhs;
+    } else if (!in_always_ff_body_mode) {
+        // Concat LHS over FULL element wires (a whole-array copy
+        // `counter_d = counter_q` expanded to {\arr[N]..\arr[1]} =
+        // {\q[N]..\q[1]}): record each element's in-flight value too, so a
+        // later dynamic-index element write's read-modify-write mux uses the
+        // default (`\q[k]`) instead of the raw element wire — the raw wire
+        // would be a self-hold inside the write's conditional arm and
+        // proc_dlatch would latch every element (CVA6 perf_counters).
+        int off = 0;
+        for (const auto& chunk : lhs.chunks()) {
+            if (chunk.wire && chunk.offset == 0 &&
+                chunk.width == chunk.wire->width) {
+                std::string nm = chunk.wire->name.str();
+                if (!nm.empty() && nm[0] == '\\') nm = nm.substr(1);
+                current_comb_values[nm] = rhs.extract(off, chunk.width);
+            }
+            off += chunk.width;
+        }
     }
 }
 
@@ -9271,14 +9289,26 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
     if (!bs) return false;
     std::string base_name = std::string(bs->VpiName());
     if (base_name.empty()) return false;
-    // Expanded unpacked array: element wires \base[0], \base[1], … exist.
+    // Expanded unpacked array: element wires \base[low..high] exist.  The low
+    // bound is usually 0, but a `[N:1]` declaration (CVA6 perf_counters
+    // `generic_counter_d[MHPMCounterNum:1]`) starts at 1 — probe a small
+    // range for the first declared element instead of requiring `[0]`.
     // (A real $memory has no such wires — bail so the memory path handles it.)
-    RTLIL::Wire* first = module->wire(RTLIL::escape_id(base_name + "[0]"));
-    if (!first) return false;
+    int array_low = -1;
+    for (int probe = 0; probe <= 64; probe++) {
+        if (module->wire(RTLIL::escape_id(
+                base_name + "[" + std::to_string(probe) + "]"))) {
+            array_low = probe;
+            break;
+        }
+    }
+    if (array_low < 0) return false;
+    RTLIL::Wire* first = module->wire(RTLIL::escape_id(
+        base_name + "[" + std::to_string(array_low) + "]"));
     int elem_w = first->width;
     int num_elems = 0;
     while (module->wire(RTLIL::escape_id(
-               base_name + "[" + std::to_string(num_elems) + "]")))
+               base_name + "[" + std::to_string(array_low + num_elems) + "]")))
         num_elems++;
     if (num_elems <= 0) return false;
 
@@ -9298,7 +9328,7 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
     if (rhs.size() < elem_w) rhs.extend_u0(elem_w, rhs_signed);
     else if (rhs.size() > elem_w) rhs = rhs.extract(0, elem_w);
 
-    for (int k = 0; k < num_elems; k++) {
+    for (int k = array_low; k < array_low + num_elems; k++) {
         std::string ename = base_name + "[" + std::to_string(k) + "]";
         RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
         if (!ew) continue;
@@ -9544,6 +9574,192 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
     return true;
 }
 
+// `arr[idx].field = rhs` with a DYNAMIC element index on an unpacked array of
+// structs represented as a FLAT wire (the whole-array-access shape from
+// import_module: `\arr` = N*elem_w bits + per-element slice aliases).  No
+// RTLIL LHS form captures a runtime-indexed element's field, so synthesise a
+// full-width mask/shift/or rewrite of the flat wire:
+//   shift = (idx - low) * elem_w + field_off
+//   new   = (cur & ~(field_mask << shift)) | (rhs << shift)
+// `cur` comes from current_comb_values so earlier same-block writes (the
+// whole-array default `mem_n = mem_q`) are preserved.  Without this the LHS
+// fell through to import_hier_path's READ path ("Could not resolve struct
+// member access 'mem_n[wptr_i].valid'") and the write was DROPPED — CVA6
+// cva6_fifo_v3 / lsu_bypass / store_buffer commit_queue_n.
+bool UhdmImporter::emit_dynamic_array_elem_field_write(
+        const UHDM::hier_path* hp,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2) return false;
+    auto& pe = *hp->Path_elems();
+    if (pe[0]->UhdmType() != uhdmbit_select) return false;
+    if (pe[1]->UhdmType() != uhdmref_obj) return false;
+    const bit_select* bs       = any_cast<const bit_select*>(pe[0]);
+    const ref_obj*    field_rf = any_cast<const ref_obj*>(pe[1]);
+    if (!bs || !field_rf || !bs->VpiIndex()) return false;
+
+    std::string base_name  = std::string(bs->VpiName());
+    std::string field_name = std::string(field_rf->VpiName());
+    if (base_name.empty() || field_name.empty()) return false;
+
+    // Only the FLAT representation is handled here: `\arr` exists as one wide
+    // wire AND per-element aliases `\arr[k]` exist (the per-element-only
+    // representation goes through emit_dynamic_unpacked_array_write).
+    RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
+    if (!base_wire) return false;
+    int base_w = base_wire->width;
+
+    // Element struct typespec via the inner net mapped to the flat wire.
+    const UHDM::struct_typespec* st = nullptr;
+    for (auto& kv : wire_map) {
+        if (kv.second != base_wire) continue;
+        const ref_typespec* rts = nullptr;
+        if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first)) rts = ln->Typespec();
+        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first)) rts = lv->Typespec();
+        else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
+        else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+        if (rts)
+            if (auto ats = rts->Actual_typespec())
+                if (ats->UhdmType() == uhdmstruct_typespec)
+                    st = any_cast<const UHDM::struct_typespec*>(ats);
+        if (st) break;
+    }
+    if (!st || !st->Members()) return false;
+
+    int elem_w = get_width_from_typespec(st, current_instance);
+    if (elem_w <= 0 || base_w % elem_w != 0) return false;
+    int n_elems = base_w / elem_w;
+
+    // Element index low bound: smallest k with an `\arr[k]` alias wire.
+    int array_low = -1;
+    for (int k = 0; k <= n_elems; k++) {
+        if (module->wire(RTLIL::escape_id(
+                base_name + "[" + std::to_string(k) + "]"))) {
+            array_low = k;
+            break;
+        }
+    }
+    if (array_low < 0) return false;
+
+    // Field offset within the element (last listed member = LSB).
+    int field_offset = 0, field_width = 0;
+    bool found_field = false;
+    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+        auto m = (*st->Members())[i];
+        int mw = 0;
+        if (auto mts = m->Typespec())
+            if (auto ats = mts->Actual_typespec())
+                mw = get_width_from_typespec(ats, current_instance);
+        if (std::string(m->VpiName()) == field_name) {
+            field_width = mw;
+            found_field = true;
+            break;
+        }
+        field_offset += mw;
+    }
+    if (!found_field || field_width <= 0) return false;
+    if (field_offset + field_width > elem_w) return false;
+
+    // Constant index: static slice write through the normal machinery.
+    RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), comb_read_map());
+    if (idx_sig.is_fully_const()) {
+        int k = idx_sig.as_const().as_int();
+        int off = (k - array_low) * elem_w + field_offset;
+        if (off < 0 || off + field_width > base_w) return false;
+        auto rhs_e = dynamic_cast<const UHDM::expr*>(rhs_any);
+        if (!rhs_e) return false;
+        int prev_ctx = expression_context_width;
+        expression_context_width = field_width;
+        RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
+        expression_context_width = prev_ctx;
+        if (rhs.size() < field_width) rhs.extend_u0(field_width, is_expr_signed(rhs_e));
+        else if (rhs.size() > field_width) rhs = rhs.extract(0, field_width);
+        RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(base_wire).extract(off, field_width);
+        if (proc) emit_comb_assign(lhs_slice, rhs, proc);
+        else if (case_rule) {
+            std::string temp_name = "$0\\" + base_name;
+            if (RTLIL::Wire* tw = module->wire(temp_name))
+                case_rule->actions.push_back(RTLIL::SigSig(
+                    RTLIL::SigSpec(tw).extract(off, field_width), rhs));
+            else
+                case_rule->actions.push_back(RTLIL::SigSig(lhs_slice, rhs));
+        }
+        if (!in_always_ff_body_mode) {
+            RTLIL::SigSpec cur = current_comb_values.count(base_name)
+                                     ? current_comb_values[base_name]
+                                     : RTLIL::SigSpec(base_wire);
+            cur.replace(off, rhs);
+            current_comb_values[base_name] = cur;
+        }
+        return true;
+    }
+
+    // Dynamic index: full-width RMW on the flat wire.
+    int shamt_w = std::max(idx_sig.size() + 6, 32);
+    RTLIL::SigSpec idx_ext = idx_sig;
+    idx_ext.extend_u0(shamt_w, false);
+    RTLIL::SigSpec pos = idx_ext;
+    if (array_low != 0) {
+        RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+        module->addSub(NEW_ID, idx_ext,
+                       RTLIL::SigSpec(RTLIL::Const(array_low, shamt_w)), pw, true);
+        pos = RTLIL::SigSpec(pw);
+    }
+    RTLIL::Wire* elem_shift = module->addWire(NEW_ID, shamt_w);
+    module->addMul(NEW_ID, pos,
+                   RTLIL::SigSpec(RTLIL::Const(elem_w, shamt_w)), elem_shift, true);
+    RTLIL::Wire* bit_shift = module->addWire(NEW_ID, shamt_w);
+    module->addAdd(NEW_ID, RTLIL::SigSpec(elem_shift),
+                   RTLIL::SigSpec(RTLIL::Const(field_offset, shamt_w)), bit_shift, true);
+
+    auto rhs_e = dynamic_cast<const UHDM::expr*>(rhs_any);
+    if (!rhs_e) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = field_width;
+    RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
+    expression_context_width = prev_ctx;
+    if (rhs.size() < field_width) rhs.extend_u0(field_width, is_expr_signed(rhs_e));
+    else if (rhs.size() > field_width) rhs = rhs.extract(0, field_width);
+
+    std::vector<RTLIL::State> mask_bits(base_w, RTLIL::State::S0);
+    for (int i = 0; i < field_width; i++) mask_bits[i] = RTLIL::State::S1;
+    RTLIL::SigSpec mask_const = RTLIL::SigSpec(RTLIL::Const(mask_bits));
+    RTLIL::SigSpec rhs_wide = rhs;
+    rhs_wide.extend_u0(base_w, false);
+
+    RTLIL::Wire* mask_sh = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, mask_const, RTLIL::SigSpec(bit_shift), mask_sh, false);
+    RTLIL::Wire* val_sh = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, rhs_wide, RTLIL::SigSpec(bit_shift), val_sh, false);
+    RTLIL::Wire* inv_mask = module->addWire(NEW_ID, base_w);
+    module->addNot(NEW_ID, RTLIL::SigSpec(mask_sh), inv_mask);
+
+    RTLIL::SigSpec cur = current_comb_values.count(base_name)
+                             ? current_comb_values[base_name]
+                             : RTLIL::SigSpec(base_wire);
+    RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
+    module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
+    RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w);
+    module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
+                  RTLIL::SigSpec(val_sh), new_full);
+
+    if (proc) {
+        emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
+    } else if (case_rule) {
+        std::string temp_name = "$0\\" + base_name;
+        if (RTLIL::Wire* tw = module->wire(temp_name))
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
+        else
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+    }
+    if (!in_always_ff_body_mode)
+        current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+    return true;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
@@ -9560,10 +9776,14 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
     // `s.field[idx] = rhs` with dynamic `idx` on a packed struct's
     // packed-array field — synthesise mask/shift/or write into `\s`.
+    // `arr[idx].field = rhs` on a flat unpacked struct array — RMW into `\arr`.
     if (auto lhs_e = uhdm_assign->Lhs()) {
         if (lhs_e->VpiType() == vpiHierPath) {
             auto hp = any_cast<const hier_path*>(lhs_e);
             if (emit_dynamic_struct_field_bit_write(
+                    hp, uhdm_assign->Rhs(), proc, nullptr))
+                return;
+            if (emit_dynamic_array_elem_field_write(
                     hp, uhdm_assign->Rhs(), proc, nullptr))
                 return;
         }
@@ -10145,6 +10365,25 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                                 ff_blocking_temps[bn] = RTLIL::SigSpec(tw);
                     }
                 }
+                // Comb: record each FULL-wire chunk's in-flight value (a
+                // whole-array copy `counter_d = counter_q` lowers to a concat
+                // over element wires) so a later dynamic-index element write's
+                // read-modify-write mux uses the default value instead of the
+                // raw element wire — the raw wire would be a self-hold inside
+                // the write's conditional arm and proc_dlatch would latch
+                // every element (CVA6 perf_counters generic_counter_d).
+                if (!in_always_ff_body_mode) {
+                    int off = 0;
+                    for (const auto& ch : lhs.chunks()) {
+                        if (ch.wire && ch.offset == 0 &&
+                            ch.width == ch.wire->width) {
+                            std::string bn = ch.wire->name.str();
+                            if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
+                            current_comb_values[bn] = rhs.extract(off, ch.width);
+                        }
+                        off += ch.width;
+                    }
+                }
                 return;
             }
         }
@@ -10191,6 +10430,9 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (lhs_e->VpiType() == vpiHierPath) {
             auto hp = any_cast<const hier_path*>(lhs_e);
             if (emit_dynamic_struct_field_bit_write(
+                    hp, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
+            if (emit_dynamic_array_elem_field_write(
                     hp, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
         }
@@ -11435,6 +11677,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     auto bs = any_cast<const bit_select*>(lhs_e);
                     if (emit_dynamic_unpacked_array_write(
                             bs, assign->Rhs(), nullptr, case_rule))
+                        return;
+                }
+            }
+
+            // `s.field[idx] = rhs` / `arr[idx].field = rhs` hier_path LHS —
+            // same routing as import_assignment_comb; without it the write
+            // falls through to the generic LHS import's READ path and is
+            // dropped (CVA6 cva6_fifo_v3 `mem_n[wptr].valid = …` under
+            // `if (push_i)`).
+            if (auto lhs_e = assign->Lhs()) {
+                if (lhs_e->VpiType() == vpiHierPath) {
+                    auto hp = any_cast<const hier_path*>(lhs_e);
+                    if (emit_dynamic_struct_field_bit_write(
+                            hp, assign->Rhs(), nullptr, case_rule))
+                        return;
+                    if (emit_dynamic_array_elem_field_write(
+                            hp, assign->Rhs(), nullptr, case_rule))
                         return;
                 }
             }

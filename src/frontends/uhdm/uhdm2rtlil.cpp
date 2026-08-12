@@ -3296,8 +3296,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         if (op->Operands()) for (auto o : *op->Operands()) scan(o);
                     break;
                 case vpiBegin: case vpiNamedBegin:
-                    if (auto b = any_cast<const begin*>(node))
-                        if (b->Stmts()) for (auto s : *b->Stmts()) scan(s);
+                    // begin_block_stmts handles BOTH `begin` and `named_begin`
+                    // (a NAMED block — `begin : read_write_comb` — is a
+                    // different UHDM class; the old any_cast<const begin*>
+                    // returned null for it, so a whole-array assignment
+                    // `mem_n = mem_q` inside a named comb block was never
+                    // flagged and the array collapsed to one element).
+                    if (auto stmts = begin_block_stmts(node))
+                        for (auto s : *stmts) scan(s);
+                    break;
+                case vpiFor:
+                    if (auto f = any_cast<const for_stmt*>(node)) scan(f->VpiStmt());
+                    break;
+                case vpiCase:
+                    if (auto cs = any_cast<const case_stmt*>(node)) {
+                        scan(cs->VpiCondition());
+                        if (cs->Case_items())
+                            for (auto item : *cs->Case_items()) scan(item->Stmt());
+                    }
                     break;
                 case vpiAssignment: case vpiAssignStmt:
                     if (auto a = any_cast<const assignment*>(node)) {
@@ -3414,20 +3430,27 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             }
                             return dflt;
                         };
+                        int array_low = 0;
                         if (first_range->Left_expr() && first_range->Right_expr()) {
                             int left = eval_bound(first_range->Left_expr(), 3);
                             int right = eval_bound(first_range->Right_expr(), 0);
                             array_size = std::abs(left - right) + 1;
+                            array_low = std::min(left, right);
                         }
-                        
+
                         // Get the packed width from the underlying variable
                         int element_width = 1;
                         if (array_var->Variables() && !array_var->Variables()->empty()) {
                             element_width = get_width(array_var->Variables()->at(0), uhdm_module);
                         }
-                        
-                        // Create individual wires for each array element
-                        for (int i = 0; i < array_size; i++) {
+
+                        // Create individual wires for each array element, named
+                        // by the DECLARED indices — a `[N:1]` array (CVA6
+                        // perf_counters `generic_counter_d[MHPMCounterNum:1]`)
+                        // must materialise `\arr[1..N]`; naming from 0 leaves
+                        // every `arr[i]` access one off (reads X, writes land
+                        // on a stray wire that then latches).
+                        for (int i = array_low; i < array_low + array_size; i++) {
                             std::string element_name = array_name + "[" + std::to_string(i) + "]";
                             RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
                             if (!module->wire(wire_id)) {
@@ -4439,6 +4462,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     
                     // Get the array dimensions
                     int array_size = 4; // Default for cases like M[3:0]
+                    int array_low = 0;
                     if (array->Ranges() && !array->Ranges()->empty()) {
                         auto first_range = (*array->Ranges())[0];
                         // Bounds may be literal constants or expressions
@@ -4455,9 +4479,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             int left = eval_bound(first_range->Left_expr(), 3);
                             int right = eval_bound(first_range->Right_expr(), 0);
                             array_size = std::abs(left - right) + 1;
+                            array_low = std::min(left, right);
                         }
                     }
-                    
+
                     // Get the packed width and signedness from the underlying net
                     int element_width = 1;
                     bool element_signed = false;
@@ -4468,8 +4493,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             element_signed = true;
                     }
 
-                    // Create individual wires for each array element
-                    for (int i = 0; i < array_size; i++) {
+                    // Create individual wires for each array element, named by
+                    // the DECLARED indices — a `[N:1]` array (CVA6
+                    // perf_counters `generic_counter_d[MHPMCounterNum:1]`) must
+                    // materialise `\arr[1..N]`; naming from 0 leaves every
+                    // `arr[i]` access dangling one off (reads X, writes make a
+                    // stray wire that then latches).
+                    for (int i = array_low; i < array_low + array_size; i++) {
                         std::string element_name = array_name + "[" + std::to_string(i) + "]";
                         RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
                         if (!module->wire(wire_id)) {
@@ -4498,17 +4528,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     int array_low = 0;
                     if (array->Ranges() && !array->Ranges()->empty()) {
                         auto first_range = (*array->Ranges())[0];
-                        if (first_range->Left_expr() && first_range->Right_expr() &&
-                            first_range->Left_expr()->VpiType() == vpiConstant &&
-                            first_range->Right_expr()->VpiType() == vpiConstant) {
-                            const constant* lc = any_cast<const constant*>(first_range->Left_expr());
-                            const constant* rc = any_cast<const constant*>(first_range->Right_expr());
-                            RTLIL::Const lv = extract_const_from_value(std::string(lc->VpiValue()));
-                            RTLIL::Const rv = extract_const_from_value(std::string(rc->VpiValue()));
-                            int left = lv.size() > 0 ? lv.as_int() : 0;
-                            int right = rv.size() > 0 ? rv.as_int() : 0;
-                            array_size = std::abs(left - right) + 1;
-                            array_low = std::min(left, right);
+                        // Bounds may be literal constants OR expressions
+                        // (`entry_t mem_q[N]` elaborates to `[0:N-1]` with an
+                        // operation bound) — fold either via import_expression;
+                        // the old literal-only path left array_size = 1 and the
+                        // array collapsed to a single element wire.
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            RTLIL::SigSpec ls = import_expression(first_range->Left_expr());
+                            RTLIL::SigSpec rs = import_expression(first_range->Right_expr());
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                int left = ls.as_int();
+                                int right = rs.as_int();
+                                array_size = std::abs(left - right) + 1;
+                                array_low = std::min(left, right);
+                            }
                         }
                     }
 

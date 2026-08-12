@@ -5136,23 +5136,33 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // flattened formal lines up (mat[i] == a[i]).  Without this the bare name
     // resolved to a 1-bit unknown wire and the callee read garbage.
     // (SelectFromUnpackedInFunction / 2DUnpackedFunctionArgument.)
-    if (!name_map.count(ref_name) && name_map.count(ref_name + "[0]")) {
-        std::string gs = get_current_gen_scope();
-        RTLIL::SigSpec arr;
-        for (int i = 0; ; i++) {
-            std::string en = ref_name + "[" + std::to_string(i) + "]";
-            RTLIL::Wire* ew = nullptr;
-            if (!gs.empty() && name_map.count(gs + "." + en))
-                ew = name_map[gs + "." + en];
-            else if (name_map.count(en))
-                ew = name_map[en];
-            if (!ew) break;
-            arr.append(RTLIL::SigSpec(ew));
-        }
-        if (arr.size() > 0) {
-            log("    ref_obj: whole unpacked array %s -> %d-bit element concat\n",
-                ref_name.c_str(), arr.size());
-            return arr;
+    if (!name_map.count(ref_name)) {
+        // Probe the array's low bound — usually 0, but a `[N:1]` declaration
+        // (CVA6 perf_counters) starts at 1.
+        int wa_low = -1;
+        for (int probe = 0; probe <= 64; probe++)
+            if (name_map.count(ref_name + "[" + std::to_string(probe) + "]")) {
+                wa_low = probe;
+                break;
+            }
+        if (wa_low >= 0) {
+            std::string gs = get_current_gen_scope();
+            RTLIL::SigSpec arr;
+            for (int i = wa_low; ; i++) {
+                std::string en = ref_name + "[" + std::to_string(i) + "]";
+                RTLIL::Wire* ew = nullptr;
+                if (!gs.empty() && name_map.count(gs + "." + en))
+                    ew = name_map[gs + "." + en];
+                else if (name_map.count(en))
+                    ew = name_map[en];
+                if (!ew) break;
+                arr.append(RTLIL::SigSpec(ew));
+            }
+            if (arr.size() > 0) {
+                log("    ref_obj: whole unpacked array %s -> %d-bit element concat\n",
+                    ref_name.c_str(), arr.size());
+                return arr;
+            }
         }
     }
 
@@ -5977,14 +5987,27 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     }
     
     // Check for expanded array: individual element wires exist (not a $memory object).
-    // Handles both constant and dynamic indices.
+    // Handles both constant and dynamic indices.  The low bound is usually 0,
+    // but a `[N:1]` declaration (CVA6 perf_counters
+    // `generic_counter_q[MHPMCounterNum:1]`) starts at 1 — probe for the first
+    // declared element instead of requiring `[0]`.
     if (!module->memories.count(mem_id)) {
-        RTLIL::Wire* first_elem = module->wire(RTLIL::escape_id(signal_name + "[0]"));
+        int arr_low = -1;
+        for (int probe = 0; probe <= 64; probe++)
+            if (module->wire(RTLIL::escape_id(
+                    signal_name + "[" + std::to_string(probe) + "]"))) {
+                arr_low = probe;
+                break;
+            }
+        RTLIL::Wire* first_elem = arr_low < 0 ? nullptr
+            : module->wire(RTLIL::escape_id(
+                  signal_name + "[" + std::to_string(arr_low) + "]"));
         if (first_elem) {
             int elem_w = first_elem->width;
-            // Count elements
+            // Count elements from the low bound up
             int num_elems = 0;
-            while (module->wire(RTLIL::escape_id(signal_name + "[" + std::to_string(num_elems) + "]")))
+            while (module->wire(RTLIL::escape_id(
+                       signal_name + "[" + std::to_string(arr_low + num_elems) + "]")))
                 num_elems++;
 
             RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
@@ -6005,18 +6028,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 // Constant index outside the array bounds reads X — SV leaves an
                 // out-of-range access unspecified (verilog/mem_bounds.sv reads
                 // `mem[-1]` and asserts it is all-X via $countbits).
-                if (num_elems > 0 && (i < 0 || i >= num_elems))
+                if (num_elems > 0 && (i < arr_low || i >= arr_low + num_elems))
                     return RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
             } else {
-                // Dynamic index — build mux chain.
-                int last = num_elems - 1;
+                // Dynamic index — build mux chain over DECLARED indices.
+                int last = arr_low + num_elems - 1;
                 int idx_w = GetSize(idx);
                 // Can the index address a non-existent element?  If the
                 // index width can represent a value >= num_elems, an
                 // out-of-range read is possible and needs an explicit
                 // fall-through value.  Otherwise every representable index
                 // is valid and the last element serves as the default.
-                bool oob_possible = (idx_w >= 31) ||
+                bool oob_possible = (idx_w >= 31) || (arr_low > 0) ||
                                     ((1LL << idx_w) > (long long)num_elems);
                 RTLIL::SigSpec result;
                 int start;
@@ -6041,7 +6064,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                     start = last - 1;
                 }
 
-                for (int i = start; i >= 0; i--) {
+                for (int i = start; i >= arr_low; i--) {
                     std::string ename = signal_name + "[" + std::to_string(i) + "]";
                     RTLIL::SigSpec elem_val;
                     if (current_comb_values.count(ename))
