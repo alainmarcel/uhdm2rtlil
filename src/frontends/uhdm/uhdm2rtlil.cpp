@@ -337,7 +337,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // from AllModules loses its memories; the elaborated instance carries the
     // correct array_var.  Used below to import such modules from the elaborated
     // form instead.
-    std::map<std::string, const module_inst*> elab_inst_by_def;
+    elab_inst_by_def.clear();
     if (uhdm_design->TopModules()) {
         std::function<void(const module_inst*)> walk = [&](const module_inst* m) {
             if (!m) return;
@@ -1453,6 +1453,33 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
             for (auto pa : *current_instance->Param_assigns())
                 if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
                     if (std::string(l->VpiName()) == bname) { a = l; break; }
+    }
+    // When importing from an AllModules DEFINITION (VpiName empty), the def's
+    // param_assign holds the DECLARATION DEFAULT (CVA6 branch_unit:
+    // `CVA6Cfg = cva6_cfg_empty` == cva6_cfg_t'(0), a 1-operand pattern) — NOT
+    // the elaborated override.  Field resolution against it either fails
+    // ("Could not resolve struct member access 'CVA6Cfg.RVC'" → guard never
+    // folds → spurious latch) or silently yields the DEFAULT's value for
+    // positional index 0.  Re-resolve the parameter from a representative
+    // ELABORATED instance of this def, whose param_assign carries the real
+    // value (vpiOverriden).
+    if (current_instance && current_instance->VpiName().empty()) {
+        std::string dn = std::string(current_instance->VpiDefName());
+        if (dn.rfind("work@", 0) == 0) dn = dn.substr(5);
+        auto eit = elab_inst_by_def.find(dn);
+        if (eit != elab_inst_by_def.end() && eit->second != current_instance) {
+            std::string bname = std::string(bref->VpiName());
+            const any* ea = nullptr;
+            if (eit->second->Parameters())
+                for (auto p : *eit->second->Parameters())
+                    if (std::string(p->VpiName()) == bname &&
+                        p->UhdmType() == uhdmparameter) { ea = p; break; }
+            if (!ea && eit->second->Param_assigns())
+                for (auto pa : *eit->second->Param_assigns())
+                    if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                        if (std::string(l->VpiName()) == bname) { ea = l; break; }
+            if (ea) a = ea;
+        }
     }
     if (!a) return "";
     const expr* val = nullptr;

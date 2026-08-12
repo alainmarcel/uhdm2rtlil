@@ -1,0 +1,20 @@
+# UHDM-vs-slang miter for def_ctx_struct_param.  read_verilog cannot parse the
+# CVA6-realistic shapes here (cfg_t'(0) cast default, function with member
+# writes + return), so the golden reference is the built-in read_slang
+# frontend — the same reference used for CVA6 latch parity.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top def_ctx_struct_param
+flatten; proc; opt -fast
+rename def_ctx_struct_param gold
+design -stash gold
+
+read_slang dut.sv --top def_ctx_struct_param
+hierarchy -check -top def_ctx_struct_param
+flatten; proc; opt -fast
+rename def_ctx_struct_param gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_outputs gold gate miter
+sat -verify -prove trigger 0 -show-inputs -show-outputs miter

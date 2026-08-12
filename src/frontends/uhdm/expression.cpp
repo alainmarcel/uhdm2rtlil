@@ -3151,16 +3151,24 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             if (mode_debug)
                 log("    vpiUIntConst: value='%s', size=%d\n", value.c_str(), size);
             try {
+                // An UNSIZED value (vpiSize == -1, e.g. the folded `~'hF` in
+                // cva6_tlb's napot mask) must not pass -1 as the Const width —
+                // yosys v0.68's WIDTH_LIMIT assert rejects it (v0.67 silently
+                // built a bogus Const).  Use the propagated context width, else
+                // the natural 64 bits of the folded value.
+                int w = size > 0 ? size
+                        : (expression_context_width > 0 ? expression_context_width
+                                                        : 64);
                 // Handle UHDM format: "UINT:value"
                 if (value.substr(0, 5) == "UINT:") {
                     std::string num_str = value.substr(5);
                     // Use stoull to handle large values like 18446744073709551615 (0xFFFFFFFFFFFFFFFF)
                     unsigned long long uint_val = std::stoull(num_str);
-                    return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
+                    return RTLIL::SigSpec(RTLIL::Const(uint_val, w));
                 } else {
                     // Handle plain number format
                     unsigned long long uint_val = std::stoull(value);
-                    return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
+                    return RTLIL::SigSpec(RTLIL::Const(uint_val, w));
                 }
             } catch (const std::exception& e) {
                 log_warning("Failed to parse UInt constant '%s': %s\n", value.c_str(), e.what());
