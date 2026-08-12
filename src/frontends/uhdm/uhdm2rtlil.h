@@ -799,6 +799,13 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    // `arr[idx].field = rhs` (dynamic element index) on an unpacked struct
+    // array represented as a flat wire — full-width mask/shift/or RMW.
+    bool emit_dynamic_array_elem_field_write(
+        const UHDM::hier_path* hp,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule);
     bool emit_dynamic_unpacked_array_write(
         const UHDM::bit_select* bs,
         const UHDM::any* rhs_any,
@@ -903,6 +910,10 @@ struct UhdmImporter {
     // Evaluate an `if` condition to a compile-time constant WITHOUT creating
     // cells: 0 (false), 1 (true), or -1 (not a resolvable constant).
     int const_cond_value(const UHDM::any* cond);
+    // Lowest declared index of an expanded unpacked array (`\base[k]` element
+    // wires) — usually 0, but a `[N:1]` declaration starts at 1.  -1 when no
+    // element wire exists (not an expanded array).
+    int expanded_array_low(const std::string& base_name);
     void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);

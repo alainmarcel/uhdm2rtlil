@@ -207,7 +207,7 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
             if (!is_const_idx) {
                 RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
                 if (!module->memories.count(mem_id) &&
-                    module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                    expanded_array_low(sig.name) >= 0) {
                     return;
                 }
             }
@@ -309,6 +309,16 @@ void UhdmImporter::collect_for_loop_var_names(const any* stmt, std::set<std::str
         }
         default: break;
     }
+}
+
+int UhdmImporter::expanded_array_low(const std::string& base_name) {
+    if (base_name.empty() || !module) return -1;
+    for (int probe = 0; probe <= 64; probe++) {
+        std::string en = base_name + "[" + std::to_string(probe) + "]";
+        if (name_map.count(en) || module->wire(RTLIL::escape_id(en)))
+            return probe;
+    }
+    return -1;
 }
 
 int UhdmImporter::const_cond_value(const any* cond) {
@@ -479,9 +489,9 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Expand to per-element so the async-ff temp-wire path
                         // finds them (tcb_dev_gpio_cdc; else "Signal arr not
                         // found in module").  lhs_expr stays the whole-array LHS.
-                        if (!module->wire(RTLIL::escape_id(nm)) &&
-                            module->wire(RTLIL::escape_id(nm + "[0]"))) {
-                            for (int i = 0; module->wire(RTLIL::escape_id(
+                        if (int alow; !module->wire(RTLIL::escape_id(nm)) &&
+                            (alow = expanded_array_low(nm)) >= 0) {
+                            for (int i = alow; module->wire(RTLIL::escape_id(
                                      nm + "[" + std::to_string(i) + "]")); i++) {
                                 AssignedSignal es;
                                 es.name = nm + "[" + std::to_string(i) + "]";
@@ -545,8 +555,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // (MemorySlice's shift `mem[N-1:1] <= mem[N-2:0]`).
                         bool elem_array_handled = false;
                         if (!sig.name.empty() &&
-                            (name_map.count(sig.name + "[0]") ||
-                             module->wire(RTLIL::escape_id(sig.name + "[0]")))) {
+                            expanded_array_low(sig.name) >= 0) {
                             int el = -1, er = -1;
                             if (auto le = part_sel->Left_range()) {
                                 RTLIL::SigSpec s = import_expression(le);
@@ -636,12 +645,12 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             if (!is_const_idx) {
                                 RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
                                 if (!module->memories.count(mem_id) &&
-                                    module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                                    expanded_array_low(sig.name) >= 0) {
                                     log("extract_assigned_signals: Skipping dynamic write to expanded array '%s'\n",
                                         sig.name.c_str());
                                     break;
                                 }
-                            } else if (module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                            } else if (expanded_array_low(sig.name) >= 0) {
                                 // Constant/genvar bit-select of an UNPACKED array
                                 // (`arr[0] <= ...`): the element is its OWN wire
                                 // \arr[0] — name the signal after it (a full wire),
@@ -787,9 +796,9 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 // the async-ff temp-wire path finds them (CVA6
                                 // bht.sv bht_q; else "Signal bht_q not found").
                                 // Mirrors the whole-array ref_obj expansion above.
-                                if (!module->wire(RTLIL::escape_id(base)) &&
-                                    module->wire(RTLIL::escape_id(base + "[0]"))) {
-                                    for (int i = 0; module->wire(RTLIL::escape_id(
+                                if (int blow; !module->wire(RTLIL::escape_id(base)) &&
+                                    (blow = expanded_array_low(base)) >= 0) {
+                                    for (int i = blow; module->wire(RTLIL::escape_id(
                                              base + "[" + std::to_string(i) + "]"));
                                          i++) {
                                         AssignedSignal es;
@@ -1614,9 +1623,9 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
             }
         }
         if (const_idx) return;
-        // Expanded array, not a real $memory: element wire \base[0] exists.
+        // Expanded array, not a real $memory: a low element wire exists.
         if (!module->memories.count(RTLIL::escape_id(base)) &&
-            module->wire(RTLIL::escape_id(base + "[0]")))
+            expanded_array_low(base) >= 0)
             names.insert(base);
     };
     switch (stmt->VpiType()) {
