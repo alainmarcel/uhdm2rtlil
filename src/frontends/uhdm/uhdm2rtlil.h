@@ -806,6 +806,13 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
+    // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
+    bool emit_dynamic_packed_select_write(
+        const UHDM::any* lhs_e,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule);
     bool emit_dynamic_unpacked_array_write(
         const UHDM::bit_select* bs,
         const UHDM::any* rhs_any,

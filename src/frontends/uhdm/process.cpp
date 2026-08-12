@@ -9760,6 +9760,229 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     return true;
 }
 
+// Dynamic writes into a PACKED array (ONE flat wire, no per-element wires):
+//   `mem_n[wptr] = data`          (bit_select, dynamic element index —
+//                                  cva6_fifo_v3 `dtype [DEPTH-1:0] mem_n`)
+//   `wr_be[0][bit_idx] = '1`      (var_select: const element, dynamic bit —
+//                                  wt_axi_adapter byte enables)
+//   `wr_be[0][bit_idx+:W] = '1`   (var_select + indexed part select)
+// Lowered as a mask/shift/or RMW of the flat wire.  Without this the LHS
+// import took the READ path and the $shiftx output wire became the write
+// target — the write was dropped and the temp latched.
+bool UhdmImporter::emit_dynamic_packed_select_write(
+        const UHDM::any* lhs_e,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!lhs_e) return false;
+
+    std::string base_name;
+    const UHDM::any* actual = nullptr;
+    const UHDM::expr* idx0_e = nullptr;      // first (element) index
+    const UHDM::any*  idx1_e = nullptr;      // optional second index / ips
+    if (lhs_e->VpiType() == vpiBitSelect) {
+        auto bs = any_cast<const bit_select*>(lhs_e);
+        base_name = std::string(bs->VpiName());
+        actual = bs->Actual_group();
+        idx0_e = dynamic_cast<const UHDM::expr*>(bs->VpiIndex());
+    } else if (lhs_e->VpiType() == vpiVarSelect) {
+        auto vs = any_cast<const var_select*>(lhs_e);
+        base_name = std::string(vs->VpiName());
+        actual = vs->Actual_group();
+        if (!vs->Exprs() || vs->Exprs()->empty() || vs->Exprs()->size() > 2)
+            return false;
+        idx0_e = dynamic_cast<const UHDM::expr*>((*vs->Exprs())[0]);
+        if (vs->Exprs()->size() == 2) idx1_e = (*vs->Exprs())[1];
+    } else {
+        return false;
+    }
+    if (base_name.empty() || !idx0_e) return false;
+
+    // Flat packed wire only: not a $memory, not an expanded per-element array.
+    if (module->memories.count(RTLIL::escape_id(base_name))) return false;
+    if (expanded_array_low(base_name) >= 0) return false;
+    RTLIL::Wire* base_wire = name_map.count(base_name)
+                                 ? name_map[base_name]
+                                 : module->wire(RTLIL::escape_id(base_name));
+    if (!base_wire) return false;
+    int base_w = base_wire->width;
+
+    // Outer packed dimension (size + low + ascending) from the base typespec.
+    const UHDM::VectorOfrange* ranges = nullptr;
+    {
+        const ref_typespec* rts = nullptr;
+        if (auto ln = dynamic_cast<const UHDM::logic_net*>(actual)) rts = ln->Typespec();
+        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(actual)) rts = lv->Typespec();
+        else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) rts = pv->Typespec();
+        else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) rts = pn->Typespec();
+        if (!rts || !rts->Actual_typespec()) return false;
+        auto ats = rts->Actual_typespec();
+        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lt->Ranges();
+        else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pt->Ranges();
+    }
+    if (!ranges || ranges->empty()) return false;
+    int r0l = 0, r0r = 0;
+    {
+        auto r0 = (*ranges)[0];
+        if (!r0->Left_expr() || !r0->Right_expr()) return false;
+        RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+        RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+        if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+        r0l = ls.as_int();
+        r0r = rs.as_int();
+    }
+    int outer_size = std::abs(r0l - r0r) + 1;
+    int outer_low = std::min(r0l, r0r);
+    if (outer_size <= 1) return false;             // plain vector, not an array
+    if (base_w % outer_size != 0) return false;
+    int elem_w = base_w / outer_size;
+    if (elem_w <= 1 && !idx1_e) return false;      // 1-bit "elements" = plain
+                                                   // vector bit write; existing
+                                                   // paths handle that
+
+    // Two-level decomposition: an ELEMENT shift (element offset in the flat
+    // wire) and an INNER shift (bit offset within the element).  The inner
+    // mask/value are built at elem_w width FIRST so a write that overruns the
+    // element (`wr_be[0][7+:2]` on an 8-bit element) truncates at the element
+    // boundary — SV semantics; a single merged shift would spill into the
+    // next element.
+    RTLIL::SigSpec idx0 = import_expression(idx0_e, comb_read_map());
+    int write_w = elem_w;
+    int shamt_w = 32;
+    bool any_dynamic = false;
+
+    auto make_pos = [&](RTLIL::SigSpec s, int scale, int low) -> RTLIL::SigSpec {
+        s.extend_u0(shamt_w, false);
+        RTLIL::SigSpec pos = s;
+        if (low != 0) {
+            RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+            module->addSub(NEW_ID, pos, RTLIL::SigSpec(RTLIL::Const(low, shamt_w)), pw, true);
+            pos = RTLIL::SigSpec(pw);
+        }
+        if (scale != 1) {
+            RTLIL::Wire* mw = module->addWire(NEW_ID, shamt_w);
+            module->addMul(NEW_ID, pos, RTLIL::SigSpec(RTLIL::Const(scale, shamt_w)), mw, true);
+            pos = RTLIL::SigSpec(mw);
+        }
+        return pos;
+    };
+
+    // Element-level shift (bit offset of the selected element).
+    RTLIL::SigSpec elem_shift;
+    if (idx0.is_fully_const()) {
+        long eo = (long)(idx0.as_const().as_int() - outer_low) * elem_w;
+        if (eo < 0 || eo + elem_w > base_w) return false;
+        elem_shift = RTLIL::SigSpec(RTLIL::Const((int)eo, shamt_w));
+    } else {
+        shamt_w = std::max(shamt_w, idx0.size() + 6);
+        elem_shift = make_pos(idx0, elem_w, outer_low);
+        any_dynamic = true;
+    }
+
+    // Inner shift within the element (0 when the whole element is written).
+    RTLIL::SigSpec inner_shift = RTLIL::SigSpec(RTLIL::Const(0, shamt_w));
+    if (idx1_e) {
+        // Second selector: a bit inside the element (width 1), or an
+        // indexed part select `base +: W` (vpiIndexedPartSelectType 1).
+        if (idx1_e->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(idx1_e);
+            if (ips->VpiIndexedPartSelectType() != 1) return false;  // -: unsupported
+            RTLIL::SigSpec wexpr;
+            if (auto we = ips->Width_expr())
+                wexpr = import_expression(we);
+            if (!wexpr.is_fully_const()) return false;
+            write_w = wexpr.as_const().as_int();
+            if (write_w <= 0 || write_w > elem_w) return false;
+            RTLIL::SigSpec b;
+            if (auto be = ips->Base_expr())
+                b = import_expression(be, comb_read_map());
+            if (b.empty()) return false;
+            if (b.is_fully_const())
+                inner_shift = RTLIL::SigSpec(RTLIL::Const(b.as_const().as_int(), shamt_w));
+            else { inner_shift = make_pos(b, 1, 0); any_dynamic = true; }
+        } else {
+            auto e1 = dynamic_cast<const UHDM::expr*>(idx1_e);
+            if (!e1) return false;
+            RTLIL::SigSpec i1 = import_expression(e1, comb_read_map());
+            write_w = 1;
+            if (i1.is_fully_const())
+                inner_shift = RTLIL::SigSpec(RTLIL::Const(i1.as_const().as_int(), shamt_w));
+            else { inner_shift = make_pos(i1, 1, 0); any_dynamic = true; }
+        }
+    }
+    if (!any_dynamic) return false;  // fully static: existing paths handle
+
+    // RHS sized to write_w (detect the '1 fill literal so it replicates).
+    auto rhs_e = dynamic_cast<const UHDM::expr*>(rhs_any);
+    if (!rhs_e) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = write_w;
+    RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
+    expression_context_width = prev_ctx;
+    if (rhs.size() == 1 && write_w > 1 && rhs_e->VpiType() == vpiConstant) {
+        auto c = any_cast<const constant*>(rhs_e);
+        if (c->VpiSize() == -1) {
+            // Unbased unsized fill: replicate the single bit.
+            RTLIL::SigSpec fill;
+            for (int i = 0; i < write_w; i++) fill.append(rhs);
+            rhs = fill;
+        }
+    }
+    if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e));
+    else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
+
+    // Inner mask/value at elem_w width (truncates element-boundary overrun).
+    std::vector<RTLIL::State> mask_bits(elem_w, RTLIL::State::S0);
+    for (int i = 0; i < write_w && i < elem_w; i++) mask_bits[i] = RTLIL::State::S1;
+    RTLIL::SigSpec mask_inner_c = RTLIL::SigSpec(RTLIL::Const(mask_bits));
+    RTLIL::SigSpec rhs_elem = rhs;
+    rhs_elem.extend_u0(elem_w, false);
+
+    RTLIL::SigSpec mask_inner = mask_inner_c, val_inner = rhs_elem;
+    if (!inner_shift.is_fully_const() || inner_shift.as_const().as_int() != 0) {
+        RTLIL::Wire* mi = module->addWire(NEW_ID, elem_w);
+        module->addShl(NEW_ID, mask_inner_c, inner_shift, mi, false);
+        mask_inner = RTLIL::SigSpec(mi);
+        RTLIL::Wire* vi = module->addWire(NEW_ID, elem_w);
+        module->addShl(NEW_ID, rhs_elem, inner_shift, vi, false);
+        val_inner = RTLIL::SigSpec(vi);
+    }
+
+    // Widen to the flat wire and apply the element shift.
+    RTLIL::SigSpec mask_wide = mask_inner; mask_wide.extend_u0(base_w, false);
+    RTLIL::SigSpec val_wide  = val_inner;  val_wide.extend_u0(base_w, false);
+    RTLIL::Wire* mask_sh = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, mask_wide, elem_shift, mask_sh, false);
+    RTLIL::Wire* val_sh = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, val_wide, elem_shift, val_sh, false);
+    RTLIL::Wire* inv_mask = module->addWire(NEW_ID, base_w);
+    module->addNot(NEW_ID, RTLIL::SigSpec(mask_sh), inv_mask);
+
+    RTLIL::SigSpec cur = (!in_always_ff_body_mode &&
+                          current_comb_values.count(base_name))
+                             ? current_comb_values[base_name]
+                             : RTLIL::SigSpec(base_wire);
+    RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
+    module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
+    RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w);
+    module->addOr(NEW_ID, RTLIL::SigSpec(cleared), RTLIL::SigSpec(val_sh), new_full);
+
+    if (proc) {
+        emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
+    } else if (case_rule) {
+        std::string temp_name = "$0\\" + base_name;
+        if (RTLIL::Wire* tw = module->wire(temp_name))
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
+        else
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+    }
+    if (!in_always_ff_body_mode)
+        current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+    return true;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
@@ -9798,6 +10021,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             auto bs = any_cast<const bit_select*>(lhs_e);
             if (emit_dynamic_unpacked_array_write(
                     bs, uhdm_assign->Rhs(), proc, nullptr))
+                return;
+        }
+    }
+
+    // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
+    // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`
+    // (cva6_fifo_v3 / wt_axi_adapter).
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiBitSelect || lhs_e->VpiType() == vpiVarSelect) {
+            if (emit_dynamic_packed_select_write(
+                    lhs_e, uhdm_assign->Rhs(), proc, nullptr))
                 return;
         }
     }
@@ -10434,6 +10668,15 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 return;
             if (emit_dynamic_array_elem_field_write(
                     hp, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
+        }
+    }
+
+    // Dynamic element / bit(-range) writes into a PACKED array (flat wire).
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiBitSelect || lhs_e->VpiType() == vpiVarSelect) {
+            if (emit_dynamic_packed_select_write(
+                    lhs_e, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
         }
     }
@@ -11677,6 +11920,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     auto bs = any_cast<const bit_select*>(lhs_e);
                     if (emit_dynamic_unpacked_array_write(
                             bs, assign->Rhs(), nullptr, case_rule))
+                        return;
+                }
+            }
+
+            // Dynamic element / bit(-range) writes into a PACKED array
+            // (flat wire): `wr_be[0][idx+:W] = '1` inside a case arm
+            // (wt_axi_adapter byte enables).
+            if (auto lhs_e = assign->Lhs()) {
+                if (lhs_e->VpiType() == vpiBitSelect || lhs_e->VpiType() == vpiVarSelect) {
+                    if (emit_dynamic_packed_select_write(
+                            lhs_e, assign->Rhs(), nullptr, case_rule))
                         return;
                 }
             }
