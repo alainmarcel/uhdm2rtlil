@@ -35,11 +35,16 @@ module latch_packed_dyn_write #(
       mem_n[wptr_i] = data_i;
     end
 
+    // Size-aligned dynamic bit offsets, like wt_axi_adapter's byte enables.
+    // The +: base MUST stay in range: for a partially out-of-range packed
+    // part-select write, UHDM and slang clamp to the element (LRM 11.5.1)
+    // while read_verilog / Verilator / iverilog spill into the flat vector —
+    // OOB stimulus makes the miter fail on a tool divergence, not a bug.
     wr_be = '0;
     unique case (size_i)
       2'b00:   wr_be[0][bit_i] = 1'b1;
-      2'b01:   wr_be[0][bit_i+:2] = '1;
-      2'b10:   wr_be[0][bit_i+:4] = '1;
+      2'b01:   wr_be[0][{bit_i[2:1], 1'b0}+:2] = '1;
+      2'b10:   wr_be[0][{bit_i[2], 2'b00}+:4] = '1;
       default: wr_be[0] = '1;
     endcase
   end
