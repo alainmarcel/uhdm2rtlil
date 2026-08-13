@@ -670,14 +670,15 @@ Test: rp32_r5p_mouse
     (see sim_equiv_classification.txt) and is tracked in failing_tests.txt.
 
 Test: latch_packed_dyn_write
-    Verilator-vs-LRM divergence on an out-of-range indexed part-select
-    WRITE within a packed-array element: `wr_be[0][bit_i+:2] = '1` with
-    bit_i == 7 addresses bits [8:7] of the 8-bit element wr_be[0].  Per
-    IEEE 1800 11.5.1 the write to the non-existent bit 8 is IGNORED —
-    read_slang and the UHDM frontend both truncate at the element
-    boundary (UHDM == slang PROVEN by the SAT miter in
-    test_slang_equiv.ys), while Verilator flattens the select and spills
-    the write into bit 0 of the NEXT element (rtl=0x180 vs nl=0x80).
-    CONFIRMED ARTIFACT (Verilator semantics deviation, not a frontend
-    bug).  The real CVA6 usage (wt_axi_adapter byte enables) never
-    overruns because addresses are size-aligned.
+    RESOLVED — the DUT's `+:` bit offsets are now size-aligned (like the
+    real CVA6 wt_axi_adapter byte enables), so no select overruns its
+    packed-array element and the co-sim, equiv_induct, UHDM-vs-Verilog
+    miter AND UHDM-vs-slang miter all pass.  The original entry
+    documented an out-of-range `wr_be[0][7+:2] = '1` where the LRM
+    (11.5.1) ignores the write to the non-existent bit — UHDM and slang
+    clamp at the element boundary, while Verilator, iverilog AND
+    read_verilog all flatten the select and spill into the next element,
+    so the UHDM-vs-Verilog Miter-Formal check failed on stimulus no real
+    design produces.  Kept as a note: out-of-range dynamic packed-element
+    part-select writes are implementation-divergent territory — keep
+    repro stimulus in range.
