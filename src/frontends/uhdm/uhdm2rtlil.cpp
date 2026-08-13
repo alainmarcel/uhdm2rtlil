@@ -2018,7 +2018,75 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
             if (parent_rtlil_module) {
                 // Create the cell in the parent module
                 std::string inst_name = std::string(uhdm_module->VpiName());
-                
+
+                // Direct instantiation of a Yosys internal cell type (escaped
+                // `\$lcu`, `\$add`, … module names in the source — yosys tests
+                // techmap/lcu_refined.v; Surelog scopes the def as
+                // "parent::$lcu").  read_verilog emits a cell of the PUBLIC
+                // type `\$lcu` with the parameters on the cell and NAMED
+                // connections, mapped later by `techmap`; deriving a $paramod
+                // module here instead produces an unknown internal-style cell
+                // type that write_rtlil's checker rejects (and the
+                // undefined-cell heuristic below would rewrite the named
+                // connections to positional `$1..$N`).
+                std::string def_base = module_name;
+                {
+                    size_t ns_pos = def_base.rfind("::");
+                    if (ns_pos != std::string::npos)
+                        def_base = def_base.substr(ns_pos + 2);
+                }
+                if (!def_base.empty() && def_base[0] == '$') {
+                    RTLIL::IdString icell_id = RTLIL::escape_id(inst_name);
+                    if (!parent_rtlil_module->cell(icell_id)) {
+                        RTLIL::Module* saved_module = this->module;
+                        auto saved_name_map = this->name_map;
+                        auto saved_wire_map = this->wire_map;
+                        this->module = parent_rtlil_module;
+                        this->name_map.clear();
+                        for (auto &wp : parent_rtlil_module->wires_) {
+                            std::string wn = wp.first.str();
+                            if (wn[0] == '\\') wn = wn.substr(1);
+                            this->name_map[wn] = wp.second;
+                        }
+                        RTLIL::Cell* cell = parent_rtlil_module->addCell(
+                            icell_id, RTLIL::escape_id(def_base));
+                        add_src_attribute(cell->attributes, uhdm_module);
+                        cell->set_bool_attribute(ID::module_not_derived);
+                        if (uhdm_module->Param_assigns()) {
+                            for (auto pa : *uhdm_module->Param_assigns()) {
+                                if (!pa->Lhs() || !pa->Rhs()) continue;
+                                RTLIL::SigSpec v = import_expression(
+                                    any_cast<const expr*>(pa->Rhs()));
+                                if (!v.empty() && v.is_fully_const()) {
+                                    RTLIL::Const pc = v.as_const();
+                                    pc.flags |= RTLIL::CONST_FLAG_SIGNED;
+                                    cell->setParam(
+                                        RTLIL::escape_id(
+                                            std::string(pa->Lhs()->VpiName())),
+                                        pc);
+                                }
+                            }
+                        }
+                        if (uhdm_module->Ports()) {
+                            for (auto port : *uhdm_module->Ports()) {
+                                std::string port_name =
+                                    std::string(port->VpiName());
+                                if (port_name.empty() || !port->High_conn())
+                                    continue;
+                                RTLIL::SigSpec conn = import_expression(
+                                    any_cast<const expr*>(port->High_conn()));
+                                cell->setPort(RTLIL::escape_id(port_name), conn);
+                            }
+                        }
+                        log("UHDM: Created internal-cell-type instance '%s' of '%s'\n",
+                            inst_name.c_str(), def_base.c_str());
+                        this->module = saved_module;
+                        this->name_map = saved_name_map;
+                        this->wire_map = saved_wire_map;
+                    }
+                    return;
+                }
+
                 // Generate parameterized module name
                 std::string cell_type = module_name;
                 // A `parameter type` instance is imported under a uniquified

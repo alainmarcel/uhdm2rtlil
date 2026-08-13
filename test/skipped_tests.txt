@@ -29,3 +29,11 @@ various/shregmap.v        # `module $__SHREG_DFF_P_` and `module $__XILINX_SHREG
 # via test/rand_const/dut.sv.
 various/rand_const.sv     # `rand` modifier at module scope (non-LRM)
 
+
+# Recursive self-instantiation (`module top; top top_i(...); endmodule`).
+# Yosys v0.68's `stat` (and the shared harness synth flow) segfaults on the
+# resulting self-referential hierarchy through BOTH read_verilog and
+# read_uhdm (`read_verilog dut.v; hierarchy -auto-top; stat` alone dumps
+# core) — an upstream yosys crash, not a UHDM-frontend bug.  The upstream
+# test only checks that `hierarchy` reports the recursion error.
+various/hierarchy_recursive.v  # upstream yosys stat segfault on recursion
