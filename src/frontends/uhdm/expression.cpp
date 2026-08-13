@@ -231,17 +231,38 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Add source location attribute for the case item
                 add_src_attribute(item_case->attributes, ci);
                 
-                // Get the case value
+                // Get the case value(s).  A multi-label arm
+                // (`EQ, NE, LTS: …`) has SEVERAL VpiExprs — taking only
+                // at(0) matched just the first label (ariane_pkg
+                // op_is_branch mis-classified NE/LTS/… as non-branches).
+                // `case … inside` additionally wraps a label list in ONE
+                // vpiListOp operation — expand its operands to individual
+                // labels (multiple compares in one CaseRule are OR'd, the
+                // exact case-label semantics).
                 if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
-                    // Regular case item
-                    RTLIL::SigSpec case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)), &input_mapping);
-                    // Ensure case value has same width as case expression
-                    if (case_value.size() < case_expr.size()) {
-                        case_value.extend_u0(case_expr.size());
-                    } else if (case_value.size() > case_expr.size()) {
-                        case_value = case_value.extract(0, case_expr.size());
+                    std::vector<const any*> labels;
+                    for (auto le : *ci->VpiExprs()) {
+                        if (le->VpiType() == vpiOperation) {
+                            auto lop = any_cast<const operation*>(le);
+                            if (lop->VpiOpType() == vpiListOp && lop->Operands()) {
+                                for (auto o : *lop->Operands())
+                                    labels.push_back(o);
+                                continue;
+                            }
+                        }
+                        labels.push_back(le);
                     }
-                    item_case->compare.push_back(case_value);
+                    for (auto le : labels) {
+                        RTLIL::SigSpec case_value = import_expression(
+                            any_cast<const expr*>(le), &input_mapping);
+                        // Ensure case value has same width as case expression
+                        if (case_value.size() < case_expr.size()) {
+                            case_value.extend_u0(case_expr.size());
+                        } else if (case_value.size() > case_expr.size()) {
+                            case_value = case_value.extract(0, case_expr.size());
+                        }
+                        item_case->compare.push_back(case_value);
+                    }
                 } // else default case (empty compare list)
                 
                 // For nested case statements, create intermediate wires and chaining assignments
@@ -3786,7 +3807,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 ? any_cast<const operation*>(operand)->VpiOpType() : -1;
             operand_is_unsigned.push_back(
                 oty == vpiConcatOp || oty == vpiMultiConcatOp);
+            // The ternary CONDITION (operand 0) is SELF-DETERMINED per LRM
+            // 11.4.11 — importing it under the assignment's wide LHS context
+            // widened `~less` to 64 bits BEFORE the inversion, making the
+            // condition nonzero for BOTH values of `less` (CVA6 alu MIN/MINU
+            // always returned operand_b).
+            // A replication COUNT (operand 0 of `{count{expr}}`) is a
+            // compile-time constant expression — force const folding so a
+            // struct-param arithmetic count (`{{53+CVA6Cfg.VLEN-64{sign}}}`,
+            // CVA6 instr_scan rvc_imm_o) folds instead of emitting cells and
+            // zero-filling the replication.
+            int cond_saved_ctx = expression_context_width;
+            bool cond_saved_fcf = force_const_fold;
+            if ((op_type == vpiConditionOp || op_type == vpiMultiConcatOp) &&
+                operands.empty()) {
+                expression_context_width = 0;
+                if (op_type == vpiMultiConcatOp)
+                    force_const_fold = true;
+            }
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
+            if (op_type == vpiConditionOp || op_type == vpiMultiConcatOp) {
+                expression_context_width = cond_saved_ctx;
+                force_const_fold = cond_saved_fcf;
+            }
             if (op_type == vpiConditionOp) {
                 log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
             }
@@ -4701,6 +4744,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (is_signed) mark_result_signed(result);
                 return result;
             }
+            break;
+        case vpiListOp:
+            // `case … inside` wraps each label in a ListOp (Surelog emits a
+            // SINGLE-element list per label) — transparently its value.
+            // Multi-element lists are expanded at the case-label sites.
+            if (operands.size() == 1)
+                return operands[0];
             break;
         case vpiConcatOp:
             // Concatenation operation {a, b, c}

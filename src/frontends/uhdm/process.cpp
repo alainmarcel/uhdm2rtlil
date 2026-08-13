@@ -2944,7 +2944,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (sig.lhs_expr) {
                             lhs_spec = import_expression(sig.lhs_expr);
                         } else {
-                            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                            // May be generate-scoped (`\gen_x.sig`) — same
+                            // resolution as the always_comb variant.
+                            RTLIL::Wire* wire = name_map.count(sig.name)
+                                                    ? name_map[sig.name] : nullptr;
+                            if (!wire) wire = module->wire(RTLIL::escape_id(sig.name));
+                            if (!wire) {
+                                std::string gs = get_current_gen_scope();
+                                if (!gs.empty())
+                                    wire = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                            }
                             if (!wire) {
                                 log_warning("import_always_ff: cannot find wire '%s' for for-loop signal\n",
                                             sig.name.c_str());
@@ -3269,7 +3278,18 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             } else {
                 // Signal extracted from a for-loop with dynamic index (lhs_expr is null).
                 // Use the full wire width so we can create a proper temp wire for it.
-                RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                // The wire may be GENERATE-SCOPED: `logic in_tmp;` declared
+                // inside `if (WIDTH > 1) begin : gen_lzc` lives as
+                // `\gen_lzc.in_tmp` (common_cells lzc flip_vector — the bare
+                // lookup dropped the whole loop's writes in every CVA6 lzc).
+                RTLIL::Wire* wire = name_map.count(sig.name)
+                                        ? name_map[sig.name] : nullptr;
+                if (!wire) wire = module->wire(RTLIL::escape_id(sig.name));
+                if (!wire) {
+                    std::string gs = get_current_gen_scope();
+                    if (!gs.empty())
+                        wire = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                }
                 if (!wire) {
                     log_warning("import_always_comb: cannot find wire '%s' for for-loop signal\n",
                                 sig.name.c_str());
@@ -11497,11 +11517,21 @@ static std::string comb_blocking_base(const RTLIL::SigSpec& target) {
 // `!found` must observe this iteration's update (and the minimal `t=0;
 // if(c) t=x; o=t+1`).  Operates on current_comb_values, which is what
 // import_ref_obj reads for a blocking scalar; the structural switch is
-// untouched.  Only top-level branch actions are threaded (a value assigned
-// inside a nested switch is left as-is, the prior behaviour).
+// untouched.  Direct branch actions are always threaded; when the caller
+// passes pre/then/else current_comb_values SNAPSHOTS, writes made ANYWHERE
+// inside a branch — including inside a nested if/case, whose own threading
+// recorded them into current_comb_values during the branch import — are
+// threaded too (same mechanism as thread_comb_case's arm_ccv).  Without the
+// snapshots a value assigned only under a nested if inside a branch was
+// dropped by the caller's ccv restore: CVA6 compressed_decoder's C.JR
+// `illegal_instr_o = (rs1 != '0) ? 0 : 1` two ifs deep in a case arm never
+// reached the trailing `if (illegal_instr_o) instr_o = instr_i;`.
 void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                                   RTLIL::CaseRule* then_case,
-                                  RTLIL::CaseRule* else_case) {
+                                  RTLIL::CaseRule* else_case,
+                                  const std::map<std::string, RTLIL::SigSpec>* pre_ccv,
+                                  const std::map<std::string, RTLIL::SigSpec>* then_ccv,
+                                  const std::map<std::string, RTLIL::SigSpec>* else_ccv) {
     if (in_always_ff_body_mode) return;
     // Last write wins within each branch.
     std::map<std::string, RTLIL::SigSpec> then_vals, else_vals;
@@ -11515,6 +11545,21 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
             std::string b = comb_blocking_base(a.first);
             if (!b.empty()) else_vals[b] = a.second;
         }
+    // Snapshot-diff capture: any name whose in-flight value CHANGED during a
+    // branch import (vs the pre-branch snapshot) was written in that branch —
+    // possibly deep inside nested constructs.  Overrides the action scan
+    // (the ccv value is the branch's final merged value).
+    auto ccv_diff = [&](const std::map<std::string, RTLIL::SigSpec>* post,
+                        std::map<std::string, RTLIL::SigSpec>& vals) {
+        if (!pre_ccv || !post) return;
+        for (auto& kv : *post) {
+            auto p = pre_ccv->find(kv.first);
+            if (p == pre_ccv->end() || p->second != kv.second)
+                vals[kv.first] = kv.second;
+        }
+    };
+    ccv_diff(then_ccv, then_vals);
+    ccv_diff(else_ccv, else_vals);
     std::set<std::string> names;
     for (auto& kv : then_vals) names.insert(kv.first);
     for (auto& kv : else_vals) names.insert(kv.first);
@@ -11717,6 +11762,9 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
                 log("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
+        // Capture the branch's final in-flight values (incl. nested-construct
+        // writes threaded during the import) BEFORE restoring.
+        auto then_ccv = current_comb_values;
         current_comb_values = saved_ccv;
 
         sw->cases.push_back(true_case);
@@ -11733,16 +11781,19 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             import_statement_comb(else_stmt, else_case);
             log("    Else case has %d actions after import\n", (int)else_case->actions.size());
             log("    Else case has %d switches after import\n", (int)else_case->switches.size());
+            auto else_ccv = current_comb_values;
             current_comb_values = saved_ccv;
 
             sw->cases.push_back(else_case);
-            thread_comb_if(condition_sig, true_case, else_case);
+            thread_comb_if(condition_sig, true_case, else_case,
+                           &saved_ccv, &then_ccv, &else_ccv);
         } else {
             // Create empty default case
             RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
             add_src_attribute(default_case->attributes, uhdm_if_else);
             sw->cases.push_back(default_case);
-            thread_comb_if(condition_sig, true_case, nullptr);
+            thread_comb_if(condition_sig, true_case, nullptr,
+                           &saved_ccv, &then_ccv, nullptr);
         }
 
         // Add the switch to the current case
@@ -11840,25 +11891,27 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
                 log("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
+        auto then_ccv = current_comb_values;
         current_comb_values = saved_ccv;
 
         sw->cases.push_back(true_case);
-        
+
         // For simple if statements (not if_else), create empty default case
         RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
         add_src_attribute(default_case->attributes, uhdm_if);
         sw->cases.push_back(default_case);
-        
+
         if (mode_debug) {
             log("    If statement import complete. Switch has %d cases\n", (int)sw->cases.size());
             for (size_t i = 0; i < sw->cases.size(); i++) {
                 log("      Case %d: %d actions\n", (int)i, (int)sw->cases[i]->actions.size());
             }
         }
-        
+
         // Add the switch to the current case
         proc->root_case.switches.push_back(sw);
-        thread_comb_if(condition_sig, true_case, nullptr);
+        thread_comb_if(condition_sig, true_case, nullptr,
+                       &saved_ccv, &then_ccv, nullptr);
     } else {
         log_warning("If statement has no condition\n");
     }
@@ -13334,6 +13387,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         log("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
+                auto then_ccv = current_comb_values;
                 current_comb_values = saved_ccv;
 
                 sw->cases.push_back(true_case);
@@ -13354,7 +13408,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // under a nested `if` in a case arm (CVA6 compressed_decoder's
                 // `if (instr_i[12:5]==0) illegal_instr_o = 1'b1;`) reverted to
                 // its pre value and the later `if (illegal) …` never saw it.
-                thread_comb_if(condition_sig, true_case, nullptr);
+                // The ccv snapshots additionally capture writes NESTED inside
+                // this branch (C.JR's ternary two ifs deep).
+                thread_comb_if(condition_sig, true_case, nullptr,
+                               &saved_ccv, &then_ccv, nullptr);
             }
             current_if_qualifier = saved_qualifier;
             break;
@@ -13416,10 +13473,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
 
                 sw->cases.push_back(true_case);
+                auto then_ccv = current_comb_values;
                 current_comb_values = saved_ccv;
 
                 // Handle else branch
                 RTLIL::CaseRule* else_case = nullptr;
+                auto else_ccv = saved_ccv;
                 if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
                     else_case = new RTLIL::CaseRule;
                     // Empty compare means default case
@@ -13429,6 +13488,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         log("        Importing else statement in case (type=%s)\n",
                             UhdmName(else_stmt->UhdmType()).c_str());
                     import_statement_comb(else_stmt, else_case);
+                    else_ccv = current_comb_values;
                     current_comb_values = saved_ccv;
 
                     sw->cases.push_back(else_case);
@@ -13443,8 +13503,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 case_rule->switches.push_back(sw);
 
                 // Thread both branches' blocking writes so a later read sees
-                // `cond ? then_value : else_value` (see the vpiIf case above).
-                thread_comb_if(condition_sig, true_case, else_case);
+                // `cond ? then_value : else_value` (see the vpiIf case above);
+                // ccv snapshots capture writes nested deeper in each branch.
+                thread_comb_if(condition_sig, true_case, else_case,
+                               &saved_ccv, &then_ccv, &else_ccv);
             }
             current_if_qualifier = saved_qualifier;
             break;
