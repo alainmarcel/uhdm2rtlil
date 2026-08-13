@@ -5067,6 +5067,16 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (mode_debug)
         log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
     
+    // A loop variable being unrolled must resolve to the CURRENT iteration's
+    // constant.  A comb_read_map()-threaded input_mapping can carry a STALE
+    // value for the same name — e.g. the post-loop `i = N` recorded by an
+    // EARLIER unrolled loop in the same block, truncated to the loop var's
+    // wire width (CVA6 frontend: the second loop's `cf_type[i]` wrote element
+    // 0 on EVERY iteration).  Genuine function-argument mappings keep
+    // priority: a function body's own parameter shadows any outer loop var.
+    if (input_mapping && !getCurrentFunctionContext() && loop_values.count(ref_name))
+        return RTLIL::SigSpec(RTLIL::Const(loop_values[ref_name], 32));
+
     // Check if this is a function input parameter
     if (input_mapping) {
         auto it = input_mapping->find(ref_name);
