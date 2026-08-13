@@ -1852,7 +1852,47 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     if (base_module_name.find("work@") == 0) {
         base_module_name = base_module_name.substr(5);
     }
-    
+
+    // Direct instantiation of a Yosys internal cell type (escaped `\$lcu`,
+    // `\$add`, … module names in the source — yosys tests
+    // techmap/lcu_refined.v).  read_verilog emits a cell of the PUBLIC type
+    // `\$lcu` with the parameters on the cell and named connections, mapped
+    // later by `techmap`; deriving a $paramod module here instead produces an
+    // unknown internal-style cell type that write_rtlil's checker rejects.
+    if (!base_module_name.empty() && base_module_name[0] == '$') {
+        RTLIL::Cell* cell = module->addCell(new_id(inst_name),
+                                            RTLIL::escape_id(base_module_name));
+        add_src_attribute(cell->attributes, uhdm_inst);
+        cell->set_bool_attribute(ID::module_not_derived);
+        if (uhdm_inst->Param_assigns()) {
+            for (auto pa : *uhdm_inst->Param_assigns()) {
+                auto lhs = pa->Lhs();
+                if (!lhs || !pa->Rhs()) continue;
+                RTLIL::SigSpec v =
+                    import_expression(dynamic_cast<const expr*>(pa->Rhs()));
+                if (!v.empty() && v.is_fully_const()) {
+                    RTLIL::Const pc = v.as_const();
+                    pc.flags |= RTLIL::CONST_FLAG_SIGNED;
+                    cell->setParam(
+                        RTLIL::escape_id(std::string(lhs->VpiName())), pc);
+                }
+            }
+        }
+        if (uhdm_inst->Ports()) {
+            for (auto p : *uhdm_inst->Ports()) {
+                std::string pname = std::string(p->VpiName());
+                if (pname.empty()) continue;
+                RTLIL::SigSpec conn;
+                if (auto hc = p->High_conn())
+                    conn = import_expression(dynamic_cast<const expr*>(hc));
+                cell->setPort(RTLIL::escape_id(pname), conn);
+            }
+        }
+        log("UHDM: Created internal-cell-type instance '%s' of '%s'\n",
+            inst_name.c_str(), base_module_name.c_str());
+        return;
+    }
+
     // Build parameterized module name using VpiValue format (matching import_module naming)
     std::string module_name = base_module_name;
     bool has_params = false;

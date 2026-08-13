@@ -7716,9 +7716,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // 4) indexes the part-select in ELEMENT units, so scale the
                 // offset/width by the element width and by the array's declared
                 // low bound.  A plain vector member (`logic [2:0] fn3`) has no
-                // Elem_typespec → element width 1 (plain bit indices), which
-                // reduces to the previous behaviour.
-                int elem_w = 1, decl_low = 0;
+                // inner dimensions → element width 1 (plain bit indices), which
+                // reduces to the previous behaviour.  The member's packed dims
+                // come in three shapes: multi-range (`bit [5:0][7:0]` — logic OR
+                // bit typespec), Elem_typespec (`logic4 [2:0]`), or a
+                // packed_array_typespec (`bit3l_t [0:7][1:0]`) — element width =
+                // product of the inner ranges times the Elem_typespec width.
+                // An ASCENDING outer range (`bit [0:7][7:0]`) puts the LEFT
+                // index at the MSB, so the bit offset counts down from the
+                // declared high index instead of up from the low one.
+                int elem_w = 1, decl_low = 0, decl_high = 0;
+                bool decl_asc = false;
                 if (ats->UhdmType() == uhdmstruct_typespec) {
                     auto st = any_cast<const UHDM::struct_typespec*>(ats);
                     if (st->Members())
@@ -7726,19 +7734,51 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (std::string(m->VpiName()) != field) continue;
                             const UHDM::typespec* mat = nullptr;
                             if (auto mts = m->Typespec()) mat = mts->Actual_typespec();
-                            if (mat && mat->UhdmType() == uhdmlogic_typespec) {
-                                auto lt = any_cast<const UHDM::logic_typespec*>(mat);
-                                if (lt->Ranges() && !lt->Ranges()->empty()) {
-                                    auto r0 = (*lt->Ranges())[0];
-                                    RTLIL::SigSpec rl = import_expression(r0->Left_expr(), input_mapping);
-                                    RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
-                                    if (rl.is_fully_const() && rr.is_fully_const())
-                                        decl_low = std::min(rl.as_const().as_int(),
-                                                            rr.as_const().as_int());
+                            const UHDM::VectorOfrange* mranges = nullptr;
+                            const UHDM::ref_typespec* elem_rts = nullptr;
+                            if (mat) {
+                                if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(mat)) {
+                                    mranges = lt->Ranges();
+                                    elem_rts = lt->Elem_typespec();
+                                } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(mat)) {
+                                    mranges = bt->Ranges();
+                                } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(mat)) {
+                                    mranges = pt->Ranges();
+                                    elem_rts = pt->Elem_typespec();
+                                } else if (auto at = dynamic_cast<const UHDM::array_typespec*>(mat)) {
+                                    // Unpacked array member inside a packed
+                                    // struct (`bit [7:0] a [7:0]`) — Yosys
+                                    // packs it, indexed like a packed dim.
+                                    mranges = at->Ranges();
+                                    elem_rts = at->Elem_typespec();
                                 }
-                                if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
-                                    elem_w = get_width_from_typespec(
-                                        lt->Elem_typespec()->Actual_typespec(), inst);
+                            }
+                            if (mranges && !mranges->empty()) {
+                                auto r0 = (*mranges)[0];
+                                RTLIL::SigSpec rl = import_expression(r0->Left_expr(), input_mapping);
+                                RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
+                                if (rl.is_fully_const() && rr.is_fully_const()) {
+                                    int rli = rl.as_const().as_int();
+                                    int rri = rr.as_const().as_int();
+                                    decl_low = std::min(rli, rri);
+                                    decl_high = std::max(rli, rri);
+                                    decl_asc = rli < rri;
+                                }
+                                int inner_w = 1;
+                                for (size_t ri = 1; ri < mranges->size(); ri++) {
+                                    auto rn = (*mranges)[ri];
+                                    RTLIL::SigSpec il = import_expression(rn->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec ir = import_expression(rn->Right_expr(), input_mapping);
+                                    if (il.is_fully_const() && ir.is_fully_const())
+                                        inner_w *= std::abs(il.as_const().as_int() -
+                                                            ir.as_const().as_int()) + 1;
+                                }
+                                elem_w = inner_w;
+                                if (elem_rts && elem_rts->Actual_typespec()) {
+                                    int ew = get_width_from_typespec(
+                                        elem_rts->Actual_typespec(), inst);
+                                    if (ew > 0) elem_w *= ew;
+                                }
                             }
                             break;
                         }
@@ -7747,8 +7787,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (okoff &&
                     w > 0 && ls.is_fully_const() && rs.is_fully_const()) {
                     int l = ls.as_const().as_int(), r = rs.as_const().as_int();
-                    int lo = std::min(l, r), cnt = std::abs(l - r) + 1;
-                    int bit_lo = (lo - decl_low) * elem_w, sw = cnt * elem_w;
+                    int lo = std::min(l, r), hi = std::max(l, r), cnt = hi - lo + 1;
+                    int bit_lo = decl_asc ? (decl_high - hi) * elem_w
+                                          : (lo - decl_low) * elem_w;
+                    int sw = cnt * elem_w;
                     if (bit_lo >= 0 && bit_lo + sw <= w &&
                         off + bit_lo + sw <= base_wire->width) {
                         log("    hier_path: packed-struct %s.%s[%d:%d] (elem_w=%d) -> %s[%d+:%d]\n",

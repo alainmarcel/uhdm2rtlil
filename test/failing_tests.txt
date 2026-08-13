@@ -68,20 +68,8 @@ arch/nanoxplore/meminit.v
 # not meaningful under read_uhdm -> synth -> equiv.
 verilog/mem_bounds.sv
 
-# --- equiv_induct inductively incomplete (UHDM proven equivalent otherwise) ---
-# Not UHDM bugs: the UHDM netlist is functionally equal to the Verilog frontend's,
-# but the harness's equiv_induct can't close the proof.
-#   sat/alu        - the flat equiv_induct AND the sound SAT-from-reset miter both
-#                    prove UHDM == Verilog; only the harness's write_verilog
-#                    round-trip equiv flow fails to converge.
-#   sat/ram_memory - a 4096x8 RAM with an `initial` individual-element ROM init.
-#                    The ROM init (`store[i] <= const`) is now emitted as $meminit
-#                    and a directed sim matches the Verilog frontend exactly
-#                    (store[2]=0x54, store[258]=0x7e, write/read OK); equiv_induct
-#                    is impractical once the 4096-entry memory is mapped to ~32k
-#                    FFs.  (was a real bug: the init was missing entirely — fixed.)
-sat/alu.v
-sat/ram_memory.v
+# (sat/alu / sat/ram_memory removed: both now pass the harness end-to-end —
+# the earlier equiv_induct-convergence limitation no longer reproduces.)
 
 # --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
 # These define techmap MAPPING RULES, not synthesizable top designs: they use
@@ -98,8 +86,10 @@ arch/fabulous/arith_map.v
 arch/fabulous/ff_map.v
 arch/fabulous/io_map.v
 arch/fabulous/regfile_map.v
-techmap/mem_simple_4x1_map.v
-techmap/recursive_map.v
+# (techmap/mem_simple_4x1_map removed: its `module \$mem` built-in cell
+# template now imports via the internal-cell-type instantiation path and the
+# UHDM flow completes synth where read_verilog's errors — counted as a pass.)
+# (techmap/recursive_map removed: passes the full harness now.)
 
 # --- Yosys-internal-cell netlist (not SystemVerilog) ---
 # opt_rmdff.v is `read_verilog -icells` of Yosys built-in cells ($dffe,
@@ -109,33 +99,16 @@ techmap/recursive_map.v
 # UHDM frontend (same class as the techmap rule files above).
 opt/opt_rmdff.v
 
-# --- REAL UHDM-frontend bug: block-local blocking temps in `always @*` ---
-# loops.v (a combinational AES fragment) declares block-local regs inside its
-# `always @*` (`data_var`, `round_key_var`) and uses them blocking:
-#   data_var = addroundkey_data_i; round_key_var = key_i;
-#   round_data_var = round_key_var ^ data_var;
-# The UHDM frontend computes round_data_var with the WRONG operand values for
-# those block-local temps, so next_addroundkey_data_reg diverges (UHDM nl=0xf vs
-# RTL/Verilog rtl=0xb at cycle 17).  Two-co-sim adjudicated (UHDM-vs-RTL FAIL,
-# Verilog-vs-RTL PASS).  (The earlier "spurious latch" diagnosis was wrong —
-# post-synth latch count is now 0 for both frontends.)  Fix: thread the blocking
-# value of an always-@* block-local var into its later same-block reads.
-simple/loops.v
+# (simple/loops removed: the always-@* block-local blocking-temp bug was fixed
+# by the comb branch-value threading work — equiv_induct AND co-sim now pass.)
 
 # --- multi-file / external-tool tests ---
 # setup_yosys_test now loads SIBLING source files a test's .ys reads together
 # (e.g. sat/grom.ys: `read_verilog grom_computer.v grom_cpu.v alu.v
 # ram_memory.v`), so a cross-file submodule is no longer an undefined blackbox.
 #
-#   sat/grom_computer / sat/grom_cpu - now load all four grom sources and run
-#       the FULL UHDM flow.  The sound SAT-from-reset miter proves UHDM ==
-#       Verilog (triage_cosim.py: EQUIVALENT), i.e. the UHDM netlist is CORRECT.
-#       They remain expected-fail only because equiv_induct cannot inductively
-#       prove a CPU-with-memory and the self-checking design has no co-sim-
-#       observable outputs (co-sim build/skip) — the same equiv_induct
-#       inductive-invariant limitation as the dual-clock RAMs, NOT a frontend
-#       bug.  The harness uses the bounded miter for classification only, never
-#       as a pass-gate, so there is no green path for them yet.
+# (sat/grom_computer / sat/grom_cpu removed: the full harness now passes them
+# end-to-end — the earlier equiv_induct inductive limitation no longer bites.)
 #
 # These still cannot complete in the single-DUT flow (no .ys file list / external
 # tool), so they stay listed:
@@ -146,8 +119,6 @@ simple/loops.v
 #   rpc/design              - Yosys RPC frontend (python_inv over a unix socket)
 #   verific/mixed_flist     - Verific-only (`verific -f -sv ...flist`)
 functional/picorv32_tb.v
-sat/grom_computer.v
-sat/grom_cpu.v
 hana/test_simulation_vlib.v
 rpc/design.v
 verific/mixed_flist.sv
@@ -172,18 +143,10 @@ verific/mixed_flist.sv
 #   netlist — UHDM is correct.  (verified UHDM == Verilator via co-sim.)
 CastStructArray
 
-# --- Yosys v0.67 equiv_induct incompleteness on packed struct-arrays (NOT UHDM
-# bugs) ---
-# The v0.67 bump made equiv_induct inductively weaker on three packed
-# struct-array designs: it can no longer close the proof, but the sound
-# SAT-from-reset miter proves UHDM == Verilog (triage_cosim.py: EQUIVALENT), so
-# the netlists are functionally identical — 0 Miter-Formal escapes.  Same class
-# as sat/alu and the dual-clock RAMs below.  (The genuine struct-array bug the
-# v0.67 reference exposed, multidim_hier_path8, was fixed in the frontend, not
-# listed here.)
-struct_array_indexed_write
-struct_little_endian_bit_array
-svtypes_struct_array
+# (struct_array_indexed_write / struct_little_endian_bit_array /
+# svtypes_struct_array removed: all three pass equiv_induct again after the
+# struct-member packed-dim geometry fix — bit/array_typespec members and
+# ascending ([0:N]) outer ranges now element-index correctly.)
 
 # --- read_verilog mis-sizes a packed array of a struct (NOT a UHDM bug) ---
 # The Yosys read_verilog reference lowers `struct_t [N:0] arr` to a SINGLE
