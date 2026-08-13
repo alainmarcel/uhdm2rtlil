@@ -669,6 +669,11 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // process in the design so no creator is missed.
     finalize_process_action_widths();
 
+    // Replace comb self-hold defaults whose held value is provably
+    // unobservable (write-before-read arm-local style temps, CVA6 csr
+    // `mask`) with X so proc_dlatch doesn't infer dead latches.
+    finalize_dead_selfhold_defaults();
+
     log("UHDM: Finished import_design\n");
     log_flush();
 

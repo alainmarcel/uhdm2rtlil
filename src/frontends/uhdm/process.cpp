@@ -582,6 +582,446 @@ void UhdmImporter::finalize_process_action_widths()
         }
 }
 
+// --- definite-assignment prescan for comb processes ------------------------
+// Computes which signals a comb process writes FULLY before ANY read on every
+// path (CVA6 csr `mask`: written then read inside each case arm, never
+// defaulted).  For such signals the held (previous-activation) value is never
+// observed, so the threading muxes' raw-wire fallback legs are dead and the
+// self-hold default can become X (slang SSAs these: 0 latches).  Everything
+// unrecognized poisons the analysis (conservative).
+namespace {
+
+struct WbrState {
+    std::set<std::string> assigned;   // definitely assigned on this path
+    std::set<std::string> written;    // fully written somewhere (any path)
+    std::set<std::string> observed;   // read (or partially written) while not
+                                      // definitely assigned
+    bool poisoned = false;
+};
+
+void wbr_scan_expr(const UHDM::any* e, WbrState& st);
+
+void wbr_read_name(const std::string& n, WbrState& st) {
+    if (n.empty()) return;
+    if (!st.assigned.count(n)) st.observed.insert(n);
+}
+
+void wbr_scan_expr(const UHDM::any* e, WbrState& st) {
+    if (!e || st.poisoned) return;
+    switch (e->UhdmType()) {
+        case UHDM::uhdmref_obj:
+            wbr_read_name(std::string(any_cast<const UHDM::ref_obj*>(e)->VpiName()), st);
+            break;
+        case UHDM::uhdmref_var:
+            wbr_read_name(std::string(any_cast<const UHDM::ref_var*>(e)->VpiName()), st);
+            break;
+        case UHDM::uhdmbit_select: {
+            auto bs = any_cast<const UHDM::bit_select*>(e);
+            wbr_read_name(std::string(bs->VpiName()), st);
+            wbr_scan_expr(bs->VpiIndex(), st);
+            break;
+        }
+        case UHDM::uhdmpart_select: {
+            auto ps = any_cast<const UHDM::part_select*>(e);
+            wbr_read_name(std::string(ps->VpiName()), st);
+            wbr_scan_expr(ps->Left_range(), st);
+            wbr_scan_expr(ps->Right_range(), st);
+            break;
+        }
+        case UHDM::uhdmindexed_part_select: {
+            auto ips = any_cast<const UHDM::indexed_part_select*>(e);
+            if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty())
+                wbr_read_name(std::string(ips->VpiParent()->VpiName()), st);
+            wbr_read_name(std::string(ips->VpiName()), st);
+            wbr_scan_expr(ips->Base_expr(), st);
+            wbr_scan_expr(ips->Width_expr(), st);
+            break;
+        }
+        case UHDM::uhdmhier_path: {
+            auto hp = any_cast<const UHDM::hier_path*>(e);
+            // Base component of `s.field` counts as a read of `s`.
+            std::string full = std::string(hp->VpiName());
+            wbr_read_name(full.substr(0, full.find('.')), st);
+            if (hp->Path_elems())
+                for (auto pe : *hp->Path_elems())
+                    if (pe->UhdmType() == UHDM::uhdmbit_select)
+                        wbr_scan_expr(any_cast<const UHDM::bit_select*>(pe)->VpiIndex(), st);
+            break;
+        }
+        case UHDM::uhdmoperation: {
+            auto op = any_cast<const UHDM::operation*>(e);
+            if (op->Operands())
+                for (auto o : *op->Operands()) wbr_scan_expr(o, st);
+            break;
+        }
+        case UHDM::uhdmconstant:
+        case UHDM::uhdmparameter:
+        case UHDM::uhdmenum_const:
+            break;
+        case UHDM::uhdmsys_func_call: {
+            auto fc = any_cast<const UHDM::sys_func_call*>(e);
+            if (fc->Tf_call_args())
+                for (auto a : *fc->Tf_call_args()) wbr_scan_expr(a, st);
+            break;
+        }
+        case UHDM::uhdmfunc_call: {
+            // Treat user function calls as pure over their arguments (CVA6
+            // package helpers).  A function body reading a MODULE signal
+            // directly would be invisible here — acceptable: the analysis
+            // only widens X-defaults for signals never otherwise read, and
+            // such impure functions don't read comb temps of this class.
+            auto fc = any_cast<const UHDM::func_call*>(e);
+            if (fc->Tf_call_args())
+                for (auto a : *fc->Tf_call_args()) wbr_scan_expr(a, st);
+            break;
+        }
+        case UHDM::uhdmtagged_pattern:
+        case UHDM::uhdmtypespec_member:
+            break;
+        case UHDM::uhdmvar_select: {
+            auto vs = any_cast<const UHDM::var_select*>(e);
+            wbr_read_name(std::string(vs->VpiName()), st);
+            if (vs->Exprs())
+                for (auto x : *vs->Exprs()) wbr_scan_expr(x, st);
+            break;
+        }
+        default:
+            // A variable reference (int_var, logic_var, enum_var, … — e.g. a
+            // `for (int i = …)` init LHS re-visited in expr position or a
+            // block-local read) is a plain read of its name.
+            if (auto v = dynamic_cast<const UHDM::variables*>(e)) {
+                wbr_read_name(std::string(v->VpiName()), st);
+                break;
+            }
+            // Anything else could read state we can't see — poison the
+            // whole process.
+            st.poisoned = true;
+            break;
+    }
+}
+
+UHDM::VectorOfany* wbr_begin_stmts(const UHDM::any* stmt) {
+    if (stmt->VpiType() == vpiBegin)
+        return any_cast<const UHDM::begin*>(stmt)->Stmts();
+    return any_cast<const UHDM::named_begin*>(stmt)->Stmts();
+}
+
+void wbr_scan_stmt(const UHDM::any* stmt, WbrState& st) {
+    if (!stmt || st.poisoned) return;
+    switch (stmt->VpiType()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            auto sc = any_cast<const UHDM::scope*>(stmt);
+            // Block-local declarations: exclude those NAMES from candidacy
+            // (a local may shadow a same-named module signal and the two
+            // would be conflated) but keep scanning the block.
+            if (sc && sc->Variables())
+                for (auto v : *sc->Variables())
+                    st.observed.insert(std::string(v->VpiName()));
+            if (auto stmts = wbr_begin_stmts(stmt))
+                for (auto s : *stmts) wbr_scan_stmt(s, st);
+            break;
+        }
+        case vpiAssignment: {
+            auto a = any_cast<const UHDM::assignment*>(stmt);
+            if (!a->Lhs()) { st.poisoned = true; return; }
+            // Compound ops read the LHS first.
+            bool compound = a->VpiOpType() != 0 && a->VpiOpType() != vpiAssignmentOp;
+            wbr_scan_expr(a->Rhs(), st);
+            int lt = a->Lhs()->VpiType();
+            std::string lname;
+            if (lt == vpiRefObj || lt == vpiRefVar)
+                lname = std::string(a->Lhs()->VpiName());
+            else if (dynamic_cast<const UHDM::variables*>(a->Lhs()))
+                lname = std::string(a->Lhs()->VpiName());
+            if (!lname.empty()) {
+                if (compound) wbr_read_name(lname, st);
+                st.assigned.insert(lname);
+                st.written.insert(lname);
+            } else {
+                // Partial / structured write: index exprs are reads; the
+                // partially-written base's other bits stay held → observed.
+                wbr_scan_expr(a->Lhs(), st);
+            }
+            break;
+        }
+        case vpiIf: {
+            auto s = any_cast<const UHDM::if_stmt*>(stmt);
+            wbr_scan_expr(s->VpiCondition(), st);
+            WbrState br = st;
+            wbr_scan_stmt(s->VpiStmt(), br);
+            st.poisoned |= br.poisoned;
+            st.written = br.written;
+            st.observed = br.observed;
+            // assigned: branch may not run → keep entry set
+            break;
+        }
+        case vpiIfElse: {
+            auto s = any_cast<const UHDM::if_else*>(stmt);
+            wbr_scan_expr(s->VpiCondition(), st);
+            WbrState b1 = st, b2 = st;
+            wbr_scan_stmt(s->VpiStmt(), b1);
+            wbr_scan_stmt(s->VpiElseStmt(), b2);
+            st.poisoned |= b1.poisoned || b2.poisoned;
+            st.written = b1.written; st.written.insert(b2.written.begin(), b2.written.end());
+            st.observed = b1.observed; st.observed.insert(b2.observed.begin(), b2.observed.end());
+            std::set<std::string> both;
+            for (auto& n : b1.assigned) if (b2.assigned.count(n)) both.insert(n);
+            st.assigned = both;
+            break;
+        }
+        case vpiCase: {
+            auto cs = any_cast<const UHDM::case_stmt*>(stmt);
+            wbr_scan_expr(cs->VpiCondition(), st);
+            bool has_default = false;
+            std::vector<WbrState> arms;
+            if (cs->Case_items())
+                for (auto item : *cs->Case_items()) {
+                    auto ci = any_cast<const UHDM::case_item*>(item);
+                    if (!ci->VpiExprs() || ci->VpiExprs()->empty()) has_default = true;
+                    else for (auto ce : *ci->VpiExprs()) wbr_scan_expr(ce, st);
+                    WbrState br = st;
+                    wbr_scan_stmt(ci->Stmt(), br);
+                    arms.push_back(br);
+                }
+            std::set<std::string> inter;
+            bool first = true;
+            for (auto& br : arms) {
+                st.poisoned |= br.poisoned;
+                st.written.insert(br.written.begin(), br.written.end());
+                st.observed.insert(br.observed.begin(), br.observed.end());
+                if (first) { inter = br.assigned; first = false; }
+                else {
+                    std::set<std::string> keep;
+                    for (auto& n : inter) if (br.assigned.count(n)) keep.insert(n);
+                    inter = keep;
+                }
+            }
+            // Writes persist only when every selector value lands in an arm.
+            if (has_default && !arms.empty()) st.assigned = inter;
+            break;
+        }
+        case vpiFor: {
+            auto f = any_cast<const UHDM::for_stmt*>(stmt);
+            wbr_scan_expr(f->VpiCondition(), st);
+            WbrState body = st;
+            // Loop var is assigned by the init.
+            if (f->VpiForInitStmts())
+                for (auto is : *f->VpiForInitStmts()) wbr_scan_stmt(is, body);
+            else if (f->VpiForInitStmt()) wbr_scan_stmt(f->VpiForInitStmt(), body);
+            wbr_scan_stmt(f->VpiStmt(), body);
+            st.poisoned |= body.poisoned;
+            st.written = body.written;
+            st.observed = body.observed;
+            // Conservative: body writes don't persist past the loop.
+            break;
+        }
+        case vpiNullStmt:
+            break;
+        case vpiSysTaskCall: {
+            // $display / $write etc: arguments are reads, no signal writes.
+            auto tc = any_cast<const UHDM::sys_task_call*>(stmt);
+            if (tc->Tf_call_args())
+                for (auto a : *tc->Tf_call_args()) wbr_scan_expr(a, st);
+            break;
+        }
+        case vpiImmediateAssert: {
+            auto ia = any_cast<const UHDM::immediate_assert*>(stmt);
+            wbr_scan_expr(ia->Expr(), st);
+            wbr_scan_stmt(ia->Stmt(), st);
+            wbr_scan_stmt(ia->Else_stmt(), st);
+            break;
+        }
+        case vpiOperation:
+            // Statement-position `i++` / `i--`: a read (and write) of the
+            // operand — reads suffice for safety (an inc'd-but-unassigned
+            // name stays observed).
+            wbr_scan_expr(stmt, st);
+            break;
+        case vpiFuncCall: {
+            // Void-called function: pure-over-args assumption (see expr case).
+            auto fc = any_cast<const UHDM::func_call*>(stmt);
+            if (fc->Tf_call_args())
+                for (auto a : *fc->Tf_call_args()) wbr_scan_expr(a, st);
+            break;
+        }
+        case vpiBreak:
+        case vpiContinue:
+            break;
+        default:
+            st.poisoned = true;
+            break;
+    }
+}
+
+} // anonymous namespace
+
+// Run the prescan for one comb process and record the proven-safe signals.
+void UhdmImporter::prescan_write_before_read(const UHDM::any* stmt) {
+    if (!stmt || !module) return;
+    WbrState st;
+    wbr_scan_stmt(stmt, st);
+    if (st.poisoned) return;
+    for (auto& n : st.written)
+        if (!st.observed.count(n))
+            comb_ssa_safe_[module].insert(n);
+}
+
+// A comb signal like CVA6 csr_regfile's `logic [63:0] mask;` is written and
+// read ONLY inside its always_comb's case arms, always write-before-read, and
+// never observed anywhere else — its self-hold default `$0\mask = \mask`
+// makes proc_dlatch infer latches for the arms that don't write it, but the
+// held value is provably unobservable (slang SSAs such signals: 0 latches).
+// Replace the self-hold RHS with an all-X default when the signal's raw wire
+// has NO other reader in the whole module: post-write reads inside the
+// process were redirected to the in-flight comb value at import time, so a
+// remaining raw `\sig` appearance IS an observation of the held value.
+static void collect_case_uses(const RTLIL::CaseRule* cs,
+                              const RTLIL::SigSig* skip_action,
+                              dict<RTLIL::Wire*, int>& uses)
+{
+    auto count = [&](const RTLIL::SigSpec& s) {
+        for (auto& ch : s.chunks())
+            if (ch.wire) uses[ch.wire]++;
+    };
+    for (auto& cmp : cs->compare) count(cmp);
+    for (auto& act : cs->actions) {
+        if (skip_action && &act == skip_action) continue;
+        count(act.second);          // RHS = read; LHS is a write target
+    }
+    for (auto* sw : cs->switches) {
+        count(sw->signal);
+        for (auto* c : sw->cases)
+            collect_case_uses(c, skip_action, uses);
+    }
+}
+
+void UhdmImporter::finalize_dead_selfhold_defaults()
+{
+    for (auto* mod : design->modules()) {
+        // Candidate self-hold defaults: a root-case action `temp = \sig`
+        // (both full-width wires) in a process whose sync-always rule has
+        // the matching `update \sig temp`.
+        struct Cand { RTLIL::Process* proc; RTLIL::SigSig* act; RTLIL::Wire* sig; };
+        std::vector<Cand> cands;
+        dict<RTLIL::Wire*, int> cand_count;
+        for (auto& pit : mod->processes) {
+            RTLIL::Process* p = pit.second;
+            bool has_sta = false;
+            for (auto* sync : p->syncs)
+                if (sync->type == RTLIL::SyncType::STa) { has_sta = true; break; }
+            if (!has_sta) continue;
+            for (auto& act : p->root_case.actions) {
+                if (!act.first.is_wire() || !act.second.is_wire()) continue;
+                RTLIL::Wire* temp = act.first.as_wire();
+                RTLIL::Wire* sig = act.second.as_wire();
+                if (temp == sig) continue;
+                if (temp->name.str()[0] != '$') continue;
+                bool paired = false;
+                for (auto* sync : p->syncs) {
+                    if (sync->type != RTLIL::SyncType::STa) continue;
+                    for (auto& ua : sync->actions)
+                        if (ua.first.is_wire() && ua.first.as_wire() == sig &&
+                            ua.second.is_wire() && ua.second.as_wire() == temp) {
+                            paired = true; break;
+                        }
+                }
+                if (!paired) continue;
+                cands.push_back({p, &act, sig});
+                cand_count[sig]++;
+            }
+        }
+        if (cands.empty()) continue;
+
+        // Count every OTHER appearance of each wire as a use.  Anything that
+        // could read or re-drive the raw wire disqualifies: cell connections
+        // (direction-agnostic, conservative), module connects (both sides),
+        // process compares / switch signals / action RHS, sync signals and
+        // sync action RHS.  Write targets (action/sync-update LHS) don't
+        // count.
+        dict<RTLIL::Wire*, int> uses;
+        // Threading-mux fallback legs (thread_comb_if / thread_comb_case
+        // cells) read the raw wire as "the held value when not yet written
+        // this activation".  For signals PROVEN write-before-read by the
+        // import-time prescan those legs are dead — track them separately so
+        // they don't count as uses and can be rewired to X.
+        std::vector<std::pair<RTLIL::Cell*, RTLIL::IdString>> thread_legs;
+        auto count = [&](const RTLIL::SigSpec& s) {
+            for (auto& ch : s.chunks())
+                if (ch.wire) uses[ch.wire]++;
+        };
+        const std::set<std::string>* ssa_safe =
+            comb_ssa_safe_.count(mod) ? &comb_ssa_safe_.at(mod) : nullptr;
+        auto wire_ssa_safe = [&](RTLIL::Wire* w) {
+            if (!ssa_safe) return false;
+            std::string n = w->name.str();
+            if (!n.empty() && n[0] == '\\') n = n.substr(1);
+            return ssa_safe->count(n) != 0;
+        };
+        for (auto* cell : mod->cells()) {
+            bool is_thread_cell =
+                cell->name.str().find(":thread_comb_") != std::string::npos;
+            for (auto& conn : cell->connections()) {
+                if (is_thread_cell && conn.second.is_wire() &&
+                    wire_ssa_safe(conn.second.as_wire())) {
+                    thread_legs.push_back({cell, conn.first});
+                    continue;
+                }
+                count(conn.second);
+            }
+        }
+        for (auto& conn : mod->connections()) { count(conn.first); count(conn.second); }
+        for (auto& pit : mod->processes) {
+            RTLIL::Process* p = pit.second;
+            // Skip only THIS process's candidate self-hold action RHS.
+            const RTLIL::SigSig* skip = nullptr;
+            for (auto& c : cands)
+                if (c.proc == p) { skip = c.act; break; }
+            // (multiple candidates in one process handled below via cand_count)
+            collect_case_uses(&p->root_case, skip, uses);
+            for (auto* sync : p->syncs) {
+                count(sync->signal);
+                for (auto& ua : sync->actions) count(ua.second);
+            }
+        }
+        // The sync `update \sig temp` counted temp (fine) — but candidate
+        // self-hold RHSs in processes with SEVERAL candidates were skipped
+        // only for the first; recount precisely: subtract each candidate's
+        // own RHS contribution that wasn't skipped.
+        {
+            dict<const RTLIL::SigSig*, bool> skipped;
+            for (auto& pit : mod->processes) {
+                RTLIL::Process* p = pit.second;
+                for (auto& c : cands)
+                    if (c.proc == p) { skipped[c.act] = true; break; }
+            }
+            for (auto& c : cands)
+                if (!skipped.count(c.act)) uses[c.sig]--;
+        }
+
+        pool<RTLIL::Wire*> converted;
+        for (auto& c : cands) {
+            if (cand_count[c.sig] > 1) continue;          // multi-writer
+            if (c.sig->port_input || c.sig->port_output) continue;
+            if (c.sig->get_bool_attribute(RTLIL::ID::keep)) continue;
+            if (c.sig->attributes.count(RTLIL::ID::init)) continue;
+            if (uses.count(c.sig) && uses.at(c.sig) > 0) continue;
+            c.act->second = RTLIL::SigSpec(RTLIL::State::Sx, c.sig->width);
+            converted.insert(c.sig);
+            log("UHDM: %s.%s: self-hold default replaced with X (held value "
+                "never observed — write-before-read comb temp)\n",
+                log_id(mod->name), log_id(c.sig->name));
+        }
+        // Rewire the (dead) threading fallback legs of converted signals to X
+        // so their muxes stop referencing the raw wire.
+        for (auto& [cell, port] : thread_legs) {
+            RTLIL::SigSpec s = cell->getPort(port);
+            if (s.is_wire() && converted.count(s.as_wire()))
+                cell->setPort(port, RTLIL::SigSpec(RTLIL::State::Sx, s.size()));
+        }
+    }
+}
+
 // --- SSA cv-threading for "simple" always_ff bodies -----------------------
 // A body is "simple" if every statement is a full-wire (ref) blocking/non-
 // blocking assignment, an if / if-else, or a begin block of those.  No
@@ -1353,6 +1793,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (auto then_stmt = if_else_stmt->VpiStmt()) {
                                 // Set up context for import
                                 current_temp_wires.clear();
+    comb_signal_temp_map.clear();
                                 current_lhs_specs.clear();
                                 
                                 // Map signal names to temp wires for import
@@ -1384,6 +1825,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
                                 // Set up context for import
                                 current_temp_wires.clear();
+    comb_signal_temp_map.clear();
                                 current_lhs_specs.clear();
                                 
                                 // Map signal names to temp wires for import
@@ -2327,6 +2769,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Statement imported to process body\n");
                     log_flush();
                     current_temp_wires.clear();
+    comb_signal_temp_map.clear();
 
                     // Create sync rule with memory writes using temp wires
                     if (clock_sig.empty()) {
@@ -2620,6 +3063,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     in_always_ff_body_mode = false;
                     current_comb_process = nullptr;
                     current_temp_wires.clear();
+    comb_signal_temp_map.clear();
                     current_comb_values.clear();
                     ff_blocking_temps.clear();
                     comb_value_aliases.clear();
@@ -2703,6 +3147,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     current_ff_clock_sig = RTLIL::SigSpec();
     current_ff_edges.clear();
     current_temp_wires.clear();
+    comb_signal_temp_map.clear();
     current_lhs_specs.clear();
     loop_values.clear();
 }
@@ -2736,6 +3181,11 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         block_local_promoted.clear();
         create_block_local_wires(actual_stmt);
         extract_assigned_signals(actual_stmt, assigned_signals);
+
+        // Definite-assignment prescan: signals fully written before every
+        // read on every path never observe their held value — recorded for
+        // finalize_dead_selfhold_defaults (CVA6 csr `mask`).
+        prescan_write_before_read(actual_stmt);
 
         // Drop signals assigned ONLY under a compile-time-FALSE guard
         // (`if (CVA6Cfg.RVH) lsu_tinst_n = …` with RVH==0, CVA6 cva6_mmu
@@ -2910,11 +3360,14 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // Map this expression to the temp wire
         temp_wires[sig.lhs_expr] = temp_wire;
     }
-    
+
     // Store temp wires in module context for use in statement import
     current_temp_wires = temp_wires;
     current_lhs_specs = lhs_specs;
-    
+    comb_signal_temp_map.clear();
+    for (const auto& [sig_name, tw] : signal_temp_wires)
+        comb_signal_temp_map[sig_name] = tw;
+
     // Initialize temp wires with current signal values
     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
         if (signal_specs.count(sig_name)) {
@@ -3077,6 +3530,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // Clear context
     current_comb_process = nullptr;
     current_temp_wires.clear();
+    comb_signal_temp_map.clear();
     current_lhs_specs.clear();
     current_comb_values.clear();
     comb_value_aliases.clear();
@@ -4185,6 +4639,9 @@ void UhdmImporter::import_initial_comb(const process_stmt* uhdm_process, RTLIL::
     // Store temp wires in module context for use in statement import
     current_temp_wires = temp_wires;
     current_lhs_specs = lhs_specs;
+    comb_signal_temp_map.clear();
+    for (const auto& [sig_name_t, tw_t] : signal_temp_wires)
+        comb_signal_temp_map[sig_name_t] = tw_t;
 
     // Initialize temp wires with current signal values
     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
@@ -4224,6 +4681,7 @@ void UhdmImporter::import_initial_comb(const process_stmt* uhdm_process, RTLIL::
     // Clear context
     current_comb_process = nullptr;
     current_temp_wires.clear();
+    comb_signal_temp_map.clear();
     current_lhs_specs.clear();
     current_comb_values.clear();
     comb_value_aliases.clear();
@@ -6641,17 +7099,29 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
 }
 
 // Map a signal to its $0\ temp wire if one exists (for comb process assignments)
+// Resolve THIS process's temp wire for a signal name.  The per-process map
+// carries the dedup-bumped "$N\<sig>" temp; the module-wide "$0\<name>"
+// lookup is only a fallback for ancillary temps (block-local, ranged) not
+// registered there — for a signal another process also writes, the bare name
+// lookup would land on that OTHER process's temp and orphan the write.
+RTLIL::Wire* UhdmImporter::find_own_temp_wire(const std::string& signal_name) {
+    auto it = comb_signal_temp_map.find(signal_name);
+    if (it != comb_signal_temp_map.end()) return it->second;
+    auto it2 = current_signal_temp_wires.find(signal_name);
+    if (it2 != current_signal_temp_wires.end()) return it2->second;
+    return module->wire("$0\\" + signal_name);
+}
+
 RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
     if (current_temp_wires.empty()) return sig;
-    // Full-wire LHS: swap `\foo` for `$0\foo` outright.
+    // Full-wire LHS: swap `\foo` for its own-process temp outright.
     if (sig.is_wire()) {
         RTLIL::Wire* target_wire = sig.as_wire();
         std::string signal_name = target_wire->name.str();
         if (signal_name[0] == '\\')
             signal_name = signal_name.substr(1);
 
-        std::string temp_name = "$0\\" + signal_name;
-        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        RTLIL::Wire* temp_wire = find_own_temp_wire(signal_name);
         if (temp_wire)
             return RTLIL::SigSpec(temp_wire);
         return sig;
@@ -6669,8 +7139,7 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
         if (chunk.wire) {
             std::string name = chunk.wire->name.str();
             if (!name.empty() && name[0] == '\\') name = name.substr(1);
-            std::string temp_name = "$0\\" + name;
-            if (RTLIL::Wire* tw = module->wire(temp_name)) {
+            if (RTLIL::Wire* tw = find_own_temp_wire(name)) {
                 if (tw->width >= chunk.offset + chunk.width) {
                     out.append(RTLIL::SigChunk(tw, chunk.offset, chunk.width));
                     changed = true;
@@ -10263,11 +10732,24 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 }
                 // A packed multi-dim array element `out_data[i]` on
                 // `logic [3:1][2:0]` is a 3-bit ELEMENT at `(i-low)*elem_w`, not
-                // bit i.  Derive the element width + low bound from the base's
-                // typespec; a scalar bit-array (`reg q[N]` / `reg [N-1:0] q`)
-                // resolves to elem_w=1, low=0 → the original per-bit behaviour.
+                // bit i.  Prefer the wire's packed_elem_width metadata (set by
+                // import_net/import_port with all typespec variants handled —
+                // a packed array of ENUM like CVA6 frontend's `cf_t [1:0]
+                // cf_type` is a packed_array_typespec the walk below misses),
+                // then fall back to the base typespec.  A scalar bit-array
+                // (`reg q[N]` / `reg [N-1:0] q`) resolves to elem_w=1, low=0 →
+                // the original per-bit behaviour.
                 int elem_w = 1, arr_low = 0;
-                if (auto a = bs->Actual_group()) {
+                if (w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+                    elem_w = w->attributes.at(
+                        RTLIL::escape_id("packed_elem_width")).as_int();
+                    int pl = w->attributes.at(
+                        RTLIL::escape_id("packed_outer_left")).as_int();
+                    int pr = w->attributes.at(
+                        RTLIL::escape_id("packed_outer_right")).as_int();
+                    arr_low = std::min(pl, pr);
+                }
+                if (elem_w <= 1) if (auto a = bs->Actual_group()) {
                     const UHDM::ref_typespec* rts = nullptr;
                     if (auto e = dynamic_cast<const UHDM::expr*>(a)) rts = e->Typespec();
                     if (rts && rts->Actual_typespec() &&
@@ -10523,10 +11005,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 signal_name = signal_name.substr(1);  // Remove leading backslash
             }
             
-            // Find the temp wire
-            std::string temp_name = "$0\\" + signal_name;
-            RTLIL::Wire* temp_wire = module->wire(temp_name);
-            
+            // Find THIS process's temp wire (dedup-bumped "$N\<sig>" when
+            // other processes already own "$0\<sig>")
+            RTLIL::Wire* temp_wire = find_own_temp_wire(signal_name);
+
             if (temp_wire) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
                 // Track current value for task/function inlining and value propagation
@@ -10569,8 +11051,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             continue;
                         }
                     }
-                    // Fallback: full-wire `$0\<wire>` temp, sliced at this offset
-                    if (RTLIL::Wire* tw = module->wire("$0\\" + signal_name)) {
+                    // Fallback: this process's full-wire temp, sliced at this
+                    // offset (dedup-bumped "$N\<wire>" when other processes
+                    // already own "$0\<wire>" — a bare-name lookup would
+                    // orphan the write on another process's temp).
+                    if (RTLIL::Wire* tw = find_own_temp_wire(signal_name)) {
                         if (tw->width >= ch.offset + ch.width) {
                             mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
                             any_mapped = true;

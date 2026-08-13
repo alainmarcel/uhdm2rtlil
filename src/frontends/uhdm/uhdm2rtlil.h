@@ -508,6 +508,15 @@ struct UhdmImporter {
     // Temporary wires for combinational processes
     std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
     std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
+    // Per-process temp wires keyed by SIGNAL NAME.  A signal written by
+    // several processes gets a dedup-bumped temp ("$1\sig", "$2\sig", …) in
+    // the later ones, so a module-wide `module->wire("$0\" + name)` lookup
+    // silently lands on ANOTHER process's temp and orphans the write (CVA6
+    // decoder exception_handling's `instruction_o.ex = ex_i` default was
+    // dropped that way).  Populated alongside current_temp_wires; consult via
+    // find_own_temp_wire().
+    std::map<std::string, RTLIL::Wire*> comb_signal_temp_map;
+    RTLIL::Wire* find_own_temp_wire(const std::string& signal_name);
     
     // Memory write handling for synchronous processes
     struct MemoryWriteInfo {
@@ -591,6 +600,13 @@ struct UhdmImporter {
     // Design-wide final pass: size-match every process action's RHS to its LHS
     // so an unresolved-signal short/empty RHS can't crash yosys proc_prune.
     void finalize_process_action_widths();
+    void finalize_dead_selfhold_defaults();
+    // Per-module comb signals PROVEN write-before-read on every path of
+    // their always_comb (definite-assignment prescan) — their held value is
+    // never observed in-process, so threading-mux fallback legs reading the
+    // raw wire are dead and the self-hold default may become X.
+    std::map<RTLIL::Module*, std::set<std::string>> comb_ssa_safe_;
+    void prescan_write_before_read(const UHDM::any* stmt);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     // XMR read resolution: expose `sig` as an output port of `cell`'s child
     // module and wire it to the parent's `\<inst>.<sig>` reader (github #450).
