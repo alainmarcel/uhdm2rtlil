@@ -517,6 +517,7 @@ struct UhdmImporter {
     // find_own_temp_wire().
     std::map<std::string, RTLIL::Wire*> comb_signal_temp_map;
     RTLIL::Wire* find_own_temp_wire(const std::string& signal_name);
+    void record_comb_partial_write(const RTLIL::SigSpec& lhs, const RTLIL::SigSpec& rhs);
     
     // Memory write handling for synchronous processes
     struct MemoryWriteInfo {

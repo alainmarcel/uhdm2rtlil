@@ -240,18 +240,26 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // labels (multiple compares in one CaseRule are OR'd, the
                 // exact case-label semantics).
                 if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
+                    // `case … inside` items arrive as ONE vpiInsideOp whose
+                    // operands are per-label single-element vpiListOps
+                    // (ariane_pkg op_is_branch) — flatten both recursively.
                     std::vector<const any*> labels;
-                    for (auto le : *ci->VpiExprs()) {
-                        if (le->VpiType() == vpiOperation) {
-                            auto lop = any_cast<const operation*>(le);
-                            if (lop->VpiOpType() == vpiListOp && lop->Operands()) {
-                                for (auto o : *lop->Operands())
-                                    labels.push_back(o);
-                                continue;
+                    std::function<void(const any*)> add_label =
+                        [&](const any* le) {
+                            if (le->VpiType() == vpiOperation) {
+                                auto lop = any_cast<const operation*>(le);
+                                if ((lop->VpiOpType() == vpiListOp ||
+                                     lop->VpiOpType() == vpiInsideOp) &&
+                                    lop->Operands()) {
+                                    for (auto o : *lop->Operands())
+                                        add_label(o);
+                                    return;
+                                }
                             }
-                        }
-                        labels.push_back(le);
-                    }
+                            labels.push_back(le);
+                        };
+                    for (auto le : *ci->VpiExprs())
+                        add_label(le);
                     for (auto le : labels) {
                         RTLIL::SigSpec case_value = import_expression(
                             any_cast<const expr*>(le), &input_mapping);
@@ -9646,73 +9654,91 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_ref_typespec = union_var_obj->Typespec();
                 }
 
+                // Walk a struct/union typespec's members for `member_name`.
+                auto find_member_slice = [&](const UHDM::typespec* ts,
+                                             int& bit_offset,
+                                             int& member_width) -> bool {
+                    if (!ts) return false;
+                    bool is_union = ts->UhdmType() == uhdmunion_typespec;
+                    if (!is_union && ts->UhdmType() != uhdmstruct_typespec)
+                        return false;
+                    const VectorOftypespec_member* members = is_union
+                        ? any_cast<const UHDM::union_typespec*>(ts)->Members()
+                        : any_cast<const UHDM::struct_typespec*>(ts)->Members();
+                    if (!members) return false;
+                    bit_offset = 0;
+                    // Iterate members in reverse (MSB to LSB for packed structs)
+                    for (int i = members->size() - 1; i >= 0; i--) {
+                        auto member_spec = (*members)[i];
+                        int w = 1;
+                        if (auto member_ts = member_spec->Typespec()) {
+                            if (auto actual_ts = member_ts->Actual_typespec())
+                                w = get_width_from_typespec(actual_ts, inst);
+                        } else {
+                            w = get_width(member_spec, inst);
+                        }
+                        if (std::string(member_spec->VpiName()) == member_name) {
+                            member_width = w;
+                            return true;
+                        }
+                        if (!is_union) bit_offset += w;
+                    }
+                    return false;
+                };
+
+                int mem_off = 0, mem_w = 0;
+                bool found_member = false;
                 if (base_ref_typespec) {
                     base_typespec = base_ref_typespec->Actual_typespec();
+                    found_member = find_member_slice(base_typespec, mem_off, mem_w);
+                    if (!found_member && mode_debug)
+                        log("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
+                            base_typespec ? UhdmName(base_typespec->UhdmType()).c_str() : "null");
+                } else if (mode_debug) {
+                    log("    Base wire has no typespec\n");
+                }
 
-                    // Check if this is a packed struct or union typespec
-                    if (base_typespec && (base_typespec->UhdmType() == uhdmstruct_typespec ||
-                                         base_typespec->UhdmType() == uhdmunion_typespec)) {
-                        bool base_is_union = (base_typespec->UhdmType() == uhdmunion_typespec);
-                        const VectorOftypespec_member* members = nullptr;
-                        if (base_is_union) {
-                            auto u_ts = any_cast<const UHDM::union_typespec*>(base_typespec);
-                            members = u_ts->Members();
-                        } else {
-                            auto s_ts = any_cast<const UHDM::struct_typespec*>(base_typespec);
-                            members = s_ts->Members();
-                        }
-
-                        if (mode_debug)
-                            log("    Found %s typespec for base wire '%s'\n",
-                                base_is_union ? "union" : "struct", base_name.c_str());
-
-                        // Find the member
-                        if (members) {
-                            int bit_offset = 0;
-                            int member_width = 0;
-                            bool found_member = false;
-
-                            // Iterate through members in reverse order (MSB to LSB for packed structs)
-                            for (int i = members->size() - 1; i >= 0; i--) {
-                                auto member_spec = (*members)[i];
-                                std::string current_member_name = std::string(member_spec->VpiName());
-
-                                // Get width of this member
-                                int current_member_width = 1;
-                                if (auto member_ts = member_spec->Typespec()) {
-                                    if (auto actual_ts = member_ts->Actual_typespec()) {
-                                        current_member_width = get_width_from_typespec(actual_ts, inst);
-                                    }
-                                } else {
-                                    // Try to get width directly from the member
-                                    current_member_width = get_width(member_spec, inst);
-                                }
-
-                                if (current_member_name == member_name) {
-                                    member_width = current_member_width;
+                // `parameter type` port/net: the base's own typespec is the
+                // UNBOUND declaration default (`parameter type exception_t =
+                // logic` → a plain logic_typespec), so the member walk above
+                // fails even though the wire has its bound width.  Recover the
+                // BOUND struct from the elaborated instance's type parameters,
+                // disambiguated by total width == wire width (branch_unit's
+                // exception_t(203) and bp_resolve_t(134) both contain `valid`).
+                // Without this the whole struct-field write stream degraded to
+                // 1-bit-x actions and `update 1'x $0\<sig>` — 12 undriven
+                // struct outputs across CVA6 (branch_unit resolved_branch_o /
+                // branch_exception_o, decoder instruction_o, mmu icache_areq_o,
+                // wt_dcache_ctrl req_port_o, cvxif drivers, btb_d).
+                if (!found_member) {
+                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                        if (mi->Parameters()) {
+                            for (auto p : *mi->Parameters()) {
+                                auto tp = dynamic_cast<const UHDM::type_parameter*>(p);
+                                if (!tp || !tp->Typespec()) continue;
+                                auto ats = tp->Typespec()->Actual_typespec();
+                                if (!ats) continue;
+                                if (ats->UhdmType() != uhdmstruct_typespec &&
+                                    ats->UhdmType() != uhdmunion_typespec) continue;
+                                int total = get_width_from_typespec(ats, inst);
+                                if (total != base_wire->width) continue;
+                                if (find_member_slice(ats, mem_off, mem_w)) {
+                                    if (mode_debug)
+                                        log("    Resolved '%s.%s' via type-parameter %s (bound struct, width %d)\n",
+                                            base_name.c_str(), member_name.c_str(),
+                                            std::string(tp->VpiName()).c_str(), total);
                                     found_member = true;
                                     break;
                                 }
-
-                                // Only accumulate offset for structs, not unions
-                                if (!base_is_union)
-                                    bit_offset += current_member_width;
-                            }
-                            
-                            if (found_member) {
-                                if (mode_debug)
-                                    log("    Found packed member: offset=%d, width=%d\n", bit_offset, member_width);
-
-                                // Return a bit slice of the base wire
-                                return RTLIL::SigSpec(base_wire, bit_offset, member_width);
                             }
                         }
-                    } else if (mode_debug) {
-                        log("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
-                            base_typespec ? UhdmName(base_typespec->UhdmType()).c_str() : "null");
                     }
-                } else if (mode_debug) {
-                    log("    Base wire has no typespec\n");
+                }
+
+                if (found_member) {
+                    if (mode_debug)
+                        log("    Found packed member: offset=%d, width=%d\n", mem_off, mem_w);
+                    return RTLIL::SigSpec(base_wire, mem_off, mem_w);
                 }
             } else if (mode_debug) {
                 log("    Could not find UHDM object for base wire '%s'\n", base_name.c_str());
@@ -10179,6 +10205,33 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 log("    hier_path '%s' folded to constant %s via ExprEval\n",
                                     path_name.c_str(), cv.as_const().as_string().c_str());
                             return cv;
+                        }
+                    }
+                }
+            }
+            // Second chance: decodeHierPath (above) returned the field's
+            // VALUE EXPRESSION from the struct-value parameter's assignment
+            // pattern (INTERRUPTS.S_TIMER → `(XLEN'(1)<<(XLEN-1)) | 5`).
+            // reduceExpr can fail on the hier_path in a re-passed context,
+            // but the member expression itself folds under force_const_fold.
+            // Without this the field returned width-only X and CVA6 decoder's
+            // interrupt_cause lost every INTERRUPTS.* constant.
+            if (member) {
+                if (auto mex = dynamic_cast<const UHDM::expr*>(member)) {
+                    if (member->UhdmType() == uhdmoperation ||
+                        member->UhdmType() == uhdmconstant) {
+                        bool saved_fcf = force_const_fold;
+                        int saved_ctx = expression_context_width;
+                        force_const_fold = true;
+                        expression_context_width = 0;
+                        RTLIL::SigSpec v = import_expression(mex, input_mapping);
+                        expression_context_width = saved_ctx;
+                        force_const_fold = saved_fcf;
+                        if (!v.empty() && v.is_fully_const() && v.is_fully_def()) {
+                            if (mode_debug)
+                                log("    hier_path '%s' folded via member value expression\n",
+                                    path_name.c_str());
+                            return v;
                         }
                     }
                 }

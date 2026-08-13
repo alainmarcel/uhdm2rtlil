@@ -940,36 +940,21 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
         // sync action RHS.  Write targets (action/sync-update LHS) don't
         // count.
         dict<RTLIL::Wire*, int> uses;
-        // Threading-mux fallback legs (thread_comb_if / thread_comb_case
-        // cells) read the raw wire as "the held value when not yet written
-        // this activation".  For signals PROVEN write-before-read by the
-        // import-time prescan those legs are dead — track them separately so
-        // they don't count as uses and can be rewired to X.
-        std::vector<std::pair<RTLIL::Cell*, RTLIL::IdString>> thread_legs;
+        // NOTE: threading-mux fallback legs reading the raw wire COUNT as
+        // uses.  An earlier tier rewired prescan-safe signals' legs to X, but
+        // that is UNSOUND: a raw-wire leg exists precisely where the
+        // threading had no in-flight value recorded, and such a leg can be
+        // REACHABLE standing in for a defined value (CVA6 decoder
+        // interrupt_cause: `'0`-initialized, a cv-miss leg fed the interrupt
+        // arm — the X leaked into instruction_o.ex).  Only the zero-raw-use
+        // tier is sound.
         auto count = [&](const RTLIL::SigSpec& s) {
             for (auto& ch : s.chunks())
                 if (ch.wire) uses[ch.wire]++;
         };
-        const std::set<std::string>* ssa_safe =
-            comb_ssa_safe_.count(mod) ? &comb_ssa_safe_.at(mod) : nullptr;
-        auto wire_ssa_safe = [&](RTLIL::Wire* w) {
-            if (!ssa_safe) return false;
-            std::string n = w->name.str();
-            if (!n.empty() && n[0] == '\\') n = n.substr(1);
-            return ssa_safe->count(n) != 0;
-        };
-        for (auto* cell : mod->cells()) {
-            bool is_thread_cell =
-                cell->name.str().find(":thread_comb_") != std::string::npos;
-            for (auto& conn : cell->connections()) {
-                if (is_thread_cell && conn.second.is_wire() &&
-                    wire_ssa_safe(conn.second.as_wire())) {
-                    thread_legs.push_back({cell, conn.first});
-                    continue;
-                }
+        for (auto* cell : mod->cells())
+            for (auto& conn : cell->connections())
                 count(conn.second);
-            }
-        }
         for (auto& conn : mod->connections()) { count(conn.first); count(conn.second); }
         for (auto& pit : mod->processes) {
             RTLIL::Process* p = pit.second;
@@ -999,7 +984,6 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
                 if (!skipped.count(c.act)) uses[c.sig]--;
         }
 
-        pool<RTLIL::Wire*> converted;
         for (auto& c : cands) {
             if (cand_count[c.sig] > 1) continue;          // multi-writer
             if (c.sig->port_input || c.sig->port_output) continue;
@@ -1007,17 +991,9 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
             if (c.sig->attributes.count(RTLIL::ID::init)) continue;
             if (uses.count(c.sig) && uses.at(c.sig) > 0) continue;
             c.act->second = RTLIL::SigSpec(RTLIL::State::Sx, c.sig->width);
-            converted.insert(c.sig);
             log("UHDM: %s.%s: self-hold default replaced with X (held value "
                 "never observed — write-before-read comb temp)\n",
                 log_id(mod->name), log_id(c.sig->name));
-        }
-        // Rewire the (dead) threading fallback legs of converted signals to X
-        // so their muxes stop referencing the raw wire.
-        for (auto& [cell, port] : thread_legs) {
-            RTLIL::SigSpec s = cell->getPort(port);
-            if (s.is_wire() && converted.count(s.as_wire()))
-                cell->setPort(port, RTLIL::SigSpec(RTLIL::State::Sx, s.size()));
         }
     }
 }
@@ -7072,6 +7048,40 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
     log_flush();
 }
 
+// Record a PARTIAL (bit/part-select) blocking write into current_comb_values
+// by splicing the written slice into the base's in-flight value.  Without
+// this a later same-block read observed the PRE-write value via the threaded
+// map: branch_unit's JALR `target_address[0] = 1'b0` never reached the
+// following `resolved_branch_o.target_address = comp ? target_address : …`
+// (UHDM kept the uncleared adder LSB; slang clears it).  The enclosing
+// if/case threading (ccv snapshots) then muxes the spliced value with the
+// pre-branch value automatically.
+void UhdmImporter::record_comb_partial_write(const RTLIL::SigSpec& lhs,
+                                             const RTLIL::SigSpec& rhs) {
+    if (in_always_ff_body_mode || in_always_ff_context) return;
+    if (lhs.empty() || lhs.chunks().size() != 1) return;
+    const RTLIL::SigChunk fc = *lhs.chunks().begin();
+    if (!fc.wire || fc.width >= fc.wire->width) return;   // full writes handled elsewhere
+    std::string bn = fc.wire->name.str();
+    if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
+    // Only splice when the base ALREADY has an in-flight value (a prior
+    // full write, like branch_unit's `target_address = base + imm`).
+    // CREATING a new entry here is hazardous: LHS imports that consult
+    // comb_read_map would redirect a later partial write's TARGET to the
+    // value (multi-driver on the thread-mux wire — latch_tlb_napot).
+    auto cit = current_comb_values.find(bn);
+    if (cit == current_comb_values.end() ||
+        cit->second.size() != fc.wire->width) return;
+    RTLIL::SigSpec cur = cit->second;
+    RTLIL::SigSpec rv = rhs;
+    if (rv.size() < fc.width) rv.extend_u0(fc.width);
+    else if (rv.size() > fc.width) rv = rv.extract(0, fc.width);
+    cur.replace(fc.offset, rv);
+    current_comb_values[bn] = cur;
+    auto ai = comb_value_aliases.find(bn);
+    if (ai != comb_value_aliases.end()) current_comb_values[ai->second] = cur;
+}
+
 // Emit an assignment in a comb process, mapping LHS to its $0\ temp wire
 void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc) {
     // Size match
@@ -7115,6 +7125,8 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
             }
             off += chunk.width;
         }
+        // Single-chunk PARTIAL write: splice into the in-flight value.
+        record_comb_partial_write(lhs, rhs);
     }
 }
 
@@ -9074,8 +9086,31 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     Arm arm;
                     arm.is_default = (!ci->VpiExprs() || ci->VpiExprs()->empty());
                     // Build match = OR of (sel == cmpval) over this item's labels.
+                    // `case … inside` wraps the label set in ONE bare vpiInsideOp
+                    // (no left operand — the selector is implicit) whose members
+                    // are single-element vpiListOps; importing that as an
+                    // expression mangles it into one nonsense compare (ariane_pkg
+                    // op_is_branch classified only garbage as branches).  Flatten
+                    // InsideOp/ListOp wrappers to the individual label values.
                     if (!arm.is_default && ci->VpiExprs()) {
-                        for (auto e : *ci->VpiExprs()) {
+                        std::vector<const any*> labels;
+                        std::function<void(const any*)> add_label =
+                            [&](const any* le) {
+                                if (le->VpiType() == vpiOperation) {
+                                    auto lop = any_cast<const operation*>(le);
+                                    if ((lop->VpiOpType() == vpiListOp ||
+                                         lop->VpiOpType() == vpiInsideOp) &&
+                                        lop->Operands()) {
+                                        for (auto o : *lop->Operands())
+                                            add_label(o);
+                                        return;
+                                    }
+                                }
+                                labels.push_back(le);
+                            };
+                        for (auto e : *ci->VpiExprs())
+                            add_label(e);
+                        for (auto e : labels) {
                             RTLIL::SigSpec cmp = import_expression(any_cast<const expr*>(e), &func_mapping);
                             int w = std::max(sel.size(), cmp.size());
                             RTLIL::SigSpec s2 = sel, c2 = cmp;
@@ -12986,6 +13021,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // otherwise (Ibex ibex_compressed_decoder cm_rlist_d:
                             // `cm_rlist_d = cm_rlist_init(..); if (cm_rlist_d<=3)…
                             // else cm_rlist_d -= 1`).
+                            if (current_comb_process && !in_always_ff_body_mode &&
+                                    !in_always_ff_context && !lhs_sig.is_wire()) {
+                                // Partial blocking write inside a branch: splice
+                                // into the in-flight value (see helper).
+                                record_comb_partial_write(lhs_sig, rhs_sig);
+                            }
                             if (current_comb_process && !in_always_ff_body_mode &&
                                     !in_always_ff_context && lhs_sig.is_wire()) {
                                 std::string bn = lhs_sig.as_wire()->name.str();
