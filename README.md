@@ -72,12 +72,13 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   including the full Ibex core (`ibex_core`, `ibex_cs_registers`, `ibex_icache`,
   `ibex_top`) — now reads and produces output.
 - **Crashes**: 1 (`memories/wide_all` — upstream Yosys)
-- **Verilator sim-equiv warnings**: 117 (undocumented divergences — now hard errors
-  unless documented in `test/sim_equiv_analyzed.txt`), plus **72 analyzed** known
-  non-bug divergences — of which 58 are sim/synth artefacts where a SAT miter
-  proves UHDM == Verilog, and the rest are uhdm-only don't-care divergences (e.g.
-  `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend can't synthesize the SV so no
-  miter is possible)
+- **Verilator sim-equiv warnings**: 117 known-but-untriaged divergences, baselined
+  in `test/sim_equiv_warn_baseline.txt` (a ratchet: the suite fails on any warning
+  NOT in the baseline, and the baseline may only shrink as entries are triaged);
+  plus **72 analyzed** known non-bug divergences — of which 58 are sim/synth
+  artefacts where a SAT miter proves UHDM == Verilog, and the rest are uhdm-only
+  don't-care divergences (e.g. `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend
+  can't synthesize the SV so no miter is possible)
 
 > The **internal** SystemVerilog suite alone is **823 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output, including the
