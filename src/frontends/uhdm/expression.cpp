@@ -3744,7 +3744,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
-        if (res && res->UhdmType() == uhdmconstant) {
+        // invalidValue MUST gate the result: a partially-failed reduction
+        // (e.g. `(XLEN'(1) << (XLEN-1)) | XLEN'(5)` with a void-typespec
+        // cast) returns a GARBAGE constant with invalidValue=true — CVA6
+        // decoder folded every INTERRUPTS.* field to 1'b1 through this.
+        if (res && !invalidValue && res->UhdmType() == uhdmconstant) {
             return import_constant(dynamic_cast<const UHDM::constant*>(res));
         }
     }
@@ -4948,8 +4952,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             }
                         }
                         // Otherwise compute the width from the type itself
-                        // (byte/int/short/long/typedef/struct/logic).
-                        if (target_width <= 0) {
+                        // (byte/int/short/long/typedef/struct/logic).  A
+                        // VOID typespec means the cast width did NOT
+                        // elaborate (`CVA6Cfg.XLEN'(expr)`) — get_width would
+                        // default it to 1 and silently TRUNCATE the operand
+                        // (CVA6 INTERRUPTS.* collapsed through
+                        // `(XLEN'(1)<<(XLEN-1))`); leave it unresolved so the
+                        // pass-through fallback below keeps the operand.
+                        if (target_width <= 0 &&
+                            ts->UhdmType() != uhdmvoid_typespec) {
                             int w = get_width_from_typespec(ts, current_instance);
                             if (w > 0) target_width = w;
                         }
@@ -5051,6 +5062,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     module->addPos(NEW_ID, operand, result_wire, src_signed);
                     return RTLIL::SigSpec(result_wire);
                 }
+            }
+            // Cast with an unresolvable width (`CVA6Cfg.XLEN'(expr)` leaves a
+            // void_typespec when the width expression didn't elaborate):
+            // return the operand UNCHANGED rather than an empty SigSpec —
+            // Surelog pre-sizes the operand constants where it can (the
+            // `XLEN'(1)` literal arrives as a 64-bit constant), and an empty
+            // result poisons every enclosing fold (CVA6 INTERRUPTS.* pattern
+            // exprs collapsed through `(XLEN'(1)<<(XLEN-1)) | XLEN'(5)`).
+            if (operands.size() == 1 && !operands[0].empty()) {
+                if (mode_debug)
+                    log("    Cast with unresolved width: passing operand through (%d bits)\n",
+                        operands[0].size());
+                return operands[0];
             }
             log_warning("Unsupported cast operation\n");
             return RTLIL::SigSpec();
@@ -10209,29 +10233,122 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
-            // Second chance: decodeHierPath (above) returned the field's
-            // VALUE EXPRESSION from the struct-value parameter's assignment
-            // pattern (INTERRUPTS.S_TIMER → `(XLEN'(1)<<(XLEN-1)) | 5`).
-            // reduceExpr can fail on the hier_path in a re-passed context,
-            // but the member expression itself folds under force_const_fold.
-            // Without this the field returned width-only X and CVA6 decoder's
-            // interrupt_cause lost every INTERRUPTS.* constant.
-            if (member) {
-                if (auto mex = dynamic_cast<const UHDM::expr*>(member)) {
-                    if (member->UhdmType() == uhdmoperation ||
-                        member->UhdmType() == uhdmconstant) {
-                        bool saved_fcf = force_const_fold;
-                        int saved_ctx = expression_context_width;
-                        force_const_fold = true;
-                        expression_context_width = 0;
-                        RTLIL::SigSpec v = import_expression(mex, input_mapping);
-                        expression_context_width = saved_ctx;
-                        force_const_fold = saved_fcf;
-                        if (!v.empty() && v.is_fully_const() && v.is_fully_def()) {
-                            if (mode_debug)
-                                log("    hier_path '%s' folded via member value expression\n",
-                                    path_name.c_str());
-                            return v;
+            // Second chance for a struct-VALUE parameter field
+            // (INTERRUPTS.S_TIMER → `(XLEN'(1)<<(XLEN-1)) | 5`): reduceExpr
+            // fails on the hier_path in a re-passed context, and
+            // decodeHierPath's MEMBER return proved UNRELIABLE (it handed
+            // back the same member for every field — all INTERRUPTS.* folded
+            // to 0x1).  Resolve the field's expression DIRECTLY from the
+            // parameter's assignment pattern: find the elaborated instance's
+            // param_assign for the base parameter, walk the pattern's
+            // tagged_patterns for the matching field name, fold that expr.
+            {
+                const UHDM::parameter* base_param = nullptr;
+                if (uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty())
+                    if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                        base_param = dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+                size_t dot1 = path_name.find('.');
+                std::string field_name = (dot1 != std::string::npos &&
+                                          path_name.find('.', dot1 + 1) == std::string::npos)
+                                             ? path_name.substr(dot1 + 1)
+                                             : std::string();
+                const UHDM::module_inst* mi =
+                    dynamic_cast<const UHDM::module_inst*>(current_instance);
+                if (base_param && !field_name.empty() && mi && mi->Param_assigns()) {
+                    const UHDM::any* prhs = nullptr;
+                    for (auto pa : *mi->Param_assigns())
+                        if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) ==
+                                             std::string(base_param->VpiName())) {
+                            prhs = pa->Rhs();
+                            break;
+                        }
+                    if (prhs && prhs->UhdmType() == uhdmoperation) {
+                        auto pop = any_cast<const operation*>(prhs);
+                        if (pop->VpiOpType() == vpiAssignmentPatternOp && pop->Operands()) {
+                            // Elaborated patterns often carry BARE field
+                            // expressions in struct DECLARATION ORDER (tags
+                            // stripped).  Find the struct definition from the
+                            // instance's type parameters (the unique one
+                            // containing this field), then index positionally.
+                            bool any_tagged = false;
+                            for (auto o : *pop->Operands())
+                                if (o->UhdmType() == uhdmtagged_pattern) { any_tagged = true; break; }
+                            if (!any_tagged && mi->Parameters()) {
+                                const UHDM::struct_typespec* sts = nullptr;
+                                int fidx = -1, nmem = 0;
+                                bool ambiguous = false;
+                                for (auto p2 : *mi->Parameters()) {
+                                    auto tp2 = dynamic_cast<const UHDM::type_parameter*>(p2);
+                                    if (!tp2 || !tp2->Typespec()) continue;
+                                    auto ats2 = dynamic_cast<const UHDM::struct_typespec*>(
+                                        tp2->Typespec()->Actual_typespec());
+                                    if (!ats2 || !ats2->Members()) continue;
+                                    int i2 = 0;
+                                    for (auto m2 : *ats2->Members()) {
+                                        if (std::string(m2->VpiName()) == field_name) {
+                                            if (sts && sts != ats2) ambiguous = true;
+                                            sts = ats2; fidx = i2;
+                                            nmem = (int)ats2->Members()->size();
+                                        }
+                                        i2++;
+                                    }
+                                }
+                                if (sts && !ambiguous && fidx >= 0 &&
+                                    (int)pop->Operands()->size() == nmem) {
+                                    auto fe = dynamic_cast<const expr*>(
+                                        (*pop->Operands())[fidx]);
+                                    if (fe) {
+                                        bool saved_fcf = force_const_fold;
+                                        int saved_ctx = expression_context_width;
+                                        force_const_fold = true;
+                                        expression_context_width = 0;
+                                        RTLIL::SigSpec v = import_expression(fe, input_mapping);
+                                        expression_context_width = saved_ctx;
+                                        force_const_fold = saved_fcf;
+                                        if (!v.empty() && v.is_fully_const() &&
+                                            v.is_fully_def()) {
+                                            // NB: do NOT shrink to `width` —
+                                            // it may be the garbage default 1
+                                            // from the failed typespec dig
+                                            // (truncated 0x8000000000000005
+                                            // to 1'b1).  Return the folded
+                                            // value at its natural size.
+                                            if (width > v.size())
+                                                v.extend_u0(width);
+                                            if (mode_debug)
+                                                log("    hier_path '%s' folded via positional pattern member %d\n",
+                                                    path_name.c_str(), fidx);
+                                            return v;
+                                        }
+                                    }
+                                }
+                            }
+                            for (auto o : *pop->Operands()) {
+                                if (o->UhdmType() != uhdmtagged_pattern) continue;
+                                auto tp = any_cast<const UHDM::tagged_pattern*>(o);
+                                std::string fname;
+                                if (tp->Typespec() && tp->Typespec()->Actual_typespec())
+                                    fname = std::string(
+                                        tp->Typespec()->Actual_typespec()->VpiName());
+                                if (fname != field_name || !tp->Pattern()) continue;
+                                bool saved_fcf = force_const_fold;
+                                int saved_ctx = expression_context_width;
+                                force_const_fold = true;
+                                expression_context_width = 0;
+                                RTLIL::SigSpec v = import_expression(
+                                    any_cast<const expr*>(tp->Pattern()), input_mapping);
+                                expression_context_width = saved_ctx;
+                                force_const_fold = saved_fcf;
+                                if (!v.empty() && v.is_fully_const() && v.is_fully_def()) {
+                                    if (width > 0 && v.size() < width)
+                                        v.extend_u0(width);
+                                    if (mode_debug)
+                                        log("    hier_path '%s' folded via assignment-pattern member '%s'\n",
+                                            path_name.c_str(), field_name.c_str());
+                                    return v;
+                                }
+                                break;
+                            }
                         }
                     }
                 }
