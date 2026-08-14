@@ -658,7 +658,11 @@ struct UhdmImporter {
     // Resolve `CFG.BUS.DAT` where the base is a struct-typed PARAMETER (Surelog
     // substitutes `sub.CFG` -> the interface's `CFG` parameter directly in an
     // elaborated port range like `[CFG.BUS.DAT-1:0]`); "" on failure.
-    std::string eval_param_struct_field(const UHDM::hier_path* hp);
+    // *width_out (optional) gets the field's DECLARED width (bit -> 1,
+    // int -> 32, ...) when determinable, so self-determined contexts (concat
+    // selectors) don't see a 32-bit-inflated constant.
+    std::string eval_param_struct_field(const UHDM::hier_path* hp,
+                                        int* width_out = nullptr);
     // Width of a port from the AllModules DEFINITION's typespec (whose range
     // refers to the module's own parameter, resolvable via the RTLIL module's
     // parameter_default_values); <=0 if not found or not parameter-driven.
@@ -1039,8 +1043,12 @@ struct UhdmImporter {
 
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
-    bool calculate_struct_member_offset(const UHDM::typespec* ts, const std::string& member_path, 
-                                       const UHDM::scope* inst, int& bit_offset, int& member_width);
+    // *final_member_ts (optional) gets the FINAL path member's actual typespec
+    // (null if the path ended in an explicit packed slice) so callers can read
+    // its declared range (e.g. a `logic [24:20]` field's non-zero low bound).
+    bool calculate_struct_member_offset(const UHDM::typespec* ts, const std::string& member_path,
+                                       const UHDM::scope* inst, int& bit_offset, int& member_width,
+                                       const UHDM::typespec** final_member_ts = nullptr);
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);

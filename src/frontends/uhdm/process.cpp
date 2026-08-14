@@ -12417,6 +12417,15 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
     bool has_full_case_attr = apply_case_qualifier_attrs(uhdm_case, sw);
 
+    // A `default:` label may appear ANYWHERE in the case statement (LRM 12.5)
+    // but only applies when no other label matches.  RTLIL switch cases are
+    // priority-ordered and the default rule has an EMPTY compare (matches
+    // everything), so a source-leading default would swallow every later arm
+    // (CVA6 decoder's R4-type `unique case (opcode)` lists `default:
+    // op = FMADD` FIRST — FNMSUB/FNMADD decoded as FMADD).  Emit defaults last.
+    std::stable_partition(items.begin(), items.end(),
+                          [](const ItemData& d) { return !d.exprs.empty(); });
+
     // Snapshot the pre-case blocking values, and capture each arm's post-body
     // values (started from the snapshot) so thread_comb_case sees the true
     // per-arm value — including signals written inside nested if/case — rather
@@ -13366,6 +13375,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             // where the Verilog frontend produces pmuxes.
             bool has_full_case_attr =
                 apply_case_qualifier_attrs(uhdm_case, sw);
+
+            // Defaults last regardless of source position (LRM 12.5): a
+            // leading `default:` would otherwise become the FIRST (empty-
+            // compare) priority-ordered RTLIL case and swallow every later
+            // arm — see import_case_stmt_comb (CVA6 decoder R4-type case).
+            std::stable_partition(ci_data.begin(), ci_data.end(),
+                                  [](const CaseItemData& d) { return !d.exprs.empty(); });
 
             // Snapshot pre-case blocking values; capture each arm's post-body
             // state (started from the snapshot) so thread_comb_case sees the

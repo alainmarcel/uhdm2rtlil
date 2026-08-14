@@ -1435,7 +1435,8 @@ bool UhdmImporter::eval_iface_local_const(const interface_inst* iface,
 // substitutes `sub.CFG` with the connected interface's `CFG` parameter directly,
 // so the elaborated range reads `[CFG.BUS.DAT-1:0]`.  Resolves via pe[0]'s own
 // Actual_group (no current_instance needed).  "" on failure.
-std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
+std::string UhdmImporter::eval_param_struct_field(const hier_path* hp,
+                                                  int* width_out) {
     if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return "";
     auto& pe = *hp->Path_elems();
     auto bref = dynamic_cast<const ref_obj*>(pe[0]);
@@ -1563,9 +1564,21 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
                     if (std::string(m->VpiName()) == field) {
                         const expr* mv = m->Actual_value();
                         if (!mv) mv = m->Default_value();
-                        if (auto c = dynamic_cast<const constant*>(mv))
+                        if (auto c = dynamic_cast<const constant*>(mv)) {
+                            // Report the member's DECLARED width (bit -> 1),
+                            // not the stored constant's vpiSize (Surelog keeps
+                            // build_config-folded bit fields as 64-bit
+                            // constants; a 32/64-bit `CVA6Cfg.RVB` in a concat
+                            // selector `{RVB, RVZiCond}` matches no 2-bit case
+                            // label).
+                            if (width_out && m->Typespec())
+                                if (auto mts = m->Typespec()->Actual_typespec()) {
+                                    int w = get_width_from_typespec(mts, nullptr);
+                                    if (w > 0) *width_out = w;
+                                }
                             return std::to_string(parse_vpi_value_to_int(
                                 std::string(c->VpiValue())));
+                        }
                         break;
                     }
             }
@@ -1585,8 +1598,15 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
         val = next;
         cur_ts = next_ts;
     }
-    if (auto c = dynamic_cast<const constant*>(val))
+    if (auto c = dynamic_cast<const constant*>(val)) {
+        // cur_ts is the FINAL member's actual typespec (from
+        // struct_member_index) — report its declared width (see fast path).
+        if (width_out && cur_ts) {
+            int w = get_width_from_typespec(cur_ts, nullptr);
+            if (w > 0) *width_out = w;
+        }
         return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
+    }
     return "";
 }
 

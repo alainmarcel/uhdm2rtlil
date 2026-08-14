@@ -6,6 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <algorithm>
 #include <uhdm/logic_var.h>
 #include <uhdm/struct_var.h>
 #include <uhdm/union_var.h>
@@ -336,8 +337,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 
                 sw->cases.push_back(item_case);
             }
+            // A `default:` may appear anywhere in the source (LRM 12.5) but
+            // only applies when no other label matches; RTLIL cases are
+            // priority-ordered and empty-compare matches everything, so move
+            // defaults last (CVA6 decoder R4-type case lists default FIRST).
+            std::stable_partition(sw->cases.begin(), sw->cases.end(),
+                                  [](const RTLIL::CaseRule* c) { return !c->compare.empty(); });
         }
-        
+
         // Add a default case if one doesn't exist (matching Verilog frontend behavior)
         // Check if we already have a default case (one with empty compare list)
         bool has_default = false;
@@ -7036,12 +7043,15 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // current_instance, so it also fixes port-width evaluation where the width
     // helper runs with no instance context (degu SoC tcb_dev_gpio sys_wdt/sys_rdt).
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
-        std::string v = eval_param_struct_field(uhdm_hier);
+        int fw = 32;  // field's declared width; bit fields must fold to 1 bit
+                      // so self-determined contexts (`{CVA6Cfg.RVB,
+                      // CVA6Cfg.RVZiCond}` case selector) keep their SV width
+        std::string v = eval_param_struct_field(uhdm_hier, &fw);
         if (!v.empty()) {
             int iv = atoi(v.c_str());
-            log("    hier_path: %s -> %d via struct parameter field\n",
-                path_name.c_str(), iv);
-            return RTLIL::SigSpec(RTLIL::Const(iv, 32));
+            log("    hier_path: %s -> %d via struct parameter field (w=%d)\n",
+                path_name.c_str(), iv, fw);
+            return RTLIL::SigSpec(RTLIL::Const(iv, fw > 0 ? fw : 32));
         }
     }
     // Cross-module reference (XMR) READ: `u_processor.internal_ready` where
@@ -9876,6 +9886,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))  rts = lv->Typespec();
                         else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
                         else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+                        else if (auto uv = dynamic_cast<const UHDM::union_var*>(kv.first))  rts = uv->Typespec();
                         if (rts) ts = rts->Actual_typespec();
                         if (ts) break;
                     }
@@ -9892,6 +9903,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 else if (auto sn = dynamic_cast<const UHDM::struct_net*>(ag)) rts = sn->Typespec();
                                 else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag))  rts = lv->Typespec();
                                 else if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rts = sv->Typespec();
+                                else if (auto uv = dynamic_cast<const UHDM::union_var*>(ag))  rts = uv->Typespec();
                                 if (rts) ts = rts->Actual_typespec();
                             }
                         }
@@ -9951,6 +9963,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                     // Field offset within the element struct.
                     int field_offset = 0, field_width = base_wire->width;
+                    const typespec* final_field_ts = nullptr;
                     if (split < names.size()) {
                         std::string remaining;
                         for (size_t j = split; j < names.size(); j++) {
@@ -9958,7 +9971,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             remaining += names[j];
                         }
                         off_ok = ts && calculate_struct_member_offset(
-                                           ts, remaining, inst, field_offset, field_width);
+                                           ts, remaining, inst, field_offset, field_width,
+                                           &final_field_ts);
                     }
                     // Array-element offset from any bit_select in the matched
                     // prefix (`sub.req_dly[DLY]`).  Stride = the element struct
@@ -9978,8 +9992,72 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (!ix.is_fully_const()) { off_ok = false; break; }
                         elem_off += ix.as_const().as_int() * elem_w;
                     }
-                    // Field range is treated as 0-based (LSB at bit 0).  Compute
-                    // the slice's LSB position and length for each form.
+                    // The select indices are in the field's DECLARED coordinates
+                    // (a `logic [24:20] rs2` field selects `rs2[22:20]`, not
+                    // `[2:0]`), and a packed-ARRAY member indexes in ELEMENT
+                    // units.  Read the final member's declared outer range
+                    // (low/high/direction) and element width so the index maps
+                    // to a field-relative bit offset.  Fields declared [N-1:0]
+                    // (decl_low 0, elem_w 1) reduce to the previous 0-based
+                    // math.  Without this, `instr.rftype.rs2[22:20]` through a
+                    // packed UNION overshot the bounds check and collapsed to a
+                    // single bit via the decodeHierPath fallback (CVA6 decoder
+                    // FCVT source-format check accepted illegal encodings).
+                    int decl_low = 0, decl_high = 0, sel_elem_w = 1;
+                    bool decl_asc = false, have_decl = false;
+                    if (final_field_ts) {
+                        const UHDM::VectorOfrange* mranges = nullptr;
+                        const UHDM::ref_typespec* elem_rts = nullptr;
+                        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(final_field_ts)) {
+                            mranges = lt->Ranges();
+                            elem_rts = lt->Elem_typespec();
+                        } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(final_field_ts)) {
+                            mranges = bt->Ranges();
+                        } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(final_field_ts)) {
+                            mranges = pt->Ranges();
+                            elem_rts = pt->Elem_typespec();
+                        } else if (auto at = dynamic_cast<const UHDM::array_typespec*>(final_field_ts)) {
+                            mranges = at->Ranges();
+                            elem_rts = at->Elem_typespec();
+                        }
+                        if (mranges && !mranges->empty()) {
+                            auto r0 = (*mranges)[0];
+                            RTLIL::SigSpec rl = import_expression(r0->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
+                            if (rl.is_fully_const() && rr.is_fully_const()) {
+                                int rli = rl.as_const().as_int();
+                                int rri = rr.as_const().as_int();
+                                decl_low = std::min(rli, rri);
+                                decl_high = std::max(rli, rri);
+                                decl_asc = rli < rri;
+                                have_decl = true;
+                            }
+                            int inner_w = 1;
+                            for (size_t ri = 1; ri < mranges->size(); ri++) {
+                                auto rn = (*mranges)[ri];
+                                RTLIL::SigSpec il = import_expression(rn->Left_expr(), input_mapping);
+                                RTLIL::SigSpec ir = import_expression(rn->Right_expr(), input_mapping);
+                                if (il.is_fully_const() && ir.is_fully_const())
+                                    inner_w *= std::abs(il.as_const().as_int() -
+                                                        ir.as_const().as_int()) + 1;
+                            }
+                            sel_elem_w = inner_w;
+                            if (elem_rts && elem_rts->Actual_typespec()) {
+                                int ew = get_width_from_typespec(
+                                    elem_rts->Actual_typespec(), inst);
+                                if (ew > 0) sel_elem_w *= ew;
+                            }
+                            if (sel_elem_w < 1) sel_elem_w = 1;
+                        }
+                    }
+                    // Map an index range [ilo..ihi] (declared coordinates) to the
+                    // field-relative bit offset of its LSB.
+                    auto idx_to_bit_lo = [&](int ilo, int ihi) -> int {
+                        if (!have_decl) return ilo * sel_elem_w;
+                        return decl_asc ? (decl_high - ihi) * sel_elem_w
+                                        : (ilo - decl_low) * sel_elem_w;
+                    };
+                    // Compute the slice's LSB position and length for each form.
                     int lsb = 0, len = 0;
                     bool bounds_ok = false;
                     if (is_ps) {
@@ -9987,8 +10065,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         RTLIL::SigSpec rs = import_expression(ps->Right_range(), input_mapping);
                         if (ls.is_fully_const() && rs.is_fully_const()) {
                             int l = ls.as_int(), r = rs.as_int();
-                            lsb = std::min(l, r);
-                            len = std::abs(l - r) + 1;
+                            int ilo = std::min(l, r), ihi = std::max(l, r);
+                            lsb = idx_to_bit_lo(ilo, ihi);
+                            len = (ihi - ilo + 1) * sel_elem_w;
                             bounds_ok = true;
                         }
                     } else if (is_ips) {
@@ -9998,9 +10077,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int base = bs.as_int(), w = ws.as_int();
                             // vpiPosIndexed `[base +: w]` -> [base + w-1 : base];
                             // otherwise `[base -: w]` -> [base : base - w + 1].
-                            lsb = (ips->VpiIndexedPartSelectType() == vpiPosIndexed)
-                                      ? base : base - w + 1;
-                            len = w;
+                            int ilo = (ips->VpiIndexedPartSelectType() == vpiPosIndexed)
+                                          ? base : base - w + 1;
+                            lsb = idx_to_bit_lo(ilo, ilo + w - 1);
+                            len = w * sel_elem_w;
                             bounds_ok = true;
                         }
                     } else if (is_bitsel) {
@@ -10011,8 +10091,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         // has no remaining field and is left to other handlers.
                         RTLIL::SigSpec ix = import_expression(fbs->VpiIndex(), input_mapping);
                         if (split < names.size() && ix.is_fully_const()) {
-                            lsb = ix.as_const().as_int();
-                            len = 1;
+                            int ib = ix.as_const().as_int();
+                            lsb = idx_to_bit_lo(ib, ib);
+                            len = sel_elem_w;
                             bounds_ok = true;
                         }
                     } else {
@@ -10395,8 +10476,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 }
 
 // Calculate bit offset and width for struct member access
-bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std::string& member_path, 
-                                                 const scope* inst, int& bit_offset, int& member_width) {
+bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std::string& member_path,
+                                                 const scope* inst, int& bit_offset, int& member_width,
+                                                 const typespec** final_member_ts) {
     if (!ts || member_path.empty()) {
         return false;
     }
@@ -10535,6 +10617,8 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
         // For the next iteration, use the member's typespec
         current_ts = found_member_ts;
     }
+
+    if (final_member_ts) *final_member_ts = current_ts;
 
     return member_width > 0;
 }
