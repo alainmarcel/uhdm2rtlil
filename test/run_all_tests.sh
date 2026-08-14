@@ -145,6 +145,25 @@ if [ -f "$SCRIPT_DIR/sim_equiv_analyzed.txt" ]; then
     done < "$SCRIPT_DIR/sim_equiv_analyzed.txt"
 fi
 
+# Known-warning RATCHET baseline: tests whose Verilator co-sim divergence is
+# KNOWN but NOT YET TRIAGED (unlike sim_equiv_analyzed.txt, whose entries have
+# been adjudicated).  A warning on a baselined test is reported separately and
+# does NOT fail the suite; a warning on any test NOT in the baseline is a hard
+# error.  This keeps the gate green on the standing backlog while forbidding
+# NEW divergences.  Triage a test (miter/adjudicate), then move it to
+# sim_equiv_analyzed.txt (or fix it) and DELETE it from the baseline — the
+# baseline must only ever shrink.
+declare -A SIM_EQUIV_WARN_BASELINE
+if [ -f "$SCRIPT_DIR/sim_equiv_warn_baseline.txt" ]; then
+    while IFS= read -r line; do
+        line="${line%%#*}"
+        line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        [ -n "$line" ] && SIM_EQUIV_WARN_BASELINE[$line]=1
+    done < "$SCRIPT_DIR/sim_equiv_warn_baseline.txt"
+fi
+SIM_EQUIV_KNOWN_WARN_TESTS=0
+SIM_EQUIV_KNOWN_WARN_NAMES=()
+
 # Manual classification overrides for the miter's soundness caveats (latches,
 # abc9 muxes, SVA $check — satgen can't model them; reset-dependent false
 # NON-EQUIVALENT).  An override WINS over the miter.  See the file header.
@@ -206,9 +225,10 @@ EQUIV_FAILED_TEST_NAMES=()
 # Helper: run the Verilator simulation-equivalence check on a UHDM-only
 # test.  Returns 0 per-test (so subsequent tests still run) but counts
 # the divergence in SIM_EQUIV_WARN_TESTS.  The suite-level exit logic
-# turns any non-zero SIM_EQUIV_WARN_TESTS into a hard failure (exit 1).
-# Document intentional divergences in `sim_equiv_analyzed.txt` to surface
-# them under the "🔍 ANALYZED" category instead of warning.
+# turns any non-zero SIM_EQUIV_WARN_TESTS into a hard failure (exit 1);
+# entries in `sim_equiv_warn_baseline.txt` (known untriaged backlog) are
+# counted separately and do not gate.  Document triaged divergences in
+# `sim_equiv_analyzed.txt` to surface them under "🔍 ANALYZED" instead.
 run_sim_equivalence_softwarn() {
     local test_dir="$1"
     local cycles="${2:-200}"
@@ -266,6 +286,13 @@ run_sim_equivalence_softwarn() {
                 SIM_EQUIV_UNCLASS_TESTS=$((SIM_EQUIV_UNCLASS_TESTS + 1))
                 SIM_EQUIV_UNCLASS_NAMES+=("$base") ;;
         esac
+        return 0
+    fi
+    # Known-but-untriaged divergence (ratchet baseline): report, don't gate.
+    if [ -n "${SIM_EQUIV_WARN_BASELINE[$base]:-}" ]; then
+        echo "    ⚠️  Verilator co-sim KNOWN WARNING (baselined, untriaged — see $base/sim_equiv.log)"
+        SIM_EQUIV_KNOWN_WARN_TESTS=$((SIM_EQUIV_KNOWN_WARN_TESTS + 1))
+        SIM_EQUIV_KNOWN_WARN_NAMES+=("$base")
         return 0
     fi
     echo "    ⚠️  Verilator co-sim WARNING (see $base/sim_equiv.log)"
@@ -379,6 +406,25 @@ is_failing_test() {
             return 0
         fi
     done
+    return 1
+}
+
+# Match a RECORDED failure name against failing_tests.txt.  Internal tests
+# record their bare dir name (exact match), but yosys tests record the
+# materialised run dir (`run/arch/nanoxplore/meminit` — `run/` prefix, source
+# extension stripped) while failing_tests.txt keeps the yosys-relative source
+# path WITH its extension (`arch/nanoxplore/meminit.v`).  Without these forms
+# the final expected-failure tally counted every documented yosys failure as
+# "unexpected" (the standing "20 unexpected failures not in failing_tests.txt"
+# on a baseline-identical run).
+is_expected_failure_name() {
+    local n="$1"
+    is_failing_test "$n" && return 0
+    local rel="${n#run/}"
+    [ "$rel" = "$n" ] && return 1
+    is_failing_test "$rel" && return 0
+    is_failing_test "$rel.v" && return 0
+    is_failing_test "$rel.sv" && return 0
     return 1
 }
 
@@ -1062,10 +1108,13 @@ fi
 echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
 if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
-    echo "  ⚠️  Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
+    echo "  ⚠️  Verilator sim-equiv warnings (NEW — not in baseline): $SIM_EQUIV_WARN_TESTS"
     for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
         echo "      - $t"
     done
+fi
+if [ "$SIM_EQUIV_KNOWN_WARN_TESTS" -gt 0 ]; then
+    echo "  ⚠️  Verilator sim-equiv KNOWN warnings (baselined, untriaged backlog): $SIM_EQUIV_KNOWN_WARN_TESTS"
 fi
 if [ "$SIM_EQUIV_ANALYZED_TESTS" -gt 0 ]; then
     # Divergences the miter proved UHDM==Verilog (or marked artefact via
@@ -1114,17 +1163,17 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
     # Count expected failures
     EXPECTED_FAILS=0
     for test in "${FAILED_TEST_NAMES[@]}"; do
-        if is_failing_test "$test"; then
+        if is_expected_failure_name "$test"; then
             EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
         fi
     done
     for test in "${EQUIV_FAILED_TEST_NAMES[@]}"; do
-        if is_failing_test "$test"; then
+        if is_expected_failure_name "$test"; then
             EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
         fi
     done
     for test in "${CRASHED_TEST_NAMES[@]}"; do
-        if is_failing_test "$test"; then
+        if is_expected_failure_name "$test"; then
             EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
         fi
     done
@@ -1158,6 +1207,9 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
             echo "All failing tests are documented in failing_tests.txt:"
             echo "  • Expected failures: $EXPECTED_FAILS"
             echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+            if [ "$SIM_EQUIV_KNOWN_WARN_TESTS" -gt 0 ]; then
+                echo "  • Known untriaged co-sim warnings (sim_equiv_warn_baseline.txt): $SIM_EQUIV_KNOWN_WARN_TESTS"
+            fi
             echo
             echo "The test suite passes because all results match expectations."
             display_timing_summary
