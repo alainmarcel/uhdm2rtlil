@@ -1,0 +1,18 @@
+# Sound UHDM-vs-slang miter (read_verilog cannot parse this construct —
+# it hard-errors "Latch inferred" on the packed-array-of-struct writes).
+# Run from the test dir after test_uhdm_workflow.sh:
+#   ../../out/current/bin/yosys -m ../../build/uhdm2rtlil.so test_slang_equiv.ys
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top packed_struct_array_shift
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename packed_struct_array_shift gold
+design -stash gold
+read_slang dut.sv --top packed_struct_array_shift
+hierarchy -check -top packed_struct_array_shift
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename packed_struct_array_shift gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+sat -verify -prove-asserts -seq 8 -set-init-zero miter

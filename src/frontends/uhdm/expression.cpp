@@ -3781,7 +3781,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             return import_constant(dynamic_cast<const UHDM::constant*>(res));
         }
     }
-    
+
+    // No RTLIL module to emit into: width probing (type_param_signature) runs
+    // BEFORE import_module creates `module`, and everything below this point
+    // creates wires/cells.  A non-foldable operation here (cvxif driver's
+    // `parameter type` port ranges with unresolved params) previously
+    // SEGFAULTed in module->addWire.  Returning empty yields a stable
+    // approximate width, which is all the signature needs (same contract as
+    // import_hier_path's null-module guard).
+    if (!module) {
+        if (mode_debug)
+            log("    import_operation: no RTLIL module yet — cannot emit cells, returning empty\n");
+        return RTLIL::SigSpec();
+    }
+
     if (mode_debug)
         log("    Importing operation: %d\n", op_type);
     
@@ -6001,12 +6014,106 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     if (left >= 0 && right >= 0) {
         int width = abs(left - right) + 1;
         int offset = std::min(left, right);
-        
+
+        // Packed-ARRAY base (`ras_t [DEPTH-1:0] stack`): the part-select
+        // indexes ELEMENTS of the outer packed dimension, not bits — scale by
+        // the element width and map through the declared range
+        // (low/high/direction).  Without this the CVA6 ras stack shift
+        // `stack_d[DEPTH-1:1] = stack_q[DEPTH-2:0]` moved single BITS instead
+        // of 9-bit struct elements.  Plain vectors (elem_w 1) keep bit math.
+        {
+            const UHDM::ref_typespec* rts = nullptr;
+            if (auto ag = uhdm_part->Actual_group()) {
+                if (auto v = dynamic_cast<const UHDM::variables*>(ag)) rts = v->Typespec();
+                else if (auto n = dynamic_cast<const UHDM::net*>(ag)) rts = n->Typespec();
+            }
+            // The part_select often carries no Actual_group — recover the base
+            // net/variable's typespec by NAME from the current instance.
+            if (!rts && !base_signal_name.empty()) {
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(
+                        current_instance ? current_instance
+                                         : dynamic_cast<const UHDM::module_inst*>(inst))) {
+                    if (mi->Nets())
+                        for (auto n0 : *mi->Nets())
+                            if (auto n = dynamic_cast<const UHDM::net*>(n0))
+                                if (std::string(n->VpiName()) == base_signal_name &&
+                                    n->Typespec()) { rts = n->Typespec(); break; }
+                    if (!rts && mi->Variables())
+                        for (auto v0 : *mi->Variables())
+                            if (auto v = dynamic_cast<const UHDM::variables*>(v0))
+                                if (std::string(v->VpiName()) == base_signal_name &&
+                                    v->Typespec()) { rts = v->Typespec(); break; }
+                }
+            }
+            const UHDM::typespec* at = rts ? rts->Actual_typespec() : nullptr;
+            const UHDM::VectorOfrange* pranges = nullptr;
+            const UHDM::ref_typespec* elem_rts = nullptr;
+            // Elaborated `packed_array_var` Actual_group: the var carries no
+            // Typespec, but its own Ranges() (already constant-folded) and
+            // Elements()[0]'s typespec give the outer dim + element type.
+            if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(
+                    uhdm_part->Actual_group())) {
+                pranges = pav->Ranges();
+                if (pav->Elements() && !pav->Elements()->empty())
+                    if (auto ev = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                        elem_rts = ev->Typespec();
+            }
+            if (at) {
+                if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(at)) {
+                    pranges = pt->Ranges();
+                    elem_rts = pt->Elem_typespec();
+                } else if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at)) {
+                    // Typedef'd packed array (`logic_typespec` with
+                    // Elem_typespec) — only when an element type exists;
+                    // a plain multi-range logic vector stays bit-indexed.
+                    if (lt->Elem_typespec()) {
+                        pranges = lt->Ranges();
+                        elem_rts = lt->Elem_typespec();
+                    }
+                }
+            }
+            if (pranges && !pranges->empty() && elem_rts &&
+                elem_rts->Actual_typespec()) {
+                int elem_w = get_width_from_typespec(elem_rts->Actual_typespec(), inst);
+                int inner_w = 1;
+                for (size_t ri = 1; ri < pranges->size(); ri++) {
+                    auto rn = (*pranges)[ri];
+                    RTLIL::SigSpec il = import_expression(rn->Left_expr(), input_mapping);
+                    RTLIL::SigSpec ir = import_expression(rn->Right_expr(), input_mapping);
+                    if (il.is_fully_const() && ir.is_fully_const())
+                        inner_w *= std::abs(il.as_const().as_int() -
+                                            ir.as_const().as_int()) + 1;
+                }
+                if (elem_w > 0) elem_w *= inner_w;
+                auto r0 = (*pranges)[0];
+                RTLIL::SigSpec rl = import_expression(r0->Left_expr(), input_mapping);
+                RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
+                if (elem_w > 1 && rl.is_fully_const() && rr.is_fully_const()) {
+                    int rli = rl.as_const().as_int(), rri = rr.as_const().as_int();
+                    int decl_low = std::min(rli, rri), decl_high = std::max(rli, rri);
+                    bool decl_asc = rli < rri;
+                    int nelem = decl_high - decl_low + 1;
+                    int ilo = std::min(left, right), ihi = std::max(left, right);
+                    // Only when the base really is the whole array (not an
+                    // already-sliced redirect) and the select is in range.
+                    if (base.size() == elem_w * nelem &&
+                        ilo >= decl_low && ihi <= decl_high) {
+                        offset = decl_asc ? (decl_high - ihi) * elem_w
+                                          : (ilo - decl_low) * elem_w;
+                        width = (ihi - ilo + 1) * elem_w;
+                        log("    part_select: packed-array element range [%d:%d] "
+                            "(elem_w=%d) -> bits [%d+:%d]\n",
+                            left, right, elem_w, offset, width);
+                    }
+                }
+            }
+        }
+
         // Bounds check to prevent out-of-bounds access
         int base_width = base.size();
         if (offset >= base_width) {
             // Completely out of bounds - return undefined
-            log_warning("Part select [%d:%d] is out of bounds for signal of width %d, returning undefined\n", 
+            log_warning("Part select [%d:%d] is out of bounds for signal of width %d, returning undefined\n",
                        left, right, base_width);
             return RTLIL::SigSpec(RTLIL::State::Sx, width);
         }
@@ -6576,6 +6683,69 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     int element_width = packed_elem_w;
     int outer_left = packed_outer_l, outer_right = packed_outer_r;
 
+    // Elaborated packed-array-of-STRUCT variable (`dtype [FifoDepth-1:0]
+    // mem_q` with a type-param struct dtype — CVA6 cva6_fifo_v3): the
+    // packed_array_var Actual_group carries no Typespec, but its own Ranges()
+    // (constant-folded) and Elements()[0]'s typespec give the outer dimension
+    // and the element type.  Without this the dynamic select `mem_q[rp_q]`
+    // read/wrote ONE BIT of the array.
+    if (element_width <= 1) {
+        // Extract outer range + element width from an elaborated packed-array
+        // VAR or NET object (`dtype [FifoDepth-1:0] mem_q` with a type-param
+        // struct dtype — CVA6 ras / cva6_fifo_v3): these carry no Typespec but
+        // have their own constant-folded Ranges() and Elements()[0] typespec.
+        auto try_packed_obj = [&](const UHDM::any* obj) {
+            const UHDM::VectorOfrange* prg = nullptr;
+            const UHDM::VectorOfany* pel = nullptr;
+            if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
+                prg = pav->Ranges(); pel = pav->Elements();
+            } else if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
+                prg = pan->Ranges(); pel = pan->Elements();
+            } else return;
+            if (prg && !prg->empty()) {
+                auto r0 = (*prg)[0];
+                if (r0->Left_expr() && r0->Right_expr()) {
+                    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                    RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                    if (l.is_fully_const() && r.is_fully_const()) {
+                        outer_left = l.as_int();
+                        outer_right = r.as_int();
+                    }
+                }
+            }
+            if (pel && !pel->empty())
+                if (auto ev = dynamic_cast<const UHDM::expr*>((*pel)[0]))
+                    if (ev->Typespec() && ev->Typespec()->Actual_typespec()) {
+                        int w = get_width_from_typespec(
+                            ev->Typespec()->Actual_typespec(), inst);
+                        if (w > 1) element_width = w;
+                    }
+        };
+        try_packed_obj(uhdm_bit->Actual_group());
+        // Surelog often leaves the bit_select's Actual_group null (or pointing
+        // at a plain logic_net whose typespec is just the ELEMENT type after a
+        // 1-element array collapse) — find the packed_array_var/net by NAME.
+        if (element_width <= 1 && !signal_name.empty()) {
+            auto mi = dynamic_cast<const UHDM::module_inst*>(
+                current_instance ? current_instance
+                                 : dynamic_cast<const UHDM::module_inst*>(inst));
+            if (mi) {
+                if (mi->Nets())
+                    for (auto n0 : *mi->Nets())
+                        if (std::string(n0->VpiName()) == signal_name) {
+                            try_packed_obj(n0);
+                            if (element_width > 1) break;
+                        }
+                if (element_width <= 1 && mi->Variables())
+                    for (auto v0 : *mi->Variables())
+                        if (std::string(v0->VpiName()) == signal_name) {
+                            try_packed_obj(v0);
+                            if (element_width > 1) break;
+                        }
+            }
+        }
+    }
+
     // Fall back to UHDM typespec detection if no wire attributes
     if (element_width <= 1) {
         if (auto actual_group = uhdm_bit->Actual_group()) {
@@ -6587,6 +6757,27 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             }
             if (net_ref_ts && net_ref_ts->Actual_typespec()) {
                 auto ts = net_ref_ts->Actual_typespec();
+                if (ts->UhdmType() == uhdmpacked_array_typespec) {
+                    // Packed array typespec (`ras_t [DEPTH-1:0]` on a net):
+                    // outer range + element type width.
+                    auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ts);
+                    if (pt->Ranges() && !pt->Ranges()->empty()) {
+                        auto r0 = (*pt->Ranges())[0];
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                outer_left = l.as_int();
+                                outer_right = r.as_int();
+                            }
+                        }
+                    }
+                    if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec()) {
+                        int w = get_width_from_typespec(
+                            pt->Elem_typespec()->Actual_typespec(), inst);
+                        if (w > 1) element_width = w;
+                    }
+                }
                 if (ts->UhdmType() == uhdmlogic_typespec) {
                     auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(ts);
                     if (logic_ts && logic_ts->Ranges() && !logic_ts->Ranges()->empty()) {

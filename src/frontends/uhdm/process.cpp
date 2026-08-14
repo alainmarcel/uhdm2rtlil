@@ -30,6 +30,18 @@ using namespace UHDM;
 // and consult VpiSigned() and the typespec.
 bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
+    // LRM 11.8.1: a bit-select or part-select result is ALWAYS unsigned,
+    // regardless of the base's signedness.  part_select/bit_select EXTEND
+    // ref_obj, so without this early-out they'd fall into the ref_obj branch
+    // below and inherit the base's sign — `FifoDepth[ADDR_DEPTH-1:0] - 1`
+    // (cva6_fifo_v3 wrap compare) sign-extended 1'b1 to -1 and folded to -2.
+    switch (e->VpiType()) {
+        case vpiPartSelect:
+        case vpiBitSelect:
+        case vpiIndexedPartSelect:
+            return false;
+        default: break;
+    }
     if (auto c = any_cast<const UHDM::constant*>(e)) {
         std::string_view deco = c->VpiDecompile();
         if (deco.find("'s") != std::string_view::npos) return true;
@@ -1492,12 +1504,28 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 collect_live_assigned_signals(stmt, true, live_signals);
                 collect_live_assigned_signals(stmt, true, all_signals,
                                               /*fold_guards=*/false);
+                if (mode_debug) {
+                    log("    ff dead-guard prune: live={");
+                    for (auto& n : live_signals) log(" %s", n.c_str());
+                    log(" } all={");
+                    for (auto& n : all_signals) log(" %s", n.c_str());
+                    log(" }\n");
+                }
                 if (live_signals.size() < all_signals.size())
                     assigned_signals.erase(
                         std::remove_if(assigned_signals.begin(), assigned_signals.end(),
                             [&](const AssignedSignal& s){
-                                return all_signals.count(s.name) > 0 &&
-                                       live_signals.count(s.name) == 0;
+                                // Unrolled array-element writes name per-ELEMENT
+                                // temps (`etrigger32_tdata1_q[0]`) while the
+                                // scans record the BASE LHS name — compare the
+                                // `[`-stripped base too (CVA6 trigger_module,
+                                // all regs dead under `if (CVA6Cfg.SDTRIG)`).
+                                std::string base = s.name.substr(0, s.name.find('['));
+                                bool in_all  = all_signals.count(s.name) ||
+                                               all_signals.count(base);
+                                bool in_live = live_signals.count(s.name) ||
+                                               live_signals.count(base);
+                                return in_all && !in_live;
                             }),
                         assigned_signals.end());
 
@@ -1517,6 +1545,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 std::set<std::string> expanded_arrays;
                 collect_dynamic_expanded_array_writes(stmt, expanded_arrays, module);
                 for (const auto& base : expanded_arrays) {
+                    // Respect the dead-guard prune above: an expanded array
+                    // whose writes are ALL under a compile-time-false guard
+                    // must not be re-registered per-element (CVA6
+                    // trigger_module with SDTRIG==0 — re-adding the elements
+                    // produced both-edge sync updates that PROC_DFF rejects
+                    // with "Multiple edge sensitive events").
+                    if (all_signals.count(base) && !live_signals.count(base))
+                        continue;
                     int n = 0;
                     while (module->wire(RTLIL::escape_id(
                                base + "[" + std::to_string(n) + "]"))) n++;
@@ -3190,8 +3226,15 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             assigned_signals.erase(
                 std::remove_if(assigned_signals.begin(), assigned_signals.end(),
                     [&](const AssignedSignal& s){
-                        return all_assigned.count(s.name) > 0 &&
-                               live_assigned.count(s.name) == 0;
+                        // Compare the `[`-stripped base too: unrolled element
+                        // writes name per-element temps while the scans record
+                        // the base LHS name (see the always_ff variant above).
+                        std::string base = s.name.substr(0, s.name.find('['));
+                        bool in_all  = all_assigned.count(s.name) ||
+                                       all_assigned.count(base);
+                        bool in_live = live_assigned.count(s.name) ||
+                                       live_assigned.count(base);
+                        return in_all && !in_live;
                     }),
                 assigned_signals.end());
     }
@@ -10362,10 +10405,34 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         else if (auto lv = dynamic_cast<const UHDM::logic_var*>(actual)) rts = lv->Typespec();
         else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) rts = pv->Typespec();
         else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) rts = pn->Typespec();
-        if (!rts || !rts->Actual_typespec()) return false;
-        auto ats = rts->Actual_typespec();
-        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lt->Ranges();
-        else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pt->Ranges();
+        if (rts && rts->Actual_typespec()) {
+            auto ats = rts->Actual_typespec();
+            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lt->Ranges();
+            else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pt->Ranges();
+        }
+    }
+    // Elaborated packed-array VAR/NET (`dtype [FifoDepth-1:0] mem_n`, dtype a
+    // type-param struct — CVA6 cva6_fifo_v3): no usable typespec on the LHS
+    // ref (a 1-element array even collapses the net typespec to the ELEMENT
+    // struct), but the packed_array_var/net object itself carries the
+    // constant-folded Ranges().  Look it up via Actual_group or by NAME.
+    if (!ranges || ranges->empty()) {
+        auto obj_ranges = [](const UHDM::any* obj) -> const UHDM::VectorOfrange* {
+            if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) return pv->Ranges();
+            if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) return pn->Ranges();
+            return nullptr;
+        };
+        ranges = obj_ranges(actual);
+        if ((!ranges || ranges->empty()) && current_instance) {
+            if (current_instance->Nets())
+                for (auto n0 : *current_instance->Nets())
+                    if (std::string(n0->VpiName()) == base_name)
+                        if (auto r = obj_ranges(n0)) { ranges = r; break; }
+            if ((!ranges || ranges->empty()) && current_instance->Variables())
+                for (auto v0 : *current_instance->Variables())
+                    if (std::string(v0->VpiName()) == base_name)
+                        if (auto r = obj_ranges(v0)) { ranges = r; break; }
+        }
     }
     if (!ranges || ranges->empty()) return false;
     int r0l = 0, r0r = 0;
@@ -10380,9 +10447,12 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     }
     int outer_size = std::abs(r0l - r0r) + 1;
     int outer_low = std::min(r0l, r0r);
-    if (outer_size <= 1) return false;             // plain vector, not an array
     if (base_w % outer_size != 0) return false;
     int elem_w = base_w / outer_size;
+    // A 1-element ARRAY of wide elements (`dtype [0:0] mem` — fifo DEPTH=1)
+    // still element-indexes; only a genuinely 1-bit-element single entry is a
+    // plain vector left to the bit-write paths.
+    if (outer_size <= 1 && elem_w <= 1) return false;
     if (elem_w <= 1 && !idx1_e) return false;      // 1-bit "elements" = plain
                                                    // vector bit write; existing
                                                    // paths handle that
