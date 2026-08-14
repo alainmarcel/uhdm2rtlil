@@ -9093,32 +9093,55 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     // op_is_branch classified only garbage as branches).  Flatten
                     // InsideOp/ListOp wrappers to the individual label values.
                     if (!arm.is_default && ci->VpiExprs()) {
-                        std::vector<const any*> labels;
+                        // Single-element ListOp = one label; TWO-element =
+                        // a `[lo:hi]` RANGE — build a (sel>=lo && sel<=hi)
+                        // window compare, NOT two point compares (decoder
+                        // FP `case (frm_i) inside [3'b000:3'b010]`).
                         std::function<void(const any*)> add_label =
                             [&](const any* le) {
                                 if (le->VpiType() == vpiOperation) {
                                     auto lop = any_cast<const operation*>(le);
-                                    if ((lop->VpiOpType() == vpiListOp ||
-                                         lop->VpiOpType() == vpiInsideOp) &&
-                                        lop->Operands()) {
+                                    if (lop->VpiOpType() == vpiInsideOp && lop->Operands()) {
+                                        for (auto o : *lop->Operands())
+                                            add_label(o);
+                                        return;
+                                    }
+                                    if (lop->VpiOpType() == vpiListOp && lop->Operands()) {
+                                        auto& mo = *lop->Operands();
+                                        if (mo.size() == 2) {
+                                            RTLIL::SigSpec ls = import_expression(
+                                                any_cast<const expr*>(mo[0]), &func_mapping);
+                                            RTLIL::SigSpec hs = import_expression(
+                                                any_cast<const expr*>(mo[1]), &func_mapping);
+                                            int w = std::max({sel.size(), ls.size(), hs.size()});
+                                            RTLIL::SigSpec s2 = sel, l2 = ls, h2 = hs;
+                                            if (s2.size() < w) s2.extend_u0(w);
+                                            if (l2.size() < w) l2.extend_u0(w);
+                                            if (h2.size() < w) h2.extend_u0(w);
+                                            RTLIL::SigSpec inr = module->And(NEW_ID,
+                                                module->Ge(NEW_ID, s2, l2),
+                                                module->Le(NEW_ID, s2, h2));
+                                            arm.match = arm.match.empty()
+                                                ? inr : module->Or(NEW_ID, arm.match, inr);
+                                            return;
+                                        }
                                         for (auto o : *lop->Operands())
                                             add_label(o);
                                         return;
                                     }
                                 }
-                                labels.push_back(le);
+                                RTLIL::SigSpec cmp = import_expression(
+                                    any_cast<const expr*>(le), &func_mapping);
+                                int w = std::max(sel.size(), cmp.size());
+                                RTLIL::SigSpec s2 = sel, c2 = cmp;
+                                if (s2.size() < w) s2.extend_u0(w);
+                                if (c2.size() < w) c2.extend_u0(w);
+                                RTLIL::SigSpec eq = module->Eq(NEW_ID, s2, c2);
+                                arm.match = arm.match.empty()
+                                    ? eq : module->Or(NEW_ID, arm.match, eq);
                             };
                         for (auto e : *ci->VpiExprs())
                             add_label(e);
-                        for (auto e : labels) {
-                            RTLIL::SigSpec cmp = import_expression(any_cast<const expr*>(e), &func_mapping);
-                            int w = std::max(sel.size(), cmp.size());
-                            RTLIL::SigSpec s2 = sel, c2 = cmp;
-                            if (s2.size() < w) s2.extend_u0(w);
-                            if (c2.size() < w) c2.extend_u0(w);
-                            RTLIL::SigSpec eq = module->Eq(NEW_ID, s2, c2);
-                            arm.match = arm.match.empty() ? eq : module->Or(NEW_ID, arm.match, eq);
-                        }
                     }
                     process_branch(ci->Stmt(), arm.map);
                     for (auto& [k, v] : arm.map)
@@ -13269,6 +13292,48 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     d.stmt = ci->Stmt();
                     if (ci->VpiExprs()) {
                         for (auto expr : *ci->VpiExprs()) {
+                            // `case … inside` label: a bare vpiInsideOp whose
+                            // ListOp members are single values or `[lo:hi]`
+                            // RANGES (enumerated) — same expansion as the
+                            // Process-variant importer; importing the
+                            // InsideOp as an expression mangles the labels
+                            // (decoder FP rs2/rm variant checks).
+                            if (expr->VpiType() == vpiOperation) {
+                                auto iop = any_cast<const UHDM::operation*>(expr);
+                                if (iop && iop->VpiOpType() == vpiInsideOp && iop->Operands()) {
+                                    for (auto mem : *iop->Operands()) {
+                                        auto lop = dynamic_cast<const UHDM::operation*>(mem);
+                                        if (lop && lop->VpiOpType() == vpiListOp && lop->Operands()) {
+                                            auto& mo = *lop->Operands();
+                                            if (mo.size() == 1) {
+                                                RTLIL::SigSpec s = import_expression(
+                                                    any_cast<const UHDM::expr*>(mo[0]));
+                                                ctx_width = std::max(ctx_width, s.size());
+                                                all_signed = false;
+                                                d.exprs.push_back({s, false});
+                                            } else if (mo.size() == 2) {
+                                                RTLIL::SigSpec ls = import_expression(
+                                                    any_cast<const UHDM::expr*>(mo[0]));
+                                                RTLIL::SigSpec hs = import_expression(
+                                                    any_cast<const UHDM::expr*>(mo[1]));
+                                                if (ls.is_fully_const() && hs.is_fully_const()) {
+                                                    int lo = ls.as_const().as_int();
+                                                    int hi = hs.as_const().as_int();
+                                                    if (lo > hi) std::swap(lo, hi);
+                                                    int w = std::max(ls.size(), hs.size());
+                                                    for (int v = lo; v <= hi && (v - lo) < 4096; v++) {
+                                                        RTLIL::SigSpec s(RTLIL::Const(v, w));
+                                                        ctx_width = std::max(ctx_width, s.size());
+                                                        all_signed = false;
+                                                        d.exprs.push_back({s, false});
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    continue;
+                                }
+                            }
                             if (auto ce = any_cast<const UHDM::expr*>(expr)) {
                                 RTLIL::SigSpec sig = import_expression(ce);
                                 bool sgn = is_expr_signed(ce);

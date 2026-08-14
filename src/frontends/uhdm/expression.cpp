@@ -241,28 +241,50 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // exact case-label semantics).
                 if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
                     // `case … inside` items arrive as ONE vpiInsideOp whose
-                    // operands are per-label single-element vpiListOps
-                    // (ariane_pkg op_is_branch) — flatten both recursively.
-                    std::vector<const any*> labels;
+                    // operands are vpiListOps: SINGLE-element = one label
+                    // value (ariane_pkg op_is_branch); TWO-element = a
+                    // `[lo:hi]` RANGE that must be ENUMERATED, not treated
+                    // as two point values (decoder FP rounding-mode checks
+                    // `case (frm_i) inside [3'b000:3'b010]` missed 3'b001).
+                    std::vector<RTLIL::SigSpec> label_vals;
                     std::function<void(const any*)> add_label =
                         [&](const any* le) {
                             if (le->VpiType() == vpiOperation) {
                                 auto lop = any_cast<const operation*>(le);
-                                if ((lop->VpiOpType() == vpiListOp ||
-                                     lop->VpiOpType() == vpiInsideOp) &&
-                                    lop->Operands()) {
+                                if (lop->VpiOpType() == vpiInsideOp && lop->Operands()) {
+                                    for (auto o : *lop->Operands())
+                                        add_label(o);
+                                    return;
+                                }
+                                if (lop->VpiOpType() == vpiListOp && lop->Operands()) {
+                                    auto& mo = *lop->Operands();
+                                    if (mo.size() == 2) {
+                                        RTLIL::SigSpec ls = import_expression(
+                                            any_cast<const expr*>(mo[0]), &input_mapping);
+                                        RTLIL::SigSpec hs = import_expression(
+                                            any_cast<const expr*>(mo[1]), &input_mapping);
+                                        if (ls.is_fully_const() && hs.is_fully_const()) {
+                                            int lo = ls.as_const().as_int();
+                                            int hi = hs.as_const().as_int();
+                                            if (lo > hi) std::swap(lo, hi);
+                                            int w = std::max(ls.size(), hs.size());
+                                            for (int v = lo; v <= hi && (v - lo) < 4096; v++)
+                                                label_vals.push_back(
+                                                    RTLIL::SigSpec(RTLIL::Const(v, w)));
+                                            return;
+                                        }
+                                    }
                                     for (auto o : *lop->Operands())
                                         add_label(o);
                                     return;
                                 }
                             }
-                            labels.push_back(le);
+                            label_vals.push_back(import_expression(
+                                any_cast<const expr*>(le), &input_mapping));
                         };
                     for (auto le : *ci->VpiExprs())
                         add_label(le);
-                    for (auto le : labels) {
-                        RTLIL::SigSpec case_value = import_expression(
-                            any_cast<const expr*>(le), &input_mapping);
+                    for (auto case_value : label_vals) {
                         // Ensure case value has same width as case expression
                         if (case_value.size() < case_expr.size()) {
                             case_value.extend_u0(case_expr.size());
