@@ -1569,6 +1569,38 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (!dup) assigned_signals.push_back(es);
                     }
                 }
+
+                // Canonicalize a MIXED unpacked-array representation (CVA6
+                // store_buffer): the flat wire `\arr` is canonical (the
+                // per-element wires are alias-CONNECTED to its slices), so
+                // when the process assigns BOTH the whole array
+                // (`mem_q <= mem_n`) and per-element names (`mem_q[i] <= '0`
+                // reset loop), the per-element `$0\arr[k]` temps would form
+                // SECOND drivers on the alias wires.  Drop the element
+                // entries; the element writes remap onto `$0\arr` slices via
+                // current_signal_temp_wires (see the temp-map loops below).
+                {
+                    std::set<std::string> bases;
+                    for (const auto& a : assigned_signals)
+                        if (a.name.find('[') == std::string::npos &&
+                            module->wire(RTLIL::escape_id(a.name)))
+                            bases.insert(a.name);
+                    if (!bases.empty())
+                        assigned_signals.erase(
+                            std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                                [&](const AssignedSignal& s){
+                                    size_t br = s.name.find('[');
+                                    if (br == std::string::npos) return false;
+                                    std::string base = s.name.substr(0, br);
+                                    if (!bases.count(base)) return false;
+                                    // Only when the element really is an
+                                    // alias of the flat wire.
+                                    RTLIL::Wire* ew = module->wire(RTLIL::escape_id(s.name));
+                                    RTLIL::Wire* bw = module->wire(RTLIL::escape_id(base));
+                                    return ew && bw && ew->width < bw->width;
+                                }),
+                            assigned_signals.end());
+                }
             }
 
             // Async-reset always_ff that ALSO writes a memory (issue #326):
@@ -9918,14 +9950,32 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
     if (rhs.size() < elem_w) rhs.extend_u0(elem_w, rhs_signed);
     else if (rhs.size() > elem_w) rhs = rhs.extract(0, elem_w);
 
+    // MIXED representation (CVA6 store_buffer's unpacked struct queues): the
+    // array ALSO exists as one flat wire `\base`, and the enclosing process
+    // registered THAT (self-hold `$0\base` + sync update) because whole-array
+    // reads/writes (`mem_n = mem_q`) use it.  Writing the raw alias wires
+    // `\base[k]` here would never reach the flat temp — the element writes
+    // were silently lost.  Target the flat temp's element slices instead.
+    RTLIL::Wire* flat_w  = module->wire(RTLIL::escape_id(base_name));
+    RTLIL::Wire* flat_tw = module->wire("$0\\" + base_name);
+    bool use_flat = flat_w && flat_w->width == elem_w * num_elems &&
+                    (proc != nullptr || flat_tw != nullptr);
+
     for (int k = array_low; k < array_low + num_elems; k++) {
         std::string ename = base_name + "[" + std::to_string(k) + "]";
         RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
-        if (!ew) continue;
+        if (!ew && !use_flat) continue;
+        int off = (k - array_low) * elem_w;
         // Current (in-flight) value of this element — the unpacked byte that
         // was assigned earlier this cycle, else the registered wire.
         RTLIL::SigSpec cur;
-        if (!in_always_ff_body_mode && current_comb_values.count(ename))
+        if (use_flat) {
+            RTLIL::SigSpec curbase =
+                (!in_always_ff_body_mode && current_comb_values.count(base_name))
+                    ? current_comb_values.at(base_name)
+                    : RTLIL::SigSpec(flat_w);
+            cur = curbase.extract(off, elem_w);
+        } else if (!in_always_ff_body_mode && current_comb_values.count(ename))
             cur = current_comb_values.at(ename);
         else
             cur = RTLIL::SigSpec(ew);
@@ -9935,6 +9985,23 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
                       RTLIL::SigSpec(RTLIL::Const(k, GetSize(idx))), sel);
         RTLIL::Wire* nv = module->addWire(NEW_ID, elem_w);
         module->addMux(NEW_ID, cur, rhs, RTLIL::SigSpec(sel), nv);
+        if (use_flat) {
+            if (proc)
+                emit_comb_assign(RTLIL::SigSpec(flat_w).extract(off, elem_w),
+                                 RTLIL::SigSpec(nv), proc);
+            else
+                case_rule->actions.push_back(RTLIL::SigSig(
+                    RTLIL::SigSpec(flat_tw).extract(off, elem_w),
+                    RTLIL::SigSpec(nv)));
+            if (!in_always_ff_body_mode) {
+                RTLIL::SigSpec curbase = current_comb_values.count(base_name)
+                                             ? current_comb_values.at(base_name)
+                                             : RTLIL::SigSpec(flat_w);
+                curbase.replace(off, RTLIL::SigSpec(nv));
+                current_comb_values[base_name] = curbase;
+            }
+            continue;
+        }
         if (proc) {
             emit_comb_assign(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv), proc);
         } else if (case_rule) {
@@ -10202,6 +10269,60 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
 
     // Element struct typespec via the inner net mapped to the flat wire.
     const UHDM::struct_typespec* st = nullptr;
+    int decl_low_ts = INT_MIN;   // outer-dim declared low, when discoverable
+    // Accept the element struct from a PACKED-array typespec too, noting the
+    // declared low bound (a `lsu_ctrl_t [1:0] mem_n` net carries a
+    // packed_array_typespec, not the bare element struct).
+    auto take_ats = [&](const UHDM::typespec* ats) {
+        if (!ats) return;
+        if (ats->UhdmType() == uhdmstruct_typespec) {
+            st = any_cast<const UHDM::struct_typespec*>(ats);
+        } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {
+            if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec()) {
+                auto ets = pt->Elem_typespec()->Actual_typespec();
+                if (ets->UhdmType() == uhdmstruct_typespec)
+                    st = any_cast<const UHDM::struct_typespec*>(ets);
+            }
+            if (st && pt->Ranges() && !pt->Ranges()->empty()) {
+                auto r0 = (*pt->Ranges())[0];
+                if (r0->Left_expr() && r0->Right_expr()) {
+                    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                    RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                    if (l.is_fully_const() && r.is_fully_const())
+                        decl_low_ts = std::min(l.as_const().as_int(),
+                                               r.as_const().as_int());
+                }
+            }
+        }
+    };
+    // Elaborated packed_array_var/net objects: no Typespec, but their own
+    // Ranges() + Elements()[0] typespec carry the geometry (type-param
+    // struct elements — same shape as import_bit_select's fallback).
+    auto take_packed_obj = [&](const UHDM::any* obj) {
+        const UHDM::VectorOfrange* prg = nullptr;
+        const UHDM::VectorOfany* pel = nullptr;
+        if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
+            prg = pv->Ranges(); pel = pv->Elements();
+        } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
+            prg = pn->Ranges(); pel = pn->Elements();
+        } else return;
+        if (pel && !pel->empty())
+            if (auto ev = dynamic_cast<const UHDM::expr*>((*pel)[0]))
+                if (ev->Typespec() && ev->Typespec()->Actual_typespec() &&
+                    ev->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec)
+                    st = any_cast<const UHDM::struct_typespec*>(
+                        ev->Typespec()->Actual_typespec());
+        if (st && prg && !prg->empty()) {
+            auto r0 = (*prg)[0];
+            if (r0->Left_expr() && r0->Right_expr()) {
+                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const())
+                    decl_low_ts = std::min(l.as_const().as_int(),
+                                           r.as_const().as_int());
+            }
+        }
+    };
     for (auto& kv : wire_map) {
         if (kv.second != base_wire) continue;
         const ref_typespec* rts = nullptr;
@@ -10209,11 +10330,28 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first)) rts = lv->Typespec();
         else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
         else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
-        if (rts)
-            if (auto ats = rts->Actual_typespec())
-                if (ats->UhdmType() == uhdmstruct_typespec)
-                    st = any_cast<const UHDM::struct_typespec*>(ats);
+        if (rts) take_ats(rts->Actual_typespec());
+        if (!st) take_packed_obj(kv.first);
         if (st) break;
+    }
+    if (!st) take_packed_obj(bs->Actual_group());
+    if (!st && current_instance) {
+        if (current_instance->Nets())
+            for (auto n0 : *current_instance->Nets())
+                if (std::string(n0->VpiName()) == base_name) {
+                    take_packed_obj(n0);
+                    if (auto n = dynamic_cast<const UHDM::net*>(n0))
+                        if (!st && n->Typespec()) take_ats(n->Typespec()->Actual_typespec());
+                    break;
+                }
+        if (!st && current_instance->Variables())
+            for (auto v0 : *current_instance->Variables())
+                if (std::string(v0->VpiName()) == base_name) {
+                    take_packed_obj(v0);
+                    if (auto v = dynamic_cast<const UHDM::variables*>(v0))
+                        if (!st && v->Typespec()) take_ats(v->Typespec()->Actual_typespec());
+                    break;
+                }
     }
     if (!st || !st->Members()) return false;
 
@@ -10221,7 +10359,9 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     if (elem_w <= 0 || base_w % elem_w != 0) return false;
     int n_elems = base_w / elem_w;
 
-    // Element index low bound: smallest k with an `\arr[k]` alias wire.
+    // Element index low bound: smallest k with an `\arr[k]` alias wire
+    // (the unpacked-flat representation), else the PACKED outer dim's
+    // declared low bound (no alias wires exist for a packed array).
     int array_low = -1;
     for (int k = 0; k <= n_elems; k++) {
         if (module->wire(RTLIL::escape_id(
@@ -10230,6 +10370,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
             break;
         }
     }
+    if (array_low < 0 && decl_low_ts != INT_MIN) array_low = decl_low_ts;
     if (array_low < 0) return false;
 
     // Field offset within the element (last listed member = LSB).
@@ -11084,9 +11225,26 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 for (const auto& ch : lhs.chunks()) {
                     if (ch.wire && ch.wire->name.str() == actual_wire_name) {
                         mapped_lhs.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
-                    } else {
-                        mapped_lhs.append(ch);
+                        continue;
                     }
+                    // Alias-element chunk remap — see the CaseRule overload.
+                    if (ch.wire) {
+                        std::string wn = ch.wire->name.str();
+                        std::string pre = actual_wire_name + "[";
+                        if (wn.rfind(pre, 0) == 0 && wn.back() == ']') {
+                            int k = atoi(wn.substr(pre.size()).c_str());
+                            int low = expanded_array_low(signal_name);
+                            if (low < 0) low = 0;
+                            int ew = ch.wire->width;
+                            int off = (k - low) * ew + ch.offset;
+                            if (off >= 0 && off + ch.width <= temp_wire->width) {
+                                mapped_lhs.append(
+                                    RTLIL::SigChunk(temp_wire, off, ch.width));
+                                continue;
+                            }
+                        }
+                    }
+                    mapped_lhs.append(ch);
                 }
                 proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
                 return;
@@ -11481,9 +11639,30 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 for (const auto& ch : lhs.chunks()) {
                     if (ch.wire && ch.wire->name.str() == actual_wire_name) {
                         mapped_lhs.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
-                    } else {
-                        mapped_lhs.append(ch);
+                        continue;
                     }
+                    // ALIAS-element chunk of a flat unpacked array
+                    // (`\mem_q[0]`, alias-connected to `\mem_q [9:0]`):
+                    // remap onto the flat temp's element slice — writing the
+                    // alias would double-drive it (CVA6 store_buffer's reset
+                    // loop `mem_q[i] <= '0`).
+                    if (ch.wire) {
+                        std::string wn = ch.wire->name.str();
+                        std::string pre = actual_wire_name + "[";
+                        if (wn.rfind(pre, 0) == 0 && wn.back() == ']') {
+                            int k = atoi(wn.substr(pre.size()).c_str());
+                            int low = expanded_array_low(signal_name);
+                            if (low < 0) low = 0;
+                            int ew = ch.wire->width;
+                            int off = (k - low) * ew + ch.offset;
+                            if (off >= 0 && off + ch.width <= temp_wire->width) {
+                                mapped_lhs.append(
+                                    RTLIL::SigChunk(temp_wire, off, ch.width));
+                                continue;
+                            }
+                        }
+                    }
+                    mapped_lhs.append(ch);
                 }
                 case_rule->actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
                 return;
