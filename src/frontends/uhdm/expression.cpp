@@ -8848,6 +8848,179 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // sig[DYN].field — DYNAMIC element index on a struct array flattened to
+    // one wide wire (CVA6 store_buffer `commit_queue_q[ptr].cbo_op`): shift
+    // the field out of the flat wire at (idx-low)*elem_w + field_off.  The
+    // constant-index shape is handled by the branch above; without this one
+    // the read fell through to "Could not resolve" and returned X.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe2d = *uhdm_hier->Path_elems();
+        if (pe2d[0]->UhdmType() == uhdmbit_select &&
+            (pe2d[1]->UhdmType() == uhdmref_obj ||
+             pe2d[1]->UhdmType() == uhdmpart_select)) {
+            const bit_select* bs = any_cast<const bit_select*>(pe2d[0]);
+            const ref_obj*    fr = pe2d[1]->UhdmType() == uhdmref_obj
+                                       ? any_cast<const ref_obj*>(pe2d[1]) : nullptr;
+            const part_select* fps = pe2d[1]->UhdmType() == uhdmpart_select
+                                         ? any_cast<const part_select*>(pe2d[1]) : nullptr;
+            // Optional constant PART-SELECT of the field
+            // (`commit_queue_q[ptr].address[IDX-1:0]` — store_buffer's
+            // address_index/tag slices; treated 0-based within the field).
+            int fsel_lo = -1, fsel_w = -1;
+            if (fps && fps->Left_range() && fps->Right_range()) {
+                RTLIL::SigSpec ls = import_expression(fps->Left_range(), input_mapping);
+                RTLIL::SigSpec rs = import_expression(fps->Right_range(), input_mapping);
+                if (ls.is_fully_const() && rs.is_fully_const()) {
+                    int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+                    fsel_lo = std::min(l, r);
+                    fsel_w = std::abs(l - r) + 1;
+                }
+            }
+            RTLIL::SigSpec idx_sig;
+            if (bs && (fr || (fps && fsel_w > 0)) && bs->VpiIndex())
+                idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+            if (bs && (fr || (fps && fsel_w > 0)) &&
+                idx_sig.size() > 0 && !idx_sig.is_fully_const()) {
+                std::string base_name  = std::string(bs->VpiName());
+                std::string field_name = fr ? std::string(fr->VpiName())
+                                            : std::string(fps->VpiName());
+                RTLIL::Wire* base_flat = name_map.count(base_name)
+                                             ? name_map[base_name]
+                                             : module->wire(RTLIL::escape_id(base_name));
+                // Element struct typespec: wire_map struct_net, the packed
+                // array objects, or by NAME from the instance (array_net's
+                // inner struct_net for the unpacked shape).
+                const UHDM::struct_typespec* st = nullptr;
+                auto ts_from = [&](const UHDM::any* obj) {
+                    if (auto sn = dynamic_cast<const UHDM::struct_net*>(obj)) {
+                        if (auto rts = sn->Typespec())
+                            if (auto ats = rts->Actual_typespec())
+                                if (ats->UhdmType() == uhdmstruct_typespec)
+                                    st = any_cast<const UHDM::struct_typespec*>(ats);
+                    } else if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
+                        if (pav->Elements() && !pav->Elements()->empty())
+                            if (auto ev = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                                if (ev->Typespec() && ev->Typespec()->Actual_typespec() &&
+                                    ev->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec)
+                                    st = any_cast<const UHDM::struct_typespec*>(
+                                        ev->Typespec()->Actual_typespec());
+                    } else if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
+                        if (pan->Elements() && !pan->Elements()->empty())
+                            if (auto ev = dynamic_cast<const UHDM::expr*>((*pan->Elements())[0]))
+                                if (ev->Typespec() && ev->Typespec()->Actual_typespec() &&
+                                    ev->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec)
+                                    st = any_cast<const UHDM::struct_typespec*>(
+                                        ev->Typespec()->Actual_typespec());
+                    } else if (auto an = dynamic_cast<const UHDM::array_net*>(obj)) {
+                        // Unpacked array_net: the element struct is its inner
+                        // struct_net.
+                        if (an->Nets() && !an->Nets()->empty())
+                            if (auto sn2 = dynamic_cast<const UHDM::struct_net*>((*an->Nets())[0]))
+                                if (auto rts2 = sn2->Typespec())
+                                    if (auto ats2 = rts2->Actual_typespec())
+                                        if (ats2->UhdmType() == uhdmstruct_typespec)
+                                            st = any_cast<const UHDM::struct_typespec*>(ats2);
+                    }
+                };
+                if (base_flat) {
+                    if (bs->Actual_group()) ts_from(bs->Actual_group());
+                    if (!st)
+                        for (auto& kv : wire_map) {
+                            if (kv.second != base_flat) continue;
+                            ts_from(kv.first);
+                            if (st) break;
+                        }
+                    if (!st && current_instance) {
+                        if (current_instance->Array_nets())
+                            for (auto an : *current_instance->Array_nets())
+                                if (std::string(an->VpiName()) == base_name) {
+                                    if (an->Nets() && !an->Nets()->empty())
+                                        ts_from((*an->Nets())[0]);
+                                    break;
+                                }
+                        if (!st && current_instance->Nets())
+                            for (auto n0 : *current_instance->Nets())
+                                if (std::string(n0->VpiName()) == base_name) {
+                                    ts_from(n0);
+                                    break;
+                                }
+                        if (!st && current_instance->Variables())
+                            for (auto v0 : *current_instance->Variables())
+                                if (std::string(v0->VpiName()) == base_name) {
+                                    ts_from(v0);
+                                    break;
+                                }
+                    }
+                }
+                if (base_flat && st && st->Members()) {
+                    int elem_w = get_width_from_typespec(st, inst);
+                    if (elem_w > 0 && base_flat->width % elem_w == 0) {
+                        int low = expanded_array_low(base_name);
+                        if (low < 0) low = 0;
+                        int field_offset = 0, field_width = 0;
+                        bool found_field = false;
+                        for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                            auto m = (*st->Members())[i];
+                            int mw = 0;
+                            if (auto mts = m->Typespec())
+                                if (auto ats = mts->Actual_typespec())
+                                    mw = get_width_from_typespec(ats, inst);
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_width = mw;
+                                found_field = true;
+                                break;
+                            }
+                            field_offset += mw;
+                        }
+                        // Apply the field-local part-select window.
+                        if (found_field && fps && fsel_w > 0) {
+                            if (fsel_lo >= 0 && fsel_lo + fsel_w <= field_width) {
+                                field_offset += fsel_lo;
+                                field_width = fsel_w;
+                            } else {
+                                found_field = false;  // OOB — leave to fallbacks
+                            }
+                        }
+                        if (found_field && field_width > 0) {
+                            int shamt_w = std::max(idx_sig.size() + 6, 32);
+                            RTLIL::SigSpec idx_ext = idx_sig;
+                            idx_ext.extend_u0(shamt_w, false);
+                            RTLIL::SigSpec pos = idx_ext;
+                            if (low != 0) {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                                module->addSub(NEW_ID, idx_ext,
+                                    RTLIL::SigSpec(RTLIL::Const(low, shamt_w)), pw, true);
+                                pos = RTLIL::SigSpec(pw);
+                            }
+                            RTLIL::Wire* esh = module->addWire(NEW_ID, shamt_w);
+                            module->addMul(NEW_ID, pos,
+                                RTLIL::SigSpec(RTLIL::Const(elem_w, shamt_w)), esh, true);
+                            RTLIL::Wire* bsh = module->addWire(NEW_ID, shamt_w);
+                            module->addAdd(NEW_ID, RTLIL::SigSpec(esh),
+                                RTLIL::SigSpec(RTLIL::Const(field_offset, shamt_w)), bsh, true);
+                            RTLIL::Wire* out = module->addWire(NEW_ID, field_width);
+                            RTLIL::Cell* sx = module->addCell(NEW_ID, ID($shiftx));
+                            sx->setParam(ID::A_SIGNED, 0);
+                            sx->setParam(ID::B_SIGNED, 0);
+                            sx->setParam(ID::A_WIDTH, base_flat->width);
+                            sx->setParam(ID::B_WIDTH, shamt_w);
+                            sx->setParam(ID::Y_WIDTH, field_width);
+                            sx->setPort(ID::A, RTLIL::SigSpec(base_flat));
+                            sx->setPort(ID::B, RTLIL::SigSpec(bsh));
+                            sx->setPort(ID::Y, out);
+                            add_src_attribute(sx->attributes, uhdm_hier);
+                            log("    hier_path: dynamic %s[idx].%s -> shiftx "
+                                "(elem_w=%d field_off=%d w=%d)\n",
+                                base_name.c_str(), field_name.c_str(),
+                                elem_w, field_offset, field_width);
+                            return RTLIL::SigSpec(out);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Handle packed array element + struct field access: sig[i].field[hi:lo]
     // Path_elems pattern: [bit_select(sig[i]), part_select(field[hi:lo])]
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
