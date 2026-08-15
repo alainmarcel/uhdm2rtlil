@@ -1043,6 +1043,26 @@ struct UhdmImporter {
 
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
+    // Materialize a whole-accessed / multi-dim unpacked array as ONE flat
+    // canonical wire (product of all dims × element width) plus per-ROW
+    // alias wires `name[k]` connected to its slices, stamping the
+    // unpacked_* 2D metadata.  Returns the flat wire or null when the dims
+    // don't fold.
+    RTLIL::Wire* materialize_flat_struct_array(const std::string& name,
+                                               const UHDM::VectorOfrange* ranges,
+                                               const UHDM::any* inner_obj,
+                                               const UHDM::any* src_obj);
+    // Geometry of a (possibly multi-dim) unpacked/packed struct array
+    // flattened to one wide wire: per-dimension (size, low) outer→inner, the
+    // element struct typespec, and the element width.  Resolves via the
+    // instance's Array_nets/Array_vars/Nets/Variables by NAME or the given
+    // Actual_group object.  Returns false when not such an array.
+    bool flat_struct_array_geom(const std::string& base_name,
+                                const UHDM::any* actual_group,
+                                const UHDM::scope* inst,
+                                std::vector<std::pair<int,int>>& dims,
+                                const UHDM::struct_typespec** st_out,
+                                int* elem_w_out);
     // *final_member_ts (optional) gets the FINAL path member's actual typespec
     // (null if the path ended in an explicit packed slice) so callers can read
     // its declared range (e.g. a `logic [24:20]` field's non-zero low bound).

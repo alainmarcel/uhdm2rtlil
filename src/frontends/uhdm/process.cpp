@@ -10248,7 +10248,135 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule) {
-    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2) return false;
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return false;
+
+    // MULTI-index chain `arr[i][j].field = rhs` (CVA6 bht/btb tables): a run
+    // of bit_selects then the field ref.  Combined bit shift
+    // Σ (idx_k − low_k)·stride_k + field_off, then the same full-width RMW
+    // on the flat wire as the single-index path below.
+    if (hp->Path_elems()->size() >= 3) {
+        auto& peM = *hp->Path_elems();
+        size_t nsel = 0;
+        while (nsel < peM.size() && peM[nsel]->UhdmType() == uhdmbit_select) nsel++;
+        if (nsel >= 2 && nsel == peM.size() - 1 &&
+            peM[nsel]->UhdmType() == uhdmref_obj) {
+            const bit_select* bs0 = any_cast<const bit_select*>(peM[0]);
+            const ref_obj* frf = any_cast<const ref_obj*>(peM[nsel]);
+            std::string base_name = std::string(bs0->VpiName());
+            std::string field_name = std::string(frf->VpiName());
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                                         ? name_map[base_name]
+                                         : module->wire(RTLIL::escape_id(base_name));
+            std::vector<std::pair<int,int>> dims;
+            const UHDM::struct_typespec* st2 = nullptr;
+            int elem_w2 = 0;
+            if (base_wire && !field_name.empty() &&
+                flat_struct_array_geom(base_name, bs0->Actual_group(), nullptr,
+                                       dims, &st2, &elem_w2) &&
+                nsel == dims.size() && st2 && st2->Members()) {
+                int field_offset = 0, field_width = 0;
+                bool found_field = false;
+                for (int i2 = (int)st2->Members()->size() - 1; i2 >= 0; i2--) {
+                    auto m = (*st2->Members())[i2];
+                    int mw = 0;
+                    if (auto mts = m->Typespec())
+                        if (auto ats = mts->Actual_typespec())
+                            mw = get_width_from_typespec(ats, current_instance);
+                    if (std::string(m->VpiName()) == field_name) {
+                        field_width = mw;
+                        found_field = true;
+                        break;
+                    }
+                    field_offset += mw;
+                }
+                if (found_field && field_width > 0) {
+                    std::vector<int> strides(nsel, elem_w2);
+                    for (size_t k = 0; k < nsel; k++)
+                        for (size_t k2 = k + 1; k2 < dims.size(); k2++)
+                            strides[k] *= dims[k2].first;
+                    int shamt_w = 32;
+                    bool idx_ok = true;
+                    std::vector<RTLIL::SigSpec> idxs;
+                    for (size_t k = 0; k < nsel; k++) {
+                        auto bsk = any_cast<const bit_select*>(peM[k]);
+                        if (!bsk || !bsk->VpiIndex()) { idx_ok = false; break; }
+                        RTLIL::SigSpec ix = import_expression(bsk->VpiIndex(), comb_read_map());
+                        if (ix.size() == 0) { idx_ok = false; break; }
+                        shamt_w = std::max(shamt_w, ix.size() + 6);
+                        idxs.push_back(ix);
+                    }
+                    if (idx_ok) {
+                        RTLIL::SigSpec acc =
+                            RTLIL::SigSpec(RTLIL::Const(field_offset, shamt_w));
+                        for (size_t k = 0; k < nsel; k++) {
+                            RTLIL::SigSpec ix = idxs[k];
+                            ix.extend_u0(shamt_w, false);
+                            if (dims[k].second != 0) {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                                module->addSub(NEW_ID, ix,
+                                    RTLIL::SigSpec(RTLIL::Const(dims[k].second, shamt_w)),
+                                    pw, true);
+                                ix = RTLIL::SigSpec(pw);
+                            }
+                            RTLIL::Wire* mw3 = module->addWire(NEW_ID, shamt_w);
+                            module->addMul(NEW_ID, ix,
+                                RTLIL::SigSpec(RTLIL::Const(strides[k], shamt_w)), mw3, true);
+                            RTLIL::Wire* aw = module->addWire(NEW_ID, shamt_w);
+                            module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw3), aw, true);
+                            acc = RTLIL::SigSpec(aw);
+                        }
+                        int base_w2 = base_wire->width;
+                        auto rhs_e2 = dynamic_cast<const UHDM::expr*>(rhs_any);
+                        if (!rhs_e2) return false;
+                        int prev_ctx2 = expression_context_width;
+                        expression_context_width = field_width;
+                        RTLIL::SigSpec rhs2 = import_expression(rhs_e2, comb_read_map());
+                        expression_context_width = prev_ctx2;
+                        if (rhs2.size() < field_width)
+                            rhs2.extend_u0(field_width, is_expr_signed(rhs_e2));
+                        else if (rhs2.size() > field_width)
+                            rhs2 = rhs2.extract(0, field_width);
+                        std::vector<RTLIL::State> mb(base_w2, RTLIL::State::S0);
+                        for (int i2 = 0; i2 < field_width; i2++) mb[i2] = RTLIL::State::S1;
+                        RTLIL::SigSpec mask_c = RTLIL::SigSpec(RTLIL::Const(mb));
+                        RTLIL::SigSpec rhs_wide = rhs2;
+                        rhs_wide.extend_u0(base_w2, false);
+                        RTLIL::Wire* mask_sh = module->addWire(NEW_ID, base_w2);
+                        module->addShl(NEW_ID, mask_c, acc, mask_sh, false);
+                        RTLIL::Wire* val_sh = module->addWire(NEW_ID, base_w2);
+                        module->addShl(NEW_ID, rhs_wide, acc, val_sh, false);
+                        RTLIL::Wire* inv_m = module->addWire(NEW_ID, base_w2);
+                        module->addNot(NEW_ID, RTLIL::SigSpec(mask_sh), inv_m);
+                        RTLIL::SigSpec cur = current_comb_values.count(base_name)
+                                                 ? current_comb_values[base_name]
+                                                 : RTLIL::SigSpec(base_wire);
+                        RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w2);
+                        module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_m), cleared);
+                        RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w2);
+                        module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
+                                      RTLIL::SigSpec(val_sh), new_full);
+                        if (proc) {
+                            emit_comb_assign(RTLIL::SigSpec(base_wire),
+                                             RTLIL::SigSpec(new_full), proc);
+                        } else if (case_rule) {
+                            std::string temp_name = "$0\\" + base_name;
+                            if (RTLIL::Wire* tw = module->wire(temp_name))
+                                case_rule->actions.push_back(RTLIL::SigSig(
+                                    RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
+                            else
+                                case_rule->actions.push_back(RTLIL::SigSig(
+                                    RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+                        }
+                        if (!in_always_ff_body_mode)
+                            current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     auto& pe = *hp->Path_elems();
     if (pe[0]->UhdmType() != uhdmbit_select) return false;
     if (pe[1]->UhdmType() != uhdmref_obj) return false;

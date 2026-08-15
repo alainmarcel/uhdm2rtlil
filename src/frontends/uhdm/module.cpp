@@ -3334,6 +3334,22 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             // signal name) resolve to it.
             if (var->UhdmType() == uhdmarray_var) {
                 if (auto av = any_cast<const UHDM::array_var*>(var)) {
+                    // WHOLE-array-accessed or MULTI-dim struct array declared
+                    // inside a generate scope (CVA6 bht/btb ASIC tables
+                    // `bht_d[NR_ROWS-1:0][IPF-1:0]` with `bht_d = bht_q`):
+                    // flat canonical wire + per-row aliases, bare name (the
+                    // accesses inside the scope use the bare name).
+                    bool whole = whole_array_accessed_names.count(var_name) > 0;
+                    bool multi = av->Ranges() && av->Ranges()->size() > 1;
+                    // NOTE: not gated on is_memory_array — it doesn't
+                    // recognize anonymous-STRUCT elements (btb_d/btb_q).
+                    if ((whole || multi) &&
+                        av->Variables() && !av->Variables()->empty()) {
+                        if (materialize_flat_struct_array(
+                                var_name, av->Ranges(),
+                                av->Variables()->at(0), av))
+                            continue;
+                    }
                     if (is_memory_array(av)) {
                         create_memory_from_array(av);
                         continue;
