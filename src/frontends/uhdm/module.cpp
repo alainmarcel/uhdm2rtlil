@@ -711,11 +711,24 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     if (auto lc = uhdm_port->Low_conn()) {
         if (lc->UhdmType() == uhdmref_obj) {
             auto ag = any_cast<const UHDM::ref_obj*>(lc)->Actual_group();
+            const UHDM::VectorOfrange* prg = nullptr;
+            const UHDM::VectorOfany* pel = nullptr;
             if (ag && ag->UhdmType() == uhdmpacked_array_var) {
                 auto pav = any_cast<const UHDM::packed_array_var*>(ag);
+                prg = pav->Ranges();
+                pel = pav->Elements();
+            } else if (ag && ag->UhdmType() == uhdmpacked_array_net) {
+                // NET-side analog (a wrapper module's own
+                // `btb_prediction_t [N-1:0]` output elaborates the port net
+                // as a packed_array_net).
+                auto pan = any_cast<const UHDM::packed_array_net*>(ag);
+                prg = pan->Ranges();
+                pel = pan->Elements();
+            }
+            if (prg || pel) {
                 int outer_l = -1, outer_r = -1;
-                if (pav->Ranges() && !pav->Ranges()->empty()) {
-                    auto r0 = (*pav->Ranges())[0];
+                if (prg && !prg->empty()) {
+                    auto r0 = (*prg)[0];
                     if (r0->Left_expr() && r0->Right_expr()) {
                         RTLIL::SigSpec l = import_expression(r0->Left_expr());
                         RTLIL::SigSpec r = import_expression(r0->Right_expr());
@@ -726,14 +739,26 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     }
                 }
                 int elem_w = 0;
-                if (pav->Elements() && !pav->Elements()->empty())
-                    elem_w = get_width((*pav->Elements())[0], current_instance);
+                if (pel && !pel->empty())
+                    elem_w = get_width((*pel)[0], current_instance);
                 if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
                     w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                     w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
                     w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);
                     log("UHDM: Port '%s' packed_array_var (Low_conn): elem_width=%d outer=[%d:%d]\n",
                         portname.c_str(), elem_w, outer_l, outer_r);
+                    // The port's own typespec often carries only the ELEMENT
+                    // type (`btb_prediction_t [INSTR_PER_FETCH-1:0]` sized the
+                    // wire to ONE 65-bit element — CVA6 btb's output was half
+                    // its real width and the miter had no matching port).
+                    // Resize to the full array width.
+                    int total = elem_w * (std::abs(outer_l - outer_r) + 1);
+                    if (w->width < total) {
+                        log("UHDM: Port '%s' resized %d -> %d (packed array of %d elements)\n",
+                            portname.c_str(), w->width, total,
+                            std::abs(outer_l - outer_r) + 1);
+                        w->width = total;
+                    }
                 }
             }
         }
