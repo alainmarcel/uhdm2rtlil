@@ -2835,6 +2835,82 @@ void UhdmImporter::create_parameterized_modules() {
     }
 }
 
+RTLIL::Wire* UhdmImporter::materialize_flat_struct_array(
+        const std::string& name,
+        const UHDM::VectorOfrange* ranges,
+        const UHDM::any* inner_obj,
+        const UHDM::any* src_obj) {
+    if (!ranges || ranges->empty() || !inner_obj) return nullptr;
+    auto eval_b = [&](const any* node, int& out) -> bool {
+        if (auto e = dynamic_cast<const expr*>(node)) {
+            RTLIL::SigSpec s = import_expression(e);
+            if (s.is_fully_const()) { out = s.as_const().as_int(); return true; }
+        }
+        return false;
+    };
+    int array_size = 1, array_low = 0, inner_count = 1, inner_low = 0;
+    {
+        int l = 0, r = 0;
+        auto r0 = (*ranges)[0];
+        if (!r0->Left_expr() || !r0->Right_expr() ||
+            !eval_b(r0->Left_expr(), l) || !eval_b(r0->Right_expr(), r))
+            return nullptr;
+        array_size = std::abs(l - r) + 1;
+        array_low = std::min(l, r);
+        for (size_t ri = 1; ri < ranges->size(); ri++) {
+            auto rn = (*ranges)[ri];
+            int il = 0, ir = 0;
+            if (!rn->Left_expr() || !rn->Right_expr() ||
+                !eval_b(rn->Left_expr(), il) || !eval_b(rn->Right_expr(), ir))
+                return nullptr;
+            inner_count *= std::abs(il - ir) + 1;
+            inner_low = std::min(il, ir);
+        }
+    }
+    int elem_w = get_width(inner_obj, current_instance);
+    if (elem_w <= 0) return nullptr;
+    int row_w = elem_w * inner_count;
+    int total_w = row_w * array_size;
+    log("UHDM: flat struct-array '%s': rows=%d row_w=%d total=%d\n",
+        name.c_str(), array_size, row_w, total_w);
+    RTLIL::IdString flat_id = RTLIL::escape_id(name);
+    RTLIL::Wire* flat_wire = module->wire(flat_id);
+    if (flat_wire && flat_wire->width != total_w) {
+        // An on-demand reference created a placeholder (1-bit) wire before
+        // the array was materialized (CVA6 btb_q) — resize it in place.
+        log("UHDM: flat struct-array '%s': resizing placeholder %d -> %d\n",
+            name.c_str(), flat_wire->width, total_w);
+        flat_wire->width = total_w;
+        name_map[name] = flat_wire;
+        wire_map[inner_obj] = flat_wire;
+    }
+    if (!flat_wire) {
+        flat_wire = module->addWire(flat_id, total_w);
+        add_src_attribute(flat_wire->attributes, src_obj);
+        name_map[name] = flat_wire;
+        wire_map[inner_obj] = flat_wire;
+    }
+    if (ranges->size() == 2 && inner_count > 1) {
+        flat_wire->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(elem_w);
+        flat_wire->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(array_low);
+        flat_wire->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(array_size);
+        flat_wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(inner_low);
+        flat_wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_count);
+    }
+    for (int i = 0; i < array_size; i++) {
+        std::string ename = name + "[" + std::to_string(array_low + i) + "]";
+        RTLIL::IdString eid = RTLIL::escape_id(ename);
+        if (!module->wire(eid)) {
+            RTLIL::Wire* ew = module->addWire(eid, row_w);
+            add_src_attribute(ew->attributes, src_obj);
+            module->connect(RTLIL::SigSpec(ew),
+                RTLIL::SigSpec(flat_wire).extract(i * row_w, row_w));
+            name_map[ename] = ew;
+        }
+    }
+    return flat_wire;
+}
+
 // Import a single module
 std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
     if (!uhdm_module || !uhdm_module->Parameters()) return "";
@@ -3496,6 +3572,89 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (should_be_memory) {
                     log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array_var);
+                } else if (is_memory_array(array_var) &&
+                           (whole_array_accessed_names.count(array_name) ||
+                            (array_var->Ranges() && array_var->Ranges()->size() > 1))) {
+                    // WHOLE-array-accessed or MULTI-dim struct array
+                    // (CVA6 bht/btb `bht_d[NR_ROWS-1:0][IPF-1:0]`, written
+                    // whole via `bht_d = bht_q`): the per-element-only
+                    // representation cannot express the whole-array copy, and
+                    // the old path consumed only Ranges()[0].  Use the FLAT
+                    // canonical wire (all dims × element) + per-ROW alias
+                    // slices, mirroring the array_net whole-access path.
+                    auto ranges = array_var->Ranges();
+                    int array_size = 1, array_low = 0, inner_count = 1;
+                    int inner_low = 0;
+                    bool dims_ok = true;
+                    auto eval_b = [&](const any* node, int& out) -> bool {
+                        if (auto e = dynamic_cast<const expr*>(node)) {
+                            RTLIL::SigSpec s = import_expression(e);
+                            if (s.is_fully_const()) { out = s.as_const().as_int(); return true; }
+                        }
+                        return false;
+                    };
+                    if (ranges && !ranges->empty()) {
+                        int l = 0, r = 0;
+                        auto r0 = (*ranges)[0];
+                        if (r0->Left_expr() && r0->Right_expr() &&
+                            eval_b(r0->Left_expr(), l) && eval_b(r0->Right_expr(), r)) {
+                            array_size = std::abs(l - r) + 1;
+                            array_low = std::min(l, r);
+                        } else dims_ok = false;
+                        for (size_t ri = 1; dims_ok && ri < ranges->size(); ri++) {
+                            auto rn = (*ranges)[ri];
+                            int il = 0, ir = 0;
+                            if (rn->Left_expr() && rn->Right_expr() &&
+                                eval_b(rn->Left_expr(), il) && eval_b(rn->Right_expr(), ir)) {
+                                inner_count *= std::abs(il - ir) + 1;
+                                inner_low = std::min(il, ir);
+                            } else dims_ok = false;
+                        }
+                    } else dims_ok = false;
+                    int elem_w = 0;
+                    const UHDM::any* inner_var = nullptr;
+                    if (array_var->Variables() && !array_var->Variables()->empty()) {
+                        inner_var = array_var->Variables()->at(0);
+                        elem_w = get_width(inner_var, uhdm_module);
+                    }
+                    if (dims_ok && elem_w > 0) {
+                        int row_w = elem_w * inner_count;
+                        int total_w = row_w * array_size;
+                        log("UHDM: Array_var '%s' whole/multi-dim — flat wire "
+                            "(rows=%d, row_w=%d, total=%d) + per-row slices\n",
+                            array_name.c_str(), array_size, row_w, total_w);
+                        RTLIL::IdString flat_id = RTLIL::escape_id(array_name);
+                        RTLIL::Wire* flat_wire = module->wire(flat_id);
+                        if (!flat_wire) {
+                            flat_wire = module->addWire(flat_id, total_w);
+                            add_src_attribute(flat_wire->attributes, array_var);
+                            name_map[array_name] = flat_wire;
+                            if (inner_var) wire_map[inner_var] = flat_wire;
+                            if (ranges->size() == 2 && inner_count > 1) {
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(elem_w);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(array_low);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(array_size);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(inner_low);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_count);
+                            }
+                        }
+                        for (int i = 0; i < array_size; i++) {
+                            std::string ename =
+                                array_name + "[" + std::to_string(array_low + i) + "]";
+                            RTLIL::IdString eid = RTLIL::escape_id(ename);
+                            if (!module->wire(eid)) {
+                                RTLIL::Wire* ew = module->addWire(eid, row_w);
+                                add_src_attribute(ew->attributes, array_var);
+                                module->connect(RTLIL::SigSpec(ew),
+                                    RTLIL::SigSpec(flat_wire).extract(i * row_w, row_w));
+                                name_map[ename] = ew;
+                            }
+                        }
+                    } else {
+                        log_warning("UHDM: Array_var '%s' whole/multi-dim with "
+                                    "non-constant dims — left unmaterialized\n",
+                                    array_name.c_str());
+                    }
                 } else if (is_memory_array(array_var)) {
                     // Has both packed and unpacked dimensions but only constant accesses,
                     // OR is a comb-only array with dynamic access — create individual element wires.
@@ -3503,7 +3662,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         log("UHDM: Array_var '%s' is comb-only, creating individual registers\n", array_name.c_str());
                     else
                         log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
-                    
+
                     // Get the array dimensions
                     auto ranges = array_var->Ranges();
                     if (ranges && !ranges->empty()) {
@@ -4544,6 +4703,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (should_be_memory) {
                     log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array);
+                } else if ((array->Ranges() && array->Ranges()->size() > 1) &&
+                           array->Nets() && !array->Nets()->empty() &&
+                           materialize_flat_struct_array(
+                               array_name, array->Ranges(),
+                               (*array->Nets())[0], array)) {
+                    // MULTI-dim unpacked array (CVA6 bht/btb tables hoisted
+                    // from their generate scope to module Array_nets): flat
+                    // canonical wire + per-ROW aliases; the per-element path
+                    // below consumed only Ranges()[0] and sized rows at
+                    // ELEMENT width.
+                    log("UHDM: Array net '%s' multi-dim — flat representation\n",
+                        array_name.c_str());
                 } else {
                     // Has only constant accesses, is comb-only, or has (* mem2reg *) attr
                     if (has_mem2reg_attr)
@@ -4605,6 +4776,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                 }
+            } else if (array->Ranges() && array->Ranges()->size() > 1 &&
+                       array->Nets() && !array->Nets()->empty() &&
+                       materialize_flat_struct_array(
+                           array_name, array->Ranges(),
+                           (*array->Nets())[0], array)) {
+                // MULTI-dim unpacked array whose element is a STRUCT
+                // (is_memory_array doesn't recognize struct elements — CVA6
+                // bht/btb `bht_q[NR_ROWS-1:0][IPF-1:0]` with an anonymous
+                // packed struct): flat canonical wire + per-ROW aliases.
+                log("UHDM: Array net '%s' multi-dim — flat representation\n",
+                    array_name.c_str());
             } else {
                 // Pure unpacked array of wires (e.g. `wire mw1[0:1]`).  When
                 // the array is only accessed by bit-select, flatten to per-
@@ -4668,8 +4850,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // to auto-creating a 1-bit `\dll_d` on the first
                     // reference, leaving every read of `dll_d[i].tag` as
                     // a single-bit X.
+                    // A MULTI-dimensional unpacked array (`e_t q[3:0][1:0]`,
+                    // CVA6 bht/btb tables) flattens row-major: the per-alias
+                    // wires are per FIRST-dim ROW, each row spanning the
+                    // product of the inner dims × element width.  Consuming
+                    // only Ranges()[0] halved the storage and broke every
+                    // 2-index access.
                     int array_size = 1;
                     int array_low = 0;
+                    int inner_count = 1;
                     if (array->Ranges() && !array->Ranges()->empty()) {
                         auto first_range = (*array->Ranges())[0];
                         if (first_range->Left_expr() && first_range->Right_expr()) {
@@ -4682,6 +4871,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 array_low = std::min(l, r);
                             }
                         }
+                        for (size_t ri = 1; ri < array->Ranges()->size(); ri++) {
+                            auto rn = (*array->Ranges())[ri];
+                            if (rn->Left_expr() && rn->Right_expr()) {
+                                RTLIL::SigSpec il = import_expression(rn->Left_expr());
+                                RTLIL::SigSpec ir = import_expression(rn->Right_expr());
+                                if (il.is_fully_const() && ir.is_fully_const())
+                                    inner_count *= std::abs(il.as_int() - ir.as_int()) + 1;
+                            }
+                        }
                     }
                     int element_width = 1;
                     bool element_signed = false;
@@ -4691,6 +4889,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         element_width = get_width(inner_net, uhdm_module);
                         if (inner_net->VpiSigned()) element_signed = true;
                     }
+                    // Row width: inner dims × element.
+                    element_width *= inner_count;
 
                     int total_width = array_size * element_width;
                     log("UHDM: Array net '%s' has whole-array access — creating flat "
@@ -4708,6 +4908,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // hier_path lookups via Actual_group() find the
                         // flat wire's typespec metadata.
                         if (inner_net) wire_map[inner_net] = flat_wire;
+                        // 2D metadata so the var_select const-2D reader/writer
+                        // slices `q[i][j]` from the flat wire (bht/btb tables).
+                        if (array->Ranges() && array->Ranges()->size() == 2 &&
+                            inner_count > 1) {
+                            auto r1 = (*array->Ranges())[1];
+                            int il = 0, ir = 0;
+                            RTLIL::SigSpec l1 = import_expression(r1->Left_expr());
+                            RTLIL::SigSpec r1s = import_expression(r1->Right_expr());
+                            if (l1.is_fully_const() && r1s.is_fully_const()) {
+                                il = l1.as_int(); ir = r1s.as_int();
+                                int base_elem_w = element_width / inner_count;
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(base_elem_w);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(array_low);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(array_size);
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(std::min(il, ir));
+                                flat_wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_count);
+                            }
+                        }
                     }
                     for (int i = 0; i < array_size; i++) {
                         std::string ename =
