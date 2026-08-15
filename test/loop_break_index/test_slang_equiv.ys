@@ -1,0 +1,14 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top loop_break_index
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename loop_break_index gold
+design -stash gold
+read_slang dut.sv --top loop_break_index
+hierarchy -check -top loop_break_index
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename loop_break_index gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+sat -verify -prove-asserts -seq 8 -set-init-zero -show-inputs -show-outputs miter

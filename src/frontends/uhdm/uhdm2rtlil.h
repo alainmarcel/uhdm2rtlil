@@ -413,6 +413,12 @@ struct UhdmImporter {
     // is only correct for a RHS read; on an LHS it would make the write target a
     // constant and drop the write).
     bool comb_lhs_keep_base = false;
+    // While unrolling a comb for-loop whose body contains `break`, the 1-bit
+    // flag wire for the CURRENT iteration; the vpiBreak handler drives it to 1
+    // under the branch conditions that reach the break, so the post-loop value
+    // of the loop variable can be built as a priority mux (CVA6 pmp.sv
+    // `for (i…) … break;  if (i == NrPMPEntries) …`).
+    RTLIL::SigSpec current_break_flag;
 
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
@@ -1043,6 +1049,10 @@ struct UhdmImporter {
 
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
+    // Substitute a `parameter type` DECLARATION-DEFAULT typespec with the
+    // instance-bound type (returns input unchanged when no binding applies).
+    const UHDM::typespec* resolve_type_param_typespec(const UHDM::typespec* ts,
+                                                      const UHDM::scope* inst = nullptr);
     // Materialize a whole-accessed / multi-dim unpacked array as ONE flat
     // canonical wire (product of all dims × element width) plus per-ROW
     // alias wires `name[k]` connected to its slices, stamping the
