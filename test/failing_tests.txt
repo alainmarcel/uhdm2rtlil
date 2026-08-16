@@ -256,3 +256,17 @@ sva/extnets.sv
 # now re-resolves from a representative elaborated instance (elab_inst_by_def).
 # def_ctx_struct_param  (PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass;
 #   kept documented here for the slang-miter verification pointer)
+
+# --- simple/mem2reg_bounds_tern: read_verilog is the WRONG side ---
+# `for (i=0;i<4;i++) mem[i] <= i == 0 ? base : mem[i-1]+1;` on `reg mem[0:2]`
+# (i==3 is an out-of-bounds write, i==0 an out-of-bounds read of mem[-1]).
+# Fixing the width-sensitive `==` constant fold (a 32-bit genvar value never
+# compared equal to a 64-bit literal, so `i == 0` folded FALSE on every
+# iteration) made the UHDM output match the behavioural RTL EXACTLY, which is
+# what newly exposes the disagreement with Yosys's own Verilog frontend.
+# ADJUDICATED with iverilog (UHDM netlist + read_verilog netlist + the
+# behavioural dut.v instantiated side by side, 40 clocked random vectors):
+#   UHDM-vs-RTL mismatches = 0     read_verilog-vs-RTL mismatches = 10
+# So this is an upstream read_verilog OOB bug, not a UHDM regression;
+# Miter-Formal stays 0 and only equiv_induct flags it.
+simple/mem2reg_bounds_tern.v

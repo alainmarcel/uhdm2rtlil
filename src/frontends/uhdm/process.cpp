@@ -3462,16 +3462,36 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // and a full-width update would conflict with them ("Drivers conflicting
     // with a constant 1'0 driver").
     std::map<std::string, std::set<int>> comb_written_bits;
+    std::set<std::string> comb_written_unreliable;
     for (const auto& s : assigned_signals) {
-        if (!s.lhs_expr) continue;
+        if (!s.lhs_expr) {
+            // for-loop write with a dynamic/loop-var index — the touched bits
+            // are unknowable here; force the full-wire update for this base.
+            comb_written_unreliable.insert(s.name);
+            continue;
+        }
         RTLIL::SigSpec ls = import_expression(s.lhs_expr);
+        bool touches_base = false;
         for (const auto& ch : ls.chunks())
             if (ch.wire) {
                 std::string wn = ch.wire->name.str();
                 if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
                 for (int b = 0; b < ch.width; b++)
                     comb_written_bits[wn].insert(ch.offset + b);
+                if (wn == s.name || wn.rfind(s.name + "[", 0) == 0)
+                    touches_base = true;
             }
+        // An indexed struct-field LHS whose indices are LOOP VARS
+        // (`upd.is_page[x][y]` — CVA6 cva6_ptw shared_tlb_update_o) can't
+        // resolve here (unrolling hasn't run), so its bits land on a scratch
+        // wire and the base bits are UNKNOWN — fall back to the full-wire
+        // update for that signal or the field writes never leave the process.
+        if (s.lhs_expr->VpiType() == vpiHierPath && !touches_base)
+            comb_written_unreliable.insert(s.name);
+        if (mode_debug)
+            log("    comb_written probe: name=%s type=%d ls=%s touches=%d\n",
+                s.name.c_str(), s.lhs_expr->VpiType(),
+                log_signal(ls), touches_base ? 1 : 0);
     }
 
     // Create sync always rule BEFORE statement import so task/function handlers can add entries
@@ -3486,6 +3506,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             auto wb = base_w ? comb_written_bits.find(sig_name)
                              : comb_written_bits.end();
             if (base_w && wb != comb_written_bits.end() &&
+                !comb_written_unreliable.count(sig_name) &&
                 (int)wb->second.size() < base_w->width &&
                 (int)temp_wire->width == base_w->width) {
                 // Partially-written base wire: drive only the written bit runs.
@@ -7730,12 +7751,27 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // iteration order flips that so the FIRST matching iteration's
                 // write is the one that survives.
                 bool has_break = body_has_break(fl_body);
+                // (index, break-flag) per iteration, for the post-loop value of
+                // the loop variable.
+                std::vector<std::pair<int, RTLIL::SigSpec>> brk_flags;
+                bool brk_idx_emitted = false;
                 if (has_break) {
                     log("    Comb for loop body has `break` — iterating in "
                         "reverse so first-match-wins semantics hold\n");
                     for (int64_t i = loop_end; i >= fl_start; i -= fl_inc_val) {
                         loop_values[fl_var] = (int)i;
+                        // Per-iteration break flag, defaulted to 0 in the root
+                        // case; the vpiBreak handler sets it to 1 under the
+                        // branch conditions that reach the break.
+                        RTLIL::Wire* bw = module->addWire(NEW_ID, 1);
+                        proc->root_case.actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(bw),
+                                          RTLIL::SigSpec(RTLIL::State::S0)));
+                        RTLIL::SigSpec saved_bf = current_break_flag;
+                        current_break_flag = RTLIL::SigSpec(bw);
                         import_statement_comb(fl_body, proc);
+                        current_break_flag = saved_bf;
+                        brk_flags.push_back({(int)i, RTLIL::SigSpec(bw)});
                     }
                 } else {
                     for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
@@ -7747,6 +7783,37 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
                 int64_t final_val = fl_inclusive ? fl_end + fl_inc_val : fl_end;
                 loop_values[fl_var] = (int)final_val;
+
+                // With a `break`, the post-loop value of the loop variable is
+                // NOT the static final value: it is the index of the FIRST
+                // iteration that broke, else N.  Code routinely tests exactly
+                // that (`if (i == NrPMPEntries)` = "nothing matched" — CVA6
+                // pmp.sv, whose allow_o was always taking the no-match
+                // fallback).  Build the priority mux and let post-loop reads
+                // resolve to it instead of the constant.
+                if (has_break && !brk_flags.empty()) {
+                    RTLIL::Wire* var_wire = name_map.count(fl_var)
+                                                ? name_map[fl_var] : nullptr;
+                    if (!var_wire)
+                        var_wire = module->wire(RTLIL::escape_id(fl_var));
+                    if (var_wire) {
+                        int w = var_wire->width;
+                        RTLIL::SigSpec sel = RTLIL::Const((int)final_val, w);
+                        // brk_flags is in DESCENDING index order, so folding in
+                        // order leaves the LOWEST index outermost = highest
+                        // priority (first break wins).
+                        for (auto& bf : brk_flags)
+                            sel = module->Mux(NEW_ID, sel,
+                                              RTLIL::SigSpec(RTLIL::Const(bf.first, w)),
+                                              bf.second);
+                        loop_values.erase(fl_var);
+                        emit_comb_assign(RTLIL::SigSpec(var_wire), sel, proc);
+                        brk_idx_emitted = true;
+                        log("    Comb for loop `break`: %s = first-break index "
+                            "priority mux (%zu iterations)\n",
+                            fl_var.c_str(), brk_flags.size());
+                    }
+                }
                 // Also drive the actual `\<fl_var>` wire with that final
                 // value via the standard comb temp-wire path.  Without
                 // this the post-loop wire stays undriven, so when ANOTHER
@@ -7757,8 +7824,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // if the variable corresponds to a module wire (skip
                 // locally-declared `for (int i = ...)` loop vars, which
                 // are loop_values-only).
-                if (RTLIL::Wire* var_wire = name_map.count(fl_var)
-                        ? name_map[fl_var] : nullptr) {
+                if (RTLIL::Wire* var_wire = brk_idx_emitted
+                        ? nullptr
+                        : (name_map.count(fl_var) ? name_map[fl_var] : nullptr)) {
                     int w = var_wire->width;
                     emit_comb_assign(RTLIL::SigSpec(var_wire),
                                      RTLIL::Const((int)final_val, w),
@@ -7770,6 +7838,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             }
             break;
         }
+        case vpiBreak:
+            // `break` inside an unrolled comb for-loop: record that THIS
+            // iteration terminated the loop, so the post-loop value of the
+            // loop variable can be built as a priority mux (CVA6 pmp.sv).
+            // Unconditional here means the branch reaching it always breaks.
+            if (!current_break_flag.empty())
+                proc->root_case.actions.push_back(
+                    RTLIL::SigSig(current_break_flag, RTLIL::SigSpec(RTLIL::State::S1)));
+            break;
+        case vpiContinue:
+            break;
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
             break;
@@ -8837,6 +8916,32 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
         }
     }
 
+    // Seed function-local DECLARATION INITIALIZERS (`logic [2:0] addr_tmp =
+    // {(addr[2] && Cfg.IS_XLEN64), addr[1:0]}`) — the Variables() loop above
+    // mapped every local to Sx, but a local whose only "assignment" is its
+    // initializer must start at that value, not X.  Evaluate against
+    // func_mapping so references to the bound call arguments resolve (CVA6
+    // store_unit data_align: addr_tmp stayed X, the case selector became 3'x
+    // and the byte-rotation collapsed to a passthrough).  Done after the
+    // current_comb_values merge so inits can also read module signals.
+    if (func_def->Variables()) {
+        for (auto var : *func_def->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            if (var_name == func_name) continue;
+            auto v = dynamic_cast<const UHDM::variables*>(var);
+            if (!v || !v->Expr()) continue;
+            auto init_expr = dynamic_cast<const expr*>(v->Expr());
+            if (!init_expr) continue;
+            RTLIL::SigSpec init = import_expression(init_expr, &func_mapping);
+            if (init.empty()) continue;
+            int width = get_width(var, current_instance);
+            if (width <= 0) width = init.size();
+            if (init.size() < width) init.extend_u0(width);
+            else if (init.size() > width) init = init.extract(0, width);
+            func_mapping[var_name] = init;
+        }
+    }
+
     // Inline function body
     if (auto func_stmt = func_def->Stmt()) {
         inline_func_body_comb(func_stmt, proc, func_mapping, func_name, context, "", process_src);
@@ -8945,6 +9050,23 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
 
                     // Map to initial undefined - will be updated by assignments
                     func_mapping[var_name] = RTLIL::SigSpec(RTLIL::State::Sx, width);
+
+                    // Block-local declaration initializer (`logic [2:0] t =
+                    // f(arg);`) — same rule as the function-level Variables()
+                    // seeding in import_func_call_comb: without it the local
+                    // reads X until an explicit body assignment.
+                    if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                        if (auto init_expr = dynamic_cast<const expr*>(v->Expr())) {
+                            RTLIL::SigSpec init =
+                                import_expression(init_expr, &func_mapping);
+                            if (!init.empty()) {
+                                if (init.size() < width) init.extend_u0(width);
+                                else if (init.size() > width)
+                                    init = init.extract(0, width);
+                                func_mapping[var_name] = init;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -9031,6 +9153,69 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                 if (lhs_expr->VpiType() == vpiRefObj) {
                     const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
                     lhs_name = std::string(lhs_ref->VpiName());
+                } else if (auto lhs_var =
+                               dynamic_cast<const UHDM::variables*>(lhs_expr)) {
+                    // A DECLARATION INITIALIZER (`logic [2:0] addr_tmp =
+                    // {(addr[2] && …), addr[1:0]};`) — Surelog emits it as an
+                    // assignment statement whose LHS is the logic_var itself,
+                    // not a ref_obj.  Without this the init was skipped and the
+                    // local stayed X (CVA6 store_unit data_align: the case
+                    // selector addr_tmp read 3'x, so the byte rotation
+                    // collapsed to a passthrough).
+                    lhs_name = std::string(lhs_var->VpiName());
+                } else if (lhs_expr->VpiType() == vpiPartSelect ||
+                           lhs_expr->VpiType() == vpiBitSelect) {
+                    // Part/bit-select write to a function LOCAL
+                    // (`data_tmp[CVA6Cfg.XLEN-1:0] = {…}` in CVA6 store_unit's
+                    // data_align — the range survives as a part_select when its
+                    // bounds come from an elaborated module parameter).  With a
+                    // constant range, splice the RHS into the tracked in-flight
+                    // value.  Previously lhs_name stayed empty and the write
+                    // was DROPPED silently (d_tmp kept its all-zero init).
+                    std::string base;
+                    int sel_off = -1, sel_w = -1;
+                    if (lhs_expr->VpiType() == vpiPartSelect) {
+                        auto ps = any_cast<const part_select*>(lhs_expr);
+                        base = std::string(!ps->VpiName().empty()
+                                               ? ps->VpiName() : ps->VpiDefName());
+                        RTLIL::SigSpec l = import_expression(
+                            any_cast<const expr*>(ps->Left_range()), &func_mapping);
+                        RTLIL::SigSpec r = import_expression(
+                            any_cast<const expr*>(ps->Right_range()), &func_mapping);
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                            sel_off = std::min(li, ri);
+                            sel_w = std::abs(li - ri) + 1;
+                        }
+                    } else {
+                        auto bs = any_cast<const bit_select*>(lhs_expr);
+                        base = std::string(bs->VpiName());
+                        RTLIL::SigSpec ix =
+                            import_expression(bs->VpiIndex(), &func_mapping);
+                        if (ix.is_fully_const()) {
+                            sel_off = ix.as_const().as_int();
+                            sel_w = 1;
+                        }
+                    }
+                    auto fit = base.empty() ? func_mapping.end()
+                                            : func_mapping.find(base);
+                    if (fit != func_mapping.end() && sel_off >= 0 &&
+                        sel_off + sel_w <= fit->second.size()) {
+                        RTLIL::SigSpec cur = fit->second;
+                        RTLIL::SigSpec r2 = rhs;
+                        if (r2.size() < sel_w) r2.extend_u0(sel_w);
+                        else if (r2.size() > sel_w) r2 = r2.extract(0, sel_w);
+                        cur.replace(sel_off, r2);
+                        func_mapping[base] = cur;
+                        log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
+                            base.c_str(), sel_off, sel_w, log_signal(r2).c_str());
+                    } else if (!base.empty()) {
+                        log_warning(
+                            "inline_func_body_comb: dropped part/bit-select "
+                            "write to '%s' (dynamic or out-of-range select)\n",
+                            base.c_str());
+                    }
+                    break;
                 }
             }
 
@@ -10722,9 +10907,12 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     // still element-indexes; only a genuinely 1-bit-element single entry is a
     // plain vector left to the bit-write paths.
     if (outer_size <= 1 && elem_w <= 1) return false;
-    if (elem_w <= 1 && !idx1_e) return false;      // 1-bit "elements" = plain
-                                                   // vector bit write; existing
-                                                   // paths handle that
+    // NOTE: elem_w == 1 (plain vector dynamic BIT write,
+    // `ldbuf_valid_d[windex] = 1'b1` in CVA6 load_unit's CaseRule context)
+    // is handled HERE too — the old defer-to-"existing paths" left the write
+    // to the generic assignment fallback, which imported the LHS as a READ
+    // (shiftx aux wire) and silently dropped the store: the load buffer's
+    // valid bits never set and req_port_o.data_id stuck at 0.
 
     // Two-level decomposition: an ELEMENT shift (element offset in the flat
     // wire) and an INNER shift (bit offset within the element).  The inner
@@ -14092,6 +14280,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         }
 
+        case vpiBreak:
+            // See the Process* overload: drive this iteration's break flag
+            // under the enclosing branch conditions.
+            if (!current_break_flag.empty())
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(current_break_flag, RTLIL::SigSpec(RTLIL::State::S1)));
+            break;
+        case vpiContinue:
+            break;
         default:
             if (mode_debug)
                 log("        Unsupported statement type in case: %s (vpiType=%d)\n",

@@ -1778,17 +1778,98 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             int leaf_w = 1;
                             for (size_t d = K; d < pdims.size(); d++) leaf_w *= pdims[d].first;
                             long off = 0; bool ok = true;
+                            bool any_dyn_idx = false;
+                            int sel_w = leaf_w;
                             for (size_t k = 0; k < K; k++) {
-                                RTLIL::SigSpec is = import_expression((*exprs)[k], input_mapping);
-                                if (!is.is_fully_const()) { ok = false; break; }
                                 int inner = 1;
                                 for (size_t d = k + 1; d < pdims.size(); d++) inner *= pdims[d].first;
+                                // Trailing RANGE select of a dim
+                                // (`vaddr_vpn_match[i][z][PtLevels-1:x]`, CVA6
+                                // cva6_tlb): the last Exprs entry is a
+                                // part_select node windowing dim K-1 — the
+                                // const-index import below returned non-const
+                                // and the read collapsed to a single wrong bit.
+                                if (k == K - 1 &&
+                                    (*exprs)[k]->UhdmType() == uhdmpart_select) {
+                                    auto psx = any_cast<const UHDM::part_select*>((*exprs)[k]);
+                                    RTLIL::SigSpec l = import_expression(psx->Left_range(), input_mapping);
+                                    RTLIL::SigSpec rr = import_expression(psx->Right_range(), input_mapping);
+                                    if (!l.is_fully_const() || !rr.is_fully_const()) { ok = false; break; }
+                                    int lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
+                                    int w = std::abs(l.as_const().as_int() -
+                                                     rr.as_const().as_int()) + 1;
+                                    int rel = lo - pdims[k].second;
+                                    if (rel < 0 || rel + w > pdims[k].first) { ok = false; break; }
+                                    off += (long)rel * inner;
+                                    sel_w = w * inner;
+                                    continue;
+                                }
+                                RTLIL::SigSpec is = import_expression((*exprs)[k], input_mapping);
+                                if (!is.is_fully_const()) {
+                                    ok = false;
+                                    any_dyn_idx = true;
+                                    break;
+                                }
                                 off += (long)(is.as_const().as_int() - pdims[k].second) * inner;
                             }
-                            if (ok && off >= 0 && off + leaf_w <= base_sig.size()) {
+                            if (ok && off >= 0 && off + sel_w <= base_sig.size()) {
                                 log("  vpiVarSelect: packed %dD %s[...] → [%d+:%d]\n",
-                                    (int)pdims.size(), base_name.c_str(), (int)off, leaf_w);
-                                return base_sig.extract((int)off, leaf_w);
+                                    (int)pdims.size(), base_name.c_str(), (int)off, sel_w);
+                                return base_sig.extract((int)off, sel_w);
+                            }
+                            // DYNAMIC index into a multi-dim PACKED array
+                            // (`vaddr_lvl[0][ptw_lvl_q[0]]` on
+                            // `logic [A:0][B:0][8:0]`, CVA6 cva6_ptw): the
+                            // const path above bails, and without this the read
+                            // fell through to a plain 1-BIT bit_select —
+                            // ptw_pptr_n lost 8 of the element's 9 bits.  Shift
+                            // the element out of the flat value at
+                            // Σ (idx_k − low_k)·stride_k.
+                            if (any_dyn_idx && pdims.size() >= K) {
+                                int leaf_w = 1;
+                                for (size_t d = K; d < pdims.size(); d++)
+                                    leaf_w *= pdims[d].first;
+                                int shamt_w = 32;
+                                RTLIL::SigSpec acc(RTLIL::Const(0, shamt_w));
+                                bool dyn_ok = leaf_w > 1;
+                                for (size_t k = 0; k < K && dyn_ok; k++) {
+                                    int inner = 1;
+                                    for (size_t d = k + 1; d < pdims.size(); d++)
+                                        inner *= pdims[d].first;
+                                    RTLIL::SigSpec ix =
+                                        import_expression((*exprs)[k], input_mapping);
+                                    if (ix.empty()) { dyn_ok = false; break; }
+                                    ix.extend_u0(shamt_w, false);
+                                    if (pdims[k].second != 0) {
+                                        RTLIL::Wire* sw = module->addWire(NEW_ID, shamt_w);
+                                        module->addSub(NEW_ID, ix,
+                                            RTLIL::SigSpec(RTLIL::Const(pdims[k].second, shamt_w)),
+                                            sw, true);
+                                        ix = RTLIL::SigSpec(sw);
+                                    }
+                                    RTLIL::Wire* mw = module->addWire(NEW_ID, shamt_w);
+                                    module->addMul(NEW_ID, ix,
+                                        RTLIL::SigSpec(RTLIL::Const(inner, shamt_w)), mw, true);
+                                    RTLIL::Wire* aw = module->addWire(NEW_ID, shamt_w);
+                                    module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw), aw, true);
+                                    acc = RTLIL::SigSpec(aw);
+                                }
+                                if (dyn_ok) {
+                                    RTLIL::Wire* out = module->addWire(NEW_ID, leaf_w);
+                                    RTLIL::Cell* sx = module->addCell(NEW_ID, ID($shiftx));
+                                    sx->setParam(ID::A_SIGNED, 0);
+                                    sx->setParam(ID::B_SIGNED, 0);
+                                    sx->setParam(ID::A_WIDTH, base_sig.size());
+                                    sx->setParam(ID::B_WIDTH, shamt_w);
+                                    sx->setParam(ID::Y_WIDTH, leaf_w);
+                                    sx->setPort(ID::A, base_sig);
+                                    sx->setPort(ID::B, acc);
+                                    sx->setPort(ID::Y, out);
+                                    log("  vpiVarSelect: DYNAMIC packed %dD %s[...] → "
+                                        "shiftx (w=%d)\n",
+                                        (int)pdims.size(), base_name.c_str(), leaf_w);
+                                    return RTLIL::SigSpec(out);
+                                }
                             }
                         }
                     }
@@ -3592,6 +3673,51 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (result.size() > 0)
                     return result;
             }
+
+            // `'{default: V}` on a PACKED VECTOR / packed array target
+            // (`logic [TLB_ENTRIES-1:0] m = RVH ? '{default: 0} : '{default: 1}`,
+            // CVA6 cva6_tlb match_vmid): every ELEMENT gets V — for a plain
+            // vector the elements are single bits, so `'{default: 1}` is
+            // all-ones, NOT the literal 1 the generic loop below produced.
+            if (deftp && !members && deftp->Pattern()) {
+                int ew = 1, tw = 0;
+                if (ats) {
+                    tw = get_width_from_typespec(ats, inst);
+                    if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {
+                        if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec()) {
+                            int w = get_width_from_typespec(
+                                pt->Elem_typespec()->Actual_typespec(), inst);
+                            if (w > 0) ew = w;
+                        }
+                    } else if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) {
+                        // Multi-range vector `logic [A][B]`: element = product of
+                        // the inner ranges; single range → 1-bit elements.
+                        if (lt->Ranges() && lt->Ranges()->size() >= 2) {
+                            int iw = 1;
+                            for (size_t ri = 1; ri < lt->Ranges()->size(); ri++) {
+                                auto rn = (*lt->Ranges())[ri];
+                                RTLIL::SigSpec il = import_expression(rn->Left_expr(), input_mapping);
+                                RTLIL::SigSpec ir = import_expression(rn->Right_expr(), input_mapping);
+                                if (il.is_fully_const() && ir.is_fully_const())
+                                    iw *= std::abs(il.as_const().as_int() -
+                                                   ir.as_const().as_int()) + 1;
+                            }
+                            if (iw > 0) ew = iw;
+                        }
+                    }
+                }
+                if (tw <= 0) tw = expression_context_width;
+                if (tw > 0 && ew > 0 && tw % ew == 0) {
+                    RTLIL::SigSpec defval = import_expression(
+                        any_cast<const expr*>(deftp->Pattern()), input_mapping);
+                    if (defval.size() < ew) defval.extend_u0(ew);
+                    else if (defval.size() > ew) defval = defval.extract(0, ew);
+                    RTLIL::SigSpec result;
+                    for (int i = 0; i < tw / ew; i++) result.append(defval);
+                    if (result.size() > 0)
+                        return result;
+                }
+            }
         }
 
         // Struct/array aggregate: '{field: val, field: val, ...}
@@ -3838,7 +3964,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // final widen — losing the explicit `signed'`/`unsigned'` cast and
     // producing the wrong bits (static_cast_simple).  Our own cast
     // handler below tracks signedness through the chain correctly.
-    if (op_type != vpiCastOp) {
+    // An UNBASED UNSIZED fill literal (`'1`/`'0`/`'x`/`'z`, VpiSize()==-1) in a
+    // context-determined position must REPLICATE to the context width, but
+    // reduceExpr collapses it to a single bit and we then zero-extend — CVA6
+    // cva6_ptw's `assign req_port_o.data_be = CVA6Cfg.IS_XLEN32 ? be_gen_32(…)
+    // : '1;` folded to 8'h01 instead of 8'hff.  Let the operand-wise path below
+    // handle those (it sizes fill branches to the context).
+    bool has_unsized_fill_operand = false;
+    if (op_type == vpiConditionOp && uhdm_op->Operands())
+        for (auto o : *uhdm_op->Operands())
+            if (auto c = dynamic_cast<const UHDM::constant*>(o))
+                if (c->VpiSize() == -1) { has_unsized_fill_operand = true; break; }
+
+    if (op_type != vpiCastOp && !has_unsized_fill_operand) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -4101,13 +4239,24 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 break;
             case vpiEqOp:
+                // VALUE comparison, not bit-vector identity: RTLIL::Const's
+                // operator== also compares the WIDTH, so a 32-bit 0 (what an
+                // unrolled loop variable folds to) compared against a 64-bit
+                // literal 0 came out FALSE.  `y == 0` inside an unrolled
+                // `for (int unsigned y …)` therefore always folded to 0 —
+                // CVA6 cva6_ptw's `shared_tlb_update_o.is_page[x][y] =
+                // y == 0 ? … : 1'b0` lost every y==0 term.  const_eq extends
+                // both operands to a common width first, like the const_lt /
+                // const_gt cases below already did.
                 if (operands.size() == 2) {
-                    result = operands[0].as_const() == operands[1].as_const() ? RTLIL::Const(1, 1) : RTLIL::Const(0, 1);
+                    result = RTLIL::const_eq(operands[0].as_const(), operands[1].as_const(),
+                                             false, false, 1);
                 }
                 break;
             case vpiNeqOp:
                 if (operands.size() == 2) {
-                    result = operands[0].as_const() != operands[1].as_const() ? RTLIL::Const(1, 1) : RTLIL::Const(0, 1);
+                    result = RTLIL::const_ne(operands[0].as_const(), operands[1].as_const(),
+                                             false, false, 1);
                 }
                 break;
             case vpiLtOp:
@@ -4841,8 +4990,41 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
 
                 // Match operand widths for the mux output
                 int max_width = std::max(operands[1].size(), operands[2].size());
+                // An UNBASED UNSIZED fill literal branch (`'1`, `'0`, `'x`,
+                // `'z` — VpiSize()==-1) is 1 bit as imported but must
+                // REPLICATE to the result width, not zero-extend.  CVA6
+                // cva6_ptw's `assign req_port_o.data_be = CVA6Cfg.IS_XLEN32 ?
+                // be_gen_32(…) : '1;` produced data_be = 8'h01 instead of
+                // 8'hff.  The assignment sites already handle a bare fill RHS;
+                // inside a ternary the branch never reached them.  Take the
+                // width from the other branch, else the surrounding context.
+                auto fill_state_of = [&](size_t i) -> std::pair<bool, RTLIL::State> {
+                    if (!uhdm_op->Operands() || uhdm_op->Operands()->size() < 3)
+                        return {false, RTLIL::State::S0};
+                    auto c = dynamic_cast<const UHDM::constant*>(
+                        (*uhdm_op->Operands())[i]);
+                    if (!c || c->VpiSize() != -1) return {false, RTLIL::State::S0};
+                    std::string v(c->VpiValue());
+                    if (v == "BIN:1") return {true, RTLIL::State::S1};
+                    if (v == "BIN:0") return {true, RTLIL::State::S0};
+                    if (v == "BIN:x" || v == "BIN:X") return {true, RTLIL::State::Sx};
+                    if (v == "BIN:z" || v == "BIN:Z") return {true, RTLIL::State::Sz};
+                    return {false, RTLIL::State::S0};
+                };
+                auto tf = fill_state_of(1), ff = fill_state_of(2);
+                // A `?:` is context-determined (LRM 11.4.11): the surrounding
+                // assignment width wins over the sibling branch's own width —
+                // `data_be = cond ? be_gen_32(…4 bits…) : '1` must fill all 8
+                // LHS bits, not 4.  Fall back to the sibling branch when there
+                // is no context.
+                int fill_w = expression_context_width > 0
+                                 ? expression_context_width
+                                 : max_width;
+                if ((tf.first || ff.first) && fill_w > max_width) max_width = fill_w;
                 RTLIL::SigSpec true_val = operands[1];
                 RTLIL::SigSpec false_val = operands[2];
+                if (tf.first && fill_w > 0) true_val = RTLIL::SigSpec(tf.second, fill_w);
+                if (ff.first && fill_w > 0) false_val = RTLIL::SigSpec(ff.second, fill_w);
 
                 // Extend operands to match widths if needed
                 // Use sign-extension when operands are signed
@@ -5035,6 +5217,24 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                 RTLIL::Const width_const = extract_const_from_value(val_str);
                                 if (width_const.size() > 0) {
                                     target_width = width_const.as_int();
+                                    is_size_cast = true;
+                                }
+                            }
+                            // EXPRESSION-width size cast — `((CVA6Cfg.PtLevels +
+                            // HYP_EXT) * (CVA6Cfg.VpnLen / CVA6Cfg.PtLevels))'
+                            // (vpn_to_store)` (CVA6 cva6_tlb tag update):
+                            // VpiValue is EMPTY and the width lives in the
+                            // integer_typespec's Expr().  Without this the
+                            // fallthrough defaulted to 32 and the oversized
+                            // cast STOLE bits from the enclosing concat (the
+                            // stored TLB asid lost its top 5 bits).
+                            if (target_width <= 0 && its->Expr()) {
+                                bool saved = force_const_fold;
+                                force_const_fold = true;
+                                RTLIL::SigSpec ws = import_expression(its->Expr());
+                                force_const_fold = saved;
+                                if (ws.is_fully_const() && ws.as_const().as_int() > 0) {
+                                    target_width = ws.as_const().as_int();
                                     is_size_cast = true;
                                 }
                             }
@@ -5915,11 +6115,21 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             int bw = w ? w->width : 32;
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
             log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
-        } else if (input_mapping && input_mapping->count(base_signal_name)) {
+        } else if (input_mapping && input_mapping->count(base_signal_name) &&
+                   (!comb_lhs_keep_base ||
+                    !module->wire(RTLIL::escape_id(base_signal_name)))) {
             // Function-inline (legacy) path: a part-select of a function param
             // or local (e.g. op[6:2] in rp32's dec32) — the base signal lives in
             // input_mapping, not as a module wire.  Without this it resolves to
             // the wrong wire / 0 (bit-selects and full refs already work).
+            // Skipped for a WRITE TARGET (comb_lhs_keep_base) whose base IS a
+            // real module wire: the base must stay the target wire —
+            // substituting the in-flight comb VALUE here turned
+            // `endian_data[31:0] = …` after `endian_data = ctrl.data` into a
+            // write at ctrl.data's struct offset (CVA6 store_unit corrupted
+            // bit 39 of the AMO operand).  Function LOCALS have no module
+            // wire, so they still resolve through input_mapping
+            // (function_mixed's `result[2*i] = x[i]`).
             base = input_mapping->at(base_signal_name);
             log("      PartSelect: base '%s' from input_mapping (width=%d)\n",
                 base_signal_name.c_str(), base.size());
@@ -5961,10 +6171,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                     base_signal_name.c_str(), vs.c_str(), bw);
             }
         }
-        if (base.empty() && input_mapping && input_mapping->count(base_signal_name)) {
+        if (base.empty() && input_mapping &&
+            input_mapping->count(base_signal_name) &&
+            (!comb_lhs_keep_base ||
+             !module->wire(RTLIL::escape_id(base_signal_name)))) {
             // Function argument sliced inside the function body (`data[hi:lo]`
             // in repData64) — the base is the call argument in input_mapping,
-            // not a module wire.
+            // not a module wire.  (Write targets keep a real wire base — see
+            // the comb_lhs_keep_base rule above.)
             base = input_mapping->at(base_signal_name);
         }
         if (base.empty()) {
@@ -6059,7 +6273,8 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     // import_ref_obj's whole-signal substitution.  PR #291 redirected
     // whole-signal blocking-temp reads but missed part/bit-selects, so the
     // consumer read the registered wire and got an extra cycle of delay.
-    if (input_mapping && !base_signal_name.empty()) {
+    if (input_mapping && !base_signal_name.empty() &&
+        !(comb_lhs_keep_base && base.is_wire())) {
         auto im = input_mapping->find(base_signal_name);
         if (im != input_mapping->end() && im->second.size() == base.size())
             base = im->second;
@@ -6685,6 +6900,36 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 }
             }
         }
+        // Packed array of an (anonymous) struct on a plain net:
+        // `struct packed {...} [N-1:0] tags_n;` — the net's typespec is a
+        // packed_array_typespec whose Elem_typespec is the struct.  Without
+        // this, `tags_n[i] = {…}` wrote a SINGLE BIT instead of the 62-bit
+        // element (CVA6 cva6_tlb's update path never stored an entry).
+        if (packed_elem_w <= 1 && rt && rt->Actual_typespec() &&
+            rt->Actual_typespec()->UhdmType() == uhdmpacked_array_typespec) {
+            auto pat = any_cast<const UHDM::packed_array_typespec*>(rt->Actual_typespec());
+            int ew = 0;
+            if (pat->Elem_typespec() && pat->Elem_typespec()->Actual_typespec())
+                ew = get_width_from_typespec(
+                    pat->Elem_typespec()->Actual_typespec(), inst);
+            if (ew > 1 && pat->Ranges() && !pat->Ranges()->empty()) {
+                auto r0 = (*pat->Ranges())[0];
+                RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+                // Only DESCENDING declarations (`[N-1:0]`, what CVA6 uses):
+                // the shared const/dynamic slot math below is
+                // `idx - min(l,r)`, which is only correct when element 0 sits
+                // at the LSB.  An ASCENDING `[0:1]` puts element 0 at the MSB
+                // (typedef_packed_enum_array), so leave those to the existing
+                // paths rather than mis-scaling them here.
+                if (ls.is_fully_const() && rs.is_fully_const() &&
+                    ls.as_int() >= rs.as_int() && base.size() % ew == 0) {
+                    packed_elem_w = ew;
+                    packed_outer_l = ls.as_int();
+                    packed_outer_r = rs.as_int();
+                }
+            }
+        }
     }
 
     // Flattened interface unpacked-ARRAY signal (`req_t req_dly [0:DLY]`,
@@ -7019,7 +7264,12 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         // `data[offset*8+:16]`): the base is passed via input_mapping, not a
         // module wire (CVA6 wt_dcache_wbuffer repData64 — else "Base signal
         // 'data' not found").  Prefer it so the slice reads the call argument.
-        if (input_mapping && input_mapping->count(base_signal_name)) {
+        // Skipped for a WRITE TARGET (comb_lhs_keep_base) with a real module
+        // wire — same rule as import_part_select: the base must stay the
+        // target wire; function locals (no wire) still use input_mapping.
+        if (input_mapping && input_mapping->count(base_signal_name) &&
+            (!comb_lhs_keep_base ||
+             !module->wire(RTLIL::escape_id(base_signal_name)))) {
             base = input_mapping->at(base_signal_name);
         } else
         // If this is a for-loop variable, substitute its current constant value
@@ -8420,7 +8670,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                        (nsel == peN.size() - 1 &&
                         (peN[nsel]->UhdmType() == uhdmref_obj ||
                          peN[nsel]->UhdmType() == uhdmpart_select ||
-                         peN[nsel]->UhdmType() == uhdmbit_select));
+                         peN[nsel]->UhdmType() == uhdmbit_select ||
+                         peN[nsel]->UhdmType() == uhdmvar_select));
         if (mode_debug)
             log("    Nidx probe: nsel=%zu total=%zu tail_ok=%d run_base='%s'\n",
                 nsel, peN.size(), tail_ok ? 1 : 0, run_base.c_str());
@@ -8434,6 +8685,13 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                          ? any_cast<const part_select*>(peN[nsel]) : nullptr;
             if (nsel < peN.size() && peN[nsel]->UhdmType() == uhdmbit_select)
                 fbs2 = any_cast<const bit_select*>(peN[nsel]);
+            // Multi-index field select (`tags_q[i].is_page[2-x][0:0]`,
+            // CVA6 cva6_tlb page_match): the field is a var_select whose
+            // Indexes() carry per-dim selects; the LAST one may be a
+            // part_select node.
+            const UHDM::var_select* fvs =
+                (nsel < peN.size() && peN[nsel]->UhdmType() == uhdmvar_select)
+                    ? any_cast<const UHDM::var_select*>(peN[nsel]) : nullptr;
             std::string base_name = bs0 ? std::string(bs0->VpiName()) : std::string();
             RTLIL::Wire* base_flat = (!base_name.empty() && name_map.count(base_name))
                                          ? name_map[base_name]
@@ -8471,20 +8729,26 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // all dims are consumed).
                 int field_offset = 0, field_width = level_w;
                 bool field_ok = true;
-                if ((fr || fps || fbs2) && st && st->Members() && nsel == dims.size()) {
+                const UHDM::typespec* field_ts = nullptr;
+                if ((fr || fps || fbs2 || fvs) && st && st->Members() && nsel == dims.size()) {
                     std::string field_name = fr ? std::string(fr->VpiName())
                                               : fps ? std::string(fps->VpiName())
-                                                    : std::string(fbs2->VpiName());
+                                              : fbs2 ? std::string(fbs2->VpiName())
+                                                     : std::string(fvs->VpiName());
                     field_offset = 0; field_width = 0;
                     bool found_field = false;
                     for (int i2 = (int)st->Members()->size() - 1; i2 >= 0; i2--) {
                         auto m = (*st->Members())[i2];
                         int mw = 0;
+                        const UHDM::typespec* ats_r = nullptr;
                         if (auto mts = m->Typespec())
-                            if (auto ats = mts->Actual_typespec())
-                                mw = get_width_from_typespec(ats, inst);
+                            if (auto ats = mts->Actual_typespec()) {
+                                ats_r = resolve_type_param_typespec(ats, inst);
+                                mw = get_width_from_typespec(ats_r, inst);
+                            }
                         if (std::string(m->VpiName()) == field_name) {
                             field_width = mw;
+                            field_ts = ats_r;
                             found_field = true;
                             break;
                         }
@@ -8515,7 +8779,89 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             } else field_ok = false;
                         } else field_ok = false;
                     }
-                } else if (fr || fps || fbs2) {
+                    // Multi-index select of a MULTI-DIM PACKED field
+                    // (`.is_page[2-x][0:0]` — CVA6 cva6_tlb page_match, genvar
+                    // indices fold to constants).  Walk the field's declared
+                    // packed dims; each Indexes() entry consumes one dim
+                    // (stride = product of remaining dim widths), and a
+                    // trailing part_select entry windows the current dim.
+                    if (field_ok && fvs && fvs->Exprs()) {
+                        // Collect (size, low) per dim, outer→inner.
+                        std::vector<std::pair<int,int>> fdims;
+                        const UHDM::any* cur = field_ts;
+                        while (cur) {
+                            const UHDM::VectorOfrange* rgs = nullptr;
+                            const UHDM::any* next = nullptr;
+                            if (cur->UhdmType() == uhdmlogic_typespec) {
+                                auto lt2 = any_cast<const UHDM::logic_typespec*>(cur);
+                                rgs = lt2->Ranges();
+                                if (lt2->Elem_typespec())
+                                    next = lt2->Elem_typespec()->Actual_typespec();
+                            } else if (cur->UhdmType() == uhdmpacked_array_typespec) {
+                                auto pt2 = any_cast<const UHDM::packed_array_typespec*>(cur);
+                                rgs = pt2->Ranges();
+                                if (pt2->Elem_typespec())
+                                    next = pt2->Elem_typespec()->Actual_typespec();
+                            }
+                            if (rgs)
+                                for (auto r : *rgs) {
+                                    RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                    if (l.is_fully_const() && rr.is_fully_const())
+                                        fdims.push_back({std::abs(l.as_const().as_int() -
+                                                                  rr.as_const().as_int()) + 1,
+                                                         std::min(l.as_const().as_int(),
+                                                                  rr.as_const().as_int())});
+                                    else { field_ok = false; break; }
+                                }
+                            cur = next;
+                            if (!field_ok) break;
+                        }
+                        // The walk is only bit-accurate when the collected dims
+                        // fully tile the field (innermost dim = bit range).
+                        {
+                            long prod = 1;
+                            for (auto& d : fdims) prod *= d.first;
+                            if (prod != field_width) field_ok = false;
+                        }
+                        size_t di = 0;
+                        for (auto sel : *fvs->Exprs()) {
+                            if (!field_ok) break;
+                            if (di >= fdims.size()) { field_ok = false; break; }
+                            // stride of dim di = product of inner dim widths
+                            // (in bits within the field)
+                            int stride = 1;
+                            for (size_t d2 = di + 1; d2 < fdims.size(); d2++)
+                                stride *= fdims[d2].first;
+                            if (sel->UhdmType() == uhdmpart_select) {
+                                auto ps2 = any_cast<const UHDM::part_select*>(sel);
+                                RTLIL::SigSpec l = import_expression(ps2->Left_range(), input_mapping);
+                                RTLIL::SigSpec rr = import_expression(ps2->Right_range(), input_mapping);
+                                if (l.is_fully_const() && rr.is_fully_const()) {
+                                    int lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
+                                    int w = std::abs(l.as_const().as_int() -
+                                                     rr.as_const().as_int()) + 1;
+                                    int rel = lo - fdims[di].second;
+                                    if (rel >= 0 && rel + w <= fdims[di].first) {
+                                        field_offset += rel * stride;
+                                        field_width = w * stride;
+                                    } else field_ok = false;
+                                } else field_ok = false;
+                            } else {
+                                RTLIL::SigSpec ix = import_expression(
+                                    any_cast<const expr*>(sel), input_mapping);
+                                if (ix.is_fully_const()) {
+                                    int iv = ix.as_const().as_int() - fdims[di].second;
+                                    if (iv >= 0 && iv < fdims[di].first) {
+                                        field_offset += iv * stride;
+                                        field_width = stride;
+                                    } else field_ok = false;  // OOB → X fallback
+                                } else field_ok = false;      // dynamic — not yet
+                            }
+                            di++;
+                        }
+                    }
+                } else if (fr || fps || fbs2 || fvs) {
                     field_ok = false;  // field on a partial (row) slice — bail
                 }
                 if (idx_ok && field_ok && any_dyn) {
@@ -8558,7 +8904,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         base_name.c_str(), nsel, field_width);
                     return RTLIL::SigSpec(out);
                 }
-                if (idx_ok && field_ok && !any_dyn && nsel == dims.size() && nsel >= 2) {
+                if (idx_ok && field_ok && !any_dyn && nsel == dims.size() &&
+                    (nsel >= 2 || fvs)) {
                     // All-constant MULTI-index element (or field) read: plain
                     // slice of the flat wire.
                     int off = field_offset;
@@ -9469,13 +9816,36 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         rts = sv->Typespec();
                     else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first))
                         rts = sn->Typespec();
+                    else if (auto po = dynamic_cast<const UHDM::port*>(kv.first))
+                        rts = po->Typespec();
                     if (rts) {
                         if (auto ats = rts->Actual_typespec()) {
-                            if (ats->UhdmType() == uhdmstruct_typespec)
-                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                            // A `parameter type` typed net keeps the
+                            // DECLARATION DEFAULT — substitute the instance
+                            // binding (CVA6 cva6_ptw shared_tlb_update_o:
+                            // tlb_update_cva6_t; without this the [x][y]
+                            // indices of .is_page[x][y] were DROPPED by the
+                            // string fallback and the write hit the whole
+                            // field).
+                            const UHDM::typespec* r =
+                                resolve_type_param_typespec(ats, inst);
+                            if (r && r->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(r);
                         }
                     }
                     if (st) break;
+                }
+                // Base ref's own typespec as a fallback (the wire_map object
+                // may be a port with no typespec).
+                if (!st && base_ref->Actual_group()) {
+                    if (auto e = dynamic_cast<const UHDM::expr*>(base_ref->Actual_group())) {
+                        if (e->Typespec() && e->Typespec()->Actual_typespec()) {
+                            const UHDM::typespec* r = resolve_type_param_typespec(
+                                e->Typespec()->Actual_typespec(), inst);
+                            if (r && r->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(r);
+                        }
+                    }
                 }
             }
 
@@ -9492,8 +9862,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     const UHDM::typespec* mts_actual = nullptr;
                     if (auto mts = m->Typespec())
                         if (auto ats = mts->Actual_typespec()) {
-                            mts_actual = ats;
-                            mw = get_width_from_typespec(ats, inst);
+                            mts_actual = resolve_type_param_typespec(ats, inst);
+                            mw = get_width_from_typespec(mts_actual, inst);
                         }
                     if (std::string(m->VpiName()) == field_name) {
                         field_ts_actual = mts_actual;
@@ -11010,6 +11380,24 @@ bool UhdmImporter::flat_struct_array_geom(const std::string& base_name,
             if (pn->Elements() && !pn->Elements()->empty())
                 st = inner_struct((*pn->Elements())[0]);
             if (st) rngs = pn->Ranges();
+        } else if (auto e = dynamic_cast<const UHDM::expr*>(obj)) {
+            // Plain net/var whose OWN typespec is a packed_array_typespec of
+            // a struct — the shape an ANONYMOUS `struct packed {...} [N-1:0]`
+            // declaration produces (CVA6 cva6_tlb tags_q/content_q).
+            const UHDM::ref_typespec* rts = e->Typespec();
+            if (rts && rts->Actual_typespec() &&
+                rts->Actual_typespec()->UhdmType() == uhdmpacked_array_typespec) {
+                auto pat = any_cast<const UHDM::packed_array_typespec*>(
+                    rts->Actual_typespec());
+                if (pat->Elem_typespec() && pat->Elem_typespec()->Actual_typespec()) {
+                    const UHDM::typespec* ets = resolve_type_param_typespec(
+                        pat->Elem_typespec()->Actual_typespec(), inst);
+                    if (ets && ets->UhdmType() == uhdmstruct_typespec) {
+                        st = any_cast<const UHDM::struct_typespec*>(ets);
+                        rngs = pat->Ranges();
+                    }
+                }
+            }
         }
     };
     try_obj(actual_group);
@@ -11118,11 +11506,15 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
             std::string current_member_name = std::string(member->VpiName());
 
             if (current_member_name == member_name) {
-                // Found the member
+                // Found the member.  Resolve a `parameter type` DECLARATION
+                // DEFAULT to the instance-bound type so the NEXT path level
+                // can descend into the bound struct's members (cva6_tlb's
+                // anonymous struct member `pte_cva6_t pte` defaults to a
+                // 1-bit logic — content_q[i].pte.g returned X).
                 if (auto ref_ts = member->Typespec()) {
                     if (auto actual_ts = ref_ts->Actual_typespec()) {
-                        found_member_ts = actual_ts;
-                        member_width = get_width_from_typespec(actual_ts, inst);
+                        found_member_ts = resolve_type_param_typespec(actual_ts, inst);
+                        member_width = get_width_from_typespec(found_member_ts, inst);
                     }
                 }
                 found = true;

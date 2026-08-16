@@ -1,0 +1,14 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_partsel_after_struct_assign
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename comb_partsel_after_struct_assign gold
+design -stash gold
+read_slang dut.sv --top comb_partsel_after_struct_assign
+hierarchy -check -top comb_partsel_after_struct_assign
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename comb_partsel_after_struct_assign gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+sat -verify -prove-asserts -seq 8 -set-init-zero -show-inputs -show-outputs miter

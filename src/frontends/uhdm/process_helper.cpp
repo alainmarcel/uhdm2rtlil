@@ -938,8 +938,21 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                     sig.is_part_select = false;
                     sig.lhs_expr = nullptr;
                 }
-                for (const auto& existing : signals)
-                    if (existing.name == sig.name) return;
+                for (auto& existing : signals)
+                    if (existing.name == sig.name) {
+                        // A loop-body write with UNKNOWABLE bits (indexed by
+                        // the loop var — lhs_expr was nulled above) must widen
+                        // the surviving entry to the FULL wire, or the
+                        // written-bits scan misses the loop's bits and the
+                        // STa update drops them (CVA6 cva6_ptw
+                        // `shared_tlb_update_o.is_page[x][y]` after the
+                        // top-level `.valid`/`.pad` field writes).
+                        if (!sig.lhs_expr && existing.lhs_expr) {
+                            existing.is_part_select = false;
+                            existing.lhs_expr = nullptr;
+                        }
+                        return;
+                    }
                 signals.push_back(sig);
             };
             // A LOCALLY-declared loop var (`for (int i = ...)`) is

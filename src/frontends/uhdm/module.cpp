@@ -2746,59 +2746,70 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
     return 1;
 }
 
+// A struct member (or net) typed by a `parameter type` keeps the
+// DECLARATION DEFAULT typespec (`parameter type cbo_t = logic` → 1 bit)
+// in the elaborated model — Surelog doesn't propagate the binding into
+// shared typespec_members.  Detect it by matching against the DEF
+// module's type-parameter defaults (same object or same source location)
+// and substitute the INSTANCE's bound type (CVA6 store_buffer's queue
+// struct sized cbo_op at 1 bit instead of 8 — 532 vs 560-bit queues).
+// Returns the input unchanged when no binding applies, so callers can
+// use it unconditionally (also needed by calculate_struct_member_offset:
+// cva6_tlb's anonymous struct member `pte_cva6_t pte` must descend into
+// the BOUND struct's members, not the 1-bit default).
+const UHDM::typespec* UhdmImporter::resolve_type_param_typespec(
+        const UHDM::typespec* ts_c, const UHDM::scope* inst) {
+    if (!ts_c) return ts_c;
+    auto mi = dynamic_cast<const UHDM::module_inst*>(
+        current_instance ? (const UHDM::scope*)current_instance : inst);
+    if (!mi) return ts_c;
+    bool has_tp = false;
+    if (mi->Parameters())
+        for (auto p : *mi->Parameters())
+            if (p->UhdmType() == uhdmtype_parameter) { has_tp = true; break; }
+    if (!has_tp || !uhdm_design || !uhdm_design->AllModules()) return ts_c;
+    std::string dn = std::string(mi->VpiDefName());
+    const UHDM::module_inst* def = nullptr;
+    for (auto m : *uhdm_design->AllModules())
+        if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+    if (!def || def == mi || !def->Parameters()) return ts_c;
+    for (auto dp : *def->Parameters()) {
+        if (dp->UhdmType() != uhdmtype_parameter) continue;
+        auto dtp = any_cast<const UHDM::type_parameter*>(dp);
+        const UHDM::typespec* d_at =
+            (dtp->Typespec() ? dtp->Typespec()->Actual_typespec() : nullptr);
+        if (!d_at) continue;
+        bool match = (d_at == ts_c) ||
+                     (d_at->UhdmType() == ts_c->UhdmType() &&
+                      d_at->VpiLineNo() == ts_c->VpiLineNo() &&
+                      d_at->VpiColumnNo() == ts_c->VpiColumnNo() &&
+                      d_at->VpiFile() == ts_c->VpiFile());
+        if (!match) continue;
+        for (auto ip : *mi->Parameters()) {
+            if (ip->UhdmType() != uhdmtype_parameter) continue;
+            if (ip->VpiName() != dp->VpiName()) continue;
+            auto itp = any_cast<const UHDM::type_parameter*>(ip);
+            if (itp->Typespec() && itp->Typespec()->Actual_typespec() &&
+                itp->Typespec()->Actual_typespec() != ts_c) {
+                log("UHDM: type-param member default '%s' -> instance-bound type\n",
+                    std::string(dp->VpiName()).c_str());
+                return itp->Typespec()->Actual_typespec();
+            }
+        }
+    }
+    return ts_c;
+}
+
 // Helper function to get width from typespec
 int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst) {
     if (!typespec) return 1;
 
-    // A struct member (or net) typed by a `parameter type` keeps the
-    // DECLARATION DEFAULT typespec (`parameter type cbo_t = logic` → 1 bit)
-    // in the elaborated model — Surelog doesn't propagate the binding into
-    // shared typespec_members.  Detect it by matching against the DEF
-    // module's type-parameter defaults (same object or same source location)
-    // and substitute the INSTANCE's bound type (CVA6 store_buffer's queue
-    // struct sized cbo_op at 1 bit instead of 8 — 532 vs 560-bit queues).
-    if (auto mi = dynamic_cast<const UHDM::module_inst*>(
-            current_instance ? (const UHDM::scope*)current_instance : inst)) {
-        bool has_tp = false;
-        if (mi->Parameters())
-            for (auto p : *mi->Parameters())
-                if (p->UhdmType() == uhdmtype_parameter) { has_tp = true; break; }
-        if (has_tp && uhdm_design && uhdm_design->AllModules()) {
-            std::string dn = std::string(mi->VpiDefName());
-            const UHDM::module_inst* def = nullptr;
-            for (auto m : *uhdm_design->AllModules())
-                if (std::string(m->VpiDefName()) == dn) { def = m; break; }
-            if (def && def != mi && def->Parameters()) {
-                auto ts_c = dynamic_cast<const UHDM::typespec*>(typespec);
-                for (auto dp : *def->Parameters()) {
-                    if (dp->UhdmType() != uhdmtype_parameter) continue;
-                    auto dtp = any_cast<const UHDM::type_parameter*>(dp);
-                    const UHDM::typespec* d_at =
-                        (dtp->Typespec() ? dtp->Typespec()->Actual_typespec() : nullptr);
-                    if (!d_at || !ts_c) continue;
-                    bool match = (d_at == ts_c) ||
-                                 (d_at->UhdmType() == ts_c->UhdmType() &&
-                                  d_at->VpiLineNo() == ts_c->VpiLineNo() &&
-                                  d_at->VpiColumnNo() == ts_c->VpiColumnNo() &&
-                                  d_at->VpiFile() == ts_c->VpiFile());
-                    if (!match) continue;
-                    for (auto ip : *mi->Parameters()) {
-                        if (ip->UhdmType() != uhdmtype_parameter) continue;
-                        if (ip->VpiName() != dp->VpiName()) continue;
-                        auto itp = any_cast<const UHDM::type_parameter*>(ip);
-                        if (itp->Typespec() && itp->Typespec()->Actual_typespec() &&
-                            itp->Typespec()->Actual_typespec() != ts_c) {
-                            log("UHDM: type-param member default '%s' -> instance-bound type\n",
-                                std::string(dp->VpiName()).c_str());
-                            return get_width_from_typespec(
-                                itp->Typespec()->Actual_typespec(), inst);
-                        }
-                    }
-                }
-            }
-        }
+    if (auto ts_c = dynamic_cast<const UHDM::typespec*>(typespec)) {
+        const UHDM::typespec* bound = resolve_type_param_typespec(ts_c, inst);
+        if (bound != ts_c)
+            return get_width_from_typespec(bound, inst);
     }
-    
+
     try {
         log("UHDM: Analyzing typespec for width determination\n");
         log("UHDM: Typespec UhdmType = %d\n", typespec->UhdmType());
