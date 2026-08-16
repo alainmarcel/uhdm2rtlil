@@ -344,7 +344,14 @@ run_sim_equivalence_softwarn() {
     # the synth netlist holds cells it can't model, e.g. $allconst).
     # Neither is an RTL-vs-netlist divergence, so it's a skip, not a fail.
     if [ $rc -eq 77 ]; then
-        echo "    ⏭  Verilator co-sim SKIPPED (no outputs or not buildable)"
+        # Say WHICH of the two reasons it was.  A self-checking DUT is normal;
+        # "Verilator cannot build" happening to EVERY test means the
+        # environment is broken (CI shards reported 0 passes / 108 skips while
+        # the same tests give 147 passes / 38 skips locally), and an
+        # undifferentiated "SKIPPED" hid that for a whole CI cycle.
+        local why
+        why=$(grep -m1 -E "^⏭|Verilator (build|compile) failed|%Error" "$log" 2>/dev/null | cut -c1-100)
+        echo "    ⏭  Verilator co-sim SKIPPED (${why:-no outputs or not buildable})"
         return 0
     fi
     local base; base="$(basename "$test_dir")"
