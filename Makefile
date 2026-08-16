@@ -35,9 +35,12 @@ test: all test-read-sv
 	@echo "Running tests..."
 	@cd build && make test
 
-# Test all target - runs internal tests + all Yosys tests
+# Test all target - runs internal tests + all Yosys tests + CVA6 equivalence.
+# The CVA6 stage runs LAST because it is by far the slowest (146 modules, each
+# its own Surelog elaboration plus a SAT miter).
 test-all: all
-	@echo "Running all tests (internal + Yosys)..."
+	@echo "Running all tests (internal + Yosys + CVA6 equivalence)..."
+	@echo "  note: the CVA6 stage runs last and is the slowest; --no-cva6 skips it"
 	@cd test && ./run_all_tests.sh --all
 
 # CVA6 per-module formal equivalence (read_uhdm vs the built-in read_slang).

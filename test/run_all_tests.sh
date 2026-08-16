@@ -180,12 +180,10 @@ if [ "$CVA6_ONLY" = true ]; then
     run_cva6_suite
     exit $?
 fi
-if [ "$RUN_CVA6" = true ]; then
-    run_cva6_suite || CVA6_FAILED=1
-    # Fold the result into the suite verdict without touching the many exit
-    # points below: turn an otherwise-clean exit into a failure.
-    CVA6_TRAP=1
-fi
+# NOTE: for a full run the CVA6 stage runs LAST (just before the summary), not
+# here.  It is by far the slowest stage — 146 modules, each its own Surelog
+# elaboration plus a SAT miter — and running it first made `make test-all` look
+# like it only ran CVA6, with no internal or Yosys results for a long time.
 
 echo "=== UHDM Frontend Test Runner ==="
 
@@ -1104,6 +1102,14 @@ if [ "$RUN_YOSYS" = true ]; then
 
     yosys_duration=$(echo "$(date +%s.%N) - $yosys_start_time" | bc)
     printf "Yosys tests total execution time: %.2f seconds\n" "$yosys_duration"
+fi
+
+# --- CVA6 per-module equivalence: the last and slowest stage --------------
+# Run after the internal and Yosys suites so the quick, high-signal results
+# appear first; its verdict is folded into the exit code by the EXIT trap.
+if [ "$RUN_CVA6" = true ]; then
+    run_cva6_suite || CVA6_FAILED=1
+    CVA6_TRAP=1
 fi
 
 # Machine-readable dump of everything the summary reports, so a sharded CI run
