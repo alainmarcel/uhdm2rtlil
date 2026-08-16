@@ -53,6 +53,13 @@ CORES_ONLY=false
 # thing --cva6 runs.
 RUN_CVA6=true
 CVA6_ONLY=false
+# --shard i/N runs a stable 1/N slice of every test source (internal, Yosys and
+# CVA6).  A full regression does not fit one CI runner's budget, so CI fans it
+# out and merges the per-shard result dumps (--results-file) into one report
+# with combine_regression.py.
+SHARD_IDX=0
+SHARD_TOT=0
+RESULTS_FILE=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -84,6 +91,18 @@ while [[ $# -gt 0 ]]; do
             RUN_CVA6=false
             shift
             ;;
+        --shard)
+            SHARD_IDX="${2%%/*}"; SHARD_TOT="${2##*/}"; shift 2
+            ;;
+        --shard=*)
+            _s="${1#*=}"; SHARD_IDX="${_s%%/*}"; SHARD_TOT="${_s##*/}"; shift
+            ;;
+        --results-file)
+            RESULTS_FILE="$2"; shift 2
+            ;;
+        --results-file=*)
+            RESULTS_FILE="${1#*=}"; shift
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS] [TEST_PATTERN]"
             echo ""
@@ -105,6 +124,8 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --cores            # Run only rp32 + Ibex core IP tests"
             echo "  $0 --cva6             # Run only the CVA6 per-module equivalence suite"
             echo "  $0 --no-cva6          # Skip the CVA6 per-module equivalence suite"
+            echo "  $0 --all --shard 2/8  # Run slice 2 of 8 (CI sharding)"
+            echo "  $0 --all --results-file r.txt  # Dump machine-readable results for merging"
             exit 0
             ;;
         *)
@@ -121,6 +142,22 @@ done
 # cva6_equiv/cva6_modules.txt is checked against its recorded expectation.
 # ---------------------------------------------------------------------------
 CVA6_FAILED=0
+CVA6_TRAP=0
+# Single EXIT trap: dump the machine-readable results (so a sharded CI run
+# always has something to merge, even on a failing shard) and fold the CVA6
+# verdict into the exit code without touching the many exit points below.
+on_exit() {
+    local rc=$?
+    dump_results_file 2>/dev/null || true
+    if [ "$rc" -eq 0 ] && [ "$CVA6_TRAP" -eq 1 ] && [ "$CVA6_FAILED" -eq 1 ]; then
+        echo ""
+        echo "❌ TEST SUITE FAILED - CVA6 module equivalence regressions"
+        exit 1
+    fi
+    exit $rc
+}
+trap on_exit EXIT
+
 run_cva6_suite() {
     local script="$SCRIPT_DIR/cva6_equiv/run_cva6_equiv.sh"
     [ -x "$script" ] || { echo "  (cva6_equiv/run_cva6_equiv.sh missing — skipped)"; return 0; }
@@ -128,10 +165,14 @@ run_cva6_suite() {
     echo "=========================================="
     echo "CVA6 per-module equivalence (UHDM vs slang)"
     echo "=========================================="
+    # Forward the shard so each runner takes its own slice of the modules —
+    # without this every shard would re-run all 146 of them.
+    local sargs=()
+    [ "$SHARD_TOT" -gt 0 ] && sargs+=(--shard "$SHARD_IDX/$SHARD_TOT")
     if [ -n "$SPECIFIC_TEST" ]; then
-        "$script" "$SPECIFIC_TEST"
+        "$script" ${sargs+"${sargs[@]}"} "$SPECIFIC_TEST"
     else
-        "$script"
+        "$script" ${sargs+"${sargs[@]}"}
     fi
 }
 
@@ -143,8 +184,7 @@ if [ "$RUN_CVA6" = true ]; then
     run_cva6_suite || CVA6_FAILED=1
     # Fold the result into the suite verdict without touching the many exit
     # points below: turn an otherwise-clean exit into a failure.
-    trap '"'"'rc=$?; if [ "$rc" -eq 0 ] && [ "$CVA6_FAILED" -eq 1 ]; then
-        echo ""; echo "❌ TEST SUITE FAILED - CVA6 module equivalence regressions"; exit 1; fi'"'"' EXIT
+    CVA6_TRAP=1
 fi
 
 echo "=== UHDM Frontend Test Runner ==="
@@ -439,7 +479,19 @@ if [ "$RUN_LOCAL" = true ]; then
         done
     fi
 
-    if [ "$RUN_YOSYS" = false ] && [ ${#TEST_DIRS[@]} -eq 0 ]; then
+    # Keep only this shard's slice (stable: position in the sorted list).
+    if [ "$SHARD_TOT" -gt 0 ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
+        _sel=()
+        for _i in "${!TEST_DIRS[@]}"; do
+            if [ $(( _i % SHARD_TOT )) -eq $(( SHARD_IDX - 1 )) ]; then
+                _sel+=("${TEST_DIRS[$_i]}")
+            fi
+        done
+        TEST_DIRS=(${_sel+"${_sel[@]}"})
+        echo "shard $SHARD_IDX/$SHARD_TOT: ${#TEST_DIRS[@]} internal tests"
+    fi
+
+    if [ "$RUN_YOSYS" = false ] && [ ${#TEST_DIRS[@]} -eq 0 ] && [ "$SHARD_TOT" -eq 0 ]; then
         echo "No test directories found (looking for directories containing dut.sv or dut.v)"
         exit 1
     fi
@@ -1044,11 +1096,48 @@ if [ "$RUN_YOSYS" = true ]; then
                   find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) -path "*${yosys_pattern}*" -print0 | sort -z
               else
                   find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) -print0 | sort -z
-              fi )
+              fi | if [ "$SHARD_TOT" -gt 0 ]; then
+                       # same stable slicing as the internal list
+                       awk -v RS='\0' -v ORS='\0' -v i="$SHARD_IDX" -v n="$SHARD_TOT" \
+                           'NR % n == i - 1'
+                   else cat; fi )
 
     yosys_duration=$(echo "$(date +%s.%N) - $yosys_start_time" | bc)
     printf "Yosys tests total execution time: %.2f seconds\n" "$yosys_duration"
 fi
+
+# Machine-readable dump of everything the summary reports, so a sharded CI run
+# can merge the pieces back into one full report (combine_regression.py).
+# Format: `count <NAME> <n>` and `list <NAME> <test>` — one test per line, so
+# names with odd characters survive the round trip.
+dump_results_file() {
+    [ -n "$RESULTS_FILE" ] || return 0
+    {
+        for v in TOTAL_TESTS PASSED_TESTS FAILED_TESTS SKIPPED_TESTS \
+                 CRASHED_TESTS UHDM_ONLY_TESTS YOSYS_TOTAL YOSYS_PASSED \
+                 YOSYS_FAILED YOSYS_SKIPPED YOSYS_UHDM_ONLY \
+                 EQUIV_FAILED_TESTS MITER_FAILED_TESTS SIM_EQUIV_WARN_TESTS \
+                 SIM_EQUIV_KNOWN_WARN_TESTS SIM_EQUIV_ANALYZED_TESTS \
+                 SIM_EQUIV_ARTEFACT_TESTS SIM_EQUIV_UNCLASS_TESTS; do
+            eval "printf 'count %s %s\n' \"\$v\" \"\${$v:-0}\""
+        done
+        for arr in FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
+                   UHDM_ONLY_TEST_NAMES EQUIV_FAILED_TEST_NAMES \
+                   MITER_FAILED_TEST_NAMES SIM_EQUIV_WARN_NAMES \
+                   SIM_EQUIV_KNOWN_WARN_NAMES SIM_EQUIV_ANALYZED_NAMES \
+                   SIM_EQUIV_ARTEFACT_NAMES SIM_EQUIV_UNCLASS_NAMES \
+                   SKIPPED_TEST_NAMES UNEXPECTED_FAILURES UNEXPECTED_SUCCESSES; do
+            eval "for _x in \"\${${arr}[@]}\"; do [ -n \"\$_x\" ] && printf 'list %s %s\n' \"$arr\" \"\$_x\"; done"
+        done
+        # The CVA6 stage keeps its own per-module verdicts.
+        if [ -f "$SCRIPT_DIR/cva6_equiv/work/.results" ]; then
+            while read -r kind mod got want; do
+                [ -n "$kind" ] && printf 'cva6 %s %s %s %s\n' "$kind" "$mod" "$got" "${want:-$got}"
+            done < "$SCRIPT_DIR/cva6_equiv/work/.results"
+        fi
+    } > "$RESULTS_FILE"
+    echo "wrote $RESULTS_FILE"
+}
 
 # Function to print comprehensive summary
 print_comprehensive_summary() {

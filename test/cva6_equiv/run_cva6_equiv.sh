@@ -115,6 +115,10 @@ EOF
   if [ "$rc" -eq 0 ]; then                     got=proven
   elif [ "$cex" -gt 0 ]; then                  got=cex
   elif grep -q "Design elaboration failed" miter.log; then got=elabfail
+  # 124/137 come from `timeout`; anything else non-zero without a model means
+  # yosys itself died (SIGSEGV / SIGFPE seen on some hpdcache modules).  That
+  # is not a SAT budget outcome and should not hide behind `timeout`.
+  elif [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ] && [ "$rc" -gt 128 ]; then got=crash
   else                                          got=timeout
   fi
   popd >/dev/null
@@ -132,6 +136,9 @@ EOF
     echo "OK $mod $got" >> "$WORKROOT/.results"
   elif [ "$got" = cex ]; then
     printf "  ❌ %-34s NEW COUNTEREXAMPLE (want=%s) — see %s\n" "$mod" "$want" "work/$mod/miter.log"
+    echo "BAD $mod $got $want" >> "$WORKROOT/.results"
+  elif [ "$got" = crash ] && [ "$want" != crash ]; then
+    printf "  ❌ %-34s yosys CRASHED (want=%s) — see %s\n" "$mod" "$want" "work/$mod/miter.log"
     echo "BAD $mod $got $want" >> "$WORKROOT/.results"
   elif [ "$got" = elabfail ] && [ "$want" = proven ]; then
     printf "  ❌ %-34s no longer elaborates (want=proven) — see %s\n" "$mod" "work/$mod/miter.log"

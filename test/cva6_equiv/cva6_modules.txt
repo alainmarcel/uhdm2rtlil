@@ -10,6 +10,11 @@
 #             to finish, and burning the full 900s each would make the suite
 #             unusable.  If one starts proving it flips to `proven` and is
 #             reported as unexpected — promote it here in that commit.
+#   crash     yosys itself DIED on the miter (SIGSEGV/SIGFPE), rather than
+#             running out of budget.  A real problem to investigate — it is
+#             recorded so it is visible instead of hiding inside `timeout`,
+#             which is exactly where these 21 modules were sitting until the
+#             classifier learned to tell a signal death from a timeout.
 #   elabfail  the WRAPPER does not elaborate yet.  A harness gap, not a
 #             frontend bug: most of these are auto-generated wrappers whose
 #             module takes parent-local types and needs an extras_<mod>.svh
@@ -30,7 +35,7 @@ alu_wrapper                            4   900   proven
 amo_alu                                4   180   timeout
 amo_buffer                             4   900   proven
 ariane_regfile_fpga                    4   180   elabfail
-axi_adapter                            4   180   timeout
+axi_adapter                            4   180   crash
 axi_shim                               4   180   elabfail
 bht                                    4   900   proven
 bht2lvl                                4   180   elabfail
@@ -48,9 +53,9 @@ csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
 cva6_hpdcache_if_adapter               4   180   elabfail
-cva6_hpdcache_subsystem                4   180   timeout
-cva6_hpdcache_subsystem_axi_arbiter    4   180   timeout
-cva6_hpdcache_wrapper                  4   180   timeout
+cva6_hpdcache_subsystem                4   180   crash
+cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
+cva6_hpdcache_wrapper                  4   180   crash
 cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   180   elabfail
 cva6_mmu                               4   180   timeout
@@ -64,7 +69,7 @@ cvxif_fu                               4   900   proven
 cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
 div_sqrt_top_mvp                       4   180   elabfail
-ex_stage                               4   180   timeout
+ex_stage                               4   180   cex
 fpnew_cast_multi                       4   180   timeout
 fpnew_classifier                       4   180   elabfail
 fpnew_divsqrt_multi                    4   180   elabfail
@@ -77,40 +82,40 @@ fpnew_opgroup_block                    4   180   elabfail
 fpnew_opgroup_fmt_slice                4   180   elabfail
 fpnew_opgroup_multifmt_slice           4   180   timeout
 fpnew_rounding                         4   180   elabfail
-fpnew_top                              4   180   timeout
+fpnew_top                              4   180   crash
 fpu_wrap                               4   180   cex
 frontend                               4   180   cex
-hpdcache                               4   180   timeout
-hpdcache_1hot_to_binary                4   180   timeout
+hpdcache                               4   180   crash
+hpdcache_1hot_to_binary                4   180   crash
 hpdcache_amo                           4   180   elabfail
 hpdcache_cbuf                          4   180   elabfail
 hpdcache_cmo                           4   180   elabfail
 hpdcache_core_arbiter                  4   180   timeout
-hpdcache_ctrl                          4   180   timeout
+hpdcache_ctrl                          4   180   crash
 hpdcache_ctrl_pe                       4   180   cex
 hpdcache_data_downsize                 4   180   elabfail
 hpdcache_data_resize                   4   180   elabfail
-hpdcache_data_upsize                   4   180   timeout
-hpdcache_decoder                       4   180   timeout
+hpdcache_data_upsize                   4   180   crash
+hpdcache_decoder                       4   180   crash
 hpdcache_demux                         4   180   elabfail
 hpdcache_fifo_reg                      4   180   elabfail
 hpdcache_fifo_reg_initialized          4   180   elabfail
-hpdcache_flush                         4   180   timeout
+hpdcache_flush                         4   180   crash
 hpdcache_fxarb                         4   180   timeout
 hpdcache_lfsr                          4   180   elabfail
-hpdcache_mem_req_read_arbiter          4   180   timeout
+hpdcache_mem_req_read_arbiter          4   180   crash
 hpdcache_mem_req_write_arbiter         4   180   timeout
 hpdcache_mem_resp_demux                4   180   elabfail
 hpdcache_mem_to_axi_read               4   180   elabfail
 hpdcache_mem_to_axi_write              4   180   elabfail
 hpdcache_memctrl                       4   180   timeout
-hpdcache_miss_handler                  4   180   timeout
+hpdcache_miss_handler                  4   180   crash
 hpdcache_mshr                          4   180   elabfail
 hpdcache_mux                           4   180   elabfail
 hpdcache_prio_1hot_encoder             4   180   timeout
 hpdcache_prio_bin_encoder              4   180   elabfail
-hpdcache_regbank_wbyteenable_1rw       4   180   timeout
-hpdcache_regbank_wmask_1rw             4   180   timeout
+hpdcache_regbank_wbyteenable_1rw       4   180   crash
+hpdcache_regbank_wmask_1rw             4   180   crash
 hpdcache_rrarb                         4   180   timeout
 hpdcache_rtab                          4   180   timeout
 hpdcache_sram                          4   180   elabfail
@@ -122,9 +127,9 @@ hpdcache_sram_wmask_1rw                4   180   elabfail
 hpdcache_sync_buffer                   4   180   elabfail
 hpdcache_uncached                      4   180   elabfail
 hpdcache_victim_plru                   4   180   timeout
-hpdcache_victim_random                 4   180   timeout
+hpdcache_victim_random                 4   180   crash
 hpdcache_victim_sel                    4   180   timeout
-hpdcache_wbuf                          4   180   timeout
+hpdcache_wbuf                          4   180   crash
 hwpf_stride                            4   180   elabfail
 hwpf_stride_arb                        4   180   elabfail
 hwpf_stride_wrapper                    4   180   elabfail
@@ -140,7 +145,7 @@ load_store_unit                        4   180   cex
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
 macro_decoder                          4   180   cex
-miss_handler                           4   180   timeout
+miss_handler                           4   180   crash
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   180   elabfail
@@ -155,8 +160,8 @@ ras                                    4   900   proven
 raw_checker                            4   900   proven
 scoreboard                             4   180   timeout
 serdiv                                 4   180   elabfail
-std_cache_subsystem                    4   180   timeout
-std_nbdcache                           4   180   timeout
+std_cache_subsystem                    4   180   crash
+std_nbdcache                           4   180   crash
 store_buffer                           4   900   proven
 store_unit                             4   900   proven
 tag_cmp                                4   180   elabfail
@@ -164,7 +169,7 @@ trigger_module                         4   900   proven
 wt_axi_adapter                         4   180   elabfail
 wt_cache_subsystem                     4   180   elabfail
 wt_dcache                              4   180   elabfail
-wt_dcache_ctrl                         4   180   timeout
+wt_dcache_ctrl                         4   180   crash
 wt_dcache_mem                          4   180   elabfail
 wt_dcache_missunit                     4   180   elabfail
 wt_dcache_wbuffer                      4   180   elabfail

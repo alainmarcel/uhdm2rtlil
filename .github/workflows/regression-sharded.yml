@@ -1,23 +1,24 @@
-name: CVA6 Equivalence
+name: Regression (sharded)
 
-# Per-module formal equivalence for the whole of CVA6: read_uhdm vs the
-# read_slang frontend built into this Yosys.  See test/cva6_equiv/README.md.
+# The FULL regression — internal tests, the upstream Yosys suite, and the CVA6
+# per-module equivalence suite — split across runners and merged back into one
+# report carrying every category the single-process run prints.
 #
-# 146 modules, each needing its own Surelog elaboration over the vendored CVA6
-# RTL plus a SAT miter, do not fit one runner's time budget — a single-job run
-# gets SIGTERM'd part-way through (exit 143).  So this mirrors the frontend
-# matrix's shape:
+# ~1400 internal + Yosys tests plus 146 CVA6 modules do not fit one runner's
+# time budget; a single-job run gets SIGTERM'd part-way through (exit 143, runs
+# 31935971681 and 31956846436).  So this mirrors the frontend matrix's shape:
 #   * build   — compile once, upload a runtime tarball (statically linked, so
 #               the shards need only the system runtime libs).
-#   * shard   — 8-way matrix; each runs `--shard i/8` over its slice and
-#               uploads its result file.
-#   * combine — merge the shard results into the final report and decide the
-#               verdict.
+#   * shard   — 12-way matrix; each runs `run_all_tests.sh --all --shard i/12`
+#               over its slice of EVERY test source and uploads its result dump.
+#   * combine — merge the dumps into the full report (passes, UHDM-only,
+#               Induct-/Miter-Formal, crashes, sim-equiv warnings/analysed/
+#               artefacts/unclassified, CVA6 per-module) and decide the verdict.
 #
-# The verdict is about CORRECTNESS, not SAT budget: a counterexample where none
-# was expected, or a module we prove today failing to elaborate, fails the run.
-# A timeout is reported as inconclusive — how far SAT gets depends on runner
-# load, and failing on that would make the gate non-deterministic.
+# The verdict fails on unexpected test failures, Miter-Formal escapes, crashes,
+# and CVA6 correctness regressions.  A CVA6 SAT timeout is reported as
+# inconclusive rather than failing: how far SAT gets depends on runner load, and
+# failing on that would make the gate non-deterministic.
 
 on:
   push:
@@ -29,12 +30,12 @@ on:
         # SAT is memory-hungry; the frontend matrix learned that parallelism
         # inside a shard OOM-kills the 16 GB runner ("received a shutdown
         # signal", exit 143).  Serial per shard is the reliable default.
-        description: "Parallel modules within each shard (1 = serial, most reliable)"
+        description: "Parallel CVA6 modules within each shard (1 = serial, most reliable)"
         required: false
         default: "1"
 
 concurrency:
-  group: cva6-equiv-${{ github.ref }}
+  group: regression-sharded-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -63,10 +64,29 @@ jobs:
         sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
         sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
 
+    - name: Cache Verilator build
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      # The suite's Verilator co-sim must run on the shards too, so Verilator
+      # travels in the runtime tarball; pin the same release CI uses.
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: cva6-equiv-build
+        key: regression-sharded-build
         max-size: 2G
 
     - name: Install Python dependencies
@@ -90,17 +110,21 @@ jobs:
       # Only what the suite invokes: yosys (with read_slang built in), the UHDM
       # plugin and the surelog binary.
       run: |
+        sudo tar -czf verilator.tar.gz -C / opt/verilator-5.048
         tar -czhf runtime.tar.gz \
           out/current \
           build/uhdm2rtlil.so \
+          build/extract_clocks_resets.so \
           build/third_party/Surelog/bin/surelog
-        ls -lh runtime.tar.gz
+        ls -lh runtime.tar.gz verilator.tar.gz
 
     - name: Upload runtime
       uses: actions/upload-artifact@v4
       with:
-        name: cva6-runtime
-        path: runtime.tar.gz
+        name: regression-runtime
+        path: |
+          runtime.tar.gz
+          verilator.tar.gz
         retention-days: 1
 
   shard:
@@ -108,7 +132,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     steps:
@@ -118,36 +142,42 @@ jobs:
     - name: Install runtime dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libtcmalloc-minimal4 libgoogle-perftools4t64 \
-          tcl libreadline8t64 libunwind8 python3 || \
-        sudo apt-get install -y libtcmalloc-minimal4 tcl python3
+        # Runtime libs for the prebuilt binaries, plus what Verilator's
+        # generated C++ and the suite's helpers need.
+        sudo apt-get install -y build-essential python3 python3-pip bc \
+          libtcmalloc-minimal4 tcl libreadline8t64 libunwind8 \
+          libgoogle-perftools4t64 iverilog help2man || \
+        sudo apt-get install -y build-essential python3 bc libtcmalloc-minimal4 tcl iverilog
 
     - name: Download runtime
       uses: actions/download-artifact@v4
       with:
-        name: cva6-runtime
+        name: regression-runtime
 
     - name: Unpack runtime
       run: |
         tar -xzf runtime.tar.gz
+        sudo tar -xzf verilator.tar.gz -C /
+        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
         ./out/current/bin/yosys -p "help read_slang" >/dev/null \
           || { echo "this yosys has no built-in read_slang"; exit 1; }
+        /opt/verilator-5.048/bin/verilator --version
 
-    - name: Run shard ${{ matrix.shard }}/8
+    - name: Run shard ${{ matrix.shard }}/12
       run: |
-        cd test/cva6_equiv
+        cd test
         JOBS=${{ github.event.inputs.jobs || 1 }} \
-        ./run_cva6_equiv.sh \
-          --shard ${{ matrix.shard }}/8 \
-          --results "$GITHUB_WORKSPACE/cva6_shard${{ matrix.shard }}.txt" \
+        ./run_all_tests.sh --all \
+          --shard ${{ matrix.shard }}/12 \
+          --results-file "$GITHUB_WORKSPACE/shard${{ matrix.shard }}.txt" \
           || true   # the combine job owns the verdict
 
     - name: Upload shard results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: cva6-shard-${{ matrix.shard }}
-        path: cva6_shard${{ matrix.shard }}.txt
+        name: regression-shard-${{ matrix.shard }}
+        path: shard${{ matrix.shard }}.txt
         retention-days: 7
         if-no-files-found: warn
 
@@ -172,9 +202,9 @@ jobs:
       # full coverage.
       run: |
         ls -la shards/ || { echo "no shard results at all"; exit 1; }
-        EXPECTED=8
-        FOUND=$(ls shards/cva6_shard*.txt 2>/dev/null | wc -l)
-        python3 test/cva6_equiv/scripts/combine_report.py shards \
+        EXPECTED=12
+        FOUND=$(ls shards/shard*.txt 2>/dev/null | wc -l)
+        python3 test/combine_regression.py --expected-shards $EXPECTED shards \
           | tee report.txt
         rc=${PIPESTATUS[0]}
         {
@@ -192,6 +222,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: cva6-equiv-report
+        name: regression-report
         path: report.txt
         retention-days: 14

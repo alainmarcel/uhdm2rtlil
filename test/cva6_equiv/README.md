@@ -90,13 +90,20 @@ outcome:
 | `proven` | SAT proves the miter unsatisfiable to the given depth. The goal. |
 | `cex` | A real counterexample survives — a frontend bug still to fix. |
 | `timeout` | SAT capacity, **not** a known bug: no model found within budget. |
+| `crash` | yosys itself died on the miter (SIGSEGV/SIGFPE) — a real problem, not a budget outcome. |
 | `elabfail` | The *wrapper* does not elaborate yet — a harness gap. |
 
 Treat the non-`proven` entries as a shrink-only backlog: a module that starts
 proving should be promoted in the same commit, and a module that stops proving
 is a regression to investigate, never to downgrade.
 
-`timeout` deserves care. It means the miter found **no** counterexample, only
+`crash` and `timeout` are easy to confuse and must not be. When the classifier
+was first written it lumped both together, and 21 modules that actually
+segfault yosys sat quietly under `timeout` looking like harmless SAT capacity.
+A non-zero exit that is not the timeout's own signal is now reported as
+`crash`, and an unexpected crash fails the suite.
+
+`timeout` deserves care too. It means the miter found **no** counterexample, only
 that it ran out of budget — every divergence ever found in those modules was
 fixed. `cva6_ptw` is the extreme case at 4233 cells: it proves at depth 1 and
 additionally passes a 20,000-cycle randomised co-simulation with zero

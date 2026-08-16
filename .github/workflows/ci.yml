@@ -132,12 +132,13 @@ jobs:
       run: |
         make test-read-sv
 
-    # The CVA6 per-module equivalence suite is EXCLUDED here on purpose: 146
-    # modules, each needing its own Surelog elaboration plus a SAT miter, do
-    # not fit alongside the rest in one job — it SIGTERM'd this job at the
-    # runner limit (exit 143, run 31935971681).  It runs sharded in its own
-    # workflow (.github/workflows/cva6-equiv.yml) on the same push/PR events,
-    # so coverage is unchanged.  `make test-all` still includes it locally.
+    # CVA6 equivalence is excluded from THIS job on purpose: the internal +
+    # Yosys suites plus 146 CVA6 modules (each its own Surelog elaboration and
+    # SAT miter) overrun the runner limit in one job (exit 143, run
+    # 31935971681).  The full regression — including CVA6 — runs sharded in
+    # .github/workflows/regression-sharded.yml on the same events and produces
+    # the combined report with every category.  `make test-all` still runs
+    # everything locally in one process.
     - name: Run tests (internal + Yosys)
       run: |
         cd test
