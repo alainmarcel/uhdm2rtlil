@@ -202,7 +202,7 @@ jobs:
     - name: Download shard results
       uses: actions/download-artifact@v4
       with:
-        pattern: cva6-shard-*
+        pattern: regression-shard-*
         path: shards
         merge-multiple: true
 
