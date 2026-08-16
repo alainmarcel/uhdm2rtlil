@@ -1031,6 +1031,21 @@ if [ "$RUN_YOSYS" = true ]; then
     echo "=== Running Yosys Tests ==="
     echo "=========================================="
     echo
+    # Without the yosys submodule this stage finds nothing and quietly reports
+    # 0 tests — a sharded CI run then looks green while covering none of the
+    # upstream suite (seen in run 31970410624, shard 1).  Refuse instead.
+    if [ ! -d "$YOSYS_TESTS_DIR" ]; then
+        echo "ERROR: $YOSYS_TESTS_DIR does not exist."
+        echo "       Initialise the submodule:"
+        echo "         git submodule update --init --depth 1 third_party/yosys"
+        echo "       or drop --yosys/--all from the invocation."
+        # Suppress the results dump: a setup failure must leave NO shard file,
+        # so the combine step counts the shard as missing and marks the report
+        # PARTIAL, rather than merging a file full of zeroes that looks like a
+        # legitimately empty slice.
+        RESULTS_FILE=""
+        exit 1
+    fi
     
     mkdir -p "$RUN_DIR"
     yosys_start_time=$(date +%s.%N)

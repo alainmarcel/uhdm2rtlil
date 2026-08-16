@@ -85,7 +85,13 @@ jobs:
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ github.job }}-${{ matrix.os }}
+        # Shared prefix with the sharded regression workflow: both build the
+        # same tree, so whichever runs first warms the cache for the other.
+        # (This used to interpolate matrix.os, which this job does not define,
+        # so the key was the stray literal "build-and-test-".)
+        key: uhdm2rtlil-build-${{ runner.os }}
+        restore-keys: |
+          uhdm2rtlil-build-
         max-size: 2G
         
     # Temporarily disabled - cache restore
