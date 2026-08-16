@@ -132,10 +132,16 @@ jobs:
       run: |
         make test-read-sv
 
+    # The CVA6 per-module equivalence suite is EXCLUDED here on purpose: 146
+    # modules, each needing its own Surelog elaboration plus a SAT miter, do
+    # not fit alongside the rest in one job — it SIGTERM'd this job at the
+    # runner limit (exit 143, run 31935971681).  It runs sharded in its own
+    # workflow (.github/workflows/cva6-equiv.yml) on the same push/PR events,
+    # so coverage is unchanged.  `make test-all` still includes it locally.
     - name: Run tests (internal + Yosys)
       run: |
         cd test
-        bash run_all_tests.sh --all
+        bash run_all_tests.sh --all --no-cva6
     
     - name: Upload test results
       if: always()

@@ -1,0 +1,197 @@
+name: CVA6 Equivalence
+
+# Per-module formal equivalence for the whole of CVA6: read_uhdm vs the
+# read_slang frontend built into this Yosys.  See test/cva6_equiv/README.md.
+#
+# 146 modules, each needing its own Surelog elaboration over the vendored CVA6
+# RTL plus a SAT miter, do not fit one runner's time budget — a single-job run
+# gets SIGTERM'd part-way through (exit 143).  So this mirrors the frontend
+# matrix's shape:
+#   * build   — compile once, upload a runtime tarball (statically linked, so
+#               the shards need only the system runtime libs).
+#   * shard   — 8-way matrix; each runs `--shard i/8` over its slice and
+#               uploads its result file.
+#   * combine — merge the shard results into the final report and decide the
+#               verdict.
+#
+# The verdict is about CORRECTNESS, not SAT budget: a counterexample where none
+# was expected, or a module we prove today failing to elaborate, fails the run.
+# A timeout is reported as inconclusive — how far SAT gets depends on runner
+# load, and failing on that would make the gate non-deterministic.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      jobs:
+        # SAT is memory-hungry; the frontend matrix learned that parallelism
+        # inside a shard OOM-kills the 16 GB runner ("received a shutdown
+        # signal", exit 143).  Serial per shard is the reliable default.
+        description: "Parallel modules within each shard (1 = serial, most reliable)"
+        required: false
+        default: "1"
+
+concurrency:
+  group: cva6-equiv-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential cmake git python3 python3-pip pkg-config \
+          libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+          libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+          libgoogle-perftools-dev ccache help2man
+
+    - name: Setup GCC-13
+      run: |
+        sudo apt install -y g++-13
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: cva6-equiv-build
+        max-size: 2G
+
+    - name: Install Python dependencies
+      run: pip3 install orderedmultidict
+
+    - name: Setup ccache environment
+      run: |
+        echo "CC=ccache gcc" >> $GITHUB_ENV
+        echo "CXX=ccache g++" >> $GITHUB_ENV
+        ccache --set-config=cache_dir=$HOME/.ccache
+        ccache --set-config=max_size=2G
+        ccache --set-config=compression=true
+        ccache --zero-stats
+
+    - name: Build project
+      run: |
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Package runtime
+      # Only what the suite invokes: yosys (with read_slang built in), the UHDM
+      # plugin and the surelog binary.
+      run: |
+        tar -czhf runtime.tar.gz \
+          out/current \
+          build/uhdm2rtlil.so \
+          build/third_party/Surelog/bin/surelog
+        ls -lh runtime.tar.gz
+
+    - name: Upload runtime
+      uses: actions/upload-artifact@v4
+      with:
+        name: cva6-runtime
+        path: runtime.tar.gz
+        retention-days: 1
+
+  shard:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install runtime dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libtcmalloc-minimal4 libgoogle-perftools4t64 \
+          tcl libreadline8t64 libunwind8 python3 || \
+        sudo apt-get install -y libtcmalloc-minimal4 tcl python3
+
+    - name: Download runtime
+      uses: actions/download-artifact@v4
+      with:
+        name: cva6-runtime
+
+    - name: Unpack runtime
+      run: |
+        tar -xzf runtime.tar.gz
+        ./out/current/bin/yosys -p "help read_slang" >/dev/null \
+          || { echo "this yosys has no built-in read_slang"; exit 1; }
+
+    - name: Run shard ${{ matrix.shard }}/8
+      run: |
+        cd test/cva6_equiv
+        JOBS=${{ github.event.inputs.jobs || 1 }} \
+        ./run_cva6_equiv.sh \
+          --shard ${{ matrix.shard }}/8 \
+          --results "$GITHUB_WORKSPACE/cva6_shard${{ matrix.shard }}.txt" \
+          || true   # the combine job owns the verdict
+
+    - name: Upload shard results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cva6-shard-${{ matrix.shard }}
+        path: cva6_shard${{ matrix.shard }}.txt
+        retention-days: 7
+        if-no-files-found: warn
+
+  combine:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download shard results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: cva6-shard-*
+        path: shards
+        merge-multiple: true
+
+    - name: Combine shards into the final report
+      # A shard that is killed cannot upload its file, so a merged report could
+      # silently be PARTIAL.  Count them and say so loudly rather than implying
+      # full coverage.
+      run: |
+        ls -la shards/ || { echo "no shard results at all"; exit 1; }
+        EXPECTED=8
+        FOUND=$(ls shards/cva6_shard*.txt 2>/dev/null | wc -l)
+        python3 test/cva6_equiv/scripts/combine_report.py shards \
+          | tee report.txt
+        rc=${PIPESTATUS[0]}
+        {
+          echo '```'
+          cat report.txt
+          echo '```'
+          echo "shards present: $FOUND / $EXPECTED"
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ "$FOUND" -lt "$EXPECTED" ]; then
+          echo "::warning::PARTIAL report — only $FOUND of $EXPECTED shards reported (a shard likely timed out or OOM'd); counts are incomplete."
+        fi
+        exit $rc
+
+    - name: Upload combined report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cva6-equiv-report
+        path: report.txt
+        retention-days: 14

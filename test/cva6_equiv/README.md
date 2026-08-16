@@ -60,6 +60,26 @@ make test-cva6                          # then re-run and update expectations
 Anything whose status changes should be updated in `cva6_modules.txt` in the
 same commit as the refresh.
 
+## In CI
+
+A full pass does not fit one GitHub runner's budget — a single job gets
+SIGTERM'd part-way through — so `.github/workflows/cva6-equiv.yml` builds once
+and fans the module list across 8 shards, then merges the per-shard result
+files into one report:
+
+```bash
+./run_cva6_equiv.sh --shard 3/8 --results shard3.txt   # what a shard runs
+python3 scripts/combine_report.py shards/              # what combine runs
+```
+
+The combine step counts the shards it received and flags the report as PARTIAL
+if any are missing, because a killed shard cannot upload its results and the
+merged numbers would otherwise look complete.
+
+The main CI job therefore runs `run_all_tests.sh --all --no-cva6`; this suite
+covers CVA6 on the same push/PR events. `make test-all` still includes it
+locally.
+
 ## Expectations
 
 `cva6_modules.txt` lists each module with its BMC depth, timeout and expected

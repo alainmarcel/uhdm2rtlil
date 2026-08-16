@@ -33,9 +33,35 @@ FLIST="$WORKROOT/cva6.f"
 mkdir -p "$WORKROOT"
 sed "s|__CVA6_RTL__|$RTL|g" "$HERE/cva6.flist" > "$FLIST"
 
+# --shard i/N selects a stable slice of the module list.  A full pass does not
+# fit one CI runner's time budget, so CI fans the list across shards and merges
+# the per-shard result files afterwards (see .github/workflows/cva6-equiv.yml).
+SHARD=""
+RESULTS_OUT=""
+args=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --shard)   SHARD="$2"; shift 2 ;;
+    --shard=*) SHARD="${1#*=}"; shift ;;
+    --results) RESULTS_OUT="$2"; shift 2 ;;
+    --results=*) RESULTS_OUT="${1#*=}"; shift ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+set -- ${args+"${args[@]}"}
+
 mods=("$@")
 if [ ${#mods[@]} -eq 0 ]; then
   mapfile -t mods < <(grep -vE '^\s*(#|$)' "$LIST" | awk '{print $1}')
+fi
+if [ -n "$SHARD" ]; then
+  idx="${SHARD%%/*}"; tot="${SHARD##*/}"
+  sel=()
+  for i in "${!mods[@]}"; do
+    if [ $(( i % tot )) -eq $(( idx - 1 )) ]; then sel+=("${mods[$i]}"); fi
+  done
+  mods=(${sel+"${sel[@]}"})
+  echo "shard $idx/$tot: ${#mods[@]} modules"
 fi
 
 # Each module is an independent surelog+SAT run, so fan them out; a serial pass
@@ -136,6 +162,10 @@ if [ "$prom" -gt 0 ]; then
 fi
 if [ "$soft" -gt 0 ]; then
   echo "Inconclusive (SAT budget, not a bug): $(awk '$1=="SOFT"{printf "%s ", $2}' "$WORKROOT/.results")"
+fi
+if [ -n "$RESULTS_OUT" ]; then
+  cp "$WORKROOT/.results" "$RESULTS_OUT"
+  echo "wrote $RESULTS_OUT"
 fi
 if [ "$fail" -gt 0 ]; then
   echo "REGRESSIONS: $(awk '$1=="BAD"{printf "%s(got=%s want=%s) ", $2,$3,$4}' "$WORKROOT/.results")"
