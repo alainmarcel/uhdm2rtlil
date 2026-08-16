@@ -1150,8 +1150,10 @@ dump_results_file() {
                    SKIPPED_TEST_NAMES UNEXPECTED_FAILURES UNEXPECTED_SUCCESSES; do
             eval "for _x in \"\${${arr}[@]}\"; do [ -n \"\$_x\" ] && printf 'list %s %s\n' \"$arr\" \"\$_x\"; done"
         done
-        # The CVA6 stage keeps its own per-module verdicts.
-        if [ -f "$SCRIPT_DIR/cva6_equiv/work/.results" ]; then
+        # The CVA6 stage keeps its own per-module verdicts.  Only report them
+        # when the stage actually ran in THIS invocation — otherwise a stale
+        # work/.results from an earlier run leaks into a --no-cva6 report.
+        if [ "$RUN_CVA6" = true ] && [ -f "$SCRIPT_DIR/cva6_equiv/work/.results" ]; then
             while read -r kind mod got want; do
                 [ -n "$kind" ] && printf 'cva6 %s %s %s %s\n' "$kind" "$mod" "$got" "${want:-$got}"
             done < "$SCRIPT_DIR/cva6_equiv/work/.results"
