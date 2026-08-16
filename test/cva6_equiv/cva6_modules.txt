@@ -1,0 +1,171 @@
+# CVA6 per-module equivalence expectations: read_uhdm vs the built-in read_slang.
+#
+#   <module>  <seq>  <timeout_s>  <expected>
+#
+# expected:
+#   proven    SAT proves the miter unsatisfiable to depth <seq>.  The goal.
+#   cex       a real counterexample survives — a frontend bug still to fix.
+#   timeout   SAT capacity, NOT a known bug: no model found within the budget.
+#             These get a short budget on purpose; we already expect them not
+#             to finish, and burning the full 900s each would make the suite
+#             unusable.  If one starts proving it flips to `proven` and is
+#             reported as unexpected — promote it here in that commit.
+#   elabfail  the WRAPPER does not elaborate yet.  A harness gap, not a
+#             frontend bug: most of these are auto-generated wrappers whose
+#             module takes parent-local types and needs an extras_<mod>.svh
+#             (see README).  This is the backlog for widening coverage.
+#
+# Shrink-only in the not-proven direction: a module that starts proving should
+# be promoted in the same commit; one that stops proving is a regression to
+# investigate, never to downgrade.
+#
+# Regenerate the measured part with scripts/classify_all.sh after refreshing
+# the vendored RTL (vendor_cva6.sh), then re-apply the entries below whose
+# seq/timeout differ from the 300s default sweep.
+
+acc_dispatcher                         4   180   timeout
+aes                                    4   180   cex
+alu                                    4   900   proven
+alu_wrapper                            4   900   proven
+amo_alu                                4   180   timeout
+amo_buffer                             4   900   proven
+ariane_regfile_fpga                    4   180   elabfail
+axi_adapter                            4   180   timeout
+axi_shim                               4   180   elabfail
+bht                                    4   900   proven
+bht2lvl                                4   180   elabfail
+branch_unit                            4   900   proven
+btb                                    4   900   proven
+cache_ctrl                             4   180   elabfail
+commit_stage                           4   900   proven
+compressed_decoder                     4   900   proven
+compressed_instr_decoder               4   180   elabfail
+control_mvp                            4   180   elabfail
+controller                             4   900   proven
+copro_alu                              4   180   elabfail
+csr_buffer                             4   900   proven
+csr_regfile                            4   180   cex
+cva6                                   4   180   timeout
+cva6_fifo_v3                           4   900   proven
+cva6_hpdcache_if_adapter               4   180   elabfail
+cva6_hpdcache_subsystem                4   180   timeout
+cva6_hpdcache_subsystem_axi_arbiter    4   180   timeout
+cva6_hpdcache_wrapper                  4   180   timeout
+cva6_icache                            4   900   proven
+cva6_icache_axi_wrapper                4   180   elabfail
+cva6_mmu                               4   180   timeout
+cva6_ptw                               1   900   proven
+cva6_rvfi_probes                       4   180   cex
+cva6_shared_tlb                        4   900   proven
+cva6_tlb                               4   900   proven
+cvxif_compressed_if_driver             4   900   proven
+cvxif_example_coprocessor              4   180   elabfail
+cvxif_fu                               4   900   proven
+cvxif_issue_register_commit_if_driver  4   900   proven
+decoder                                4   900   proven
+div_sqrt_top_mvp                       4   180   elabfail
+ex_stage                               4   180   timeout
+fpnew_cast_multi                       4   180   timeout
+fpnew_classifier                       4   180   elabfail
+fpnew_divsqrt_multi                    4   180   elabfail
+fpnew_divsqrt_th_32                    4   180   elabfail
+fpnew_divsqrt_th_64_multi              4   180   elabfail
+fpnew_fma                              4   180   elabfail
+fpnew_fma_multi                        4   180   timeout
+fpnew_noncomp                          4   180   elabfail
+fpnew_opgroup_block                    4   180   elabfail
+fpnew_opgroup_fmt_slice                4   180   elabfail
+fpnew_opgroup_multifmt_slice           4   180   timeout
+fpnew_rounding                         4   180   elabfail
+fpnew_top                              4   180   timeout
+fpu_wrap                               4   180   cex
+frontend                               4   180   cex
+hpdcache                               4   180   timeout
+hpdcache_1hot_to_binary                4   180   timeout
+hpdcache_amo                           4   180   elabfail
+hpdcache_cbuf                          4   180   elabfail
+hpdcache_cmo                           4   180   elabfail
+hpdcache_core_arbiter                  4   180   timeout
+hpdcache_ctrl                          4   180   timeout
+hpdcache_ctrl_pe                       4   180   cex
+hpdcache_data_downsize                 4   180   elabfail
+hpdcache_data_resize                   4   180   elabfail
+hpdcache_data_upsize                   4   180   timeout
+hpdcache_decoder                       4   180   timeout
+hpdcache_demux                         4   180   elabfail
+hpdcache_fifo_reg                      4   180   elabfail
+hpdcache_fifo_reg_initialized          4   180   elabfail
+hpdcache_flush                         4   180   timeout
+hpdcache_fxarb                         4   180   timeout
+hpdcache_lfsr                          4   180   elabfail
+hpdcache_mem_req_read_arbiter          4   180   timeout
+hpdcache_mem_req_write_arbiter         4   180   timeout
+hpdcache_mem_resp_demux                4   180   elabfail
+hpdcache_mem_to_axi_read               4   180   elabfail
+hpdcache_mem_to_axi_write              4   180   elabfail
+hpdcache_memctrl                       4   180   timeout
+hpdcache_miss_handler                  4   180   timeout
+hpdcache_mshr                          4   180   elabfail
+hpdcache_mux                           4   180   elabfail
+hpdcache_prio_1hot_encoder             4   180   timeout
+hpdcache_prio_bin_encoder              4   180   elabfail
+hpdcache_regbank_wbyteenable_1rw       4   180   timeout
+hpdcache_regbank_wmask_1rw             4   180   timeout
+hpdcache_rrarb                         4   180   timeout
+hpdcache_rtab                          4   180   timeout
+hpdcache_sram                          4   180   elabfail
+hpdcache_sram_1rw                      4   180   elabfail
+hpdcache_sram_wbyteenable              4   180   elabfail
+hpdcache_sram_wbyteenable_1rw          4   180   elabfail
+hpdcache_sram_wmask                    4   180   elabfail
+hpdcache_sram_wmask_1rw                4   180   elabfail
+hpdcache_sync_buffer                   4   180   elabfail
+hpdcache_uncached                      4   180   elabfail
+hpdcache_victim_plru                   4   180   timeout
+hpdcache_victim_random                 4   180   timeout
+hpdcache_victim_sel                    4   180   timeout
+hpdcache_wbuf                          4   180   timeout
+hwpf_stride                            4   180   elabfail
+hwpf_stride_arb                        4   180   elabfail
+hwpf_stride_wrapper                    4   180   elabfail
+id_stage                               4   180   cex
+instr_decoder                          4   180   elabfail
+instr_queue                            4   900   proven
+instr_realign                          4   900   proven
+instr_scan                             4   900   proven
+issue_read_operands                    4   180   timeout
+issue_stage                            4   180   timeout
+iteration_div_sqrt_mvp                 4   180   elabfail
+load_store_unit                        4   180   cex
+load_unit                              4   900   proven
+lsu_bypass                             4   900   proven
+macro_decoder                          4   180   cex
+miss_handler                           4   180   timeout
+mult                                   4   180   timeout
+multiplier                             4   180   timeout
+norm_div_sqrt_mvp                      4   180   elabfail
+nrbd_nrsc_mvp                          4   180   elabfail
+perf_counters                          4   180   elabfail
+pmp                                    4   180   timeout
+pmp_data_if                            4   180   cex
+pmp_entry                              4   900   proven
+popcount                               4   180   elabfail
+preprocess_mvp                         4   180   elabfail
+ras                                    4   900   proven
+raw_checker                            4   900   proven
+scoreboard                             4   180   timeout
+serdiv                                 4   180   elabfail
+std_cache_subsystem                    4   180   timeout
+std_nbdcache                           4   180   timeout
+store_buffer                           4   900   proven
+store_unit                             4   900   proven
+tag_cmp                                4   180   elabfail
+trigger_module                         4   900   proven
+wt_axi_adapter                         4   180   elabfail
+wt_cache_subsystem                     4   180   elabfail
+wt_dcache                              4   180   elabfail
+wt_dcache_ctrl                         4   180   timeout
+wt_dcache_mem                          4   180   elabfail
+wt_dcache_missunit                     4   180   elabfail
+wt_dcache_wbuffer                      4   180   elabfail
+zcmt_decoder                           4   180   cex

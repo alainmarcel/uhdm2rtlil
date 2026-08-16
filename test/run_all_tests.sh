@@ -48,6 +48,11 @@ RUN_LOCAL=true
 RUN_YOSYS=false
 SPECIFIC_TEST=""
 CORES_ONLY=false
+# CVA6 per-module formal equivalence (read_uhdm vs the built-in read_slang).
+# Part of the regular regression: on by default for a full run, and the only
+# thing --cva6 runs.
+RUN_CVA6=true
+CVA6_ONLY=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -65,6 +70,18 @@ while [[ $# -gt 0 ]]; do
         --cores)
             # Run only the CPU-core IP tests: rp32 (RISC-V SoC) and Ibex.
             CORES_ONLY=true
+            RUN_CVA6=false
+            shift
+            ;;
+        --cva6)
+            # Run only the CVA6 per-module equivalence suite.
+            CVA6_ONLY=true
+            RUN_LOCAL=false
+            RUN_YOSYS=false
+            shift
+            ;;
+        --no-cva6)
+            RUN_CVA6=false
             shift
             ;;
         --help|-h)
@@ -86,6 +103,8 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --yosys simple     # Run Yosys tests matching 'simple'"
             echo "  $0 --all              # Run all local and Yosys tests"
             echo "  $0 --cores            # Run only rp32 + Ibex core IP tests"
+            echo "  $0 --cva6             # Run only the CVA6 per-module equivalence suite"
+            echo "  $0 --no-cva6          # Skip the CVA6 per-module equivalence suite"
             exit 0
             ;;
         *)
@@ -94,6 +113,39 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# ---------------------------------------------------------------------------
+# CVA6 per-module formal equivalence (read_uhdm vs the built-in read_slang).
+# This is a first-class part of the regression, not a side flow: the CVA6 RTL
+# is vendored under cva6_equiv/rtl and every module listed in
+# cva6_equiv/cva6_modules.txt is checked against its recorded expectation.
+# ---------------------------------------------------------------------------
+CVA6_FAILED=0
+run_cva6_suite() {
+    local script="$SCRIPT_DIR/cva6_equiv/run_cva6_equiv.sh"
+    [ -x "$script" ] || { echo "  (cva6_equiv/run_cva6_equiv.sh missing — skipped)"; return 0; }
+    echo ""
+    echo "=========================================="
+    echo "CVA6 per-module equivalence (UHDM vs slang)"
+    echo "=========================================="
+    if [ -n "$SPECIFIC_TEST" ]; then
+        "$script" "$SPECIFIC_TEST"
+    else
+        "$script"
+    fi
+}
+
+if [ "$CVA6_ONLY" = true ]; then
+    run_cva6_suite
+    exit $?
+fi
+if [ "$RUN_CVA6" = true ]; then
+    run_cva6_suite || CVA6_FAILED=1
+    # Fold the result into the suite verdict without touching the many exit
+    # points below: turn an otherwise-clean exit into a failure.
+    trap '"'"'rc=$?; if [ "$rc" -eq 0 ] && [ "$CVA6_FAILED" -eq 1 ]; then
+        echo ""; echo "❌ TEST SUITE FAILED - CVA6 module equivalence regressions"; exit 1; fi'"'"' EXIT
+fi
 
 echo "=== UHDM Frontend Test Runner ==="
 

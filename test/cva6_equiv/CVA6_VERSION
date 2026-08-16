@@ -1,0 +1,6 @@
+# CVA6 RTL vendored under rtl/ — refresh with ./vendor_cva6.sh <checkout>
+upstream: https://github.com/openhwgroup/cva6.git
+revision: a3dc2c5e7835b25dc8437eee3e956ab12857ead7
+describe: a3dc2c5
+date:     2026-07-21
+vendored: 2026-08-16

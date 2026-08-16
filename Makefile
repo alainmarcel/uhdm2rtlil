@@ -1,5 +1,5 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test test-read-sv test-all test-cores test-yosys frontends test-matrix clean plugin install help
+.PHONY: all debug test test-read-sv test-all test-cores test-cva6 test-yosys frontends test-matrix clean plugin install help
 
 # Use bash as the default shell
 SHELL := /usr/bin/env bash
@@ -40,10 +40,18 @@ test-all: all
 	@echo "Running all tests (internal + Yosys)..."
 	@cd test && ./run_all_tests.sh --all
 
+# CVA6 per-module formal equivalence (read_uhdm vs the built-in read_slang).
+# The CVA6 RTL is vendored under test/cva6_equiv/rtl (refresh it with
+# test/cva6_equiv/vendor_cva6.sh <cva6-checkout>), so this needs no external
+# checkout.  It is also run as part of `make test-all`.
+test-cva6: all
+	@echo "Running CVA6 per-module equivalence tests..."
+	@cd test && ./run_all_tests.sh --cva6
+
 # Test cores target - runs only the rp32 and Ibex core IP tests
 test-cores: all
 	@echo "Running core IP tests (rp32 + Ibex)..."
-	@cd test && ./run_all_tests.sh --cores
+	@cd test && ./run_all_tests.sh --cores --no-cva6
 
 # Test Yosys target - runs only Yosys tests
 test-yosys: all preprocess-yosys-tests
@@ -122,7 +130,8 @@ help:
 	@echo "  plugin     - Build and show plugin location"
 	@echo "  test-read-sv - Smoke-test the read_sv command (in-process Surelog)"
 	@echo "  test       - Run internal tests only (includes test-read-sv)"
-	@echo "  test-all   - Run all tests (internal + Yosys)"
+	@echo "  test-all   - Run all tests (internal + Yosys + CVA6 equivalence)"
+	@echo "  test-cva6  - Run the CVA6 per-module equivalence suite (vendored CVA6 RTL)"
 	@echo "  test-yosys - Run Yosys tests only"
 	@echo "  frontends  - Build sv2v for the 4-frontend matrix (slang is built into yosys)"
 	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
