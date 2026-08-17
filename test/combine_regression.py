@@ -125,10 +125,20 @@ def main():
     for t in names(lists, "SIM_EQUIV_UNCLASS_NAMES"):
         print(f"      - {t}")
 
-    section("🧩 YOSYS UPSTREAM SUITE:")
-    print(f"  total {counts['YOSYS_TOTAL']}, passing {counts['YOSYS_PASSED']}, "
-          f"UHDM-only {counts['YOSYS_UHDM_ONLY']}, failing {counts['YOSYS_FAILED']}, "
-          f"skipped {counts['YOSYS_SKIPPED']}")
+    # The YOSYS_* counters are legacy: classify_test_outcome buckets upstream
+    # tests into the SHARED counters, so they stay 0 and the section read as
+    # "no Yosys coverage" even on runs that exercised all ~545.  Derive the
+    # split from the `run/` prefix the upstream tests carry instead.
+    def _split(key):
+        v = names(lists, key)
+        return sum(1 for x in v if x.startswith("run/"))
+    y_pass, y_uhdm = _split("PASSED_TEST_NAMES"), _split("UHDM_ONLY_TEST_NAMES")
+    y_fail, y_crash = _split("FAILED_TEST_NAMES"), _split("CRASHED_TEST_NAMES")
+    if y_pass or y_uhdm or y_fail:
+        section("🧩 UPSTREAM YOSYS SUITE (tests under run/):")
+        print(f"  passing {y_pass}, UHDM-only {y_uhdm}, failing {y_fail}, "
+              f"crashes {y_crash}")
+        print(f"  internal: passing {passed - y_pass}, UHDM-only {uhdm - y_uhdm}")
 
     cva6_bad = []
     if cva6:
@@ -155,13 +165,19 @@ def main():
 
     crashes = names(lists, "CRASHED_TEST_NAMES")
     if crashes:
-        section("💥 CRASHES:")
+        section("💥 CRASHES (documented ones are expected — see failing_tests.txt):")
         for t in crashes:
             print(f"      - {t}")
 
     print("")
     print("=" * 66)
-    bad = bool(unexpected) or miter > 0 or crashed > 0 or cva6_bad
+    # A crash is only a regression if it is UNEXPECTED.  The single-process
+    # runner already decides that (it checks failing_tests.txt and puts
+    # anything undocumented in UNEXPECTED_FAILURES), and it passes with a
+    # documented crash — memories/wide_all segfaults Yosys v0.67's own `synth`,
+    # which is not a UHDM bug.  Counting raw crashes here made this gate
+    # stricter than the reference and failed an otherwise clean run.
+    bad = bool(unexpected) or miter > 0 or cva6_bad
     if expected and used < expected:
         print(f"⚠️  PARTIAL: only {used} of {expected} shards reported — a shard "
               f"was likely killed; counts above are incomplete.")
@@ -169,12 +185,12 @@ def main():
         why = []
         if miter:      why.append(f"{miter} Miter-Formal")
         if unexpected: why.append(f"{len(unexpected)} unexpected failures")
-        if crashed:    why.append(f"{crashed} crashes")
+
         if cva6_bad:   why.append(f"{len(cva6_bad)} CVA6 regressions")
         print("❌ REGRESSION SUITE FAILED — " + ", ".join(why))
         return 1
     print("✅ REGRESSION SUITE PASSED — no unexpected failures, "
-          "no Miter-Formal escapes, no crashes")
+          "no Miter-Formal escapes, no CVA6 regressions")
     return 0
 
 if __name__ == "__main__":
