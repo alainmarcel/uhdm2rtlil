@@ -350,7 +350,11 @@ run_sim_equivalence_softwarn() {
         # the same tests give 147 passes / 38 skips locally), and an
         # undifferentiated "SKIPPED" hid that for a whole CI cycle.
         local why
-        why=$(grep -m1 -E "^⏭|Verilator (build|compile) failed|%Error" "$log" 2>/dev/null | cut -c1-100)
+        # Prefer the COMPILER's own message: when the generated model fails to
+        # build, Verilator's "%Error: 'make ...' exited with 2" says nothing
+        # about the cause, while the g++ line right above it does.
+        why=$(grep -m1 -E "error:|fatal error:|No such file or directory" "$log" 2>/dev/null | cut -c1-160)
+        [ -z "$why" ] && why=$(grep -m1 -E "^⏭|%Error" "$log" 2>/dev/null | cut -c1-160)
         echo "    ⏭  Verilator co-sim SKIPPED (${why:-no outputs or not buildable})"
         return 0
     fi

@@ -148,10 +148,17 @@ jobs:
         sudo apt-get update
         # Runtime libs for the prebuilt binaries, plus what Verilator's
         # generated C++ and the suite's helpers need.
-        sudo apt-get install -y build-essential python3 python3-pip bc \
+        # g++-13 explicitly: Verilator is invoked with --timing, whose
+        # generated model uses C++20 coroutines, so the shard needs the same
+        # compiler generation the build job used.
+        sudo apt-get install -y build-essential g++-13 python3 python3-pip bc \
           libtcmalloc-minimal4 tcl libreadline8t64 libunwind8 \
-          libgoogle-perftools4t64 iverilog help2man || \
-        sudo apt-get install -y build-essential python3 bc libtcmalloc-minimal4 tcl iverilog
+          libgoogle-perftools4t64 zlib1g-dev iverilog help2man || \
+        sudo apt-get install -y build-essential g++-13 python3 bc \
+          libtcmalloc-minimal4 tcl zlib1g-dev iverilog
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        g++ --version | head -1
 
     - name: Download runtime
       uses: actions/download-artifact@v4
