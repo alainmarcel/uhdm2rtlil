@@ -305,7 +305,12 @@ module fpnew_classifier_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter fpnew_pkg::fp_format_e   FpFormat = fpnew_pkg::fp_format_e'(0),
+  parameter int unsigned             NumOperands = 1,
+  // Do not change
+    localparam int unsigned WIDTH = fpnew_pkg::fp_width(FpFormat)
 ) (
 
   input  logic                [NumOperands-1:0][WIDTH-1:0] operands_i,
@@ -342,7 +347,8 @@ module fpnew_classifier_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_classifier #(
-      
+      .FpFormat(FpFormat),
+      .NumOperands(NumOperands)
   ) dut (.*);
 
 endmodule

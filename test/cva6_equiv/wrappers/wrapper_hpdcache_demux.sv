@@ -305,7 +305,19 @@ module hpdcache_demux_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  //  Number of outputs
+      parameter  int unsigned NOUTPUT     = 0,
+  //  Width in bits of each input
+      parameter  int unsigned DATA_WIDTH  = 0,
+  //  Selector signal is one-hot encoded
+      parameter  bit          ONE_HOT_SEL = 0,
+  //  Compute the width of the selection signal
+      localparam int unsigned NOUTPUT_LOG2 = $clog2(NOUTPUT),
+  localparam int unsigned SEL_WIDTH    = ONE_HOT_SEL ? NOUTPUT : NOUTPUT_LOG2,
+  localparam type data_t = logic [DATA_WIDTH-1:0],
+  localparam type sel_t  = logic [SEL_WIDTH-1:0]
 ) (
 
     input  data_t               data_i,
@@ -342,7 +354,9 @@ module hpdcache_demux_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_demux #(
-      
+      .NOUTPUT(NOUTPUT),
+      .DATA_WIDTH(DATA_WIDTH),
+      .ONE_HOT_SEL(ONE_HOT_SEL)
   ) dut (.*);
 
 endmodule

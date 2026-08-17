@@ -305,7 +305,25 @@ module fpnew_opgroup_block_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter fpnew_pkg::opgroup_e        OpGroup       = fpnew_pkg::ADDMUL,
+  // FPU configuration
+    parameter int unsigned                Width         = 32,
+  parameter logic                       EnableVectors = 1'b1,
+  parameter fpnew_pkg::divsqrt_unit_t   DivSqrtSel    = fpnew_pkg::THMULTI,
+  parameter fpnew_pkg::fmt_logic_t      FpFmtMask     = '1,
+  parameter fpnew_pkg::ifmt_logic_t     IntFmtMask    = '1,
+  parameter fpnew_pkg::fmt_unsigned_t   FmtPipeRegs   = '{default: 0},
+  parameter fpnew_pkg::fmt_unit_types_t FmtUnitTypes  = '{default: fpnew_pkg::PARALLEL},
+  parameter fpnew_pkg::pipe_config_t    PipeConfig    = fpnew_pkg::BEFORE,
+  parameter type                        TagType       = logic,
+  parameter int unsigned                TrueSIMDClass = 0,
+  // Do not change
+    localparam int unsigned NUM_FORMATS  = fpnew_pkg::NUM_FP_FORMATS,
+  localparam int unsigned NUM_OPERANDS = fpnew_pkg::num_operands(OpGroup),
+  localparam int unsigned NUM_LANES    = fpnew_pkg::max_num_lanes(Width, FpFmtMask, EnableVectors),
+  localparam type         MaskType     = logic [NUM_LANES-1:0]
 ) (
 
   input logic                                     clk_i,
@@ -368,7 +386,17 @@ module fpnew_opgroup_block_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_opgroup_block #(
-      
+      .OpGroup(OpGroup),
+      .Width(Width),
+      .EnableVectors(EnableVectors),
+      .DivSqrtSel(DivSqrtSel),
+      .FpFmtMask(FpFmtMask),
+      .IntFmtMask(IntFmtMask),
+      .FmtPipeRegs(FmtPipeRegs),
+      .FmtUnitTypes(FmtUnitTypes),
+      .PipeConfig(PipeConfig),
+      .TagType(TagType),
+      .TrueSIMDClass(TrueSIMDClass)
   ) dut (.*);
 
 endmodule

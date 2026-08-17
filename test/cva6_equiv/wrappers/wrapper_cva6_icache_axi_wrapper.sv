@@ -305,7 +305,10 @@ module cva6_icache_axi_wrapper_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type axi_req_t = logic,
+  parameter type axi_rsp_t = logic
 ) (
 
     input logic             clk_i,
@@ -361,7 +364,9 @@ module cva6_icache_axi_wrapper_equiv
       .icache_dreq_t(icache_dreq_t),
       .icache_drsp_t(icache_drsp_t),
       .icache_req_t(icache_req_t),
-      .icache_rtrn_t(icache_rtrn_t)
+      .icache_rtrn_t(icache_rtrn_t),
+      .axi_req_t(axi_req_t),
+      .axi_rsp_t(axi_rsp_t)
   ) dut (.*);
 
 endmodule

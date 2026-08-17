@@ -305,7 +305,15 @@ module wt_axi_adapter_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned ReqFifoDepth = 2,
+  parameter int unsigned MetaFifoDepth = CVA6Cfg.DCACHE_MAX_TX,
+  parameter type axi_req_t = logic,
+  parameter type axi_rsp_t = logic,
+  parameter type dcache_req_t = logic,
+  parameter type dcache_rtrn_t = logic,
+  parameter type dcache_inval_t = logic
 ) (
 
     input logic clk_i,
@@ -370,6 +378,13 @@ module wt_axi_adapter_equiv
 
   wt_axi_adapter #(
       .CVA6Cfg(CVA6Cfg),
+      .ReqFifoDepth(ReqFifoDepth),
+      .MetaFifoDepth(MetaFifoDepth),
+      .axi_req_t(axi_req_t),
+      .axi_rsp_t(axi_rsp_t),
+      .dcache_req_t(dcache_req_t),
+      .dcache_rtrn_t(dcache_rtrn_t),
+      .dcache_inval_t(dcache_inval_t),
       .icache_req_t(icache_req_t),
       .icache_rtrn_t(icache_rtrn_t)
   ) dut (.*);

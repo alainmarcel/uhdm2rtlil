@@ -305,7 +305,10 @@ module cache_ctrl_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type cache_line_t = logic,
+  parameter type cl_be_t = logic
 ) (
 
     input logic clk_i,  // Clock
@@ -373,6 +376,8 @@ module cache_ctrl_equiv
 
   cache_ctrl #(
       .CVA6Cfg(CVA6Cfg),
+      .cache_line_t(cache_line_t),
+      .cl_be_t(cl_be_t),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t)
   ) dut (.*);

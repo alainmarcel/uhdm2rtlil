@@ -305,7 +305,12 @@ module cvxif_example_coprocessor_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  // CVXIF Types
+      parameter  int unsigned NrRgprPorts         = 2,
+  parameter  int unsigned XLEN                = 32,
+  localparam type         registers_t         = logic [NrRgprPorts-1:0][XLEN-1:0]
 ) (
 
     input  logic        clk_i,        // Clock
@@ -343,6 +348,8 @@ module cvxif_example_coprocessor_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   cvxif_example_coprocessor #(
+      .NrRgprPorts(NrRgprPorts),
+      .XLEN(XLEN),
       .readregflags_t(readregflags_t),
       .writeregflags_t(writeregflags_t),
       .id_t(id_t),

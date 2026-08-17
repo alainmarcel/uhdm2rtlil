@@ -305,7 +305,10 @@ module serdiv_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter WIDTH = 64,
+  parameter STABLE_HANDSHAKE = 0             // Guarantee a stable in_rdy_o during the input handshake. Keep it at 0 in CVA6
 ) (
 
     // Subsystem Clock - SUBSYSTEM
@@ -365,7 +368,9 @@ module serdiv_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   serdiv #(
-      .CVA6Cfg(CVA6Cfg)
+      .CVA6Cfg(CVA6Cfg),
+      .WIDTH(WIDTH),
+      .STABLE_HANDSHAKE(STABLE_HANDSHAKE)
   ) dut (.*);
 
 endmodule

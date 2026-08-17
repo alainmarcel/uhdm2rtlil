@@ -305,7 +305,10 @@ module wt_dcache_wbuffer_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter DCACHE_CL_IDX_WIDTH = 0,
+  parameter type wbuffer_t = logic
 ) (
 
     input logic clk_i,  // Clock
@@ -388,8 +391,10 @@ module wt_dcache_wbuffer_equiv
 
   wt_dcache_wbuffer #(
       .CVA6Cfg(CVA6Cfg),
+      .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
       .dcache_req_i_t(dcache_req_i_t),
-      .dcache_req_o_t(dcache_req_o_t)
+      .dcache_req_o_t(dcache_req_o_t),
+      .wbuffer_t(wbuffer_t)
   ) dut (.*);
 
 endmodule

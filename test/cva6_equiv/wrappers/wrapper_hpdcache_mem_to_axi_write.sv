@@ -305,7 +305,13 @@ module hpdcache_mem_to_axi_write_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type hpdcache_mem_req_t = logic,
+  parameter type hpdcache_mem_req_w_t = logic,
+  parameter type hpdcache_mem_resp_w_t = logic,
+  parameter type aw_chan_t = logic,
+  parameter type w_chan_t = logic
 ) (
 
     output logic                          req_ready_o,
@@ -362,6 +368,11 @@ module hpdcache_mem_to_axi_write_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_mem_to_axi_write #(
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
+      .aw_chan_t(aw_chan_t),
+      .w_chan_t(w_chan_t),
       .b_chan_t(b_chan_t)
   ) dut (.*);
 

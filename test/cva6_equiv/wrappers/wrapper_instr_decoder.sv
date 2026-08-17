@@ -305,7 +305,13 @@ module instr_decoder_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type               copro_issue_resp_t          = logic,
+  parameter type               opcode_t                    = logic,
+  parameter int                NbInstr                     = 1,
+  parameter int unsigned       NrRgprPorts                 = 2,
+  parameter type               registers_t                 = logic
 ) (
 
     input  logic                clk_i,
@@ -352,11 +358,16 @@ module instr_decoder_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   instr_decoder #(
+      .copro_issue_resp_t(copro_issue_resp_t),
+      .opcode_t(opcode_t),
+      .NbInstr(NbInstr),
+      .NrRgprPorts(NrRgprPorts),
       .hartid_t(hartid_t),
       .id_t(id_t),
       .x_issue_req_t(x_issue_req_t),
       .x_issue_resp_t(x_issue_resp_t),
-      .x_register_t(x_register_t)
+      .x_register_t(x_register_t),
+      .registers_t(registers_t)
   ) dut (.*);
 
 endmodule

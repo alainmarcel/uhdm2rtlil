@@ -305,7 +305,12 @@ module hpdcache_cbuf_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter type hpdcache_req_data_t   = logic,
+  parameter type hpdcache_req_be_t     = logic,
+  parameter type cbuf_id_t             = logic
 ) (
 
     input  logic               clk_i,
@@ -350,7 +355,10 @@ module hpdcache_cbuf_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_cbuf #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .cbuf_id_t(cbuf_id_t)
   ) dut (.*);
 
 endmodule

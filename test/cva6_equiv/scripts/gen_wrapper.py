@@ -74,6 +74,23 @@ def param_names(block, bindable_only=False):
         names.append(m.group(1))
     return names
 
+
+def split_param_entries(block):
+    """Yield the target's #() entries, split on top-level commas.
+
+    Keeps struct/array bodies intact (`parameter type x = struct packed {a; b;}`
+    contains commas and semicolons inside braces)."""
+    out, depth, cur = [], 0, []
+    for c in block:
+        if c in "({[": depth += 1
+        elif c in ")}]": depth -= 1
+        if c == "," and depth == 0:
+            out.append("".join(cur)); cur = []
+        else:
+            cur.append(c)
+    if "".join(cur).strip(): out.append("".join(cur))
+    return [e.strip() for e in out if e.strip()]
+
 def gen(target, out_path, extra_binds=None, import_pkgs=None):
     cva6_txt = open(f"{CORE}/cva6.sv").read()
     cva6_params, _ = extract_param_block(cva6_txt, "cva6")
@@ -140,6 +157,27 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
 
     wrp_names = set(param_names(cva6_params)) | set(param_names(cva6_body_lp)) \
                 | set(param_names(extras)) | set(param_names(tgt_body_lp))
+
+    # A generic library module parameterises its own ports
+    # (`hpdcache_fifo_reg #(parameter int WIDTH = 8) (input logic [WIDTH-1:0] …)`).
+    # The wrapper copies that port list verbatim, so every such name must be
+    # declared BEFORE the ports or slang reports "use of undeclared identifier
+    # 'WIDTH'" — the single biggest cause of wrappers that would not elaborate.
+    # Re-declare the target's own entries, keeping their defaults, but only the
+    # ones cva6.sv / extras do not already provide (those must win, since they
+    # carry the values the real hierarchy uses).
+    own = []
+    for entry in split_param_entries(tgt_params):
+        nm = param_names(entry)
+        if not nm or nm[0] in wrp_names:
+            continue
+        own.append(entry)
+        wrp_names.add(nm[0])
+    if own:
+        extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(
+            "  " + o.replace("\n", "\n  ") for o in own)
+        print(f"  declared target's own params: "
+              f"{', '.join(param_names(o)[0] for o in own)}")
     binds = []
     unbound = []
     for p in param_names(tgt_params, bindable_only=True):

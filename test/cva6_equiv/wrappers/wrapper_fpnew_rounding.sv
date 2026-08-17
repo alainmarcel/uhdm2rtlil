@@ -305,7 +305,9 @@ module fpnew_rounding_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned AbsWidth=2 // Width of the abolute value
 ) (
 
   // Input value
@@ -351,7 +353,7 @@ module fpnew_rounding_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_rounding #(
-      
+      .AbsWidth(AbsWidth)
   ) dut (.*);
 
 endmodule

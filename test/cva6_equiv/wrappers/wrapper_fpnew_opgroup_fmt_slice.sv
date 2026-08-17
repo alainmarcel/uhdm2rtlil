@@ -305,7 +305,23 @@ module fpnew_opgroup_fmt_slice_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter fpnew_pkg::opgroup_e     OpGroup       = fpnew_pkg::ADDMUL,
+  parameter fpnew_pkg::fp_format_e   FpFormat      = fpnew_pkg::fp_format_e'(0),
+  // FPU configuration
+    parameter int unsigned             Width         = 32,
+  parameter logic                    EnableVectors = 1'b1,
+  parameter int unsigned             NumPipeRegs   = 0,
+  parameter fpnew_pkg::pipe_config_t PipeConfig    = fpnew_pkg::BEFORE,
+  parameter logic                    ExtRegEna     = 1'b0,
+  parameter type                     TagType       = logic,
+  parameter int unsigned             TrueSIMDClass = 0,
+  // Do not change
+    localparam int unsigned NUM_OPERANDS = fpnew_pkg::num_operands(OpGroup),
+  localparam int unsigned NUM_LANES    = fpnew_pkg::num_lanes(Width, FpFormat, EnableVectors),
+  localparam type         MaskType     = logic [NUM_LANES-1:0],
+  localparam int unsigned ExtRegEnaWidth = NumPipeRegs == 0 ? 1 : NumPipeRegs
 ) (
 
   input logic                               clk_i,
@@ -368,7 +384,15 @@ module fpnew_opgroup_fmt_slice_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_opgroup_fmt_slice #(
-      
+      .OpGroup(OpGroup),
+      .FpFormat(FpFormat),
+      .Width(Width),
+      .EnableVectors(EnableVectors),
+      .NumPipeRegs(NumPipeRegs),
+      .PipeConfig(PipeConfig),
+      .ExtRegEna(ExtRegEna),
+      .TagType(TagType),
+      .TrueSIMDClass(TrueSIMDClass)
   ) dut (.*);
 
 endmodule

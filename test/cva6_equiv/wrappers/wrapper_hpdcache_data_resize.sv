@@ -305,7 +305,13 @@ module hpdcache_data_resize_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int WR_WIDTH = 0,
+  parameter int RD_WIDTH = 0,
+  parameter int DEPTH    = 0,
+  localparam type wdata_t = logic [WR_WIDTH-1:0],
+  localparam type rdata_t = logic [RD_WIDTH-1:0]
 ) (
 
     input  logic   clk_i,
@@ -351,7 +357,9 @@ module hpdcache_data_resize_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_data_resize #(
-      
+      .WR_WIDTH(WR_WIDTH),
+      .RD_WIDTH(RD_WIDTH),
+      .DEPTH(DEPTH)
   ) dut (.*);
 
 endmodule

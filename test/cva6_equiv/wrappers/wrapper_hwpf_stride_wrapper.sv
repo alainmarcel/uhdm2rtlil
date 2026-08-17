@@ -305,7 +305,22 @@ module hwpf_stride_wrapper_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter int unsigned NUM_HW_PREFETCH = 4,
+  parameter int unsigned NUM_SNOOP_PORTS = 1,
+  //  Request Interface Definitions
+      //  {{{
+      parameter type hpdcache_tag_t = logic,
+      parameter type hpdcache_req_offset_t = logic,
+      parameter type hpdcache_req_data_t = logic,
+      parameter type hpdcache_req_be_t = logic,
+      parameter type hpdcache_req_sid_t = logic,
+      parameter type hpdcache_req_tid_t = logic,
+      parameter type hpdcache_req_t = logic,
+      parameter type hpdcache_rsp_t = logic
+      //  }}}
 ) (
 
     input  logic                                        clk_i,
@@ -380,7 +395,10 @@ module hwpf_stride_wrapper_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hwpf_stride_wrapper #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .NUM_HW_PREFETCH(NUM_HW_PREFETCH),
+      .NUM_SNOOP_PORTS(NUM_SNOOP_PORTS),
+      .hpdcache_tag_t(hpdcache_tag_t)
   ) dut (.*);
 
 endmodule

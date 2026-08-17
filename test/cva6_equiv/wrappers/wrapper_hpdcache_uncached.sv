@@ -305,7 +305,27 @@ module hpdcache_uncached_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter type hpdcache_nline_t = logic,
+  parameter type hpdcache_tag_t = logic,
+  parameter type hpdcache_set_t = logic,
+  parameter type hpdcache_offset_t = logic,
+  parameter type hpdcache_word_t = logic,
+  parameter type hpdcache_req_addr_t = logic,
+  parameter type hpdcache_req_tid_t = logic,
+  parameter type hpdcache_req_sid_t = logic,
+  parameter type hpdcache_req_data_t = logic,
+  parameter type hpdcache_req_be_t = logic,
+  parameter type hpdcache_way_vector_t = logic,
+  parameter type hpdcache_req_t = logic,
+  parameter type hpdcache_rsp_t = logic,
+  parameter type hpdcache_mem_id_t = logic,
+  parameter type hpdcache_mem_req_t = logic,
+  parameter type hpdcache_mem_req_w_t = logic,
+  parameter type hpdcache_mem_resp_r_t = logic,
+  parameter type hpdcache_mem_resp_w_t = logic
 ) (
 
     input  logic                  clk_i,
@@ -423,7 +443,25 @@ module hpdcache_uncached_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_uncached #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_nline_t(hpdcache_nline_t),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_set_t(hpdcache_set_t),
+      .hpdcache_offset_t(hpdcache_offset_t),
+      .hpdcache_word_t(hpdcache_word_t),
+      .hpdcache_req_addr_t(hpdcache_req_addr_t),
+      .hpdcache_req_tid_t(hpdcache_req_tid_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .hpdcache_way_vector_t(hpdcache_way_vector_t),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t)
   ) dut (.*);
 
 endmodule
