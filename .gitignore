@@ -54,3 +54,7 @@ test/test_results.log
 test/old-test.log
 test/old-test-yosys.log
 __pycache__/
+
+# CVA6 equivalence suite: per-run scratch (UHDM, netlists, logs)
+test/cva6_equiv/work/
+test/cva6_equiv/cva6_modules.generated.txt

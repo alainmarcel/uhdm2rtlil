@@ -1,0 +1,250 @@
+name: Regression (sharded)
+
+# The FULL regression — internal tests, the upstream Yosys suite, and the CVA6
+# per-module equivalence suite — split across runners and merged back into one
+# report carrying every category the single-process run prints.
+#
+# ~1400 internal + Yosys tests plus 146 CVA6 modules do not fit one runner's
+# time budget; a single-job run gets SIGTERM'd part-way through (exit 143, runs
+# 31935971681 and 31956846436).  So this mirrors the frontend matrix's shape:
+#   * build   — compile once, upload a runtime tarball (statically linked, so
+#               the shards need only the system runtime libs).
+#   * shard   — 12-way matrix; each runs `run_all_tests.sh --all --shard i/12`
+#               over its slice of EVERY test source and uploads its result dump.
+#   * combine — merge the dumps into the full report (passes, UHDM-only,
+#               Induct-/Miter-Formal, crashes, sim-equiv warnings/analysed/
+#               artefacts/unclassified, CVA6 per-module) and decide the verdict.
+#
+# The verdict fails on unexpected test failures, Miter-Formal escapes, crashes,
+# and CVA6 correctness regressions.  A CVA6 SAT timeout is reported as
+# inconclusive rather than failing: how far SAT gets depends on runner load, and
+# failing on that would make the gate non-deterministic.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      jobs:
+        # SAT is memory-hungry; the frontend matrix learned that parallelism
+        # inside a shard OOM-kills the 16 GB runner ("received a shutdown
+        # signal", exit 143).  Serial per shard is the reliable default.
+        description: "Parallel CVA6 modules within each shard (1 = serial, most reliable)"
+        required: false
+        default: "1"
+
+concurrency:
+  group: regression-sharded-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential cmake git python3 python3-pip pkg-config \
+          libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+          libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+          libgoogle-perftools-dev ccache help2man
+
+    - name: Setup GCC-13
+      run: |
+        sudo apt install -y g++-13
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
+
+    - name: Cache Verilator build
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      # The suite's Verilator co-sim must run on the shards too, so Verilator
+      # travels in the runtime tarball; pin the same release CI uses.
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        # Same key as ci.yml so the two workflows share one warm cache.
+        key: uhdm2rtlil-build-${{ runner.os }}
+        restore-keys: |
+          uhdm2rtlil-build-
+        max-size: 2G
+
+    - name: Install Python dependencies
+      run: pip3 install orderedmultidict
+
+    - name: Setup ccache environment
+      run: |
+        echo "CC=ccache gcc" >> $GITHUB_ENV
+        echo "CXX=ccache g++" >> $GITHUB_ENV
+        ccache --set-config=cache_dir=$HOME/.ccache
+        ccache --set-config=max_size=2G
+        ccache --set-config=compression=true
+        ccache --zero-stats
+
+    - name: Build project
+      run: |
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Package runtime
+      # Only what the suite invokes: yosys (with read_slang built in), the UHDM
+      # plugin and the surelog binary.
+      run: |
+        sudo tar -czf verilator.tar.gz -C / opt/verilator-5.048
+        tar -czhf runtime.tar.gz \
+          out/current \
+          build/uhdm2rtlil.so \
+          build/extract_clocks_resets.so \
+          build/third_party/Surelog/bin/surelog \
+          third_party/yosys/tests
+        ls -lh runtime.tar.gz verilator.tar.gz
+
+    - name: Upload runtime
+      uses: actions/upload-artifact@v4
+      with:
+        name: regression-runtime
+        path: |
+          runtime.tar.gz
+          verilator.tar.gz
+        retention-days: 1
+
+  shard:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install runtime dependencies
+      run: |
+        sudo apt-get update
+        # Runtime libs for the prebuilt binaries, plus what Verilator's
+        # generated C++ and the suite's helpers need.
+        # ccache is REQUIRED here even though the shard compiles nothing of
+        # ours: the Verilator we ship was configured in a job that had ccache
+        # on PATH, so its installed verilated.mk pins `CXX = ccache g++`.
+        # Without it every co-sim model build dies with
+        #   make: ccache: No such file or directory
+        # which the harness reports as a skip — 0 co-sim passes across a whole
+        # shard, and the memory tests that rely on the co-sim rescue then look
+        # like failures.  g++-13 matches the build job (the co-sim runs
+        # Verilator with --timing, whose model uses C++20 coroutines).
+        sudo apt-get install -y build-essential g++-13 ccache python3 python3-pip bc \
+          libtcmalloc-minimal4 tcl libreadline8t64 libunwind8 \
+          libgoogle-perftools4t64 zlib1g-dev iverilog help2man || \
+        sudo apt-get install -y build-essential g++-13 ccache python3 bc \
+          libtcmalloc-minimal4 tcl zlib1g-dev iverilog
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        g++ --version | head -1
+
+    - name: Download runtime
+      uses: actions/download-artifact@v4
+      with:
+        name: regression-runtime
+
+    - name: Unpack runtime
+      run: |
+        tar -xzf runtime.tar.gz
+        sudo tar -xzf verilator.tar.gz -C /
+        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
+        ./out/current/bin/yosys -p "help read_slang" >/dev/null \
+          || { echo "this yosys has no built-in read_slang"; exit 1; }
+        /opt/verilator-5.048/bin/verilator --version
+        # The shard checkout has no submodules, so the Yosys test corpus comes
+        # from the tarball.  Fail loudly if it is absent: without it the Yosys
+        # stage silently contributes 0 tests and the run still looks green.
+        test -d third_party/yosys/tests \
+          || { echo "third_party/yosys/tests missing from the runtime"; exit 1; }
+        echo "yosys tests: $(find third_party/yosys/tests -name '*.v' -o -name '*.sv' | wc -l) files"
+
+    - name: Run shard ${{ matrix.shard }}/12
+      run: |
+        cd test
+        JOBS=${{ github.event.inputs.jobs || 1 }} \
+        ./run_all_tests.sh --all \
+          --shard ${{ matrix.shard }}/12 \
+          --results-file "$GITHUB_WORKSPACE/shard${{ matrix.shard }}.txt" \
+          || true   # the combine job owns the verdict
+
+    - name: Upload shard results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: regression-shard-${{ matrix.shard }}
+        path: shard${{ matrix.shard }}.txt
+        retention-days: 7
+        if-no-files-found: warn
+
+  combine:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download shard results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: regression-shard-*
+        path: shards
+        merge-multiple: true
+
+    - name: Combine shards into the final report
+      # A shard that is killed cannot upload its file, so a merged report could
+      # silently be PARTIAL.  Count them and say so loudly rather than implying
+      # full coverage.
+      run: |
+        ls -la shards/ || { echo "no shard results at all"; exit 1; }
+        EXPECTED=12
+        FOUND=$(ls shards/shard*.txt 2>/dev/null | wc -l)
+        python3 test/combine_regression.py --expected-shards $EXPECTED shards \
+          | tee report.txt
+        rc=${PIPESTATUS[0]}
+        {
+          echo '```'
+          cat report.txt
+          echo '```'
+          echo "shards present: $FOUND / $EXPECTED"
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ "$FOUND" -lt "$EXPECTED" ]; then
+          echo "::warning::PARTIAL report — only $FOUND of $EXPECTED shards reported (a shard likely timed out or OOM'd); counts are incomplete."
+        fi
+        exit $rc
+
+    - name: Upload combined report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: regression-report
+        path: report.txt
+        retention-days: 14

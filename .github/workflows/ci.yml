@@ -85,7 +85,13 @@ jobs:
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ github.job }}-${{ matrix.os }}
+        # Shared prefix with the sharded regression workflow: both build the
+        # same tree, so whichever runs first warms the cache for the other.
+        # (This used to interpolate matrix.os, which this job does not define,
+        # so the key was the stray literal "build-and-test-".)
+        key: uhdm2rtlil-build-${{ runner.os }}
+        restore-keys: |
+          uhdm2rtlil-build-
         max-size: 2G
         
     # Temporarily disabled - cache restore
@@ -132,10 +138,17 @@ jobs:
       run: |
         make test-read-sv
 
+    # CVA6 equivalence is excluded from THIS job on purpose: the internal +
+    # Yosys suites plus 146 CVA6 modules (each its own Surelog elaboration and
+    # SAT miter) overrun the runner limit in one job (exit 143, run
+    # 31935971681).  The full regression — including CVA6 — runs sharded in
+    # .github/workflows/regression-sharded.yml on the same events and produces
+    # the combined report with every category.  `make test-all` still runs
+    # everything locally in one process.
     - name: Run tests (internal + Yosys)
       run: |
         cd test
-        bash run_all_tests.sh --all
+        bash run_all_tests.sh --all --no-cva6
     
     - name: Upload test results
       if: always()
