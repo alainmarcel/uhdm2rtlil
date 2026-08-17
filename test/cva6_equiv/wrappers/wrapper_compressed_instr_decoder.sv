@@ -6,6 +6,7 @@
 
 module compressed_instr_decoder_equiv
   import ariane_pkg::*;
+  import cvxif_instr_pkg::*;
 #(
 
     // CVA6 config
@@ -307,8 +308,8 @@ module compressed_instr_decoder_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type                    copro_compressed_resp_t          = logic,
-  parameter int                     NbInstr                          = 1
+  parameter type                    copro_compressed_resp_t = cvxif_instr_pkg::copro_compressed_resp_t,
+  parameter int                     NbInstr = cvxif_instr_pkg::NbCompInstr
 ) (
 
     input  logic               clk_i,

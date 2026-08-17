@@ -307,7 +307,7 @@ module hpdcache_mem_resp_demux_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int         N  = 0,
+  parameter int         N = 2,
   parameter type resp_t    = logic,
   parameter type resp_id_t = logic,
   localparam int RT_DEPTH  = (1 << $bits(resp_id_t)),

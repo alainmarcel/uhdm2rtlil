@@ -311,7 +311,8 @@ module bht_equiv
     logic                    valid;
     logic [CVA6Cfg.VLEN-1:0] pc;
     logic                    taken;
-  }
+  },
+  parameter int unsigned NR_ENTRIES = CVA6Cfg.BHTEntries
 ) (
 
     // Subsystem Clock - SUBSYSTEM
@@ -361,7 +362,7 @@ module bht_equiv
   bht #(
       .CVA6Cfg(CVA6Cfg),
       .bht_update_t(bht_update_t),
-      .NR_ENTRIES(CVA6Cfg.BHTEntries)
+      .NR_ENTRIES(NR_ENTRIES)
   ) dut (.*);
 
 endmodule

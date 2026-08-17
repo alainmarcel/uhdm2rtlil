@@ -6,6 +6,7 @@
 
 module hpdcache_sram_wbyteenable_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -311,7 +312,11 @@ module hpdcache_sram_wbyteenable_equiv
   parameter int unsigned DATA_SIZE = 0,
   parameter int unsigned DEPTH = 2**ADDR_SIZE,
   parameter int unsigned NDATA = 1,
-  parameter bit          ECC_EN = 1'b0
+  parameter bit          ECC_EN = 1'b0,
+  parameter int unsigned HPDCACHE_DATA_RAM_ENTR_PER_SET = HPDcacheCfg.u.clWords/
+                                                               HPDcacheCfg.u.accessWords,
+  parameter int unsigned HPDCACHE_DATA_RAM_DEPTH = HPDcacheCfg.u.sets*
+                                                        HPDCACHE_DATA_RAM_ENTR_PER_SET
 ) (
 
     input  logic                              clk,

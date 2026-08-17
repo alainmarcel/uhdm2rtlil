@@ -307,7 +307,7 @@ module popcount_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned INPUT_WIDTH = 256,
+  parameter int unsigned INPUT_WIDTH = CVA6Cfg.XLEN,
   localparam int unsigned PopcountWidth = $clog2(INPUT_WIDTH)+1
 ) (
 

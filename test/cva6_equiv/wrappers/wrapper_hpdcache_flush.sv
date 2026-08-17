@@ -3,9 +3,11 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_flush_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,19 @@ module hpdcache_flush_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t,
+  parameter type hpdcache_set_t = hpdcache_equiv_pkg::hpdcache_set_t,
+  parameter type hpdcache_word_t = hpdcache_equiv_pkg::hpdcache_word_t,
+  parameter type hpdcache_way_vector_t = hpdcache_equiv_pkg::hpdcache_way_vector_t,
+  parameter type hpdcache_access_data_t = hpdcache_equiv_pkg::hpdcache_access_data_t,
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_data_t = hpdcache_equiv_pkg::hpdcache_mem_data_t,
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t
 ) (
 
     input  logic                  clk_i,
@@ -392,7 +406,17 @@ module hpdcache_flush_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_flush #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_nline_t(hpdcache_nline_t),
+      .hpdcache_set_t(hpdcache_set_t),
+      .hpdcache_word_t(hpdcache_word_t),
+      .hpdcache_way_vector_t(hpdcache_way_vector_t),
+      .hpdcache_access_data_t(hpdcache_access_data_t),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_data_t(hpdcache_mem_data_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t)
   ) dut (.*);
 
 endmodule

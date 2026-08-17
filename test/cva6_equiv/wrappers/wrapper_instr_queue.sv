@@ -375,8 +375,6 @@ module instr_queue_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
-
-
   instr_queue #(
       .CVA6Cfg(CVA6Cfg),
       .fetch_entry_t(fetch_entry_t)

@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hwpf_stride_equiv
   import ariane_pkg::*;
@@ -309,12 +310,12 @@ module hwpf_stride_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter hpdcache_cfg_t HPDcacheCfg = '0,
-  parameter type hpdcache_nline_t = logic,
-  parameter type hpdcache_tag_t = logic,
-  parameter type hpdcache_set_t = logic,
-  parameter type hpdcache_req_t = logic,
-  parameter type hpdcache_rsp_t = logic
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t,
+  parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_set_t = hpdcache_equiv_pkg::hpdcache_set_t,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t
 ) (
 
     input  logic                        clk_i,

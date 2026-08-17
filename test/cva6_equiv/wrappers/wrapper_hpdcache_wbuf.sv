@@ -3,9 +3,11 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_wbuf_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,18 @@ module hpdcache_wbuf_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type wbuf_addr_t = hpdcache_equiv_pkg::wbuf_addr_t,
+  parameter type wbuf_timecnt_t = logic,
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
+  localparam int unsigned WBUF_WORD_WIDTH = HPDcacheCfg.u.reqWords*HPDcacheCfg.u.wordWidth,
+  localparam type wbuf_data_t = hpdcache_equiv_pkg::wbuf_data_t,
+  localparam type wbuf_be_t = hpdcache_equiv_pkg::wbuf_be_t
 ) (
 
     //  Clock and reset signals
@@ -391,7 +404,13 @@ module hpdcache_wbuf_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_wbuf #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .wbuf_addr_t(wbuf_addr_t),
+      .wbuf_timecnt_t(wbuf_timecnt_t),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t)
   ) dut (.*);
 
 endmodule

@@ -7,6 +7,7 @@
 module cva6_icache_axi_wrapper_equiv
   import ariane_pkg::*;
   import wt_cache_pkg::*;
+  import std_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -308,8 +309,8 @@ module cva6_icache_axi_wrapper_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type axi_req_t = logic,
-  parameter type axi_rsp_t = logic
+  parameter type axi_req_t = noc_req_t,
+  parameter type axi_rsp_t = noc_resp_t
 ) (
 
     input logic             clk_i,

@@ -310,7 +310,8 @@ module ras_equiv
   localparam type ras_t = struct packed {
     logic                    valid;
     logic [CVA6Cfg.VLEN-1:0] ra;
-  }
+  },
+  parameter int unsigned DEPTH = CVA6Cfg.RASDepth
 ) (
 
     // Subsystem Clock - SUBSYSTEM
@@ -360,7 +361,7 @@ module ras_equiv
   ras #(
       .CVA6Cfg(CVA6Cfg),
       .ras_t(ras_t),
-      .DEPTH(CVA6Cfg.RASDepth)
+      .DEPTH(DEPTH)
   ) dut (.*);
 
 endmodule

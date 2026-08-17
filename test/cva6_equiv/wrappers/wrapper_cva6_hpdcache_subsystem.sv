@@ -305,7 +305,12 @@ module cva6_hpdcache_subsystem_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  localparam NumPorts = 4,
+  parameter int NrHwPrefetchers = 4,
+  parameter type axi_b_chan_t = b_chan_t,
+  parameter type axi_r_chan_t = r_chan_t
 ) (
 
 
@@ -414,7 +419,7 @@ module cva6_hpdcache_subsystem_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   cva6_hpdcache_subsystem #(
@@ -428,9 +433,12 @@ module cva6_hpdcache_subsystem_equiv
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t),
       .NumPorts(NumPorts),
+      .NrHwPrefetchers(NrHwPrefetchers),
       .axi_ar_chan_t(axi_ar_chan_t),
       .axi_aw_chan_t(axi_aw_chan_t),
       .axi_w_chan_t(axi_w_chan_t),
+      .axi_b_chan_t(axi_b_chan_t),
+      .axi_r_chan_t(axi_r_chan_t),
       .noc_req_t(noc_req_t),
       .noc_resp_t(noc_resp_t)
   ) dut (.*);

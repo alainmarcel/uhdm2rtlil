@@ -6,6 +6,7 @@
 
 module wt_dcache_ctrl_equiv
   import ariane_pkg::*;
+  import wt_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +306,9 @@ module wt_dcache_ctrl_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter DCACHE_CL_IDX_WIDTH = 0
 ) (
 
     input logic clk_i,  // Clock
@@ -372,6 +375,7 @@ module wt_dcache_ctrl_equiv
 
   wt_dcache_ctrl #(
       .CVA6Cfg(CVA6Cfg),
+      .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t)
   ) dut (.*);

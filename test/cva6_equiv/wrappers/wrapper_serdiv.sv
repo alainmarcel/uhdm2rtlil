@@ -307,7 +307,7 @@ module serdiv_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter WIDTH = 64,
+  parameter WIDTH = CVA6Cfg.XLEN,
   parameter STABLE_HANDSHAKE = 0             // Guarantee a stable in_rdy_o during the input handshake. Keep it at 0 in CVA6
 ) (
 

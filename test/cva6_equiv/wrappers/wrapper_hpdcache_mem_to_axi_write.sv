@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_mem_to_axi_write_equiv
   import ariane_pkg::*;
@@ -308,11 +309,11 @@ module hpdcache_mem_to_axi_write_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type hpdcache_mem_req_t = logic,
-  parameter type hpdcache_mem_req_w_t = logic,
-  parameter type hpdcache_mem_resp_w_t = logic,
-  parameter type aw_chan_t = logic,
-  parameter type w_chan_t = logic
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
+  parameter type aw_chan_t = axi_aw_chan_t,
+  parameter type w_chan_t = axi_w_chan_t
 ) (
 
     output logic                          req_ready_o,

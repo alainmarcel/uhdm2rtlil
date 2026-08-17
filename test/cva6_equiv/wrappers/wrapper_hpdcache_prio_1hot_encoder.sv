@@ -305,7 +305,9 @@ module hpdcache_prio_1hot_encoder_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned N = 0
 ) (
 
     input  logic [N-1:0] val_i,
@@ -341,7 +343,7 @@ module hpdcache_prio_1hot_encoder_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_prio_1hot_encoder #(
-      
+      .N(N)
   ) dut (.*);
 
 endmodule

@@ -3,9 +3,11 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_memctrl_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,21 @@ module hpdcache_memctrl_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t,
+  parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_set_t = hpdcache_equiv_pkg::hpdcache_set_t,
+  parameter type hpdcache_word_t = hpdcache_equiv_pkg::hpdcache_word_t,
+  parameter type hpdcache_way_vector_t = hpdcache_equiv_pkg::hpdcache_way_vector_t,
+  parameter type hpdcache_dir_entry_t = logic,
+  parameter type hpdcache_data_word_t = hpdcache_equiv_pkg::hpdcache_data_word_t,
+  parameter type hpdcache_data_be_t = hpdcache_equiv_pkg::hpdcache_data_be_t,
+  parameter type hpdcache_req_data_t = hpdcache_equiv_pkg::hpdcache_req_data_t,
+  parameter type hpdcache_req_be_t = hpdcache_equiv_pkg::hpdcache_req_be_t,
+  parameter type hpdcache_access_data_t = hpdcache_equiv_pkg::hpdcache_access_data_t,
+  parameter type hpdcache_access_be_t = hpdcache_equiv_pkg::hpdcache_access_be_t
 ) (
 
     //      Global clock and reset signals
@@ -483,7 +499,19 @@ module hpdcache_memctrl_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_memctrl #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_nline_t(hpdcache_nline_t),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_set_t(hpdcache_set_t),
+      .hpdcache_word_t(hpdcache_word_t),
+      .hpdcache_way_vector_t(hpdcache_way_vector_t),
+      .hpdcache_dir_entry_t(hpdcache_dir_entry_t),
+      .hpdcache_data_word_t(hpdcache_data_word_t),
+      .hpdcache_data_be_t(hpdcache_data_be_t),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .hpdcache_access_data_t(hpdcache_access_data_t),
+      .hpdcache_access_be_t(hpdcache_access_be_t)
   ) dut (.*);
 
 endmodule

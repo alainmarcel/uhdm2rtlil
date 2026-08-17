@@ -6,6 +6,7 @@
 
 module axi_shim_equiv
   import ariane_pkg::*;
+  import wt_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -307,10 +308,11 @@ module axi_shim_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned AxiNumWords = 4,
-  must be >=2
-      parameter type axi_req_t = logic,
-  parameter type axi_rsp_t = logic
+  parameter int unsigned AxiNumWords = (CVA6Cfg.ICACHE_LINE_WIDTH/CVA6Cfg.AxiDataWidth) * (CVA6Cfg.ICACHE_LINE_WIDTH  > CVA6Cfg.DCACHE_LINE_WIDTH)  +
+                             (CVA6Cfg.DCACHE_LINE_WIDTH/CVA6Cfg.AxiDataWidth) * (CVA6Cfg.ICACHE_LINE_WIDTH <= CVA6Cfg.DCACHE_LINE_WIDTH),
+  // data width in dwords, this is also the maximum burst length, must be >=2
+      parameter type axi_req_t = noc_req_t,
+  parameter type axi_rsp_t = noc_resp_t
 ) (
 
     input logic clk_i,  // Clock

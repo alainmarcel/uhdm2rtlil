@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module cva6_hpdcache_subsystem_axi_arbiter_equiv
   import ariane_pkg::*;
@@ -305,7 +306,21 @@ module cva6_hpdcache_subsystem_axi_arbiter_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_r_t = hpdcache_equiv_pkg::hpdcache_mem_resp_r_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
+  parameter int unsigned AxiAddrWidth = CVA6Cfg.AxiAddrWidth,
+  parameter int unsigned AxiDataWidth = CVA6Cfg.AxiDataWidth,
+  parameter int unsigned AxiIdWidth = CVA6Cfg.AxiIdWidth,
+  parameter int unsigned AxiUserWidth = CVA6Cfg.AxiUserWidth,
+  parameter type axi_b_chan_t = b_chan_t,
+  parameter type axi_r_chan_t = r_chan_t,
+  parameter type axi_req_t = noc_req_t,
+  parameter type axi_rsp_t = noc_resp_t
 ) (
 
     input logic clk_i,
@@ -384,11 +399,24 @@ module cva6_hpdcache_subsystem_axi_arbiter_equiv
 
   cva6_hpdcache_subsystem_axi_arbiter #(
       .CVA6Cfg(CVA6Cfg),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
       .icache_req_t(icache_req_t),
       .icache_rtrn_t(icache_rtrn_t),
+      .AxiAddrWidth(AxiAddrWidth),
+      .AxiDataWidth(AxiDataWidth),
+      .AxiIdWidth(AxiIdWidth),
+      .AxiUserWidth(AxiUserWidth),
       .axi_ar_chan_t(axi_ar_chan_t),
       .axi_aw_chan_t(axi_aw_chan_t),
-      .axi_w_chan_t(axi_w_chan_t)
+      .axi_w_chan_t(axi_w_chan_t),
+      .axi_b_chan_t(axi_b_chan_t),
+      .axi_r_chan_t(axi_r_chan_t),
+      .axi_req_t(axi_req_t),
+      .axi_rsp_t(axi_rsp_t)
   ) dut (.*);
 
 endmodule

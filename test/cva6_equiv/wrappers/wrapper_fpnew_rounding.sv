@@ -307,7 +307,7 @@ module fpnew_rounding_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned AbsWidth=2 // Width of the abolute value
+  parameter int unsigned AbsWidth=2 // Width of the abolute value, without sign bit
 ) (
 
   // Input value

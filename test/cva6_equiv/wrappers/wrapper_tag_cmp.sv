@@ -6,6 +6,7 @@
 
 module tag_cmp_equiv
   import ariane_pkg::*;
+  import std_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -307,10 +308,20 @@ module tag_cmp_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned           NR_PORTS   = 3,
-  parameter int unsigned           ADDR_WIDTH = 64,
-  parameter type                   l_data_t   = logic,
-  parameter type                   l_be_t     = logic
+  localparam NumPorts = 4,
+  parameter int unsigned           NR_PORTS = NumPorts + 1,
+  parameter int unsigned           ADDR_WIDTH = CVA6Cfg.DCACHE_INDEX_WIDTH,
+  parameter type                   l_data_t = struct packed {
+      logic [CVA6Cfg.DCACHE_TAG_WIDTH-1:0]  tag;    // tag array
+      logic [CVA6Cfg.DCACHE_LINE_WIDTH-1:0] data;   // data array
+      logic                                 valid;  // state array
+      logic                                 dirty;  // state array
+    },
+  parameter type                   l_be_t = struct packed {
+      logic [(CVA6Cfg.DCACHE_TAG_WIDTH+7)/8-1:0] tag;  // byte enable into tag array
+      logic [(CVA6Cfg.DCACHE_LINE_WIDTH+7)/8-1:0] data;  // byte enable into data array
+      logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0]        vldrty; // bit enable into state array (valid for a pair of dirty/valid bits)
+    }
 ) (
 
     input logic clk_i,
@@ -360,7 +371,7 @@ module tag_cmp_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   tag_cmp #(

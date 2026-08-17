@@ -332,7 +332,8 @@ module cva6_tlb_equiv
     logic [HYP_EXT*2:0] v_st_enbl;
     pte_cva6_t content;
     pte_cva6_t g_content;
-  }
+  },
+  parameter int unsigned TLB_ENTRIES = CVA6Cfg.InstrTlbEntries
 ) (
 
     input logic clk_i,  // Clock
@@ -393,6 +394,7 @@ module cva6_tlb_equiv
       .CVA6Cfg(CVA6Cfg),
       .pte_cva6_t(pte_cva6_t),
       .tlb_update_cva6_t(tlb_update_cva6_t),
+      .TLB_ENTRIES(TLB_ENTRIES),
       .HYP_EXT(HYP_EXT)
   ) dut (.*);
 

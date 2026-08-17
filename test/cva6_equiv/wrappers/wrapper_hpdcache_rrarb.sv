@@ -3,9 +3,11 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_rrarb_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,12 @@ module hpdcache_rrarb_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = hpdcache_equiv_pkg::HPDcacheUserCfg,
+  //    Number of requesters
+      parameter int unsigned N = HPDcacheCfg.u.rtabEntries
 ) (
 
     input  logic                  clk_i,
@@ -344,7 +351,7 @@ module hpdcache_rrarb_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_rrarb #(
-      
+      .N(N)
   ) dut (.*);
 
 endmodule

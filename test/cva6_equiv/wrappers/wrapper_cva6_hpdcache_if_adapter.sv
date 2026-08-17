@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module cva6_hpdcache_if_adapter_equiv
   import ariane_pkg::*;
@@ -307,12 +308,12 @@ module cva6_hpdcache_if_adapter_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = '0,
-  parameter type hpdcache_tag_t = logic,
-  parameter type hpdcache_req_offset_t = logic,
-  parameter type hpdcache_req_sid_t = logic,
-  parameter type hpdcache_req_t = logic,
-  parameter type hpdcache_rsp_t = logic,
+  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_req_offset_t = hpdcache_equiv_pkg::hpdcache_req_offset_t,
+  parameter type hpdcache_req_sid_t = hpdcache_equiv_pkg::hpdcache_req_sid_t,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t,
   parameter bit InvalidateOnFlush = 1'b0,
   parameter bit IsLoadPort = 1'b1
 ) (

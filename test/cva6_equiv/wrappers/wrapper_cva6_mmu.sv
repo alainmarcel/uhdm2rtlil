@@ -305,7 +305,9 @@ module cva6_mmu_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned           HYP_EXT = CVA6Cfg.RVH ? 1 : 0
 ) (
 
     input logic clk_i,
@@ -416,7 +418,8 @@ module cva6_mmu_equiv
       .icache_drsp_t(icache_drsp_t),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t),
-      .exception_t(exception_t)
+      .exception_t(exception_t),
+      .HYP_EXT(HYP_EXT)
   ) dut (.*);
 
 endmodule

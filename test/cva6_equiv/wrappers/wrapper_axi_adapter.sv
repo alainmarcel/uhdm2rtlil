@@ -6,6 +6,7 @@
 
 module axi_adapter_equiv
   import ariane_pkg::*;
+  import std_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +306,14 @@ module axi_adapter_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned DATA_WIDTH = 64,
+  parameter logic        CRITICAL_WORD_FIRST   = 0,
+  // the AXI subsystem needs to support wrapping reads for this feature
+      parameter int unsigned CACHELINE_BYTE_OFFSET = CVA6Cfg.DCACHE_OFFSET_WIDTH,
+  parameter type axi_req_t = noc_req_t,
+  parameter type axi_rsp_t = noc_resp_t
 ) (
 
     input logic clk_i,  // Clock
@@ -362,7 +370,12 @@ module axi_adapter_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   axi_adapter #(
-      .CVA6Cfg(CVA6Cfg)
+      .CVA6Cfg(CVA6Cfg),
+      .DATA_WIDTH(DATA_WIDTH),
+      .CRITICAL_WORD_FIRST(CRITICAL_WORD_FIRST),
+      .CACHELINE_BYTE_OFFSET(CACHELINE_BYTE_OFFSET),
+      .axi_req_t(axi_req_t),
+      .axi_rsp_t(axi_rsp_t)
   ) dut (.*);
 
 endmodule

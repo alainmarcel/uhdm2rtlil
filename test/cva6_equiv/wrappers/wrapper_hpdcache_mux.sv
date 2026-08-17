@@ -6,6 +6,7 @@
 
 module hpdcache_mux_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
