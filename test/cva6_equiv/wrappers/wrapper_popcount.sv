@@ -305,7 +305,10 @@ module popcount_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned INPUT_WIDTH = 256,
+  localparam int unsigned PopcountWidth = $clog2(INPUT_WIDTH)+1
 ) (
 
     input logic [INPUT_WIDTH-1:0]     data_i,
@@ -313,8 +316,35 @@ module popcount_equiv
 
 );
 
+  localparam type interrupts_t = struct packed {
+    logic [CVA6Cfg.XLEN-1:0] S_SW;
+    logic [CVA6Cfg.XLEN-1:0] VS_SW;
+    logic [CVA6Cfg.XLEN-1:0] M_SW;
+    logic [CVA6Cfg.XLEN-1:0] S_TIMER;
+    logic [CVA6Cfg.XLEN-1:0] VS_TIMER;
+    logic [CVA6Cfg.XLEN-1:0] M_TIMER;
+    logic [CVA6Cfg.XLEN-1:0] S_EXT;
+    logic [CVA6Cfg.XLEN-1:0] VS_EXT;
+    logic [CVA6Cfg.XLEN-1:0] M_EXT;
+    logic [CVA6Cfg.XLEN-1:0] HS_EXT;
+  };
+  localparam interrupts_t INTERRUPTS = '{
+      S_SW: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_S_SOFT),
+      VS_SW: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_VS_SOFT),
+      M_SW: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_SOFT),
+      S_TIMER: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_S_TIMER),
+      VS_TIMER: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_VS_TIMER),
+      M_TIMER: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_TIMER),
+      S_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_S_EXT),
+      VS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_VS_EXT),
+      M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
+      HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
+  };
+  localparam NumPorts = 4;
+  localparam PC_QUEUE_DEPTH = 16;
+
   popcount #(
-      
+      .INPUT_WIDTH(INPUT_WIDTH)
   ) dut (.*);
 
 endmodule

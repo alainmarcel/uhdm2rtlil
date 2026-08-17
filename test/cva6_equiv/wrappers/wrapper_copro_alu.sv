@@ -6,6 +6,7 @@
 
 module copro_alu_equiv
   import ariane_pkg::*;
+  import cvxif_instr_pkg::*;
 #(
 
     // CVA6 config

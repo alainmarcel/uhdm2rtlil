@@ -6,6 +6,7 @@
 
 module cvxif_example_coprocessor_equiv
   import ariane_pkg::*;
+  import cvxif_instr_pkg::*;
 #(
 
     // CVA6 config

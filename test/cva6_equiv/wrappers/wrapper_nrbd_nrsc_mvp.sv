@@ -6,6 +6,7 @@
 
 module nrbd_nrsc_mvp_equiv
   import ariane_pkg::*;
+  import defs_div_sqrt_mvp::*;
 #(
 
     // CVA6 config
