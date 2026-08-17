@@ -3,9 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_fifo_reg_equiv
   import ariane_pkg::*;
+  import config_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -309,7 +312,8 @@ module hpdcache_fifo_reg_equiv
 
   parameter int unsigned FIFO_DEPTH = 1,
   parameter bit FEEDTHROUGH = 1'b0,
-  parameter type fifo_data_t = logic
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type fifo_data_t = hpdcache_mem_req_t
 ) (
 
     input  logic                  clk_i,

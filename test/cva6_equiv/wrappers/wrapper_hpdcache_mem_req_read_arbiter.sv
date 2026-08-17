@@ -7,6 +7,8 @@
 
 module hpdcache_mem_req_read_arbiter_equiv
   import ariane_pkg::*;
+  import config_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config

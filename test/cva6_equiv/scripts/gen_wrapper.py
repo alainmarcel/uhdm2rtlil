@@ -109,7 +109,13 @@ def param_names(block, bindable_only=False):
     # derived ADDR_DEPTH) cannot be overridden at instantiation.
     names = []
     kw = r"parameter" if bindable_only else r"(?:parameter|localparam)"
-    for m in re.finditer(r"\b" + kw + r"\s+(?:type\s+)?(?:[\w:\[\]\.\$ ]+?\s+)?(\w+)\s*=", block):
+    # The name may carry an UNPACKED dimension before the default
+    # (`parameter copro_issue_resp_t CoproInstr [NbInstr] = {0}`).  Missing
+    # those left the array parameter undeclared while its companion count was
+    # taken from the real site, so the two disagreed and slang rejected the
+    # default's concatenation: "requires 10 elements but got 1".
+    for m in re.finditer(r"\b" + kw + r"\s+(?:type\s+)?(?:[\w:\[\]\.\$ ]+?\s+)?"
+                         r"(\w+)\s*(?:\[[^\]]*\]\s*)*=", block):
         names.append(m.group(1))
     return names
 
@@ -269,8 +275,12 @@ def provider_types(wrp_dir):
         names |= set(re.findall(r"\btypedef\s+[^;]*?(\w+)\s*;", txt))
         names |= set(re.findall(r"\blocalparam\s+(?:type\s+)?(?:[\w:]+\s+)*?"
                                 r"(\w+)\s*=", txt))
+        # Declarations lifted alongside these names are written in the
+        # package's scope and spell its types unqualified (`hpdcache_cfg_t`),
+        # so a wrapper that uses them needs the same imports.
+        imports = re.findall(r"\bimport\s+([A-Za-z_]\w*)\s*::", txt)
         for n in names:
-            out[n] = (m.group(1), os.path.basename(f))
+            out[n] = (m.group(1), os.path.basename(f), tuple(imports))
     return out
 
 def package_names(pkgs):
@@ -349,7 +359,12 @@ def order_by_dependency(entries):
 IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
 SV_KEYWORDS = {"logic", "bit", "int", "unsigned", "signed", "struct", "packed",
                "union", "enum", "byte", "shortint", "longint", "type", "reg",
-               "wire", "if", "else", "1", "0"}
+               "wire", "if", "else", "1", "0",
+               # assignment-pattern and declaration keywords that appear inside
+               # parameter defaults -- `'{default: 0}` read `default` as a name
+               "default", "const", "automatic", "static", "real", "string",
+               "void", "null", "time", "integer", "genvar", "localparam",
+               "parameter"}
 
 def expr_resolves(expr, known):
     """True when every identifier in `expr` is available in the wrapper.
@@ -365,6 +380,16 @@ def expr_resolves(expr, known):
     # qualifier and name.  Stripping only the `pkg::` prefix left the member
     # behind (`fpnew_pkg::CONV` -> `CONV`), and enum members are not in any
     # name set we build, so good expressions looked unresolvable.
+    # Assignment-pattern member labels name a field of the target type, not
+    # something to declare: fpnew's `Implementation` literal is written
+    # `'{PipeRegs: '{...}, UnitTypes: '{...}}`.  Only strip where a label can
+    # legally appear — right after `{` or `,` — so a ternary's `:` keeps its
+    # operands, which ARE references.
+    expr = re.sub(r"(?<=[{,])\s*\b\w+\s*:(?!:)", "", expr)
+    # System functions are not identifiers to declare: `$clog2(DEPTH)` was
+    # tokenized as `clog2`, which nothing declares, so the whole value was
+    # rejected and reverted to the module's default.
+    expr = re.sub(r"\$\w+", "", expr)
     expr = re.sub(r"\b\w+\s*::\s*\w+", "", expr)
     # Likewise a member select: in `CVA6Cfg.BHTEntries` only CVA6Cfg has to be
     # declared — BHTEntries is a field of it.  Counting fields as identifiers
@@ -567,7 +592,7 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     pkg_names = package_names(set(tgt_pkgs) | {"ariane_pkg"})
 
     providers = provider_types(os.path.dirname(out_path) or ".")
-    need_includes = set()
+    need_includes, need_imports = set(), set()
 
     site, site_file = site_bindings(target)
     if site_file:
@@ -596,13 +621,14 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
         # function too.
         real = None
         if n in providers:
-            pkg, inc = providers[n]
+            pkg, inc, pimports = providers[n]
+            need_imports.update(pimports)
             own.append(retarget_entry(entry, f"{pkg}::{n}"))
             need_includes.add(inc)
             print(f"  took helper-package value: {n} = {pkg}::{n}")
             wrp_names.add(n)
             continue
-        real = resolve_param(target, n, wrp_names | pkg_names)
+        real = resolve_param(target, n, wrp_names | pkg_names | set(providers))
         if real is not None:
             own.append(retarget_entry(entry, real))
             print(f"  took site value: {n} = {' '.join(real.split())[:48]}")
@@ -649,22 +675,49 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
             nm = param_names(e)
             if nm:
                 anc_params[nm[0]] = (e, module_name_of(anc))
+    # A value lifted here can itself reference further ancestor parameters
+    # (fpnew's `Implementation` literal is written in terms of `LAT_COMP_FP32`
+    # and friends), so keep going until nothing new is referenced -- a single
+    # pass only sees what the target's own parameters mention.
     free = []
-    own_txt = "\n".join(own)
-    for n, (entry, mod) in anc_params.items():
-        if n in wrp_names or n in pkg_names or n in providers:
-            continue
-        if not re.search(r"\b" + re.escape(n) + r"\b", own_txt):
-            continue
-        real = resolve_param(mod, n, wrp_names | pkg_names)
-        if real is None and not expr_resolves(rhs_of(entry), wrp_names | pkg_names):
-            # Its default is written in terms the wrapper cannot name — an
-            # ancestor's generate-loop variable (`LANE = unsigned'(lane)`).
-            # Emitting it anyway breaks wrappers that were fine without it.
-            continue
-        free.append(retarget_entry(entry, real) if real else entry)
-        added.add(n)
-        wrp_names.add(n)
+    for _ in range(8):
+        own_txt = "\n".join(own + free)
+        before = len(free)
+        for n, (entry, mod) in anc_params.items():
+            if n in wrp_names or n in pkg_names:
+                continue
+            if not re.search(r"\b" + re.escape(n) + r"\b", own_txt):
+                continue
+            if n in providers:
+                # A value resolved through this name (`DEPTH =
+                # HPDcacheCfg.u.flushFifoDepth`) needs the name itself
+                # declared; skipping it because the package HAS it left the
+                # reference dangling in the wrapper.
+                pkg, inc, pimports = providers[n]
+                need_imports.update(pimports)
+                free.append(retarget_entry(entry, f"{pkg}::{n}"))
+                need_includes.add(inc)
+                added.add(n); wrp_names.add(n)
+                continue
+            known = wrp_names | pkg_names | set(providers)
+            real = resolve_param(mod, n, known)
+            if real is None and not expr_resolves(rhs_of(entry), known):
+                # Its default is written in terms the wrapper cannot name — an
+                # ancestor's generate-loop variable (`LANE = unsigned'(lane)`).
+                # Emitting it anyway breaks wrappers that were fine without it.
+                continue
+            free.append(retarget_entry(entry, real) if real else entry)
+            # NOTE deliberately no `originals` entry: if this declaration later
+            # proves unsupportable it must be DROPPED, and everything derived
+            # from it reverted to the target's own default.  Falling back to
+            # the ancestor's default instead fabricates a third value that is
+            # neither the real hierarchy's nor the module's own — fpnew's
+            # `PipeConfig` became `Implementation.PipeConfig` off a
+            # `DEFAULT_NOREGS` that the real design never uses.
+            added.add(n)
+            wrp_names.add(n)
+        if len(free) == before:
+            break
     if free:
         own += free
         print(f"  declared ancestor params used by lifted types: "
@@ -691,7 +744,8 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
             # ancestor's own definition calls functions that live in that
             # ancestor's body (`HPDcacheUserCfg = hpdcacheSetConfig()`), so
             # inlining it just relocates the undeclared identifier.
-            pkg, inc = providers[n]
+            pkg, inc, pimports = providers[n]
+            need_imports.update(pimports)
             d = retarget_entry(d, f"{pkg}::{n}")
             need_includes.add(inc)
         own.append(d)
@@ -730,6 +784,7 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     # slang stops at "use of undeclared identifier 'hpdcache_cfg_t'".  This is
     # the single biggest remaining cause of wrappers that will not elaborate.
     pkgs = import_pkgs or (["ariane_pkg"] + [q for q in tgt_pkgs if q != "ariane_pkg"])
+    pkgs = pkgs + [q for q in sorted(need_imports) if q not in pkgs]
     if tgt_pkgs:
         print(f"  inherited target imports: {', '.join(tgt_pkgs)}")
     imports = "\n".join(f"  import {p}::*;" for p in pkgs)

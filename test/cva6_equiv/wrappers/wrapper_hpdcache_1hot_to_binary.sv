@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_1hot_to_binary_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -308,7 +310,8 @@ module hpdcache_1hot_to_binary_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter  int unsigned N     = 0,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter  int unsigned N = HPDcacheCfg.u.ways,
   localparam int unsigned Log2N = N > 1 ? $clog2(N) : 1,
   localparam type in_t  = logic unsigned [N-1:0],
   localparam type out_t = logic unsigned [Log2N-1:0]

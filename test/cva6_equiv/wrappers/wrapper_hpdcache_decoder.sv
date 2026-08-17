@@ -8,6 +8,7 @@
 module hpdcache_decoder_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -309,13 +310,13 @@ module hpdcache_decoder_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter  int unsigned N     = 0,
-  localparam int unsigned Pow2N = 2**N,
-  localparam type in_t  = logic unsigned [N-1:0],
-  localparam type out_t = logic unsigned [Pow2N-1:0],
   parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   parameter hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = hpdcache_equiv_pkg::HPDcacheUserCfg,
-  parameter int unsigned FlushEntries = HPDcacheCfg.u.flushEntries
+  parameter int unsigned FlushEntries = HPDcacheCfg.u.flushEntries,
+  parameter  int unsigned N = (FlushEntries > 1) ? $clog2(FlushEntries) : 1,
+  localparam int unsigned Pow2N = 2**N,
+  localparam type in_t  = logic unsigned [N-1:0],
+  localparam type out_t = logic unsigned [Pow2N-1:0]
 ) (
 
     input  logic   en_i,

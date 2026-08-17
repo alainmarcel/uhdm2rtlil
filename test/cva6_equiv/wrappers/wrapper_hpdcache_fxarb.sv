@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_fxarb_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -308,8 +310,9 @@ module hpdcache_fxarb_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   //    Number of requesters
-      parameter int unsigned N = 0
+      parameter int unsigned N = HPDcacheCfg.u.nRequesters
 ) (
 
     input  logic                  clk_i,

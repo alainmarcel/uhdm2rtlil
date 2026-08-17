@@ -308,7 +308,7 @@ module wt_dcache_wbuffer_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter DCACHE_CL_IDX_WIDTH = 0,
+  parameter DCACHE_CL_IDX_WIDTH = $clog2(CVA6Cfg.DCACHE_NUM_WORDS),
   parameter type wbuffer_t = struct packed {
       logic [CVA6Cfg.DCACHE_TAG_WIDTH+(CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.XLEN_ALIGN_BYTES)-1:0] wtag;
       logic [CVA6Cfg.XLEN-1:0] data;

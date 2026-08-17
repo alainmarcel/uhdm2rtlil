@@ -308,7 +308,7 @@ module wt_dcache_ctrl_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter DCACHE_CL_IDX_WIDTH = 0
+  parameter DCACHE_CL_IDX_WIDTH = $clog2(CVA6Cfg.DCACHE_NUM_WORDS)
 ) (
 
     input logic clk_i,  // Clock

@@ -8,6 +8,7 @@
 module hpdcache_demux_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -309,19 +310,18 @@ module hpdcache_demux_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  //  Width in bits of each input
-      parameter  int unsigned DATA_WIDTH  = 0,
   //  Selector signal is one-hot encoded
       parameter  bit          ONE_HOT_SEL = 0,
-  localparam type data_t = logic [DATA_WIDTH-1:0],
-  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
-  parameter hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = hpdcache_equiv_pkg::HPDcacheUserCfg,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   //  Number of outputs
       parameter  int unsigned NOUTPUT = HPDcacheCfg.u.accessWords/
                                                         HPDcacheCfg.u.reqWords,
+  //  Width in bits of each input
+      parameter  int unsigned DATA_WIDTH = HPDcacheCfg.reqDataBytes,
   //  Compute the width of the selection signal
       localparam int unsigned NOUTPUT_LOG2 = $clog2(NOUTPUT),
   localparam int unsigned SEL_WIDTH    = ONE_HOT_SEL ? NOUTPUT : NOUTPUT_LOG2,
+  localparam type data_t = logic [DATA_WIDTH-1:0],
   localparam type sel_t  = logic [SEL_WIDTH-1:0]
 ) (
 

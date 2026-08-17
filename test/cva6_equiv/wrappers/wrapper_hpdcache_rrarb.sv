@@ -8,6 +8,7 @@
 module hpdcache_rrarb_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -309,8 +310,7 @@ module hpdcache_rrarb_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
-  parameter hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = hpdcache_equiv_pkg::HPDcacheUserCfg,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   //    Number of requesters
       parameter int unsigned N = HPDcacheCfg.u.rtabEntries
 ) (

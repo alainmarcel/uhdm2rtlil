@@ -311,6 +311,7 @@ module instr_decoder_equiv
   parameter type               copro_issue_resp_t = cvxif_instr_pkg::copro_issue_resp_t,
   parameter type               opcode_t = cvxif_instr_pkg::opcode_t,
   parameter int                NbInstr = cvxif_instr_pkg::NbInstr,
+  parameter copro_issue_resp_t CoproInstr        [NbInstr] = cvxif_instr_pkg::CoproInstr,
   parameter int unsigned       NrRgprPorts                 = 2,
   parameter  int unsigned XLEN                = 32,
   parameter type               registers_t = logic [NrRgprPorts-1:0][XLEN-1:0]
@@ -363,6 +364,7 @@ module instr_decoder_equiv
       .copro_issue_resp_t(copro_issue_resp_t),
       .opcode_t(opcode_t),
       .NbInstr(NbInstr),
+      .CoproInstr(CoproInstr),
       .NrRgprPorts(NrRgprPorts),
       .hartid_t(hartid_t),
       .id_t(id_t),

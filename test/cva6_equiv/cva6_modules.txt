@@ -44,7 +44,7 @@ btb                                    4   900   proven
 cache_ctrl                             4   180   cex
 commit_stage                           4   900   proven
 compressed_decoder                     4   900   proven
-compressed_instr_decoder               4   400   elabfail  # harness: unpacked-array param concat
+compressed_instr_decoder               4   400   elabfail  # slang: no $onehot0
 control_mvp                            4   400   elabfail  # non-ANSI port list
 controller                             4   900   proven
 copro_alu                              4   400   proven
@@ -72,7 +72,7 @@ div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
 fpnew_cast_multi                       4   180   timeout
 fpnew_classifier                       4   180   cex
-fpnew_divsqrt_multi                    4   400   elabfail  # harness: degenerate index
+fpnew_divsqrt_multi                    4   400   elabfail  # harness: needs fpnew Implementation resolved 4 levels up
 fpnew_divsqrt_th_32                    4   180   cex
 fpnew_divsqrt_th_64_multi              4   900   proven
 fpnew_fma                              4   180   cex
@@ -93,12 +93,12 @@ hpdcache_cmo                           4   400   elabfail  # slang: no $onehot
 hpdcache_core_arbiter                  4   180   timeout
 hpdcache_ctrl                          4   180   crash
 hpdcache_ctrl_pe                       4   180   cex
-hpdcache_data_downsize                 4   400   elabfail  # harness: DEPTH still 0
+hpdcache_data_downsize                 4   400   elabfail  # harness: not instantiated at this config (its own $fatal: RD>=WR)
 hpdcache_data_resize                   4   180   timeout
 hpdcache_data_upsize                   4   180   crash
 hpdcache_decoder                       4   180   crash
 hpdcache_demux                         4   180   timeout
-hpdcache_fifo_reg                      4   900   proven
+hpdcache_fifo_reg                      4   900   timeout  # was proven on a 1-bit fifo_data_t; now the real request struct
 hpdcache_fifo_reg_initialized          4   180   cex
 hpdcache_flush                         4   180   crash
 hpdcache_fxarb                         4   180   timeout
@@ -120,11 +120,11 @@ hpdcache_rrarb                         4   180   timeout
 hpdcache_rtab                          4   180   timeout
 hpdcache_sram                          4   180   timeout
 hpdcache_sram_1rw                      4   180   timeout
-hpdcache_sram_wbyteenable              4   400   elabfail  # harness: zero-width select
-hpdcache_sram_wbyteenable_1rw          4   400   elabfail  # harness: zero-width select
+hpdcache_sram_wbyteenable              4   400   timeout  # harness: zero-width select
+hpdcache_sram_wbyteenable_1rw          4   400   timeout  # harness: zero-width select
 hpdcache_sram_wmask                    4   180   timeout
 hpdcache_sram_wmask_1rw                4   180   timeout
-hpdcache_sync_buffer                   4   900   proven
+hpdcache_sync_buffer                   4   900   timeout  # was proven on a 1-bit data type; now the real one
 hpdcache_uncached                      4   400   elabfail  # slang: unsupported SVA feature
 hpdcache_victim_plru                   4   180   timeout
 hpdcache_victim_random                 4   180   crash
@@ -134,7 +134,7 @@ hwpf_stride                            4   400   timeout
 hwpf_stride_arb                        4   400   elabfail  # slang: no $onehot0
 hwpf_stride_wrapper                    4   400   elabfail  # slang: no $onehot0
 id_stage                               4   180   cex
-instr_decoder                          4   400   elabfail  # harness: unpacked-array param concat
+instr_decoder                          4   400   elabfail  # slang: no $onehot0
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
@@ -170,7 +170,7 @@ wt_axi_adapter                         4   400   timeout
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   crash
-wt_dcache_mem                          4   180   timeout
-wt_dcache_missunit                     4   400   timeout
-wt_dcache_wbuffer                      4   180   timeout
+wt_dcache_mem                          4   180   cex      # cex exposed once DCACHE_CL_IDX_WIDTH stopped being 0 - TRIAGE
+wt_dcache_missunit                     4   400   cex      # cex exposed by real dcache struct types - TRIAGE
+wt_dcache_wbuffer                      4   180   cex      # cex exposed by real dcache struct types - TRIAGE
 zcmt_decoder                           4   180   cex

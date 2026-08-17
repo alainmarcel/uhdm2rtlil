@@ -8,6 +8,7 @@
 module hpdcache_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -310,7 +311,6 @@ module hpdcache_equiv
 ,
 
   parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
-  parameter type wbuf_timecnt_t = logic,
   //  Request Interface Definitions
       //  {{{
       parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
@@ -337,7 +337,9 @@ module hpdcache_equiv
   parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
   //  }}}
   
-      localparam type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t
+      localparam type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t,
+  parameter type hpdcache_wbuf_timecnt_t = hpdcache_equiv_pkg::hpdcache_wbuf_timecnt_t,
+  parameter type wbuf_timecnt_t = hpdcache_wbuf_timecnt_t
 ) (
 
     //      Clock and reset signals

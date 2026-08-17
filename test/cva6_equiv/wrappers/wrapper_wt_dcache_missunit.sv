@@ -309,7 +309,7 @@ module wt_dcache_missunit_equiv
 ,
 
   localparam NumPorts = 4,
-  parameter DCACHE_CL_IDX_WIDTH = 0,
+  parameter DCACHE_CL_IDX_WIDTH = $clog2(CVA6Cfg.DCACHE_NUM_WORDS),
   parameter type dcache_req_t = struct packed {
       wt_cache_pkg::dcache_out_t rtype;  // see definitions above
       logic [2:0]                                      size;        // transaction size: 000=Byte 001=2Byte; 010=4Byte; 011=8Byte; 111=Cache line (16/32Byte)

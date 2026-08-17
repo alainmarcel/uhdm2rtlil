@@ -8,6 +8,7 @@
 module hpdcache_wbuf_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -311,14 +312,15 @@ module hpdcache_wbuf_equiv
 
   parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   parameter type wbuf_addr_t = hpdcache_equiv_pkg::wbuf_addr_t,
-  parameter type wbuf_timecnt_t = logic,
   parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
   parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
   parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
   parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
   localparam int unsigned WBUF_WORD_WIDTH = HPDcacheCfg.u.reqWords*HPDcacheCfg.u.wordWidth,
   localparam type wbuf_data_t = hpdcache_equiv_pkg::wbuf_data_t,
-  localparam type wbuf_be_t = hpdcache_equiv_pkg::wbuf_be_t
+  localparam type wbuf_be_t = hpdcache_equiv_pkg::wbuf_be_t,
+  parameter type hpdcache_wbuf_timecnt_t = hpdcache_equiv_pkg::hpdcache_wbuf_timecnt_t,
+  parameter type wbuf_timecnt_t = hpdcache_wbuf_timecnt_t
 ) (
 
     //  Clock and reset signals
