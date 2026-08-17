@@ -6,6 +6,8 @@
 
 module acc_dispatcher_equiv
   import ariane_pkg::*;
+  import riscv::*;
+  import cf_math_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,10 @@ module acc_dispatcher_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type acc_req_t = cvxif_req_t,
+  parameter type acc_resp_t = cvxif_resp_t
 ) (
 
     input logic clk_i,
@@ -397,6 +402,8 @@ module acc_dispatcher_equiv
       .exception_t(exception_t),
       .fu_data_t(fu_data_t),
       .scoreboard_entry_t(scoreboard_entry_t),
+      .acc_req_t(acc_req_t),
+      .acc_resp_t(acc_resp_t),
       .accelerator_req_t(accelerator_req_t),
       .accelerator_resp_t(accelerator_resp_t),
       .acc_mmu_req_t(acc_mmu_req_t),

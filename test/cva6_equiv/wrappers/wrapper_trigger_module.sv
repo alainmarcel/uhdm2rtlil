@@ -6,6 +6,7 @@
 
 module trigger_module_equiv
   import ariane_pkg::*;
+  import triggers_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +306,9 @@ module trigger_module_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned           N_Triggers         = 4
 ) (
 
     input logic clk_i,
@@ -374,7 +377,8 @@ module trigger_module_equiv
   trigger_module #(
       .CVA6Cfg(CVA6Cfg),
       .exception_t(exception_t),
-      .scoreboard_entry_t(scoreboard_entry_t)
+      .scoreboard_entry_t(scoreboard_entry_t),
+      .N_Triggers(N_Triggers)
   ) dut (.*);
 
 endmodule

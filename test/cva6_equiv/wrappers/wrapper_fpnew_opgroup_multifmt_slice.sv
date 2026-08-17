@@ -305,7 +305,25 @@ module fpnew_opgroup_multifmt_slice_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter fpnew_pkg::opgroup_e      OpGroup       = fpnew_pkg::CONV,
+  parameter int unsigned              Width         = 64,
+  // FPU configuration
+    parameter fpnew_pkg::fmt_logic_t    FpFmtConfig   = '1,
+  parameter fpnew_pkg::ifmt_logic_t   IntFmtConfig  = '1,
+  parameter logic                     EnableVectors = 1'b1,
+  parameter fpnew_pkg::divsqrt_unit_t DivSqrtSel    = fpnew_pkg::THMULTI,
+  parameter int unsigned              NumPipeRegs   = 0,
+  parameter fpnew_pkg::pipe_config_t  PipeConfig    = fpnew_pkg::BEFORE,
+  parameter logic                     ExtRegEna     = 1'b0,
+  parameter type                      TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
+  // Do not change
+    localparam int unsigned NUM_OPERANDS = fpnew_pkg::num_operands(OpGroup),
+  localparam int unsigned NUM_FORMATS  = fpnew_pkg::NUM_FP_FORMATS,
+  localparam int unsigned NUM_SIMD_LANES = fpnew_pkg::max_num_lanes(Width, FpFmtConfig, EnableVectors),
+  localparam type         MaskType     = logic [NUM_SIMD_LANES-1:0],
+  localparam int unsigned ExtRegEnaWidth = NumPipeRegs == 0 ? 1 : NumPipeRegs
 ) (
 
   input logic                                     clk_i,
@@ -371,7 +389,16 @@ module fpnew_opgroup_multifmt_slice_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_opgroup_multifmt_slice #(
-      
+      .OpGroup(OpGroup),
+      .Width(Width),
+      .FpFmtConfig(FpFmtConfig),
+      .IntFmtConfig(IntFmtConfig),
+      .EnableVectors(EnableVectors),
+      .DivSqrtSel(DivSqrtSel),
+      .NumPipeRegs(NumPipeRegs),
+      .PipeConfig(PipeConfig),
+      .ExtRegEna(ExtRegEna),
+      .TagType(TagType)
   ) dut (.*);
 
 endmodule

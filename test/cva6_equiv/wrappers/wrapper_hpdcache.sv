@@ -3,9 +3,11 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +307,37 @@ module hpdcache_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type wbuf_timecnt_t = logic,
+  //  Request Interface Definitions
+      //  {{{
+      parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_data_word_t = hpdcache_equiv_pkg::hpdcache_data_word_t,
+  parameter type hpdcache_data_be_t = hpdcache_equiv_pkg::hpdcache_data_be_t,
+  parameter type hpdcache_req_offset_t = hpdcache_equiv_pkg::hpdcache_req_offset_t,
+  parameter type hpdcache_req_data_t = hpdcache_equiv_pkg::hpdcache_req_data_t,
+  parameter type hpdcache_req_be_t = hpdcache_equiv_pkg::hpdcache_req_be_t,
+  parameter type hpdcache_req_sid_t = hpdcache_equiv_pkg::hpdcache_req_sid_t,
+  parameter type hpdcache_req_tid_t = hpdcache_equiv_pkg::hpdcache_req_tid_t,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t,
+  //  }}}
+  
+      //  Memory Interface Definitions
+      //  {{{
+      parameter type hpdcache_mem_addr_t = hpdcache_equiv_pkg::hpdcache_mem_addr_t,
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_data_t = hpdcache_equiv_pkg::hpdcache_mem_data_t,
+  parameter type hpdcache_mem_be_t = hpdcache_equiv_pkg::hpdcache_mem_be_t,
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_r_t = hpdcache_equiv_pkg::hpdcache_mem_resp_r_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
+  //  }}}
+  
+      localparam type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t
 ) (
 
     //      Clock and reset signals
@@ -419,7 +451,26 @@ module hpdcache_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .wbuf_timecnt_t(wbuf_timecnt_t),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_data_word_t(hpdcache_data_word_t),
+      .hpdcache_data_be_t(hpdcache_data_be_t),
+      .hpdcache_req_offset_t(hpdcache_req_offset_t),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .hpdcache_req_tid_t(hpdcache_req_tid_t),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t),
+      .hpdcache_mem_addr_t(hpdcache_mem_addr_t),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_data_t(hpdcache_mem_data_t),
+      .hpdcache_mem_be_t(hpdcache_mem_be_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t)
   ) dut (.*);
 
 endmodule

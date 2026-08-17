@@ -6,6 +6,7 @@
 
 module wt_dcache_wbuffer_equiv
   import ariane_pkg::*;
+  import wt_cache_pkg::*;
 #(
 
     // CVA6 config

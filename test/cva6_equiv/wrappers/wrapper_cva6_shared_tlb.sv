@@ -332,7 +332,8 @@ module cva6_shared_tlb_equiv
     logic [HYP_EXT*2:0] v_st_enbl;
     pte_cva6_t content;
     pte_cva6_t g_content;
-  }
+  },
+  parameter int SHARED_TLB_WAYS = 2
 ) (
 
     input logic clk_i,  // Clock
@@ -421,6 +422,7 @@ module cva6_shared_tlb_equiv
       .CVA6Cfg(CVA6Cfg),
       .pte_cva6_t(pte_cva6_t),
       .tlb_update_cva6_t(tlb_update_cva6_t),
+      .SHARED_TLB_WAYS(SHARED_TLB_WAYS),
       .HYP_EXT(HYP_EXT)
   ) dut (.*);
 

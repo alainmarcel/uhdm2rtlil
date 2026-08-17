@@ -307,9 +307,9 @@ module ariane_regfile_fpga_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned           DATA_WIDTH    = 32,
-  parameter int unsigned           NR_READ_PORTS = 2,
-  parameter bit                    ZERO_REG_ZERO = 0
+  parameter int unsigned           DATA_WIDTH = CVA6Cfg.XLEN,
+  parameter int unsigned           NR_READ_PORTS = CVA6Cfg.NrRgprPorts,
+  parameter bit                    ZERO_REG_ZERO = 1
 ) (
 
     // clock and reset

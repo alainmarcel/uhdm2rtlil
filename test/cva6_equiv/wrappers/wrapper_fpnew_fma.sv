@@ -310,8 +310,8 @@ module fpnew_fma_equiv
   parameter fpnew_pkg::fp_format_e   FpFormat    = fpnew_pkg::fp_format_e'(0),
   parameter int unsigned             NumPipeRegs = 0,
   parameter fpnew_pkg::pipe_config_t PipeConfig  = fpnew_pkg::BEFORE,
-  parameter type                     TagType     = logic,
-  parameter type                     AuxType     = logic,
+  parameter type                     TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
+  parameter type                     AuxType = logic,
   // Do not change
     localparam int unsigned WIDTH = fpnew_pkg::fp_width(FpFormat),
   localparam int unsigned ExtRegEnaWidth = NumPipeRegs == 0 ? 1 : NumPipeRegs

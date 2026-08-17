@@ -315,7 +315,8 @@ module btb_equiv
     logic                    valid;
     logic [CVA6Cfg.VLEN-1:0] pc;
     logic [CVA6Cfg.VLEN-1:0] target_address;
-  }
+  },
+  parameter int NR_ENTRIES = CVA6Cfg.BTBEntries
 ) (
 
     // Subsystem Clock - SUBSYSTEM
@@ -366,7 +367,7 @@ module btb_equiv
       .CVA6Cfg(CVA6Cfg),
       .btb_update_t(btb_update_t),
       .btb_prediction_t(btb_prediction_t),
-      .NR_ENTRIES(CVA6Cfg.BTBEntries)
+      .NR_ENTRIES(NR_ENTRIES)
   ) dut (.*);
 
 endmodule

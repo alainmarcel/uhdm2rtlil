@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module cva6_hpdcache_wrapper_equiv
   import ariane_pkg::*;
@@ -305,7 +306,31 @@ module cva6_hpdcache_wrapper_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  localparam NumPorts = 4,
+  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter int NrHwPrefetchers = 4,
+  parameter type hpdcache_mem_addr_t = hpdcache_equiv_pkg::hpdcache_mem_addr_t,
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_data_t = hpdcache_equiv_pkg::hpdcache_mem_data_t,
+  parameter type hpdcache_mem_be_t = hpdcache_equiv_pkg::hpdcache_mem_be_t,
+  parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
+  parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
+  parameter type hpdcache_mem_resp_r_t = hpdcache_equiv_pkg::hpdcache_mem_resp_r_t,
+  parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
+  parameter type hpdcache_req_offset_t = hpdcache_equiv_pkg::hpdcache_req_offset_t,
+  parameter type hpdcache_data_word_t = hpdcache_equiv_pkg::hpdcache_data_word_t,
+  parameter type hpdcache_req_data_t = hpdcache_equiv_pkg::hpdcache_req_data_t,
+  parameter type hpdcache_req_be_t = hpdcache_equiv_pkg::hpdcache_req_be_t,
+  parameter type hpdcache_req_sid_t = hpdcache_equiv_pkg::hpdcache_req_sid_t,
+  parameter type hpdcache_req_tid_t = hpdcache_equiv_pkg::hpdcache_req_tid_t,
+  parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t,
+  parameter type hpdcache_wbuf_timecnt_t = hpdcache_equiv_pkg::hpdcache_wbuf_timecnt_t,
+  parameter type hpdcache_data_be_t = hpdcache_equiv_pkg::hpdcache_data_be_t,
+  localparam type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t
 ) (
 
 
@@ -397,14 +422,35 @@ module cva6_hpdcache_wrapper_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   cva6_hpdcache_wrapper #(
       .CVA6Cfg(CVA6Cfg),
+      .HPDcacheCfg(HPDcacheCfg),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t),
-      .NumPorts(NumPorts)
+      .NumPorts(NumPorts),
+      .NrHwPrefetchers(NrHwPrefetchers),
+      .hpdcache_mem_addr_t(hpdcache_mem_addr_t),
+      .hpdcache_mem_id_t(hpdcache_mem_id_t),
+      .hpdcache_mem_data_t(hpdcache_mem_data_t),
+      .hpdcache_mem_be_t(hpdcache_mem_be_t),
+      .hpdcache_mem_req_t(hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t(hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
+      .hpdcache_req_offset_t(hpdcache_req_offset_t),
+      .hpdcache_data_word_t(hpdcache_data_word_t),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .hpdcache_req_tid_t(hpdcache_req_tid_t),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t),
+      .hpdcache_wbuf_timecnt_t(hpdcache_wbuf_timecnt_t),
+      .hpdcache_data_be_t(hpdcache_data_be_t)
   ) dut (.*);
 
 endmodule

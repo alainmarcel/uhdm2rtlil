@@ -6,6 +6,7 @@
 
 module hpdcache_data_upsize_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -305,7 +306,14 @@ module hpdcache_data_upsize_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int RD_WIDTH = CVA6Cfg.ICACHE_LINE_WIDTH,
+  parameter int DEPTH = 1,
+  localparam type rdata_t = logic [RD_WIDTH-1:0],
+  parameter int unsigned AxiDataWidth = CVA6Cfg.AxiDataWidth,
+  parameter int WR_WIDTH = CVA6Cfg.AxiDataWidth,
+  localparam type wdata_t = logic [WR_WIDTH-1:0]
 ) (
 
     input  logic   clk_i,
@@ -350,7 +358,9 @@ module hpdcache_data_upsize_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_data_upsize #(
-      
+      .WR_WIDTH(WR_WIDTH),
+      .RD_WIDTH(RD_WIDTH),
+      .DEPTH(DEPTH)
   ) dut (.*);
 
 endmodule

@@ -315,7 +315,7 @@ module fpnew_opgroup_fmt_slice_equiv
   parameter int unsigned             NumPipeRegs   = 0,
   parameter fpnew_pkg::pipe_config_t PipeConfig    = fpnew_pkg::BEFORE,
   parameter logic                    ExtRegEna     = 1'b0,
-  parameter type                     TagType       = logic,
+  parameter type                     TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
   parameter int unsigned             TrueSIMDClass = 0,
   // Do not change
     localparam int unsigned NUM_OPERANDS = fpnew_pkg::num_operands(OpGroup),

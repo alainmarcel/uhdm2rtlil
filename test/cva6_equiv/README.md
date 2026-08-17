@@ -33,6 +33,23 @@ that are local to the module's *parent* rather than to `cva6.sv` (for example
 `frontend.sv`'s `ras_t`); those are injected into the wrapper's parameter block
 because the port list needs them.
 
+A parameter's own default is the last thing the generator wants. Defaults exist
+to keep a file standalone-parsable, not to describe the design: `parameter type
+axi_req_t = logic` makes every field access illegal, and
+`hpdcache_data_downsize`'s `DEPTH = 0` trips the module's own `$fatal`. So for
+each parameter the generator asks, in order:
+
+1. **What does the instantiation site bind?** `cva6.sv` says
+   `.axi_req_t(noc_req_t)`, which same-name binding can never find. One level up
+   is rarely enough — `axi_shim` is given `.axi_req_t(axi_req_t)` by
+   `std_nbdcache`, whose own `axi_req_t` is filled in further up — so the walk
+   continues until the name lands on something real.
+2. **Is it an ancestor's localparam?** Then inline that definition, along with
+   the ancestor types and parameters it references (`dcache_rtrn_t` embeds
+   `dcache_inval_t`; `registers_t` is sized by its ancestor's `XLEN`).
+3. **Does a helper package supply it?** See below.
+4. Otherwise keep the default and report it as kept-default.
+
 The generator also re-declares the target's **own** `#()` parameters when
 nothing else supplies them. Generic library modules parameterise their ports
 (`hpdcache_fifo_reg #(parameter int WIDTH = 8) (input logic [WIDTH-1:0] …)`),
@@ -40,6 +57,27 @@ and since the port list is copied verbatim those names must be declared before
 it — otherwise slang reports `use of undeclared identifier 'WIDTH'`. Names that
 cva6.sv or an `extras_*.svh` provides always win, so the real hierarchy's values
 are never shadowed by a module's own default.
+
+### Helper packages
+
+Some parameters cannot be resolved by walking the hierarchy at all. The whole
+hpdcache family is parameterised by types that `cva6_hpdcache_subsystem` builds
+with `HPDCACHE_TYPEDEF_*` macros **inside its module body**, which a wrapper
+cannot reach into — so those modules ran on `parameter type hpdcache_req_t =
+logic` and an all-zero `HPDcacheCfg`, and reported a scatter of symptoms
+(illegal field accesses, unindexable scalars, zero-width selects, the design's
+own `$fatal`) that all traced back to that one gap.
+
+`wrappers/hpdcache_equiv_pkg.svh` re-emits that environment as a package, and
+any name it declares is offered to any wrapper that needs it. It is generated
+rather than hand-copied, so it follows CVA6:
+
+```bash
+python3 scripts/gen_hpdcache_pkg.py     # after ./vendor_cva6.sh
+```
+
+Drop another `*.svh` containing a `package` into `wrappers/` and its names join
+the pool the same way.
 
 Regenerate a wrapper after a CVA6 update with:
 
@@ -49,6 +87,15 @@ python3 scripts/gen_wrapper.py <module>
 
 It prints which parameters it bound and which kept their defaults — check the
 kept-default list against the real instantiation site.
+
+After regenerating in bulk, **diff the instantiation bindings against the
+previous wrappers**, not just the file text. A generator change can silently
+swap a real value for a module's default, and the symptom is not a failure: the
+module still elaborates and still proves, it just proves a *different, usually
+bigger* design — `bht` with `NR_ENTRIES = 1024` instead of
+`CVA6Cfg.BHTEntries` stopped fitting its SAT budget and looked like a
+load-related `timeout`. A binding may legitimately move from `.X(expr)` into a
+`parameter X = expr` declaration; what must never change is the value.
 
 ## Vendored RTL
 
@@ -100,6 +147,14 @@ outcome:
 | `timeout` | SAT capacity, **not** a known bug: no model found within budget. |
 | `crash` | yosys itself died on the miter (SIGSEGV/SIGFPE) — a real problem, not a budget outcome. |
 | `elabfail` | The *wrapper* does not elaborate yet — a harness gap. |
+
+Not every `elabfail` is a harness gap we can close. Five modules use system
+tasks the reference frontend does not implement (`$random` in
+`ariane_regfile_fpga`; `$onehot0` in the cvxif example decoders and, via
+`hpdcache_rrarb`, the `hwpf_stride` pair), so there is no reference netlist to
+miter against. Two more (`control_mvp`, `preprocess_mvp`) declare their ports
+non-ANSI, which the port-list-copying wrapper cannot mirror. Those are marked
+with a comment in `cva6_modules.txt` rather than re-triaged each round.
 
 Treat the non-`proven` entries as a shrink-only backlog: a module that starts
 proving should be promoted in the same commit, and a module that stops proving

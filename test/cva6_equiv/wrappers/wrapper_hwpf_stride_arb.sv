@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hwpf_stride_arb_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import hwpf_stride_pkg::*;
 #(
 
     // CVA6 config
@@ -309,8 +311,8 @@ module hwpf_stride_arb_equiv
 ,
 
   parameter int NUM_HW_PREFETCH = 4,
-  parameter type hpdcache_req_t = logic,
-  parameter type hpdcache_rsp_t = logic
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t
 ) (
 
     input  logic                                clk_i,

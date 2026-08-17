@@ -6,6 +6,8 @@
 
 module cva6_fifo_v3_equiv
   import ariane_pkg::*;
+  import riscv::*;
+  import cf_math_pkg::*;
 #(
 
     // CVA6 config
@@ -315,7 +317,13 @@ module cva6_fifo_v3_equiv
     logic [CVA6Cfg.XLEN-1:0] data;
     logic [1:0]              size;
   },
-  localparam ADDR_DEPTH = (DEPTH > 1) ? $clog2(DEPTH) : 1
+  localparam ADDR_DEPTH = (DEPTH > 1) ? $clog2(DEPTH) : 1,
+  parameter bit FALL_THROUGH = 1'b0,
+  // fifo is in fall-through mode
+      parameter bit FPGA_ALTERA = 1'b0,
+  // FPGA Altera optimizations enabled
+      parameter int unsigned DATA_WIDTH = 32,
+  parameter bit FPGA_EN = CVA6Cfg.FpgaEn
 ) (
 
     input  logic                  clk_i,       // Clock
@@ -363,9 +371,12 @@ module cva6_fifo_v3_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   cva6_fifo_v3 #(
+      .FALL_THROUGH(FALL_THROUGH),
+      .FPGA_ALTERA(FPGA_ALTERA),
+      .DATA_WIDTH(DATA_WIDTH),
       .DEPTH(DEPTH),
       .dtype(dtype),
-      .FPGA_EN(CVA6Cfg.FpgaEn),
+      .FPGA_EN(FPGA_EN),
       .ADDR_DEPTH(ADDR_DEPTH)
   ) dut (.*);
 

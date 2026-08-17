@@ -6,6 +6,7 @@
 
 module aes_equiv
   import ariane_pkg::*;
+  import aes_pkg::*;
 #(
 
     // CVA6 config

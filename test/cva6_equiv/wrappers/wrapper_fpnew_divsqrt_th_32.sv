@@ -311,7 +311,7 @@ module fpnew_divsqrt_th_32_equiv
     // FPU configuration
     parameter int unsigned             NumPipeRegs = 0,
   parameter fpnew_pkg::pipe_config_t PipeConfig  = fpnew_pkg::BEFORE,
-  parameter type                     TagType     = logic,
+  parameter type                     TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
   parameter type                     AuxType     = logic,
   // Do not change
     localparam int unsigned WIDTH       = 32,

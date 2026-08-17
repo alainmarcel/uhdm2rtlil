@@ -16,32 +16,71 @@ CORE = os.environ.get(
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                  "rtl", "core"))
 
+def code_mask(text):
+    """Per-character flags: True where the character is code, not a comment.
+
+    Every scanner below counts brackets, and the hpdcache sources fence their
+    sections with `//  {{{` / `//  }}}` fold markers.  Counting those as real
+    braces made a declaration scan run past its `;` and swallow the whole port
+    list into the wrapper's parameter block."""
+    mask = [True] * len(text)
+    i, n = 0, len(text)
+    while i < n:
+        two = text[i:i+2]
+        if two == "//":
+            j = text.find("\n", i)
+            j = n if j < 0 else j
+            for k in range(i, j): mask[k] = False
+            i = j
+        elif two == "/*":
+            j = text.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            for k in range(i, j): mask[k] = False
+            i = j
+        elif text[i] == '"':
+            j = i + 1
+            while j < n and text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
+            for k in range(i, min(j + 1, n)): mask[k] = False
+            i = j + 1
+        else:
+            i += 1
+    return mask
+
+def match_close(text, open_idx, mask=None):
+    """Index of the `)` closing the `(` at open_idx, ignoring comments."""
+    mask = mask if mask is not None else code_mask(text)
+    depth = 0
+    for j in range(open_idx, len(text)):
+        if not mask[j]:
+            continue
+        if text[j] == '(': depth += 1
+        elif text[j] == ')':
+            depth -= 1
+            if depth == 0: return j
+    return len(text)
+
 def extract_param_block(text, modname):
     """Return the text inside the module's #( ... ) block."""
     m = re.search(r"module\s+" + re.escape(modname) + r"\b", text)
     if not m: raise SystemExit(f"module {modname} not found")
-    i = text.find("#", m.end())
-    # allow 'import pkg::*;' between name and #(
-    i = text.find("#(", m.end())
-    if i < 0: return "", m.end()
-    depth = 0; j = i + 1
-    while j < len(text):
-        if text[j] == '(': depth += 1
-        elif text[j] == ')':
-            depth -= 1
-            if depth == 0: break
-        j += 1
+    mask = code_mask(text)
+    # allow 'import pkg::*;' and comments between the name and #(
+    i = m.end()
+    while True:
+        i = text.find("#(", i)
+        if i < 0: return "", m.end()
+        if mask[i]: break
+        i += 2
+    j = match_close(text, i + 1, mask)
     return text[i+2:j], j+1
 
 def extract_port_block(text, after):
-    i = text.find("(", after)
-    depth = 0; j = i
-    while j < len(text):
-        if text[j] == '(': depth += 1
-        elif text[j] == ')':
-            depth -= 1
-            if depth == 0: break
-        j += 1
+    mask = code_mask(text)
+    i = after
+    while i < len(text) and not (text[i] == "(" and mask[i]):
+        i += 1
+    j = match_close(text, i, mask)
     return text[i+1:j]
 
 def extract_body_localparams(text, header_end):
@@ -76,8 +115,16 @@ def param_names(block, bindable_only=False):
 
 
 
-def find_parent_file(target):
-    """The file of the module that INSTANTIATES `target`.
+def all_sv_files():
+    """Every vendored source, core first (core definitions should win)."""
+    rtl_root = os.path.dirname(CORE)
+    core = sorted(glob.glob(f"{CORE}/**/*.sv", recursive=True))
+    rest = [f for f in sorted(glob.glob(f"{rtl_root}/**/*.sv", recursive=True))
+            if f not in set(core)]
+    return core + rest
+
+def find_parent_files(target):
+    """Every file that INSTANTIATES `target`.
 
     A child often takes types that are local to its parent
     (`wt_dcache.sv` declares `localparam type wbuffer_t = struct packed {...}`
@@ -85,29 +132,315 @@ def find_parent_file(target):
     the wrapper has to lift them from the real instantiation site — which is
     what the hand-written extras_<mod>.svh files do."""
     pat = re.compile(r"^\s*" + re.escape(target) + r"\s*#?\s*\(", re.M)
-    for f in glob.glob(f"{CORE}/**/*.sv", recursive=True):
+    out = []
+    for f in all_sv_files():
         if os.path.basename(f) == f"{target}.sv":
             continue
         try:
             if pat.search(open(f, errors="ignore").read()):
-                return f
+                out.append(f)
         except OSError:
             pass
-    return None
+    return out
 
-def parent_local_types(parent_file):
-    """Top-level `localparam type NAME = ...;` declarations in a module body."""
+def find_parent_file(target):
+    p = find_parent_files(target)
+    return p[0] if p else None
+
+def module_name_of(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+def ancestor_files(target, depth=4):
+    """The instantiation chain above `target`, nearest ancestors first.
+
+    A type a module needs is not always declared by its immediate parent:
+    `wt_dcache_missunit` takes `dcache_rtrn_t`, but that is a localparam of
+    `wt_cache_subsystem` — its GRANDparent — and is merely passed through
+    `wt_dcache`.  Walking only one level up left the type at its
+    `= logic` default and slang rejected every field access on it."""
+    seen, order, frontier = set(), [], [target]
+    for _ in range(depth):
+        nxt = []
+        for mod in frontier:
+            for f in find_parent_files(mod):
+                if f in seen:
+                    continue
+                seen.add(f); order.append(f); nxt.append(module_name_of(f))
+        if not nxt:
+            break
+        frontier = nxt
+    return order
+
+def site_bindings(target):
+    """`.PARAM(expr)` bindings from the module's real instantiation site.
+
+    Same-name binding cannot express the common case where the parent renames:
+    cva6.sv instantiates the AXI adapter as `.axi_req_t(noc_req_t)`.  Copying
+    the site's own bindings reproduces the real hierarchy exactly, which is the
+    whole point of this wrapper."""
+    for f in find_parent_files(target):
+        txt = open(f, errors="ignore").read()
+        mask = code_mask(txt)
+        m = None
+        for cand in re.finditer(r"^[ \t]*" + re.escape(target) + r"\s*#\s*\(",
+                                txt, re.M):
+            if mask[cand.start()]:
+                m = cand; break
+        if not m:
+            continue
+        start = m.end()
+        body, out = txt[start:match_close(txt, start - 1, mask)], {}
+        for entry in split_param_entries(body):
+            em = re.match(r"\.\s*(\w+)\s*\((.*)\)\s*$", entry.strip(), re.S)
+            if em:
+                out[em.group(1)] = " ".join(em.group(2).split())
+        if out:
+            return out, f
+    return {}, None
+
+def resolve_param(target, pname, known, depth=0, _seen=None):
+    """What the real hierarchy gives `target`'s parameter `pname`.
+
+    A binding is rarely a literal at the first level up.  `axi_shim` is given
+    `.axi_req_t(axi_req_t)` by `std_nbdcache`, whose OWN `axi_req_t` parameter
+    cva6.sv fills in with `noc_req_t` — so resolving one level finds only
+    another placeholder, and the wrapper kept `= logic`.  Walk up until the
+    name lands on something real: a literal/expression the wrapper can name, or
+    an ancestor's localparam whose definition we can inline.
+
+    Returns the text to use as the parameter's value, or None.
+    """
+    _seen = _seen or set()
+    if depth > 6 or (target, pname) in _seen:
+        return None
+    _seen.add((target, pname))
+    site, f = site_bindings(target)
+    if not f or pname not in site:
+        return None
+    expr = site[pname]
+    if re.fullmatch(r"\w+", expr):
+        locals_ = parent_local_types(f, values=True)
+        if expr in locals_:                       # parent declares it: inline
+            return rhs_of(locals_[expr])
+        up = resolve_param(module_name_of(f), expr, known, depth + 1, _seen)
+        if up:
+            return up
+    return expr if expr_resolves(expr, known) else None
+
+def closure_types(text, defs, known):
+    """Ancestor type definitions that `text` references, transitively.
+
+    An inlined struct is not self-contained: `dcache_rtrn_t` embeds
+    `dcache_inval_t`, which is equally local to the ancestor, so inlining only
+    the outer one leaves the wrapper referring to an undeclared identifier."""
+    out, todo = {}, list(IDENT.findall(text))
+    while todo:
+        t = todo.pop()
+        if t in out or t in known or t not in defs:
+            continue
+        out[t] = defs[t]
+        todo += IDENT.findall(rhs_of(defs[t]))
+    return out
+
+def provider_types(wrp_dir):
+    """Names supplied by helper packages shipped next to the wrappers.
+
+    Some parameters cannot be resolved by walking the hierarchy at all: the
+    hpdcache types are built by `HPDCACHE_TYPEDEF_*` macros inside
+    cva6_hpdcache_subsystem's module BODY, which a wrapper cannot reach into.
+    `hpdcache_equiv_pkg.svh` (generated by gen_hpdcache_pkg.py) re-emits that
+    environment as a package; anything it declares is offered here as a
+    last-resort binding.
+
+    Returns {name: (package, include-file)}.
+    """
+    out = {}
+    for f in sorted(glob.glob(os.path.join(wrp_dir, "*.svh"))):
+        txt = open(f, errors="ignore").read()
+        m = re.search(r"\bpackage\s+(\w+)\s*;", txt)
+        if not m:
+            continue
+        # `HPDCACHE_TYPEDEF_REQ_ATTR_T(a_t, b_t, …, Cfg)` declares EVERY type
+        # named in it, not just the first, so take all `*_t` arguments.
+        names = set()
+        for call in re.finditer(r"`\w*TYPEDEF_\w+\(([^;]*?)\)\s*;", txt, re.S):
+            names |= {a.strip() for a in call.group(1).split(",")
+                      if a.strip().endswith("_t")}
+        names |= set(re.findall(r"\btypedef\s+[^;]*?(\w+)\s*;", txt))
+        names |= set(re.findall(r"\blocalparam\s+(?:type\s+)?(?:[\w:]+\s+)*?"
+                                r"(\w+)\s*=", txt))
+        for n in names:
+            out[n] = (m.group(1), os.path.basename(f))
+    return out
+
+def package_names(pkgs):
+    """Every name a package declares, so a site binding that uses one is usable.
+
+    `.l_data_t(cache_line_t)` is only worth copying if the wrapper can name
+    `cache_line_t`; most such names come from an imported package rather than
+    from cva6.sv, and treating them as unresolvable threw away good bindings."""
+    out = set()
+    for f in all_sv_files() + glob.glob(f"{os.path.dirname(CORE)}/**/*.svh",
+                                        recursive=True):
+        base = os.path.splitext(os.path.basename(f))[0]
+        if base not in pkgs:
+            continue
+        txt = open(f, errors="ignore").read()
+        out |= set(re.findall(r"}\s*(\w+)\s*;", txt))            # struct/enum
+        out |= set(re.findall(r"\btypedef\s+[^;]*?(\w+)\s*;", txt))
+        out |= set(re.findall(r"\b(?:localparam|parameter)\s+"
+                              r"(?:type\s+)?(?:\w+\s+)?(\w+)\s*=", txt))
+    return out
+
+def rhs_of(decl):
+    """The right-hand side of a `localparam type X = <rhs>` declaration."""
+    i = default_pos(decl)
+    return decl[i+1:].strip().rstrip(";,").strip() if i >= 0 else decl
+
+def drop_unsupported(entries, base_names, originals, added, providers):
+    """Iterate until every entry resolves against what the wrapper declares."""
+    entries = list(entries)
+    while True:
+        declared = set(base_names) | {param_names(e)[0] for e in entries
+                                      if param_names(e)}
+        changed = False
+        for i, e in enumerate(entries):
+            nm = param_names(e)
+            if not nm or expr_resolves(rhs_of(e), declared):
+                continue
+            n = nm[0]
+            if n in originals and e != originals[n]:
+                entries[i] = originals[n]        # back to the module's default
+                print(f"  reverted {n}: real value not expressible here")
+            elif n in added:
+                del entries[i]
+                print(f"  dropped lifted {n}: not expressible here")
+            else:
+                continue                         # its own default; nothing better
+            changed = True
+            break
+        if not changed:
+            return entries
+
+def order_by_dependency(entries):
+    """Sort parameter entries so none is used before it is declared.
+
+    The site's own order is not usable: the target lists its parameters in its
+    own order, but the definitions we lift from ancestors reference each other
+    (`dcache_rtrn_t` embeds `dcache_inval_t`), and slang rejects a forward
+    reference inside a parameter list."""
+    placed, names = [], [param_names(e)[0] for e in entries if param_names(e)]
+    pending = list(entries)
+    for _ in range(len(pending) + 1):
+        if not pending:
+            break
+        progressed = False
+        for e in list(pending):
+            nm = param_names(e)
+            n = nm[0] if nm else None
+            deps = {t for t in IDENT.findall(rhs_of(e))
+                    if t in names and t != n}
+            if deps <= {param_names(p)[0] for p in placed if param_names(p)}:
+                placed.append(e); pending.remove(e); progressed = True
+        if not progressed:
+            break                       # a cycle: keep the original order
+    return placed + pending
+
+IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
+SV_KEYWORDS = {"logic", "bit", "int", "unsigned", "signed", "struct", "packed",
+               "union", "enum", "byte", "shortint", "longint", "type", "reg",
+               "wire", "if", "else", "1", "0"}
+
+def expr_resolves(expr, known):
+    """True when every identifier in `expr` is available in the wrapper.
+
+    A site binding is only usable if the wrapper can actually name what the
+    parent named; otherwise fall back to same-name binding or the default."""
+    # Comments first: the lifted struct types carry the source's own inline
+    # commentary (`logic vld; // invalidate only affected way`), and prose
+    # words are not identifiers.
+    mask = code_mask(expr)
+    expr = "".join(c for i, c in enumerate(expr) if mask[i])
+    # A package-qualified reference always resolves — drop the whole thing,
+    # qualifier and name.  Stripping only the `pkg::` prefix left the member
+    # behind (`fpnew_pkg::CONV` -> `CONV`), and enum members are not in any
+    # name set we build, so good expressions looked unresolvable.
+    expr = re.sub(r"\b\w+\s*::\s*\w+", "", expr)
+    # Likewise a member select: in `CVA6Cfg.BHTEntries` only CVA6Cfg has to be
+    # declared — BHTEntries is a field of it.  Counting fields as identifiers
+    # made real values (`.NR_ENTRIES(CVA6Cfg.BHTEntries)`) look unresolvable,
+    # and they were silently reverted to the module's default.
+    expr = re.sub(r"\.\s*\w+", "", expr)
+    # And a struct body declares its members rather than referencing them:
+    # in `struct packed { logic [CVA6Cfg.VLEN-1:0] pc; }` only CVA6Cfg must
+    # exist, not `pc`.  Counting members as references reverted whole lifted
+    # struct types back to `logic`, which is exactly the placeholder this
+    # generator exists to replace.
+    expr = re.sub(r"\b\w+\s*(?=[;,]\s*\})|\b\w+\s*(?=;)", "", expr)
+    for tok in IDENT.findall(expr):
+        if tok in SV_KEYWORDS or tok in known or tok.isdigit():
+            continue
+        if re.match(r"^\d", tok):        # 32'd7, 1'b0 fragments
+            continue
+        return False
+    return True
+
+def default_pos(entry):
+    """Index of the `=` introducing a `#()` entry's default, or -1.
+
+    Must ignore comments: entries carry the source's own commentary, and a
+    `>=2` in a leading comment reads as the default's `=` — which made
+    `rhs_of` return prose and every check built on it come out wrong.
+    """
+    depth, mask = 0, code_mask(entry)
+    for i, c in enumerate(entry):
+        if not mask[i]:
+            continue
+        if c in "({[": depth += 1
+        elif c in ")}]": depth -= 1
+        elif c == "=" and depth == 0 and entry[i:i+2] != "==" \
+                and (i == 0 or entry[i-1] not in "<>!="):
+            return i
+    return -1
+
+def retarget_entry(entry, expr):
+    """Rewrite a `#()` entry's default to `expr`, keeping its declaration."""
+    i = default_pos(entry)
+    return (entry[:i].rstrip() if i >= 0 else entry.rstrip()) + " = " + expr
+
+def parent_local_types(parent_file, values=False):
+    """Top-level `localparam [type] NAME = ...;` declarations in a module body.
+
+    With values=True this also captures VALUE localparams.  The whole hpdcache
+    family hangs off one of those: `HPDcacheCfg` is bound from the subsystem's
+    `localparam hpdcache_cfg_t HPDcacheCfg = hpdcacheBuildConfig(...)`, and
+    matching only `localparam type` left every hpdcache module running on the
+    `'0` default config — which is why they variously reported zero-width
+    selects, unindexable scalars, and the design's own `$fatal`."""
     if not parent_file:
         return {}
     txt = open(parent_file, errors="ignore").read()
+    mask = code_mask(txt)
     out = {}
-    for m in re.finditer(r"\blocalparam\s+type\s+(\w+)\s*=", txt):
+    pat = (r"\blocalparam\s+(?:type\s+)?(?:[\w:]+\s+)*?(\w+)\s*="
+           if values else r"\blocalparam\s+type\s+(\w+)\s*=")
+    for m in re.finditer(pat, txt):
+        if not mask[m.start()]:
+            continue
         i = m.end(); depth = 0
         while i < len(txt):
             c = txt[i]
+            if not mask[i]:
+                i += 1; continue
             if c in "{([": depth += 1
-            elif c in "})]": depth -= 1
-            elif c == ";" and depth == 0: break
+            elif c in "})]":
+                # A `localparam type` can live in a module's parameter LIST, in
+                # which case its terminator is the list's `,` or the closing
+                # `)` — never a `;`.  Scanning on for a `;` walked into the
+                # module body and captured the whole port list.
+                if depth == 0: break
+                depth -= 1
+            elif c in ";," and depth == 0: break
             i += 1
         out[m.group(1)] = txt[m.start():i].strip()
     return out
@@ -118,7 +451,10 @@ def split_param_entries(block):
     Keeps struct/array bodies intact (`parameter type x = struct packed {a; b;}`
     contains commas and semicolons inside braces)."""
     out, depth, cur = [], 0, []
-    for c in block:
+    mask = code_mask(block)
+    for i, c in enumerate(block):
+        if not mask[i]:
+            cur.append(c); continue
         if c in "({[": depth += 1
         elif c in ")}]": depth -= 1
         if c == "," and depth == 0:
@@ -213,16 +549,81 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     # `parameter type foo_t = logic` default does not survive into the wrapper
     # (slang then rejects every field access: "invalid member access for type
     # 'wbuffer_t' (aka 'logic')").
-    ptypes = parent_local_types(find_parent_file(target))
+    # Nearest ancestor wins, so a pass-through parent cannot shadow the
+    # grandparent that actually declares the type.
+    ptypes = {}
+    for anc in reversed(ancestor_files(target)):
+        ptypes.update(parent_local_types(anc, values=True))
+    # Inherit the target's OWN package imports, and its PARENT's.  A module
+    # compiled inside its parent sees whatever that parent imported
+    # (`instr_decoder` uses cvxif_instr_pkg's copro_issue_resp_t without
+    # importing it), and the wrapper stands in for that parent.
+    tgt_pkgs = []
+    for src in (tgt_txt, *(open(f, errors="ignore").read()
+                           for f in find_parent_files(target)[:1])):
+        for pm in re.finditer(r"\bimport\s+([A-Za-z_]\w*)\s*::", src):
+            if pm.group(1) not in tgt_pkgs:
+                tgt_pkgs.append(pm.group(1))
+    pkg_names = package_names(set(tgt_pkgs) | {"ariane_pkg"})
 
+    providers = provider_types(os.path.dirname(out_path) or ".")
+    need_includes = set()
+
+    site, site_file = site_bindings(target)
+    if site_file:
+        print(f"  instantiation site: {os.path.relpath(site_file, CORE)} "
+              f"({len(site)} bindings)")
+
+    # Names the wrapper already declares before the target's own parameters.
+    base_names = set(wrp_names) | pkg_names | set(providers)
+    own, originals, added = [], {}, set()
+    for entry in split_param_entries(tgt_params):
+        nm = param_names(entry)
+        if not nm or nm[0] in wrp_names:
+            continue
+        n = nm[0]
+        originals[n] = entry
+        # Prefer the value the module is really given over its default.  A
+        # default exists to make the file standalone-parsable, not to describe
+        # the design: `parameter type axi_req_t = logic` makes every field
+        # access illegal, and `hpdcache_data_downsize`'s `DEPTH = 0` trips its
+        # own `$fatal`.  The instantiation site has the real value.
+        # The helper package wins where it applies: what the hierarchy walk
+        # finds for these names is an ancestor localparam whose definition
+        # calls functions that live in that ancestor's body
+        # (`HPDcacheUserCfg = hpdcacheSetConfig()`), so inlining it just moves
+        # the undeclared identifier into the wrapper.  The package carries the
+        # function too.
+        real = None
+        if n in providers:
+            pkg, inc = providers[n]
+            own.append(retarget_entry(entry, f"{pkg}::{n}"))
+            need_includes.add(inc)
+            print(f"  took helper-package value: {n} = {pkg}::{n}")
+            wrp_names.add(n)
+            continue
+        real = resolve_param(target, n, wrp_names | pkg_names)
+        if real is not None:
+            own.append(retarget_entry(entry, real))
+            print(f"  took site value: {n} = {' '.join(real.split())[:48]}")
+        elif re.search(r"\bparameter\s+type\b", entry) and n in ptypes:
+            # `parameter type X = logic` + an ancestor's definition of X ->
+            # declare X as that real type instead of the placeholder default.
+            own.append(ptypes[n].replace("localparam", "parameter", 1))
+            print(f"  bound parent-local type: {n}")
+        else:
+            own.append(entry)
+        wrp_names.add(n)
     # cva6.sv's BODY localparams are emitted into the wrapper's body, i.e.
-    # AFTER the port list.  When the target's ports reference one of them
-    # (perf_counters' NumPorts) slang reports "identifier 'NumPorts' used
-    # before its declaration".  Hoist just those into the parameter block.
+    # AFTER the port list.  When the ports — or a parameter we just took from
+    # the instantiation site (tag_cmp's `.NR_PORTS(NumPorts + 1)`) — reference
+    # one, slang reports "identifier 'NumPorts' used before its declaration".
+    # Hoist just those, ahead of the entries that use them.
     hoist_body = []
     for stmt in [s for s in cva6_body_lp.split("\n") if s.strip()]:
         nm = param_names(stmt)
-        if nm and re.search(r"\b" + re.escape(nm[0]) + r"\b", tgt_ports):
+        if nm and re.search(r"\b" + re.escape(nm[0]) + r"\b",
+                            tgt_ports + "\n" + "\n".join(own)):
             hoist_body.append(stmt.strip().rstrip(";"))
     if hoist_body:
         extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(
@@ -233,21 +634,82 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
         print(f"  hoisted cva6 body localparams used in ports: "
               f"{', '.join(param_names(h)[0] for h in hoist_body)}")
 
-    own = []
-    for entry in split_param_entries(tgt_params):
-        nm = param_names(entry)
-        if not nm or nm[0] in wrp_names:
+    # An inlined definition can also reference an ancestor's PARAMETERS
+    # (cvxif_example_coprocessor's `registers_t` is sized by its own XLEN and
+    # NrRgprPorts), which no localparam scan finds.  Declare those too, with
+    # the value the ancestor is really given where we can resolve it.
+    anc_params = {}
+    for anc in reversed(ancestor_files(target)):
+        try:
+            blk, _ = extract_param_block(open(anc, errors="ignore").read(),
+                                         module_name_of(anc))
+        except SystemExit:
             continue
-        n = nm[0]
-        # `parameter type X = logic` + a parent/package definition of X ->
-        # declare X as that real type instead of the placeholder default.
-        if re.search(r"\bparameter\s+type\b", entry) and n in ptypes:
-            own.append(ptypes[n].replace("localparam", "parameter", 1))
-            print(f"  bound parent-local type: {n}")
-        else:
-            own.append(entry)
+        for e in split_param_entries(blk):
+            nm = param_names(e)
+            if nm:
+                anc_params[nm[0]] = (e, module_name_of(anc))
+    free = []
+    own_txt = "\n".join(own)
+    for n, (entry, mod) in anc_params.items():
+        if n in wrp_names or n in pkg_names or n in providers:
+            continue
+        if not re.search(r"\b" + re.escape(n) + r"\b", own_txt):
+            continue
+        real = resolve_param(mod, n, wrp_names | pkg_names)
+        if real is None and not expr_resolves(rhs_of(entry), wrp_names | pkg_names):
+            # Its default is written in terms the wrapper cannot name — an
+            # ancestor's generate-loop variable (`LANE = unsigned'(lane)`).
+            # Emitting it anyway breaks wrappers that were fine without it.
+            continue
+        free.append(retarget_entry(entry, real) if real else entry)
+        added.add(n)
         wrp_names.add(n)
+    if free:
+        own += free
+        print(f"  declared ancestor params used by lifted types: "
+              f"{', '.join(param_names(f)[0] for f in free)}")
+
+    # An inlined ancestor type drags in the ancestor types it embeds.
+    dep = closure_types("\n".join(own), ptypes, wrp_names | pkg_names)
+    # Drop anything we cannot actually declare here.  `parent_local_types`
+    # sees the whole file, generate blocks included, so a name can resolve to a
+    # localparam written in terms of a genvar (`LANE = unsigned'(lane)`).
+    # Dropping one can invalidate another, so iterate to a fixpoint.
+    while True:
+        allowed = wrp_names | pkg_names | set(dep) | set(providers)
+        bad = [n for n, d in dep.items()
+               if n not in providers and not expr_resolves(rhs_of(d), allowed)]
+        if not bad:
+            break
+        for n in bad:
+            del dep[n]
+    for n, d in dep.items():
+        d = d.replace("localparam", "parameter", 1)
+        if n in providers:
+            # Keep the declaration but take its VALUE from the package: the
+            # ancestor's own definition calls functions that live in that
+            # ancestor's body (`HPDcacheUserCfg = hpdcacheSetConfig()`), so
+            # inlining it just relocates the undeclared identifier.
+            pkg, inc = providers[n]
+            d = retarget_entry(d, f"{pkg}::{n}")
+            need_includes.add(inc)
+        own.append(d)
+        added.add(n)
+    if dep:
+        print(f"  pulled in referenced ancestor types: {', '.join(dep)}")
+        wrp_names |= set(dep)
+
+    # Self-containment: every entry must be expressible with what this wrapper
+    # declares.  A value lifted from the hierarchy can depend on names that do
+    # not survive the trip (an ancestor's genvar-indexed localparams), and
+    # emitting it anyway breaks a wrapper that was fine on defaults.  So drop
+    # what we added but cannot support, and revert any entry whose real value
+    # depended on it — falling back to the module's own default, which is
+    # exactly where this generator started.
+    own = drop_unsupported(own, base_names, originals, added, providers)
     if own:
+        own = order_by_dependency(own)
         extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(
             "  " + o.replace("\n", "\n  ") for o in own)
         print(f"  declared target's own params: "
@@ -267,21 +729,18 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     # the wrapper copies that port list verbatim — without the same import
     # slang stops at "use of undeclared identifier 'hpdcache_cfg_t'".  This is
     # the single biggest remaining cause of wrappers that will not elaborate.
-    tgt_pkgs = []
-    for pm in re.finditer(r"\bimport\s+([A-Za-z_]\w*)\s*::", tgt_txt):
-        if pm.group(1) not in tgt_pkgs:
-            tgt_pkgs.append(pm.group(1))
     pkgs = import_pkgs or (["ariane_pkg"] + [q for q in tgt_pkgs if q != "ariane_pkg"])
     if tgt_pkgs:
         print(f"  inherited target imports: {', '.join(tgt_pkgs)}")
     imports = "\n".join(f"  import {p}::*;" for p in pkgs)
+    helper_includes = "".join(f'`include "{i}"\n' for i in sorted(need_includes))
     wtop = f"{target}_equiv"
     out = f"""// AUTO-GENERATED per-module equivalence wrapper for {target}
 // Parameter environment copied verbatim from cva6.sv (build_config-computed
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
-
+{helper_includes}
 module {wtop}
 {imports}
 #(

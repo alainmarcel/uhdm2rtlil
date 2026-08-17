@@ -317,7 +317,7 @@ module fpnew_opgroup_block_equiv
   parameter fpnew_pkg::fmt_unsigned_t   FmtPipeRegs   = '{default: 0},
   parameter fpnew_pkg::fmt_unit_types_t FmtUnitTypes  = '{default: fpnew_pkg::PARALLEL},
   parameter fpnew_pkg::pipe_config_t    PipeConfig    = fpnew_pkg::BEFORE,
-  parameter type                        TagType       = logic,
+  parameter type                        TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
   parameter int unsigned                TrueSIMDClass = 0,
   // Do not change
     localparam int unsigned NUM_FORMATS  = fpnew_pkg::NUM_FP_FORMATS,

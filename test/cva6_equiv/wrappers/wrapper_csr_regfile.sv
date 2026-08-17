@@ -305,7 +305,11 @@ module csr_regfile_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int                    VmidWidth          = 1,
+  parameter int unsigned           MHPMCounterNum     = 6,
+  parameter int unsigned           N_Triggers         = 4
 ) (
 
     // Subsystem Clock - SUBSYSTEM
@@ -510,7 +514,10 @@ module csr_regfile_equiv
       .jvt_t(jvt_t),
       .irq_ctrl_t(irq_ctrl_t),
       .scoreboard_entry_t(scoreboard_entry_t),
-      .rvfi_probes_csr_t(rvfi_probes_csr_t)
+      .rvfi_probes_csr_t(rvfi_probes_csr_t),
+      .VmidWidth(VmidWidth),
+      .MHPMCounterNum(MHPMCounterNum),
+      .N_Triggers(N_Triggers)
   ) dut (.*);
 
 endmodule

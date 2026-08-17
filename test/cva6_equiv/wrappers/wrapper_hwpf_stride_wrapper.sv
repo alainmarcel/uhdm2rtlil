@@ -3,6 +3,7 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hwpf_stride_wrapper_equiv
   import ariane_pkg::*;
@@ -309,20 +310,19 @@ module hwpf_stride_wrapper_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   parameter int unsigned NUM_HW_PREFETCH = 4,
-  parameter int unsigned NUM_SNOOP_PORTS = 1,
+  parameter int unsigned NUM_SNOOP_PORTS = 2,
   //  Request Interface Definitions
       //  {{{
-      parameter type hpdcache_tag_t = logic,
-      parameter type hpdcache_req_offset_t = logic,
-      parameter type hpdcache_req_data_t = logic,
-      parameter type hpdcache_req_be_t = logic,
-      parameter type hpdcache_req_sid_t = logic,
-      parameter type hpdcache_req_tid_t = logic,
-      parameter type hpdcache_req_t = logic,
-      parameter type hpdcache_rsp_t = logic
-      //  }}}
+      parameter type hpdcache_tag_t = hpdcache_equiv_pkg::hpdcache_tag_t,
+  parameter type hpdcache_req_offset_t = hpdcache_equiv_pkg::hpdcache_req_offset_t,
+  parameter type hpdcache_req_data_t = hpdcache_equiv_pkg::hpdcache_req_data_t,
+  parameter type hpdcache_req_be_t = hpdcache_equiv_pkg::hpdcache_req_be_t,
+  parameter type hpdcache_req_sid_t = hpdcache_equiv_pkg::hpdcache_req_sid_t,
+  parameter type hpdcache_req_tid_t = hpdcache_equiv_pkg::hpdcache_req_tid_t,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  parameter type hpdcache_rsp_t = hpdcache_equiv_pkg::hpdcache_rsp_t
 ) (
 
     input  logic                                        clk_i,
@@ -400,7 +400,14 @@ module hwpf_stride_wrapper_equiv
       .HPDcacheCfg(HPDcacheCfg),
       .NUM_HW_PREFETCH(NUM_HW_PREFETCH),
       .NUM_SNOOP_PORTS(NUM_SNOOP_PORTS),
-      .hpdcache_tag_t(hpdcache_tag_t)
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_req_offset_t(hpdcache_req_offset_t),
+      .hpdcache_req_data_t(hpdcache_req_data_t),
+      .hpdcache_req_be_t(hpdcache_req_be_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .hpdcache_req_tid_t(hpdcache_req_tid_t),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t)
   ) dut (.*);
 
 endmodule

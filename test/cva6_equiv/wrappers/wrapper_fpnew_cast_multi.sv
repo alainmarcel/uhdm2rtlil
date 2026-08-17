@@ -305,7 +305,20 @@ module fpnew_cast_multi_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter fpnew_pkg::fmt_logic_t   FpFmtConfig  = '1,
+  parameter fpnew_pkg::ifmt_logic_t  IntFmtConfig = '1,
+  // FPU configuration
+    parameter int unsigned             NumPipeRegs = 0,
+  parameter fpnew_pkg::pipe_config_t PipeConfig  = fpnew_pkg::BEFORE,
+  parameter type                     TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
+  parameter type                     AuxType     = logic,
+  // Do not change
+    localparam int unsigned WIDTH = fpnew_pkg::maximum(fpnew_pkg::max_fp_width(FpFmtConfig),
+                                                       fpnew_pkg::max_int_width(IntFmtConfig)),
+  localparam int unsigned NUM_FORMATS = fpnew_pkg::NUM_FP_FORMATS,
+  localparam int unsigned ExtRegEnaWidth = NumPipeRegs == 0 ? 1 : NumPipeRegs
 ) (
 
   input  logic                   clk_i,
@@ -373,7 +386,12 @@ module fpnew_cast_multi_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_cast_multi #(
-      
+      .FpFmtConfig(FpFmtConfig),
+      .IntFmtConfig(IntFmtConfig),
+      .NumPipeRegs(NumPipeRegs),
+      .PipeConfig(PipeConfig),
+      .TagType(TagType),
+      .AuxType(AuxType)
   ) dut (.*);
 
 endmodule

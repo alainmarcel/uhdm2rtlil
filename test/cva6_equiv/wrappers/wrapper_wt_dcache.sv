@@ -6,6 +6,7 @@
 
 module wt_dcache_equiv
   import ariane_pkg::*;
+  import wt_cache_pkg::*;
 #(
 
     // CVA6 config
@@ -307,6 +308,7 @@ module wt_dcache_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
+  localparam NumPorts = 4,
   parameter type dcache_req_t = struct packed {
       wt_cache_pkg::dcache_out_t rtype;  // see definitions above
       logic [2:0]                                      size;        // transaction size: 000=Byte 001=2Byte; 010=4Byte; 011=8Byte; 111=Cache line (16/32Byte)
@@ -317,6 +319,12 @@ module wt_dcache_equiv
       logic nc;  // noncacheable
       logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
       ariane_pkg::amo_t amo_op;  // amo opcode
+    },
+  parameter type dcache_inval_t = struct packed {
+      logic                                      vld;  // invalidate only affected way
+      logic                                      all;  // invalidate all ways
+      logic [CVA6Cfg.DCACHE_INDEX_WIDTH-1:0]     idx;  // physical address to invalidate
+      logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to invalidate
     },
   parameter type dcache_rtrn_t = struct packed {
       wt_cache_pkg::dcache_in_t rtype;  // see definitions above
@@ -381,7 +389,7 @@ module wt_dcache_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   wt_dcache #(

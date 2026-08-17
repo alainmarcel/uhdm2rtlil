@@ -305,7 +305,21 @@ module fpnew_top_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  // FPU configuration
+    parameter fpnew_pkg::fpu_features_t       Features       = fpnew_pkg::RV64D_Xsflt,
+  parameter fpnew_pkg::fpu_implementation_t Implementation = fpnew_pkg::DEFAULT_NOREGS,
+  // DivSqrtSel chooses among PULP, TH32, or THMULTI (see documentation and fpnew_pkg.sv for further details)
+    parameter fpnew_pkg::divsqrt_unit_t       DivSqrtSel     = fpnew_pkg::THMULTI,
+  parameter type                            TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
+  parameter int unsigned                    TrueSIMDClass  = 0,
+  parameter int unsigned                    EnableSIMDMask = 0,
+  // Do not change
+    localparam int unsigned NumLanes     = fpnew_pkg::max_num_lanes(Features.Width, Features.FpFmtMask, Features.EnableVectors),
+  localparam type         MaskType     = logic [NumLanes-1:0],
+  localparam int unsigned WIDTH        = Features.Width,
+  localparam int unsigned NUM_OPERANDS = 3
 ) (
 
   input logic                               clk_i,
@@ -366,7 +380,12 @@ module fpnew_top_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   fpnew_top #(
-      
+      .Features(Features),
+      .Implementation(Implementation),
+      .DivSqrtSel(DivSqrtSel),
+      .TagType(TagType),
+      .TrueSIMDClass(TrueSIMDClass),
+      .EnableSIMDMask(EnableSIMDMask)
   ) dut (.*);
 
 endmodule
