@@ -38,7 +38,7 @@ ariane_regfile_fpga                    4   180   elabfail
 axi_adapter                            4   180   crash
 axi_shim                               4   180   elabfail
 bht                                    4   900   proven
-bht2lvl                                4   180   elabfail
+bht2lvl                                4   180   cex
 branch_unit                            4   900   proven
 btb                                    4   900   proven
 cache_ctrl                             4   180   elabfail
@@ -150,7 +150,7 @@ mult                                   4   180   timeout
 multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   180   elabfail
 nrbd_nrsc_mvp                          4   180   elabfail
-perf_counters                          4   180   elabfail
+perf_counters                          4   900   proven
 pmp                                    4   180   timeout
 pmp_data_if                            4   180   cex
 pmp_entry                              4   900   proven
@@ -167,10 +167,10 @@ store_unit                             4   900   proven
 tag_cmp                                4   180   elabfail
 trigger_module                         4   900   proven
 wt_axi_adapter                         4   180   elabfail
-wt_cache_subsystem                     4   180   elabfail
-wt_dcache                              4   180   elabfail
+wt_cache_subsystem                     4   180   timeout
+wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   crash
-wt_dcache_mem                          4   180   elabfail
+wt_dcache_mem                          4   180   timeout
 wt_dcache_missunit                     4   180   elabfail
-wt_dcache_wbuffer                      4   180   elabfail
+wt_dcache_wbuffer                      4   180   timeout
 zcmt_decoder                           4   180   cex

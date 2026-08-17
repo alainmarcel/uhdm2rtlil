@@ -307,8 +307,18 @@ module wt_dcache_mem_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
+  localparam NumPorts = 4,
   parameter                        DCACHE_CL_IDX_WIDTH = 0,
-  parameter type                   wbuffer_t           = logic
+  parameter type wbuffer_t = struct packed {
+      logic [CVA6Cfg.DCACHE_TAG_WIDTH+(CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.XLEN_ALIGN_BYTES)-1:0] wtag;
+      logic [CVA6Cfg.XLEN-1:0] data;
+      logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0] user;
+      logic [(CVA6Cfg.XLEN/8)-1:0] dirty;  // byte is dirty
+      logic [(CVA6Cfg.XLEN/8)-1:0] valid;  // byte is valid
+      logic [(CVA6Cfg.XLEN/8)-1:0] txblock;  // byte is part of transaction in-flight
+      logic checked;  // if cache state of this word has been checked
+      logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] hit_oh;  // valid way in the cache
+    }
 ) (
 
     input logic clk_i,
@@ -377,7 +387,7 @@ module wt_dcache_mem_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   wt_dcache_mem #(

@@ -307,8 +307,17 @@ module cache_ctrl_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type cache_line_t = logic,
-  parameter type cl_be_t = logic
+  parameter type cache_line_t = struct packed {
+      logic [CVA6Cfg.DCACHE_TAG_WIDTH-1:0]  tag;    // tag array
+      logic [CVA6Cfg.DCACHE_LINE_WIDTH-1:0] data;   // data array
+      logic                                 valid;  // state array
+      logic                                 dirty;  // state array
+    },
+  parameter type cl_be_t = struct packed {
+      logic [(CVA6Cfg.DCACHE_TAG_WIDTH+7)/8-1:0] tag;  // byte enable into tag array
+      logic [(CVA6Cfg.DCACHE_LINE_WIDTH+7)/8-1:0] data;  // byte enable into data array
+      logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0]        vldrty; // bit enable into state array (valid for a pair of dirty/valid bits)
+    }
 ) (
 
     input logic clk_i,  // Clock

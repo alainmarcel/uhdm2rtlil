@@ -307,7 +307,11 @@ module bht2lvl_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type bht_update_t = logic
+  parameter type bht_update_t = struct packed {
+      logic                    valid;
+      logic [CVA6Cfg.VLEN-1:0] pc;     // update at PC
+      logic                    taken;
+    }
 ) (
 
     input  logic                                                      clk_i,

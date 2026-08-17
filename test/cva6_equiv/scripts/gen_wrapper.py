@@ -6,7 +6,7 @@ build_config(...) plus every shared `parameter/localparam type`), mirrors the
 target module's port list, and instantiates the target binding every
 same-named parameter — reproducing the real hierarchy's parameterization.
 """
-import re, sys, os
+import re, sys, os, glob
 
 # Default to the VENDORED CVA6 RTL so wrapper generation works from a clean
 # checkout; override with CVA6_CORE=<path> to point at an upstream working tree
@@ -74,6 +74,43 @@ def param_names(block, bindable_only=False):
         names.append(m.group(1))
     return names
 
+
+
+def find_parent_file(target):
+    """The file of the module that INSTANTIATES `target`.
+
+    A child often takes types that are local to its parent
+    (`wt_dcache.sv` declares `localparam type wbuffer_t = struct packed {...}`
+    and passes it to wt_dcache_wbuffer).  Those cannot come from cva6.sv, so
+    the wrapper has to lift them from the real instantiation site — which is
+    what the hand-written extras_<mod>.svh files do."""
+    pat = re.compile(r"^\s*" + re.escape(target) + r"\s*#?\s*\(", re.M)
+    for f in glob.glob(f"{CORE}/**/*.sv", recursive=True):
+        if os.path.basename(f) == f"{target}.sv":
+            continue
+        try:
+            if pat.search(open(f, errors="ignore").read()):
+                return f
+        except OSError:
+            pass
+    return None
+
+def parent_local_types(parent_file):
+    """Top-level `localparam type NAME = ...;` declarations in a module body."""
+    if not parent_file:
+        return {}
+    txt = open(parent_file, errors="ignore").read()
+    out = {}
+    for m in re.finditer(r"\blocalparam\s+type\s+(\w+)\s*=", txt):
+        i = m.end(); depth = 0
+        while i < len(txt):
+            c = txt[i]
+            if c in "{([": depth += 1
+            elif c in "})]": depth -= 1
+            elif c == ";" and depth == 0: break
+            i += 1
+        out[m.group(1)] = txt[m.start():i].strip()
+    return out
 
 def split_param_entries(block):
     """Yield the target's #() entries, split on top-level commas.
@@ -166,13 +203,45 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     # Re-declare the target's own entries, keeping their defaults, but only the
     # ones cva6.sv / extras do not already provide (those must win, since they
     # carry the values the real hierarchy uses).
+    # Types a target takes but nothing here defines are usually local to its
+    # PARENT; lift them from the real instantiation site so a
+    # `parameter type foo_t = logic` default does not survive into the wrapper
+    # (slang then rejects every field access: "invalid member access for type
+    # 'wbuffer_t' (aka 'logic')").
+    ptypes = parent_local_types(find_parent_file(target))
+
+    # cva6.sv's BODY localparams are emitted into the wrapper's body, i.e.
+    # AFTER the port list.  When the target's ports reference one of them
+    # (perf_counters' NumPorts) slang reports "identifier 'NumPorts' used
+    # before its declaration".  Hoist just those into the parameter block.
+    hoist_body = []
+    for stmt in [s for s in cva6_body_lp.split("\n") if s.strip()]:
+        nm = param_names(stmt)
+        if nm and re.search(r"\b" + re.escape(nm[0]) + r"\b", tgt_ports):
+            hoist_body.append(stmt.strip().rstrip(";"))
+    if hoist_body:
+        extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(
+            "  " + h for h in hoist_body)
+        # drop them from the body so they are not declared twice
+        for h in hoist_body:
+            cva6_body_lp = cva6_body_lp.replace(h + ";", "")
+        print(f"  hoisted cva6 body localparams used in ports: "
+              f"{', '.join(param_names(h)[0] for h in hoist_body)}")
+
     own = []
     for entry in split_param_entries(tgt_params):
         nm = param_names(entry)
         if not nm or nm[0] in wrp_names:
             continue
-        own.append(entry)
-        wrp_names.add(nm[0])
+        n = nm[0]
+        # `parameter type X = logic` + a parent/package definition of X ->
+        # declare X as that real type instead of the placeholder default.
+        if re.search(r"\bparameter\s+type\b", entry) and n in ptypes:
+            own.append(ptypes[n].replace("localparam", "parameter", 1))
+            print(f"  bound parent-local type: {n}")
+        else:
+            own.append(entry)
+        wrp_names.add(n)
     if own:
         extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(
             "  " + o.replace("\n", "\n  ") for o in own)

@@ -308,7 +308,16 @@ module wt_dcache_wbuffer_equiv
 ,
 
   parameter DCACHE_CL_IDX_WIDTH = 0,
-  parameter type wbuffer_t = logic
+  parameter type wbuffer_t = struct packed {
+      logic [CVA6Cfg.DCACHE_TAG_WIDTH+(CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.XLEN_ALIGN_BYTES)-1:0] wtag;
+      logic [CVA6Cfg.XLEN-1:0] data;
+      logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0] user;
+      logic [(CVA6Cfg.XLEN/8)-1:0] dirty;  // byte is dirty
+      logic [(CVA6Cfg.XLEN/8)-1:0] valid;  // byte is valid
+      logic [(CVA6Cfg.XLEN/8)-1:0] txblock;  // byte is part of transaction in-flight
+      logic checked;  // if cache state of this word has been checked
+      logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] hit_oh;  // valid way in the cache
+    }
 ) (
 
     input logic clk_i,  // Clock
