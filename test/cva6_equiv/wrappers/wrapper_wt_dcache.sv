@@ -305,7 +305,26 @@ module wt_dcache_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type dcache_req_t = struct packed {
+      wt_cache_pkg::dcache_out_t rtype;  // see definitions above
+      logic [2:0]                                      size;        // transaction size: 000=Byte 001=2Byte; 010=4Byte; 011=8Byte; 111=Cache line (16/32Byte)
+      logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to replace
+      logic [CVA6Cfg.PLEN-1:0] paddr;  // physical address
+      logic [CVA6Cfg.XLEN-1:0] data;  // word width of processor (no block stores at the moment)
+      logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0]          user;        // user width of processor (no block stores at the moment)
+      logic nc;  // noncacheable
+      logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
+      ariane_pkg::amo_t amo_op;  // amo opcode
+    },
+  parameter type dcache_rtrn_t = struct packed {
+      wt_cache_pkg::dcache_in_t rtype;  // see definitions above
+      logic [CVA6Cfg.DCACHE_LINE_WIDTH-1:0] data;  // full cache line width
+      logic [CVA6Cfg.DCACHE_USER_LINE_WIDTH-1:0] user;  // user bits
+      dcache_inval_t inv;  // invalidation vector
+      logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
+    }
 ) (
 
     input logic clk_i,  // Clock
@@ -369,6 +388,8 @@ module wt_dcache_equiv
       .CVA6Cfg(CVA6Cfg),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t),
+      .dcache_req_t(dcache_req_t),
+      .dcache_rtrn_t(dcache_rtrn_t),
       .NumPorts(NumPorts)
   ) dut (.*);
 

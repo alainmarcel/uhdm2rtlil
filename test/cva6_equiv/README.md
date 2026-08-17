@@ -33,6 +33,14 @@ that are local to the module's *parent* rather than to `cva6.sv` (for example
 `frontend.sv`'s `ras_t`); those are injected into the wrapper's parameter block
 because the port list needs them.
 
+The generator also re-declares the target's **own** `#()` parameters when
+nothing else supplies them. Generic library modules parameterise their ports
+(`hpdcache_fifo_reg #(parameter int WIDTH = 8) (input logic [WIDTH-1:0] …)`),
+and since the port list is copied verbatim those names must be declared before
+it — otherwise slang reports `use of undeclared identifier 'WIDTH'`. Names that
+cva6.sv or an `extras_*.svh` provides always win, so the real hierarchy's values
+are never shadowed by a module's own default.
+
 Regenerate a wrapper after a CVA6 update with:
 
 ```bash
@@ -96,6 +104,12 @@ outcome:
 Treat the non-`proven` entries as a shrink-only backlog: a module that starts
 proving should be promoted in the same commit, and a module that stops proving
 is a regression to investigate, never to downgrade.
+
+A slow-elaborating module can be misfiled as `timeout` when the budget is
+tight: the classifier only sees that no model was produced. `wt_dcache` and
+`wt_cache_subsystem` were recorded as `timeout` from a 150 s sweep and turned
+out to be `elabfail` once given 400 s. When (re)classifying, give the sweep a
+generous budget, or re-check anything new that lands on `timeout`.
 
 `crash` and `timeout` are easy to confuse and must not be. When the classifier
 was first written it lumped both together, and 21 modules that actually

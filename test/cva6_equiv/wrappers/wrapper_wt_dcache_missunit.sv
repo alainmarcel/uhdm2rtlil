@@ -305,7 +305,12 @@ module wt_dcache_missunit_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  localparam NumPorts = 4,
+  parameter DCACHE_CL_IDX_WIDTH = 0,
+  parameter type dcache_req_t = logic,
+  parameter type dcache_rtrn_t = logic
 ) (
 
     input logic clk_i,  // Clock
@@ -385,11 +390,14 @@ module wt_dcache_missunit_equiv
       M_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_M_EXT),
       HS_EXT: (CVA6Cfg.XLEN'(1) << (CVA6Cfg.XLEN - 1)) | CVA6Cfg.XLEN'(riscv::IRQ_HS_EXT)
   };
-  localparam NumPorts = 4;
+  
   localparam PC_QUEUE_DEPTH = 16;
 
   wt_dcache_missunit #(
       .CVA6Cfg(CVA6Cfg),
+      .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
+      .dcache_req_t(dcache_req_t),
+      .dcache_rtrn_t(dcache_rtrn_t),
       .NumPorts(NumPorts)
   ) dut (.*);
 

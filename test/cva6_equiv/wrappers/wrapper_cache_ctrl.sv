@@ -305,7 +305,19 @@ module cache_ctrl_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type cache_line_t = struct packed {
+      logic [CVA6Cfg.DCACHE_TAG_WIDTH-1:0]  tag;    // tag array
+      logic [CVA6Cfg.DCACHE_LINE_WIDTH-1:0] data;   // data array
+      logic                                 valid;  // state array
+      logic                                 dirty;  // state array
+    },
+  parameter type cl_be_t = struct packed {
+      logic [(CVA6Cfg.DCACHE_TAG_WIDTH+7)/8-1:0] tag;  // byte enable into tag array
+      logic [(CVA6Cfg.DCACHE_LINE_WIDTH+7)/8-1:0] data;  // byte enable into data array
+      logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0]        vldrty; // bit enable into state array (valid for a pair of dirty/valid bits)
+    }
 ) (
 
     input logic clk_i,  // Clock
@@ -373,6 +385,8 @@ module cache_ctrl_equiv
 
   cache_ctrl #(
       .CVA6Cfg(CVA6Cfg),
+      .cache_line_t(cache_line_t),
+      .cl_be_t(cl_be_t),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t)
   ) dut (.*);

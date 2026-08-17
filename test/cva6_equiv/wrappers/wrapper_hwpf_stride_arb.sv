@@ -305,7 +305,11 @@ module hwpf_stride_arb_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int NUM_HW_PREFETCH = 4,
+  parameter type hpdcache_req_t = logic,
+  parameter type hpdcache_rsp_t = logic
 ) (
 
     input  logic                                clk_i,
@@ -355,7 +359,9 @@ module hwpf_stride_arb_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hwpf_stride_arb #(
-      
+      .NUM_HW_PREFETCH(NUM_HW_PREFETCH),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t)
   ) dut (.*);
 
 endmodule

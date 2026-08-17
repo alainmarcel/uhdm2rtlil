@@ -305,7 +305,12 @@ module tag_cmp_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned           NR_PORTS   = 3,
+  parameter int unsigned           ADDR_WIDTH = 64,
+  parameter type                   l_data_t   = logic,
+  parameter type                   l_be_t     = logic
 ) (
 
     input logic clk_i,
@@ -359,7 +364,11 @@ module tag_cmp_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   tag_cmp #(
-      .CVA6Cfg(CVA6Cfg)
+      .CVA6Cfg(CVA6Cfg),
+      .NR_PORTS(NR_PORTS),
+      .ADDR_WIDTH(ADDR_WIDTH),
+      .l_data_t(l_data_t),
+      .l_be_t(l_be_t)
   ) dut (.*);
 
 endmodule

@@ -305,7 +305,11 @@ module ariane_regfile_fpga_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned           DATA_WIDTH    = 32,
+  parameter int unsigned           NR_READ_PORTS = 2,
+  parameter bit                    ZERO_REG_ZERO = 0
 ) (
 
     // clock and reset
@@ -351,7 +355,10 @@ module ariane_regfile_fpga_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   ariane_regfile_fpga #(
-      .CVA6Cfg(CVA6Cfg)
+      .CVA6Cfg(CVA6Cfg),
+      .DATA_WIDTH(DATA_WIDTH),
+      .NR_READ_PORTS(NR_READ_PORTS),
+      .ZERO_REG_ZERO(ZERO_REG_ZERO)
   ) dut (.*);
 
 endmodule

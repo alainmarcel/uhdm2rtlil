@@ -305,7 +305,19 @@ module hpdcache_mshr_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter type hpdcache_nline_t = logic,
+  parameter type hpdcache_tag_t = logic,
+  parameter type hpdcache_set_t = logic,
+  parameter type hpdcache_word_t = logic,
+  parameter type hpdcache_way_t = logic,
+  parameter type hpdcache_req_tid_t = logic,
+  parameter type hpdcache_req_sid_t = logic,
+  parameter type mshr_way_t = logic,
+  parameter type mshr_set_t = logic,
+  parameter type cbuf_id_t = logic
 ) (
 
     //  Clock and reset signals
@@ -383,7 +395,17 @@ module hpdcache_mshr_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_mshr #(
-      
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_nline_t(hpdcache_nline_t),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_set_t(hpdcache_set_t),
+      .hpdcache_word_t(hpdcache_word_t),
+      .hpdcache_way_t(hpdcache_way_t),
+      .hpdcache_req_tid_t(hpdcache_req_tid_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .mshr_way_t(mshr_way_t),
+      .mshr_set_t(mshr_set_t),
+      .cbuf_id_t(cbuf_id_t)
   ) dut (.*);
 
 endmodule

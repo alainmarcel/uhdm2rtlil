@@ -305,7 +305,16 @@ module cva6_hpdcache_if_adapter_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = '0,
+  parameter type hpdcache_tag_t = logic,
+  parameter type hpdcache_req_offset_t = logic,
+  parameter type hpdcache_req_sid_t = logic,
+  parameter type hpdcache_req_t = logic,
+  parameter type hpdcache_rsp_t = logic,
+  parameter bit InvalidateOnFlush = 1'b0,
+  parameter bit IsLoadPort = 1'b1
 ) (
 
     //  Clock and active-low reset pins
@@ -368,8 +377,16 @@ module cva6_hpdcache_if_adapter_equiv
 
   cva6_hpdcache_if_adapter #(
       .CVA6Cfg(CVA6Cfg),
+      .HPDcacheCfg(HPDcacheCfg),
+      .hpdcache_tag_t(hpdcache_tag_t),
+      .hpdcache_req_offset_t(hpdcache_req_offset_t),
+      .hpdcache_req_sid_t(hpdcache_req_sid_t),
+      .hpdcache_req_t(hpdcache_req_t),
+      .hpdcache_rsp_t(hpdcache_rsp_t),
       .dcache_req_i_t(dcache_req_i_t),
-      .dcache_req_o_t(dcache_req_o_t)
+      .dcache_req_o_t(dcache_req_o_t),
+      .InvalidateOnFlush(InvalidateOnFlush),
+      .IsLoadPort(IsLoadPort)
   ) dut (.*);
 
 endmodule

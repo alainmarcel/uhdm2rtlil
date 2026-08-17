@@ -305,7 +305,13 @@ module bht2lvl_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter type bht_update_t = struct packed {
+      logic                    valid;
+      logic [CVA6Cfg.VLEN-1:0] pc;     // update at PC
+      logic                    taken;
+    }
 ) (
 
     input  logic                                                      clk_i,
@@ -346,7 +352,8 @@ module bht2lvl_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   bht2lvl #(
-      .CVA6Cfg(CVA6Cfg)
+      .CVA6Cfg(CVA6Cfg),
+      .bht_update_t(bht_update_t)
   ) dut (.*);
 
 endmodule

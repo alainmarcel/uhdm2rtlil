@@ -305,7 +305,13 @@ module hpdcache_sram_equiv
     `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
     parameter type cvxif_resp_t =
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
+,
 
+  parameter int unsigned ADDR_SIZE = 0,
+  parameter int unsigned DATA_SIZE = 0,
+  parameter int unsigned DEPTH = 2**ADDR_SIZE,
+  parameter int unsigned NDATA = 1,
+  parameter bit          ECC_EN = 1'b0
 ) (
 
     input  logic                            clk,
@@ -351,7 +357,11 @@ module hpdcache_sram_equiv
   localparam PC_QUEUE_DEPTH = 16;
 
   hpdcache_sram #(
-      
+      .ADDR_SIZE(ADDR_SIZE),
+      .DATA_SIZE(DATA_SIZE),
+      .DEPTH(DEPTH),
+      .NDATA(NDATA),
+      .ECC_EN(ECC_EN)
   ) dut (.*);
 
 endmodule
