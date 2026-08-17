@@ -41,7 +41,7 @@ bht                                    4   900   proven
 bht2lvl                                4   180   cex
 branch_unit                            4   900   proven
 btb                                    4   900   proven
-cache_ctrl                             4   180   elabfail
+cache_ctrl                             4   180   cex
 commit_stage                           4   900   proven
 compressed_decoder                     4   900   proven
 compressed_instr_decoder               4   180   elabfail
@@ -68,7 +68,7 @@ cvxif_example_coprocessor              4   180   elabfail
 cvxif_fu                               4   900   proven
 cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
-div_sqrt_top_mvp                       4   180   elabfail
+div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
 fpnew_cast_multi                       4   180   timeout
 fpnew_classifier                       4   180   cex
@@ -87,8 +87,8 @@ fpu_wrap                               4   180   cex
 frontend                               4   180   cex
 hpdcache                               4   180   crash
 hpdcache_1hot_to_binary                4   180   crash
-hpdcache_amo                           4   180   elabfail
-hpdcache_cbuf                          4   180   elabfail
+hpdcache_amo                           4   900   proven
+hpdcache_cbuf                          4   180   cex
 hpdcache_cmo                           4   180   elabfail
 hpdcache_core_arbiter                  4   180   timeout
 hpdcache_ctrl                          4   180   crash
@@ -148,13 +148,13 @@ macro_decoder                          4   180   cex
 miss_handler                           4   180   crash
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
-norm_div_sqrt_mvp                      4   180   elabfail
-nrbd_nrsc_mvp                          4   180   elabfail
+norm_div_sqrt_mvp                      4   900   proven
+nrbd_nrsc_mvp                          4   900   proven
 perf_counters                          4   900   proven
 pmp                                    4   180   timeout
 pmp_data_if                            4   180   cex
 pmp_entry                              4   900   proven
-popcount                               4   180   elabfail
+popcount                               4   900   proven
 preprocess_mvp                         4   180   elabfail
 ras                                    4   900   proven
 raw_checker                            4   900   proven

@@ -6,6 +6,7 @@
 
 module cache_ctrl_equiv
   import ariane_pkg::*;
+  import std_cache_pkg::*;
 #(
 
     // CVA6 config

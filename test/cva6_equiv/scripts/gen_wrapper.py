@@ -136,6 +136,11 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
         # search
         import glob
         cands = glob.glob(f"{CORE}/**/{target}.sv", recursive=True)
+        if not cands:
+            # Vendored common_cells / axi live outside core/ (popcount, lzc, …)
+            # but are part of the design and worth proving too.
+            rtl_root = os.path.dirname(CORE)
+            cands = glob.glob(f"{rtl_root}/**/{target}.sv", recursive=True)
         if not cands: raise SystemExit(f"{target}.sv not found under {CORE}")
         tgt_file = cands[0]
     tgt_txt = open(tgt_file).read()
@@ -257,7 +262,18 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
         else:
             unbound.append(p)
 
-    pkgs = import_pkgs or ["ariane_pkg"]
+    # Inherit the target's OWN package imports.  A module that says
+    # `import hpdcache_pkg::*;` uses that package's types in its port list, and
+    # the wrapper copies that port list verbatim — without the same import
+    # slang stops at "use of undeclared identifier 'hpdcache_cfg_t'".  This is
+    # the single biggest remaining cause of wrappers that will not elaborate.
+    tgt_pkgs = []
+    for pm in re.finditer(r"\bimport\s+([A-Za-z_]\w*)\s*::", tgt_txt):
+        if pm.group(1) not in tgt_pkgs:
+            tgt_pkgs.append(pm.group(1))
+    pkgs = import_pkgs or (["ariane_pkg"] + [q for q in tgt_pkgs if q != "ariane_pkg"])
+    if tgt_pkgs:
+        print(f"  inherited target imports: {', '.join(tgt_pkgs)}")
     imports = "\n".join(f"  import {p}::*;" for p in pkgs)
     wtop = f"{target}_equiv"
     out = f"""// AUTO-GENERATED per-module equivalence wrapper for {target}

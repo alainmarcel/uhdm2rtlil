@@ -6,6 +6,7 @@
 
 module hwpf_stride_arb_equiv
   import ariane_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
