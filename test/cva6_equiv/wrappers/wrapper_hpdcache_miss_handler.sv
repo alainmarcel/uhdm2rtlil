@@ -8,6 +8,7 @@
 module hpdcache_miss_handler_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -317,7 +318,7 @@ module hpdcache_miss_handler_equiv
   parameter type hpdcache_way_vector_t = hpdcache_equiv_pkg::hpdcache_way_vector_t,
   parameter type hpdcache_way_t = hpdcache_equiv_pkg::hpdcache_way_t,
   parameter type hpdcache_dir_entry_t = logic,
-  parameter type hpdcache_refill_data_t = logic,
+  parameter type hpdcache_refill_data_t = hpdcache_access_data_t,
   parameter type hpdcache_req_data_t = hpdcache_equiv_pkg::hpdcache_req_data_t,
   parameter type hpdcache_req_be_t = hpdcache_equiv_pkg::hpdcache_req_be_t,
   parameter type hpdcache_req_offset_t = hpdcache_equiv_pkg::hpdcache_req_offset_t,

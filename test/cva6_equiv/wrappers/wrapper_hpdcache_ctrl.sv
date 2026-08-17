@@ -8,6 +8,7 @@
 module hpdcache_ctrl_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config

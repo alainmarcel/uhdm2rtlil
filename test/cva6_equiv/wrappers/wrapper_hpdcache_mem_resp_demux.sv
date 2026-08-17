@@ -3,9 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_mem_resp_demux_equiv
   import ariane_pkg::*;
+  import config_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -308,8 +311,10 @@ module hpdcache_mem_resp_demux_equiv
 ,
 
   parameter int         N = 2,
-  parameter type resp_t    = logic,
-  parameter type resp_id_t = logic,
+  parameter type hpdcache_mem_id_t = hpdcache_equiv_pkg::hpdcache_mem_id_t,
+  parameter type hpdcache_mem_resp_r_t = hpdcache_equiv_pkg::hpdcache_mem_resp_r_t,
+  parameter type resp_t = hpdcache_mem_resp_r_t,
+  parameter type resp_id_t = hpdcache_mem_id_t,
   localparam int RT_DEPTH  = (1 << $bits(resp_id_t)),
   localparam type rt_t     = resp_id_t [RT_DEPTH-1:0]
 ) (

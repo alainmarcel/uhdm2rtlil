@@ -7,6 +7,8 @@
 
 module cva6_hpdcache_if_adapter_equiv
   import ariane_pkg::*;
+  import config_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config

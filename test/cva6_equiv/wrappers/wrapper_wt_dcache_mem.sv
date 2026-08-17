@@ -309,7 +309,7 @@ module wt_dcache_mem_equiv
 ,
 
   localparam NumPorts = 4,
-  parameter                        DCACHE_CL_IDX_WIDTH = 0,
+  parameter                        DCACHE_CL_IDX_WIDTH = $clog2(CVA6Cfg.DCACHE_NUM_WORDS),
   parameter type                   wbuffer_t = struct packed {
       logic [CVA6Cfg.DCACHE_TAG_WIDTH+(CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.XLEN_ALIGN_BYTES)-1:0] wtag;
       logic [CVA6Cfg.XLEN-1:0] data;

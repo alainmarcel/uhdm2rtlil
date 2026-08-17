@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_mux_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -308,12 +310,14 @@ module hpdcache_mux_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  //  Number of inputs
-      parameter  int unsigned NINPUT      = 0,
-  //  Width in bits of each input
-      parameter  int unsigned DATA_WIDTH  = 0,
   //  Selector signal is one-hot encoded
       parameter  bit          ONE_HOT_SEL = 0,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter type hpdcache_req_t = hpdcache_equiv_pkg::hpdcache_req_t,
+  //  Number of inputs
+      parameter  int unsigned NINPUT = HPDcacheCfg.u.nRequesters,
+  //  Width in bits of each input
+      parameter  int unsigned DATA_WIDTH = $bits(hpdcache_req_t),
   //  Compute the width of the selection signal
       localparam int unsigned NINPUT_LOG2 = $clog2(NINPUT),
   localparam int unsigned SEL_WIDTH   = ONE_HOT_SEL ? NINPUT : NINPUT_LOG2,

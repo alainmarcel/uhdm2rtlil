@@ -3,9 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_sram_wbyteenable_1rw_equiv
   import ariane_pkg::*;
+  import config_pkg::*;
+  import hpdcache_pkg::*;
 #(
 
     // CVA6 config
@@ -307,14 +310,15 @@ module hpdcache_sram_wbyteenable_1rw_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned ADDR_SIZE = 0,
-  parameter int unsigned DATA_SIZE = 0,
-  parameter int unsigned DEPTH = 2**ADDR_SIZE,
-  parameter int unsigned NDATA = 1,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
   parameter int unsigned HPDCACHE_DATA_RAM_ENTR_PER_SET = HPDcacheCfg.u.clWords/
                                                                HPDcacheCfg.u.accessWords,
+  parameter int unsigned DATA_SIZE = HPDcacheCfg.u.wordWidth,
+  parameter int unsigned NDATA = HPDcacheCfg.u.dataWaysPerRamWord,
   parameter int unsigned HPDCACHE_DATA_RAM_DEPTH = HPDcacheCfg.u.sets*
-                                                        HPDCACHE_DATA_RAM_ENTR_PER_SET
+                                                        HPDCACHE_DATA_RAM_ENTR_PER_SET,
+  parameter int unsigned ADDR_SIZE = $clog2(HPDCACHE_DATA_RAM_DEPTH),
+  parameter int unsigned DEPTH = 2**ADDR_SIZE
 ) (
 
     input  logic                              clk,

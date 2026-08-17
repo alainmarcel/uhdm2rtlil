@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_sram_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -308,11 +310,12 @@ module hpdcache_sram_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned ADDR_SIZE = 0,
   parameter int unsigned DATA_SIZE = 0,
-  parameter int unsigned DEPTH = 2**ADDR_SIZE,
   parameter int unsigned NDATA = 1,
-  parameter bit          ECC_EN = 1'b0
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter int unsigned ADDR_SIZE = $clog2(HPDcacheCfg.u.sets),
+  parameter int unsigned DEPTH = 2**ADDR_SIZE,
+  parameter bit          ECC_EN = HPDcacheCfg.u.eccEn
 ) (
 
     input  logic                            clk,

@@ -148,6 +148,17 @@ outcome:
 | `crash` | yosys itself died on the miter (SIGSEGV/SIGFPE) — a real problem, not a budget outcome. |
 | `elabfail` | The *wrapper* does not elaborate yet — a harness gap. |
 
+A degenerate parameter does not just weaken a proof, it can **hide a bug**.
+`wt_dcache_mem` ran with `DCACHE_CL_IDX_WIDTH = 0` and reported `timeout`;
+giving it the real `$clog2(CVA6Cfg.DCACHE_NUM_WORDS)` turned it into a
+counterexample, as it did for `wt_dcache_missunit` and `wt_dcache_wbuffer` once
+their dcache structs became real. Conversely `hpdcache_fifo_reg` and
+`hpdcache_sync_buffer` had been `proven` on a 1-bit `fifo_data_t`; with the real
+request struct they no longer fit their SAT budget. Both directions are the same
+lesson — a status measured against a degenerate configuration says little about
+the design that ships, so treat a parameter fix as invalidating the statuses
+around it.
+
 Not every `elabfail` is a harness gap we can close. Five modules use system
 tasks the reference frontend does not implement (`$random` in
 `ariane_regfile_fpga`; `$onehot0` in the cvxif example decoders and, via

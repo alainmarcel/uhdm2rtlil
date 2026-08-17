@@ -3,10 +3,12 @@
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
+`include "hpdcache_equiv_pkg.svh"
 
 module hpdcache_data_resize_equiv
   import ariane_pkg::*;
   import hpdcache_pkg::*;
+  import config_pkg::*;
 #(
 
     // CVA6 config
@@ -308,9 +310,10 @@ module hpdcache_data_resize_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int WR_WIDTH = 0,
-  parameter int RD_WIDTH = 0,
-  parameter int DEPTH    = 0,
+  parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  parameter int WR_WIDTH = HPDcacheCfg.accessWidth,
+  parameter int RD_WIDTH = HPDcacheCfg.u.memDataWidth,
+  parameter int DEPTH = HPDcacheCfg.u.flushFifoDepth,
   localparam type wdata_t = logic [WR_WIDTH-1:0],
   localparam type rdata_t = logic [RD_WIDTH-1:0]
 ) (

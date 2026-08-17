@@ -309,7 +309,8 @@ module compressed_instr_decoder_equiv
 ,
 
   parameter type                    copro_compressed_resp_t = cvxif_instr_pkg::copro_compressed_resp_t,
-  parameter int                     NbInstr = cvxif_instr_pkg::NbCompInstr
+  parameter int                     NbInstr = cvxif_instr_pkg::NbCompInstr,
+  parameter copro_compressed_resp_t CoproInstr             [NbInstr] = cvxif_instr_pkg::CoproCompInstr
 ) (
 
     input  logic               clk_i,
@@ -351,6 +352,7 @@ module compressed_instr_decoder_equiv
   compressed_instr_decoder #(
       .copro_compressed_resp_t(copro_compressed_resp_t),
       .NbInstr(NbInstr),
+      .CoproInstr(CoproInstr),
       .x_compressed_req_t(x_compressed_req_t),
       .x_compressed_resp_t(x_compressed_resp_t)
   ) dut (.*);
