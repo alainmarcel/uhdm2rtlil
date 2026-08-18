@@ -7542,13 +7542,25 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
     const UHDM::struct_typespec* st = nullptr;
     if (auto rt = param->Typespec())
         if (auto ats = rt->Actual_typespec()) {
+            const UHDM::typespec* et = nullptr;
             if (ats->UhdmType() == uhdmarray_typespec) {
                 auto arr = any_cast<const UHDM::array_typespec*>(ats);
                 if (arr->Elem_typespec())
-                    if (auto et = arr->Elem_typespec()->Actual_typespec())
-                        st = dynamic_cast<const UHDM::struct_typespec*>(et);
+                    et = arr->Elem_typespec()->Actual_typespec();
             } else {
-                st = dynamic_cast<const UHDM::struct_typespec*>(ats);
+                et = dynamic_cast<const UHDM::typespec*>(ats);
+            }
+            st = et ? dynamic_cast<const UHDM::struct_typespec*>(et) : nullptr;
+            // The element type can be a TYPE PARAMETER whose default has been
+            // erased to plain `logic` (`parameter type copro_issue_resp_t =
+            // logic`, bound at the instance to the package's struct).  The
+            // erased default has no members, so the field offsets cannot be
+            // computed from it -- resolve it to the type the instance actually
+            // binds.
+            if (!st && et) {
+                const UHDM::typespec* bound = resolve_type_param_typespec(et, inst);
+                if (bound && bound != et)
+                    st = dynamic_cast<const UHDM::struct_typespec*>(bound);
             }
         }
     if (!st || !st->Members())
