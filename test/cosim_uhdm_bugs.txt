@@ -173,3 +173,9 @@ arb_idx_cast
     rr_arb_tree's wrong idx_o and hence wt_dcache_mem's wr_ack_o
     counterexample.  Minimal repro + analysis of why the obvious fix regresses
     3-D packed selects: test/arb_idx_cast/README.md.
+
+latch_perf_counters
+    read_uhdm != read_slang (SAT counterexample on a 64-bit wdata_i write).
+    Present since the test was added in CVA6 latch triage round 2 and invisible
+    until the slang miters were wired into run_all_tests.sh.  read_verilog
+    cannot parse this design, so no other check covers it.  Untriaged.

@@ -132,6 +132,14 @@ EOF
   # yosys itself died (SIGSEGV / SIGFPE seen on some hpdcache modules).  That
   # is not a SAT budget outcome and should not hide behind `timeout`.
   elif [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ] && [ "$rc" -gt 128 ]; then got=crash
+  # A yosys ERROR exits with a small non-zero code -- not the timeout's own
+  # 124/137 and not a signal -- so it used to fall through to `timeout` and a
+  # module that had stopped IMPORTING looked like a SAT budget outcome.  That
+  # is how wt_dcache_mem appeared to improve from `cex` to `timeout` while it
+  # was in fact failing to build at all.  `timeout` must mean "SAT ran and
+  # found no model", nothing else.
+  elif [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ] && [ "$rc" -ne 0 ] &&
+       grep -qE "^ERROR:" miter.log; then                got=error
   else                                          got=timeout
   fi
   popd >/dev/null
@@ -152,6 +160,9 @@ EOF
     echo "BAD $mod $got $want" >> "$WORKROOT/.results"
   elif [ "$got" = crash ] && [ "$want" != crash ]; then
     printf "  ❌ %-34s yosys CRASHED (want=%s) — see %s\n" "$mod" "$want" "work/$mod/miter.log"
+    echo "BAD $mod $got $want" >> "$WORKROOT/.results"
+  elif [ "$got" = error ] && [ "$want" != error ]; then
+    printf "  ❌ %-34s yosys ERROR (want=%s) — see %s\n" "$mod" "$want" "work/$mod/miter.log"
     echo "BAD $mod $got $want" >> "$WORKROOT/.results"
   elif [ "$got" = elabfail ] && [ "$want" = proven ]; then
     printf "  ❌ %-34s no longer elaborates (want=proven) — see %s\n" "$mod" "work/$mod/miter.log"
