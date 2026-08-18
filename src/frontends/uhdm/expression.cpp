@@ -7693,18 +7693,45 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
         auto& pe_pa = *uhdm_hier->Path_elems();
         if (pe_pa[0]->UhdmType() == uhdmbit_select) {
+            // The LAST element may itself be a bit_select -- the field is a
+            // vector and a bit of it is taken
+            // (`CoproInstr[i].resp.register_read[2]`).  Treating that as "not a
+            // field chain" abandoned the whole access, which is what still
+            // fed `issue_ready_o` from a zero.
             std::vector<std::string> fields;
+            const bit_select* tail_sel = nullptr;
             for (size_t i = 1; i < pe_pa.size(); i++) {
-                if (pe_pa[i]->UhdmType() != uhdmref_obj) { fields.clear(); break; }
-                fields.push_back(
-                    std::string(any_cast<const ref_obj*>(pe_pa[i])->VpiName()));
+                if (pe_pa[i]->UhdmType() == uhdmref_obj) {
+                    fields.push_back(
+                        std::string(any_cast<const ref_obj*>(pe_pa[i])->VpiName()));
+                } else if (pe_pa[i]->UhdmType() == uhdmbit_select &&
+                           i + 1 == pe_pa.size()) {
+                    tail_sel = any_cast<const bit_select*>(pe_pa[i]);
+                    fields.push_back(std::string(tail_sel->VpiName()));
+                } else {
+                    fields.clear(); break;
+                }
             }
             if (!fields.empty()) {
                 RTLIL::SigSpec r = import_param_array_elem_field(
                     any_cast<const bit_select*>(pe_pa[0]), fields, inst,
                     input_mapping);
-                if (r.size() > 0)
-                    return r;
+                if (r.size() > 0) {
+                    if (!tail_sel)
+                        return r;
+                    RTLIL::SigSpec bi = tail_sel->VpiIndex()
+                        ? import_expression(tail_sel->VpiIndex(), input_mapping)
+                        : RTLIL::SigSpec();
+                    if (bi.size() > 0 && bi.is_fully_const()) {
+                        int b = bi.as_const().as_int();
+                        if (b >= 0 && b < r.size())
+                            return r.extract(b, 1);
+                    } else if (bi.size() > 0) {
+                        RTLIL::Wire* yw = module->addWire(NEW_ID, 1);
+                        module->addShiftx(NEW_ID, r, bi, yw, false);
+                        return RTLIL::SigSpec(yw);
+                    }
+                }
             }
         }
     }
