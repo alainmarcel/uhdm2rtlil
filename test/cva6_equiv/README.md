@@ -191,13 +191,25 @@ wrong trade: `read_uhdm` keeps the initial block, so the two sides disagree
 about initial memory content and the miter reports a counterexample that is
 purely an artefact of the flag.
 
-Not every `elabfail` is a harness gap we can close. Five modules use system
-tasks the reference frontend does not implement (`$random` in
-`ariane_regfile_fpga`; `$onehot0` in the cvxif example decoders and, via
-`hpdcache_rrarb`, the `hwpf_stride` pair), so there is no reference netlist to
-miter against. Two more (`control_mvp`, `preprocess_mvp`) declare their ports
-non-ANSI, which the port-list-copying wrapper cannot mirror. Those are marked
-with a comment in `cva6_modules.txt` rather than re-triaged each round.
+Three `elabfail` entries remain, each annotated in `cva6_modules.txt` with a
+reason rather than re-triaged each round:
+
+- `ariane_regfile_fpga` — a real gap in the reference frontend: Verilator
+  accepts the `$random` memory initialiser that slang rejects. It is also the
+  FPGA variant, which the shipped configuration does not instantiate.
+- `hpdcache_data_downsize` — dead at this configuration. `accessWidth ==
+  memDataWidth`, so `hpdcache_data_resize` instantiates neither resizer;
+  *both* binding directions trip the module's own `$fatal`.
+- `fpnew_divsqrt_multi` — ours: the fpnew `Implementation` chain is four levels
+  up and still unresolved, leaving `NUM_INP_REGS = 0` and an out-of-range
+  select that Verilator flags at the same line.
+
+`control_mvp` and `preprocess_mvp` were on this list as "non-ANSI ports". They
+were not. Neither module has a `#(` block, and the generator searched the whole
+file for `#(`, ran into the body, and lifted a later *instantiation's*
+parameter list — after which the port list it copied was that instance's
+connections. Verilator's "complex ports" complaint was about the generated
+wrapper, which is exactly where the bug was. Both now prove.
 
 Treat the non-`proven` entries as a shrink-only backlog: a module that starts
 proving should be promoted in the same commit, and a module that stops proving

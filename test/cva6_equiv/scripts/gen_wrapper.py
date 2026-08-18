@@ -65,11 +65,20 @@ def extract_param_block(text, modname):
     m = re.search(r"module\s+" + re.escape(modname) + r"\b", text)
     if not m: raise SystemExit(f"module {modname} not found")
     mask = code_mask(text)
+    # A module without a parameter block must not borrow one: searching the
+    # whole file for `#(` ran into the BODY and picked up a later
+    # instantiation's parameter list, after which the "port list" scanned from
+    # there was really that instance's connections (control_mvp,
+    # preprocess_mvp).  The parameter block, if any, comes before the port
+    # list's `(`.
+    port_open = m.end()
+    while port_open < len(text) and not (text[port_open] == "(" and mask[port_open]):
+        port_open += 1
     # allow 'import pkg::*;' and comments between the name and #(
     i = m.end()
     while True:
         i = text.find("#(", i)
-        if i < 0: return "", m.end()
+        if i < 0 or i > port_open: return "", m.end()
         if mask[i]: break
         i += 2
     j = match_close(text, i + 1, mask)
