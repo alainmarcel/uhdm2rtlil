@@ -39,7 +39,7 @@ if not (os.path.exists("adj_gold.v") and os.path.exists("adj_gate.v")):
     open("adj.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; setundef -undriven -zero
+flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 rename {TOP} gold_{TOP}
@@ -47,7 +47,7 @@ write_verilog -noattr adj_gold.v
 design -reset
 read_slang --ignore-assertions -f {FLIST} {WRAP} --top {TOP}
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; setundef -undriven -zero
+flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 rename {TOP} gate_{TOP}

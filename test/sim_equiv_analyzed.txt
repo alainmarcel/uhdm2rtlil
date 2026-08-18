@@ -682,3 +682,17 @@ Test: latch_packed_dyn_write
     design produces.  Kept as a note: out-of-range dynamic packed-element
     part-select writes are implementation-divergent territory — keep
     repro stimulus in range.
+
+Test: arb_idx_cast
+    A REAL UHDM bug, checked in deliberately as a reproducer (also listed in
+    failing_tests.txt and cosim_uhdm_bugs.txt).  A bit- or part-select of an
+    ELEMENT of a packed array whose element type is a TYPE PARAMETER drops the
+    second index and folds to a constant: for `idx_t [3:0] nodes`, `nodes[2]`
+    reads correctly but `nodes[2][0]` yields 1'h0 and `{1'b1, nodes[2][0:0]}`
+    yields 2'h3.  The wire carries correct packed_elem_width/packed_outer_*
+    attributes, so only the second index is lost.  This is what makes
+    rr_arb_tree's idx_o report the wrong port and gates wt_dcache_mem's
+    wr_ack_o incorrectly.  See arb_idx_cast/README.md for why resolving it
+    from those attributes is not a safe fix (it steals 3-D packed selects such
+    as tc_sram's `data_t [NumPorts-1:0][Latency-1:0] rdata_q`, whose second
+    index selects a whole sub-element, and wt_dcache_mem then fails to import).

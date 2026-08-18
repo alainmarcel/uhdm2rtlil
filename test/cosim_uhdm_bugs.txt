@@ -166,3 +166,10 @@
 #   2*32.  The UHDM frontend never even sees the func_call (verified by probing
 #   import_expression: only the pre-folded 2-bit constant arrives).  Fix belongs
 #   in Surelog`s function-return const-evaluation; deferred (Surelog change).
+
+arb_idx_cast
+    Bit/part-select of an element of a packed array with a TYPE-PARAMETER
+    element type drops the second index (folds to a constant).  Root cause of
+    rr_arb_tree's wrong idx_o and hence wt_dcache_mem's wr_ack_o
+    counterexample.  Minimal repro + analysis of why the obvious fix regresses
+    3-D packed selects: test/arb_idx_cast/README.md.
