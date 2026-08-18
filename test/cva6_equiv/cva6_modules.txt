@@ -34,7 +34,7 @@ alu                                    4   900   proven
 alu_wrapper                            4   900   proven
 amo_alu                                4   180   timeout
 amo_buffer                             4   900   proven
-ariane_regfile_fpga                    4   400   elabfail  # slang: no $random
+ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random in initial (Verilator ACCEPTS this source)
 axi_adapter                            4   180   crash
 axi_shim                               4   400   timeout
 bht                                    4   900   proven
@@ -44,8 +44,8 @@ btb                                    4   900   proven
 cache_ctrl                             4   180   cex
 commit_stage                           4   900   proven
 compressed_decoder                     4   900   proven
-compressed_instr_decoder               4   400   elabfail  # slang: no $onehot0
-control_mvp                            4   400   elabfail  # non-ANSI port list
+compressed_instr_decoder               4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
+control_mvp                            4   400   elabfail  # non-ANSI ports; Verilator rejects the generated wrapper too
 controller                             4   900   proven
 copro_alu                              4   400   proven
 csr_buffer                             4   900   proven
@@ -58,13 +58,13 @@ cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
 cva6_hpdcache_wrapper                  4   180   crash
 cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   400   timeout
-cva6_mmu                               4   180   timeout
+cva6_mmu                               4   180   proven
 cva6_ptw                               1   900   proven
 cva6_rvfi_probes                       4   180   cex
 cva6_shared_tlb                        4   900   proven
 cva6_tlb                               4   900   proven
 cvxif_compressed_if_driver             4   900   proven
-cvxif_example_coprocessor              4   400   elabfail  # slang: no $onehot0
+cvxif_example_coprocessor              4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
 cvxif_fu                               4   900   proven
 cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
@@ -72,7 +72,7 @@ div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
 fpnew_cast_multi                       4   180   timeout
 fpnew_classifier                       4   180   cex
-fpnew_divsqrt_multi                    4   400   elabfail  # harness: needs fpnew Implementation resolved 4 levels up
+fpnew_divsqrt_multi                    4   400   elabfail  # harness: NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
 fpnew_divsqrt_th_32                    4   180   cex
 fpnew_divsqrt_th_64_multi              4   900   proven
 fpnew_fma                              4   180   cex
@@ -89,11 +89,11 @@ hpdcache                               4   180   crash
 hpdcache_1hot_to_binary                4   180   crash
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   cex
-hpdcache_cmo                           4   400   elabfail  # slang: no $onehot
+hpdcache_cmo                           4   400   timeout
 hpdcache_core_arbiter                  4   180   timeout
 hpdcache_ctrl                          4   180   crash
 hpdcache_ctrl_pe                       4   180   cex
-hpdcache_data_downsize                 4   400   elabfail  # harness: not instantiated at this config (its own $fatal: RD>=WR)
+hpdcache_data_downsize                 4   400   elabfail  # not instantiated at this config (own $fatal; Verilator: USERFATAL)
 hpdcache_data_resize                   4   180   timeout
 hpdcache_data_upsize                   4   180   crash
 hpdcache_decoder                       4   180   crash
@@ -104,7 +104,7 @@ hpdcache_flush                         4   180   crash
 hpdcache_fxarb                         4   180   timeout
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   crash
-hpdcache_mem_req_write_arbiter         4   180   elabfail  # slang: no $onehot0
+hpdcache_mem_req_write_arbiter         4   180   timeout
 hpdcache_mem_resp_demux                4   180   timeout
 hpdcache_mem_to_axi_read               4   400   timeout
 hpdcache_mem_to_axi_write              4   400   timeout
@@ -125,16 +125,16 @@ hpdcache_sram_wbyteenable_1rw          4   400   timeout  # harness: zero-width 
 hpdcache_sram_wmask                    4   180   timeout
 hpdcache_sram_wmask_1rw                4   180   timeout
 hpdcache_sync_buffer                   4   900   timeout  # was proven on a 1-bit data type; now the real one
-hpdcache_uncached                      4   400   elabfail  # slang: unsupported SVA feature
+hpdcache_uncached                      4   400   timeout
 hpdcache_victim_plru                   4   180   timeout
 hpdcache_victim_random                 4   180   crash
 hpdcache_victim_sel                    4   180   timeout
 hpdcache_wbuf                          4   180   crash
 hwpf_stride                            4   400   timeout
-hwpf_stride_arb                        4   400   elabfail  # slang: no $onehot0
-hwpf_stride_wrapper                    4   400   elabfail  # slang: no $onehot0
+hwpf_stride_arb                        4   400   timeout
+hwpf_stride_wrapper                    4   400   timeout
 id_stage                               4   180   cex
-instr_decoder                          4   400   elabfail  # slang: no $onehot0
+instr_decoder                          4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
@@ -151,11 +151,11 @@ multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   900   proven
 nrbd_nrsc_mvp                          4   900   proven
 perf_counters                          4   900   proven
-pmp                                    4   180   timeout
+pmp                                    4   180   proven
 pmp_data_if                            4   180   cex
 pmp_entry                              4   900   proven
 popcount                               4   900   proven
-preprocess_mvp                         4   400   elabfail  # non-ANSI port list
+preprocess_mvp                         4   400   elabfail  # non-ANSI ports; Verilator rejects the generated wrapper too
 ras                                    4   900   proven
 raw_checker                            4   900   proven
 scoreboard                             4   180   timeout

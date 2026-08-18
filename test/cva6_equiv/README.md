@@ -159,6 +159,38 @@ lesson — a status measured against a degenerate configuration says little abou
 the design that ships, so treat a parameter fix as invalidating the statuses
 around it.
 
+### Assertions, and not blaming the reference frontend
+
+Nine modules used to report `unsupported system task '$onehot0'` (or `$onehot`,
+or an SVA feature) and were written off as reference-frontend limitations. They
+were not. Those calls live inside `assert property`, and the reason a full CVA6
+read never trips over them is that the shipped configuration does not
+instantiate those modules at all — CVXIF is disabled, the FPGA regfile is
+unused, hpdcache is not the default cache. Only this per-module flow forces
+them to elaborate.
+
+Assertions are not hardware and this flow compares hardware, so the miter drops
+them — **on both sides**. `read_slang` takes `--ignore-assertions`; `read_uhdm`
+turns the same assertions into `$check` cells, so gold deletes
+`$check`/`$assert`/`$assume`/`$print` too. Doing it on one side only would also
+leave `sat -prove-asserts` proving the *design's own* assertions, where a
+failing design assertion would masquerade as a counterexample.
+
+When a module still will not elaborate, adjudicate with **Verilator** before
+calling it a reference-frontend bug — the same rule this suite already applies
+to counterexamples. Doing that here found exactly one genuine gap
+(`ariane_regfile_fpga`: Verilator accepts the `$random` initialiser that slang
+rejects) and confirmed the rest as real: Verilator flags
+`fpnew_divsqrt_multi`'s out-of-range select at the same line, reports
+`hpdcache_data_downsize`'s own `$fatal`, and rejects the non-ANSI port lists in
+`control_mvp`/`preprocess_mvp` — pointing at the generated wrapper, which is
+what actually needs fixing.
+
+`--ignore-initial` would make `ariane_regfile_fpga` elaborate, and it is the
+wrong trade: `read_uhdm` keeps the initial block, so the two sides disagree
+about initial memory content and the miter reports a counterexample that is
+purely an artefact of the flag.
+
 Not every `elabfail` is a harness gap we can close. Five modules use system
 tasks the reference frontend does not implement (`$random` in
 `ariane_regfile_fpga`; `$onehot0` in the cvxif example decoders and, via

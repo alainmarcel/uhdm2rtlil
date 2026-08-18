@@ -92,15 +92,28 @@ run_one() {
     echo "SKIP $mod" >> "$WORKROOT/.results"; popd >/dev/null; return 0
   fi
 
+  # Assertions are not hardware, and this flow compares hardware.  Both sides
+  # must drop them, symmetrically:
+  #   - read_slang REFUSES to elaborate `assert property ($onehot0(sel))` at
+  #     all ("unsupported system task"), which looked like a slang limitation
+  #     but is just this flow forcing elaboration of modules the shipped CVA6
+  #     config never instantiates (CVXIF, the FPGA regfile, hpdcache).
+  #   - read_uhdm turns the same assertions into `\$check` cells, so leaving
+  #     them in gold would ALSO make `sat -prove-asserts` try to prove the
+  #     design's own assertions rather than just the miter's equivalence
+  #     asserts -- a failed design assertion would masquerade as a
+  #     counterexample.
   cat > miter.ys <<EOF
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $top
 flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gold
 design -stash gold
-read_slang -f $FLIST $wrap --top $top
+read_slang --ignore-assertions -f $FLIST $wrap --top $top
 hierarchy -check -top $top
 flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gate
 design -stash gate
 design -copy-from gold -as gold gold
