@@ -7443,6 +7443,193 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
 }
 
 // Import hierarchical path (e.g., bus.a, interface.signal)
+// `PARAM[idx].field` for a parameter that is an unpacked array of structs.
+//
+// Surelog keeps such a parameter's value in the enclosing scope's param_assign
+// (an assignment pattern of assignment patterns), not in VpiValue/Expr, and the
+// element is a struct rather than a plain vector -- so neither the wire-based
+// element/field paths nor the scalar parameter path applies.  Evaluate the
+// whole array to one constant, then cut the requested field out of the
+// requested element.  A non-constant index selects between the per-element
+// field slices.
+RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
+        const bit_select* bs, const std::vector<std::string>& fields,
+        const scope* inst,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping,
+        const RTLIL::SigSpec* idx_in) {
+    if (!bs || fields.empty())
+        return RTLIL::SigSpec();
+    const UHDM::any* actual = bs->Actual_group();
+    auto param = actual ? dynamic_cast<const UHDM::parameter*>(actual) : nullptr;
+    if (!param)
+        return RTLIL::SigSpec();
+
+    // The initialiser: Expr() when Surelog put it there, otherwise the
+    // param_assign the enclosing package/module holds for this name.
+    const UHDM::expr* rhs = dynamic_cast<const UHDM::expr*>(param->Expr());
+    if (!rhs) {
+        std::string pname = std::string(param->VpiName());
+        const UHDM::any* parent = param->VpiParent();
+        if (parent && parent->UhdmType() == uhdmparam_assign) {
+            if (auto pa = any_cast<const UHDM::param_assign*>(parent))
+                rhs = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+        } else if (auto sc = dynamic_cast<const UHDM::instance*>(parent)) {
+            if (sc->Param_assigns())
+                for (auto pa : *sc->Param_assigns())
+                    if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == pname)
+                        rhs = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+        }
+    }
+    if (!rhs)
+        return RTLIL::SigSpec();
+
+    // The initialiser may just NAME another parameter -- a wrapper writes
+    // `parameter copro_issue_resp_t CoproInstr[NbInstr] =
+    // cvxif_instr_pkg::CoproInstr`, and the array literal lives on the package
+    // parameter.  Follow the reference to the declaration that actually holds
+    // the pattern.
+    for (int hop = 0; hop < 4 && rhs && rhs->UhdmType() == uhdmref_obj; hop++) {
+        auto r = any_cast<const UHDM::ref_obj*>(rhs);
+        auto rp = r ? dynamic_cast<const UHDM::parameter*>(r->Actual_group())
+                    : nullptr;
+        if (!rp) break;
+        const UHDM::expr* nxt = dynamic_cast<const UHDM::expr*>(rp->Expr());
+        if (!nxt) {
+            std::string rn = std::string(rp->VpiName());
+            const UHDM::any* rpar = rp->VpiParent();
+            if (rpar && rpar->UhdmType() == uhdmparam_assign) {
+                if (auto pa = any_cast<const UHDM::param_assign*>(rpar))
+                    nxt = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+            } else if (auto rsc = dynamic_cast<const UHDM::instance*>(rpar)) {
+                if (rsc->Param_assigns())
+                    for (auto pa : *rsc->Param_assigns())
+                        if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == rn)
+                            nxt = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+            }
+        }
+        if (!nxt) break;
+        rhs = nxt;
+        param = rp;   // widths/typespec come from the declaration we landed on
+    }
+
+    // How many elements: the initialiser's own operand count is the most
+    // reliable source -- the parameter's range can be written in terms of
+    // another parameter (`[NbInstr]`).
+    int nelem = 0;
+    if (rhs->UhdmType() == uhdmoperation)
+        if (auto ops = any_cast<const UHDM::operation*>(rhs)->Operands())
+            nelem = (int)ops->size();
+    if (nelem <= 0)
+        return RTLIL::SigSpec();
+
+    // Import the array literal at its NATURAL width.  The ambient context
+    // width belongs to the field being read (1 bit for `.accept`, 8 for
+    // `.tag`), and letting it size the whole-array pattern truncates it -- the
+    // element width then comes out as 1 or 2 bits and the read is nonsense.
+    bool saved_fcf = force_const_fold;
+    int saved_ctx = expression_context_width;
+    force_const_fold = true;
+    expression_context_width = 0;
+    RTLIL::SigSpec all = import_expression(rhs, input_mapping);
+    expression_context_width = saved_ctx;
+    force_const_fold = saved_fcf;
+    if (all.size() <= 0 || all.size() % nelem != 0)
+        return RTLIL::SigSpec();
+    int elem_w = all.size() / nelem;
+
+    // Field offset within the element struct, counting from the LSB (members
+    // are declared MSB-first).
+    const UHDM::struct_typespec* st = nullptr;
+    if (auto rt = param->Typespec())
+        if (auto ats = rt->Actual_typespec()) {
+            if (ats->UhdmType() == uhdmarray_typespec) {
+                auto arr = any_cast<const UHDM::array_typespec*>(ats);
+                if (arr->Elem_typespec())
+                    if (auto et = arr->Elem_typespec()->Actual_typespec())
+                        st = dynamic_cast<const UHDM::struct_typespec*>(et);
+            } else {
+                st = dynamic_cast<const UHDM::struct_typespec*>(ats);
+            }
+        }
+    if (!st || !st->Members())
+        return RTLIL::SigSpec();
+
+    // Walk the whole field chain, not just one level: the decoder reads
+    // `CoproInstr[i].resp.accept`, so stopping after `resp` leaves the access
+    // unresolved and the value falls back to zero.
+    int field_offset = 0, field_width = 0;
+    for (size_t f = 0; f < fields.size(); f++) {
+        if (!st || !st->Members())
+            return RTLIL::SigSpec();
+        int off = 0, w = 0;
+        bool found = false;
+        const UHDM::struct_typespec* next = nullptr;
+        for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+            auto m = (*st->Members())[i];
+            const UHDM::any* mats = nullptr;
+            int mw = 0;
+            if (auto mts = m->Typespec())
+                if ((mats = mts->Actual_typespec()))
+                    mw = get_width_from_typespec(mats, inst);
+            if (std::string(m->VpiName()) == fields[f]) {
+                w = mw; found = true;
+                next = mats ? dynamic_cast<const UHDM::struct_typespec*>(mats)
+                            : nullptr;
+                break;
+            }
+            off += mw;
+        }
+        if (!found || w <= 0)
+            return RTLIL::SigSpec();
+        field_offset += off;
+        field_width = w;
+        st = next;
+    }
+    if (field_width <= 0 || field_offset + field_width > elem_w)
+        return RTLIL::SigSpec();
+
+    // The assignment pattern is concatenated with element 0 FIRST, and a
+    // Verilog concatenation puts its first operand in the HIGH bits -- so
+    // element 0 lives at the top of the flattened value, not the bottom.
+    // Indexing from the bottom silently reverses the array: the decoder table
+    // still matched, but against the wrong entries.
+    auto slice_of = [&](int idx) {
+        return all.extract((nelem - 1 - idx) * elem_w + field_offset, field_width);
+    };
+
+    RTLIL::SigSpec idx_sig;
+    if (idx_in)
+        idx_sig = *idx_in;      // caller already evaluated it (loop unrolling)
+    else if (bs->VpiIndex())
+        idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+    if (idx_sig.size() > 0 && idx_sig.is_fully_const()) {
+        int idx = idx_sig.as_const().as_int();
+        if (idx < 0 || idx >= nelem)
+            return RTLIL::SigSpec();
+        if (mode_debug)
+            log("    param array elem field: %s[%d].%s -> %d bits\n",
+                std::string(param->VpiName()).c_str(), idx,
+                fields.back().c_str(), field_width);
+        return slice_of(idx);
+    }
+    if (idx_sig.size() == 0)
+        return RTLIL::SigSpec();
+
+    // Runtime index: mux the per-element field slices.  Built as a chain so the
+    // out-of-range index yields the same 'x' a select would.
+    RTLIL::SigSpec result = RTLIL::SigSpec(RTLIL::State::Sx, field_width);
+    for (int idx = nelem - 1; idx >= 0; idx--) {
+        RTLIL::SigSpec eq = module->Eq(NEW_ID, idx_sig,
+                                       RTLIL::Const(idx, idx_sig.size()));
+        result = module->Mux(NEW_ID, result, slice_of(idx), eq);
+    }
+    if (mode_debug)
+        log("    param array elem field: %s[<dyn>].%s -> %d-bit mux of %d\n",
+            std::string(param->VpiName()).c_str(), fields.back().c_str(),
+            field_width, nelem);
+    return result;
+}
+
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing hier_path\n");
@@ -7484,6 +7671,32 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 path_name.c_str(), fs.size());
         return fs;
     }
+
+    // `TBL[i].field` where TBL is a PARAMETER that is an unpacked array of a
+    // struct type (cvxif's `parameter copro_issue_resp_t CoproInstr[NbInstr]`).
+    // There is no wire to select from: the whole array is a constant, and the
+    // value lives in the enclosing scope's param_assign rather than in the
+    // parameter's VpiValue/Expr.  Without this the read produced X, which after
+    // synthesis reads as the field simply being zero.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        auto& pe_pa = *uhdm_hier->Path_elems();
+        if (pe_pa[0]->UhdmType() == uhdmbit_select) {
+            std::vector<std::string> fields;
+            for (size_t i = 1; i < pe_pa.size(); i++) {
+                if (pe_pa[i]->UhdmType() != uhdmref_obj) { fields.clear(); break; }
+                fields.push_back(
+                    std::string(any_cast<const ref_obj*>(pe_pa[i])->VpiName()));
+            }
+            if (!fields.empty()) {
+                RTLIL::SigSpec r = import_param_array_elem_field(
+                    any_cast<const bit_select*>(pe_pa[0]), fields, inst,
+                    input_mapping);
+                if (r.size() > 0)
+                    return r;
+            }
+        }
+    }
+
 
     // Nested interface struct-parameter field: `s.CFG.BUS.DAT` where `s` is a
     // modport port and `CFG` is a (nested struct) parameter on the connected
