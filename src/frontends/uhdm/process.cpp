@@ -11344,6 +11344,30 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 // then fall back to the base typespec.  A scalar bit-array
                 // (`reg q[N]` / `reg [N-1:0] q`) resolves to elem_w=1, low=0 →
                 // the original per-bit behaviour.
+                // An UNPACKED array (`logic [63:0] q[4:1]`) is expanded into
+                // per-element wires, and the flat `\q` alongside them exists
+                // only because something reads the array as a whole.  The
+                // typespec walk below only understands PACKED shapes, so an
+                // unpacked element write fell through with elem_w = 1 and
+                // wrote BIT idx of the flat wire -- every element then held the
+                // same value (latch_perf_counters, via CVA6 perf_counters'
+                // `generic_counter_q[MHPMCounterNum:1]`).  When the element
+                // wire exists, write it directly.
+                {
+                    int uw_low = expanded_array_low(bs_name);
+                    if (uw_low >= 0 && idx_sig.size() > 0 && idx_sig.is_fully_const()) {
+                        std::string en = bs_name + "[" +
+                            std::to_string(idx_sig.as_const().as_int()) + "]";
+                        if (RTLIL::Wire* ew = module->wire(RTLIL::escape_id(en))) {
+                            RTLIL::SigSpec rhs_e;
+                            if (auto rhs_any = uhdm_assign->Rhs())
+                                if (auto re = dynamic_cast<const expr*>(rhs_any))
+                                    rhs_e = import_expression(re, comb_read_map());
+                            emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
+                            return;
+                        }
+                    }
+                }
                 int elem_w = 1, arr_low = 0;
                 if (w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
                     elem_w = w->attributes.at(
