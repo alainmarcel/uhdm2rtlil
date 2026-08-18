@@ -248,6 +248,27 @@ When a module reports `cex`, these turn the counterexample into a diagnosis:
 - `scripts/triage_module.py <mod>` — combinational evaluation of a
   counterexample (blind to sequential state).
 
+- `scripts/adjudicate.py <mod> [cycles] [seed]` — the one that answers *which
+  side is wrong*. It runs three instances under identical stimulus — the
+  behavioural RTL, the `read_uhdm` netlist and the `read_slang` netlist — and
+  compares each netlist **against the RTL**, printing the first output that
+  diverges on each side and a verdict (`UHDM_WRONG` / `SLANG_WRONG` /
+  `BOTH_DIFFER` / `NO_DIVERGENCE`).
+
+  Verilator runs it; `ADJ_TOOL=iverilog` forces the 4-state simulator. Note
+  that iverilog **cannot parse the CVA6 flist at all** (`inside` expressions in
+  `hpdcache_pkg`), so on this design Verilator is the practical reference and
+  the fallback only helps for narrower cases.
+
+  Two traps this hit, both of which produce confident nonsense:
+  driving the inputs in the same statement sequence that toggles the clock
+  races the three instances and reports ~40% divergence *on both sides*; and
+  `write_verilog` emits `$bwmux` as a bare module reference, which stops both
+  simulators until it is `simplemap`ed away.
+
+  A quiet run proves little: `instr_decoder` and `wt_dcache_missunit` looked
+  clean for 500 cycles and diverged at cycle 163 and 524 of a longer run.
+
 One hard-won rule: **the miter says the two frontends differ, not which one is
 wrong.** Before changing the UHDM frontend, adjudicate the disputed vectors
 against an independent simulator — instantiate the UHDM netlist next to the

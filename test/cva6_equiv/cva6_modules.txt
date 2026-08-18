@@ -44,7 +44,7 @@ btb                                    4   900   proven
 cache_ctrl                             4   180   cex
 commit_stage                           4   900   proven
 compressed_decoder                     4   900   proven
-compressed_instr_decoder               4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
+compressed_instr_decoder               4   400   cex      # UHDM WRONG (adjudicated): c17 compressed_resp_o low bits zeroed by uhdm
 control_mvp                            4   400   proven
 controller                             4   900   proven
 copro_alu                              4   400   proven
@@ -64,7 +64,7 @@ cva6_rvfi_probes                       4   180   cex
 cva6_shared_tlb                        4   900   proven
 cva6_tlb                               4   900   proven
 cvxif_compressed_if_driver             4   900   proven
-cvxif_example_coprocessor              4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
+cvxif_example_coprocessor              4   400   cex      # UHDM WRONG (adjudicated): c20 cvxif_resp_o field zeroed by uhdm
 cvxif_fu                               4   900   proven
 cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
@@ -134,7 +134,7 @@ hwpf_stride                            4   400   timeout
 hwpf_stride_arb                        4   400   timeout
 hwpf_stride_wrapper                    4   400   timeout
 id_stage                               4   180   cex
-instr_decoder                          4   400   cex      # cex exposed once assertions stopped blocking elaboration - TRIAGE
+instr_decoder                          4   400   cex      # UHDM WRONG (adjudicated): c163 issue_resp_o/registers_o uhdm=0, slang==rtl
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
@@ -170,7 +170,7 @@ wt_axi_adapter                         4   400   timeout
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   crash
-wt_dcache_mem                          4   180   cex      # cex exposed once DCACHE_CL_IDX_WIDTH stopped being 0 - TRIAGE
-wt_dcache_missunit                     4   400   cex      # cex exposed by real dcache struct types - TRIAGE
-wt_dcache_wbuffer                      4   180   cex      # cex exposed by real dcache struct types - TRIAGE
+wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudicated): wr_ack_o rtl=0 uhdm=1 slang=0, seeds 1/2/3
+wt_dcache_missunit                     4   400   cex      # UHDM WRONG (adjudicated): c524 wr_cl_vld_o rtl=1 uhdm=0 slang=1
+wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0
 zcmt_decoder                           4   180   cex
