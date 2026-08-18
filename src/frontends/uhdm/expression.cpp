@@ -3707,9 +3707,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 if (tw <= 0) tw = expression_context_width;
+                RTLIL::SigSpec defval = import_expression(
+                    any_cast<const expr*>(deftp->Pattern()), input_mapping);
+                // In a PROCEDURAL assignment the pattern carries no typespec,
+                // so the element width above stays 1 and the value is
+                // replicated BIT-wise -- `'{default: rd_idx_i[sel]}` on a
+                // `logic [3:0][7:0]` filled all 32 bits with bit 0 of the
+                // 8-bit value (wt_dcache_mem's bank_idx).  When the fill value
+                // is a NON-CONSTANT expression narrower than the target and
+                // dividing it evenly, it is already element-typed, so take its
+                // width as the element width.  Constant fills (`'{default: 0}`,
+                // `'{default: 1}`) keep the bitwise semantics they need.
+                if (ew == 1 && !defval.is_fully_const() && defval.size() > 1 &&
+                    tw > defval.size() && tw % defval.size() == 0)
+                    ew = defval.size();
                 if (tw > 0 && ew > 0 && tw % ew == 0) {
-                    RTLIL::SigSpec defval = import_expression(
-                        any_cast<const expr*>(deftp->Pattern()), input_mapping);
                     if (defval.size() < ew) defval.extend_u0(ew);
                     else if (defval.size() > ew) defval = defval.extract(0, ew);
                     RTLIL::SigSpec result;
