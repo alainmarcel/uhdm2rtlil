@@ -309,10 +309,37 @@ module preprocess_mvp_equiv
 
 ) (
 
-    .in_i    ( Mant_a_D          ),
-    .cnt_o   ( Mant_leadingOne_a ),
-    .empty_o ( Mant_zero_S_a     )
-  
+   input logic                   Clk_CI,
+   input logic                   Rst_RBI,
+   input logic                   Div_start_SI,
+   input logic                   Sqrt_start_SI,
+   input logic                   Ready_SI,
+   //Input Operands
+   input logic [C_OP_FP64-1:0]   Operand_a_DI,
+   input logic [C_OP_FP64-1:0]   Operand_b_DI,
+   input logic [C_RM-1:0]        RM_SI,    //Rounding Mode
+   input logic [C_FS-1:0]        Format_sel_SI,  // Format Selection
+
+   // to control
+   output logic                  Start_SO,
+   output logic [C_EXP_FP64:0]   Exp_a_DO_norm,
+   output logic [C_EXP_FP64:0]   Exp_b_DO_norm,
+   output logic [C_MANT_FP64:0]  Mant_a_DO_norm,
+   output logic [C_MANT_FP64:0]  Mant_b_DO_norm,
+
+   output logic [C_RM-1:0]       RM_dly_SO,
+
+   output logic                  Sign_z_DO,
+   output logic                  Inf_a_SO,
+   output logic                  Inf_b_SO,
+   output logic                  Zero_a_SO,
+   output logic                  Zero_b_SO,
+   output logic                  NaN_a_SO,
+   output logic                  NaN_b_SO,
+   output logic                  SNaN_SO,
+   output logic                  Special_case_SBO,
+   output logic                  Special_case_dly_SBO
+   
 );
 
   localparam type interrupts_t = struct packed {

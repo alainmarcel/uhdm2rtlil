@@ -308,17 +308,43 @@ module control_mvp_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 
 ) (
+//Input
+   input logic                                        Clk_CI,
+   input logic                                        Rst_RBI,
+   input logic                                        Div_start_SI ,
+   input logic                                        Sqrt_start_SI,
+   input logic                                        Start_SI,
+   input logic                                        Kill_SI,
+   input logic                                        Special_case_SBI,
+   input logic                                        Special_case_dly_SBI,
+   input logic [C_PC-1:0]                             Precision_ctl_SI,
+   input logic [1:0]                                  Format_sel_SI,
+   input logic [C_MANT_FP64:0]                        Numerator_DI,
+   input logic [C_EXP_FP64:0]                         Exp_num_DI,
+   input logic [C_MANT_FP64:0]                        Denominator_DI,
+   input logic [C_EXP_FP64:0]                         Exp_den_DI,
 
-          .A_DI                                    (Iteration_cell_a_D[i]            ),
-          .B_DI                                    (Iteration_cell_b_D[i]            ),
-          .Div_enable_SI                           (Div_enable_SI[i]                 ),
-          .Div_start_dly_SI                        (Div_start_dly_SI[i]              ),
-          .Sqrt_enable_SI                          (Sqrt_enable_SI[i]                ),
-          .D_DI                                    (Sqrt_DI[i]                       ),
-          .D_DO                                    (Sqrt_DO[i]                       ),
-          .Sum_DO                                  (Iteration_cell_sum_D[i]          ),
-          .Carry_out_DO                            (Iteration_cell_carry_D[i]        )
-         
+
+   output logic                                       Div_start_dly_SO ,
+   output logic                                       Sqrt_start_dly_SO,
+   output logic                                       Div_enable_SO,
+   output logic                                       Sqrt_enable_SO,
+
+
+   //To next stage
+   output logic                                       Full_precision_SO,
+   output logic                                       FP32_SO,
+   output logic                                       FP64_SO,
+   output logic                                       FP16_SO,
+   output logic                                       FP16ALT_SO,
+
+   output logic                                       Ready_SO,
+   output logic                                       Done_SO,
+
+   output logic [C_MANT_FP64+4:0]                     Mant_result_prenorm_DO,
+ //  output logic [3:0]                                 Round_bit_DO,
+   output logic [C_EXP_FP64+1:0]                      Exp_result_prenorm_DO
+ 
 );
 
   localparam type interrupts_t = struct packed {
