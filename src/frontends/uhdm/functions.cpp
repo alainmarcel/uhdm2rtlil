@@ -1065,6 +1065,33 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         // (RISC-V decoder immediate functions).  Extract the member bits from
         // the base struct constant using the base variable's struct typespec.
         const hier_path* hp = any_cast<const hier_path*>(operand);
+        // `CoproInstr[i].resp.accept`: an element of a PARAMETER that is an
+        // unpacked array of structs, read while this loop is being unrolled.
+        // The base is not a local variable, so the struct-member path below
+        // does not apply and the read used to fall through as zero -- which is
+        // how the cvxif decoders silently decoded every instruction as "not
+        // mine".  The index is a loop variable, already known here, so hand it
+        // to the shared resolver rather than re-importing it.
+        if (hp && hp->Path_elems() && hp->Path_elems()->size() >= 2 &&
+            (*hp->Path_elems())[0]->UhdmType() == uhdmbit_select) {
+            auto& pe0 = *hp->Path_elems();
+            std::vector<std::string> fields;
+            for (size_t i = 1; i < pe0.size(); i++) {
+                if (pe0[i]->UhdmType() != uhdmref_obj) { fields.clear(); break; }
+                fields.push_back(std::string(pe0[i]->VpiName()));
+            }
+            const bit_select* pbs = any_cast<const bit_select*>(pe0[0]);
+            if (!fields.empty() && pbs && pbs->VpiIndex()) {
+                RTLIL::Const iv = evaluate_single_operand(pbs->VpiIndex(), local_vars);
+                if (iv.size() > 0) {
+                    RTLIL::SigSpec idx(iv);
+                    RTLIL::SigSpec r = import_param_array_elem_field(
+                        pbs, fields, nullptr, nullptr, &idx);
+                    if (r.size() > 0 && r.is_fully_const())
+                        return r.as_const();
+                }
+            }
+        }
         if (hp && hp->Path_elems() && hp->Path_elems()->size() >= 2) {
             auto& pe = *hp->Path_elems();
             std::string base = std::string(pe[0]->VpiName());

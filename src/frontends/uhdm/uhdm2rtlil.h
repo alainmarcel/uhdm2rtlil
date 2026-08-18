@@ -900,6 +900,13 @@ struct UhdmImporter {
     RTLIL::SigSpec import_indexed_part_select(const UHDM::indexed_part_select* uhdm_indexed, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
+    // `PARAM[idx].field` where PARAM is an unpacked array of structs.  Empty
+    // SigSpec when this is not that shape, so callers can fall through.
+    RTLIL::SigSpec import_param_array_elem_field(const UHDM::bit_select* bs,
+                                                 const std::vector<std::string>& fields,
+                                                 const UHDM::scope* inst = nullptr,
+                                                 const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr,
+                                                 const RTLIL::SigSpec* idx_in = nullptr);
     
     // Side-effect helpers for assignment expressions and inc/dec
     void emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc);
