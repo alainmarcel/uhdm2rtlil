@@ -179,3 +179,8 @@ latch_perf_counters
     Present since the test was added in CVA6 latch triage round 2 and invisible
     until the slang miters were wired into run_all_tests.sh.  read_verilog
     cannot parse this design, so no other check covers it.  Untriaged.
+
+unpacked_elem_write_flat
+    Per-element loop write to an unpacked array becomes a single-BIT write on
+    the flat wire when the array is also read as a whole array.  Minimal
+    reproducer and root cause for latch_perf_counters.

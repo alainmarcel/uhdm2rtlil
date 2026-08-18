@@ -696,3 +696,13 @@ Test: arb_idx_cast
     from those attributes is not a safe fix (it steals 3-D packed selects such
     as tc_sram's `data_t [NumPorts-1:0][Latency-1:0] rdata_q`, whose second
     index selects a whole sub-element, and wt_dcache_mem then fails to import).
+
+Test: unpacked_elem_write_flat
+    A REAL UHDM bug, checked in deliberately as the minimal reproducer for
+    latch_perf_counters (also in slang_miter_expected_fail.txt and
+    cosim_uhdm_bugs.txt).  A per-element write in a for loop lands on a single
+    BIT of the flattened array wire instead of the element, once the same
+    unpacked array is ALSO read as a whole array elsewhere in the module:
+    `assign \q [1] <expr>[0]` where it should be `assign \q[1] <expr>`.  Every
+    element then holds the same value.  See README.md for the RTLIL diff and
+    where the LHS resolution needs to prefer the element wire.

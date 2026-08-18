@@ -19,3 +19,9 @@ arb_idx_cast
 # ONLY check that covers it.  Untriaged — a real frontend divergence to chase,
 # not a harness artefact.
 latch_perf_counters
+
+# Root cause of latch_perf_counters (above): a per-element loop write to an
+# unpacked array degrades to a single-BIT write on the flat wire once the same
+# array is also read as a WHOLE array elsewhere in the module.  Analysis and
+# the exact RTLIL difference: unpacked_elem_write_flat/README.md.
+unpacked_elem_write_flat

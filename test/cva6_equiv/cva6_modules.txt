@@ -28,15 +28,15 @@
 # the vendored RTL (vendor_cva6.sh), then re-apply the entries below whose
 # seq/timeout differ from the 300s default sweep.
 
-acc_dispatcher                         4   180   timeout
+acc_dispatcher                         4   180   error
 aes                                    4   180   cex
 alu                                    4   900   proven
 alu_wrapper                            4   900   proven
-amo_alu                                4   180   timeout
+amo_alu                                4   180   error
 amo_buffer                             4   900   proven
 ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random init (Verilator accepts); FPGA variant, not in the shipped config
 axi_adapter                            4   180   crash
-axi_shim                               4   400   timeout
+axi_shim                               4   400   error
 bht                                    4   900   proven
 bht2lvl                                4   180   cex
 branch_unit                            4   900   proven
@@ -52,12 +52,12 @@ csr_buffer                             4   900   proven
 csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
-cva6_hpdcache_if_adapter               4   400   timeout
+cva6_hpdcache_if_adapter               4   400   error
 cva6_hpdcache_subsystem                4   180   crash
 cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
 cva6_hpdcache_wrapper                  4   180   crash
 cva6_icache                            4   900   proven
-cva6_icache_axi_wrapper                4   400   timeout
+cva6_icache_axi_wrapper                4   400   error
 cva6_mmu                               4   180   proven
 cva6_ptw                               1   900   proven
 cva6_rvfi_probes                       4   180   cex
@@ -70,13 +70,13 @@ cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
 div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
-fpnew_cast_multi                       4   180   timeout
+fpnew_cast_multi                       4   180   error
 fpnew_classifier                       4   180   cex
 fpnew_divsqrt_multi                    4   400   elabfail  # harness: fpnew Implementation chain unresolved -> NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
 fpnew_divsqrt_th_32                    4   180   cex
 fpnew_divsqrt_th_64_multi              4   900   proven
 fpnew_fma                              4   180   cex
-fpnew_fma_multi                        4   180   timeout
+fpnew_fma_multi                        4   180   error
 fpnew_noncomp                          4   180   cex
 fpnew_opgroup_block                    4   180   cex
 fpnew_opgroup_fmt_slice                4   180   cex
@@ -88,57 +88,57 @@ frontend                               4   180   cex
 hpdcache                               4   180   crash
 hpdcache_1hot_to_binary                4   180   crash
 hpdcache_amo                           4   900   proven
-hpdcache_cbuf                          4   180   cex
-hpdcache_cmo                           4   400   timeout
-hpdcache_core_arbiter                  4   180   timeout
+hpdcache_cbuf                          4   180   error
+hpdcache_cmo                           4   400   error
+hpdcache_core_arbiter                  4   180   error
 hpdcache_ctrl                          4   180   crash
 hpdcache_ctrl_pe                       4   180   cex
 hpdcache_data_downsize                 4   400   elabfail  # dead at this config: accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
-hpdcache_data_resize                   4   180   timeout
+hpdcache_data_resize                   4   180   error
 hpdcache_data_upsize                   4   180   crash
 hpdcache_decoder                       4   180   crash
-hpdcache_demux                         4   180   timeout
-hpdcache_fifo_reg                      4   900   timeout  # was proven on a 1-bit fifo_data_t; now the real request struct
+hpdcache_demux                         4   180   error
+hpdcache_fifo_reg                      4   900   error
 hpdcache_fifo_reg_initialized          4   180   cex
 hpdcache_flush                         4   180   crash
-hpdcache_fxarb                         4   180   timeout
+hpdcache_fxarb                         4   180   error
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   crash
-hpdcache_mem_req_write_arbiter         4   180   timeout
-hpdcache_mem_resp_demux                4   180   timeout
-hpdcache_mem_to_axi_read               4   400   timeout
-hpdcache_mem_to_axi_write              4   400   timeout
+hpdcache_mem_req_write_arbiter         4   180   error
+hpdcache_mem_resp_demux                4   180   error
+hpdcache_mem_to_axi_read               4   400   error
+hpdcache_mem_to_axi_write              4   400   error
 hpdcache_memctrl                       4   180   timeout
 hpdcache_miss_handler                  4   180   crash
-hpdcache_mshr                          4   400   timeout
-hpdcache_mux                           4   180   timeout
-hpdcache_prio_1hot_encoder             4   180   timeout
-hpdcache_prio_bin_encoder              4   180   timeout
+hpdcache_mshr                          4   400   error
+hpdcache_mux                           4   180   error
+hpdcache_prio_1hot_encoder             4   180   error
+hpdcache_prio_bin_encoder              4   180   error
 hpdcache_regbank_wbyteenable_1rw       4   180   crash
 hpdcache_regbank_wmask_1rw             4   180   crash
-hpdcache_rrarb                         4   180   timeout
-hpdcache_rtab                          4   180   timeout
-hpdcache_sram                          4   180   timeout
-hpdcache_sram_1rw                      4   180   timeout
-hpdcache_sram_wbyteenable              4   400   timeout  # harness: zero-width select
-hpdcache_sram_wbyteenable_1rw          4   400   timeout  # harness: zero-width select
-hpdcache_sram_wmask                    4   180   timeout
-hpdcache_sram_wmask_1rw                4   180   timeout
-hpdcache_sync_buffer                   4   900   timeout  # was proven on a 1-bit data type; now the real one
-hpdcache_uncached                      4   400   timeout
-hpdcache_victim_plru                   4   180   timeout
+hpdcache_rrarb                         4   180   error
+hpdcache_rtab                          4   180   error
+hpdcache_sram                          4   180   error
+hpdcache_sram_1rw                      4   180   error
+hpdcache_sram_wbyteenable              4   400   error
+hpdcache_sram_wbyteenable_1rw          4   400   error
+hpdcache_sram_wmask                    4   180   error
+hpdcache_sram_wmask_1rw                4   180   error
+hpdcache_sync_buffer                   4   900   error
+hpdcache_uncached                      4   400   error
+hpdcache_victim_plru                   4   180   error
 hpdcache_victim_random                 4   180   crash
-hpdcache_victim_sel                    4   180   timeout
+hpdcache_victim_sel                    4   180   error
 hpdcache_wbuf                          4   180   crash
-hwpf_stride                            4   400   timeout
-hwpf_stride_arb                        4   400   timeout
-hwpf_stride_wrapper                    4   400   timeout
+hwpf_stride                            4   400   error
+hwpf_stride_arb                        4   400   error
+hwpf_stride_wrapper                    4   400   error
 id_stage                               4   180   cex
 instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
-issue_read_operands                    4   180   timeout
+issue_read_operands                    4   180   error
 issue_stage                            4   180   timeout
 iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   cex
@@ -158,7 +158,7 @@ popcount                               4   900   proven
 preprocess_mvp                         4   400   proven
 ras                                    4   900   proven
 raw_checker                            4   900   proven
-scoreboard                             4   180   timeout
+scoreboard                             4   180   error
 serdiv                                 4   180   timeout
 std_cache_subsystem                    4   180   crash
 std_nbdcache                           4   180   crash
@@ -166,7 +166,7 @@ store_buffer                           4   900   proven
 store_unit                             4   900   proven
 tag_cmp                                4   400   cex
 trigger_module                         4   900   proven
-wt_axi_adapter                         4   400   timeout
+wt_axi_adapter                         4   400   error
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   crash
@@ -174,3 +174,4 @@ wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudica
 wt_dcache_missunit                     4   400   cex      # UHDM WRONG (adjudicated): c524 wr_cl_vld_o rtl=1 uhdm=0 slang=1
 wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0
 zcmt_decoder                           4   180   cex
+rr_arb_tree                            4   400   proven
