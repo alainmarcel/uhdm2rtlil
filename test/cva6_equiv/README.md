@@ -146,6 +146,7 @@ outcome:
 | `cex` | A real counterexample survives — a frontend bug still to fix. |
 | `timeout` | SAT capacity, **not** a known bug: no model found within budget. |
 | `crash` | yosys itself died on the miter (SIGSEGV/SIGFPE) — a real problem, not a budget outcome. |
+| `error` | yosys stopped with an ERROR (the design no longer imports, say) — also not a budget outcome. |
 | `elabfail` | The *wrapper* does not elaborate yet — a harness gap. |
 
 A degenerate parameter does not just weaken a proof, it can **hide a bug**.
@@ -220,6 +221,14 @@ tight: the classifier only sees that no model was produced. `wt_dcache` and
 `wt_cache_subsystem` were recorded as `timeout` from a 150 s sweep and turned
 out to be `elabfail` once given 400 s. When (re)classifying, give the sweep a
 generous budget, or re-check anything new that lands on `timeout`.
+
+`timeout` must mean one thing only: **SAT ran and found no model**. A yosys
+ERROR exits with a small non-zero code — not the timeout's own 124/137, and not
+a signal — so it used to fall through to `timeout`, and a module that had
+stopped importing altogether looked like a harmless budget outcome.
+`wt_dcache_mem` appeared to improve from `cex` to `timeout` that way while it
+was in fact failing to build. Such runs are now reported as `error` and fail
+the gate when unexpected.
 
 `crash` and `timeout` are easy to confuse and must not be. When the classifier
 was first written it lumped both together, and 21 modules that actually

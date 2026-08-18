@@ -1,0 +1,21 @@
+# Tests whose `test_slang_equiv.ys` miter is KNOWN to fail.
+# One test directory name per line.  Each entry must say why, and should be
+# removed as soon as the underlying bug is fixed.
+#
+# A slang miter proves read_uhdm == read_slang.  It is the only check that
+# covers constructs read_verilog cannot parse at all (type parameters, packed
+# struct parameters), so a test here is a real, tracked frontend bug.
+
+# Bit/part-select of an element of a packed array whose element type is a TYPE
+# PARAMETER drops the second index.  Root cause of rr_arb_tree's wrong idx_o
+# and hence wt_dcache_mem's wr_ack_o counterexample.  The obvious fix also
+# claims 3-D packed selects and breaks tc_sram — see arb_idx_cast/README.md.
+arb_idx_cast
+
+# Surfaced the moment these miters were wired up: this test's miter has been
+# failing since the test was added (commit 3e77690b, CVA6 latch triage round 2)
+# with nothing running it.  read_uhdm != read_slang on a 64-bit `wdata_i`
+# write; read_verilog cannot parse the shapes here, so the slang miter is the
+# ONLY check that covers it.  Untriaged — a real frontend divergence to chase,
+# not a harness artefact.
+latch_perf_counters

@@ -48,7 +48,7 @@ def main():
     print(f"  modules reported : {len(rows)}")
     print("")
     print("  measured status:")
-    for s in ("proven", "cex", "timeout", "elabfail", "skip"):
+    for s in ("proven", "cex", "timeout", "crash", "error", "elabfail", "skip"):
         if by_status.get(s):
             print(f"    {s:<10} {by_status[s]:>4}")
     print("")

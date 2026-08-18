@@ -20,7 +20,7 @@ COUNTS = [
     "YOSYS_FAILED", "YOSYS_SKIPPED", "YOSYS_UHDM_ONLY", "EQUIV_FAILED_TESTS",
     "MITER_FAILED_TESTS", "SIM_EQUIV_WARN_TESTS", "SIM_EQUIV_KNOWN_WARN_TESTS",
     "SIM_EQUIV_ANALYZED_TESTS", "SIM_EQUIV_ARTEFACT_TESTS",
-    "SIM_EQUIV_UNCLASS_TESTS",
+    "SIM_EQUIV_UNCLASS_TESTS", "SLANG_MITER_RUN", "SLANG_MITER_FAILED_TESTS", "SLANG_MITER_KNOWN_FAIL",
 ]
 
 def collect(paths):
@@ -108,6 +108,15 @@ def main():
         print(f"      └─ Miter-Formal (UHDM != Verilog, equiv_induct missed): {miter}")
         for t in names(lists, "MITER_FAILED_TEST_NAMES"):
             print(f"          - {t}")
+    if counts["SLANG_MITER_RUN"]:
+        ok = (counts["SLANG_MITER_RUN"] - counts["SLANG_MITER_FAILED_TESTS"]
+              - counts["SLANG_MITER_KNOWN_FAIL"])
+        print(f"  🔷 Slang-Miter (read_uhdm == read_slang): "
+              f"{ok}/{counts['SLANG_MITER_RUN']} passed, "
+              f"{counts['SLANG_MITER_KNOWN_FAIL']} known-fail, "
+              f"{counts['SLANG_MITER_FAILED_TESTS']} unexpected")
+        for t_ in names(lists, "SLANG_MITER_FAILED_TEST_NAMES"):
+            print(f"      - {t_}")
     print(f"  ❌ True failures: {failed}")
     print(f"  💥 Crashes: {crashed}")
     if total:
@@ -147,7 +156,8 @@ def main():
         section("🧪 CVA6 PER-MODULE EQUIVALENCE:")
         print(f"  modules: {len(cva6)}  "
               + "  ".join(f"{s}={status[s]}" for s in
-                          ("proven", "cex", "timeout", "elabfail") if status.get(s)))
+                          ("proven", "cex", "timeout", "crash", "error",
+                           "elabfail") if status.get(s)))
         print(f"  as expected {kinds.get('OK',0)}, regressions {kinds.get('BAD',0)}, "
               f"newly proven {kinds.get('PROMOTE',0)}, inconclusive {kinds.get('SOFT',0)}")
         for m, (k, got, want) in sorted(cva6.items()):

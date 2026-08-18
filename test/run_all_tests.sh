@@ -209,6 +209,46 @@ EQUIV_FAILED_TESTS=0
 # equiv_induct check passed — real bugs that equiv_induct's blind spot missed.
 MITER_FAILED_TESTS=0
 MITER_FAILED_TEST_NAMES=()
+# Slang-miter checks: a per-test `test_slang_equiv.ys` proves read_uhdm ==
+# read_slang.  These reproducers used to be run by NOTHING, so they documented
+# bugs without guarding against them.  Needed because the Induct-Formal check
+# above requires a read_verilog netlist, which does not exist for the very
+# constructs (type parameters, packed struct params) these tests cover.
+SLANG_MITER_RUN=0
+SLANG_MITER_FAILED_TESTS=0
+SLANG_MITER_KNOWN_FAIL=0
+SLANG_MITER_FAILED_TEST_NAMES=()
+
+# Slang miter: proves read_uhdm == read_slang for a test that ships a
+# `test_slang_equiv.ys`.  Called from EVERY exit path that produced UHDM
+# output -- notably the "UHDM succeeds where Verilog fails" one, which returns
+# early and covers exactly the constructs (type parameters, packed struct
+# params) that have no read_verilog netlist to check against.  A known-failing
+# miter is listed in slang_miter_expected_fail.txt with its reason.
+run_slang_miter() {
+    local test_dir="$1"
+    [ "${SLANG_MITER_DONE:-}" = "$test_dir" ] && return 0
+    # The caller's CWD is not the test directory on every path, so address it
+    # explicitly and run yosys from inside it (the .ys reads slpp_all/... and
+    # dut.sv by relative path).
+    local d="$SCRIPT_DIR/$test_dir"
+    [ -f "$d/test_slang_equiv.ys" ] && [ -f "$d/slpp_all/surelog.uhdm" ] || return 0
+    SLANG_MITER_DONE="$test_dir"
+    SLANG_MITER_RUN=$((SLANG_MITER_RUN + 1))
+    if (cd "$d" && timeout 300 "$YOSYS_BIN" -m "$UHDM_PLUGIN" ./test_slang_equiv.ys \
+            > slang_miter.log 2>&1); then
+        echo "    ✅ Slang-Miter: read_uhdm == read_slang"
+    elif grep -qxF "$test_dir" "$SCRIPT_DIR/slang_miter_expected_fail.txt" 2>/dev/null; then
+        echo "    ⚠️  Slang-Miter FAILED (known — see slang_miter_expected_fail.txt)"
+        SLANG_MITER_KNOWN_FAIL=$((SLANG_MITER_KNOWN_FAIL + 1))
+    else
+        echo "    ❌ Slang-Miter FAILED - read_uhdm != read_slang (see slang_miter.log)"
+        SLANG_MITER_FAILED_TESTS=$((SLANG_MITER_FAILED_TESTS + 1))
+        SLANG_MITER_FAILED_TEST_NAMES+=("$test_dir")
+        UNEXPECTED_FAILURES+=("$test_dir (slang-miter)")
+    fi
+}
+
 SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
 SIM_EQUIV_ANALYZED_TESTS=0
@@ -832,6 +872,7 @@ analyze_test_result() {
     if [ ! -f "$uhdm_file" ] && [ ! -f "$verilog_file" ] && [ -f "$uhdm_nohier" ] && [ -f "$verilog_nohier" ]; then
         # Both paths failed at hierarchy but produced nohier ILs - compare those
         echo "✅ Test $test_dir PASSED - comparing nohier ILs (both paths fail at hierarchy)"
+        run_slang_miter "$test_dir"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     fi
@@ -842,6 +883,7 @@ analyze_test_result() {
         if [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
             echo "✅ Test $test_dir PASSED - UHDM succeeds where Verilog fails!"
             echo "    Demonstrates UHDM's superior SystemVerilog support"
+            run_slang_miter "$test_dir"
             run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
@@ -903,6 +945,8 @@ analyze_test_result() {
             fi
         fi
     fi
+
+    run_slang_miter "$test_dir"
 
     # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
@@ -1148,12 +1192,15 @@ dump_results_file() {
         for v in TOTAL_TESTS PASSED_TESTS FAILED_TESTS SKIPPED_TESTS \
                  CRASHED_TESTS UHDM_ONLY_TESTS YOSYS_TOTAL YOSYS_PASSED \
                  YOSYS_FAILED YOSYS_SKIPPED YOSYS_UHDM_ONLY \
-                 EQUIV_FAILED_TESTS MITER_FAILED_TESTS SIM_EQUIV_WARN_TESTS \
+                 EQUIV_FAILED_TESTS MITER_FAILED_TESTS \
+                 SLANG_MITER_RUN SLANG_MITER_FAILED_TESTS SLANG_MITER_KNOWN_FAIL \
+                 SIM_EQUIV_WARN_TESTS \
                  SIM_EQUIV_KNOWN_WARN_TESTS SIM_EQUIV_ANALYZED_TESTS \
                  SIM_EQUIV_ARTEFACT_TESTS SIM_EQUIV_UNCLASS_TESTS; do
             eval "printf 'count %s %s\n' \"\$v\" \"\${$v:-0}\""
         done
-        for arr in FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
+        for arr in SLANG_MITER_FAILED_TEST_NAMES \
+                   FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
                    UHDM_ONLY_TEST_NAMES EQUIV_FAILED_TEST_NAMES \
                    MITER_FAILED_TEST_NAMES SIM_EQUIV_WARN_NAMES \
                    SIM_EQUIV_KNOWN_WARN_NAMES SIM_EQUIV_ANALYZED_NAMES \
@@ -1278,6 +1325,12 @@ if [ "$TOTAL_EQUIV_FAILED" -gt 0 ]; then
     echo "      └─ Miter-Formal (UHDM != Verilog, equiv_induct missed): $MITER_FAILED_TESTS"
     for t in "${MITER_FAILED_TEST_NAMES[@]}"; do
         echo "          - $t"
+    done
+fi
+if [ "${SLANG_MITER_RUN:-0}" -gt 0 ]; then
+    echo "  🔷 Slang-Miter (read_uhdm == read_slang): $((SLANG_MITER_RUN - SLANG_MITER_FAILED_TESTS - SLANG_MITER_KNOWN_FAIL))/$SLANG_MITER_RUN passed, $SLANG_MITER_KNOWN_FAIL known-fail, $SLANG_MITER_FAILED_TESTS unexpected"
+    for t_ in "${SLANG_MITER_FAILED_TEST_NAMES[@]}"; do
+        echo "      - $t_"
     done
 fi
 echo "  ❌ True failures: $FAILED_TESTS"
