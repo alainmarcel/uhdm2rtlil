@@ -12,16 +12,4 @@
 # claims 3-D packed selects and breaks tc_sram — see arb_idx_cast/README.md.
 arb_idx_cast
 
-# Surfaced the moment these miters were wired up: this test's miter has been
-# failing since the test was added (commit 3e77690b, CVA6 latch triage round 2)
-# with nothing running it.  read_uhdm != read_slang on a 64-bit `wdata_i`
-# write; read_verilog cannot parse the shapes here, so the slang miter is the
-# ONLY check that covers it.  Untriaged — a real frontend divergence to chase,
-# not a harness artefact.
-latch_perf_counters
 
-# Root cause of latch_perf_counters (above): a per-element loop write to an
-# unpacked array degrades to a single-BIT write on the flat wire once the same
-# array is also read as a WHOLE array elsewhere in the module.  Analysis and
-# the exact RTLIL difference: unpacked_elem_write_flat/README.md.
-unpacked_elem_write_flat
