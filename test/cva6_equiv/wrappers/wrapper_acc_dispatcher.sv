@@ -309,8 +309,8 @@ module acc_dispatcher_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter type acc_req_t = cvxif_req_t,
-  parameter type acc_resp_t = cvxif_resp_t
+  parameter type acc_req_t = `CVXIF_REQ_T(CVA6Cfg, x_compressed_req_t, x_issue_req_t, x_register_t, x_commit_t),
+  parameter type acc_resp_t = `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ) (
 
     input logic clk_i,

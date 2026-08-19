@@ -309,8 +309,25 @@ module std_cache_subsystem_equiv
 ,
 
   localparam NumPorts = 4,
-  parameter type axi_req_t = noc_req_t,
-  parameter type axi_rsp_t = noc_resp_t
+  parameter type axi_req_t = struct packed {
+        axi_aw_chan_t aw;
+        logic         aw_valid;
+        axi_w_chan_t  w;
+        logic         w_valid;
+        logic         b_ready;
+        axi_ar_chan_t ar;
+        logic         ar_valid;
+        logic         r_ready;
+      },
+  parameter type axi_rsp_t = struct packed {
+        logic    aw_ready;
+        logic    ar_ready;
+        logic    w_ready;
+        logic    b_valid;
+        b_chan_t b;
+        logic    r_valid;
+        r_chan_t r;
+      }
 ) (
 
     input logic clk_i,
