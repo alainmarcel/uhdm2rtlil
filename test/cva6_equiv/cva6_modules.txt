@@ -97,11 +97,11 @@ hpdcache_data_downsize                 4   400   elabfail  # dead at this config
 hpdcache_data_resize                   4   180   error
 hpdcache_data_upsize                   4   180   crash
 hpdcache_decoder                       4   180   crash
-hpdcache_demux                         4   180   error
+hpdcache_demux                         4   180   proven
 hpdcache_fifo_reg                      4   900   error
 hpdcache_fifo_reg_initialized          4   180   cex
 hpdcache_flush                         4   180   crash
-hpdcache_fxarb                         4   180   error
+hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   crash
 hpdcache_mem_req_write_arbiter         4   180   error
@@ -112,11 +112,11 @@ hpdcache_memctrl                       4   180   timeout
 hpdcache_miss_handler                  4   180   crash
 hpdcache_mshr                          4   400   error
 hpdcache_mux                           4   180   error
-hpdcache_prio_1hot_encoder             4   180   error
+hpdcache_prio_1hot_encoder             4   180   proven
 hpdcache_prio_bin_encoder              4   180   error
 hpdcache_regbank_wbyteenable_1rw       4   180   crash
 hpdcache_regbank_wmask_1rw             4   180   crash
-hpdcache_rrarb                         4   180   error
+hpdcache_rrarb                         4   180   proven
 hpdcache_rtab                          4   180   error
 hpdcache_sram                          4   180   error
 hpdcache_sram_1rw                      4   180   error
@@ -126,7 +126,7 @@ hpdcache_sram_wmask                    4   180   error
 hpdcache_sram_wmask_1rw                4   180   error
 hpdcache_sync_buffer                   4   900   error
 hpdcache_uncached                      4   400   error
-hpdcache_victim_plru                   4   180   error
+hpdcache_victim_plru                   4   180   cex      # cex now measurable (was error: zero-width [-1:0] ports) - TRIAGE
 hpdcache_victim_random                 4   180   crash
 hpdcache_victim_sel                    4   180   error
 hpdcache_wbuf                          4   180   crash
