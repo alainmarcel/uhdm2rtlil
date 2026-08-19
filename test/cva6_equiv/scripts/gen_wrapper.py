@@ -771,6 +771,25 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     # depended on it — falling back to the module's own default, which is
     # exactly where this generator started.
     own = drop_unsupported(own, base_names, originals, added, providers)
+    # A `parameter type X = <another type parameter>` chain leaves the port
+    # 1 BIT wide: Surelog attaches no typespec to a port whose type is a type
+    # parameter defaulted to another type parameter, so read_uhdm sees a bare
+    # logic_var while read_slang sizes it properly, and `miter` then reports
+    # "No matching port in gate module was found".  A type parameter defaulted
+    # to a STRUCT resolves fine, so inline the referenced parameter's own
+    # definition instead of naming it.
+    wrapper_types = {}
+    for e in split_param_entries(cva6_params) + split_param_entries(extras):
+        nm = param_names(e)
+        if nm and re.search(r"\bparameter\s+type\b|\blocalparam\s+type\b", e):
+            wrapper_types[nm[0]] = rhs_of(e)
+    for i, e in enumerate(own):
+        if not re.search(r"\bparameter\s+type\b", e):
+            continue
+        r = rhs_of(e)
+        if re.fullmatch(r"\w+", r) and r in wrapper_types:
+            own[i] = retarget_entry(e, wrapper_types[r])
+            print(f"  inlined chained type param: {param_names(e)[0]} = {r}")
     if own:
         own = order_by_dependency(own)
         extras_pl += ("," if extras_pl else ",\n") + "\n" + ",\n".join(

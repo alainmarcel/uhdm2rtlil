@@ -312,7 +312,19 @@ module hpdcache_mem_to_axi_read_equiv
 
   parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
   parameter type hpdcache_mem_resp_r_t = hpdcache_equiv_pkg::hpdcache_mem_resp_r_t,
-  parameter type ar_chan_t = axi_ar_chan_t
+  parameter type ar_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        logic [CVA6Cfg.AxiAddrWidth-1:0] addr;
+        axi_pkg::len_t                   len;
+        axi_pkg::size_t                  size;
+        axi_pkg::burst_t                 burst;
+        logic                            lock;
+        axi_pkg::cache_t                 cache;
+        axi_pkg::prot_t                  prot;
+        axi_pkg::qos_t                   qos;
+        axi_pkg::region_t                region;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      }
 ) (
 
     output logic                          req_ready_o,

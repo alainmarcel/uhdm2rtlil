@@ -36,7 +36,7 @@ amo_alu                                4   180   error
 amo_buffer                             4   900   proven
 ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random init (Verilator accepts); FPGA variant, not in the shipped config
 axi_adapter                            4   180   crash
-axi_shim                               4   400   error
+axi_shim                               4   400   proven
 bht                                    4   900   proven
 bht2lvl                                4   180   cex
 branch_unit                            4   900   proven
@@ -57,7 +57,7 @@ cva6_hpdcache_subsystem                4   180   crash
 cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
 cva6_hpdcache_wrapper                  4   180   crash
 cva6_icache                            4   900   proven
-cva6_icache_axi_wrapper                4   400   error
+cva6_icache_axi_wrapper                4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 cva6_mmu                               4   180   proven
 cva6_ptw                               1   900   proven
 cva6_rvfi_probes                       4   180   cex
@@ -166,7 +166,7 @@ store_buffer                           4   900   proven
 store_unit                             4   900   proven
 tag_cmp                                4   400   cex
 trigger_module                         4   900   proven
-wt_axi_adapter                         4   400   error
+wt_axi_adapter                         4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   crash

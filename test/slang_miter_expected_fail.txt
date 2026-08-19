@@ -13,3 +13,8 @@
 arb_idx_cast
 
 
+
+# A port typed by a type parameter that is defaulted to ANOTHER type parameter
+# comes out 1 bit wide (Surelog attaches no typespec).  See README.md; the CVA6
+# wrapper generator sidesteps it by inlining, but the limitation is real.
+port_chained_type_param

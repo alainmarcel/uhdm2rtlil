@@ -319,10 +319,37 @@ module cva6_hpdcache_subsystem_axi_arbiter_equiv
   parameter int unsigned AxiDataWidth = CVA6Cfg.AxiDataWidth,
   parameter int unsigned AxiIdWidth = CVA6Cfg.AxiIdWidth,
   parameter int unsigned AxiUserWidth = CVA6Cfg.AxiUserWidth,
-  parameter type axi_b_chan_t = b_chan_t,
-  parameter type axi_r_chan_t = r_chan_t,
-  parameter type axi_req_t = noc_req_t,
-  parameter type axi_rsp_t = noc_resp_t
+  parameter type axi_b_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        axi_pkg::resp_t                  resp;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      },
+  parameter type axi_r_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        logic [CVA6Cfg.AxiDataWidth-1:0] data;
+        axi_pkg::resp_t                  resp;
+        logic                            last;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      },
+  parameter type axi_req_t = struct packed {
+        axi_aw_chan_t aw;
+        logic         aw_valid;
+        axi_w_chan_t  w;
+        logic         w_valid;
+        logic         b_ready;
+        axi_ar_chan_t ar;
+        logic         ar_valid;
+        logic         r_ready;
+      },
+  parameter type axi_rsp_t = struct packed {
+        logic    aw_ready;
+        logic    ar_ready;
+        logic    w_ready;
+        logic    b_valid;
+        b_chan_t b;
+        logic    r_valid;
+        r_chan_t r;
+      }
 ) (
 
     input logic clk_i,

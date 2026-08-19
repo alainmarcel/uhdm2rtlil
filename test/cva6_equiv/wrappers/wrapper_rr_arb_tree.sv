@@ -1,10 +1,10 @@
-// AUTO-GENERATED per-module equivalence wrapper for wt_axi_adapter
+// AUTO-GENERATED per-module equivalence wrapper for rr_arb_tree
 // Parameter environment copied verbatim from cva6.sv (build_config-computed
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
 `include "rvfi_types.svh"
 `include "cvxif_types.svh"
 
-module wt_axi_adapter_equiv
+module rr_arb_tree_equiv
   import ariane_pkg::*;
   import wt_cache_pkg::*;
 #(
@@ -308,83 +308,69 @@ module wt_axi_adapter_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned ReqFifoDepth = 2,
-  parameter int unsigned MetaFifoDepth = CVA6Cfg.DCACHE_MAX_TX,
-  parameter type axi_req_t = struct packed {
-        axi_aw_chan_t aw;
-        logic         aw_valid;
-        axi_w_chan_t  w;
-        logic         w_valid;
-        logic         b_ready;
-        axi_ar_chan_t ar;
-        logic         ar_valid;
-        logic         r_ready;
-      },
-  parameter type axi_rsp_t = struct packed {
-        logic    aw_ready;
-        logic    ar_ready;
-        logic    w_ready;
-        logic    b_valid;
-        b_chan_t b;
-        logic    r_valid;
-        r_chan_t r;
-      },
-  parameter type dcache_req_t = struct packed {
-      wt_cache_pkg::dcache_out_t rtype;  // see definitions above
-      logic [2:0]                                      size;        // transaction size: 000=Byte 001=2Byte; 010=4Byte; 011=8Byte; 111=Cache line (16/32Byte)
-      logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to replace
-      logic [CVA6Cfg.PLEN-1:0] paddr;  // physical address
-      logic [CVA6Cfg.XLEN-1:0] data;  // word width of processor (no block stores at the moment)
-      logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0]          user;        // user width of processor (no block stores at the moment)
-      logic nc;  // noncacheable
-      logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
-      ariane_pkg::amo_t amo_op;  // amo opcode
-    },
-  parameter type dcache_inval_t = struct packed {
-      logic                                      vld;  // invalidate only affected way
-      logic                                      all;  // invalidate all ways
-      logic [CVA6Cfg.DCACHE_INDEX_WIDTH-1:0]     idx;  // physical address to invalidate
-      logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to invalidate
-    },
-  parameter type dcache_rtrn_t = struct packed {
-      wt_cache_pkg::dcache_in_t rtype;  // see definitions above
-      logic [CVA6Cfg.DCACHE_LINE_WIDTH-1:0] data;  // full cache line width
-      logic [CVA6Cfg.DCACHE_USER_LINE_WIDTH-1:0] user;  // user bits
-      dcache_inval_t inv;  // invalidation vector
-      logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
-    }
+  /// Number of inputs to be arbitrated.
+    parameter int unsigned NumIn = 2,
+  /// Data width of the payload in bits. Not needed if `DataType` is overwritten.
+    parameter int unsigned DataWidth = 1,
+  /// Data type of the payload, can be overwritten with custom type. Only use of `DataWidth`.
+    parameter type         DataType   = logic [DataWidth-1:0],
+  /// The `ExtPrio` option allows to override the internal round robin counter via the
+    /// `rr_i` signal. This can be useful in case multiple arbiters need to have
+    /// rotating priorities that are operating in lock-step. If static priority arbitration
+    /// is needed, just connect `rr_i` to '0.
+    ///
+    /// Set to 1'b1 to enable.
+    parameter bit          ExtPrio    = 1'b0,
+  /// If `AxiVldRdy` is set, the req/gnt signals are compliant with the AXI style vld/rdy
+    /// handshake. Namely, upstream vld (req) must not depend on rdy (gnt), as it can be deasserted
+    /// again even though vld is asserted. Enabling `AxiVldRdy` leads to a reduction of arbiter
+    /// delay and area.
+    ///
+    /// Set to `1'b1` to treat req/gnt as vld/rdy.
+    parameter bit          AxiVldRdy  = 1'b0,
+  /// The `LockIn` option prevents the arbiter from changing the arbitration
+    /// decision when the arbiter is disabled. I.e., the index of the first request
+    /// that wins the arbitration will be locked in case the destination is not
+    /// able to grant the request in the same cycle.
+    ///
+    /// Set to `1'b1` to enable.
+    parameter bit          LockIn     = 1'b0,
+  /// When set, ensures that throughput gets distributed evenly between all inputs.
+    ///
+    /// Set to `1'b0` to disable.
+    parameter bit          FairArb    = 1'b1,
+  /// Dependent parameter, do **not** overwrite.
+    /// Width of the arbitration priority signal and the arbitrated index.
+    parameter int unsigned IdxWidth   = (NumIn > 32'd1) ? unsigned'($clog2(NumIn)) : 32'd1,
+  /// Dependent parameter, do **not** overwrite.
+    /// Type for defining the arbitration priority and arbitrated index signal.
+    parameter type         idx_t      = logic [IdxWidth-1:0]
 ) (
 
-    input logic clk_i,
-    input logic rst_ni,
-
-    // icache
-    input  logic         icache_data_req_i,
-    output logic         icache_data_ack_o,
-    input  icache_req_t  icache_data_i,
-    // returning packets must be consumed immediately
-    output logic         icache_rtrn_vld_o,
-    output icache_rtrn_t icache_rtrn_o,
-
-    // dcache
-    input  logic         dcache_data_req_i,
-    output logic         dcache_data_ack_o,
-    input  dcache_req_t  dcache_data_i,
-    // returning packets must be consumed immediately
-    output logic         dcache_rtrn_vld_o,
-    output dcache_rtrn_t dcache_rtrn_o,
-
-    // AXI port
-    output axi_req_t axi_req_o,
-    input  axi_rsp_t axi_resp_i,
-
-    // Endianness Control Signal from CSR
-    input logic mbe_i,
-
-    // Invalidations
-    input  logic [63:0] inval_addr_i,
-    input  logic        inval_valid_i,
-    output logic        inval_ready_o
+  /// Clock, positive edge triggered.
+  input  logic                clk_i,
+  /// Asynchronous reset, active low.
+  input  logic                rst_ni,
+  /// Clears the arbiter state. Only used if `ExtPrio` is `1'b0` or `LockIn` is `1'b1`.
+  input  logic                flush_i,
+  /// External round-robin priority. Only used if `ExtPrio` is `1'b1.`
+  input  idx_t                rr_i,
+  /// Input requests arbitration.
+  input  logic    [NumIn-1:0] req_i,
+  /* verilator lint_off UNOPTFLAT */
+  /// Input request is granted.
+  output logic    [NumIn-1:0] gnt_o,
+  /* verilator lint_on UNOPTFLAT */
+  /// Input data for arbitration.
+  input  DataType [NumIn-1:0] data_i,
+  /// Output request is valid.
+  output logic                req_o,
+  /// Output request is granted.
+  input  logic                gnt_i,
+  /// Output data.
+  output DataType             data_o,
+  /// Index from which input the data came from.
+  output idx_t                idx_o
 
 );
 
@@ -415,17 +401,16 @@ module wt_axi_adapter_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
-  wt_axi_adapter #(
-      .CVA6Cfg(CVA6Cfg),
-      .ReqFifoDepth(ReqFifoDepth),
-      .MetaFifoDepth(MetaFifoDepth),
-      .axi_req_t(axi_req_t),
-      .axi_rsp_t(axi_rsp_t),
-      .dcache_req_t(dcache_req_t),
-      .dcache_rtrn_t(dcache_rtrn_t),
-      .dcache_inval_t(dcache_inval_t),
-      .icache_req_t(icache_req_t),
-      .icache_rtrn_t(icache_rtrn_t)
+  rr_arb_tree #(
+      .NumIn(NumIn),
+      .DataWidth(DataWidth),
+      .DataType(DataType),
+      .ExtPrio(ExtPrio),
+      .AxiVldRdy(AxiVldRdy),
+      .LockIn(LockIn),
+      .FairArb(FairArb),
+      .IdxWidth(IdxWidth),
+      .idx_t(idx_t)
   ) dut (.*);
 
 endmodule

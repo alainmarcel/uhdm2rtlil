@@ -309,8 +309,18 @@ module cva6_hpdcache_subsystem_equiv
 
   localparam NumPorts = 4,
   parameter int NrHwPrefetchers = 4,
-  parameter type axi_b_chan_t = b_chan_t,
-  parameter type axi_r_chan_t = r_chan_t
+  parameter type axi_b_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        axi_pkg::resp_t                  resp;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      },
+  parameter type axi_r_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        logic [CVA6Cfg.AxiDataWidth-1:0] data;
+        axi_pkg::resp_t                  resp;
+        logic                            last;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      }
 ) (
 
 

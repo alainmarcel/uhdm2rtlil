@@ -313,8 +313,26 @@ module hpdcache_mem_to_axi_write_equiv
   parameter type hpdcache_mem_req_t = hpdcache_equiv_pkg::hpdcache_mem_req_t,
   parameter type hpdcache_mem_req_w_t = hpdcache_equiv_pkg::hpdcache_mem_req_w_t,
   parameter type hpdcache_mem_resp_w_t = hpdcache_equiv_pkg::hpdcache_mem_resp_w_t,
-  parameter type aw_chan_t = axi_aw_chan_t,
-  parameter type w_chan_t = axi_w_chan_t
+  parameter type aw_chan_t = struct packed {
+        logic [CVA6Cfg.AxiIdWidth-1:0]   id;
+        logic [CVA6Cfg.AxiAddrWidth-1:0] addr;
+        axi_pkg::len_t                   len;
+        axi_pkg::size_t                  size;
+        axi_pkg::burst_t                 burst;
+        logic                            lock;
+        axi_pkg::cache_t                 cache;
+        axi_pkg::prot_t                  prot;
+        axi_pkg::qos_t                   qos;
+        axi_pkg::region_t                region;
+        axi_pkg::atop_t                  atop;
+        logic [CVA6Cfg.AxiUserWidth-1:0] user;
+      },
+  parameter type w_chan_t = struct packed {
+        logic [CVA6Cfg.AxiDataWidth-1:0]     data;
+        logic [(CVA6Cfg.AxiDataWidth/8)-1:0] strb;
+        logic                                last;
+        logic [CVA6Cfg.AxiUserWidth-1:0]     user;
+      }
 ) (
 
     output logic                          req_ready_o,
