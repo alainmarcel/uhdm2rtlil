@@ -52,7 +52,7 @@ csr_buffer                             4   900   proven
 csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
-cva6_hpdcache_if_adapter               4   400   error
+cva6_hpdcache_if_adapter               4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 cva6_hpdcache_subsystem                4   180   crash
 cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
 cva6_hpdcache_wrapper                  4   180   crash
@@ -88,51 +88,51 @@ frontend                               4   180   cex
 hpdcache                               4   180   crash
 hpdcache_1hot_to_binary                4   180   crash
 hpdcache_amo                           4   900   proven
-hpdcache_cbuf                          4   180   error
-hpdcache_cmo                           4   400   error
+hpdcache_cbuf                          4   180   proven
+hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_core_arbiter                  4   180   error
 hpdcache_ctrl                          4   180   crash
 hpdcache_ctrl_pe                       4   180   cex
 hpdcache_data_downsize                 4   400   elabfail  # dead at this config: accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
-hpdcache_data_resize                   4   180   error
+hpdcache_data_resize                   4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_data_upsize                   4   180   crash
 hpdcache_decoder                       4   180   crash
 hpdcache_demux                         4   180   proven
-hpdcache_fifo_reg                      4   900   error
+hpdcache_fifo_reg                      4   900   proven
 hpdcache_fifo_reg_initialized          4   180   cex
 hpdcache_flush                         4   180   crash
 hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   crash
-hpdcache_mem_req_write_arbiter         4   180   error
+hpdcache_mem_req_write_arbiter         4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_mem_resp_demux                4   180   error
-hpdcache_mem_to_axi_read               4   400   error
-hpdcache_mem_to_axi_write              4   400   error
+hpdcache_mem_to_axi_read               4   400   proven
+hpdcache_mem_to_axi_write              4   400   proven
 hpdcache_memctrl                       4   180   timeout
 hpdcache_miss_handler                  4   180   crash
-hpdcache_mshr                          4   400   error
-hpdcache_mux                           4   180   error
+hpdcache_mshr                          4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_mux                           4   180   proven
 hpdcache_prio_1hot_encoder             4   180   proven
-hpdcache_prio_bin_encoder              4   180   error
+hpdcache_prio_bin_encoder              4   180   proven
 hpdcache_regbank_wbyteenable_1rw       4   180   crash
 hpdcache_regbank_wmask_1rw             4   180   crash
 hpdcache_rrarb                         4   180   proven
 hpdcache_rtab                          4   180   error
-hpdcache_sram                          4   180   error
-hpdcache_sram_1rw                      4   180   error
+hpdcache_sram                          4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_sram_1rw                      4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_sram_wbyteenable              4   400   error
 hpdcache_sram_wbyteenable_1rw          4   400   error
-hpdcache_sram_wmask                    4   180   error
-hpdcache_sram_wmask_1rw                4   180   error
-hpdcache_sync_buffer                   4   900   error
-hpdcache_uncached                      4   400   error
+hpdcache_sram_wmask                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_sram_wmask_1rw                4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_sync_buffer                   4   900   proven
+hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_victim_plru                   4   180   cex      # cex now measurable (was error: zero-width [-1:0] ports) - TRIAGE
 hpdcache_victim_random                 4   180   crash
-hpdcache_victim_sel                    4   180   error
+hpdcache_victim_sel                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_wbuf                          4   180   crash
-hwpf_stride                            4   400   error
-hwpf_stride_arb                        4   400   error
-hwpf_stride_wrapper                    4   400   error
+hwpf_stride                            4   400   proven
+hwpf_stride_arb                        4   400   proven
+hwpf_stride_wrapper                    4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 id_stage                               4   180   cex
 instr_decoder                          4   400   proven
 instr_queue                            4   900   proven

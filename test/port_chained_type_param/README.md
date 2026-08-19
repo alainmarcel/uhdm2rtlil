@@ -1,7 +1,7 @@
-# port_chained_type_param — KNOWN FAILING frontend limitation
+# port_chained_type_param
 
 A port whose type is a type parameter **defaulted to another type parameter**
-comes out ONE BIT wide:
+came out ONE BIT wide:
 
     parameter type noc_req_t = struct packed { ... 49 bits ... },
     parameter type req_t     = noc_req_t     // chained
@@ -12,23 +12,46 @@ comes out ONE BIT wide:
     read_slang:  wire width 49 input 2 \in_i   <- correct
 
 A type parameter defaulted DIRECTLY to a struct (or to a package-qualified
-struct) resolves correctly — only the chain fails.
+struct) always resolved — only the chain failed.
 
-Cause: Surelog attaches no typespec to such a port (`vpiTypedef` is absent
-where a normal port has one), and the port's LowConn resolves to a bare
-`logic_var`, so there is nothing for the importer to size from.  Fixing it
-properly means resolving the type-parameter chain during elaboration, which is
-Surelog-side work.
+## Root cause — Surelog `CompileHelper::compileParameterDeclaration`
+
+Surelog attached **no typespec at all** to the chained parameter (`vpiTypespec`
+absent, where the non-chained one has `ref_typespec → struct_typespec`), so the
+port had nothing to size from and fell back to 1 bit.
+
+The `paTYPE` branch compiles the parameter's default with
+
+    compileTypespec(component, fC, Data_type, compileDesign, Reduce::No,
+                    p, /*instance=*/nullptr, false)
+
+and `compileTypespec`'s `paExpression` case can only resolve a *named* type via
+`bindTypespec(name, instance, s)` — which it skips entirely when `instance` is
+null.  So the call returned null and the parameter was left untyped.
+
+The referenced parameter is already in the same `parameters` vector being
+built, so the fix resolves the chain directly against that list — no instance
+needed.  NOTE the borrowed typespec still belongs to the parameter it was
+declared on: it is referenced **without re-parenting**, otherwise the original
+loses its owner and the chain breaks in the other direction.
 
 ## Why it mattered
 
-This is why 29 CVA6 modules reported
+CVA6's hpdcache modules chain their types this way — e.g.
+`parameter type fifo_data_t = hpdcache_mem_req_t` in `hpdcache_fifo_reg` and
+`hpdcache_sync_buffer`, whose data ports were 1 bit instead of 84.  The wrapper
+generator used to sidestep this by inlining the referenced definition into
+generated code (PR #614); that workaround is no longer load-bearing.
 
-    ERROR: No matching port in gate module was found for \<port>!
+## Still open — chained type parameter WITH a packed dimension
 
-which reads like a wrapper bug but is really a width mismatch: gold had the
-port at 1 bit, gate at its true width (`axi_shim`: 32 vs 470).  The per-module
-wrapper generator now inlines the referenced parameter's definition instead of
-naming it, which sidesteps the chain — see `inlined chained type param` in
-scripts/gen_wrapper.py.  That is a workaround in generated code, NOT a fix for
-this limitation, which still affects hand-written RTL.
+`type X = <type_param> [range]` (e.g. `hpdcache_mem_resp_demux`'s
+`localparam type rt_t = resp_id_t [RT_DEPTH-1:0]`) compiles to a bare
+`integer_typespec`, so it measures 32 bits regardless of the element type
+(32 vs slang's 8).  That is a separate Surelog defect in the same family and is
+not fixed here.
+
+## Checking
+
+`read_verilog` cannot parse a type parameter defaulted to another type
+parameter, so this is a **slang-miter-only** test (`test_slang_equiv.ys`).

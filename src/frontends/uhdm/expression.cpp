@@ -2439,6 +2439,55 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
 
                     auto first_arg = func_call->Tf_call_args()->at(0);
 
+                    // `$bits(T)` where T is a TYPE PARAMETER.  Surelog folds
+                    // `$bits(pkg::struct_t)` to a constant during elaboration,
+                    // but leaves the type-parameter form as an unevaluated
+                    // sys_func_call whose argument is a bare `ref_obj` naming
+                    // the parameter — importing that ref as an expression
+                    // yields 1 bit, so the query collapsed to 1.  CVA6's
+                    // hpdcache modules are built on exactly this shape
+                    // (`parameter type hpdcache_req_t = …;
+                    //   parameter int DATA_WIDTH = $bits(hpdcache_req_t)`),
+                    // which sized every data port to 1 instead of 147.
+                    // Resolve the parameter's BOUND typespec from the
+                    // elaborated instance and measure that instead.
+                    if (auto ro = dynamic_cast<const UHDM::ref_obj*>(first_arg)) {
+                        const UHDM::typespec* bound_ts = nullptr;
+                        if (auto ag = ro->Actual_group()) {
+                            if (ag->UhdmType() == uhdmtype_parameter)
+                                if (auto tp = any_cast<const UHDM::type_parameter*>(ag))
+                                    if (tp->Typespec())
+                                        bound_ts = tp->Typespec()->Actual_typespec();
+                        }
+                        // The ref is often unbound (no Actual_group) — look the
+                        // name up among the instance's type parameters.
+                        if (!bound_ts) {
+                            auto mi = dynamic_cast<const UHDM::module_inst*>(
+                                current_instance ? (const UHDM::scope*)current_instance : nullptr);
+                            if (mi && mi->Parameters()) {
+                                for (auto p : *mi->Parameters()) {
+                                    if (p->UhdmType() != uhdmtype_parameter) continue;
+                                    if (p->VpiName() != ro->VpiName()) continue;
+                                    if (auto tp = any_cast<const UHDM::type_parameter*>(p))
+                                        if (tp->Typespec())
+                                            bound_ts = tp->Typespec()->Actual_typespec();
+                                    break;
+                                }
+                            }
+                        }
+                        if (bound_ts) {
+                            int w = get_width_from_typespec(bound_ts, current_instance);
+                            if (w > 0) {
+                                total_bits = w;
+                                if (func_name == "$bits") {
+                                    log_debug("UHDM: $bits(type param %s) = %d\n",
+                                              std::string(ro->VpiName()).c_str(), w);
+                                    return RTLIL::SigSpec(RTLIL::Const(w, 32));
+                                }
+                            }
+                        }
+                    }
+
                     // Walk a typespec to extract its dimensions in outer→inner
                     // order.  For multi-range packed types (logic [a:b][c:d])
                     // the ranges are dim 1, dim 2, …; nested Elem_typespec
