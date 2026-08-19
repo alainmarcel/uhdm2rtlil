@@ -3094,17 +3094,18 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     RTLIL::SigSpec rs = import_expression(r->Right_expr());
                     force_const_fold = saved_fcf;
                     if (ls.is_fully_const() && rs.is_fully_const()) {
-                        // A `[size-1:0]` range with size==0 collapses to `[-1:0]`
-                        // (a negative MSB).  Real packed bit indices are never
-                        // negative, so a negative bound means an intended
-                        // zero-width field (e.g. `logic [CFG.BUS.CTL-1:0] ctl`
-                        // with CTL==0) — elide it instead of the bogus
-                        // abs()-derived width of 2.
-                        if (ls.as_int() < 0 || rs.as_int() < 0) {
-                            log("UHDM: logic_typespec simple range is empty "
-                                "([%d:%d]) -> width 0\n", ls.as_int(), rs.as_int());
-                            return 0;
-                        }
+                        // A `[size-1:0]` range with size==0 collapses to
+                        // `[-1:0]`.  Verilog sizes a range as |msb-lsb|+1
+                        // regardless of sign, so that is TWO bits — both
+                        // Yosys's own `read_verilog` and `read_slang` produce
+                        // `wire width 2 upto offset -1` for a port and give a
+                        // packed struct member two bits as well.  Treating it
+                        // as an elided zero-width field (which this used to
+                        // do) makes us the odd one out: the wire disappears,
+                        // and every `sig[0]` read of it then fails with "bit
+                        // select index 0 is out of range" (CVA6's hpdcache
+                        // arbiters, whose `parameter int unsigned N = 0`
+                        // yields exactly this range).
                         int range_size = std::abs(ls.as_int() - rs.as_int()) + 1;
                         log("UHDM: logic_typespec simple range width = %d\n", range_size);
                         return range_size;

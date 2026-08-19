@@ -83,7 +83,13 @@ run_one() {
   work="$WORKROOT/$mod"; mkdir -p "$work"; pushd "$work" >/dev/null
   top="${mod}_equiv"
 
-  if [ ! -f slpp_all/surelog.uhdm ] || [ "$wrap" -nt slpp_all/surelog.uhdm ]; then
+  # Re-elaborate when the wrapper changed OR when surelog itself is newer than
+  # the cached UHDM.  The binary embeds the UHDM elaborator, so a Surelog/UHDM
+  # fix changes the elaborated model even though every source file is
+  # untouched.  Without the second test an elaborator fix silently measures
+  # STALE UHDM and looks like it did nothing.
+  if [ ! -f slpp_all/surelog.uhdm ] || [ "$wrap" -nt slpp_all/surelog.uhdm ] ||
+     [ "$SURELOG" -nt slpp_all/surelog.uhdm ]; then
     "$SURELOG" -parse -sverilog -d uhdm -f "$FLIST" "$wrap" -top "$top" \
         > surelog.log 2>&1
   fi
