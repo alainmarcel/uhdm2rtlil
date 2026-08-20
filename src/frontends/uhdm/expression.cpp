@@ -2460,10 +2460,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                         bound_ts = tp->Typespec()->Actual_typespec();
                         }
                         // The ref is often unbound (no Actual_group) — look the
-                        // name up among the instance's type parameters.
+                        // name up among the enclosing instance's type
+                        // parameters.  `current_instance` is NOT yet set while
+                        // the module's own parameters are being imported (and
+                        // `$bits` in a parameter default is exactly that
+                        // case), so fall back to walking the call's parent
+                        // chain to whatever scope encloses it.
                         if (!bound_ts) {
-                            auto mi = dynamic_cast<const UHDM::module_inst*>(
-                                current_instance ? (const UHDM::scope*)current_instance : nullptr);
+                            const UHDM::module_inst* mi =
+                                dynamic_cast<const UHDM::module_inst*>(
+                                    (const UHDM::any*)current_instance);
+                            if (!mi) {
+                                for (const UHDM::any* up = func_call->VpiParent();
+                                     up; up = up->VpiParent()) {
+                                    if ((mi = dynamic_cast<const UHDM::module_inst*>(up)))
+                                        break;
+                                }
+                            }
                             if (mi && mi->Parameters()) {
                                 for (auto p : *mi->Parameters()) {
                                     if (p->UhdmType() != uhdmtype_parameter) continue;
