@@ -11166,7 +11166,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     const MemoryWriteInfo& info = *infop;
                     const expr* addr_expr = nullptr;
                     int lo = 0, hi = 0;
-                    if (parse_mem_partial_select(vs, addr_expr, lo, hi)) {
+                    if (parse_mem_partial_select(vs, addr_expr, lo, hi, info.data_wire->width)) {
                         int w = hi - lo + 1;
                         RTLIL::SigSpec addr = import_expression(addr_expr);
                         if (addr.size() != info.addr_wire->width) {
@@ -13232,7 +13232,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             const MemoryWriteInfo& info = *infop;
                             const expr* addr_expr = nullptr;
                             int lo = 0, hi = 0;
-                            if (parse_mem_partial_select(vs, addr_expr, lo, hi)) {
+                            if (parse_mem_partial_select(vs, addr_expr, lo, hi, info.data_wire->width)) {
                                 int w = hi - lo + 1;
                                 RTLIL::SigSpec addr = import_expression(addr_expr);
                                 if (addr.size() != info.addr_wire->width) {
@@ -13253,6 +13253,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     if (data.size() < w) data.extend_u0(w);
                                     else data = data.extract(0, w);
                                 }
+                                if (lo < 0 || w <= 0 ||
+                                    lo + w > info.data_wire->width) {
+                                    log_warning("UHDM: memory partial write "
+                                        "[%d +: %d] out of range for %d-bit word of "
+                                        "'%s' - falling back to a full-word write\n",
+                                        lo, w, info.data_wire->width,
+                                        std::string(vs->VpiName()).c_str());
+                                } else {
                                 case_rule->actions.push_back(RTLIL::SigSig(
                                     RTLIL::SigSpec(info.addr_wire), addr));
                                 case_rule->actions.push_back(RTLIL::SigSig(
@@ -13261,6 +13269,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     RTLIL::SigSpec(info.en_wire).extract(lo, w),
                                     RTLIL::SigSpec(RTLIL::State::S1, w)));
                                 return;
+                                }
                             }
                         }
                     }

@@ -970,8 +970,11 @@ struct UhdmImporter {
     // the address expression and the constant bit range [lo,hi] of its slice.
     // Handles part_select (`[hi:lo]`) and indexed_part_select (`[base+:w]` /
     // `[base-:w]`).  Returns false if there is no selector or it isn't constant.
+    // `mem_word_width` lets the parser fold a MIDDLE index (`mem[addr][j][sel]`,
+    // where the word is a packed array) into lo/hi; pass 0 when unknown.
     bool parse_mem_partial_select(const UHDM::var_select* vs,
-                                  const UHDM::expr*& addr_expr, int& lo, int& hi);
+                                  const UHDM::expr*& addr_expr, int& lo, int& hi,
+                                  int mem_word_width = 0);
     void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);
     bool has_for_loop(const any* stmt);
     bool needs_sync_path(const any* stmt, bool inside_conditional = false);

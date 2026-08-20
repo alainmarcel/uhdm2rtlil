@@ -1399,7 +1399,8 @@ void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std
 
 // Helper function to check if an assignment is a memory write
 bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
-                                            const UHDM::expr*& addr_expr, int& lo, int& hi) {
+                                            const UHDM::expr*& addr_expr, int& lo, int& hi,
+                                            int mem_word_width) {
     addr_expr = nullptr;
     const UHDM::any* sel = nullptr;
     const UHDM::expr* second = nullptr;
@@ -1425,13 +1426,38 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
         lo = hi = b.as_int();
         return true;
     }
+    // `mem[addr][j][sel]`: the memory WORD is itself a packed array and `j`
+    // picks one of its elements.  `second` holds that index; it used to be
+    // parsed and then dropped, so every element wrote at element 0's offset
+    // (CVA6's byte-enable SRAM wrote word j's bytes into word 0).  Fold it into
+    // the offset once the selector below has produced lo/hi.
+    int mid_offset = 0;
+    if (second && mem_word_width > 0) {
+        RTLIL::SigSpec m = import_expression(second);
+        if (!m.is_fully_const()) return false;   // dynamic element index: not this path
+        int outer = 0;
+        if (auto memp = module->memories.count(RTLIL::escape_id(std::string(vs->VpiName())))
+                            ? module->memories.at(RTLIL::escape_id(std::string(vs->VpiName())))
+                            : nullptr) {
+            auto it = memp->attributes.find(ID(packed_outer_dim));
+            if (it != memp->attributes.end()) outer = it->second.as_int();
+        }
+        if (outer <= 0) return false;            // unknown geometry: do not guess
+        int stride = mem_word_width / outer;
+        if (stride <= 0 || stride * outer != mem_word_width) return false;
+        mid_offset = m.as_int() * stride;
+    } else if (second) {
+        // A middle index with no word width to scale by — cannot place it.
+        return false;
+    }
+
     if (sel->VpiType() == vpiPartSelect) {
         auto ps = any_cast<const part_select*>(sel);
         RTLIL::SigSpec l = import_expression(ps->Left_range());
         RTLIL::SigSpec r = import_expression(ps->Right_range());
         if (!l.is_fully_const() || !r.is_fully_const()) return false;
-        lo = std::min(l.as_int(), r.as_int());
-        hi = std::max(l.as_int(), r.as_int());
+        lo = std::min(l.as_int(), r.as_int()) + mid_offset;
+        hi = std::max(l.as_int(), r.as_int()) + mid_offset;
         return true;
     }
     // indexed_part_select: `[base +: width]` (type 1) or `[base -: width]` (2)
@@ -1445,6 +1471,8 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
     } else {                                       // +:
         lo = b; hi = b + w - 1;
     }
+    lo += mid_offset;
+    hi += mid_offset;
     return true;
 }
 

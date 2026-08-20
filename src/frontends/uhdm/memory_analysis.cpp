@@ -484,6 +484,9 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
     
     // Extract memory dimensions from the array_net structure
     int width = 1; // Default bit width
+    // Outer packed dimension when the memory WORD is itself a packed array
+    // (`logic [NDATA-1:0][DATA_SIZE-1:0]`); 0 = plain vector word.
+    int packed_outer_dim = 0;
     int size = 1;  // Default array size
     int start_offset = 0;
     // Memory dimensions may be interface struct-parameter expressions
@@ -526,25 +529,49 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
-                    auto range = (*logic_typespec->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        // The packed width may be an interface struct-parameter
-                        // expression like `s.CFG.BUS.DAT-1`; force constant folding
-                        // so the `-1` operation collapses to a constant.
-                        bool saved_fcf = force_const_fold;
-                        force_const_fold = true;
+                    // Multiply ALL packed dimensions.  Only Ranges()[0] was
+                    // consulted, so a memory whose element is a packed
+                    // MULTI-DIMENSIONAL array — `typedef logic [NDATA-1:0]
+                    // [DATA_SIZE-1:0] mem_t [DEPTH]` — got the width of the
+                    // OUTER dimension alone (NDATA, not NDATA*DATA_SIZE).  A
+                    // per-byte write into such a memory then indexes past the
+                    // word and aborts yosys outright with
+                    // "Assert `offset + length <= size()' failed" (CVA6's
+                    // behavioural byte-enable SRAM, hpdcache_sram_wbyteenable).
+                    int packed_total = 1;
+                    int outer_dim = 0;
+                    bool all_const = true;
+                    // A bound may be an interface struct-parameter expression
+                    // like `s.CFG.BUS.DAT-1`; force folding so `-1` collapses.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    for (auto range : *logic_typespec->Ranges()) {
+                        if (!range->Left_expr() || !range->Right_expr()) {
+                            all_const = false;
+                            break;
+                        }
                         RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                         RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        force_const_fold = saved_fcf;
-                        
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            int left = left_spec.as_int();
-                            int right = right_spec.as_int();
-                            width = std::abs(left - right) + 1;
-
-                            if (mode_debug)
-                                log("    Packed range: [%d:%d], width=%d\n", left, right, width);
+                        if (!left_spec.is_fully_const() || !right_spec.is_fully_const()) {
+                            all_const = false;
+                            break;
                         }
+                        int left = left_spec.as_int();
+                        int right = right_spec.as_int();
+                        int dim = std::abs(left - right) + 1;
+                        if (outer_dim == 0) outer_dim = dim;   // first = outermost
+                        packed_total *= dim;
+                        if (mode_debug)
+                            log("    Packed range: [%d:%d]\n", left, right);
+                    }
+                    force_const_fold = saved_fcf;
+                    if (all_const && packed_total > 0) {
+                        width = packed_total;
+                        if (logic_typespec->Ranges()->size() > 1)
+                            packed_outer_dim = outer_dim;
+                        if (mode_debug)
+                            log("    Packed width=%d (%d dims)\n", width,
+                                (int)logic_typespec->Ranges()->size());
                     }
                 }
             }
@@ -570,8 +597,33 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
                 }
             }
         }
-        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
-            width = get_width_from_typespec(ats->Elem_typespec()->Actual_typespec());
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec()) {
+            // Pass the instance: the element's packed bounds are usually
+            // parameter expressions (`logic [NDATA-1:0][DATA_SIZE-1:0]`), and
+            // without a scope to resolve them against the width silently
+            // collapses to 1 — which then aborts yosys on the first per-byte
+            // write into the memory.
+            const UHDM::typespec* ets = ats->Elem_typespec()->Actual_typespec();
+            int ew = get_width_from_typespec(ets, current_instance);
+            if (ew > 0) width = ew;
+            // Same geometry note as above: if the element is itself a packed
+            // MULTI-dim array, record the outer dimension so an
+            // `mem[addr][j][sel]` write can place element j.
+            if (ets->UhdmType() == uhdmlogic_typespec) {
+                auto elt = any_cast<const UHDM::logic_typespec*>(ets);
+                if (elt->Ranges() && elt->Ranges()->size() > 1) {
+                    auto r0 = (*elt->Ranges())[0];
+                    if (r0->Left_expr() && r0->Right_expr()) {
+                        bool sv = force_const_fold; force_const_fold = true;
+                        RTLIL::SigSpec l0 = import_expression(r0->Left_expr());
+                        RTLIL::SigSpec r0s = import_expression(r0->Right_expr());
+                        force_const_fold = sv;
+                        if (l0.is_fully_const() && r0s.is_fully_const())
+                            packed_outer_dim = std::abs(l0.as_int() - r0s.as_int()) + 1;
+                    }
+                }
+            }
+        }
         if (mode_debug)
             log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
                 width, size, start_offset);
@@ -585,6 +637,13 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
+    // Record the OUTER packed dimension when the word is itself a packed array
+    // (`logic [NDATA-1:0][DATA_SIZE-1:0]`).  A write of the form
+    // `mem[addr][j][sel]` needs it to place element j at j*(width/NDATA);
+    // without it the element index has to be dropped, which silently writes
+    // every element at element 0's offset.
+    if (packed_outer_dim > 1)
+        memory->attributes[ID(packed_outer_dim)] = RTLIL::Const(packed_outer_dim);
 
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
@@ -607,6 +666,9 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     
     // Extract memory dimensions from the array_var structure
     int width = 1; // Default bit width
+    // Outer packed dimension when the memory WORD is itself a packed array
+    // (`logic [NDATA-1:0][DATA_SIZE-1:0]`); 0 = plain vector word.
+    int packed_outer_dim = 0;
     int size = 1;  // Default array size
     int start_offset = 0;
     // Memory dimensions may be interface struct-parameter expressions
@@ -651,25 +713,49 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
-                    auto range = (*logic_typespec->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        // The packed width may be an interface struct-parameter
-                        // expression like `s.CFG.BUS.DAT-1`; force constant folding
-                        // so the `-1` operation collapses to a constant.
-                        bool saved_fcf = force_const_fold;
-                        force_const_fold = true;
+                    // Multiply ALL packed dimensions.  Only Ranges()[0] was
+                    // consulted, so a memory whose element is a packed
+                    // MULTI-DIMENSIONAL array — `typedef logic [NDATA-1:0]
+                    // [DATA_SIZE-1:0] mem_t [DEPTH]` — got the width of the
+                    // OUTER dimension alone (NDATA, not NDATA*DATA_SIZE).  A
+                    // per-byte write into such a memory then indexes past the
+                    // word and aborts yosys outright with
+                    // "Assert `offset + length <= size()' failed" (CVA6's
+                    // behavioural byte-enable SRAM, hpdcache_sram_wbyteenable).
+                    int packed_total = 1;
+                    int outer_dim = 0;
+                    bool all_const = true;
+                    // A bound may be an interface struct-parameter expression
+                    // like `s.CFG.BUS.DAT-1`; force folding so `-1` collapses.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    for (auto range : *logic_typespec->Ranges()) {
+                        if (!range->Left_expr() || !range->Right_expr()) {
+                            all_const = false;
+                            break;
+                        }
                         RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                         RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        force_const_fold = saved_fcf;
-                        
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            int left = left_spec.as_int();
-                            int right = right_spec.as_int();
-                            width = std::abs(left - right) + 1;
-
-                            if (mode_debug)
-                                log("    Packed range: [%d:%d], width=%d\n", left, right, width);
+                        if (!left_spec.is_fully_const() || !right_spec.is_fully_const()) {
+                            all_const = false;
+                            break;
                         }
+                        int left = left_spec.as_int();
+                        int right = right_spec.as_int();
+                        int dim = std::abs(left - right) + 1;
+                        if (outer_dim == 0) outer_dim = dim;   // first = outermost
+                        packed_total *= dim;
+                        if (mode_debug)
+                            log("    Packed range: [%d:%d]\n", left, right);
+                    }
+                    force_const_fold = saved_fcf;
+                    if (all_const && packed_total > 0) {
+                        width = packed_total;
+                        if (logic_typespec->Ranges()->size() > 1)
+                            packed_outer_dim = outer_dim;
+                        if (mode_debug)
+                            log("    Packed width=%d (%d dims)\n", width,
+                                (int)logic_typespec->Ranges()->size());
                     }
                 }
             }
@@ -695,8 +781,33 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                 }
             }
         }
-        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
-            width = get_width_from_typespec(ats->Elem_typespec()->Actual_typespec());
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec()) {
+            // Pass the instance: the element's packed bounds are usually
+            // parameter expressions (`logic [NDATA-1:0][DATA_SIZE-1:0]`), and
+            // without a scope to resolve them against the width silently
+            // collapses to 1 — which then aborts yosys on the first per-byte
+            // write into the memory.
+            const UHDM::typespec* ets = ats->Elem_typespec()->Actual_typespec();
+            int ew = get_width_from_typespec(ets, current_instance);
+            if (ew > 0) width = ew;
+            // Same geometry note as above: if the element is itself a packed
+            // MULTI-dim array, record the outer dimension so an
+            // `mem[addr][j][sel]` write can place element j.
+            if (ets->UhdmType() == uhdmlogic_typespec) {
+                auto elt = any_cast<const UHDM::logic_typespec*>(ets);
+                if (elt->Ranges() && elt->Ranges()->size() > 1) {
+                    auto r0 = (*elt->Ranges())[0];
+                    if (r0->Left_expr() && r0->Right_expr()) {
+                        bool sv = force_const_fold; force_const_fold = true;
+                        RTLIL::SigSpec l0 = import_expression(r0->Left_expr());
+                        RTLIL::SigSpec r0s = import_expression(r0->Right_expr());
+                        force_const_fold = sv;
+                        if (l0.is_fully_const() && r0s.is_fully_const())
+                            packed_outer_dim = std::abs(l0.as_int() - r0s.as_int()) + 1;
+                    }
+                }
+            }
+        }
         if (mode_debug)
             log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
                 width, size, start_offset);
@@ -710,6 +821,13 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
+    // Record the OUTER packed dimension when the word is itself a packed array
+    // (`logic [NDATA-1:0][DATA_SIZE-1:0]`).  A write of the form
+    // `mem[addr][j][sel]` needs it to place element j at j*(width/NDATA);
+    // without it the element index has to be dropped, which silently writes
+    // every element at element 0's offset.
+    if (packed_outer_dim > 1)
+        memory->attributes[ID(packed_outer_dim)] = RTLIL::Const(packed_outer_dim);
 
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
