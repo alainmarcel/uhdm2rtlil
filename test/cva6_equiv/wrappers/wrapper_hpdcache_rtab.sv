@@ -314,9 +314,9 @@ module hpdcache_rtab_equiv
   parameter type hpdcache_nline_t = hpdcache_equiv_pkg::hpdcache_nline_t,
   parameter type hpdcache_way_t = hpdcache_equiv_pkg::hpdcache_way_t,
   parameter type hpdcache_req_addr_t = hpdcache_equiv_pkg::hpdcache_req_addr_t,
-  parameter type rtab_ptr_t = logic,
-  parameter type rtab_cnt_t = logic,
-  parameter type rtab_entry_t = logic
+  parameter type rtab_ptr_t = hpdcache_equiv_pkg::rtab_ptr_t,
+  parameter type rtab_cnt_t = hpdcache_equiv_pkg::rtab_cnt_t,
+  parameter type rtab_entry_t = hpdcache_equiv_pkg::rtab_entry_t
 ) (
 
     //  Clock and reset signals

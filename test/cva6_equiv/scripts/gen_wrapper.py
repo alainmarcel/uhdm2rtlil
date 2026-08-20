@@ -282,6 +282,14 @@ def provider_types(wrp_dir):
             names |= {a.strip() for a in call.group(1).split(",")
                       if a.strip().endswith("_t")}
         names |= set(re.findall(r"\btypedef\s+[^;]*?(\w+)\s*;", txt))
+        # A multi-line `typedef struct packed { … } name_t;` is NOT matched by
+        # the pattern above: `[^;]` cannot cross the semicolons inside the
+        # struct body, so it captures the first MEMBER name instead of the
+        # type.  Those aggregates are exactly the types wrappers need to name
+        # in a port list (rtab_entry_t, hpdcache_req_x_t), and missing them
+        # left `parameter type rtab_entry_t = logic`, which the reference
+        # frontend then rejects with "invalid member access".
+        names |= set(re.findall(r"\}\s*(\w+)\s*;", txt))
         names |= set(re.findall(r"\blocalparam\s+(?:type\s+)?(?:[\w:]+\s+)*?"
                                 r"(\w+)\s*=", txt))
         # Declarations lifted alongside these names are written in the

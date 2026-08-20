@@ -154,4 +154,37 @@ package hpdcache_equiv_pkg;
     //  Declaration of internal signals
     //  {{{
     logic                  refill_req_valid;
+
+  //  Replay-table types from hpdcache_ctrl.sv's body
+    typedef logic [$clog2(HPDcacheCfg.u.rtabEntries)-1:0] rtab_ptr_t;
+    typedef logic [$clog2(HPDcacheCfg.u.rtabEntries):0]   rtab_cnt_t;
+
+    //    Extended request type
+    typedef struct packed {
+        hpdcache_req_t req;
+
+        // Replayed from the RTAB
+        logic from_rtab;
+
+        // Error tag: Used for replayed requests that has been tagged as an error
+        // (e.g. write miss with allocation whose read response was an error)
+        logic is_error;
+
+        // Error scrubbing request
+        //   - Do not trigger miss request to the memory in case of miss
+        //   - Do not update the access state (e.g. LRU bits)
+        //   - Address contains the indexes of the way, set and word
+        logic err_scrubbing;
+    } hpdcache_req_x_t;
+
+    //    RTAB entry definition
+    typedef struct packed {
+        hpdcache_req_x_t req;
+        hpdcache_way_t   way_fetch;
+    } rtab_entry_t;
+    //  }}}
+
+    //  Definition of internal registers
+    //  {{{
+    logic                    st1_req_valid_q, st1_req_valid_d;
 endpackage
