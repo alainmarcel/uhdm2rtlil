@@ -1755,7 +1755,17 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
                     }
         // Check if parameter has an expression (its value)
         if (expr) {
+            // A parameter's value is by definition compile-time constant, so
+            // fold arithmetic over it here.  import_operation otherwise only
+            // folds inside loop/function/generate/dynports contexts, which
+            // left `parameter int DEPTH = 1 << $bits(some_type_param)`
+            // unfolded — reported "non-constant value" and defaulted to 0,
+            // which then collapsed every range built from it (CVA6
+            // hpdcache_mem_resp_demux's `rt_t = resp_id_t [DEPTH-1:0]`).
+            bool saved_fcf = force_const_fold;
+            force_const_fold = true;
             RTLIL::SigSpec value_spec = import_expression(expr);
+            force_const_fold = saved_fcf;
             // import_expression of an interface struct-parameter field hier_path
             // yields a fully-X constant (is_fully_const() is TRUE for X), so test
             // is_fully_def() and resolve via the interface instead.
@@ -2992,6 +3002,15 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                 }
                 int range_total = 1;
                 if (pa->Ranges()) {
+                    // Force folding: a packed dimension is compile-time
+                    // constant by definition, but its bound is often an
+                    // OPERATION over parameters (`[DEPTH-1:0]`), which
+                    // import_operation leaves unfolded outside
+                    // loop/function/generate contexts — the range then
+                    // silently contributes 1 and the array collapses to a
+                    // single element.  Same guard import_port already uses.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
                     for (auto r : *pa->Ranges()) {
                         if (r->Left_expr() && r->Right_expr()) {
                             RTLIL::SigSpec lspec = import_expression(r->Left_expr());
@@ -3003,6 +3022,7 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                             }
                         }
                     }
+                    force_const_fold = saved_fcf;
                 }
                 int total = elem_width * range_total;
                 log("UHDM: packed_array_typespec: elem_w=%d, range_total=%d, total=%d\n",
