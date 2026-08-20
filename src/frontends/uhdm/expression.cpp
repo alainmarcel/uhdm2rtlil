@@ -7142,6 +7142,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 net_ref_ts = logic_net->Typespec();
             } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(actual_group)) {
                 net_ref_ts = logic_var->Typespec();
+            } else if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(actual_group)) {
+                // A signal declared with a packed-array TYPE (`rt_t rt_i`,
+                // where `rt_t = id_t [DEPTH-1:0]`) elaborates to a
+                // packed_array_var/net, not a logic_var/net.  Only the logic_*
+                // forms were consulted here, so the element width stayed 1 and
+                // `rt_i[idx]` degenerated to an unscaled BIT select — reading
+                // bit `idx` instead of the element at `idx * ELEM_W`.  Correct
+                // only for index 0 (CVA6 hpdcache_mem_resp_demux's routing
+                // select was wrong for 3 of its 4 index values).
+                net_ref_ts = pav->Typespec();
+            } else if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(actual_group)) {
+                net_ref_ts = pan->Typespec();
             }
             if (net_ref_ts && net_ref_ts->Actual_typespec()) {
                 auto ts = net_ref_ts->Actual_typespec();

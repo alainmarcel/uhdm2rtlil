@@ -105,7 +105,7 @@ hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   crash
 hpdcache_mem_req_write_arbiter         4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_mem_resp_demux                4   180   cex      # cex now measurable (was error: unpacked type-param port) - TRIAGE
+hpdcache_mem_resp_demux                4   180   proven
 hpdcache_mem_to_axi_read               4   400   proven
 hpdcache_mem_to_axi_write              4   400   proven
 hpdcache_memctrl                       4   180   timeout
