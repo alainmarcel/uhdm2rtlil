@@ -7931,7 +7931,29 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             }
 
             // Create hierarchical wire: \blockname.varname
+            //
+            // The SAME named begin can appear in SEVERAL always blocks of one
+            // module — CVA6's fpnew_cast_multi has three `begin :
+            // special_results` — and each is a distinct scope with its own
+            // locals.  Naming them all `\special_results.<var>` made the
+            // second addWire abort yosys outright:
+            //   Assert `count_id(wire->name) == 0' failed
+            // Uniquify instead of reusing: reuse would MERGE two unrelated
+            // block-locals into one wire, silently tying the blocks together.
+            // (An unnamed begin already gets a per-block counter above; this
+            // is the named case.)  Keep the pair in step so `$0\<hier>` still
+            // matches its target wire.
             std::string hier_name = block_name + "." + var_name;
+            if (module->wire(RTLIL::escape_id(hier_name))) {
+                int n = 2;
+                while (module->wire(RTLIL::escape_id(
+                           hier_name + "$" + std::to_string(n))))
+                    n++;
+                hier_name += "$" + std::to_string(n);
+                log("    Begin block local '%s' collides with an earlier block "
+                    "of the same name; using '%s'\n",
+                    (block_name + "." + var_name).c_str(), hier_name.c_str());
+            }
             RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);
             if (var) add_src_attribute(block_wire->attributes, var);
 
