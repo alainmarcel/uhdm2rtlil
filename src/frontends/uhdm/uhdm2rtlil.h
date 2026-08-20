@@ -686,6 +686,11 @@ struct UhdmImporter {
     // name is a parameter present in the current RTLIL module's
     // parameter_default_values — i.e. a width we have actually resolved.
     bool expr_uses_resolved_param(const UHDM::any* e);
+    // ref_obj resolutions currently on the stack.  A parameter whose value
+    // resolves back to itself (directly or through a chain) otherwise recurses
+    // until the process dies of stack exhaustion — CVA6 fpnew_top segfaulted
+    // at ~53k frames of import_ref_obj/import_expression.
+    std::set<const UHDM::any*> ref_obj_in_progress;
 
     // Package support
     void import_package(const UHDM::package* uhdm_package);

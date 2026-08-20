@@ -1689,6 +1689,14 @@ int UhdmImporter::width_from_def_var(const std::string& def_name,
 // is a parameter present in the current RTLIL module's parameter_default_values.
 bool UhdmImporter::expr_uses_resolved_param(const any* e) {
     if (!e) return false;
+    // No RTLIL module yet: type_param_signature() probes port widths BEFORE
+    // import_module creates `module`, and this function dereferences it for
+    // parameter_default_values — a null deref that SEGFAULTED read_uhdm on
+    // most of the CVA6 cache subsystem (hpdcache, hpdcache_ctrl, std_nbdcache,
+    // …).  Same contract as the null-module guards in import_operation and
+    // import_hier_path: with no module there are no resolved parameters to
+    // find, so the answer is simply "no".
+    if (!module) return false;
     if (e->UhdmType() == uhdmref_obj) {
         std::string n = std::string(any_cast<const ref_obj*>(e)->VpiName());
         return !n.empty() &&
