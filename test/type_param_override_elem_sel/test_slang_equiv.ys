@@ -1,0 +1,20 @@
+# UHDM-vs-slang miter for dut.  read_verilog cannot parse the
+# CVA6-realistic shape here (a type parameter OVERRIDDEN at the
+# instantiation), so the golden reference is the built-in read_slang
+# — the same reference used for CVA6 latch parity.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+rename dut gold
+design -stash gold
+
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast
+rename dut gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_outputs gold gate miter
+sat -verify -prove trigger 0 -show-inputs -show-outputs miter
