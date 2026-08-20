@@ -693,6 +693,57 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 }
             }
         }
+        // Same recovery for an unpacked-array port that presents as an
+        // array_VAR rather than an array_net — which is what happens as soon
+        // as the port is written procedurally (`always_comb out_o[i] = ...`).
+        // Only Array_nets() was searched, so such a port kept the width of a
+        // SINGLE ELEMENT: CVA6 hpdcache_mem_resp_demux's
+        // `output resp_t mem_resp_o [N-1:0]` came out 69 bits instead of 138,
+        // while its sibling `mem_resp_valid_o` (an array_net) was recovered
+        // correctly.
+        if (unpacked_count == 0 && module_scope && module_scope->Variables()) {
+            for (auto v : *module_scope->Variables()) {
+                if (v->VpiName() != portname) continue;
+                auto av = dynamic_cast<const UHDM::array_var*>(v);
+                if (!av) break;
+                int total = 1;
+                if (av->Ranges()) {
+                    // The bound is typically `[N-1:0]` — an operation over a
+                    // parameter, which needs forcing like every other
+                    // compile-time-constant dimension.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    for (auto r : *av->Ranges()) {
+                        if (r->Left_expr() && r->Right_expr()) {
+                            RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                            if (ls.is_fully_const() && rs.is_fully_const())
+                                total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                            else { total = 0; break; }
+                        }
+                    }
+                    force_const_fold = saved_fcf;
+                }
+                int elem_w = 0;
+                if (av->Variables() && !av->Variables()->empty())
+                    elem_w = get_width((*av->Variables())[0], current_instance);
+                if (elem_w <= 0 && av->Typespec())
+                    if (auto ats = dynamic_cast<const UHDM::array_typespec*>(
+                            av->Typespec()->Actual_typespec()))
+                        if (auto et = ats->Elem_typespec())
+                            if (auto a = et->Actual_typespec())
+                                elem_w = get_width_from_typespec(a, current_instance);
+                if (total > 0 && elem_w > 0) {
+                    unpacked_count = total;
+                    unpacked_elem_w = elem_w;
+                    width = total * elem_w;
+                    log("UHDM: Port '%s' recovered unpacked dims from "
+                        "Variables (array_var): %d * %d = %d bits\n",
+                        portname.c_str(), elem_w, total, width);
+                }
+                break;
+            }
+        }
     }
 
     RTLIL::Wire* w = create_wire(portname, width, upto, start_offset);
@@ -2966,6 +3017,17 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                 }
                 int range_total = 1;
                 if (ats->Ranges()) {
+                    // Force folding — an unpacked dimension is compile-time
+                    // constant, but its bound is usually an OPERATION over a
+                    // parameter (`[N-1:0]`), which import_operation leaves
+                    // unfolded outside loop/function/generate contexts.  The
+                    // range then contributed 1 and the port came out ONE
+                    // ELEMENT wide (CVA6 hpdcache_mem_resp_demux's
+                    // `output resp_t mem_resp_o [N-1:0]`: 69 instead of 138).
+                    // Same guard the packed_array_typespec case below and
+                    // import_port already use.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
                     for (auto r : *ats->Ranges()) {
                         if (r->Left_expr() && r->Right_expr()) {
                             RTLIL::SigSpec lspec = import_expression(r->Left_expr());
@@ -2977,6 +3039,7 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                             }
                         }
                     }
+                    force_const_fold = saved_fcf;
                 }
                 int total = elem_width * range_total;
                 log("UHDM: array_typespec: elem_w=%d, range_total=%d, total=%d\n",
