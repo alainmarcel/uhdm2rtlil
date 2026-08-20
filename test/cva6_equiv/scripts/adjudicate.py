@@ -80,10 +80,83 @@ if not outs:
 def rnd(n, w):
     return " ".join(f"{n}[{min(b+31, w-1)}:{b}] <= $random;" for b in range(0, w, 32))
 
+# The netlists flatten an UNPACKED-array port to one wide vector, but the
+# behavioural RTL still declares it as an array -- connecting the flat wire to
+# it is a hard Verilator error ("mismatch between port which is an array, and
+# expression which is not"), which used to surface as an unexplained
+# "both simulators failed".  Find those ports in the wrapper and give the RTL
+# instance its own array-shaped nets, packed to/from the flat vector.
+unpacked = {}          # port name -> element count
+try:
+    wtxt = open(WRAP).read()
+    wtxt = re.sub(r"//[^\n]*", "", wtxt)
+    params = dict(re.findall(r"\bparameter\s+(?:int|int\s+unsigned)\s+(\w+)\s*=\s*(\d+)",
+                             wtxt))
+    for pname, dim in re.findall(
+            r"^\s*(?:input|output|inout)\s+\w+\s+(\w+)\s*\[([^\]]+)\]\s*,?\s*$",
+            wtxt, re.M):
+        m = re.fullmatch(r"\s*(\w+)\s*-\s*1\s*:\s*0\s*", dim)
+        cnt = None
+        if m:
+            cnt = int(params[m.group(1)]) if m.group(1) in params else None
+            if m.group(1).isdigit():
+                cnt = int(m.group(1))
+        elif re.fullmatch(r"\s*\d+\s*:\s*0\s*", dim):
+            cnt = int(dim.split(":")[0]) + 1
+        elif re.fullmatch(r"\s*\d+\s*", dim):
+            cnt = int(dim)
+        if cnt:
+            unpacked[pname] = cnt
+except OSError:
+    pass
+
+_allports = {n: w for n, w in ins + outs}
+_bad = [n for n, c in unpacked.items()
+        if n in _allports and (c <= 0 or _allports[n] % c)]
+for n in _bad:
+    del unpacked[n]
+if _bad:
+    print(f"{mod}: unpacked ports not evenly divisible, left flat: {_bad}")
+_unres = [n for n in re.findall(
+              r"^\s*(?:input|output|inout)\s+\w+\s+(\w+)\s*\[[^\]]+\]\s*,?\s*$",
+              re.sub(r"//[^\n]*", "", open(WRAP).read()), re.M)
+          if n in _allports and n not in unpacked]
+if _unres:
+    # Say so rather than let the simulator fail with a port-shape error that
+    # reads like a design problem.
+    print(f"{mod}: WARNING cannot size unpacked port(s) {_unres}; "
+          f"the RTL connection will fail to elaborate")
+
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
+
+# Array-shaped views for the RTL instance only; the netlists stay flat.
+arr_decl, arr_glue = [], []
+for n, w in ins:
+    if n not in unpacked: continue
+    c = unpacked[n]; ew = w // c
+    arr_decl.append(f"  wire [{ew-1}:0] a_{n} [0:{c-1}];")
+    for k in range(c):
+        _kk = k if os.environ.get("ADJ_ELEM_ORDER","hi") == "lo" else (c-1-k)
+        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(_kk+1)*ew-1}:{_kk*ew}];")
+for n, w in outs:
+    if n not in unpacked: continue
+    c = unpacked[n]; ew = w // c
+    arr_decl.append(f"  wire [{ew-1}:0] a_r_{n} [0:{c-1}];")
+    _order = range(c-1, -1, -1) if os.environ.get("ADJ_ELEM_ORDER","hi") == "lo" \
+             else range(0, c)
+    arr_glue.append("  assign r_%s = {%s};" %
+                    (n, ", ".join(f"a_r_{n}[{k}]" for k in _order)))
+arrays = "\n".join(arr_decl + arr_glue)
+
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
+# The RTL sees the array views where a port is unpacked; the netlists never do.
+rtl_conn = ", ".join(f".{n}(a_{n})" if n in unpacked else f".{n}({n})"
+                     for n, _ in ins)
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
+def bind_rtl():
+    return ", ".join(f".{n}(a_r_{n})" if n in unpacked else f".{n}(r_{n})"
+                     for n, _ in outs)
 drive = "\n      ".join(rnd(n, w) for n, w in ins)
 # Compare each netlist against the RTL, not against each other.  An X on the
 # RTL side is not a divergence -- it is the reference declining to say.
@@ -91,21 +164,29 @@ gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 # Name the first output that diverges, per side -- "they differ" is not a
 # diagnosis, and with a dozen ports the count alone does not say where to look.
-seen  = "\n".join(f"  reg rep_{n};" for n, _ in outs)
-seeni = "\n    ".join(f"rep_{n} = 0;" for n, _ in outs)
+# Track the two sides SEPARATELY.  A single per-output flag is claimed by
+# whichever side diverges first, so if slang breaks at cycle 0 the uhdm
+# divergence is never printed and the run looks like "slang only" even when
+# both are counted as differing.
+seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
+seeni = "\n    ".join(f"repg_{n} = 0; reps_{n} = 0;" for n, _ in outs)
 report = "\n".join(
-    f'      if (!rep_{n} && (r_{n} === r_{n}) && (g_{n} !== r_{n} || s_{n} !== r_{n})) '
-    f'begin rep_{n} = 1; $display("FIRST %0d {n} rtl=%h uhdm=%h slang=%h", i, '
-    f'r_{n}, g_{n}, s_{n}); end' for n, _ in outs)
+    f'      if (!repg_{n} && (r_{n} === r_{n}) && (g_{n} !== r_{n})) '
+    f'begin repg_{n} = 1; $display("FIRST-UHDM %0d {n} rtl=%h uhdm=%h", i, '
+    f'r_{n}, g_{n}); end\n'
+    f'      if (!reps_{n} && (r_{n} === r_{n}) && (s_{n} !== r_{n})) '
+    f'begin reps_{n} = 1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, '
+    f'r_{n}, s_{n}); end' for n, _ in outs)
 
 tb = f"""`timescale 1ns/1ps
 module tb;
   reg clk = 0, rst_ni = 0;
 {decl}
 {wires}
+{arrays}
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
-  {TOP}      rtl (.clk_i(clk), .rst_ni(rst_ni), {conn}, {bind('r')});
+  {TOP}      rtl (.clk_i(clk), .rst_ni(rst_ni), {rtl_conn}, {bind_rtl()});
   gold_{TOP} gold(.clk_i(clk), .rst_ni(rst_ni), {conn}, {bind('g')});
   gate_{TOP} gate(.clk_i(clk), .rst_ni(rst_ni), {conn}, {bind('s')});
   // Free-running clock, inputs driven on the FALLING edge and outputs sampled
