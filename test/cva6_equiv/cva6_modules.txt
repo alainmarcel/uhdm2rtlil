@@ -118,10 +118,10 @@ hpdcache_regbank_wbyteenable_1rw       4   180   crash
 hpdcache_regbank_wmask_1rw             4   180   crash
 hpdcache_rrarb                         4   180   proven
 hpdcache_rtab                          4   180   error
-hpdcache_sram                          4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_sram_1rw                      4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_sram_wbyteenable              4   400   error
-hpdcache_sram_wbyteenable_1rw          4   400   error
+hpdcache_sram                          4   180   proven
+hpdcache_sram_1rw                      4   180   proven
+hpdcache_sram_wbyteenable              4   400   timeout  # now elaborates+miters (was error: 1-bit memory word); SAT budget
+hpdcache_sram_wbyteenable_1rw          4   400   timeout  # now elaborates+miters (was error: 1-bit memory word); SAT budget
 hpdcache_sram_wmask                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_sram_wmask_1rw                4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_sync_buffer                   4   900   proven

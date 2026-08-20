@@ -1570,7 +1570,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         RTLIL::Memory* memory = module->memories.at(mem_id);
                         const expr* addr_expr = nullptr;
                         int psel_lo = 0, psel_hi = 0;
-                        bool have_psel = parse_mem_partial_select(vs, addr_expr, psel_lo, psel_hi);
+                        bool have_psel = parse_mem_partial_select(vs, addr_expr, psel_lo, psel_hi,
+                                                                  memory->width);
                         if (!addr_expr && !exprs->empty())
                             addr_expr = (*exprs)[0];   // plain `mem[addr]` read (no slice)
                         if (addr_expr) {
@@ -2165,6 +2166,48 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             }
                         } else {
                             log_warning("vpiVarSelect: non-constant part select on '%s'\n", base_name.c_str());
+                        }
+                    } else if (second_idx->VpiType() == vpiIndexedPartSelect) {
+                        // Indexed part select WITHIN the element:
+                        // `wdata[j][i*8 +: 8]`.  This case was missing, so the
+                        // access fell through to the generic branch below,
+                        // which re-imports the select against the FULL base
+                        // wire instead of the element — for a base narrower
+                        // than base+width that aborts yosys outright with
+                        // "Assert `offset + length <= size()' failed"
+                        // (CVA6's behavioural byte-enable SRAM, whose write
+                        // loop is exactly this shape).
+                        const indexed_part_select* ips =
+                            any_cast<const indexed_part_select*>(second_idx);
+                        RTLIL::SigSpec base_sig =
+                            import_expression(ips->Base_expr(), input_mapping);
+                        RTLIL::SigSpec w_sig =
+                            import_expression(ips->Width_expr(), input_mapping);
+                        bool pos = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
+                        if (w_sig.is_fully_const()) {
+                            int w = w_sig.as_const().as_int();
+                            if (base_sig.is_fully_const() && w > 0) {
+                                int b = base_sig.as_const().as_int();
+                                int off = pos ? b : (b - w + 1);
+                                if (off >= 0 && off + w <= element_sig.size()) {
+                                    result = element_sig.extract(off, w);
+                                } else {
+                                    log_warning("vpiVarSelect: indexed part select "
+                                                "[%d +/- %d] out of range for %d-bit "
+                                                "element of '%s'\n",
+                                                b, w, element_sig.size(),
+                                                base_name.c_str());
+                                }
+                            } else if (!base_sig.empty() && w > 0) {
+                                // Dynamic base — shift the ELEMENT, not the
+                                // whole array, and take w bits.
+                                RTLIL::Wire* y = module->addWire(NEW_ID, w);
+                                module->addShiftx(NEW_ID, element_sig, base_sig, y);
+                                result = RTLIL::SigSpec(y);
+                            }
+                        } else {
+                            log_warning("vpiVarSelect: non-constant width in indexed "
+                                        "part select on '%s'\n", base_name.c_str());
                         }
                     } else if (second_idx->VpiType() == vpiBitSelect) {
                         // Bit select within the element.  Index may be dynamic
