@@ -35,7 +35,7 @@ alu_wrapper                            4   900   proven
 amo_alu                                4   180   error
 amo_buffer                             4   900   proven
 ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random init (Verilator accepts); FPGA variant, not in the shipped config
-axi_adapter                            4   180   crash
+axi_adapter                            4   180   proven
 axi_shim                               4   400   proven
 bht                                    4   900   proven
 bht2lvl                                4   180   cex
@@ -53,9 +53,9 @@ csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
 cva6_hpdcache_if_adapter               4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-cva6_hpdcache_subsystem                4   180   crash
-cva6_hpdcache_subsystem_axi_arbiter    4   180   crash
-cva6_hpdcache_wrapper                  4   180   crash
+cva6_hpdcache_subsystem                4   180   error    # was crash (segfault); now Async reset yields non-constant value
+cva6_hpdcache_subsystem_axi_arbiter    4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
+cva6_hpdcache_wrapper                  4   180   error    # was crash (segfault); now chunk offset assert
 cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 cva6_mmu                               4   180   proven
@@ -82,39 +82,39 @@ fpnew_opgroup_block                    4   180   cex
 fpnew_opgroup_fmt_slice                4   180   cex
 fpnew_opgroup_multifmt_slice           4   180   timeout
 fpnew_rounding                         4   900   proven
-fpnew_top                              4   180   crash
+fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
 fpu_wrap                               4   180   cex
 frontend                               4   180   cex
-hpdcache                               4   180   crash
-hpdcache_1hot_to_binary                4   180   crash
+hpdcache                               4   180   error    # was crash (segfault); now Async reset yields non-constant value
+hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   proven
 hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_core_arbiter                  4   180   cex      # cex now measurable (was error) - TRIAGE
-hpdcache_ctrl                          4   180   crash
+hpdcache_ctrl                          4   180   timeout  # was crash (segfault); now timeout
 hpdcache_ctrl_pe                       4   180   cex
 hpdcache_data_downsize                 4   400   elabfail  # dead at this config: accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
 hpdcache_data_resize                   4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_data_upsize                   4   180   cex      # cex now measurable (was crash) - TRIAGE
-hpdcache_decoder                       4   180   crash
+hpdcache_decoder                       4   180   proven
 hpdcache_demux                         4   180   proven
 hpdcache_fifo_reg                      4   900   proven
 hpdcache_fifo_reg_initialized          4   180   cex
-hpdcache_flush                         4   180   crash
+hpdcache_flush                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
-hpdcache_mem_req_read_arbiter          4   180   crash
+hpdcache_mem_req_read_arbiter          4   180   proven
 hpdcache_mem_req_write_arbiter         4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_mem_resp_demux                4   180   proven
 hpdcache_mem_to_axi_read               4   400   proven
 hpdcache_mem_to_axi_write              4   400   proven
 hpdcache_memctrl                       4   180   timeout
-hpdcache_miss_handler                  4   180   crash
+hpdcache_miss_handler                  4   180   elabfail  # was crash (segfault); now elabfail
 hpdcache_mshr                          4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_mux                           4   180   proven
 hpdcache_prio_1hot_encoder             4   180   proven
 hpdcache_prio_bin_encoder              4   180   proven
-hpdcache_regbank_wbyteenable_1rw       4   180   crash
+hpdcache_regbank_wbyteenable_1rw       4   180   elabfail  # was crash (segfault); now elabfail
 hpdcache_regbank_wmask_1rw             4   180   cex      # cex now measurable (was crash) - TRIAGE
 hpdcache_rrarb                         4   180   proven
 hpdcache_rtab                          4   180   cex      # cex now measurable (was error: rtab_entry_t defaulted to logic) - TRIAGE
@@ -127,9 +127,9 @@ hpdcache_sram_wmask_1rw                4   180   proven
 hpdcache_sync_buffer                   4   900   proven
 hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_victim_plru                   4   180   cex      # cex now measurable (was error: zero-width [-1:0] ports) - TRIAGE
-hpdcache_victim_random                 4   180   crash
+hpdcache_victim_random                 4   180   proven
 hpdcache_victim_sel                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_wbuf                          4   180   crash
+hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
 hwpf_stride                            4   400   proven
 hwpf_stride_arb                        4   400   proven
 hwpf_stride_wrapper                    4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
@@ -145,7 +145,7 @@ load_store_unit                        4   180   cex
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
 macro_decoder                          4   180   cex
-miss_handler                           4   180   crash
+miss_handler                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   900   proven
@@ -160,8 +160,8 @@ ras                                    4   900   proven
 raw_checker                            4   900   proven
 scoreboard                             4   180   error
 serdiv                                 4   180   timeout
-std_cache_subsystem                    4   180   crash
-std_nbdcache                           4   180   crash
+std_cache_subsystem                    4   180   timeout  # was crash (segfault); now timeout
+std_nbdcache                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 store_buffer                           4   900   proven
 store_unit                             4   900   proven
 tag_cmp                                4   400   cex
@@ -169,7 +169,7 @@ trigger_module                         4   900   proven
 wt_axi_adapter                         4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
-wt_dcache_ctrl                         4   180   crash
+wt_dcache_ctrl                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudicated): wr_ack_o rtl=0 uhdm=1 slang=0, seeds 1/2/3
 wt_dcache_missunit                     4   400   cex      # UHDM WRONG (adjudicated): c524 wr_cl_vld_o rtl=1 uhdm=0 slang=1
 wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0

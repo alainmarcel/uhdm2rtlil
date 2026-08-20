@@ -5571,6 +5571,26 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
 
 // Import reference to object
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    // Break reference CYCLES.  A parameter whose value resolves back to itself
+    // (directly, or around a chain of parameters) recursed through
+    // import_expression until the stack was exhausted: CVA6's fpnew_top died
+    // with SIGSEGV about 53,000 frames deep, reported only as an opaque
+    // "crash".  Guard on the OBJECT, not a depth counter, so genuinely deep
+    // (but finite) parameter chains still resolve.
+    struct CycleGuard {
+        std::set<const UHDM::any*>& set_;
+        const UHDM::any* key_;
+        bool inserted_;
+        CycleGuard(std::set<const UHDM::any*>& s, const UHDM::any* k)
+            : set_(s), key_(k), inserted_(s.insert(k).second) {}
+        ~CycleGuard() { if (inserted_) set_.erase(key_); }
+    } _cycle_guard(ref_obj_in_progress, uhdm_ref);
+    if (!_cycle_guard.inserted_) {
+        log_warning("UHDM: cyclic reference through '%s' — returning empty "
+                    "instead of recursing\n",
+                    std::string(uhdm_ref->VpiName()).c_str());
+        return RTLIL::SigSpec();
+    }
     // Get the referenced object name
     std::string ref_name = std::string(uhdm_ref->VpiName());
     
