@@ -4429,7 +4429,36 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             return RTLIL::SigSpec(result);
         }
     }
-    
+
+    // An unsized fill literal ('0 / '1 / 'x / 'z) in a COMPARISON is
+    // context-determined: it replicates to the width of the other operand.
+    // It arrives here as a SINGLE BIT, so `exponent != '1` compared against
+    // 5'b00001 instead of 5'b11111 — CVA6 fpnew_classifier's is_normal,
+    // is_inf and is_nan all hinge on `exponent == '1`, and every operand was
+    // misclassified.  Replicate it before the per-operator sizing below.
+    if ((op_type == vpiEqOp || op_type == vpiNeqOp ||
+         op_type == vpiCaseEqOp || op_type == vpiCaseNeqOp ||
+         op_type == vpiWildEqOp || op_type == vpiWildNeqOp ||
+         op_type == vpiLtOp || op_type == vpiLeOp ||
+         op_type == vpiGtOp || op_type == vpiGeOp) &&
+        operands.size() == 2 && uhdm_op->Operands() &&
+        uhdm_op->Operands()->size() == 2) {
+        auto& uops = *uhdm_op->Operands();
+        for (int k = 0; k < 2; k++) {
+            auto fc = dynamic_cast<const UHDM::constant*>(uops[k]);
+            if (!fc || fc->VpiSize() != -1) continue;      // not a fill literal
+            const int other = 1 - k;
+            if (operands[k].size() != 1) continue;         // already sized
+            if (operands[other].size() <= 1) continue;
+            if (!operands[k].is_fully_const()) continue;
+            RTLIL::State bit = operands[k].as_const()[0];
+            operands[k] = RTLIL::SigSpec(bit, operands[other].size());
+            if (mode_debug)
+                log("    fill literal operand %d replicated to %d bits\n",
+                    k, operands[other].size());
+        }
+    }
+
     switch (op_type) {
         case vpiPlusOp:
             // Unary plus is a value no-op, but it must PRESERVE the operand's
@@ -11574,6 +11603,38 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             if (ts) {
                 // Calculate bit offset for struct member access
                 std::string remaining_path = path_name.substr(struct_name.length() + 1);
+                // The member's trailing index can be an EXPRESSION, not a
+                // literal.  CVA6 fpnew_classifier's `value.mantissa[MAN_BITS-1]`
+                // arrives here as the TEXT `mantissa[23 - 1]`, and the resolver
+                // below parses only the LEADING integer — selecting bit 23
+                // instead of 22, so `is_signalling` read the wrong mantissa bit
+                // and every signalling NaN was classified as quiet.
+                //
+                // The hier_path's own trailing `bit_select` carries the index as
+                // a real expression, so fold that and rewrite the bracket with
+                // the result.  Only the TEXT is rewritten: whether the index
+                // means a BIT or an ARRAY ELEMENT stays the resolver's decision
+                // (`rsp.rdata[0]` must still yield the whole 64-bit element).
+                if (!remaining_path.empty() && remaining_path.back() == ']' &&
+                    uhdm_hier->Path_elems() &&
+                    uhdm_hier->Path_elems()->size() >= 2) {
+                    auto bs = dynamic_cast<const UHDM::bit_select*>(
+                        uhdm_hier->Path_elems()->back());
+                    const UHDM::expr* idx = bs ? bs->VpiIndex() : nullptr;
+                    size_t ob = remaining_path.find_last_of('[');
+                    if (idx && idx->UhdmType() != uhdmconstant &&
+                        ob != std::string::npos) {
+                        RTLIL::SigSpec iv = import_expression(idx);
+                        if (iv.is_fully_const()) {
+                            remaining_path = remaining_path.substr(0, ob + 1) +
+                                             std::to_string(iv.as_const().as_int()) +
+                                             "]";
+                            if (mode_debug)
+                                log("    folded member index -> '%s'\n",
+                                    remaining_path.c_str());
+                        }
+                    }
+                }
                 // A trailing bit range on the member — `rsp.rdata[0][32 +: 32]`
                 // (CVA6 cva6_hpdcache_if_adapter's AMO response) — was left in
                 // the member NAME.  calculate_struct_member_offset then
