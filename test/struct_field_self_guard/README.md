@@ -43,21 +43,23 @@ against the module wire.
 Add `struct_net` to that cast list. One line; the branch then resolves the
 members and returns the in-flight slice.
 
-## Two prerequisites that also had to be true
+## Three changes are required, not one
 
-Both were already satisfied once traced, and are worth knowing if this area is
-touched again:
+The `struct_net` cast alone does **not** fix this. Two `current_comb_values`
+gaps have to be closed as well, or the map is empty at the guard and there is no
+in-flight value to prefer:
 
-1. `record_comb_partial_write()` only *splices* into an existing
-   `current_comb_values` entry — it deliberately does not create one. A struct
-   written solely through its fields never gets a full write, so it would never
-   enter the map.
-2. The `Process*` (unconditional) assignment path records only **full-wire**
-   chunks, so the top-level `o.fexc = ...` was not recorded there either.
+1. `record_comb_partial_write()` only *spliced* into an existing entry and never
+   created one. A struct written solely through its fields never gets a full
+   write, so it never entered the map and every field write bailed out. It now
+   seeds the entry from the wire, then splices.
+2. The `Process*` (unconditional) assignment path recorded only **full-wire**
+   chunks, so the top-level `o.fexc = ...` was never recorded there. It now calls
+   `record_comb_partial_write()` like the `CaseRule` overload already did.
 
-Neither needed changing for this DUT — the entry is created via the paths that
-already run — but if a future case shows an empty map at the guard
-(`ccp=1 keys=[]`), those two are where to look.
+With the map populated, `import_hier_path`'s member-chain branch fires, and the
+`struct_net` cast is what lets it resolve the base's typespec and return the
+in-flight slice.
 
 ## Checking
 
