@@ -7166,8 +7166,18 @@ void UhdmImporter::record_comb_partial_write(const RTLIL::SigSpec& lhs,
     // comb_read_map would redirect a later partial write's TARGET to the
     // value (multi-driver on the thread-mux wire — latch_tlb_napot).
     auto cit = current_comb_values.find(bn);
-    if (cit == current_comb_values.end() ||
-        cit->second.size() != fc.wire->width) return;
+    if (cit == current_comb_values.end()) {
+        // A signal written ONLY through its fields never gets a full write, so it
+        // never entered the map and every field write bailed out here.  A later
+        // READ of such a field then falls back to the final wire -- which this
+        // very process drives -- forming a combinational loop that yosys breaks
+        // by leaving the field driven by itself.  Seed from the wire and splice
+        // below: the written bits become visible, and the unwritten ones resolve
+        // to the wire exactly as they already did.
+        current_comb_values[bn] = RTLIL::SigSpec(fc.wire);
+        cit = current_comb_values.find(bn);
+    }
+    if (cit->second.size() != fc.wire->width) return;
     RTLIL::SigSpec cur = cit->second;
     RTLIL::SigSpec rv = rhs;
     if (rv.size() < fc.width) rv.extend_u0(fc.width);
@@ -11770,6 +11780,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         }
                         off += ch.width;
                     }
+                    // ...and splice a PARTIAL write (a struct-field assignment
+                    // `o.fexc = i.fexc`) into the in-flight value.  The CaseRule
+                    // overload already does this for writes inside a branch;
+                    // without it here the UNCONDITIONAL field writes at the top
+                    // of an always_comb were never recorded, so a guard reading
+                    // one of those fields saw the final wire.
+                    record_comb_partial_write(lhs, rhs);
                 }
                 return;
             }
