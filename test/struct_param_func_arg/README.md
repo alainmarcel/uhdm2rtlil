@@ -67,38 +67,19 @@ the path is already correct and was verified by probe:
 So the constant is wrong before any of that runs — it is built wrong where the
 assignment pattern is imported.
 
-## Attempted and reverted
+## Partially addressed
 
-Adding `param_assign` to `assignment_lhs_typespec()` (the helper added in round
-27 for the procedural case), with a `parameter` LHS returning its `Typespec()`.
-It did **not** change the packed constant, so either the pattern's parent is not
-the `param_assign` or the parameter's typespec does not resolve to the struct
-there. Reverted rather than shipped unverified. That helper is still the right
-place to look; the next step is to probe which parent the pattern operation
-actually has in this shape.
+The **packing** half is now fixed (see `test/struct_param_pattern_packing`): a
+parameter initialised by a *literal* pattern packs its fields correctly. Two
+changes were needed — `param_assign` in `assignment_lhs_typespec()`, and
+positional sizing for the **bare, untagged** operands Surelog emits for an
+elaborated parameter.
 
-## Where it came from
+**This test still fails**, because its `CFG` comes from `p::build()` — a function
+that assigns members and returns the struct. That folds to all-zeros, not
+mis-packed, and is the parked `evalFunc` value-less `struct_var` defect. CVA6
+`pmp_data_if` is in the same category (`CVA6Cfg = build_config(...)`) and remains
+at 377/2000.
 
-CVA6 `pmp_data_if`, which is still a counterexample after the `struct_net` fix
-(PR #628). Its netlist shows the collapse directly:
-
-```
-uhdm : assign \dut.match_any_execute_region = 1'h1
-slang: assign \dut.match_any_execute_region = | { 13'h0000, _0210_, _0201_, _0049_ }
-```
-
-from `config_pkg::is_inside_execute_regions(CVA6Cfg, ...)`, whose body is
-
-```systemverilog
-if (Cfg.NrExecuteRegionRules != 0) begin ... return |pass; end
-else return 1;
-```
-
-`NrExecuteRegionRules` is 3 in this configuration, but folds to 0 through the
-formal, so the `else` fires and every address reports "inside an execute
-region". That inverts the PMP access-fault decision, which is why both `cause`
-and `tval` diverge (Verilator adjudication 377/2000; slang 0/2000).
-
-## Status
-
-Listed in `slang_miter_expected_fail.txt`. Remove it from there once fixed.
+So this reproducer now isolates exactly one thing: the function-built struct
+parameter. Fixing it means fixing `evalFunc`.
