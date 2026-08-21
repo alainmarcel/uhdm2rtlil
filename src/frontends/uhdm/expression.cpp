@@ -10909,9 +10909,18 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (mode_debug)
             log("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
         
+        // Same gen-scope qualification as the resolver below: a struct
+        // declared inside a generate block is registered as
+        // `<gen_scope>.<name>`.
+        std::string base_key = base_name;
+        if (!name_map.count(base_key)) {
+            const std::string gs = get_current_gen_scope();
+            if (!gs.empty() && name_map.count(gs + "." + base_name))
+                base_key = gs + "." + base_name;
+        }
         // Check if the base wire exists
-        if (name_map.count(base_name)) {
-            RTLIL::Wire* base_wire = name_map[base_name];
+        if (name_map.count(base_key)) {
+            RTLIL::Wire* base_wire = name_map[base_key];
             
             // Look up the base wire in wire_map to get the UHDM object
             const any* base_uhdm_obj = nullptr;
@@ -11469,8 +11478,23 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         // This is a struct member reference but we couldn't resolve it above
         // Try to calculate the offset dynamically from the struct typespec
         std::string struct_name = path_name.substr(0, path_name.find('.'));
-        if (name_map.count(struct_name)) {
-            RTLIL::Wire* struct_wire = name_map[struct_name];
+        // A struct declared INSIDE a generate block is registered under its
+        // gen-scope-qualified name (`gen_op[0].value`), but the member path
+        // carries the bare name — so the lookup missed and the whole access
+        // resolved to X.  CVA6 fpnew_classifier declares `fp_t value;` in a
+        // genvar block and reads `value.exponent`; every classification folded
+        // to a constant because the field read was X.  Same class as the lzc
+        // gen-scope prefix fix, at the struct-member site.
+        // NB keep `struct_name` as the PATH prefix — later code slices
+        // path_name by its length — and look the wire up under a separate key.
+        std::string struct_key = struct_name;
+        if (!name_map.count(struct_key)) {
+            const std::string gs = get_current_gen_scope();
+            if (!gs.empty() && name_map.count(gs + "." + struct_name))
+                struct_key = gs + "." + struct_name;
+        }
+        if (name_map.count(struct_key)) {
+            RTLIL::Wire* struct_wire = name_map[struct_key];
             
             // Find the UHDM object for the struct wire
             const any* struct_uhdm_obj = nullptr;
