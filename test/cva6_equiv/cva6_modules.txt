@@ -53,9 +53,9 @@ csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
 cva6_hpdcache_if_adapter               4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-cva6_hpdcache_subsystem                4   180   error    # was crash (segfault); now Async reset yields non-constant value
+cva6_hpdcache_subsystem                4   180   error  # chunk-offset assert FIXED; now blocked on the async-reset (evalFunc struct_var) issue
 cva6_hpdcache_subsystem_axi_arbiter    4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
-cva6_hpdcache_wrapper                  4   180   error    # was crash (segfault); now chunk offset assert
+cva6_hpdcache_wrapper                  4   180   error  # chunk-offset assert FIXED; now blocked on the async-reset (evalFunc struct_var) issue
 cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 cva6_mmu                               4   180   proven

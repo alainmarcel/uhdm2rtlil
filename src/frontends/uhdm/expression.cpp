@@ -11550,13 +11550,63 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             if (ts) {
                 // Calculate bit offset for struct member access
                 std::string remaining_path = path_name.substr(struct_name.length() + 1);
+                // A trailing bit range on the member — `rsp.rdata[0][32 +: 32]`
+                // (CVA6 cva6_hpdcache_if_adapter's AMO response) — was left in
+                // the member NAME.  calculate_struct_member_offset then
+                // resolved `rdata[0]` and returned that element's FULL width,
+                // so the range was dropped and the resulting chunk ran past the
+                // end of the struct wire, aborting yosys with
+                // "Assert `chunk_.offset + chunk_.width <= chunk_.wire->width'".
+                // Split the range off, resolve the member without it, then
+                // apply it to the member's slice.
+                int sub_lsb = 0, sub_width = 0;
+                bool have_sub = false;
+                {
+                    size_t ob = remaining_path.find_last_of('[');
+                    if (ob != std::string::npos &&
+                        remaining_path.back() == ']') {
+                        std::string sel = remaining_path.substr(
+                            ob + 1, remaining_path.size() - ob - 2);
+                        int a = 0, b = 0;
+                        if (sscanf(sel.c_str(), "%d+:%d", &a, &b) == 2) {
+                            sub_lsb = a; sub_width = b; have_sub = true;
+                        } else if (sscanf(sel.c_str(), "%d-:%d", &a, &b) == 2) {
+                            sub_width = b; sub_lsb = a - b + 1; have_sub = true;
+                        } else if (sscanf(sel.c_str(), "%d:%d", &a, &b) == 2) {
+                            sub_lsb = std::min(a, b);
+                            sub_width = std::abs(a - b) + 1;
+                            have_sub = true;
+                        }
+                        if (have_sub)
+                            remaining_path = remaining_path.substr(0, ob);
+                    }
+                }
                 int bit_offset = 0;
                 int member_width = 0;
                 if (calculate_struct_member_offset(ts, remaining_path, inst, bit_offset, member_width)) {
+                    if (have_sub) {
+                        if (sub_lsb < 0 || sub_width <= 0 ||
+                            sub_lsb + sub_width > member_width) {
+                            log_warning("UHDM: range [%d +: %d] out of range for "
+                                        "%d-bit member '%s'\n",
+                                        sub_lsb, sub_width, member_width,
+                                        remaining_path.c_str());
+                            have_sub = false;
+                        } else {
+                            bit_offset += sub_lsb;
+                            member_width = sub_width;
+                        }
+                    }
                     if (mode_debug)
                         log("    Calculated struct member '%s' offset=%d, width=%d\n",
                             path_name.c_str(), bit_offset, member_width);
-                    return RTLIL::SigSpec(struct_wire, bit_offset, member_width);
+                    if (bit_offset >= 0 && member_width > 0 &&
+                        bit_offset + member_width <= struct_wire->width)
+                        return RTLIL::SigSpec(struct_wire, bit_offset, member_width);
+                    log_warning("UHDM: struct member '%s' slice [%d +: %d] exceeds "
+                                "the %d-bit wire — leaving unresolved\n",
+                                path_name.c_str(), bit_offset, member_width,
+                                struct_wire->width);
                 }
             }
         }
