@@ -1,0 +1,26 @@
+# UHDM-vs-slang miter for dut.  read_verilog cannot parse the CVA6-realistic
+# shape here (a memory whose element is a packed 2-D array, written per byte
+# under two loop variables), so the golden reference is the built-in read_slang
+# frontend — the same reference used for CVA6 latch parity.
+#
+# This design is CLOCKED and contains a memory, so the miter is SEQUENTIAL:
+# `memory` lowers $memwr_v2/$memrd (satgen has no model for them) and
+# async2sync makes the flops SAT-modellable, then the proof runs over N cycles
+# from a zero-initialised state — the same recipe test/cva6_equiv uses.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+rename dut gold
+design -stash gold
+
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast
+rename dut gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_outputs gold gate miter
+
+sat -verify -prove trigger 0 -show-inputs -show-outputs miter
