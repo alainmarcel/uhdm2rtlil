@@ -8364,6 +8364,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
                 else if (a->UhdmType() == uhdmunion_var)
                     rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                // A struct declared as a NET (`p::areq_t o;` in a module) is a
+                // struct_net, which was missing here — the typespec came back
+                // null, the member walk bailed, and the whole access fell
+                // through to the handlers below, which resolve against the
+                // module WIRE instead of the in-flight value.  For a field read
+                // inside the same always_comb that writes the struct, that wire
+                // is driven by this very process: a combinational loop, which
+                // yosys breaks by leaving the field driven by itself (CVA6
+                // pmp_data_if's fetch_exception.cause).
+                else if (a->UhdmType() == uhdmstruct_net)
+                    rts = any_cast<const UHDM::struct_net*>(a)->Typespec();
                 else if (a->UhdmType() == uhdmio_decl)
                     rts = any_cast<const UHDM::io_decl*>(a)->Typespec();
             }
