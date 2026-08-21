@@ -65,6 +65,11 @@ cut = mtxt.find("function")
 if cut > 0:
     mtxt = mtxt[:cut]
 ins, outs = [], []
+# A purely COMBINATIONAL module (fpnew_classifier) has no clk_i/rst_ni.
+# The testbench used to connect them unconditionally, so Verilator
+# rejected the whole build with 'Pin not found' and the run was reported
+# as 'both simulators failed' — indistinguishable from a design problem.
+has_clk_rst = set()
 for dirn, rng, name in re.findall(r"^  (input|output)\s+(\[\d+:\d+\]\s+)?(\w+);",
                                   mtxt, re.M):
     w = 1
@@ -72,6 +77,7 @@ for dirn, rng, name in re.findall(r"^  (input|output)\s+(\[\d+:\d+\]\s+)?(\w+);"
         hi, lo = map(int, re.findall(r"\d+", rng))
         w = hi - lo + 1
     if name in ("clk_i", "rst_ni"):
+        has_clk_rst.add(name)
         continue
     (ins if dirn == "input" else outs).append((name, w))
 if not outs:
@@ -178,6 +184,8 @@ report = "\n".join(
     f'begin reps_{n} = 1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, '
     f'r_{n}, s_{n}); end' for n, _ in outs)
 
+ck = "".join((".clk_i(clk), " if "clk_i" in has_clk_rst else "",
+               ".rst_ni(rst_ni), " if "rst_ni" in has_clk_rst else ""))
 tb = f"""`timescale 1ns/1ps
 module tb;
   reg clk = 0, rst_ni = 0;
@@ -186,9 +194,9 @@ module tb;
 {arrays}
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
-  {TOP}      rtl (.clk_i(clk), .rst_ni(rst_ni), {rtl_conn}, {bind_rtl()});
-  gold_{TOP} gold(.clk_i(clk), .rst_ni(rst_ni), {conn}, {bind('g')});
-  gate_{TOP} gate(.clk_i(clk), .rst_ni(rst_ni), {conn}, {bind('s')});
+  {TOP}      rtl ({ck}{rtl_conn}, {bind_rtl()});
+  gold_{TOP} gold({ck}{conn}, {bind('g')});
+  gate_{TOP} gate({ck}{conn}, {bind('s')});
   // Free-running clock, inputs driven on the FALLING edge and outputs sampled
   // after the rising one.  Driving inputs in the same statement sequence that
   // toggles the clock races the three instances against each other and reports
