@@ -157,6 +157,15 @@ CastStructArray
 # miter (SUCCESS).  These are the reproducers for the CVA6 alu_wrapper
 # `fu_data_i[0]` packed-array element-select fixes.
 packed_array_elem_select
+
+# Same read_verilog defect as packed_array_elem_select above, reached through a
+# PACKAGE-scoped struct typedef: `p::fp_info_t [1:0] info_q` is sized 8 bits by
+# read_verilog instead of 16, so its reference netlist selects the wrong bits and
+# the SAT equiv reports spurious unproven cells.  Adjudicated three ways —
+# read_slang and read_uhdm both give 16 bits, and iverilog agrees
+# ($bits = 16, info_q[0] = the LOW byte).  UHDM is correct here; the slang miter
+# PROVES this test, which is the check that matters for it.
+packed_struct_array_net_elem
 # packed_array_struct_port_sel  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- `parameter type` struct with function-computed CVA6Cfg.FIELD widths ---

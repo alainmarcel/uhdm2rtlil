@@ -3654,6 +3654,31 @@ static void xz_value_extend_pair(RTLIL::SigSpec &a, RTLIL::SigSpec &b) {
 }
 
 // Import operation
+// An assignment-pattern operation carries no typespec of its own, and in a
+// PROCEDURAL context its parent is an `assignment` (or a `cont_assign`) rather
+// than the `param_assign` the pattern handlers originally expected.  Recover the
+// target type from the assignment's LHS so `'{...}` can be laid out against the
+// real struct.  Returns null when the LHS carries no typespec.
+static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm_op) {
+    if (!uhdm_op || !uhdm_op->VpiParent()) return nullptr;
+    const UHDM::any* lhs = nullptr;
+    if (uhdm_op->VpiParent()->UhdmType() == uhdmassignment)
+        lhs = any_cast<const UHDM::assignment*>(uhdm_op->VpiParent())->Lhs();
+    else if (uhdm_op->VpiParent()->UhdmType() == uhdmcont_assign)
+        lhs = any_cast<const UHDM::cont_assign*>(uhdm_op->VpiParent())->Lhs();
+    if (!lhs) return nullptr;
+    // A ref_obj LHS points at the declaration that carries the typespec.
+    if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
+        if (auto ag = r->Actual_group()) lhs = ag;
+    const UHDM::ref_typespec* rt = nullptr;
+    if (auto sv = dynamic_cast<const UHDM::struct_var*>(lhs)) rt = sv->Typespec();
+    else if (auto uv = dynamic_cast<const UHDM::union_var*>(lhs)) rt = uv->Typespec();
+    else if (auto sn = dynamic_cast<const UHDM::struct_net*>(lhs)) rt = sn->Typespec();
+    else if (auto lv = dynamic_cast<const UHDM::logic_var*>(lhs)) rt = lv->Typespec();
+    else if (auto ln = dynamic_cast<const UHDM::logic_net*>(lhs)) rt = ln->Typespec();
+    return rt ? rt->Actual_typespec() : nullptr;
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -3752,6 +3777,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (auto p = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
                         if (p->Typespec()) ats = p->Typespec()->Actual_typespec();
             }
+            // Recover the target type from a procedural assignment's LHS, but
+            // ONLY for a struct/union target.  The packed-VECTOR branch further
+            // down sizes the fill to `ats`'s full width, and handing it the
+            // whole LHS object there produced a 104256-bit constant in
+            // rp32_r5p_csr (Verilator then refused to build the netlist).  The
+            // vector case keeps using the context width, as before.
+            if (!ats)
+                if (auto lt = assignment_lhs_typespec(uhdm_op))
+                    if (lt->UhdmType() == uhdmstruct_typespec ||
+                        lt->UhdmType() == uhdmunion_typespec)
+                        ats = lt;
             const VectorOftypespec_member* members = nullptr;
             if (ats && ats->UhdmType() == uhdmstruct_typespec)
                 members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
@@ -3887,6 +3923,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     expression_context_typespec &&
                     expression_context_typespec->UhdmType() == uhdmstruct_typespec)
                     cand = expression_context_typespec;
+                // Neither is set for a PROCEDURAL `r = '{sign: .., exponent: '1,
+                // ..}` (CVA6 fpnew_noncomp's NaN-box canonicalization), so every
+                // field fell back to the ctx/count guess — 32/3 is not a whole
+                // number, giving field_w 0, no per-field resizing, and a concat
+                // wider than the target whose TOP fields (sign, exponent) were
+                // then truncated away: 0x00400000 instead of 0x7fc00000.
+                if (!cand || cand->UhdmType() != uhdmstruct_typespec)
+                    if (auto lt = assignment_lhs_typespec(uhdm_op))
+                        if (lt->UhdmType() == uhdmstruct_typespec) cand = lt;
                 if (cand && cand->UhdmType() == uhdmstruct_typespec)
                     struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
             }
@@ -7008,28 +7053,46 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         // Find the packed_array_var (via wire_map) to read its Ranges()/Elements();
         // for a typedef'd packed array of struct this is the only place the outer
         // dimension and element type are both available.
-        const UHDM::packed_array_var* pav = nullptr;
-        for (auto& kv : wire_map) {
-            if (kv.second != wire) continue;
-            if (kv.first->UhdmType() == uhdmpacked_array_var) {
-                pav = any_cast<const UHDM::packed_array_var*>(kv.first);
-                break;
+        // A NET-declared packed array of a struct (`fpnew_pkg::fp_info_t [1:0]
+        // info_q`) elaborates to a packed_array_NET, which this search did not
+        // accept — only the VAR form.  `info_q[0]` then extracted a single BIT
+        // and zero-extended it to the struct's width, so every field of CVA6
+        // fpnew_noncomp's info_a/info_b read as 0 (2972/3000 cycles diverged).
+        // The dynamic-index path below already handles both forms; take them
+        // both here too, and prefer the bit_select's own Actual_group (the
+        // declaration is right there) over searching wire_map by wire.
+        const UHDM::VectorOfrange* prg = nullptr;
+        const UHDM::VectorOfany* pel = nullptr;
+        const UHDM::ref_typespec* pts_ref = nullptr;
+        auto take_packed = [&](const UHDM::any* o) {
+            if (prg) return;
+            if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(o)) {
+                prg = pv->Ranges(); pel = pv->Elements(); pts_ref = pv->Typespec();
+            } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(o)) {
+                prg = pn->Ranges(); pel = pn->Elements(); pts_ref = pn->Typespec();
             }
-        }
-        if (pav) {
+        };
+        take_packed(uhdm_bit->Actual_group());
+        if (!prg)
+            for (auto& kv : wire_map) {
+                if (kv.second != wire) continue;
+                take_packed(kv.first);
+                if (prg) break;
+            }
+        if (prg || pel || pts_ref) {
             int ew = 0;
-            if (pav->Elements() && !pav->Elements()->empty())
-                if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
+            if (pel && !pel->empty())
+                if (auto e0 = dynamic_cast<const UHDM::any*>((*pel)[0]))
                     ew = get_width(e0, inst);
-            if (ew <= 0 && pav->Typespec())
-                if (auto pts = pav->Typespec()->Actual_typespec())
+            if (ew <= 0 && pts_ref)
+                if (auto pts = pts_ref->Actual_typespec())
                     if (pts->UhdmType() == uhdmpacked_array_typespec)
                         if (auto pat = any_cast<const UHDM::packed_array_typespec*>(pts))
                             if (pat->Elem_typespec())
                                 if (auto et = pat->Elem_typespec()->Actual_typespec())
                                     ew = get_width_from_typespec(et, inst);
-            if (ew > 1 && pav->Ranges() && !pav->Ranges()->empty()) {
-                auto r0 = (*pav->Ranges())[0];
+            if (ew > 1 && prg && !prg->empty()) {
+                auto r0 = (*prg)[0];
                 RTLIL::SigSpec ls = import_expression(r0->Left_expr());
                 RTLIL::SigSpec rs = import_expression(r0->Right_expr());
                 if (ls.is_fully_const() && rs.is_fully_const()) {
