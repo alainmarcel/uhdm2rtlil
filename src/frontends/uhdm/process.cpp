@@ -7188,6 +7188,9 @@ void UhdmImporter::record_comb_partial_write(const RTLIL::SigSpec& lhs,
     if (ai != comb_value_aliases.end()) current_comb_values[ai->second] = cur;
 }
 
+static void remove_target_from_switches(RTLIL::CaseRule* cr,
+                                        const RTLIL::SigSpec& target);
+
 // Emit an assignment in a comb process, mapping LHS to its $0\ temp wire
 void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc) {
     // Size match
@@ -7200,6 +7203,14 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
 
     // Map LHS wire to its $0\ temp wire (same logic as import_assignment_comb)
     RTLIL::SigSpec mapped_lhs = map_to_temp_wire(lhs);
+    // This write is unconditional at the root-case level and later in program
+    // order than any switch already in the root case, so an identical-target
+    // assign inside those switches is superseded (later-wins; its effect is
+    // carried by the ccv-threaded value this write chains on).  RTLIL applies a
+    // case's actions BEFORE its switches, so the stale switch action would
+    // otherwise override this one — bht2lvl's `.hist` write after the
+    // saturation-counter if/else was lost that way.
+    remove_target_from_switches(&proc->root_case, mapped_lhs);
     proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
 
     // Update value tracking so subsequent expressions see the new value.
@@ -10098,13 +10109,13 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_val), proc);
     } else if (case_rule) {
         std::string temp_name = "$0\\" + base_name;
-        if (RTLIL::Wire* temp_wire = module->wire(temp_name)) {
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(new_val)));
-        } else {
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_val)));
-        }
+        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        RTLIL::SigSpec tgt = temp_wire ? RTLIL::SigSpec(temp_wire)
+                                       : RTLIL::SigSpec(base_wire);
+        // Unconditional at this case level — supersedes identical-target
+        // writes in the case's existing switches (see emit_comb_assign).
+        remove_target_from_switches(case_rule, tgt);
+        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_val)));
     }
     if (!in_always_ff_body_mode)
         current_comb_values[base_name] = RTLIL::SigSpec(new_val);
@@ -10206,10 +10217,13 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
             if (proc)
                 emit_comb_assign(RTLIL::SigSpec(flat_w).extract(off, elem_w),
                                  RTLIL::SigSpec(nv), proc);
-            else
-                case_rule->actions.push_back(RTLIL::SigSig(
-                    RTLIL::SigSpec(flat_tw).extract(off, elem_w),
-                    RTLIL::SigSpec(nv)));
+            else {
+                RTLIL::SigSpec tgt =
+                    RTLIL::SigSpec(flat_tw).extract(off, elem_w);
+                remove_target_from_switches(case_rule, tgt);
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
+            }
             if (!in_always_ff_body_mode) {
                 RTLIL::SigSpec curbase = current_comb_values.count(base_name)
                                              ? current_comb_values.at(base_name)
@@ -10223,12 +10237,10 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
             emit_comb_assign(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv), proc);
         } else if (case_rule) {
             std::string temp_name = "$0\\" + ename;
-            if (RTLIL::Wire* tw = module->wire(temp_name))
-                case_rule->actions.push_back(
-                    RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(nv)));
-            else
-                case_rule->actions.push_back(
-                    RTLIL::SigSig(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv)));
+            RTLIL::Wire* tw = module->wire(temp_name);
+            RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew);
+            remove_target_from_switches(case_rule, tgt);
+            case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
         }
         if (!in_always_ff_body_mode)
             current_comb_values[ename] = RTLIL::SigSpec(nv);
@@ -10428,15 +10440,12 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
         emit_comb_assign(lhs_slice, RTLIL::SigSpec(new_field), proc);
     } else if (case_rule) {
         std::string temp_name = "$0\\" + base_name;
-        if (RTLIL::Wire* temp_wire = module->wire(temp_name)) {
-            RTLIL::SigSpec temp_slice =
-                RTLIL::SigSpec(temp_wire).extract(field_offset, field_width);
-            case_rule->actions.push_back(
-                RTLIL::SigSig(temp_slice, RTLIL::SigSpec(new_field)));
-        } else {
-            case_rule->actions.push_back(
-                RTLIL::SigSig(lhs_slice, RTLIL::SigSpec(new_field)));
-        }
+        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        RTLIL::SigSpec tgt = temp_wire
+            ? RTLIL::SigSpec(temp_wire).extract(field_offset, field_width)
+            : lhs_slice;
+        remove_target_from_switches(case_rule, tgt);
+        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_field)));
     }
     if (!in_always_ff_body_mode) {
         // Update current_comb_values[base_name] with the field slice
@@ -10471,16 +10480,62 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     // of bit_selects then the field ref.  Combined bit shift
     // Σ (idx_k − low_k)·stride_k + field_off, then the same full-width RMW
     // on the flat wire as the single-index path below.
+    // Geometry of a packed-array (or plain vector) struct member indexed by a
+    // trailing bit-select (`....field[k]`): per-element width and the OUTER
+    // packed dim's declared bounds.  `field[k]` writes only that sub-slice,
+    // not the whole member — bht2lvl's `.saturation_counter[update_hist]`
+    // write zeroed the other 7 counters without this.
+    auto member_sub_geom = [&](const UHDM::typespec* ats, int fw,
+                               int& sub_w, int& sub_l, int& sub_r) -> bool {
+        if (!ats || fw <= 0) return false;
+        const UHDM::VectorOfrange* rg = nullptr;
+        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats))
+            rg = lt->Ranges();
+        else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats))
+            rg = pt->Ranges();
+        else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(ats))
+            rg = bt->Ranges();
+        if (!rg || rg->empty()) return false;
+        auto r0 = (*rg)[0];
+        if (!r0->Left_expr() || !r0->Right_expr()) return false;
+        RTLIL::SigSpec l = import_expression(r0->Left_expr());
+        RTLIL::SigSpec r = import_expression(r0->Right_expr());
+        if (!l.is_fully_const() || !r.is_fully_const()) return false;
+        sub_l = l.as_const().as_int();
+        sub_r = r.as_const().as_int();
+        int cnt = std::abs(sub_l - sub_r) + 1;
+        if (cnt <= 0 || fw % cnt != 0) return false;
+        sub_w = fw / cnt;
+        return sub_w > 0;
+    };
+
     if (hp->Path_elems()->size() >= 3) {
         auto& peM = *hp->Path_elems();
         size_t nsel = 0;
         while (nsel < peM.size() && peM[nsel]->UhdmType() == uhdmbit_select) nsel++;
+        // Field elem: a plain ref_obj (`arr[i][j].field`) or, since the
+        // trailing member select is preserved, a NAMED bit_select
+        // (`arr[i][j].field[k]`).
+        const ref_obj* frf = nullptr;
+        const bit_select* field_bs = nullptr;
         if (nsel >= 2 && nsel == peM.size() - 1 &&
             peM[nsel]->UhdmType() == uhdmref_obj) {
+            frf = any_cast<const ref_obj*>(peM[nsel]);
+        } else if (nsel >= 3 && nsel == peM.size()) {
+            const bit_select* cand = any_cast<const bit_select*>(peM[nsel - 1]);
+            const bit_select* first = any_cast<const bit_select*>(peM[0]);
+            if (cand && first && cand->VpiIndex() &&
+                !std::string(cand->VpiName()).empty() &&
+                std::string(cand->VpiName()) != std::string(first->VpiName())) {
+                field_bs = cand;
+                nsel -= 1;   // leading ARRAY selects only
+            }
+        }
+        if (frf || field_bs) {
             const bit_select* bs0 = any_cast<const bit_select*>(peM[0]);
-            const ref_obj* frf = any_cast<const ref_obj*>(peM[nsel]);
             std::string base_name = std::string(bs0->VpiName());
-            std::string field_name = std::string(frf->VpiName());
+            std::string field_name = std::string(frf ? frf->VpiName()
+                                                     : field_bs->VpiName());
             RTLIL::Wire* base_wire = name_map.count(base_name)
                                          ? name_map[base_name]
                                          : module->wire(RTLIL::escape_id(base_name));
@@ -10488,23 +10543,37 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
             const UHDM::struct_typespec* st2 = nullptr;
             int elem_w2 = 0;
             if (base_wire && !field_name.empty() &&
-                flat_struct_array_geom(base_name, bs0->Actual_group(), nullptr,
-                                       dims, &st2, &elem_w2) &&
+                flat_struct_array_geom(base_name, bs0->Actual_group(),
+                                       current_instance, dims, &st2, &elem_w2) &&
                 nsel == dims.size() && st2 && st2->Members()) {
                 int field_offset = 0, field_width = 0;
                 bool found_field = false;
+                const UHDM::typespec* field_ats = nullptr;
                 for (int i2 = (int)st2->Members()->size() - 1; i2 >= 0; i2--) {
                     auto m = (*st2->Members())[i2];
                     int mw = 0;
+                    const UHDM::typespec* ats2 = nullptr;
                     if (auto mts = m->Typespec())
-                        if (auto ats = mts->Actual_typespec())
-                            mw = get_width_from_typespec(ats, current_instance);
+                        if ((ats2 = mts->Actual_typespec()))
+                            mw = get_width_from_typespec(ats2, current_instance);
                     if (std::string(m->VpiName()) == field_name) {
                         field_width = mw;
+                        field_ats = ats2;
                         found_field = true;
                         break;
                     }
                     field_offset += mw;
+                }
+                // With a trailing field index, only the indexed sub-slice of
+                // the member is written.
+                int write_w = field_width;
+                int sub_w = 0, sub_l = 0, sub_r = 0;
+                if (found_field && field_bs) {
+                    if (!member_sub_geom(field_ats, field_width, sub_w, sub_l,
+                                         sub_r))
+                        found_field = false;
+                    else
+                        write_w = sub_w;
                 }
                 if (found_field && field_width > 0) {
                     std::vector<int> strides(nsel, elem_w2);
@@ -10521,6 +10590,13 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         if (ix.size() == 0) { idx_ok = false; break; }
                         shamt_w = std::max(shamt_w, ix.size() + 6);
                         idxs.push_back(ix);
+                    }
+                    RTLIL::SigSpec field_idx;
+                    if (idx_ok && field_bs) {
+                        field_idx =
+                            import_expression(field_bs->VpiIndex(), comb_read_map());
+                        if (field_idx.size() == 0) idx_ok = false;
+                        else shamt_w = std::max(shamt_w, field_idx.size() + 6);
                     }
                     if (idx_ok) {
                         RTLIL::SigSpec acc =
@@ -10542,19 +10618,48 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                             module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw3), aw, true);
                             acc = RTLIL::SigSpec(aw);
                         }
+                        if (field_bs) {
+                            // Sub-element position within the member: element k
+                            // sits at (k - lo)*sub_w for a descending [hi:lo]
+                            // dim, (hi - k)*sub_w for an ascending [lo:hi].
+                            RTLIL::SigSpec fx = field_idx;
+                            fx.extend_u0(shamt_w, false);
+                            RTLIL::SigSpec rel = fx;
+                            if (sub_l >= sub_r) {
+                                if (sub_r != 0) {
+                                    RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                                    module->addSub(NEW_ID, fx,
+                                        RTLIL::SigSpec(RTLIL::Const(sub_r, shamt_w)),
+                                        pw, true);
+                                    rel = RTLIL::SigSpec(pw);
+                                }
+                            } else {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                                module->addSub(NEW_ID,
+                                    RTLIL::SigSpec(RTLIL::Const(sub_r, shamt_w)),
+                                    fx, pw, true);
+                                rel = RTLIL::SigSpec(pw);
+                            }
+                            RTLIL::Wire* mw4 = module->addWire(NEW_ID, shamt_w);
+                            module->addMul(NEW_ID, rel,
+                                RTLIL::SigSpec(RTLIL::Const(sub_w, shamt_w)), mw4, true);
+                            RTLIL::Wire* aw2 = module->addWire(NEW_ID, shamt_w);
+                            module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw4), aw2, true);
+                            acc = RTLIL::SigSpec(aw2);
+                        }
                         int base_w2 = base_wire->width;
                         auto rhs_e2 = dynamic_cast<const UHDM::expr*>(rhs_any);
                         if (!rhs_e2) return false;
                         int prev_ctx2 = expression_context_width;
-                        expression_context_width = field_width;
+                        expression_context_width = write_w;
                         RTLIL::SigSpec rhs2 = import_expression(rhs_e2, comb_read_map());
                         expression_context_width = prev_ctx2;
-                        if (rhs2.size() < field_width)
-                            rhs2.extend_u0(field_width, is_expr_signed(rhs_e2));
-                        else if (rhs2.size() > field_width)
-                            rhs2 = rhs2.extract(0, field_width);
+                        if (rhs2.size() < write_w)
+                            rhs2.extend_u0(write_w, is_expr_signed(rhs_e2));
+                        else if (rhs2.size() > write_w)
+                            rhs2 = rhs2.extract(0, write_w);
                         std::vector<RTLIL::State> mb(base_w2, RTLIL::State::S0);
-                        for (int i2 = 0; i2 < field_width; i2++) mb[i2] = RTLIL::State::S1;
+                        for (int i2 = 0; i2 < write_w; i2++) mb[i2] = RTLIL::State::S1;
                         RTLIL::SigSpec mask_c = RTLIL::SigSpec(RTLIL::Const(mb));
                         RTLIL::SigSpec rhs_wide = rhs2;
                         rhs_wide.extend_u0(base_w2, false);
@@ -10577,12 +10682,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                                              RTLIL::SigSpec(new_full), proc);
                         } else if (case_rule) {
                             std::string temp_name = "$0\\" + base_name;
-                            if (RTLIL::Wire* tw = module->wire(temp_name))
-                                case_rule->actions.push_back(RTLIL::SigSig(
-                                    RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
-                            else
-                                case_rule->actions.push_back(RTLIL::SigSig(
-                                    RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+                            RTLIL::Wire* tw = module->wire(temp_name);
+                            RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw)
+                                                    : RTLIL::SigSpec(base_wire);
+                            // Unconditional at this case level, later than any
+                            // switch already in it: drop the superseded
+                            // branch writes (their effect is in the ccv-chained
+                            // `cur` above) so they can't override this action
+                            // (RTLIL runs actions before switches) — the
+                            // bht2lvl `.hist` write after the sat-counter
+                            // if/else.
+                            remove_target_from_switches(case_rule, tgt);
+                            case_rule->actions.push_back(RTLIL::SigSig(
+                                tgt, RTLIL::SigSpec(new_full)));
                         }
                         if (!in_always_ff_body_mode)
                             current_comb_values[base_name] = RTLIL::SigSpec(new_full);
@@ -10596,13 +10708,26 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
 
     auto& pe = *hp->Path_elems();
     if (pe[0]->UhdmType() != uhdmbit_select) return false;
-    if (pe[1]->UhdmType() != uhdmref_obj) return false;
-    const bit_select* bs       = any_cast<const bit_select*>(pe[0]);
-    const ref_obj*    field_rf = any_cast<const ref_obj*>(pe[1]);
-    if (!bs || !field_rf || !bs->VpiIndex()) return false;
+    const bit_select* bs = any_cast<const bit_select*>(pe[0]);
+    if (!bs || !bs->VpiIndex()) return false;
+    // Field elem: plain ref_obj (`arr[i].field`) or a NAMED bit_select
+    // carrying a trailing member index (`arr[i].field[k]`).
+    const ref_obj*    field_rf = nullptr;
+    const bit_select* field_bs = nullptr;
+    if (pe[1]->UhdmType() == uhdmref_obj) {
+        field_rf = any_cast<const ref_obj*>(pe[1]);
+    } else if (pe[1]->UhdmType() == uhdmbit_select) {
+        const bit_select* cand = any_cast<const bit_select*>(pe[1]);
+        if (cand && cand->VpiIndex() &&
+            !std::string(cand->VpiName()).empty() &&
+            std::string(cand->VpiName()) != std::string(bs->VpiName()))
+            field_bs = cand;
+    }
+    if (!field_rf && !field_bs) return false;
 
     std::string base_name  = std::string(bs->VpiName());
-    std::string field_name = std::string(field_rf->VpiName());
+    std::string field_name = std::string(field_rf ? field_rf->VpiName()
+                                                  : field_bs->VpiName());
     if (base_name.empty() || field_name.empty()) return false;
 
     // Only the FLAT representation is handled here: `\arr` exists as one wide
@@ -10721,14 +10846,17 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     // Field offset within the element (last listed member = LSB).
     int field_offset = 0, field_width = 0;
     bool found_field = false;
+    const UHDM::typespec* field_ats = nullptr;
     for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
         auto m = (*st->Members())[i];
         int mw = 0;
+        const UHDM::typespec* ats3 = nullptr;
         if (auto mts = m->Typespec())
-            if (auto ats = mts->Actual_typespec())
-                mw = get_width_from_typespec(ats, current_instance);
+            if ((ats3 = mts->Actual_typespec()))
+                mw = get_width_from_typespec(ats3, current_instance);
         if (std::string(m->VpiName()) == field_name) {
             field_width = mw;
+            field_ats = ats3;
             found_field = true;
             break;
         }
@@ -10736,10 +10864,18 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     }
     if (!found_field || field_width <= 0) return false;
     if (field_offset + field_width > elem_w) return false;
+    // With a trailing field index, only the indexed sub-slice is written.
+    int write_w = field_width;
+    int sub_w = 0, sub_l = 0, sub_r = 0;
+    if (field_bs) {
+        if (!member_sub_geom(field_ats, field_width, sub_w, sub_l, sub_r))
+            return false;
+        write_w = sub_w;
+    }
 
     // Constant index: static slice write through the normal machinery.
     RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), comb_read_map());
-    if (idx_sig.is_fully_const()) {
+    if (!field_bs && idx_sig.is_fully_const()) {
         int k = idx_sig.as_const().as_int();
         int off = (k - array_low) * elem_w + field_offset;
         if (off < 0 || off + field_width > base_w) return false;
@@ -10755,11 +10891,12 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         if (proc) emit_comb_assign(lhs_slice, rhs, proc);
         else if (case_rule) {
             std::string temp_name = "$0\\" + base_name;
-            if (RTLIL::Wire* tw = module->wire(temp_name))
-                case_rule->actions.push_back(RTLIL::SigSig(
-                    RTLIL::SigSpec(tw).extract(off, field_width), rhs));
-            else
-                case_rule->actions.push_back(RTLIL::SigSig(lhs_slice, rhs));
+            RTLIL::Wire* tw = module->wire(temp_name);
+            RTLIL::SigSpec tgt = tw
+                ? RTLIL::SigSpec(tw).extract(off, field_width)
+                : lhs_slice;
+            remove_target_from_switches(case_rule, tgt);
+            case_rule->actions.push_back(RTLIL::SigSig(tgt, rhs));
         }
         if (!in_always_ff_body_mode) {
             RTLIL::SigSpec cur = current_comb_values.count(base_name)
@@ -10772,7 +10909,13 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     }
 
     // Dynamic index: full-width RMW on the flat wire.
+    RTLIL::SigSpec field_idx;
+    if (field_bs) {
+        field_idx = import_expression(field_bs->VpiIndex(), comb_read_map());
+        if (field_idx.size() == 0) return false;
+    }
     int shamt_w = std::max(idx_sig.size() + 6, 32);
+    if (field_bs) shamt_w = std::max(shamt_w, field_idx.size() + 6);
     RTLIL::SigSpec idx_ext = idx_sig;
     idx_ext.extend_u0(shamt_w, false);
     RTLIL::SigSpec pos = idx_ext;
@@ -10788,18 +10931,45 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     RTLIL::Wire* bit_shift = module->addWire(NEW_ID, shamt_w);
     module->addAdd(NEW_ID, RTLIL::SigSpec(elem_shift),
                    RTLIL::SigSpec(RTLIL::Const(field_offset, shamt_w)), bit_shift, true);
+    if (field_bs) {
+        // Sub-element position within the member: (k - lo)*sub_w for a
+        // descending [hi:lo] dim, (hi - k)*sub_w for an ascending [lo:hi].
+        RTLIL::SigSpec fx = field_idx;
+        fx.extend_u0(shamt_w, false);
+        RTLIL::SigSpec rel = fx;
+        if (sub_l >= sub_r) {
+            if (sub_r != 0) {
+                RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                module->addSub(NEW_ID, fx,
+                               RTLIL::SigSpec(RTLIL::Const(sub_r, shamt_w)), pw, true);
+                rel = RTLIL::SigSpec(pw);
+            }
+        } else {
+            RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+            module->addSub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(sub_r, shamt_w)),
+                           fx, pw, true);
+            rel = RTLIL::SigSpec(pw);
+        }
+        RTLIL::Wire* sub_shift = module->addWire(NEW_ID, shamt_w);
+        module->addMul(NEW_ID, rel,
+                       RTLIL::SigSpec(RTLIL::Const(sub_w, shamt_w)), sub_shift, true);
+        RTLIL::Wire* bs2 = module->addWire(NEW_ID, shamt_w);
+        module->addAdd(NEW_ID, RTLIL::SigSpec(bit_shift),
+                       RTLIL::SigSpec(sub_shift), bs2, true);
+        bit_shift = bs2;
+    }
 
     auto rhs_e = dynamic_cast<const UHDM::expr*>(rhs_any);
     if (!rhs_e) return false;
     int prev_ctx = expression_context_width;
-    expression_context_width = field_width;
+    expression_context_width = write_w;
     RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
     expression_context_width = prev_ctx;
-    if (rhs.size() < field_width) rhs.extend_u0(field_width, is_expr_signed(rhs_e));
-    else if (rhs.size() > field_width) rhs = rhs.extract(0, field_width);
+    if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e));
+    else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
 
     std::vector<RTLIL::State> mask_bits(base_w, RTLIL::State::S0);
-    for (int i = 0; i < field_width; i++) mask_bits[i] = RTLIL::State::S1;
+    for (int i = 0; i < write_w; i++) mask_bits[i] = RTLIL::State::S1;
     RTLIL::SigSpec mask_const = RTLIL::SigSpec(RTLIL::Const(mask_bits));
     RTLIL::SigSpec rhs_wide = rhs;
     rhs_wide.extend_u0(base_w, false);
@@ -10824,12 +10994,10 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
     } else if (case_rule) {
         std::string temp_name = "$0\\" + base_name;
-        if (RTLIL::Wire* tw = module->wire(temp_name))
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
-        else
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+        RTLIL::Wire* tw = module->wire(temp_name);
+        RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
+        remove_target_from_switches(case_rule, tgt);
+        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
     }
     if (!in_always_ff_body_mode)
         current_comb_values[base_name] = RTLIL::SigSpec(new_full);
@@ -11077,12 +11245,10 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
     } else if (case_rule) {
         std::string temp_name = "$0\\" + base_name;
-        if (RTLIL::Wire* tw = module->wire(temp_name))
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(new_full)));
-        else
-            case_rule->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full)));
+        RTLIL::Wire* tw = module->wire(temp_name);
+        RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
+        remove_target_from_switches(case_rule, tgt);
+        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
     }
     if (!in_always_ff_body_mode)
         current_comb_values[base_name] = RTLIL::SigSpec(new_full);

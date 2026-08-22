@@ -12150,7 +12150,12 @@ bool UhdmImporter::flat_struct_array_geom(const std::string& base_name,
         int li = l.as_const().as_int(), ri = rr.as_const().as_int();
         dims.push_back({std::abs(li - ri) + 1, std::min(li, ri)});
     }
-    int ew = get_width_from_typespec(st, inst);
+    // Width eval needs an instance for parameterized member ranges
+    // (`[2**CVA6Cfg.BHTHist-1:0]`); with none the member collapses to 1 bit
+    // and every write stride is wrong (bht2lvl wrote entry pc*10 instead of
+    // pc*40).  Fall back to current_instance like the module lookup above.
+    int ew = get_width_from_typespec(
+        st, inst ? inst : (const UHDM::scope*)current_instance);
     if (ew <= 0) return false;
     if (st_out) *st_out = st;
     if (elem_w_out) *elem_w_out = ew;
