@@ -12433,7 +12433,22 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
         else continue;
         RTLIL::SigSpec tv = then_vals.count(nm) ? then_vals[nm] : pre;
         RTLIL::SigSpec ev = else_vals.count(nm) ? else_vals[nm] : pre;
-        if (tv.size() != ev.size() || tv == ev) continue;
+        if (tv.size() != ev.size()) continue;
+        if (tv == ev) {
+            // BOTH branches agree on the value — no mux needed, but the
+            // merged value must still be RECORDED: skipping silently leaves
+            // the stale pre-if value in current_comb_values, and a later
+            // read in the same block sees the old value.  hpdcache_ctrl_pe's
+            // uncacheable-request handling sets `st1_nop = 1'b1` in BOTH
+            // arms of `if (cachedir_hit_i)`, and the later
+            // `nop = st1_nop | st2_nop` read 0 — rtab_req_ready_o went
+            // high while a stage-1 fence request was pending.
+            if (tv != pre) {
+                current_comb_values[nm] = tv;
+                if (alias != nm) current_comb_values[alias] = tv;
+            }
+            continue;
+        }
         RTLIL::Wire* m = module->addWire(NEW_ID, tv.size());
         module->addMux(NEW_ID, ev, tv, cond, m);
         current_comb_values[nm] = RTLIL::SigSpec(m);
