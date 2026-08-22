@@ -38,7 +38,7 @@ ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random 
 axi_adapter                            4   180   proven
 axi_shim                               4   400   proven
 bht                                    4   900   proven
-bht2lvl                                4   180   cex
+bht2lvl                                2   900   proven
 branch_unit                            4   900   proven
 btb                                    4   900   proven
 cache_ctrl                             4   180   cex
