@@ -3666,12 +3666,18 @@ static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm
         lhs = any_cast<const UHDM::assignment*>(uhdm_op->VpiParent())->Lhs();
     else if (uhdm_op->VpiParent()->UhdmType() == uhdmcont_assign)
         lhs = any_cast<const UHDM::cont_assign*>(uhdm_op->VpiParent())->Lhs();
+    // A PARAMETER initialiser (`localparam cfg_t LIT = '{n: 3, base: ...}`) is a
+    // param_assign.  The `'{default:}` handler has its own param_assign case,
+    // but the named-field handler had none.
+    else if (uhdm_op->VpiParent()->UhdmType() == uhdmparam_assign)
+        lhs = any_cast<const UHDM::param_assign*>(uhdm_op->VpiParent())->Lhs();
     if (!lhs) return nullptr;
     // A ref_obj LHS points at the declaration that carries the typespec.
     if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
         if (auto ag = r->Actual_group()) lhs = ag;
     const UHDM::ref_typespec* rt = nullptr;
-    if (auto sv = dynamic_cast<const UHDM::struct_var*>(lhs)) rt = sv->Typespec();
+    if (auto pm = dynamic_cast<const UHDM::parameter*>(lhs)) rt = pm->Typespec();
+    else if (auto sv = dynamic_cast<const UHDM::struct_var*>(lhs)) rt = sv->Typespec();
     else if (auto uv = dynamic_cast<const UHDM::union_var*>(lhs)) rt = uv->Typespec();
     else if (auto sn = dynamic_cast<const UHDM::struct_net*>(lhs)) rt = sn->Typespec();
     else if (auto lv = dynamic_cast<const UHDM::logic_var*>(lhs)) rt = lv->Typespec();
@@ -3935,6 +3941,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (cand && cand->UhdmType() == uhdmstruct_typespec)
                     struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
             }
+            int field_idx = 0;
             for (auto operand : *uhdm_op->Operands()) {
                 const expr* field_expr = nullptr;
                 // Named-field patterns (`'{a: 0, b: 1, ...}`) wrap each value in a
@@ -3961,7 +3968,26 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 } else {
                     field_expr = any_cast<const expr*>(operand);
+                    // An ELABORATED struct parameter's pattern carries BARE
+                    // exprs in declaration order -- Surelog strips the tags --
+                    // so the tagged_pattern branch above never runs and every
+                    // field fell back to the ctx/count guess.  For a 96-bit
+                    // {int unsigned; logic[63:0]} that is 96/2 = 48 bits apiece,
+                    // packing {48'd3, 48'h1000} instead of {32'd3, 64'h1000}, so
+                    // every field then reads at the wrong offset (CVA6
+                    // pmp_data_if: Cfg.NrExecuteRegionRules came out 0).
+                    // Size positionally from the struct's members instead.
+                    if (struct_ts && struct_ts->Members() &&
+                        (int)struct_ts->Members()->size() == pat_count) {
+                        auto m = (*struct_ts->Members())[field_idx];
+                        if (auto mt = m->Typespec())
+                            if (auto at = mt->Actual_typespec()) {
+                                int w = get_width_from_typespec(at, inst);
+                                if (w > 0) field_w = w;
+                            }
+                    }
                 }
+                field_idx++;
                 if (!field_expr) continue;
                 int saved_ctx = expression_context_width;
                 if (field_w > 0) expression_context_width = field_w;
