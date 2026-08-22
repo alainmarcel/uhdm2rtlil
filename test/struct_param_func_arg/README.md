@@ -83,3 +83,35 @@ at 377/2000.
 
 So this reproducer now isolates exactly one thing: the function-built struct
 parameter. Fixing it means fixing `evalFunc`.
+
+## Two further gaps found while attempting the fix (2026-08-21)
+
+Both are real and were verified by probe, but neither fixes this on its own, so
+neither is committed:
+
+1. **An empty `parameter_default_values` entry is treated as a value.** For
+   `CFG`, `module->parameter_default_values` holds a **width-0** constant (not 96
+   bits of zero). The struct-parameter read consults it first, gets nothing, and
+   zero-extends that to the struct's width. Guarding on `.size() > 0` and falling
+   through to the VpiValue / Expr / param_assign paths is correct, but changes
+   nothing here because those paths also come up empty.
+
+2. **A module parameter never reaches its initialiser.** The fallback chain looks
+   for a `param_assign` on `param->VpiParent()`, but a *module* parameter's
+   parent is the **`module_inst`** (UhdmType 2229); its initialiser lives in that
+   instance's `Param_assigns()`. So the `param_assign` Rhs branch never fired for
+   `CFG` at all.
+
+With both applied, the initialiser *is* reached — and evaluating `p::build()`
+still yields nothing, because our own `evaluate_function_call()` cannot evaluate a
+function that builds a struct by member assignment either. That is the same
+defect as Surelog's `evalFunc`, on our side.
+
+## What a fix has to do
+
+Evaluate a function that: declares a struct local, applies a sequence of member
+writes, and returns it — producing the packed constant. Note a narrow evaluator
+for exactly that shape would fix this reproducer but **not** unblock CVA6:
+`build_config()` also contains if/else, arithmetic over other parameters,
+ternaries and nested calls (`__minu`/`__maxu`), so it needs a real evaluator, not
+a special case.
