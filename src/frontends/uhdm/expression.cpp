@@ -5904,7 +5904,13 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // expression (no RTLIL module context) — guard the lookup, else a
             // package parameter that references another parameter segfaults
             // (ibex_tracer_pkg).
-            if (module && module->parameter_default_values.count(p_id)) {
+            // An EMPTY (zero-width) entry is not a value.  A struct-typed
+            // parameter whose initialiser could not be folded lands here as a
+            // width-0 constant, and consuming it zero-extends the whole struct
+            // to 0.  Fall through to the VpiValue / Expr / param_assign paths,
+            // which at least have a chance of resolving it.
+            if (module && module->parameter_default_values.count(p_id) &&
+                module->parameter_default_values.at(p_id).size() > 0) {
                 param_value = module->parameter_default_values.at(p_id);
                 if (mode_debug)
                     log("UHDM: Using module parameter %s value %s (overrides base VpiValue)\n",
@@ -6020,6 +6026,20 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                         // Surelog stores the value expression in the parent param_assign's Rhs(),
                         // not in the parameter's VpiValue() or Expr().
                         const BaseClass* parent = param->VpiParent();
+                        // A MODULE parameter's VpiParent is the module_inst, not
+                        // a param_assign, so this fallback never fired for one --
+                        // its initialiser lives in the instance's
+                        // Param_assigns().  Find it by name.
+                        if ((!parent || parent->UhdmType() != uhdmparam_assign) &&
+                            current_instance) {
+                            if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance))
+                                if (mi->Param_assigns())
+                                    for (auto pa2 : *mi->Param_assigns())
+                                        if (auto l = dynamic_cast<const UHDM::parameter*>(pa2->Lhs()))
+                                            if (std::string(l->VpiName()) == param_name) {
+                                                parent = pa2; break;
+                                            }
+                        }
                         if (parent && parent->UhdmType() == uhdmparam_assign) {
                             const param_assign* pa = any_cast<const param_assign*>(parent);
                             if (pa && pa->Rhs()) {
