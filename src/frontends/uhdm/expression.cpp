@@ -4164,7 +4164,45 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (auto c = dynamic_cast<const UHDM::constant*>(o))
                 if (c->VpiSize() == -1) { has_unsized_fill_operand = true; break; }
 
-    if (op_type != vpiCastOp && !has_unsized_fill_operand) {
+    // A hier_path operand rooted at a STRUCT-typed parameter must go through
+    // our own operand-wise import: ExprEval resolves the base parameter to its
+    // stamped VALUE constant, which for a function-computed config that failed
+    // whole-struct elaboration is a garbage 0 (hpdcache's HPDcacheCfg is
+    // stamped BIN:0 through the opaque struct_var override hand-off), and the
+    // member select of that garbage folds the whole operation confidently
+    // wrong — `!HPDcacheCfg.u.lowLatency` became constant 1 and st1 logic
+    // that must be dead stayed live.  import_hier_path resolves these through
+    // the typespec-member value annotations instead.
+    bool has_struct_param_hier_operand = false;
+    if (uhdm_op->Operands()) {
+        for (auto o : *uhdm_op->Operands()) {
+            auto ohp = dynamic_cast<const UHDM::hier_path*>(o);
+            if (!ohp || !ohp->Path_elems() || ohp->Path_elems()->size() < 2)
+                continue;
+            auto r0 = dynamic_cast<const ref_obj*>((*ohp->Path_elems())[0]);
+            if (!r0) continue;
+            const UHDM::parameter* bp =
+                dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+            if (!bp && !r0->Actual_group() && current_instance) {
+                std::string bn(r0->VpiName());
+                if (!bn.empty() && current_instance->Parameters())
+                    for (auto p0 : *current_instance->Parameters())
+                        if (std::string(p0->VpiName()) == bn) {
+                            bp = dynamic_cast<const UHDM::parameter*>(p0);
+                            break;
+                        }
+            }
+            if (bp && bp->Typespec() && bp->Typespec()->Actual_typespec() &&
+                bp->Typespec()->Actual_typespec()->UhdmType() ==
+                    uhdmstruct_typespec) {
+                has_struct_param_hier_operand = true;
+                break;
+            }
+        }
+    }
+
+    if (op_type != vpiCastOp && !has_unsized_fill_operand &&
+        !has_struct_param_hier_operand) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -4325,9 +4363,28 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     //    constant in `import_hier_path`, but the surrounding `range`
     //    expression (`bus.DATA_WIDTH - 1`) still needs to fold so that
     //    `get_width_from_typespec` can read it as a literal range.
+    // Short-circuit logical ops with a dominant constant operand, regardless
+    // of context: `HPDcacheCfg.u.eccScrubberEn && st1_dat_err_i` with the
+    // config field folded to 0 must be constant 0 so the guarded branch is
+    // PRUNED at import (a $logic_and cell keeps the branch as a runtime
+    // switch, changing comb threading even though opt later removes it).
+    if ((op_type == vpiLogAndOp || op_type == vpiLogOrOp) &&
+        operands.size() == 2) {
+        for (int oi = 0; oi < 2; oi++) {
+            if (!operands[oi].is_fully_const()) continue;
+            bool as_true = operands[oi].as_const().as_bool();
+            if (op_type == vpiLogAndOp && !as_true &&
+                operands[oi].is_fully_def())
+                return RTLIL::SigSpec(RTLIL::State::S0);
+            if (op_type == vpiLogOrOp && as_true)
+                return RTLIL::SigSpec(RTLIL::State::S1);
+        }
+    }
+
     if (all_const && operands.size() > 0 &&
         (!loop_values.empty() || getCurrentFunctionContext() != nullptr ||
          !gen_scope_stack.empty() || force_const_fold ||
+         has_struct_param_hier_operand ||
          (module && module->attributes.count(ID::dynports)))) {
         RTLIL::Const result;
         bool can_evaluate = true;
@@ -4465,6 +4522,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             case vpiGeOp:
                 if (operands.size() == 2) {
                     result = RTLIL::const_ge(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiLogAndOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_logic_and(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiLogOrOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_logic_or(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiNotOp:
+                if (operands.size() == 1) {
+                    result = RTLIL::const_logic_not(operands[0].as_const(), RTLIL::Const(), false, false, 1);
                 }
                 break;
             case vpiMultiConcatOp:
@@ -11894,11 +11966,104 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         // debug log.  A genuine signal struct-access failure still warns.
         bool base_is_param = false;
         if (uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
-            if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+            if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0])) {
                 if (auto a0 = r0->Actual_group())
                     base_is_param = (a0->UhdmType() == uhdmparameter);
+                else {
+                    // UNBOUND base ref (Surelog's binder misses references deep
+                    // inside named begin scopes — hpdcache_ctrl_pe's
+                    // `HPDcacheCfg.u.lowLatency` in hpdcache_ctrl_comb came
+                    // through with no Actual at all): match by NAME against the
+                    // instance's parameters so the constant-folding paths below
+                    // still get their chance.
+                    std::string bn(r0->VpiName());
+                    auto mi0 =
+                        dynamic_cast<const UHDM::module_inst*>(current_instance);
+                    if (!bn.empty() && mi0 && mi0->Parameters()) {
+                        for (auto p0 : *mi0->Parameters())
+                            if (std::string(p0->VpiName()) == bn) {
+                                base_is_param = true;
+                                break;
+                            }
+                    }
+                }
+            }
         }
         if (base_is_param) {
+            // Typespec-member VALUE annotations first: when Surelog's
+            // compile-time evaluation of a struct-returning config function
+            // (hpdcacheBuildConfig(hpdcacheSetConfig())) resolves the member
+            // values, it annotates the function-arg typespec CLONE's members
+            // with their constants, and the parameter's struct typespec routes
+            // to that clone.  Walk the member path and return the annotated
+            // constant.  This must run BEFORE the ExprEval reduction below:
+            // the elaborated dut-instance parameter can carry a GARBAGE value
+            // (BIN:0 through an opaque anonymous struct_var RHS at the
+            // instantiation hand-off), which reduceExpr confidently returns as
+            // an all-zero whole-struct constant — hpdcache_ctrl_pe read
+            // HPDcacheCfg.u.lowLatency as 0 that way (the ~1% cex).
+            {
+                const UHDM::parameter* bp = nullptr;
+                if (auto r0 = dynamic_cast<const ref_obj*>(
+                        (*uhdm_hier->Path_elems())[0])) {
+                    bp = dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+                    if (!bp) {
+                        std::string bn(r0->VpiName());
+                        auto mi0 = dynamic_cast<const UHDM::module_inst*>(
+                            current_instance);
+                        if (!bn.empty() && mi0 && mi0->Parameters())
+                            for (auto p0 : *mi0->Parameters())
+                                if (std::string(p0->VpiName()) == bn) {
+                                    bp = dynamic_cast<const UHDM::parameter*>(p0);
+                                    break;
+                                }
+                    }
+                }
+                const UHDM::typespec* ts2 =
+                    (bp && bp->Typespec()) ? bp->Typespec()->Actual_typespec()
+                                           : nullptr;
+                size_t dot0 = path_name.find('.');
+                if (ts2 && dot0 != std::string::npos) {
+                    std::string rest = path_name.substr(dot0 + 1);
+                    const UHDM::expr* val = nullptr;
+                    while (!rest.empty() && ts2 &&
+                           ts2->UhdmType() == uhdmstruct_typespec) {
+                        size_t d = rest.find('.');
+                        std::string part = rest.substr(0, d);
+                        rest = (d == std::string::npos) ? std::string()
+                                                        : rest.substr(d + 1);
+                        auto sts2 = any_cast<const UHDM::struct_typespec*>(ts2);
+                        const UHDM::typespec_member* mem = nullptr;
+                        if (sts2->Members())
+                            for (auto m : *sts2->Members())
+                                if (std::string(m->VpiName()) == part) {
+                                    mem = m;
+                                    break;
+                                }
+                        if (!mem) break;
+                        if (rest.empty()) {
+                            val = mem->Actual_value();
+                            if (!val) val = mem->Default_value();
+                            break;
+                        }
+                        ts2 = mem->Typespec() ? mem->Typespec()->Actual_typespec()
+                                              : nullptr;
+                    }
+                    if (val && val->UhdmType() == uhdmconstant) {
+                        RTLIL::SigSpec cv =
+                            import_constant(any_cast<const constant*>(val));
+                        if (cv.is_fully_const() && cv.is_fully_def()) {
+                            if (width > cv.size()) cv.extend_u0(width);
+                            if (mode_debug)
+                                log("    hier_path '%s' folded via typespec-member "
+                                    "annotation -> %s\n",
+                                    path_name.c_str(),
+                                    cv.as_const().as_string().c_str());
+                            return cv;
+                        }
+                    }
+                }
+            }
             // A struct-typed parameter FIELD used in an expression
             // (`Cfg.XLEN_ALIGN_BYTES` as a shift amount / replication count in
             // CVA6 wt_dcache_wbuffer): Surelog leaves the hier_path unfolded and
