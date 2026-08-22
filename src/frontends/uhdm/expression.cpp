@@ -9278,6 +9278,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // Field offset/width within the ELEMENT (only meaningful when
                 // all dims are consumed).
                 int field_offset = 0, field_width = level_w;
+                RTLIL::SigSpec dyn_field_idx;      // dynamic field index, if any
+                int dyn_field_stride = 0, dyn_field_low = 0;
                 bool field_ok = true;
                 const UHDM::typespec* field_ts = nullptr;
                 if ((fr || fps || fbs2 || fvs) && st && st->Members() && nsel == dims.size()) {
@@ -9318,7 +9320,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             } else field_ok = false;
                         } else field_ok = false;
                     }
-                    // Constant BIT-select of the field (`.sat_cnt[1]`).
+                    // BIT/element select of the field (`.sat_cnt[1]`).
                     if (field_ok && fbs2 && fbs2->VpiIndex()) {
                         RTLIL::SigSpec ixf = import_expression(fbs2->VpiIndex(), input_mapping);
                         if (ixf.is_fully_const()) {
@@ -9327,7 +9329,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 field_offset += b;
                                 field_width = 1;
                             } else field_ok = false;
-                        } else field_ok = false;
+                        } else {
+                            // DYNAMIC field index
+                            // (`.saturation_counter[read_history[i]]`, CVA6
+                            // bht2lvl).  This used to give up, which dropped the
+                            // whole continuous assign: `bht_prediction_o[i].taken`
+                            // was left UNDRIVEN while its `.valid` sibling was
+                            // fine.  The shiftx path below already sums
+                            // field_offset + Σ (idx_k − low_k)·stride_k, so the
+                            // field index just contributes one more term.
+                            // Element stride comes from the field's OUTER packed
+                            // dim; the remaining width is one element.
+                            int fcount = 0, flow = 0;
+                            if (field_ts) {
+                                const UHDM::VectorOfrange* rgs = nullptr;
+                                if (field_ts->UhdmType() == uhdmlogic_typespec)
+                                    rgs = any_cast<const UHDM::logic_typespec*>(field_ts)->Ranges();
+                                else if (field_ts->UhdmType() == uhdmpacked_array_typespec)
+                                    rgs = any_cast<const UHDM::packed_array_typespec*>(field_ts)->Ranges();
+                                if (rgs && !rgs->empty()) {
+                                    RTLIL::SigSpec l = import_expression((*rgs)[0]->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec rr = import_expression((*rgs)[0]->Right_expr(), input_mapping);
+                                    if (l.is_fully_const() && rr.is_fully_const()) {
+                                        fcount = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+                                        flow = std::min(l.as_const().as_int(), rr.as_const().as_int());
+                                    }
+                                }
+                            }
+                            if (fcount > 1 && field_width % fcount == 0) {
+                                dyn_field_idx = ixf;
+                                dyn_field_low = flow;
+                                dyn_field_stride = field_width / fcount;
+                                field_width = dyn_field_stride;
+                            } else field_ok = false;
+                        }
                     }
                     // Multi-index select of a MULTI-DIM PACKED field
                     // (`.is_page[2-x][0:0]` — CVA6 cva6_tlb page_match, genvar
@@ -9406,7 +9441,23 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         field_offset += iv * stride;
                                         field_width = stride;
                                     } else field_ok = false;  // OOB → X fallback
-                                } else field_ok = false;      // dynamic — not yet
+                                } else if (dyn_field_stride == 0) {
+                                    // DYNAMIC per-dim index
+                                    // (`.saturation_counter[read_history[i]][1]`,
+                                    // CVA6 bht2lvl).  Bailing here dropped the
+                                    // whole continuous assign, leaving
+                                    // `bht_prediction_o[i].taken` UNDRIVEN while
+                                    // its `.valid` sibling was fine.  The shiftx
+                                    // path below already sums the constant
+                                    // field_offset with the index-run terms, so
+                                    // this dim just adds one more.  A LATER dim
+                                    // can still fold a constant on top, because
+                                    // field_offset stays additive.
+                                    dyn_field_idx = ix;
+                                    dyn_field_low = fdims[di].second;
+                                    dyn_field_stride = stride;
+                                    field_width = stride;
+                                } else field_ok = false;  // two dynamic dims — not handled
                             }
                             di++;
                         }
@@ -9414,6 +9465,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 } else if (fr || fps || fbs2 || fvs) {
                     field_ok = false;  // field on a partial (row) slice — bail
                 }
+                if (idx_ok && field_ok && dyn_field_stride > 0) any_dyn = true;
                 if (idx_ok && field_ok && any_dyn) {
                     // strides: stride_k = elem_w * product(sizes[k+1..])
                     std::vector<int> strides(nsel, elem_w);
@@ -9438,6 +9490,22 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         RTLIL::Wire* aw = module->addWire(NEW_ID, shamt_w);
                         module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw2), aw, true);
                         acc = RTLIL::SigSpec(aw);
+                    }
+                    if (dyn_field_stride > 0) {
+                        RTLIL::SigSpec fx = dyn_field_idx;
+                        fx.extend_u0(shamt_w, false);
+                        if (dyn_field_low != 0) {
+                            RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                            module->addSub(NEW_ID, fx,
+                                RTLIL::SigSpec(RTLIL::Const(dyn_field_low, shamt_w)), pw, true);
+                            fx = RTLIL::SigSpec(pw);
+                        }
+                        RTLIL::Wire* fm = module->addWire(NEW_ID, shamt_w);
+                        module->addMul(NEW_ID, fx,
+                            RTLIL::SigSpec(RTLIL::Const(dyn_field_stride, shamt_w)), fm, true);
+                        RTLIL::Wire* fa = module->addWire(NEW_ID, shamt_w);
+                        module->addAdd(NEW_ID, acc, RTLIL::SigSpec(fm), fa, true);
+                        acc = RTLIL::SigSpec(fa);
                     }
                     RTLIL::Wire* out = module->addWire(NEW_ID, field_width);
                     RTLIL::Cell* sx = module->addCell(NEW_ID, ID($shiftx));
