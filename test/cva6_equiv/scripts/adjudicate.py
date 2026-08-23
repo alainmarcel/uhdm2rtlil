@@ -232,8 +232,13 @@ open("adj_tb.sv", "w").write(tb)
 
 # ---------------------------------------------------------------- run
 def run_verilator():
+    # --no-assert: the RTL's internal protocol assertions (e.g. cva6_fifo_v3's
+    # empty_read, inside `pragma translate_off` which Verilator ignores) $fatal
+    # under random stimulus and kill the sim before the ADJUDICATION summary.
+    # Divergence detection is output comparison; the assertions are not the
+    # property under test.
     r = sh(["verilator", "--binary", "-j", "0", "-Wno-lint", "-Wno-style",
-            "-Wno-fatal", "--timing", "-o", "adjsim",
+            "-Wno-fatal", "--timing", "--no-assert", "-o", "adjsim",
             "-f", FLIST, f"+incdir+{HERE}/wrappers", WRAP,
             "adj_gold.v", "adj_gate.v", "adj_tb.sv", "--top-module", "tb"])
     if r.returncode:
