@@ -221,12 +221,18 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         add_src_attribute(sw->attributes, cs);
         
         case_rule->switches.push_back(sw);
-        
+
+        // Each arm runs on a copy of the variable mapping; SSA renames made
+        // inside an arm are phi-merged after the switch (see uhdmif_else).
+        std::map<std::string, RTLIL::SigSpec> pre_map = input_mapping;
+        std::vector<std::pair<RTLIL::CaseRule*, std::map<std::string, RTLIL::SigSpec>>> arm_maps;
+
         if (cs->Case_items()) {
             for (auto item : *cs->Case_items()) {
                 const case_item* ci = any_cast<const case_item*>(item);
                 if (!ci) continue;
-                
+                input_mapping = pre_map;
+
                 RTLIL::CaseRule* item_case = new RTLIL::CaseRule;
                 
                 // Add source location attribute for the case item
@@ -336,7 +342,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 
                 sw->cases.push_back(item_case);
+                arm_maps.push_back({item_case, input_mapping});
             }
+            input_mapping = pre_map;
             // A `default:` may appear anywhere in the source (LRM 12.5) but
             // only applies when no other label matches; RTLIL cases are
             // priority-ordered and empty-compare matches everything, so move
@@ -377,10 +385,39 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
             
             sw->cases.push_back(default_case);
+            arm_maps.push_back({default_case, pre_map});
+        }
+
+        // Phi-merge variables renamed inside any arm.
+        for (auto& pm : pre_map) {
+            const std::string& nm = pm.first;
+            bool changed = false;
+            for (auto& am : arm_maps) {
+                auto ai = am.second.find(nm);
+                if (ai != am.second.end() && ai->second != pm.second) {
+                    changed = true;
+                    break;
+                }
+            }
+            if (!changed) continue;
+            if (pm.second.is_wire() && pm.second.as_wire() == result_wire)
+                continue;
+            RTLIL::Wire* join = module->addWire(
+                RTLIL::escape_id(stringf("$%s$phi_%s_%d",
+                    func_call_context.c_str(), nm.c_str(), incr_autoidx())),
+                pm.second.size());
+            add_src_attribute(join->attributes, cs);
+            for (auto& am : arm_maps) {
+                auto ai = am.second.find(nm);
+                RTLIL::SigSpec av =
+                    (ai != am.second.end()) ? ai->second : pm.second;
+                am.first->actions.push_back(RTLIL::SigSig(join, av));
+            }
+            input_mapping[nm] = RTLIL::SigSpec(join);
         }
         break;
     }
-    
+
     case uhdmif_else: {
         // Handle if-else statement as a switch
         const if_else* ie = any_cast<const if_else*>(stmt);
@@ -394,15 +431,26 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // Create a switch rule for the if-else with source location
             RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
             sw->signal = cond;
-            
+
             // Add source location attribute
             add_src_attribute(sw->attributes, ie);
-            
+
             case_rule->switches.push_back(sw);
-            
+
+            // Run each arm on a COPY of the variable mapping and phi-merge
+            // afterwards: an arm-local SSA rename (see the assignment
+            // handler) must not leak into the other arm, and reads after the
+            // if must see mux(cond, then_value, else_value).
+            std::map<std::string, RTLIL::SigSpec> pre_map = input_mapping;
+            std::map<std::string, RTLIL::SigSpec> then_map = pre_map;
+            std::map<std::string, RTLIL::SigSpec> else_map = pre_map;
+            RTLIL::CaseRule* phi_if_case = nullptr;
+            RTLIL::CaseRule* phi_else_case = nullptr;
+
             // If branch (when condition is true)
             if (ie->VpiStmt()) {
                 RTLIL::CaseRule* if_case = new RTLIL::CaseRule;
+                phi_if_case = if_case;
                 
                 // Add source location for the if branch
                 const any* if_stmt = ie->VpiStmt();
@@ -456,13 +504,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // Process directly
                     process_stmt_to_case(ie->VpiStmt(), if_case, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
                 }
-                
+
                 sw->cases.push_back(if_case);
+                then_map = input_mapping;
+                input_mapping = pre_map;
             }
-            
+
             // Else branch (default case)
             if (ie->VpiElseStmt()) {
                 RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
+                phi_else_case = else_case;
                 
                 // Add source location for the else branch
                 const any* else_stmt = ie->VpiElseStmt();
@@ -502,8 +553,39 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // Process directly
                     process_stmt_to_case(ie->VpiElseStmt(), else_case, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
                 }
-                
+
                 sw->cases.push_back(else_case);
+                else_map = input_mapping;
+                input_mapping = pre_map;
+            }
+
+            // Phi-merge: for every variable an arm renamed, drive one join
+            // wire from both arms and point the outer mapping at it.
+            for (auto& pm : pre_map) {
+                const std::string& nm = pm.first;
+                auto ti = then_map.find(nm);
+                auto ei = else_map.find(nm);
+                RTLIL::SigSpec tv = (ti != then_map.end()) ? ti->second : pm.second;
+                RTLIL::SigSpec ev = (ei != else_map.end()) ? ei->second : pm.second;
+                if (tv == pm.second && ev == pm.second) continue;
+                if (pm.second.is_wire() && pm.second.as_wire() == result_wire) continue;
+                RTLIL::Wire* join = module->addWire(
+                    RTLIL::escape_id(stringf("$%s$phi_%s_%d",
+                        func_call_context.c_str(), nm.c_str(), incr_autoidx())),
+                    pm.second.size());
+                add_src_attribute(join->attributes, ie);
+                if (!phi_if_case) {
+                    phi_if_case = new RTLIL::CaseRule;
+                    phi_if_case->compare.push_back(RTLIL::SigSpec(1, cond.size()));
+                    sw->cases.insert(sw->cases.begin(), phi_if_case);
+                }
+                if (!phi_else_case) {
+                    phi_else_case = new RTLIL::CaseRule;
+                    sw->cases.push_back(phi_else_case);
+                }
+                phi_if_case->actions.push_back(RTLIL::SigSig(join, tv));
+                phi_else_case->actions.push_back(RTLIL::SigSig(join, ev));
+                input_mapping[nm] = RTLIL::SigSpec(join);
             }
         }
         break;
@@ -527,8 +609,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             add_src_attribute(sw->attributes, is);
             case_rule->switches.push_back(sw);
 
+            // Same phi discipline as uhdmif_else: the arm runs on the shared
+            // mapping, and every variable it SSA-renamed is merged into a
+            // join wire driven by the arm (new value) and the default case
+            // (held pre-if value).
+            std::map<std::string, RTLIL::SigSpec> pre_map = input_mapping;
+            RTLIL::CaseRule* phi_if_case = nullptr;
+
             if (is->VpiStmt()) {
                 RTLIL::CaseRule* if_case = new RTLIL::CaseRule;
+                phi_if_case = if_case;
                 add_src_attribute(if_case->attributes, is->VpiStmt());
                 if_case->compare.push_back(RTLIL::SigSpec(1, cond.size()));
                 if_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
@@ -567,6 +657,27 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
             default_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
             sw->cases.push_back(default_case);
+
+            // Phi-merge arm-renamed variables (default case holds the
+            // pre-if value).
+            for (auto& pm : pre_map) {
+                auto ci2 = input_mapping.find(pm.first);
+                if (ci2 == input_mapping.end() || ci2->second == pm.second)
+                    continue;
+                if (pm.second.is_wire() && pm.second.as_wire() == result_wire)
+                    continue;
+                RTLIL::Wire* join = module->addWire(
+                    RTLIL::escape_id(stringf("$%s$phi_%s_%d",
+                        func_call_context.c_str(), pm.first.c_str(),
+                        incr_autoidx())),
+                    pm.second.size());
+                add_src_attribute(join->attributes, is);
+                if (phi_if_case)
+                    phi_if_case->actions.push_back(
+                        RTLIL::SigSig(join, ci2->second));
+                default_case->actions.push_back(RTLIL::SigSig(join, pm.second));
+                input_mapping[pm.first] = RTLIL::SigSpec(join);
+            }
         }
         break;
     }
@@ -586,6 +697,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
             RTLIL::SigSpec lhs_sig;
             RTLIL::SigSpec rhs_sig;
+            // Value the LHS variable held BEFORE this assignment when the
+            // named-LHS branch SSA-renames it — the compound-assignment
+            // combine below must read this, not the freshly-allocated wire.
+            RTLIL::SigSpec ssa_prev_value;
             // Size the RHS to the LHS *field* width for a struct-field write
             // (`decode.gpr = '{...}`).  Otherwise the surrounding function-call
             // context (the WHOLE return struct — e.g. rp32's 306-bit dec_t)
@@ -681,7 +796,68 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // and block-local variables that may shadow the function name
                     auto it = input_mapping.find(lhs_name);
                     if (it != input_mapping.end()) {
-                        lhs_sig = it->second;
+                        // SSA-rename on every whole-variable write: reads and
+                        // writes both resolving to ONE block wire turn a
+                        // reassignment (`result ^= x`, or `temp = f(temp)`)
+                        // into `wire = wire ^ x` — a combinational self-loop
+                        // that simulates as 0 (CVA6 aes_pkg::gfmul zeroed
+                        // aes_mixcolumn_inv and with it aes64dsm/aes64im).
+                        // Give each write a fresh wire and point the mapping
+                        // at it so later reads see the value-so-far; the
+                        // if/case handlers phi-merge arm-local renames.  The
+                        // function's return variable stays bound to
+                        // result_wire (its value is taken from there).
+                        // Two exclusions from SSA renaming:
+                        // - output/inout parameters: their mapped wire IS
+                        //   the caller's destination — renaming orphans the
+                        //   caller's read (function_output/fib_simple);
+                        // - inside an unrolled for-loop body: the loop
+                        //   accumulator machinery threads values by
+                        //   temporarily remapping the variable and restoring
+                        //   it afterwards, which would clobber SSA renames
+                        //   (const_arg_loop).
+                        bool ssa_excluded = !loop_values.empty();
+                        // The return binding must stay on the result-wire
+                        // chain: the function name and any return variable
+                        // map to a `...$result$N` wire, and nested case/if
+                        // levels pass INTERMEDIATE result wires as
+                        // result_wire, so identity against the local
+                        // result_wire parameter is not enough
+                        // (fsm_using_function collapsed to 0 cells).
+                        if (!ssa_excluded && lhs_name == func_name)
+                            ssa_excluded = true;
+                        if (!ssa_excluded && it->second.is_wire() &&
+                            it->second.as_wire()->name.str().find(".$result") !=
+                                std::string::npos)
+                            ssa_excluded = true;
+                        if (!ssa_excluded) {
+                            FunctionCallContext* fctx2 = getCurrentFunctionContext();
+                            if (fctx2 && fctx2->func_def &&
+                                fctx2->func_def->Io_decls()) {
+                                for (auto iod : *fctx2->func_def->Io_decls()) {
+                                    if (std::string(iod->VpiName()) == lhs_name &&
+                                        iod->VpiDirection() != vpiInput) {
+                                        ssa_excluded = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!ssa_excluded && it->second.is_wire() &&
+                            it->second.as_wire() != result_wire) {
+                            int w = it->second.size();
+                            ssa_prev_value = it->second;
+                            std::string ssa_name = stringf("$%s$ssa_%s_%d",
+                                func_call_context.c_str(), lhs_name.c_str(),
+                                incr_autoidx());
+                            RTLIL::Wire* ssa_wire = module->addWire(
+                                RTLIL::escape_id(ssa_name), w);
+                            add_src_attribute(ssa_wire->attributes, assign);
+                            lhs_sig = RTLIL::SigSpec(ssa_wire);
+                            input_mapping[lhs_name] = lhs_sig;
+                        } else {
+                            lhs_sig = it->second;
+                        }
                         if (mode_debug) {
                             log("UHDM: Assignment to mapped variable %s\n", lhs_name.c_str());
                         }
@@ -929,12 +1105,19 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // (`encode |= v[i] ? ... : '0`) chains across iterations instead of
             // each iteration overwriting the previous one.
             if (lhs_sig.size() > 0 && !skip_assignment) {
-                // The accumulator's current value is the most recent action
+                // The accumulator's current value: with SSA renaming it is
+                // the mapping value from BEFORE this assignment (the fresh
+                // LHS wire has no value yet — reading it would recreate the
+                // self-loop).  Otherwise it is the most recent action
                 // targeting this exact LHS (the pre-loop initializer or the
                 // previous iteration's result); fall back to the wire itself.
                 RTLIL::SigSpec acc = lhs_sig;
-                for (const auto& act : case_rule->actions)
-                    if (act.first == lhs_sig) acc = act.second;
+                if (!ssa_prev_value.empty()) {
+                    acc = ssa_prev_value;
+                } else {
+                    for (const auto& act : case_rule->actions)
+                        if (act.first == lhs_sig) acc = act.second;
+                }
                 if (acc.size() < rhs_sig.size()) acc.extend_u0(rhs_sig.size());
                 else if (acc.size() > rhs_sig.size()) rhs_sig.extend_u0(acc.size());
                 RTLIL::SigSpec c;
