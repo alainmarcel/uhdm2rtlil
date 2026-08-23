@@ -3975,7 +3975,8 @@ static void mark_result_signed(RTLIL::SigSpec& result) {
 // the Verilog frontend uses for self-determined positions like a part-select
 // index, so `dout[ctrl*sel +: 16]` truncates the index to max(width(ctrl),
 // width(sel)) rather than width(ctrl)+width(sel).
-int UhdmImporter::self_determined_width(const UHDM::any* node) {
+int UhdmImporter::self_determined_width(const UHDM::any* node,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!node)
         return 0;
     if (node->VpiType() == vpiOperation) {
@@ -3985,7 +3986,7 @@ int UhdmImporter::self_determined_width(const UHDM::any* node) {
             for (auto o : *op->Operands())
                 ops.push_back(o);
         auto W = [&](size_t i) -> int {
-            return i < ops.size() ? self_determined_width(ops[i]) : 0;
+            return i < ops.size() ? self_determined_width(ops[i], input_mapping) : 0;
         };
         switch (op->VpiOpType()) {
             // Arithmetic and bitwise binary: max(L, R).
@@ -4025,7 +4026,7 @@ int UhdmImporter::self_determined_width(const UHDM::any* node) {
     // For these, import_expression resolves to an existing wire or a Const and
     // creates no new logic, so this is side-effect-free.
     if (auto e = dynamic_cast<const UHDM::expr*>(node))
-        return import_expression(e).size();
+        return import_expression(e, input_mapping).size();
     return 0;
 }
 
@@ -4199,6 +4200,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (deftp && members && deftp->Pattern()) {
                 RTLIL::SigSpec defval =
                     import_expression(any_cast<const expr*>(deftp->Pattern()), input_mapping);
+                // NAMED tags override the default for their member —
+                // `'{is_normal: 1'b1, is_boxed: 1'b1, default: 1'b0}`
+                // (fpnew_fma's ADD-arm info_a) filled every field with the
+                // default and dropped the named ones, so is_normal read 0 and
+                // the injected 1.0 multiplicand lost its implicit bit.
+                std::map<std::string, const UHDM::expr*> named_tags;
+                for (auto operand : *uhdm_op->Operands()) {
+                    if (operand->UhdmType() != uhdmtagged_pattern) continue;
+                    auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                    if (!tp->Typespec() || !tp->Pattern()) continue;
+                    std::string tn = std::string(tp->Typespec()->VpiName());
+                    if (auto a = tp->Typespec()->Actual_typespec())
+                        if (tn.empty()) tn = std::string(a->VpiName());
+                    if (!tn.empty() && tn != "default")
+                        named_tags[tn] = any_cast<const expr*>(tp->Pattern());
+                }
                 RTLIL::SigSpec result;
                 // First member at MSB (concat order), matching packed layout.
                 for (int i = (int)members->size() - 1; i >= 0; i--) {
@@ -4207,7 +4224,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (auto mts = m->Typespec())
                         if (auto a = mts->Actual_typespec())
                             mw = get_width_from_typespec(a, inst);
-                    RTLIL::SigSpec v = defval;
+                    RTLIL::SigSpec v;
+                    auto nt = named_tags.find(std::string(m->VpiName()));
+                    if (nt != named_tags.end())
+                        v = import_expression(nt->second, input_mapping);
+                    else
+                        v = defval;
                     if (mw > 0) {
                         if (v.size() < mw) v.extend_u0(mw);
                         else if (v.size() > mw) v = v.extract(0, mw);
@@ -4671,7 +4693,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // The 1-bit RESULT width must NOT propagate into the operands — they
         // are sized to max(operand widths) among themselves.  Without this,
         // `a+b != 3'd0` (zu is 1-bit) collapsed the `a+b` to a 1-bit add.
+        //
+        // But zero context is not right either: per LRM 11.8.2 the operands
+        // are evaluated at max(self-size(A), self-size(B)), and that width
+        // must flow INTO nested arithmetic.  `p - z + 1 >= 0` sized the
+        // inner sub at 10 bits while the 32/64-bit literal `1` widened the
+        // add — p-z wrapped for p-z < -512 and the (signed) compare took
+        // the wrong branch (fpnew_fma subnormals; signed_interm_cmp).
         expression_context_width = 0;
+        if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
+            int sa = self_determined_width((*uhdm_op->Operands())[0], input_mapping);
+            int sb = self_determined_width((*uhdm_op->Operands())[1], input_mapping);
+            if (sa > 0 && sb > 0)
+                expression_context_width = std::max(sa, sb);
+        }
         bool ops_all_signed = false;
         if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
             auto& uops = *uhdm_op->Operands();
@@ -5257,13 +5292,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // SigSpecs) are unsigned unless they were tagged as
                 // fully-const-signed.
                 bool is_signed = true;
-                for (const auto& operand : operands) {
+                for (size_t oi = 0; oi < operands.size(); oi++) {
+                    const auto& operand = operands[oi];
                     bool op_signed = false;
                     if (operand.is_wire()) {
                         op_signed = operand.as_wire()->is_signed;
                     } else if (operand.is_fully_const()) {
                         op_signed = (operand.as_const().flags &
                                      RTLIL::CONST_FLAG_SIGNED) != 0;
+                    }
+                    // The RTLIL view loses signedness for an intermediate
+                    // operation result (anonymous wire, never marked) and for
+                    // unsuffixed decimal literals (signed per LRM §5.7.1, but
+                    // the flag isn't set on import) — fall back to the UHDM
+                    // expression.  fpnew_fma's `p - z + 1 >= 0` zero-extended
+                    // the signed 10-bit sub into a 64-bit add, so -1 compared
+                    // as 1023 and the subnormal branch was never taken.
+                    if (!op_signed && uhdm_op->Operands() &&
+                        oi < uhdm_op->Operands()->size()) {
+                        if (auto oe = any_cast<const expr*>(
+                                (*uhdm_op->Operands())[oi]))
+                            op_signed = is_expr_signed(oe);
                     }
                     if (!op_signed) { is_signed = false; break; }
                 }
@@ -5280,7 +5329,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (op.size() > result_width)
                         return op.extract(0, result_width);
                     bool sgn = is_signed;
-                    if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
+                    // NB: is_signed is true only when EVERY operand is signed
+                    // (LRM §11.8.1), so extension follows it directly.  A
+                    // wire-level `is_signed` veto here zero-extended
+                    // intermediate operation results (anonymous wires are
+                    // never marked signed) — fpnew_fma's `p - z + 1`.
                     // A concatenation/replication operand is always unsigned —
                     // zero-extend it even inside a signed add/subtract.
                     if (op_unsigned) sgn = false;
@@ -5295,6 +5348,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 std::string cell_name = generate_cell_name(uhdm_op, "add");
                 auto c = module->addAdd(RTLIL::escape_id(cell_name), a, b, result, is_signed);
                 add_src_attribute(c->attributes, uhdm_op);
+                if (is_signed) mark_result_signed(result);
                 return result;
             }
             break;
@@ -5324,7 +5378,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (op.size() > result_width)
                         return op.extract(0, result_width);
                     bool sgn = is_signed;
-                    if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
+                    // NB: is_signed is true only when EVERY operand is signed
+                    // (LRM §11.8.1), so extension follows it directly.  A
+                    // wire-level `is_signed` veto here zero-extended
+                    // intermediate operation results (anonymous wires are
+                    // never marked signed) — fpnew_fma's `p - z + 1`.
                     // A concatenation/replication operand is always unsigned —
                     // zero-extend it even inside a signed add/subtract.
                     if (op_unsigned) sgn = false;
@@ -5339,6 +5397,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 std::string cell_name = generate_cell_name(uhdm_op, "sub");
                 auto c = module->addSub(RTLIL::escape_id(cell_name), a, b, result, is_signed);
                 add_src_attribute(c->attributes, uhdm_op);
+                if (is_signed) mark_result_signed(result);
                 return result;
             }
             break;
@@ -8303,6 +8362,15 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
                 auto arr = any_cast<const UHDM::array_typespec*>(ats);
                 if (arr->Elem_typespec())
                     et = arr->Elem_typespec()->Actual_typespec();
+            } else if (ats->UhdmType() == uhdmpacked_array_typespec) {
+                // PACKED array of structs — fpnew_pkg's
+                // `fp_encoding_t [0:NUM_FP_FORMATS-1] FP_ENCODINGS`: the
+                // element struct hangs off the packed_array_typespec the same
+                // way (bias() read FP_ENCODINGS[fmt].exp_bits as 0 without
+                // this, folding every FP bias to -1).
+                auto parr = any_cast<const UHDM::packed_array_typespec*>(ats);
+                if (parr->Elem_typespec())
+                    et = parr->Elem_typespec()->Actual_typespec();
             } else {
                 et = dynamic_cast<const UHDM::typespec*>(ats);
             }

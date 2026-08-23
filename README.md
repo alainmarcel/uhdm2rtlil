@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1384 (839 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1339/1384 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1387 (842 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1342/1387 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 912 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 427 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Passing**: 913 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 429 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -95,6 +95,12 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
 > **CVA6 latch parity**: the full [CVA6](https://github.com/openhwgroup/cva6)
 > core (`cv64a6_imafdc_sv39`) now lowers through `read_uhdm; hierarchy; proc`
 > with **0 inferred latches** — matching the `read_slang` reference exactly.
+>
+> **CVA6 per-module equivalence** (`test/cva6_equiv/`): every CVA6 module is
+> compiled standalone with its real-hierarchy parameters and mitered against
+> the `read_slang` reference — **79 of 147 modules formally PROVEN**, the
+> rest tracked with expected verdicts in `cva6_modules.txt` (a ratchet: any
+> module regressing from its recorded verdict fails the suite).
 
 ### Supported Core IP (rp32 & Ibex)
 

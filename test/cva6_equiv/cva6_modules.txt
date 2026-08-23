@@ -80,7 +80,7 @@ fpnew_fma_multi                        4   180   error    # count_id assert FIXE
 fpnew_noncomp                          4   180   proven
 fpnew_opgroup_block                    4   180   cex
 fpnew_opgroup_fmt_slice                4   180   cex
-fpnew_opgroup_multifmt_slice           4   180   timeout
+fpnew_opgroup_multifmt_slice           4   180   cex      # cex now measurable (was timeout w/ collapsed LANE widths pre-evaluator fixes) - shares the arb_idx_cast root
 fpnew_rounding                         4   900   proven
 fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
 fpu_wrap                               4   180   cex
