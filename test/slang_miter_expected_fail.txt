@@ -6,9 +6,4 @@
 # covers constructs read_verilog cannot parse at all (type parameters, packed
 # struct parameters), so a test here is a real, tracked frontend bug.
 
-# Bit/part-select of an element of a packed array whose element type is a TYPE
-# PARAMETER drops the second index.  Root cause of rr_arb_tree's wrong idx_o
-# and hence wt_dcache_mem's wr_ack_o counterexample.  The obvious fix also
-# claims 3-D packed selects and breaks tc_sram — see arb_idx_cast/README.md.
-arb_idx_cast
 

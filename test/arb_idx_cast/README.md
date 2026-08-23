@@ -1,4 +1,17 @@
-# arb_idx_cast — KNOWN FAILING (documented in ../failing_tests.txt)
+# arb_idx_cast — FIXED (2026-08-23)
+
+**The slang miter now PROVES.**  The missing discriminator the analysis below
+asked for turned out to already exist in UHDM: for a packed array whose element
+type is a typedef or TYPE PARAMETER, the OUTER dims live in the
+`packed_array_var/net`'s own `Ranges()` while its typespec is just the element
+type — prepending those ranges to the dimension walk (and resolving erased
+type parameters to their instance-bound type) completes the per-level dimension
+chain, so `nodes[i][j]` bit-selects inside the element while tc_sram's
+`rdata_q[i][j]` still selects the whole sub-element (the
+`total == base_sig.size()` guard rejects any double-count).  The historical
+analysis is kept below.
+
+## Original analysis (historical)
 
 A bit- or part-select of an ELEMENT of a packed array whose element type is a
 TYPE PARAMETER collapses to a constant:
