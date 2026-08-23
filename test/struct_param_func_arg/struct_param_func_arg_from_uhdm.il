@@ -4,13 +4,22 @@ attribute \top 1
 attribute \src "dut.sv:16.1-23.10"
 attribute \dynports 1
 module \dut
-  parameter \CFG 0'x
+  parameter \CFG 96'000000000000000000000000000000110000000000000000000000000000000000000000000000000001000000000000
   attribute \src "dut.sv:17.25-17.28"
   wire width 64 input 1 \a_i
   attribute \src "dut.sv:18.25-18.29"
   wire output 2 \o_fn
   attribute \src "dut.sv:19.25-19.33"
   wire width 32 output 3 \o_direct
+  cell $ge $ge$dut.sv:11$11
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \a_i
+    connect \B 64'0000000000000000000000000000000000000000000000000001000000000000
+    connect \Y \o_fn
+  end
   connect \o_direct 3
-  connect \o_fn 1'1
 end

@@ -1060,7 +1060,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         auto operands = cond_op->Operands();
                         const any* left_op = operands->at(0);
                         const any* right_op = operands->at(1);
-                        
+
                         // Check that left operand is our loop variable
                         // Handle both ref_obj and ref_var (integer variables use ref_var)
                         bool is_loop_var = false;
@@ -1133,13 +1133,80 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                         log("DEBUG: Operation result not constant (invalidValue=%d)\n", invalidValue);
                                     }
                                 }
+                            } else if (right_op->UhdmType() == uhdmhier_path) {
+                                // Struct-param field bound
+                                // (`k < Cfg.NrExecuteRegionRules` in CVA6's
+                                // is_inside_execute_regions).  In function
+                                // context the member imports as a SLICE of
+                                // the arg WIRE (correct as hardware, useless
+                                // as a bound), so when the import is
+                                // non-const, slice the numeric value out of
+                                // the call context's constant argument.
+                                RTLIL::SigSpec hv = import_expression(
+                                    any_cast<const expr*>(right_op),
+                                    &input_mapping);
+                                bool bound_ok =
+                                    hv.is_fully_const() && hv.is_fully_def();
+                                if (bound_ok) {
+                                    end_value = hv.as_const().as_int();
+                                } else if (FunctionCallContext* fctx =
+                                               getCurrentFunctionContext()) {
+                                    auto hp = any_cast<const hier_path*>(right_op);
+                                    if (hp->Path_elems() &&
+                                        hp->Path_elems()->size() >= 2 &&
+                                        fctx->func_def &&
+                                        fctx->func_def->Io_decls()) {
+                                        std::string bn(
+                                            (*hp->Path_elems())[0]->VpiName());
+                                        auto cit =
+                                            fctx->const_wire_values.find(bn);
+                                        const UHDM::typespec* ats = nullptr;
+                                        for (auto iod :
+                                             *fctx->func_def->Io_decls())
+                                            if (std::string(iod->VpiName()) ==
+                                                    bn &&
+                                                iod->Typespec()) {
+                                                ats = iod->Typespec()
+                                                          ->Actual_typespec();
+                                                break;
+                                            }
+                                        if (cit != fctx->const_wire_values.end() &&
+                                            ats) {
+                                            std::string mpath;
+                                            for (size_t pi = 1;
+                                                 pi < hp->Path_elems()->size();
+                                                 pi++) {
+                                                if (!mpath.empty())
+                                                    mpath += ".";
+                                                mpath += std::string(
+                                                    (*hp->Path_elems())[pi]
+                                                        ->VpiName());
+                                            }
+                                            int off = 0, w = 0;
+                                            if (calculate_struct_member_offset(
+                                                    ats, mpath,
+                                                    current_instance, off,
+                                                    w) &&
+                                                w > 0 &&
+                                                off + w <=
+                                                    cit->second.size()) {
+                                                end_value =
+                                                    cit->second
+                                                        .extract(off, w)
+                                                        .as_int();
+                                                bound_ok = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!bound_ok) can_unroll = false;
                             } else {
                                 can_unroll = false;
                             }
                         }
                     }
                 }
-                
+
                 // Extract increment: i++ or i = i + 1
                 if (can_unroll && inc_stmt->UhdmType() == uhdmoperation) {
                     const operation* inc_op = any_cast<const operation*>(inc_stmt);
@@ -3227,6 +3294,153 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 return process_function_with_context(func_def, args, fc, parent_ctx);
             }
             break;
+        case vpiStructVar: {
+            // READER-SIDE assembly first: walk the struct_var's typespec
+            // members and evaluate each member's annotated value with OUR
+            // import machinery — package params, casts, patterns and logical
+            // ops all resolve here, while ExprEval lacks the context functors
+            // and failed on `CVA6ConfigA && CVA6ConfigB`-style member values.
+            // Packing: first declared member = MSBs (RTLIL Const bits are
+            // LSB-first, so the LAST member's bits go in first).
+            {
+                auto sv0 = any_cast<const struct_var*>(uhdm_expr);
+                // Re-entrancy guard: a member's value expression can
+                // reference the SAME config struct
+                // (`NonIdemPotenceEn = CVA6Cfg.NrNonIdempotentRules != 0 &&
+                // ...`) — without the guard the inner reference re-enters
+                // this assembly and recurses to a stack overflow.  Inside
+                // the guard the inner hier_path resolves through the
+                // typespec-member annotation walk instead.
+                static thread_local std::set<const UHDM::any*> rasm_in_progress;
+                if (rasm_in_progress.count(uhdm_expr)) {
+                    log_warning("Unsupported expression type: %s\n",
+                                UhdmName(uhdm_expr->UhdmType()).c_str());
+                    return RTLIL::SigSpec();
+                }
+                rasm_in_progress.insert(uhdm_expr);
+                auto rasm_cleanup = [&]() { rasm_in_progress.erase(uhdm_expr); };
+                std::function<bool(const UHDM::struct_typespec*, RTLIL::Const&)>
+                    asm_members = [&](const UHDM::struct_typespec* stps,
+                                      RTLIL::Const& out) -> bool {
+                    if (!stps || !stps->Members()) return false;
+                    std::vector<RTLIL::Const> vals;  // declaration order
+                    for (auto member : *stps->Members()) {
+                        const UHDM::typespec* mts =
+                            member->Typespec()
+                                ? member->Typespec()->Actual_typespec()
+                                : nullptr;
+                        int mw = get_width_from_typespec(mts, current_instance);
+                        if (mw <= 0 && mts &&
+                            mts->UhdmType() == uhdmenum_typespec) {
+                            auto ets =
+                                any_cast<const UHDM::enum_typespec*>(mts);
+                            if (ets->Base_typespec() &&
+                                ets->Base_typespec()->Actual_typespec())
+                                mw = get_width_from_typespec(
+                                    ets->Base_typespec()->Actual_typespec(),
+                                    current_instance);
+                            if (mw <= 0) mw = 32;
+                        }
+                        if (mw <= 0) {
+                            return false;
+                        }
+                        const UHDM::any* mv = member->Actual_value();
+                        if (!mv) mv = member->Default_value();
+                        RTLIL::Const mc;
+                        bool got = false;
+                        if (mv) {
+                            if (mv->UhdmType() == uhdmstruct_var) {
+                                const UHDM::struct_typespec* nst = nullptr;
+                                auto nsv = any_cast<const struct_var*>(mv);
+                                if (nsv->Typespec())
+                                    nst = dynamic_cast<
+                                        const UHDM::struct_typespec*>(
+                                        nsv->Typespec()->Actual_typespec());
+                                if (!nst && mts &&
+                                    mts->UhdmType() == uhdmstruct_typespec)
+                                    nst = any_cast<
+                                        const UHDM::struct_typespec*>(mts);
+                                got = asm_members(nst, mc);
+                            } else if (auto me =
+                                           dynamic_cast<const expr*>(mv)) {
+                                bool saved_fcf = force_const_fold;
+                                int saved_ctx = expression_context_width;
+                                force_const_fold = true;
+                                expression_context_width = mw;
+                                RTLIL::SigSpec msig = import_expression(me);
+                                expression_context_width = saved_ctx;
+                                force_const_fold = saved_fcf;
+                                if (msig.is_fully_const() &&
+                                    msig.is_fully_def()) {
+                                    mc = msig.as_const();
+                                    got = true;
+                                }
+                            }
+                        }
+                        if (!got) {
+                            return false;
+                        }
+                        if (mc.size() > mw) {
+                            mc = mc.extract(0, mw);
+                        } else if (mc.size() < mw) {
+                            RTLIL::SigSpec t(mc);
+                            t.extend_u0(mw, false);
+                            mc = t.as_const();
+                        }
+                        vals.push_back(mc);
+                    }
+                    std::vector<RTLIL::State> packed;
+                    for (auto it = vals.rbegin(); it != vals.rend(); ++it)
+                        for (int i = 0; i < it->size(); i++)
+                            packed.push_back((*it)[i]);
+                    out = RTLIL::Const(packed);
+                    return true;
+                };
+                RTLIL::Const full;
+                const UHDM::struct_typespec* stps = nullptr;
+                if (sv0->Typespec())
+                    stps = dynamic_cast<const UHDM::struct_typespec*>(
+                        sv0->Typespec()->Actual_typespec());
+                bool rasm_ok = asm_members(stps, full) && full.size() > 0;
+                rasm_cleanup();
+                if (rasm_ok) {
+                    if (mode_debug)
+                        log("UHDM: struct_var reader-assembled to %d-bit constant\n",
+                            full.size());
+                    return RTLIL::SigSpec(full);
+                }
+            }
+            // A function-computed struct VALUE (`parameter cva6_cfg_t CVA6Cfg =
+            // build_config(...)` — the param_assign RHS is an opaque struct_var
+            // whose typespec members carry the evaluated field constants).
+            // ExprEval assembles the packed constant from those annotations;
+            // without this the value imported as EMPTY and a function argument
+            // fed from it (`is_inside_execute_regions(CVA6Cfg, paddr)`)
+            // materialized as an all-zero 17217-bit Cfg — every config member
+            // read 0 and pmp_data_if never raised the PMA access fault.
+            ExprEval eval;
+            bool invalidValue = false;
+            expr* res = eval.reduceExpr(uhdm_expr, invalidValue,
+                                        current_instance
+                                            ? (const any*)current_instance
+                                            : nullptr,
+                                        uhdm_expr->VpiParent(), true);
+            if (res) {
+                if (!invalidValue && res->UhdmType() == uhdmconstant) {
+                    RTLIL::SigSpec cv =
+                        import_constant(any_cast<const constant*>(res));
+                    if (cv.is_fully_const() && cv.is_fully_def()) {
+                        if (mode_debug)
+                            log("UHDM: struct_var assembled to %d-bit constant\n",
+                                cv.size());
+                        return cv;
+                    }
+                }
+            }
+            log_warning("Unsupported expression type: %s\n",
+                        UhdmName(uhdm_expr->UhdmType()).c_str());
+            return RTLIL::SigSpec();
+        }
         default:
             log_warning("Unsupported expression type: %s\n", UhdmName(uhdm_expr->UhdmType()).c_str());
             return RTLIL::SigSpec();
@@ -8024,7 +8238,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (!full_name_view.empty() && path_name.empty()) {
         path_name = std::string(full_name_view);
     }
-    
+
+    // Substitute unrolled-loop variables into bracketed selects of the path
+    // name (`Cfg.ExecuteRegionAddrBase[k]` with loop_values[k]=1 →
+    // `...[1]`): downstream string-driven member resolution
+    // (calculate_struct_member_offset) parses only literal indices, so a
+    // symbolic loop index made the whole member access unresolvable inside
+    // an unrolled function loop (CVA6 is_inside_execute_regions).
+    if (!loop_values.empty() && path_name.find('[') != std::string::npos) {
+        std::string subst;
+        size_t p = 0;
+        while (p < path_name.size()) {
+            size_t ob = path_name.find('[', p);
+            if (ob == std::string::npos) {
+                subst += path_name.substr(p);
+                break;
+            }
+            size_t cb = path_name.find(']', ob);
+            if (cb == std::string::npos) {
+                subst += path_name.substr(p);
+                break;
+            }
+            subst += path_name.substr(p, ob - p + 1);
+            std::string idx = path_name.substr(ob + 1, cb - ob - 1);
+            auto lv = loop_values.find(idx);
+            if (lv != loop_values.end())
+                subst += std::to_string(lv->second);
+            else
+                subst += idx;
+            subst += "]";
+            p = cb + 1;
+        }
+        path_name = subst;
+    }
+
     if (mode_debug)
         log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
             std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
@@ -12061,6 +12308,25 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     cv.as_const().as_string().c_str());
                             return cv;
                         }
+                    } else if (auto vexpr = dynamic_cast<const expr*>(val)) {
+                        // The annotation can be a foldable EXPRESSION —
+                        // CVA6's NonIdempotentLength member carries a CAST of
+                        // a constant (`1024'(...)`-shape, vpiCastOp).  Import
+                        // it; SV assignment widening zero-extends to the
+                        // member width.
+                        bool saved_fcf2 = force_const_fold;
+                        force_const_fold = true;
+                        RTLIL::SigSpec cv = import_expression(vexpr);
+                        force_const_fold = saved_fcf2;
+                        if (cv.is_fully_const() && cv.is_fully_def() &&
+                            cv.size() > 0) {
+                            if (width > cv.size()) cv.extend_u0(width);
+                            if (mode_debug)
+                                log("    hier_path '%s' folded via typespec-member "
+                                    "annotation expr (%d bits)\n",
+                                    path_name.c_str(), cv.size());
+                            return cv;
+                        }
                     }
                 }
             }
@@ -12216,6 +12482,39 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     "width=%d resolved via typespec (constant, no signal)\n",
                     path_name.c_str(), width);
         } else {
+            // Function-inlining fallback: the base is a struct-typed function
+            // ARGUMENT bound to a constant (CVA6's
+            // `is_inside_execute_regions(Cfg, ...)` where Cfg is the folded
+            // CVA6Cfg parameter).  There is no module wire for `Cfg`, but the
+            // call context holds the constant value and the io_decl carries
+            // the struct typespec — slice the member (array-element selects
+            // like `ExecuteRegionAddrBase[0]` included) out of the constant.
+            if (FunctionCallContext* fctx = getCurrentFunctionContext()) {
+                size_t dp = path_name.find('.');
+                if (dp != std::string::npos && fctx->func_def &&
+                    fctx->func_def->Io_decls()) {
+                    std::string bn = path_name.substr(0, dp);
+                    std::string mpath = path_name.substr(dp + 1);
+                    auto cit = fctx->const_wire_values.find(bn);
+                    const UHDM::typespec* ats = nullptr;
+                    for (auto iod : *fctx->func_def->Io_decls())
+                        if (std::string(iod->VpiName()) == bn && iod->Typespec()) {
+                            ats = iod->Typespec()->Actual_typespec();
+                            break;
+                        }
+                    if (cit != fctx->const_wire_values.end() && ats) {
+                        int off = 0, w = 0;
+                        if (calculate_struct_member_offset(ats, mpath,
+                                current_instance, off, w) &&
+                            w > 0 && off + w <= cit->second.size()) {
+                            if (mode_debug)
+                                log("    hier_path '%s' folded from const function arg '%s' [%d +: %d]\n",
+                                    path_name.c_str(), bn.c_str(), off, w);
+                            return cit->second.extract(off, w);
+                        }
+                    }
+                }
+            }
             // Log a warning and return an unconnected signal
             log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
         }
