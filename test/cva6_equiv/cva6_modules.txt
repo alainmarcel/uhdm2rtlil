@@ -92,7 +92,7 @@ hpdcache_cbuf                          4   180   proven
 hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_core_arbiter                  4   180   cex      # cex now measurable (was error) - TRIAGE
 hpdcache_ctrl                          4   180   timeout  # was crash (segfault); now timeout
-hpdcache_ctrl_pe                       4   180   cex
+hpdcache_ctrl_pe                       4   180   proven
 hpdcache_data_downsize                 4   400   elabfail  # dead at this config: accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
 hpdcache_data_resize                   4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_data_upsize                   4   180   cex      # cex now measurable (was crash) - TRIAGE
