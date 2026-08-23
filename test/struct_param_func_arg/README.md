@@ -1,6 +1,13 @@
 # struct_param_func_arg
 
-**Known-failing reproducer — an unfixed UHDM bug, not a passing test.**
+**FIXED (2026-08-22, pmp_data_if round).** The slang miter now proves, and the
+test is no longer in `slang_miter_expected_fail.txt`. The fix chain: UHDM
+`ExprEval::reduceExpr` assembles a value-carrying `struct_var` returned by a
+constant function into a packed constant (enum/wide/cast/pattern member values),
+plus a reader-side assembler (`case vpiStructVar` in `import_expression`) and a
+function-context fallback that slices `C.member[idx]` reads out of the constant
+argument bound to the formal. CVA6 `pmp_data_if` (same category,
+`CVA6Cfg = build_config(...)`) is PROVEN. The analysis below is kept as history.
 
 A struct **parameter** passed as a **function argument**, with a field read from
 the formal inside the function:

@@ -4,7 +4,7 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:16.1-23.10"
 attribute \dynports 1
 module \dut
-  parameter \CFG 0'x
+  parameter \CFG 96'000000000000000000000000000000110000000000000000000000000000000000000000000000000001000000000000
   attribute \src "dut.sv:17.25-17.28"
   wire width 64 input 1 \a_i
   attribute \src "dut.sv:18.25-18.29"
@@ -55,7 +55,7 @@ module \dut
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\in_region$func$dut.sv:21$2.C$4 96'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    assign $0\in_region$func$dut.sv:21$2.C$4 96'000000000000000000000000000000110000000000000000000000000000000000000000000000000001000000000000
     assign $0\in_region$func$dut.sv:21$2.a$5 \a_i
     assign $0\in_region$func$dut.sv:21$2.$result$6 $1\in_region$func$dut.sv:21$2.$result$7
     assign $0\in_region$func$dut.sv:21$1.$result$8 $1\in_region$func$dut.sv:21$2.$result$7

@@ -152,7 +152,7 @@ norm_div_sqrt_mvp                      4   900   proven
 nrbd_nrsc_mvp                          4   900   proven
 perf_counters                          4   900   proven
 pmp                                    4   180   proven
-pmp_data_if                            4   180   cex
+pmp_data_if                            4   180   proven
 pmp_entry                              4   900   proven
 popcount                               4   900   proven
 preprocess_mvp                         4   400   proven

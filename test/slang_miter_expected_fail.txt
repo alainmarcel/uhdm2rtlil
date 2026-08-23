@@ -12,16 +12,3 @@
 # claims 3-D packed selects and breaks tc_sram — see arb_idx_cast/README.md.
 arb_idx_cast
 
-
-
-
-# A struct PARAMETER passed as a FUNCTION ARGUMENT: a field read from the formal
-# inside the function folds to 0, so a guard on it becomes constant-false and the
-# call collapses to the else arm's constant.  This is CVA6 pmp_data_if's
-# config_pkg::is_inside_execute_regions(CVA6Cfg, addr) -> match_any_execute_region
-# = 1'h1 instead of address logic (adjudicates UHDM_WRONG, 377/2000).
-# Ruled out: the parked evalFunc defect (a direct CFG.n read gives 3), Surelog
-# pre-folding (the UHDM has a real func_call), and the all_const guard (present;
-# the call is inlined, and the inlined guard is what folds).
-# Unfixed -- see struct_param_func_arg/README.md.
-struct_param_func_arg
