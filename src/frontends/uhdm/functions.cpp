@@ -244,6 +244,28 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
 
     int stmt_type = stmt->VpiType();
 
+    // A bare `i++` / `i--` statement (typically a for-loop's inc): Surelog
+    // emits an operation node, not an assignment.  Without this the inc
+    // silently no-oped and the compile-time for-loop above never advanced —
+    // fpnew_pkg's min/max_fp_width spun to the iteration limit and every
+    // dependent width folded to 0.
+    if (stmt_type == vpiOperation) {
+        auto op = any_cast<const operation*>(stmt);
+        int ot = op ? op->VpiOpType() : 0;
+        if ((ot == vpiPostIncOp || ot == vpiPreIncOp ||
+             ot == vpiPostDecOp || ot == vpiPreDecOp) &&
+            op->Operands() && op->Operands()->size() == 1) {
+            std::string vn = std::string((*op->Operands())[0]->VpiName());
+            auto it = local_vars.find(vn);
+            if (it != local_vars.end()) {
+                int delta = (ot == vpiPostIncOp || ot == vpiPreIncOp) ? 1 : -1;
+                RTLIL::Const nv(it->second.as_int() + delta, it->second.size());
+                it->second = nv;
+                return nv;
+            }
+        }
+    }
+
     switch (stmt_type) {
         case vpiParamAssign: {
             // Block-scoped `localparam` (e.g. `localparam other_mult = 2;`
@@ -383,12 +405,14 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 } else if (assign->Rhs()->VpiType() == vpiFuncCall) {
                     const func_call* fc = any_cast<const func_call*>(assign->Rhs());
                     rhs_value = evaluate_recursive_function_call(fc, local_vars);
-                } else if (assign->Rhs()->VpiType() == vpiBitSelect ||
-                           assign->Rhs()->VpiType() == vpiVarSelect ||
-                           assign->Rhs()->VpiType() == vpiPartSelect) {
-                    // vpiPartSelect handles `wrap = out[4:0]` (rotate's compile-
-                    // time index function); evaluate_single_operand slices the
-                    // tracked local-var constant.
+                } else {
+                    // Everything else evaluate_single_operand knows: bit/var/
+                    // part-selects, hier_paths, and crucially sys_func_calls —
+                    // `res = unsigned'(maximum(...))` reaches Surelog's UHDM as
+                    // a $unsigned sys_func_call wrapping the func_call, and the
+                    // old routing left rhs_value EMPTY (fpnew multifmt LANE
+                    // widths folded to 0 and `[LANE_WIDTH-1:0]` crashed on a
+                    // negative extract).
                     rhs_value = evaluate_single_operand(assign->Rhs(), local_vars);
                 }
             }
@@ -452,7 +476,11 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     }
                     log("    Assigned %s[%d] = %s\n", lhs_name.c_str(), bit_index,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
-                } else {
+                } else if (rhs_value.size() > 0 || !local_vars.count(lhs_name)) {
+                    // Never clobber a tracked value with an EMPTY one (a
+                    // failed RHS evaluation): keeping the previous value
+                    // matches the pre-existing behaviour of not executing the
+                    // statement, instead of poisoning every later use.
                     local_vars[lhs_name] = rhs_value;
                     log("    Assigned %s = %s\n", lhs_name.c_str(),
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
@@ -471,12 +499,12 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (is->VpiCondition()->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(is->VpiCondition());
                     cond_value = evaluate_operation_const(op, local_vars);
-                } else if (is->VpiCondition()->VpiType() == vpiRefObj) {
-                    const ref_obj* ref = any_cast<const ref_obj*>(is->VpiCondition());
-                    std::string var_name = std::string(ref->VpiName());
-                    if (local_vars.count(var_name)) {
-                        cond_value = local_vars[var_name];
-                    }
+                } else {
+                    // Handles refs, bit/part-selects, hier_paths, constants —
+                    // `if (cfg[i])` (fpnew_pkg max_fp_width) fell through the
+                    // old ref-only branch, left cond_value EMPTY, and the body
+                    // never ran, so every enabled-format width folded to 0.
+                    cond_value = evaluate_single_operand(is->VpiCondition(), local_vars);
                 }
             }
 
@@ -496,12 +524,10 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (ie->VpiCondition()->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(ie->VpiCondition());
                     cond_value = evaluate_operation_const(op, local_vars);
-                } else if (ie->VpiCondition()->VpiType() == vpiRefObj) {
-                    const ref_obj* ref = any_cast<const ref_obj*>(ie->VpiCondition());
-                    std::string var_name = std::string(ref->VpiName());
-                    if (local_vars.count(var_name)) {
-                        cond_value = local_vars[var_name];
-                    }
+                } else {
+                    // Same as vpiIf: bit/part-selects etc. must evaluate, not
+                    // silently read as empty/false.
+                    cond_value = evaluate_single_operand(ie->VpiCondition(), local_vars);
                 }
             }
 
@@ -894,10 +920,35 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             }
             val = RTLIL::Const(bits);
         } else if (bs->VpiIndex() && local_vars.count(nm)) {
-            // Plain bit_select on a non-array local var.
+            // Plain bit_select on a non-array local var.  SV index → RTLIL bit
+            // must honour the declared range: for an ASCENDING `[0:N-1]`
+            // (fpnew_pkg's fmt_logic_t) SV index 0 is the LEFTMOST bit, i.e.
+            // RTLIL bit N-1 — direct `target[idx]` silently reversed the
+            // vector (cfg[FP32] read the FP16ALT bit).
             RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
             int idx = idx_v.as_int();
             const RTLIL::Const& target = local_vars.at(nm);
+            const UHDM::ref_typespec* rt = nullptr;
+            if (auto e = dynamic_cast<const UHDM::expr*>(bs->Actual_group()))
+                rt = e->Typespec();
+            else if (auto io = dynamic_cast<const UHDM::io_decl*>(bs->Actual_group()))
+                rt = io->Typespec();
+            if (const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr) {
+                if (a->UhdmType() == uhdmlogic_typespec) {
+                    auto lt = any_cast<const UHDM::logic_typespec*>(a);
+                    if (lt->Ranges() && lt->Ranges()->size() == 1) {
+                        auto r0 = lt->Ranges()->at(0);
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            int l = evaluate_single_operand(r0->Left_expr(), local_vars).as_int();
+                            int r = evaluate_single_operand(r0->Right_expr(), local_vars).as_int();
+                            if (l <= r)      // ascending [l:r]: SV idx → bit r-idx
+                                idx = r - idx;
+                            else             // descending [l:r]: SV idx → bit idx-r
+                                idx = idx - r;
+                        }
+                    }
+                }
+            }
             if (idx >= 0 && idx < target.size())
                 val = RTLIL::Const(std::vector<RTLIL::State>{target[idx]});
         } else if (bs->VpiIndex() && bs->Actual_group() &&
@@ -1348,6 +1399,24 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
                 }
                 log_warning("Modulus by zero in compile-time evaluation\n");
                 return RTLIL::Const(0, 32);
+            }
+            break;
+
+        case vpiPowerOp:  // Power (**) — fpnew_pkg::bias() = 2**(EXP_BITS-1)-1
+            if (operand_values.size() >= 2) {
+                int64_t base = operand_values[0].as_int();
+                int64_t exp = operand_values[1].as_int();
+                int64_t result;
+                if (exp < 0) {
+                    // Integer semantics (LRM 11.4.3): only |base|==1 survives
+                    result = (base == 1)    ? 1
+                             : (base == -1) ? ((exp & 1) ? -1 : 1)
+                                            : 0;
+                } else {
+                    result = 1;
+                    for (int64_t i = 0; i < exp && i < 63; i++) result *= base;
+                }
+                return RTLIL::Const((int)result, 32);
             }
             break;
 
