@@ -1847,6 +1847,125 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // PACKED multi-dim var_select (`x[i][j]` on
+                // `logic [0:N][2:0][31:0] x`): resolve every index against
+                // the net's typespec dimensions with correct MSB-first
+                // flattening (leftmost dim occupies the MSBs; ascending
+                // ranges put index `low` at the MSBs).  fpnew's pipeline
+                // arrays (`inp_pipe_operands_q[NUM_INP_REGS][k]`) come
+                // through here with no Actual_group — fall back to the
+                // elaborated instance's net list for the typespec.
+                {
+                    RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
+                                    : module->wire(RTLIL::escape_id(base_name));
+                    const UHDM::ref_typespec* rt = nullptr;
+                    if (auto actual = vs->Actual_group()) {
+                        if (auto e = dynamic_cast<const UHDM::expr*>(actual))
+                            rt = e->Typespec();
+                        else if (auto io = dynamic_cast<const UHDM::io_decl*>(actual))
+                            rt = io->Typespec();
+                    }
+                    if (!rt && current_instance) {
+                        if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                            if (mi->Nets())
+                                for (auto n : *mi->Nets())
+                                    if (std::string(n->VpiName()) == base_name) { rt = n->Typespec(); break; }
+                            if (!rt && mi->Variables())
+                                for (auto v : *mi->Variables())
+                                    if (std::string(v->VpiName()) == base_name) { rt = v->Typespec(); break; }
+                        }
+                    }
+                    const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
+                    const UHDM::logic_typespec* lt =
+                        a ? dynamic_cast<const UHDM::logic_typespec*>(a) : nullptr;
+                    if (bw && lt && lt->Ranges() && lt->Ranges()->size() >= 2 &&
+                        !lt->Elem_typespec()) {
+                        // Evaluate all dims.
+                        std::vector<std::pair<int,int>> dims;  // (left,right)
+                        bool dims_ok = true;
+                        for (auto r : *lt->Ranges()) {
+                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                            if (!l.is_fully_const() || !rr.is_fully_const()) { dims_ok = false; break; }
+                            dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+                        }
+                        long total = 1;
+                        if (dims_ok)
+                            for (auto& d : dims) total *= (std::abs(d.first - d.second) + 1);
+                        // Only plain index expressions (no part-selects) and
+                        // no more indices than dims.
+                        bool idx_ok = dims_ok && total == bw->width &&
+                                      exprs->size() <= dims.size();
+                        if (idx_ok)
+                            for (auto e : *exprs) {
+                                int t = e->VpiType();
+                                if (t == vpiPartSelect || t == vpiIndexedPartSelect) { idx_ok = false; break; }
+                            }
+                        if (idx_ok) {
+                            // stride[i] = product of sizes of dims after i
+                            std::vector<long> stride(dims.size(), 1);
+                            for (int i = (int)dims.size() - 2; i >= 0; i--)
+                                stride[i] = stride[i + 1] *
+                                    (std::abs(dims[i + 1].first - dims[i + 1].second) + 1);
+                            long const_off = 0;
+                            RTLIL::SigSpec dyn_off;   // accumulated dynamic bit offset
+                            bool fail = false;
+                            for (size_t i = 0; i < exprs->size(); i++) {
+                                const expr* ie = (*exprs)[i];
+                                if (ie->VpiType() == vpiBitSelect)
+                                    ie = any_cast<const expr*>(
+                                        any_cast<const UHDM::bit_select*>(ie)->VpiIndex());
+                                RTLIL::SigSpec is = import_expression(ie, input_mapping);
+                                int l = dims[i].first, r = dims[i].second;
+                                bool asc = l < r;
+                                if (is.is_fully_const()) {
+                                    int idx = is.as_const().as_int();
+                                    long slot = asc ? (long)(r - idx) : (long)(idx - r);
+                                    if (slot < 0 || slot > std::abs(l - r)) { fail = true; break; }
+                                    const_off += slot * stride[i];
+                                } else if (!is.empty()) {
+                                    RTLIL::SigSpec iv = is;
+                                    iv.extend_u0(32, false);
+                                    RTLIL::SigSpec slot;
+                                    if (asc)
+                                        slot = module->Sub(NEW_ID, RTLIL::Const(r, 32), iv, false);
+                                    else if (r != 0)
+                                        slot = module->Sub(NEW_ID, iv, RTLIL::Const(r, 32), false);
+                                    else
+                                        slot = iv;
+                                    RTLIL::SigSpec contrib = (stride[i] == 1) ? slot
+                                        : (RTLIL::SigSpec)module->Mul(NEW_ID, slot,
+                                              RTLIL::Const((int)stride[i], 32), false);
+                                    dyn_off = dyn_off.empty() ? contrib
+                                        : (RTLIL::SigSpec)module->Add(NEW_ID, dyn_off, contrib, false);
+                                } else { fail = true; break; }
+                            }
+                            if (!fail) {
+                                long res_w = stride[exprs->size() - 1];
+                                if (dyn_off.empty()) {
+                                    long bit_off = const_off;
+                                    if (bit_off >= 0 && bit_off + res_w <= bw->width) {
+                                        log("  vpiVarSelect: packed %zuD %s → [%ld+:%ld]\n",
+                                            exprs->size(), base_name.c_str(), bit_off, res_w);
+                                        return RTLIL::SigSpec(bw).extract((int)bit_off, (int)res_w);
+                                    }
+                                } else {
+                                    // stride[i] is in BITS (innermost dim is
+                                    // the bit dim), so the accumulated offset
+                                    // is already a bit offset.
+                                    RTLIL::SigSpec bit_off = dyn_off;
+                                    if (const_off != 0)
+                                        bit_off = module->Add(NEW_ID, bit_off,
+                                                          RTLIL::Const((int)const_off, 32), false);
+                                    RTLIL::Wire* y = module->addWire(NEW_ID, (int)res_w);
+                                    module->addShiftx(NEW_ID, RTLIL::SigSpec(bw), bit_off, y);
+                                    return RTLIL::SigSpec(y);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // 2D unpacked array element access (`n[i][j]`).  When both
                 // indices are const and the base wire carries the
                 // `unpacked_*` metadata that `import_module` stamped on
@@ -7563,8 +7682,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             if (got) {
                 int total = param_value.size();
                 RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
-                if (index.is_fully_const()) {
-                    int idx = index.as_const().as_int();
+                {
                     // Compute the element width from the parameter's
                     // typespec ranges.  For a packed multi-range
                     // logic_typespec the OUTER range count divides the
@@ -7573,6 +7691,8 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                     // range or int_typespec) `P[i]` is just bit `i`.
                     int elem_w = 1;
                     int outer_low = 0;
+                    int outer_high = 0;
+                    bool outer_ascending = false;
                     bool packed_multidim = false;
                     if (auto rts = param->Typespec()) {
                         if (auto ats = rts->Actual_typespec()) {
@@ -7617,19 +7737,69 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                                             elem_w = total / arr_size;
                                     }
                                 }
+                            } else if (ats->UhdmType() == uhdmpacked_array_typespec) {
+                                // PACKED array parameter (e.g. fpnew's
+                                // fmt_unit_types_t = ut_e [0:4]): `P[i]`
+                                // selects a whole element; ascending ranges
+                                // put element `low` at the MSBs.
+                                auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(ats);
+                                if (pat && pat->Ranges() && !pat->Ranges()->empty()) {
+                                    packed_multidim = true;
+                                    auto r0 = (*pat->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        int arr_size = std::abs(l - r) + 1;
+                                        outer_low = std::min(l, r);
+                                        outer_high = std::max(l, r);
+                                        outer_ascending = (l < r);
+                                        if (arr_size > 0 && total % arr_size == 0)
+                                            elem_w = total / arr_size;
+                                    }
+                                }
                             }
                         }
                     }
                     (void)packed_multidim;
-                    int slot = idx - outer_low;
-                    int off = slot * elem_w;
-                    if (off >= 0 && off + elem_w <= total) {
-                        RTLIL::SigSpec full(param_value);
-                        RTLIL::SigSpec slice = full.extract(off, elem_w);
+                    if (index.is_fully_const()) {
+                        int idx = index.as_const().as_int();
+                        int slot = outer_ascending ? (outer_high - idx)
+                                                   : (idx - outer_low);
+                        int off = slot * elem_w;
+                        if (off >= 0 && off + elem_w <= total) {
+                            RTLIL::SigSpec full(param_value);
+                            RTLIL::SigSpec slice = full.extract(off, elem_w);
+                            if (mode_debug)
+                                log("    Bit-select on parameter %s[%d]: extracted %d bits @off %d\n",
+                                    signal_name.c_str(), idx, elem_w, off);
+                            return slice;
+                        }
+                    } else {
+                        // DYNAMIC index into a parameter constant
+                        // (`FmtUnitTypes[dst_fmt_i]`): extract the element
+                        // with a $shiftx over the constant.  slot is the
+                        // element offset in ELEMENTS from the RTLIL LSB.
+                        int iw = std::max(GetSize(index), 32);
+                        RTLIL::SigSpec idx_ext = index;
+                        idx_ext.extend_u0(iw, false);
+                        RTLIL::SigSpec slot;
+                        if (outer_ascending)
+                            slot = module->Sub(NEW_ID,
+                                RTLIL::SigSpec(RTLIL::Const(outer_high, iw)),
+                                idx_ext);
+                        else
+                            slot = module->Sub(NEW_ID, idx_ext,
+                                RTLIL::SigSpec(RTLIL::Const(outer_low, iw)));
+                        RTLIL::SigSpec off = module->Mul(NEW_ID, slot,
+                            RTLIL::SigSpec(RTLIL::Const(elem_w, iw)));
+                        RTLIL::Wire* out = module->addWire(NEW_ID, elem_w);
+                        module->addShiftx(NEW_ID, RTLIL::SigSpec(param_value),
+                                          off, out);
                         if (mode_debug)
-                            log("    Bit-select on parameter %s[%d]: extracted %d bits @off %d\n",
-                                signal_name.c_str(), idx, elem_w, off);
-                        return slice;
+                            log("    Dynamic bit-select on parameter %s: $shiftx elem_w=%d\n",
+                                signal_name.c_str(), elem_w);
+                        return RTLIL::SigSpec(out);
                     }
                 }
             }
@@ -7879,7 +8049,12 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
 
         if (packed_elem_w > 1) {
             int outer_lo = std::min(packed_outer_l, packed_outer_r);
-            int slot = idx - outer_lo;
+            int outer_hi = std::max(packed_outer_l, packed_outer_r);
+            // Ascending [0:N] puts element `low` at the MSBs (fpnew's
+            // `pipe[1]` on `logic [0:1][2:0][31:0]` is the LSB half).
+            bool asc = (packed_outer_l >= 0 && packed_outer_r >= 0 &&
+                        packed_outer_l < packed_outer_r);
+            int slot = asc ? (outer_hi - idx) : (idx - outer_lo);
             int off = slot * packed_elem_w;
             if (off < 0 || off + packed_elem_w > base.size()) {
                 log_warning("Packed array element index %d is out of range "

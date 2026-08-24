@@ -3532,6 +3532,35 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             log("UHDM: ExprEval returned size=%llu for typespec\n", (unsigned long long)size);
             return (int)size;
         } else {
+            // ExprEval could not size it (ranges referencing conditional
+            // localparams, e.g. fpnew_cast_multi's
+            // `logic [0:NUM_INP_REGS][2:0][WIDTH-1:0]`).  Multiply the
+            // ranges out ourselves with import_expression, which resolves
+            // parameters through the importer's own machinery.
+            const UHDM::VectorOfrange* rgs = nullptr;
+            if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(typespec)) {
+                if (!lts->Elem_typespec()) rgs = lts->Ranges();
+            } else if (auto bts = dynamic_cast<const UHDM::bit_typespec*>(typespec)) {
+                rgs = bts->Ranges();
+            }
+            if (rgs && !rgs->empty()) {
+                bool saved_fcf3 = force_const_fold;
+                force_const_fold = true;
+                long total = 1;
+                bool ok = true;
+                for (auto r : *rgs) {
+                    if (!r->Left_expr() || !r->Right_expr()) { ok = false; break; }
+                    RTLIL::SigSpec l = import_expression(r->Left_expr());
+                    RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                    if (!l.is_fully_const() || !rr.is_fully_const()) { ok = false; break; }
+                    total *= (long)std::abs(l.as_int() - rr.as_int()) + 1;
+                }
+                force_const_fold = saved_fcf3;
+                if (ok && total > 0) {
+                    log("UHDM: range-product fallback width=%ld\n", total);
+                    return (int)total;
+                }
+            }
             log("UHDM: ExprEval failed or returned invalid size, defaulting to 1\n");
         }
         
