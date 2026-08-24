@@ -6,6 +6,8 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <uhdm/UhdmListener.h>
+#include <uhdm/ref_var.h>
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/packed_array_var.h>
 #include <uhdm/gen_scope.h>
@@ -3454,7 +3456,87 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             std::string full_gen_path = get_current_gen_scope();
             std::string hierarchical_name = full_gen_path + "." + var_name;
             int width = get_width(var, current_instance);
-            
+
+            // A gen-scope packed array whose element type is a TYPE PARAMETER
+            // (`DataType [2**NumLevels-2:0] data_nodes` in rr_arb_tree's
+            // gen_arbiter): the elaborated logic_var carries the outer Range
+            // but NO typespec at all, so get_width defaulted to 1 and the
+            // whole arbiter data path collapsed (fpnew_top's status/valid
+            // outputs stuck at 0 — ex_stage / fpu_wrap).  The element type's
+            // NAME survives in the DEF module's Typespecs() as a named
+            // typespec on the same declaration line; resolve that name
+            // against THIS instance's bound type parameters.
+            int tp_elem_w = 0, tp_outer_l = -1, tp_outer_r = -1;
+            if (width <= 1) {
+                const UHDM::VectorOfrange* vrgs = nullptr;
+                const UHDM::any* vts = nullptr;
+                if (auto lv = dynamic_cast<const UHDM::logic_var*>(var)) {
+                    vrgs = lv->Ranges();
+                    if (lv->Typespec()) vts = lv->Typespec()->Actual_typespec();
+                }
+                auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+                if (vrgs && !vrgs->empty() && !vts && mi &&
+                    uhdm_design && uhdm_design->AllModules()) {
+                    const UHDM::module_inst* def = nullptr;
+                    std::string dn = std::string(mi->VpiDefName());
+                    for (auto m : *uhdm_design->AllModules())
+                        if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+                    // The element type NAME survives only on def-side
+                    // references to the same variable (a ref_var whose
+                    // typespec is the named/unsupported typespec of the
+                    // declaration).  Scan the def module for one.
+                    struct TypeNameFinder : public UHDM::UhdmListener {
+                        std::string target;
+                        std::string found;
+                        void enterRef_var(const UHDM::ref_var* const o) override {
+                            if (!found.empty()) return;
+                            if (std::string(o->VpiName()) != target) return;
+                            if (o->Typespec() && o->Typespec()->Actual_typespec()) {
+                                std::string tn(
+                                    o->Typespec()->Actual_typespec()->VpiName());
+                                if (!tn.empty()) found = tn;
+                            }
+                        }
+                    };
+                    std::string tname;
+                    if (def) {
+                        TypeNameFinder tf;
+                        tf.target = var_name;
+                        tf.listenAny(def);
+                        tname = tf.found;
+                    }
+                    if (!tname.empty() && mi->Parameters()) {
+                        for (auto ip : *mi->Parameters()) {
+                            if (ip->UhdmType() != uhdmtype_parameter) continue;
+                            if (std::string(ip->VpiName()) != tname) continue;
+                            auto itp = any_cast<const UHDM::type_parameter*>(ip);
+                            if (itp->Typespec() && itp->Typespec()->Actual_typespec())
+                                tp_elem_w = get_width_from_typespec(
+                                    itp->Typespec()->Actual_typespec(),
+                                    current_instance);
+                            break;
+                        }
+                    }
+                    if (tp_elem_w > 0) {
+                        auto r0 = (*vrgs)[0];
+                        RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                        RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            tp_outer_l = l.as_const().as_int();
+                            tp_outer_r = r.as_const().as_int();
+                            int n = std::abs(tp_outer_l - tp_outer_r) + 1;
+                            width = n * tp_elem_w;
+                            log("UHDM: gen-scope var '%s' element type '%s' "
+                                "resolved via type parameter: %d x %d = %d bits\n",
+                                var_name.c_str(), tname.c_str(), n, tp_elem_w,
+                                width);
+                        } else {
+                            tp_elem_w = 0;
+                        }
+                    }
+                }
+            }
+
             // The wire may already exist if it was referenced (created on demand)
             // by an outer process before we got here.  In that case we still
             // need to drive its initializer expression — otherwise the wire
@@ -3473,6 +3555,17 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 }
                 log("UHDM: Created wire '%s' (width=%d, signed=%d) for generate scope variable\n",
                     hierarchical_name.c_str(), width, w->is_signed ? 1 : 0);
+            }
+            // Element geometry for the type-param packed array: bit_select
+            // and var_select reads/writes element-index through these attrs.
+            if (w && tp_elem_w > 1 && tp_outer_l >= 0 && tp_outer_r >= 0 &&
+                !w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+                w->attributes[RTLIL::escape_id("packed_elem_width")] =
+                    RTLIL::Const(tp_elem_w);
+                w->attributes[RTLIL::escape_id("packed_outer_left")] =
+                    RTLIL::Const(tp_outer_l);
+                w->attributes[RTLIL::escape_id("packed_outer_right")] =
+                    RTLIL::Const(tp_outer_r);
             }
             if (w) {
                 // If the variable has an initializer expression, create a continuous

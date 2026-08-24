@@ -1967,6 +1967,20 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 if (exprs->size() >= 2) {
                     RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
                                     : module->wire(RTLIL::escape_id(base_name));
+                    // Inside a generate scope the wire is registered under the
+                    // scope-qualified name (`gen_arbiter.index_nodes`), not
+                    // the bare one, and the reference can sit in a NESTED
+                    // scope (`gen_arbiter.gen_levels[0]...`) while the var is
+                    // declared levels above — walk the scope path upwards
+                    // (rr_arb_tree's index_nodes[i][range] in a paramod).
+                    if (!bw && !gen_scope_stack.empty()) {
+                        std::string sc = get_current_gen_scope();
+                        while (!bw && !sc.empty()) {
+                            bw = module->wire(RTLIL::escape_id(sc + "." + base_name));
+                            size_t dot = sc.rfind('.');
+                            sc = (dot == std::string::npos) ? "" : sc.substr(0, dot);
+                        }
+                    }
                     // Typespec from the Actual_group — works for a wire-backed
                     // expr AND for a packed-array PARAMETER with no wire (both
                     // extend `expr`; the param branch handles ParameterPackedArray).
@@ -1980,20 +1994,78 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                     std::vector<std::pair<int,int>> pdims; // (size, low) outer->inner
                     bool pdim_ok = true;
+                    auto push_ranges = [&](const UHDM::VectorOfrange* rgs) {
+                        if (!rgs) return;
+                        for (auto r : *rgs) {
+                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                            if (l.is_fully_const() && rr.is_fully_const())
+                                pdims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
+                                                 std::min(l.as_const().as_int(), rr.as_const().as_int())});
+                            else pdim_ok = false;
+                        }
+                    };
+                    // A packed array whose ELEMENT type is a typedef or TYPE
+                    // PARAMETER (`idx_t [2**NumLevels-2:0] index_nodes`,
+                    // rr_arb_tree) elaborates as a packed_array_var/net whose
+                    // OUTER dims sit in its own Ranges() while its typespec is
+                    // just the element type — the walk below then saw one dim
+                    // and the second index was dropped (arb_idx_cast: idx_o's
+                    // child bit lost, the arbiter reported the wrong port).
+                    // Prepending the object's own Ranges completes the chain;
+                    // the `total == base_sig.size()` check below still bails
+                    // on any double-count.
+                    if (vs->Actual_group()) {
+                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(vs->Actual_group()))
+                            push_ranges(pav->Ranges());
+                        else if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(vs->Actual_group()))
+                            push_ranges(pan->Ranges());
+                    }
                     const UHDM::any* cur = ts;
-                    while (cur && cur->UhdmType() == uhdmlogic_typespec) {
-                        auto lt = any_cast<const UHDM::logic_typespec*>(cur);
-                        if (lt->Ranges())
-                            for (auto r : *lt->Ranges()) {
-                                RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
-                                RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
-                                if (l.is_fully_const() && rr.is_fully_const())
-                                    pdims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
-                                                     std::min(l.as_const().as_int(), rr.as_const().as_int())});
-                                else pdim_ok = false;
+                    int ts_hops = 0;
+                    while (cur && ts_hops++ < 8) {
+                        if (cur->UhdmType() == uhdmlogic_typespec) {
+                            auto lt = any_cast<const UHDM::logic_typespec*>(cur);
+                            push_ranges(lt->Ranges());
+                            cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                                  ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+                        } else if (cur->UhdmType() == uhdmpacked_array_typespec) {
+                            auto pt = any_cast<const UHDM::packed_array_typespec*>(cur);
+                            push_ranges(pt->Ranges());
+                            cur = (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec())
+                                  ? pt->Elem_typespec()->Actual_typespec() : nullptr;
+                        } else {
+                            // Erased type parameter or other alias: resolve to
+                            // the bound type and keep walking.
+                            const UHDM::typespec* tsp =
+                                dynamic_cast<const UHDM::typespec*>(cur);
+                            const UHDM::typespec* bound =
+                                tsp ? resolve_type_param_typespec(
+                                          tsp, current_scope ? current_scope
+                                                             : current_instance)
+                                    : nullptr;
+                            if (bound && bound != cur) { cur = bound; continue; }
+                            break;
+                        }
+                    }
+                    // No typespec at all (a gen-scope type-param packed array
+                    // — rr_arb_tree's index_nodes in a paramod): fall back to
+                    // the packed_* geometry attrs stamped at wire creation.
+                    if (pdims.empty() && bw) {
+                        auto& wa = bw->attributes;
+                        auto ew_id = RTLIL::escape_id("packed_elem_width");
+                        auto ol_id = RTLIL::escape_id("packed_outer_left");
+                        auto or_id = RTLIL::escape_id("packed_outer_right");
+                        if (wa.count(ew_id) && wa.count(ol_id) && wa.count(or_id)) {
+                            int ew = wa.at(ew_id).as_int();
+                            int ol = wa.at(ol_id).as_int();
+                            int orr = wa.at(or_id).as_int();
+                            if (ew > 1) {
+                                pdims.push_back({std::abs(ol - orr) + 1,
+                                                 std::min(ol, orr)});
+                                pdims.push_back({ew, 0});
                             }
-                        cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
-                              ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+                        }
                     }
                     size_t K = exprs->size();
                     if (pdim_ok && pdims.size() >= 2 && pdims.size() >= K) {
@@ -3477,6 +3549,46 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 return process_function_with_context(func_def, args, fc, parent_ctx);
             }
             break;
+        case vpiPackedArrayVar: {
+            // Value-carrying packed_array_var: Surelog's elaborated hand-off
+            // for a packed-array parameter override (fpnew_top's FmtUnitTypes
+            // = '{...} of unit-type enums).  Elements() holds one value-tagged
+            // var per element, declaration order = left index first = MSBs.
+            // Without this the parameter imported EMPTY and every
+            // fpnew_opgroup_block generate decision (PARALLEL/MERGED slices)
+            // collapsed.
+            auto pav = any_cast<const UHDM::packed_array_var*>(uhdm_expr);
+            if (pav && pav->Elements() && !pav->Elements()->empty()) {
+                int total = pav->VpiSize();
+                int n = (int)pav->Elements()->size();
+                if (total > 0 && n > 0 && total % n == 0) {
+                    int ew = total / n;
+                    RTLIL::SigSpec res;
+                    bool ok = true;
+                    for (int i = n - 1; i >= 0; i--) {
+                        auto ev = dynamic_cast<const UHDM::variables*>(
+                            (*pav->Elements())[i]);
+                        std::string vs2 =
+                            ev ? std::string(ev->VpiValue()) : std::string();
+                        if (vs2.empty()) { ok = false; break; }
+                        RTLIL::Const c = extract_const_from_value(vs2);
+                        if (c.size() == 0) { ok = false; break; }
+                        if (c.size() > ew) c = RTLIL::Const(c.extract(0, ew));
+                        else if (c.size() < ew) c.resize(ew, RTLIL::State::S0);
+                        res.append(RTLIL::SigSpec(c));
+                    }
+                    if (ok && res.size() == total) {
+                        if (mode_debug)
+                            log("UHDM: packed_array_var assembled to %d-bit constant\n",
+                                total);
+                        return res;
+                    }
+                }
+            }
+            log_warning("Unsupported expression type: %s\n",
+                        UhdmName(uhdm_expr->UhdmType()).c_str());
+            return RTLIL::SigSpec();
+        }
         case vpiStructVar: {
             // READER-SIDE assembly first: walk the struct_var's typespec
             // members and evaluate each member's annotated value with OUR
