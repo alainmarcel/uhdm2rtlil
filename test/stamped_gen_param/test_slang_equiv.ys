@@ -1,0 +1,21 @@
+# UHDM-vs-slang miter for stamped_gen_param.  read_verilog cannot
+# parse struct-typed parameters / constant struct-returning functions, so the
+# golden reference is the built-in read_slang frontend — the same reference
+# used for CVA6 module equivalence.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top stamped_gen_param
+flatten; proc; opt; techmap; opt
+rename stamped_gen_param gold
+design -stash gold
+
+read_slang dut.sv --top stamped_gen_param
+hierarchy -check -top stamped_gen_param
+flatten; proc; opt; techmap; opt
+rename stamped_gen_param gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter
