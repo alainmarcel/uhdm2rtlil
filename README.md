@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1387 (842 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1342/1387 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1388 (843 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1343/1388 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 913 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 429 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 430 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
