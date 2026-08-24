@@ -3143,9 +3143,45 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (!param_name.empty()) {
                     log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
 
-                    // Get the assigned value
+                    // Get the assigned value.  A value-carrying var STAMP
+                    // (packed_array_var / struct_var) can hold garbage clone
+                    // values — prefer re-evaluating the def-side original
+                    // (fpnew_top's FmtUnitTypes; see
+                    // reeval_stamped_param_assign).
                     auto rhs_expr = any_cast<const expr*>(param_assign->Rhs());
-                    RTLIL::SigSpec value_spec = import_expression(rhs_expr);
+                    RTLIL::SigSpec value_spec;
+                    bool suspicious_stamp = rhs_expr &&
+                        (rhs_expr->UhdmType() == uhdmpacked_array_var ||
+                         rhs_expr->UhdmType() == uhdmstruct_var);
+                    // The other stamp signature: a 1-bit BIN:0 constant on a
+                    // WIDER-typed parameter (Surelog's garbage clone value —
+                    // evalfunc round 1's "stamped BIN:0"; stamped_gen_param's
+                    // UT came through as BIN:0 size 1 for a 6-bit row type).
+                    if (!suspicious_stamp && rhs_expr &&
+                        rhs_expr->UhdmType() == uhdmconstant) {
+                        auto c0 = any_cast<const constant*>(rhs_expr);
+                        // A constant override NARROWER than the parameter's
+                        // type is the other stamp signature (Surelog clones
+                        // stamped BIN:0 / truncated values).  The def-side
+                        // re-evaluation is authoritative when it succeeds and
+                        // a no-op otherwise, so genuine narrow literals are
+                        // unaffected.
+                        if (c0->VpiSize() >= 0 && c0->VpiSize() <= 32) {
+                            int tw = 0;
+                            if (auto lp0 = dynamic_cast<const parameter*>(
+                                    param_assign->Lhs()))
+                                if (lp0->Typespec() &&
+                                    lp0->Typespec()->Actual_typespec())
+                                    tw = get_width_from_typespec(
+                                        lp0->Typespec()->Actual_typespec(),
+                                        current_instance);
+                            if (tw > c0->VpiSize()) suspicious_stamp = true;
+                        }
+                    }
+                    if (suspicious_stamp)
+                        value_spec = reeval_stamped_param_assign(param_assign);
+                    if (value_spec.empty())
+                        value_spec = import_expression(rhs_expr);
                     RTLIL::Const param_value;
                     bool have_value = false;
                     // A hier_path override like `.SYS_DAT(sub.CFG.BUS.DAT)` may evaluate
