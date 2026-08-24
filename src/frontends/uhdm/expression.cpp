@@ -7527,9 +7527,21 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             // own `VpiValue()`.
             RTLIL::Const param_value;
             bool got = false;
+            // The module's ELABORATED parameter value first: the Param_assigns
+            // Rhs can be a garbage Surelog clone stamp, which
+            // reeval_stamped_param_assign has already corrected in
+            // parameter_default_values (stamped_gen_param's UT[k] reads).
+            {
+                RTLIL::IdString p_id = RTLIL::escape_id(signal_name);
+                if (module && module->parameter_default_values.count(p_id) &&
+                    module->parameter_default_values.at(p_id).size() > 1) {
+                    param_value = module->parameter_default_values.at(p_id);
+                    got = true;
+                }
+            }
             const UHDM::module_inst* pmod =
                 dynamic_cast<const UHDM::module_inst*>(current_instance);
-            if (pmod && pmod->Param_assigns()) {
+            if (!got && pmod && pmod->Param_assigns()) {
                 for (auto pa : *pmod->Param_assigns()) {
                     if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != signal_name)
                         continue;
@@ -13099,32 +13111,88 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
         // Walk the member's logic_typespec dims and add the row-major bit
         // offset; the remaining (unindexed) dims give the resulting width.
         if (!sel_idxs.empty() && found_member_ts) {
-            std::vector<std::pair<int,int>> dims; // (size, low) outer->inner
+            struct MDim { int size; int low; bool asc; };
+            std::vector<MDim> dims; // outer->inner
             bool dim_ok = true;
+            auto push_rgs = [&](const UHDM::VectorOfrange* rgs) {
+                if (!rgs) return;
+                for (auto r : *rgs) {
+                    RTLIL::SigSpec l = import_expression(r->Left_expr());
+                    RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                    if (l.is_fully_const() && rr.is_fully_const()) {
+                        int li = l.as_const().as_int(), ri = rr.as_const().as_int();
+                        dims.push_back({std::abs(li - ri) + 1,
+                                        std::min(li, ri), li < ri});
+                    } else dim_ok = false;
+                }
+            };
             const UHDM::any* cur = found_member_ts;
-            while (cur && cur->UhdmType() == uhdmlogic_typespec) {
-                auto lt = any_cast<const UHDM::logic_typespec*>(cur);
-                if (lt->Ranges())
-                    for (auto r : *lt->Ranges()) {
-                        RTLIL::SigSpec l = import_expression(r->Left_expr());
-                        RTLIL::SigSpec rr = import_expression(r->Right_expr());
-                        if (l.is_fully_const() && rr.is_fully_const())
-                            dims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
-                                            std::min(l.as_const().as_int(), rr.as_const().as_int())});
-                        else dim_ok = false;
+            int hops = 0;
+            while (cur && hops++ < 8) {
+                if (cur->UhdmType() == uhdmlogic_typespec) {
+                    auto lt = any_cast<const UHDM::logic_typespec*>(cur);
+                    // Typedef-alias duplication: Surelog copies the aliased
+                    // array's range onto the alias level, so the SAME range
+                    // appears at two consecutive hops — skip this level's
+                    // ranges when the bounds equal the element's own
+                    // outermost range (stamped_gen_param's row_t chain
+                    // produced dims {2}{3}{3}{2} for a {2}{3}{2} type).
+                    bool dup = false;
+                    const UHDM::logic_typespec* el2 = nullptr;
+                    if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                        el2 = dynamic_cast<const UHDM::logic_typespec*>(
+                            lt->Elem_typespec()->Actual_typespec());
+                    if (el2 && el2->Elem_typespec() && lt->Ranges() &&
+                        !lt->Ranges()->empty() && el2->Ranges() &&
+                        !el2->Ranges()->empty()) {
+                        auto ro = (*lt->Ranges())[0];
+                        auto ri = (*el2->Ranges())[0];
+                        RTLIL::SigSpec ol = import_expression(ro->Left_expr());
+                        RTLIL::SigSpec orr = import_expression(ro->Right_expr());
+                        RTLIL::SigSpec il = import_expression(ri->Left_expr());
+                        RTLIL::SigSpec ir = import_expression(ri->Right_expr());
+                        if (ol.is_fully_const() && orr.is_fully_const() &&
+                            il.is_fully_const() && ir.is_fully_const() &&
+                            ol.as_int() == il.as_int() &&
+                            orr.as_int() == ir.as_int())
+                            dup = true;
                     }
-                cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
-                      ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+                    if (!dup) push_rgs(lt->Ranges());
+                    cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                          ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+                } else if (cur->UhdmType() == uhdmpacked_array_typespec) {
+                    // fpnew's fmt_unit_types_t [0:3] member — the old
+                    // logic_typespec-only walk saw no dims at all and the
+                    // element select failed.
+                    auto pt = any_cast<const UHDM::packed_array_typespec*>(cur);
+                    push_rgs(pt->Ranges());
+                    cur = (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec())
+                          ? pt->Elem_typespec()->Actual_typespec() : nullptr;
+                } else {
+                    const UHDM::typespec* tsp =
+                        dynamic_cast<const UHDM::typespec*>(cur);
+                    const UHDM::typespec* bound =
+                        tsp ? resolve_type_param_typespec(tsp, inst) : nullptr;
+                    if (bound && bound != cur) { cur = bound; continue; }
+                    // Leaf (enum/struct): its width is the innermost stride.
+                    int lw = get_width_from_typespec(cur, inst);
+                    if (lw > 1) dims.push_back({lw, 0, false});
+                    break;
+                }
             }
             if (!dim_ok || dims.size() < sel_idxs.size())
                 return false;
             int leaf_w = 1;
-            for (size_t d = sel_idxs.size(); d < dims.size(); d++) leaf_w *= dims[d].first;
+            for (size_t d = sel_idxs.size(); d < dims.size(); d++) leaf_w *= dims[d].size;
             int within = 0;
             for (size_t k = 0; k < sel_idxs.size(); k++) {
                 int inner = 1;
-                for (size_t d = k + 1; d < dims.size(); d++) inner *= dims[d].first;
-                within += (sel_idxs[k] - dims[k].second) * inner;
+                for (size_t d = k + 1; d < dims.size(); d++) inner *= dims[d].size;
+                int pos = sel_idxs[k] - dims[k].low;
+                // ASCENDING range ([0:N-1]): index low is the LEFTMOST
+                // element, i.e. the MSB end of the packed value.
+                if (dims[k].asc) pos = dims[k].size - 1 - pos;
+                within += pos * inner;
             }
             bit_offset += within;
             member_width = leaf_w;

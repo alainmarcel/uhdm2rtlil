@@ -1775,6 +1775,250 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
 }
 
 // Import a parameter
+RTLIL::SigSpec UhdmImporter::reeval_stamped_param_assign(const UHDM::param_assign* pa) {
+    // The elaborated Rhs is a value-carrying var STAMP whose element values
+    // Surelog clones as garbage (fpnew_top: 4 of the 5 FmtUnitTypes stamps
+    // are all-zeros).  Recover the DEF-side original expression
+    // (`Implementation.UnitTypes[opgrp]`), seed the genvar values from the
+    // enclosing elaborated generate scope, and evaluate it in the PARENT
+    // instance's context.
+    if (!pa || !pa->Lhs()) return RTLIL::SigSpec();
+    std::string pname = std::string(pa->Lhs()->VpiName());
+    if (pname.empty()) return RTLIL::SigSpec();
+
+    const UHDM::gen_scope* gs = nullptr;
+    const UHDM::module_inst* parent_mi = nullptr;
+    const UHDM::any* p = pa->VpiParent();
+    for (int hops = 0; p && hops < 6; hops++) {
+        if (!gs) gs = dynamic_cast<const UHDM::gen_scope*>(p);
+        else if (auto mi2 = dynamic_cast<const UHDM::module_inst*>(p)) {
+            parent_mi = mi2;
+            break;
+        }
+        p = p->VpiParent();
+    }
+    if (!gs || !parent_mi || !uhdm_design || !uhdm_design->AllModules())
+        return RTLIL::SigSpec();
+
+    // The gen_scope's VpiName is empty — take the last segment of its
+    // FullName (`...gen_operation_groups[0]`) and strip the index.
+    std::string sname = std::string(gs->VpiName());
+    if (sname.empty()) {
+        std::string fn = std::string(gs->VpiFullName());
+        size_t dot = fn.rfind('.');
+        sname = (dot == std::string::npos) ? fn : fn.substr(dot + 1);
+    }
+    size_t br = sname.find('[');
+    std::string sbase = (br == std::string::npos) ? sname : sname.substr(0, br);
+    if (sbase.empty()) return RTLIL::SigSpec();
+
+    const UHDM::module_inst* def = nullptr;
+    std::string dn = std::string(parent_mi->VpiDefName());
+    for (auto m : *uhdm_design->AllModules())
+        if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+    if (!def || def == parent_mi) return RTLIL::SigSpec();
+
+    struct PAFinder : public UHDM::UhdmListener {
+        std::string suffix;
+        const UHDM::param_assign* found = nullptr;
+        void enterParam_assign(const UHDM::param_assign* const o) override {
+            if (found || !o->Lhs()) return;
+            auto lp = dynamic_cast<const UHDM::parameter*>(o->Lhs());
+            if (!lp) return;
+            std::string fn = std::string(lp->VpiFullName());
+            if (fn.size() >= suffix.size() &&
+                fn.compare(fn.size() - suffix.size(), suffix.size(), suffix) == 0)
+                found = o;
+        }
+    };
+    PAFinder pf;
+    pf.suffix = "." + sbase + "." + pname;
+    pf.listenAny(def);
+    if (!pf.found || !pf.found->Rhs()) return RTLIL::SigSpec();
+    auto rut = pf.found->Rhs()->UhdmType();
+    if (rut == uhdmpacked_array_var || rut == uhdmstruct_var)
+        return RTLIL::SigSpec();    // def side is a stamp too — no gain
+
+    // Genvar / scope-localparam values (opgrp = N) for the loop-var
+    // substitution machinery.
+    auto saved_lv = loop_values;
+    if (gs->Parameters()) {
+        for (auto sp : *gs->Parameters()) {
+            auto spp = dynamic_cast<const UHDM::parameter*>(sp);
+            if (!spp) continue;
+            std::string v = std::string(spp->VpiValue());
+            long long iv = 0;
+            bool ok = false;
+            try {
+                if (v.rfind("UINT:", 0) == 0) { iv = std::stoll(v.substr(5)); ok = true; }
+                else if (v.rfind("INT:", 0) == 0) { iv = std::stoll(v.substr(4)); ok = true; }
+            } catch (...) { ok = false; }
+            if (ok) loop_values[std::string(spp->VpiName())] = (int)iv;
+        }
+    }
+    auto saved_inst = current_instance;
+    current_instance = parent_mi;
+    bool saved_fcf = force_const_fold;
+    force_const_fold = true;
+    int saved_ctx = expression_context_width;
+    expression_context_width = 0;
+
+    RTLIL::SigSpec v;
+    // Direct resolution for the common shape: the def Rhs is a hier_path
+    // whose base is a struct parameter of the PARENT
+    // (`Implementation.UnitTypes[opgrp]`).  Get the parent parameter's full
+    // value (its own param_assign Rhs — the value-carrying struct_var stamp
+    // there assembles correctly from typespec-member annotations) and slice
+    // the member with calculate_struct_member_offset.
+    if (auto hp = dynamic_cast<const UHDM::hier_path*>(pf.found->Rhs())) {
+        if (hp->Path_elems() && hp->Path_elems()->size() >= 2) {
+            auto& pe = *hp->Path_elems();
+            std::string bn = std::string(pe[0]->VpiName());
+            const UHDM::parameter* bp = nullptr;
+            const UHDM::expr* bval_expr = nullptr;
+            if (parent_mi->Parameters())
+                for (auto pp : *parent_mi->Parameters())
+                    if (std::string(pp->VpiName()) == bn) {
+                        bp = dynamic_cast<const UHDM::parameter*>(pp);
+                        break;
+                    }
+            if (parent_mi->Param_assigns())
+                for (auto ppa : *parent_mi->Param_assigns())
+                    if (ppa->Lhs() &&
+                        std::string(ppa->Lhs()->VpiName()) == bn && ppa->Rhs()) {
+                        bval_expr = dynamic_cast<const UHDM::expr*>(ppa->Rhs());
+                        break;
+                    }
+            // PACKAGE parameter base (`q2::IMPL.UnitTypes[grp]`): the ref
+            // may be UNBOUND (no Actual at all) — resolve `pkg::name` through
+            // the design's packages by name.
+            if (!bp) {
+                if (auto r0 = dynamic_cast<const UHDM::ref_obj*>(pe[0]))
+                    bp = dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+                if (!bp && bn.find("::") != std::string::npos) {
+                    std::string pkg = bn.substr(0, bn.find("::"));
+                    std::string pnm = bn.substr(bn.find("::") + 2);
+                    auto scan_pkgs = [&](UHDM::VectorOfpackage* pkgs) {
+                        if (!pkgs || bp) return;
+                        for (auto pk : *pkgs) {
+                            std::string kn = std::string(pk->VpiName());
+                            if (kn != pkg && kn != pkg + "::") continue;
+                            if (pk->Parameters())
+                                for (auto pp : *pk->Parameters()) {
+                                    std::string ppn = std::string(pp->VpiName());
+                                    if (ppn == pnm || ppn == bn) {
+                                        bp = dynamic_cast<const UHDM::parameter*>(pp);
+                                        break;
+                                    }
+                                }
+                            if (bp && pk->Param_assigns())
+                                for (auto ppa : *pk->Param_assigns()) {
+                                    std::string ln = ppa->Lhs()
+                                        ? std::string(ppa->Lhs()->VpiName())
+                                        : std::string();
+                                    if ((ln == pnm || ln == bn) && ppa->Rhs()) {
+                                        bval_expr =
+                                            dynamic_cast<const UHDM::expr*>(
+                                                ppa->Rhs());
+                                        break;
+                                    }
+                                }
+                            if (bp) break;
+                        }
+                    };
+                    scan_pkgs(uhdm_design->TopPackages());
+                    scan_pkgs(uhdm_design->AllPackages());
+                }
+                if (bp) {
+                    bval_expr = dynamic_cast<const UHDM::expr*>(bp->Expr());
+                    if (!bval_expr) {
+                        if (auto psc = dynamic_cast<const UHDM::scope*>(
+                                bp->VpiParent())) {
+                            if (psc->Param_assigns())
+                                for (auto ppa : *psc->Param_assigns())
+                                    if (ppa->Lhs() &&
+                                        std::string(ppa->Lhs()->VpiName()) ==
+                                            std::string(bp->VpiName()) &&
+                                        ppa->Rhs()) {
+                                        bval_expr =
+                                            dynamic_cast<const UHDM::expr*>(
+                                                ppa->Rhs());
+                                        break;
+                                    }
+                        }
+                    }
+                }
+            }
+            const UHDM::typespec* bts =
+                (bp && bp->Typespec()) ? bp->Typespec()->Actual_typespec()
+                                       : nullptr;
+            if (bp && bval_expr && bts) {
+                // Size the pattern to the full struct width — without the
+                // context the assignment-pattern import sized q2::IMPL to
+                // just one member's bits.
+                int btw = get_width_from_typespec(bts, parent_mi);
+                if (btw > 0) expression_context_width = btw;
+                RTLIL::SigSpec bv = import_expression(bval_expr);
+                expression_context_width = 0;
+                if (btw > 0 && bv.is_fully_const() && bv.size() != btw) {
+                    RTLIL::Const bc = bv.as_const();
+                    bc.resize(btw, RTLIL::State::S0);
+                    bv = RTLIL::SigSpec(bc);
+                }
+                if (bv.is_fully_const() && bv.size() > 0) {
+                    // Member path with loop-var-substituted indices
+                    // (`UnitTypes[opgrp]` -> `UnitTypes[0]`).
+                    std::string mpath;
+                    bool mp_ok = true;
+                    for (size_t i = 1; i < pe.size() && mp_ok; i++) {
+                        if (i > 1) mpath += ".";
+                        mpath += std::string(pe[i]->VpiName());
+                        if (auto bs =
+                                dynamic_cast<const UHDM::bit_select*>(pe[i])) {
+                            long long iv = -1;
+                            if (bs->VpiIndex()) {
+                                std::string in2(bs->VpiIndex()->VpiName());
+                                if (!in2.empty() && loop_values.count(in2))
+                                    iv = loop_values.at(in2);
+                                else {
+                                    RTLIL::SigSpec ix = import_expression(
+                                        any_cast<const UHDM::expr*>(
+                                            bs->VpiIndex()));
+                                    if (ix.is_fully_const())
+                                        iv = ix.as_const().as_int();
+                                    else
+                                        mp_ok = false;
+                                }
+                            }
+                            if (mp_ok && iv >= 0)
+                                mpath += "[" + std::to_string(iv) + "]";
+                        }
+                    }
+                    int off = 0, w = 0;
+                    bool cok = mp_ok &&
+                        calculate_struct_member_offset(bts, mpath, parent_mi,
+                                                       off, w);
+                    if (cok && w > 0 && off >= 0 && off + w <= bv.size())
+                        v = bv.extract(off, w);
+                }
+            }
+        }
+    }
+    if (v.empty())
+        v = import_expression(any_cast<const UHDM::expr*>(pf.found->Rhs()));
+
+    expression_context_width = saved_ctx;
+    force_const_fold = saved_fcf;
+    current_instance = saved_inst;
+    loop_values = saved_lv;
+    if (v.is_fully_const() && v.is_fully_def() && v.size() > 0) {
+        log("UHDM: re-evaluated stamped param '%s' from def-side expr: %s\n",
+            pname.c_str(), v.as_const().as_string().c_str());
+        return v;
+    }
+    return RTLIL::SigSpec();
+}
+
 void UhdmImporter::import_parameter(const any* uhdm_param) {
     if (!uhdm_param) return;
     
@@ -3218,10 +3462,42 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                         }
                     }
                     if (elem_is_packed_array) {
-                        // Typedef alias: elem already is the full packed array, just use its width
-                        int total = get_width_from_typespec(elem_actual, inst);
-                        log("UHDM: logic_typespec with packed-array Elem_typespec (typedef alias): total=%d\n", total);
-                        return total;
+                        // Typedef alias (`typedef reg8_t [0:3] reg2dim1_t`):
+                        // Surelog DUPLICATES the outer range onto this
+                        // typespec, so multiplying again double-counts.  But a
+                        // GENUINE extra dimension over an array typedef
+                        // (`row_t [0:1] UnitTypes` where row_t = ut_e [0:2])
+                        // presents identically except the bounds DIFFER —
+                        // compare this range against the element's own
+                        // outermost range and only skip the multiply when
+                        // they are the same (stamped_gen_param under-counted
+                        // 12 -> 6 and every member offset shifted).
+                        bool redundant = true;
+                        auto elem_logic2 = dynamic_cast<const UHDM::logic_typespec*>(elem_actual);
+                        if (logic_ts->Ranges() && !logic_ts->Ranges()->empty() &&
+                            elem_logic2 && elem_logic2->Ranges() &&
+                            !elem_logic2->Ranges()->empty()) {
+                            auto ro = (*logic_ts->Ranges())[0];
+                            auto ri = (*elem_logic2->Ranges())[0];
+                            bool saved_fcf2 = force_const_fold;
+                            force_const_fold = true;
+                            RTLIL::SigSpec ol = import_expression(ro->Left_expr());
+                            RTLIL::SigSpec orr = import_expression(ro->Right_expr());
+                            RTLIL::SigSpec il = import_expression(ri->Left_expr());
+                            RTLIL::SigSpec ir = import_expression(ri->Right_expr());
+                            force_const_fold = saved_fcf2;
+                            if (ol.is_fully_const() && orr.is_fully_const() &&
+                                il.is_fully_const() && ir.is_fully_const() &&
+                                (ol.as_int() != il.as_int() ||
+                                 orr.as_int() != ir.as_int()))
+                                redundant = false;
+                        }
+                        if (redundant) {
+                            int total = get_width_from_typespec(elem_actual, inst);
+                            log("UHDM: logic_typespec with packed-array Elem_typespec (typedef alias): total=%d\n", total);
+                            return total;
+                        }
+                        // fall through: genuine extra dimension, multiply below
                     }
                     int elem_width = get_width_from_typespec(elem_actual, inst);
                     if (elem_width > 0 && logic_ts->Ranges() && !logic_ts->Ranges()->empty()) {

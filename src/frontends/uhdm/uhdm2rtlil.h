@@ -622,6 +622,12 @@ struct UhdmImporter {
     void import_ref_module(const UHDM::ref_module* ref_mod);
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
+    // Re-evaluate a param_assign whose elaborated Rhs is a value-carrying
+    // var STAMP (packed_array_var / struct_var) from the DEF-side original
+    // expression — Surelog stamps garbage clone values for gen-scope
+    // localparams derived from struct-member array elements
+    // (fpnew_top's FmtUnitTypes = Implementation.UnitTypes[opgrp]).
+    RTLIL::SigSpec reeval_stamped_param_assign(const UHDM::param_assign* pa);
     // Fold an interface-port parameter member (`sub.CFG.HSK.DLY`) to a constant
     // by walking the hier_path's Actual_group chain — the element named after
     // the interface parameter (`CFG`) is bound directly to the `parameter`
