@@ -7777,22 +7777,62 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 std::vector<std::pair<int, RTLIL::SigSpec>> brk_flags;
                 bool brk_idx_emitted = false;
                 if (has_break) {
-                    log("    Comb for loop body has `break` — iterating in "
-                        "reverse so first-match-wins semantics hold\n");
-                    for (int64_t i = loop_end; i >= fl_start; i -= fl_inc_val) {
+                    // FORWARD iteration with a `live` guard: iteration i's
+                    // body is imported under `switch (live_i)` — exactly the
+                    // structure the vpiIfElse comb handler builds — so its
+                    // writes only take effect when no earlier iteration
+                    // broke, and thread_comb_if muxes the in-flight values.
+                    // (The old reverse-iteration trick made first-match
+                    // SCALAR writes win via override order, but per-bit
+                    // writes like tag_cmp's `gnt_o[i] = 1'b1` target
+                    // different bits and never overrode each other.)
+                    log("    Comb for loop body has `break` — forward "
+                        "iteration with live-guarded bodies\n");
+                    RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
+                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
                         loop_values[fl_var] = (int)i;
-                        // Per-iteration break flag, defaulted to 0 in the root
-                        // case; the vpiBreak handler sets it to 1 under the
-                        // branch conditions that reach the break.
+                        // Per-iteration break flag, defaulted to 0 in the
+                        // root case; the vpiBreak handlers set it to 1 under
+                        // the branch conditions that reach the break.
                         RTLIL::Wire* bw = module->addWire(NEW_ID, 1);
                         proc->root_case.actions.push_back(
                             RTLIL::SigSig(RTLIL::SigSpec(bw),
                                           RTLIL::SigSpec(RTLIL::State::S0)));
                         RTLIL::SigSpec saved_bf = current_break_flag;
                         current_break_flag = RTLIL::SigSpec(bw);
-                        import_statement_comb(fl_body, proc);
+                        bool live_const1 =
+                            live.is_fully_const() && live.as_bool();
+                        RTLIL::SigSpec bf_eff = RTLIL::SigSpec(bw);
+                        if (live_const1) {
+                            import_statement_comb(fl_body, proc);
+                        } else {
+                            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                            sw->signal = live;
+                            RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
+                            live_case->compare.push_back(
+                                RTLIL::SigSpec(RTLIL::State::S1));
+                            auto saved_ccv = current_comb_values;
+                            import_statement_comb(fl_body, live_case);
+                            auto then_ccv = current_comb_values;
+                            current_comb_values = saved_ccv;
+                            sw->cases.push_back(live_case);
+                            RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
+                            sw->cases.push_back(dead_case);
+                            thread_comb_if(live, live_case, nullptr,
+                                           &saved_ccv, &then_ccv, nullptr);
+                            proc->root_case.switches.push_back(sw);
+                            // Effective (one-hot) break flag: live && bf.
+                            bf_eff = module->And(NEW_ID, live,
+                                                 RTLIL::SigSpec(bw));
+                        }
                         current_break_flag = saved_bf;
-                        brk_flags.push_back({(int)i, RTLIL::SigSpec(bw)});
+                        brk_flags.push_back({(int)i, bf_eff});
+                        RTLIL::SigSpec nb =
+                            module->Not(NEW_ID, RTLIL::SigSpec(bw));
+                        live = live_const1
+                                   ? nb
+                                   : RTLIL::SigSpec(
+                                         module->And(NEW_ID, live, nb));
                     }
                 } else {
                     for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
@@ -11053,16 +11093,39 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
 
     // Outer packed dimension (size + low + ascending) from the base typespec.
     const UHDM::VectorOfrange* ranges = nullptr;
+    int elem_w_ts = 0;   // element width from Elem_typespec (typedef-alias safe)
     {
         const ref_typespec* rts = nullptr;
         if (auto ln = dynamic_cast<const UHDM::logic_net*>(actual)) rts = ln->Typespec();
         else if (auto lv = dynamic_cast<const UHDM::logic_var*>(actual)) rts = lv->Typespec();
-        else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) rts = pv->Typespec();
-        else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) rts = pn->Typespec();
+        // For a packed_array_var/net the object's OWN Ranges() are the outer
+        // dims and its typespec describes the ELEMENT (way_vector_t) — taking
+        // the typespec ranges here made hpdcache_victim_plru's update treat
+        // 8 ways as the outer dim (writes at set*256 while reads used set*8).
+        else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) {
+            if (!pv->Ranges() || pv->Ranges()->empty()) rts = pv->Typespec();
+            if (pv->Typespec() && pv->Typespec()->Actual_typespec())
+                elem_w_ts = get_width_from_typespec(
+                    pv->Typespec()->Actual_typespec(), current_instance);
+        } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) {
+            if (!pn->Ranges() || pn->Ranges()->empty()) rts = pn->Typespec();
+            if (pn->Typespec() && pn->Typespec()->Actual_typespec())
+                elem_w_ts = get_width_from_typespec(
+                    pn->Typespec()->Actual_typespec(), current_instance);
+        }
         if (rts && rts->Actual_typespec()) {
             auto ats = rts->Actual_typespec();
-            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lt->Ranges();
-            else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pt->Ranges();
+            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats)) {
+                ranges = lt->Ranges();
+                if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                    elem_w_ts = get_width_from_typespec(
+                        lt->Elem_typespec()->Actual_typespec(), current_instance);
+            } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {
+                ranges = pt->Ranges();
+                if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec())
+                    elem_w_ts = get_width_from_typespec(
+                        pt->Elem_typespec()->Actual_typespec(), current_instance);
+            }
         }
     }
     // Elaborated packed-array VAR/NET (`dtype [FifoDepth-1:0] mem_n`, dtype a
@@ -11088,6 +11151,55 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                         if (auto r = obj_ranges(v0)) { ranges = r; break; }
         }
     }
+    // Element width from the packed obj's Elements()[0] (the same source the
+    // READ path uses) — the var/net Ranges() can be the ELEMENT's range for a
+    // typedef'd element type, in which case base_w/outer_size is the number
+    // of sets, not the way width (hpdcache_victim_plru).
+    if (elem_w_ts <= 0) {
+        auto obj_elem_w = [&](const UHDM::any* obj) -> int {
+            const UHDM::VectorOfany* pel = nullptr;
+            const UHDM::ref_typespec* pts_ref = nullptr;
+            if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
+                pel = pv->Elements(); pts_ref = pv->Typespec();
+            } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
+                pel = pn->Elements(); pts_ref = pn->Typespec();
+            } else return 0;
+            // Typespec Elem chain FIRST: Elements()[0] is often a bare
+            // 1-bit logic_var that under-reports the element width.
+            int ew = 0;
+            if (pts_ref && pts_ref->Actual_typespec()) {
+                auto pats = pts_ref->Actual_typespec();
+                const UHDM::any* ets = nullptr;
+                if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(pats)) {
+                    if (pat->Elem_typespec()) ets = pat->Elem_typespec()->Actual_typespec();
+                } else if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(pats)) {
+                    if (lt2->Elem_typespec()) ets = lt2->Elem_typespec()->Actual_typespec();
+                }
+                if (ets)
+                    ew = get_width_from_typespec(ets, current_instance);
+            }
+            if (ew <= 1 && pel && !pel->empty()) {
+                int ew2 = get_width((*pel)[0], current_instance);
+                if (ew2 > 1) ew = ew2;
+            }
+            return ew;
+        };
+        elem_w_ts = obj_elem_w(actual);
+        if (elem_w_ts <= 0 && current_instance) {
+            if (current_instance->Variables())
+                for (auto v0 : *current_instance->Variables())
+                    if (std::string(v0->VpiName()) == base_name) {
+                        elem_w_ts = obj_elem_w(v0);
+                        break;
+                    }
+            if (elem_w_ts <= 0 && current_instance->Nets())
+                for (auto n0 : *current_instance->Nets())
+                    if (std::string(n0->VpiName()) == base_name) {
+                        elem_w_ts = obj_elem_w(n0);
+                        break;
+                    }
+        }
+    }
     if (!ranges || ranges->empty()) return false;
     int r0l = 0, r0r = 0;
     {
@@ -11103,6 +11215,21 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     int outer_low = std::min(r0l, r0r);
     if (base_w % outer_size != 0) return false;
     int elem_w = base_w / outer_size;
+    // Typedef-alias duplication (`way_vector_t [sets-1:0] plru_q` where
+    // way_vector_t is a typedef): the net typespec's Ranges()[0] can be the
+    // ELEMENT's range, making elem_w the number of SETS instead of the way
+    // width (hpdcache_victim_plru's update wrote set*256 while the read used
+    // set*8).  When the Elem_typespec width disagrees, trust it.
+    if (elem_w_ts > 1 && elem_w_ts != elem_w && (base_w % elem_w_ts) == 0) {
+        elem_w = elem_w_ts;
+        int new_outer = base_w / elem_w;
+        if (new_outer != outer_size) {
+            outer_size = new_outer;
+            outer_low = 0;
+            r0l = outer_size - 1;
+            r0r = 0;
+        }
+    }
     // A 1-element ARRAY of wide elements (`dtype [0:0] mem` — fifo DEPTH=1)
     // still element-indexes; only a genuinely 1-bit-element single entry is a
     // plain vector left to the bit-write paths.

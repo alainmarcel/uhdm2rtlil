@@ -126,7 +126,7 @@ hpdcache_sram_wmask                    4   180   proven
 hpdcache_sram_wmask_1rw                4   180   proven
 hpdcache_sync_buffer                   4   900   proven
 hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_victim_plru                   4   180   cex      # cex now measurable (was error: zero-width [-1:0] ports) - TRIAGE
+hpdcache_victim_plru                   4  3600   proven   # PROVEN 2026-08-24: dyn packed elem write used elem-typedef range as outer dim (wrote set*256, read set*8)
 hpdcache_victim_random                 4   180   proven
 hpdcache_victim_sel                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
@@ -171,7 +171,7 @@ wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudicated): wr_ack_o rtl=0 uhdm=1 slang=0, seeds 1/2/3
-wt_dcache_missunit                     4   400   cex      # UHDM WRONG (adjudicated): c524 wr_cl_vld_o rtl=1 uhdm=0 slang=1
+wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
 wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0
 zcmt_decoder                           4   180   cex
 rr_arb_tree                            4   400   proven
