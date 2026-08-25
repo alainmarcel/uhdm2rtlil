@@ -416,6 +416,60 @@ module hpdcache_rtab_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Input legalization -------------------------------------------
+  //  The rtab documents its interface contract as assert properties (see
+  //  hpdcache_rtab.sv "Assertions" block).  The raw miter/co-sim inputs are
+  //  conditioned here so only contract-legal stimulus reaches the DUT; the
+  //  SAME legalizer is compiled into both sides of the miter, so the proof
+  //  claim is equivalence over the legal input space.  Each condition below
+  //  cites the assert it mirrors.
+  logic        leg_alloc_and_link;
+  logic        leg_alloc;
+  logic        leg_pop_try;
+  logic        leg_pop_commit;
+  logic        leg_pop_rback;
+  logic        pop_pending_q;
+  rtab_ptr_t   pop_ptr_q;
+  hpdcache_nline_t leg_check_nline;
+
+  //  "alloc and link shall be performed in case of check hit"
+  //  "trying to link a request in single entry mode"
+  //  "trying to allocate while the table is full"
+  assign leg_alloc_and_link = alloc_and_link_i & check_i & check_hit_o
+                            & ~cfg_single_entry_i & ~full_o;
+  //  "nline for alloc and link shall match the one being checked": force the
+  //  checked nline to the allocated request's nline when linking.
+  assign leg_check_nline = (alloc_and_link_i & check_i)
+      ? {alloc_req_i.req.req.addr_tag,
+         alloc_req_i.req.req.addr_offset[HPDcacheCfg.clOffsetWidth +:
+                                         HPDcacheCfg.setWidth]}
+      : check_nline_i;
+
+  //  "a pop try shall be followed by a commit or rollback",
+  //  "committing/rolling-back an invalid entry": track the popped entry and
+  //  only allow commit/rollback of that pointer while it is outstanding.
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      pop_pending_q <= 1'b0;
+      pop_ptr_q     <= '0;
+    end else begin
+      if (leg_pop_try & pop_try_valid_o) begin
+        pop_pending_q <= 1'b1;
+        pop_ptr_q     <= pop_try_ptr_o;
+      end else if (leg_pop_commit | leg_pop_rback) begin
+        pop_pending_q <= 1'b0;
+      end
+    end
+  end
+  assign leg_pop_commit = pop_commit_i & pop_pending_q;
+  //  commit and rollback of the same outstanding pop are exclusive
+  assign leg_pop_rback  = pop_rback_i & pop_pending_q & ~leg_pop_commit;
+  //  "cache shall not accept a new request while rolling back"
+  assign leg_pop_try    = pop_try_i & ~leg_pop_rback;
+  //  "only one allocation per cycle is allowed", "not while full",
+  //  "trying to allocate a new request while rolling back"
+  assign leg_alloc      = alloc_i & ~alloc_and_link_i & ~full_o & ~leg_pop_rback;
+
   hpdcache_rtab #(
       .HPDcacheCfg(HPDcacheCfg),
       .hpdcache_nline_t(hpdcache_nline_t),
@@ -424,6 +478,16 @@ module hpdcache_rtab_equiv
       .rtab_ptr_t(rtab_ptr_t),
       .rtab_cnt_t(rtab_cnt_t),
       .rtab_entry_t(rtab_entry_t)
-  ) dut (.*);
+  ) dut (
+      .alloc_i         (leg_alloc),
+      .alloc_and_link_i(leg_alloc_and_link),
+      .check_nline_i   (leg_check_nline),
+      .pop_try_i       (leg_pop_try),
+      .pop_commit_i    (leg_pop_commit),
+      .pop_commit_ptr_i(pop_ptr_q),
+      .pop_rback_i     (leg_pop_rback),
+      .pop_rback_ptr_i (pop_ptr_q),
+      .*
+  );
 
 endmodule

@@ -373,11 +373,21 @@ module wt_dcache_ctrl_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Input legalization -------------------------------------------
+  //  rd_hit_oh_i is the dcache mem's ONE-HOT hit vector (name and use are
+  //  the contract: it selects one way's data).  Keep only the lowest set
+  //  bit; identical legalizer in both miter sides.
+  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] leg_rd_hit_oh;
+  assign leg_rd_hit_oh = rd_hit_oh_i & (~rd_hit_oh_i + 1'b1);
+
   wt_dcache_ctrl #(
       .CVA6Cfg(CVA6Cfg),
       .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t)
-  ) dut (.*);
+  ) dut (
+      .rd_hit_oh_i(leg_rd_hit_oh),
+      .*
+  );
 
 endmodule
