@@ -508,6 +508,22 @@ module csr_regfile_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Input legalization -------------------------------------------
+  //  csr_op_i is an ENUM-typed port (ariane_pkg::fu_op): the SV contract —
+  //  and the issue stage that drives it — only ever produce declared enum
+  //  members.  The raw miter input is legalized to the CSR-relevant members
+  //  (anything else acts as CSR_READ, matching the RTL's default no-op arm);
+  //  the same legalizer is compiled into both sides of the miter.
+  fu_op leg_csr_op;
+  always_comb begin
+    unique case (csr_op_i)
+      CSR_WRITE, CSR_READ, CSR_SET, CSR_CLEAR, MRET, SRET, DRET:
+        leg_csr_op = csr_op_i;
+      default:
+        leg_csr_op = CSR_READ;
+    endcase
+  end
+
   csr_regfile #(
       .CVA6Cfg(CVA6Cfg),
       .exception_t(exception_t),
@@ -518,6 +534,9 @@ module csr_regfile_equiv
       .VmidWidth(VmidWidth),
       .MHPMCounterNum(MHPMCounterNum),
       .N_Triggers(N_Triggers)
-  ) dut (.*);
+  ) dut (
+      .csr_op_i(leg_csr_op),
+      .*
+  );
 
 endmodule

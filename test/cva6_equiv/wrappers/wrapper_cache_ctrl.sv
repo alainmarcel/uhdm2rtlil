@@ -384,12 +384,23 @@ module cache_ctrl_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Input legalization -------------------------------------------
+  //  hit_way_i comes from tag_cmp, whose own assertion guarantees the hit
+  //  vector is one-hot0 ("Hit should be one-hot encoded").  Legalize the raw
+  //  miter input by keeping only the lowest set bit; the same legalizer is
+  //  in both sides of the miter, so the proof is over the legal input space.
+  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] leg_hit_way;
+  assign leg_hit_way = hit_way_i & (~hit_way_i + 1'b1);
+
   cache_ctrl #(
       .CVA6Cfg(CVA6Cfg),
       .cache_line_t(cache_line_t),
       .cl_be_t(cl_be_t),
       .dcache_req_i_t(dcache_req_i_t),
       .dcache_req_o_t(dcache_req_o_t)
-  ) dut (.*);
+  ) dut (
+      .hit_way_i(leg_hit_way),
+      .*
+  );
 
 endmodule

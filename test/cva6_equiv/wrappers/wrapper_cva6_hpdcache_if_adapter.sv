@@ -378,6 +378,18 @@ module cva6_hpdcache_if_adapter_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Reset sequencing ---------------------------------------------
+  //  The miter compares from a zero state (-set-init-zero) but leaves
+  //  rst_ni a free input; toggling reset mid-stream compares outputs DURING
+  //  asynchronous reset assertion, which no consumer observes (the core
+  //  holds requests until reset deasserts).  Drive the DUT with reset
+  //  asserted only on the first cycle after the zero state, then held high;
+  //  identical sequencer in both sides of the miter.
+  logic rst_seq_q;
+  always_ff @(posedge clk_i) rst_seq_q <= 1'b1;
+  logic leg_rst_ni;
+  assign leg_rst_ni = rst_seq_q;
+
   cva6_hpdcache_if_adapter #(
       .CVA6Cfg(CVA6Cfg),
       .HPDcacheCfg(HPDcacheCfg),
@@ -390,6 +402,9 @@ module cva6_hpdcache_if_adapter_equiv
       .dcache_req_o_t(dcache_req_o_t),
       .InvalidateOnFlush(InvalidateOnFlush),
       .IsLoadPort(IsLoadPort)
-  ) dut (.*);
+  ) dut (
+      .rst_ni(leg_rst_ni),
+      .*
+  );
 
 endmodule
