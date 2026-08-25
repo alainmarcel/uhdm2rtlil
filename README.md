@@ -51,10 +51,10 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1388 (843 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1343/1388 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1389 (844 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1344/1389 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 913 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **Passing**: 914 tests with formal equivalence verified between the UHDM and Verilog frontends
 - **UHDM-Only Success**: 430 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
@@ -80,7 +80,7 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   don't-care divergences (e.g. `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend
   can't synthesize the SV so no miter is possible)
 
-> The **internal** SystemVerilog suite alone is **837 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **838 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output, including the
 > complete Ibex core (all modules + `ibex_top`) and the rp32 cores/SoCs. The only
 > internal equivalence failures are `CastStructArray` and
