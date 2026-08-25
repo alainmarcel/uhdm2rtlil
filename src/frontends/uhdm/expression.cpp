@@ -1037,6 +1037,50 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     ctx->const_wire_values[base_name] = new_val;
                                 }
                             }
+                        } else if (!index_sig.empty() && loop_values.empty()) {
+                            // DYNAMIC bit/element write on a function local
+                            // (`out[in] = 1'b1` in wt_dcache_missunit's
+                            // way_bin2oh): read-modify-write the value-so-far
+                            // and SSA-rename the local so later reads (and
+                            // the return) see the merged value.  Without
+                            // this, lhs_sig stayed empty and the write was
+                            // silently DROPPED — the function returned its
+                            // initializer.  Excluded inside unrolled loops
+                            // (the accumulator machinery owns the mapping
+                            // there, and indices are constant anyway).
+                            RTLIL::SigSpec old_sig = it->second;
+                            int bw = old_sig.size();
+                            RTLIL::SigSpec idx32 = index_sig;
+                            idx32.extend_u0(32, false);
+                            RTLIL::SigSpec shamt = idx32;
+                            if (element_width > 1)
+                                shamt = module->Mul(NEW_ID, idx32,
+                                    RTLIL::Const(element_width, 32), false);
+                            RTLIL::SigSpec mask_base(
+                                RTLIL::Const(RTLIL::State::S1, element_width));
+                            mask_base.extend_u0(bw, false);
+                            RTLIL::SigSpec mask =
+                                module->Shl(NEW_ID, mask_base, shamt, false);
+                            RTLIL::SigSpec data = rhs_sig;
+                            if (data.size() > element_width)
+                                data = data.extract(0, element_width);
+                            else if (data.size() < element_width)
+                                data.extend_u0(element_width);
+                            data.extend_u0(bw, false);
+                            RTLIL::SigSpec data_sh =
+                                module->Shl(NEW_ID, data, shamt, false);
+                            RTLIL::SigSpec keep = module->And(NEW_ID, old_sig,
+                                module->Not(NEW_ID, mask, false), false);
+                            RTLIL::SigSpec merged =
+                                module->Or(NEW_ID, keep, data_sh, false);
+                            RTLIL::Wire* ssa_w = module->addWire(NEW_ID, bw);
+                            lhs_sig = RTLIL::SigSpec(ssa_w);
+                            rhs_sig = merged;
+                            input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
+                            if (mode_debug)
+                                log("UHDM: dynamic bit-select write %s[dyn] "
+                                    "-> RMW + SSA rename (ew=%d)\n",
+                                    base_name.c_str(), element_width);
                         }
                     }
                 }
