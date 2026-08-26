@@ -103,17 +103,22 @@ RTLIL::SigSpec UhdmImporter::create_mux_cell(const RTLIL::SigSpec& sel, const RT
 
 UHDM::VectorOfany *UhdmImporter::begin_block_stmts(const any *stmt)
 {
+    // `begin` and `named_begin` are SEPARATE UHDM classes, not a base/derived
+    // pair: any_cast between them yields null.  Dispatch on VpiType and cast
+    // each to its own type, and never assume "not a begin" means named_begin —
+    // a caller that reaches here with some other statement would otherwise
+    // dereference a null.
     UHDM::VectorOfany *stmts = nullptr;
+    if (!stmt)
+        return nullptr;
     if (stmt->VpiType() == vpiBegin) {
-        const UHDM::begin *begin_stmt = any_cast<const UHDM::begin *>(stmt);
-        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
-            stmts = begin_stmt->Stmts();
-        }
-    } else {
-        const UHDM::named_begin *begin_stmt = any_cast<const UHDM::named_begin *>(stmt);
-        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
-            stmts = begin_stmt->Stmts();
-        }
+        if (const UHDM::begin *begin_stmt = any_cast<const UHDM::begin *>(stmt))
+            if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty())
+                stmts = begin_stmt->Stmts();
+    } else if (stmt->VpiType() == vpiNamedBegin) {
+        if (const UHDM::named_begin *begin_stmt = any_cast<const UHDM::named_begin *>(stmt))
+            if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty())
+                stmts = begin_stmt->Stmts();
     }
     return stmts;
 }

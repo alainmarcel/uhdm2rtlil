@@ -1104,7 +1104,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     }
     
     // Check if this net should be imported as a memory
-    if (is_memory_array(uhdm_net)) {
+    if (is_memory_array(uhdm_net) && !async_reset_filled_arrays.count(netname)) {
         log("UHDM: Net '%s' has both packed and unpacked dimensions - creating memory\n", netname.c_str());
         
         // Get packed dimension (width) and unpacked dimension (size).
@@ -3752,7 +3752,7 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                 av->Variables()->at(0), av))
                             continue;
                     }
-                    if (is_memory_array(av)) {
+                    if (is_memory_array(av) && !async_reset_filled_arrays.count(var_name)) {
                         create_memory_from_array(av);
                         continue;
                     }
