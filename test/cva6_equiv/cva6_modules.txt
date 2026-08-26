@@ -144,7 +144,7 @@ instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
-issue_read_operands                    4   180   error
+issue_read_operands                    4   180   cex      # measurable since the type-param packed-array struct member fix (fwd_i width); shares forwarding_t with scoreboard - TRIAGE
 issue_stage                            4   180   timeout
 iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   cex
@@ -164,7 +164,7 @@ popcount                               4   900   proven
 preprocess_mvp                         4   400   proven
 ras                                    4   900   proven
 raw_checker                            4   900   proven
-scoreboard                             4   180   error
+scoreboard                             4   180   cex      # measurable since the type-param packed-array struct member fix (fwd_o was 518 bits, not 3860); co-sim now shows a REAL divergence (1878/2000 vs RTL, slang 0) - TRIAGE
 serdiv                                 4   180   timeout
 std_cache_subsystem                    4   180   timeout  # was crash (segfault); now timeout
 std_nbdcache                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
