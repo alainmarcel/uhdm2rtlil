@@ -19,6 +19,12 @@
 #             frontend bug: most of these are auto-generated wrappers whose
 #             module takes parent-local types and needs an extras_<mod>.svh
 #             (see README).  This is the backlog for widening coverage.
+#   dead      the module cannot be elaborated at THIS configuration, so there
+#             is nothing to measure.  NOT a gap and NOT a backlog item: it is
+#             excluded from the coverage denominator and never run.  Reserve it
+#             for modules whose own parameters make them illegal here (an
+#             elaboration $fatal / an assertion on the config), not for wrappers
+#             we simply have not written yet.
 #
 # Shrink-only in the not-proven direction: a module that starts proving should
 # be promoted in the same commit; one that stops proving is a regression to
@@ -34,7 +40,7 @@ alu                                    4   900   proven
 alu_wrapper                            4   900   proven
 amo_alu                                4   180   error
 amo_buffer                             4   900   proven
-ariane_regfile_fpga                    4   400   elabfail  # slang gap: $random init (Verilator accepts); FPGA variant, not in the shipped config
+ariane_regfile_fpga                    4   400   dead     # FPGA variant, not instantiated in the shipped config (and slang rejects its $random init)
 axi_adapter                            4   180   proven
 axi_shim                               4   400   proven
 bht                                    4   900   proven
@@ -53,9 +59,9 @@ csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
 cva6_hpdcache_if_adapter               4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-cva6_hpdcache_subsystem                4   180   error  # chunk-offset assert FIXED; now blocked on the async-reset (evalFunc struct_var) issue
+cva6_hpdcache_subsystem                4   180   dead     # instantiates hpdcache -> same config $fatal
 cva6_hpdcache_subsystem_axi_arbiter    4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
-cva6_hpdcache_wrapper                  4   180   error  # chunk-offset assert FIXED; now blocked on the async-reset (evalFunc struct_var) issue
+cva6_hpdcache_wrapper                  4   180   dead     # instantiates hpdcache -> same config $fatal
 cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 cva6_mmu                               4   180   proven
@@ -85,7 +91,7 @@ fpnew_rounding                         4   900   proven
 fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
 fpu_wrap                               4   180   cex
 frontend                               4   180   cex
-hpdcache                               4   180   error    # was crash (segfault); now Async reset yields non-constant value
+hpdcache                               4   180   dead     # CVA6Cfg.DCacheType == config_pkg::WT selects the wt_dcache, so hpdcacheSetConfig leaves wtEn AND wbEn 0 and hpdcache.sv:1327 $fatal's
 hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   proven
@@ -93,7 +99,7 @@ hpdcache_cmo                           4   400   cex      # cex now measurable (
 hpdcache_core_arbiter                  4   180   cex      # cex now measurable (was error) - TRIAGE
 hpdcache_ctrl                          4   180   timeout  # was crash (segfault); now timeout
 hpdcache_ctrl_pe                       4   180   proven
-hpdcache_data_downsize                 4   400   elabfail  # dead at this config: accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
+hpdcache_data_downsize                 4   400   dead     # accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
 hpdcache_data_resize                   4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_data_upsize                   4   180   cex      # cex now measurable (was crash) - TRIAGE
 hpdcache_decoder                       4   180   proven
