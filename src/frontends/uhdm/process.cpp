@@ -13654,6 +13654,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             comb_lhs_keep_base = (lhs_map_ != nullptr);
                             RTLIL::SigSpec lhs_sig = import_expression(lhs, lhs_map_);
                             comb_lhs_keep_base = false;
+                            // Declaration initializer (`automatic logic [3:0]
+                            // index = addr - BASE;` in a case arm): the Lhs is
+                            // the VARIABLE object itself, which
+                            // import_expression rejects — resolve it by NAME to
+                            // the block-local wire.  Without this the init was
+                            // silently dropped and every read of the local saw
+                            // x (csr_regfile's pmpcfg decode never raised its
+                            // odd-index exception).
+                            if (lhs_sig.empty() && lhs->VpiType() != vpiRefObj) {
+                                std::string vn = std::string(lhs->VpiName());
+                                if (!vn.empty()) {
+                                    RTLIL::Wire* vw = name_map.count(vn)
+                                        ? name_map[vn]
+                                        : module->wire(RTLIL::escape_id(vn));
+                                    if (vw) lhs_sig = RTLIL::SigSpec(vw);
+                                }
+                            }
                             // Propagate LHS width as context so arithmetic ops
                             // widen to it (SV context-determined sizing).
                             int prev_ctx = expression_context_width;
