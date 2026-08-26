@@ -357,9 +357,44 @@ int UhdmImporter::const_cond_value(const any* cond) {
     // otherwise it becomes an async-reset FF with a non-constant reset value that
     // proc/PROC_ARST rejects.
     if (cond->UhdmType() == uhdmhier_path) {
-        std::string v = eval_param_struct_field(any_cast<const hier_path*>(cond));
+        auto hp = any_cast<const hier_path*>(cond);
+        std::string v = eval_param_struct_field(hp);
         if (!v.empty())
             return atoi(v.c_str()) == 0 ? 0 : 1;
+        // eval_param_struct_field walks the typespec itself and gives up on
+        // some shapes that import_hier_path still folds — a NESTED field of a
+        // deep-hierarchy struct parameter (hpdcache_memctrl's
+        // `HPDcacheCfg.u.eccEn`, eccEn == 0) resolves there but not here, and
+        // the guard then never folds: data_flush_read_q is assigned ONLY under
+        // it and never in the reset branch, so it survives as an async-reset FF
+        // with no constant reset value and PROC_ARST rejects the whole process
+        // ("yields non-constant value 1'm").  Fall back to the expression
+        // importer, but ONLY when the path's base is a parameter — a field read
+        // off a real signal must not be folded away, and that restriction also
+        // keeps this from emitting cells for anything but a constant.
+        if (hp->Path_elems() && !hp->Path_elems()->empty()) {
+            if (auto bref = dynamic_cast<const ref_obj*>((*hp->Path_elems())[0])) {
+                const any* a = bref->Actual_group();
+                bool base_is_param = a && a->UhdmType() == uhdmparameter;
+                if (!base_is_param && current_instance && !a) {
+                    // Deep re-passed parameters can be left unlinked; recover by
+                    // name, the same way eval_param_struct_field does.
+                    std::string bn = std::string(bref->VpiName());
+                    if (current_instance->Parameters())
+                        for (auto p : *current_instance->Parameters())
+                            if (std::string(p->VpiName()) == bn &&
+                                p->UhdmType() == uhdmparameter) { base_is_param = true; break; }
+                }
+                if (base_is_param) {
+                    bool saved = force_const_fold;
+                    force_const_fold = true;
+                    RTLIL::SigSpec s = import_expression(hp);
+                    force_const_fold = saved;
+                    if (s.is_fully_const())
+                        return s.as_const().is_fully_zero() ? 0 : 1;
+                }
+            }
+        }
     }
     // Logical operations over resolvable constants (`if (!CVA6Cfg.RVC)` in CVA6
     // branch_unit, `if (FPGA_EN && FPGA_ALTERA)` in cva6_fifo_v3) — fold

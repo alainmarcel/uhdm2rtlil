@@ -76,6 +76,15 @@ run_one() {
   seq=${SEQ:-$(echo "$spec" | awk '{print $2}')};     seq=${seq:-4}
   tmo=${TIMEOUT:-$(echo "$spec" | awk '{print $3}')}; tmo=${tmo:-900}
   want=$(echo "$spec" | awk '{print $4}');            want=${want:-proven}
+  # `dead` = the module cannot be elaborated at THIS configuration, so there is
+  # nothing to measure and it must not count against coverage.  Not a harness
+  # gap and not a frontend bug: e.g. hpdcache and everything that instantiates
+  # it $fatal at cva6_config's DCacheType == config_pkg::WT, which selects the
+  # wt_dcache instead.  Skipped outright rather than burning a surelog+SAT run.
+  if [ "$want" = dead ]; then
+    printf "  ⊘  %-34s not instantiable at this config — excluded\n" "$mod"
+    echo "SKIP $mod dead" >> "$WORKROOT/.results"; return 0
+  fi
   wrap="$HERE/wrappers/wrapper_$mod.sv"
   if [ ! -f "$wrap" ]; then
     echo "  ?? $mod — no wrapper"; echo "SKIP $mod" >> "$WORKROOT/.results"; return 0
@@ -194,6 +203,23 @@ prom=$(grep -c '^PROMOTE ' "$WORKROOT/.results" 2>/dev/null || true); prom=${pro
 soft=$(grep -c '^SOFT '    "$WORKROOT/.results" 2>/dev/null || true); soft=${soft:-0}
 echo ""
 echo "CVA6 module equivalence: $pass as expected, $fail regressions, $prom newly proven, $soft inconclusive, $skip skipped (jobs=$JOBS)"
+
+# Campaign coverage, read from the MANIFEST rather than from this run, so a
+# single-module invocation still reports the true state of the design.  The
+# denominator counts only what is MEASURABLE here: `dead` modules cannot be
+# elaborated at this configuration, so including them would understate coverage
+# against a target that can never be reached.
+cov_proven=$(awk '!/^#/ && NF>=4 && $4=="proven"' "$LIST" | wc -l)
+cov_dead=$(awk   '!/^#/ && NF>=4 && $4=="dead"'   "$LIST" | wc -l)
+cov_total=$(awk  '!/^#/ && NF>=4 && $4!="dead"'   "$LIST" | wc -l)
+if [ "$cov_total" -gt 0 ]; then
+  printf "CVA6 coverage: %d/%d modules proven (%d%%)" \
+      "$cov_proven" "$cov_total" $(( cov_proven * 100 / cov_total ))
+  if [ "$cov_dead" -gt 0 ]; then
+    printf " — %d excluded, not instantiable at this config" "$cov_dead"
+  fi
+  echo ""
+fi
 if [ "$prom" -gt 0 ]; then
   echo "Newly proven (tighten cva6_modules.txt): $(awk '$1=="PROMOTE"{printf "%s ", $2}' "$WORKROOT/.results")"
 fi
