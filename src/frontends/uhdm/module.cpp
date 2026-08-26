@@ -3863,6 +3863,41 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             }
             // Element geometry for the type-param packed array: bit_select
             // and var_select reads/writes element-index through these attrs.
+            // A gen-scope packed array whose element type is a local TYPEDEF
+            // (`mshr_sram_wbyteenable_t [WAYS-1:0] mshr_wbyteenable` in
+            // hpdcache_mshr) sizes correctly as a whole, so the type-param
+            // recovery above (which only runs when get_width failed) never
+            // stamps the element geometry — and `wbe[i] = '1` then wrote a
+            // SINGLE BIT per way instead of a whole byte-enable, leaving all
+            // but the low byte of each MSHR RAM word unwritten (X).  Derive
+            // the element width from the declared outer range whenever the
+            // variable is a packed array with a wider-than-1-bit element.
+            if (w && tp_elem_w <= 1) {
+                const UHDM::VectorOfrange* vr = nullptr;
+                if (auto lv2 = dynamic_cast<const UHDM::logic_var*>(var))
+                    vr = lv2->Ranges();
+                else if (auto pv2 = dynamic_cast<const UHDM::packed_array_var*>(var))
+                    vr = pv2->Ranges();
+                if (vr && !vr->empty() && width > 1) {
+                    auto r0 = (*vr)[0];
+                    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                    RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                    if (l.is_fully_const() && r.is_fully_const()) {
+                        int ol = l.as_const().as_int();
+                        int orr = r.as_const().as_int();
+                        int osz = std::abs(ol - orr) + 1;
+                        if (osz > 1 && (width % osz) == 0 &&
+                            (width / osz) > 1) {
+                            tp_elem_w = width / osz;
+                            tp_outer_l = ol;
+                            tp_outer_r = orr;
+                            log("UHDM: gen-scope packed array '%s': outer "
+                                "[%d:%d] elem_w=%d (from declared range)\n",
+                                var_name.c_str(), ol, orr, tp_elem_w);
+                        }
+                    }
+                }
+            }
             if (w && tp_elem_w > 1 && tp_outer_l >= 0 && tp_outer_r >= 0 &&
                 !w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
                 w->attributes[RTLIL::escape_id("packed_elem_width")] =

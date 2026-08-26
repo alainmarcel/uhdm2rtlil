@@ -166,6 +166,16 @@ packed_array_elem_select
 # ($bits = 16, info_q[0] = the LOW byte).  UHDM is correct here; the slang miter
 # PROVES this test, which is the check that matters for it.
 packed_struct_array_net_elem
+
+# Same class again, reached through a GENERATE-SCOPE packed array whose element
+# type is a local typedef: `be_t [WAYS-1:0] be` written per element with an
+# unbased unsized fill (`be[i] = '1'`).  read_verilog leaves the whole array
+# UNDRIVEN (its netlist simulates as x), so the SAT equiv reports spurious
+# unproven cells.  Adjudicated against Verilator on the source: sel=0 gives
+# be_o=00ff and sel=1 gives be_o=ff00 — exactly what UHDM produces, while the
+# read_verilog netlist gives xxxx for both.  This is the reproducer for CVA6
+# hpdcache_mshr's byte-enable geometry (only the low byte of each MSHR RAM word
+# was ever enabled, leaving every field above bit 7 unwritten).
 # packed_array_struct_port_sel  (now PASSES: runner classifies "UHDM succeeds where Verilog fails" as pass)
 
 # --- `parameter type` struct with function-computed CVA6Cfg.FIELD widths ---
@@ -279,3 +289,4 @@ sva/extnets.sv
 # So this is an upstream read_verilog OOB bug, not a UHDM regression;
 # Miter-Formal stays 0 and only equiv_induct flags it.
 simple/mem2reg_bounds_tern.v
+genscope_packed_be
