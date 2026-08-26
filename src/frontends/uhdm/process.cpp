@@ -10177,7 +10177,21 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule) {
     if (!bs) return false;
-    std::string base_name = std::string(bs->VpiName());
+    return emit_dynamic_unpacked_array_elem_write(
+        std::string(bs->VpiName()), bs->VpiIndex(), rhs_any, -1, 0, proc, case_rule);
+}
+
+// Shared implementation.  `slice_off >= 0` writes only `[slice_off +: slice_w]`
+// of the selected element (`mem[addr][i*8 +: 8] <= wdata[...]`, the byte-enable
+// register bank); otherwise the whole element is written.
+bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
+        const std::string& base_name,
+        const UHDM::any* idx_expr,
+        const UHDM::any* rhs_any,
+        int slice_off,
+        int slice_w,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
     if (base_name.empty()) return false;
     // Expanded unpacked array: element wires \base[low..high] exist.  The low
     // bound is usually 0, but a `[N:1]` declaration (CVA6 perf_counters
@@ -10202,21 +10216,35 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
         num_elems++;
     if (num_elems <= 0) return false;
 
-    auto idx_expr = bs->VpiIndex();
+    // Non-blocking semantics: inside ANY always_ff the RHS must see the
+    // REGISTERED element, never the value queued earlier in the same body.
+    // in_always_ff_body_mode covers the synchronous path; the async-reset path
+    // sets only in_always_ff_context, and without it a read-after-write in the
+    // same block (`mem[addr][..] <= wdata; rdata <= mem[addr];`) threads the
+    // updated value into the read and rdata comes out one cycle early.
+    const bool nb_mode = in_always_ff_body_mode || in_always_ff_context;
+
     if (!idx_expr) return false;
-    RTLIL::SigSpec idx = import_expression(idx_expr);
+    auto idx_expr_obj = dynamic_cast<const UHDM::expr*>(idx_expr);
+    if (!idx_expr_obj) return false;
+    RTLIL::SigSpec idx = import_expression(idx_expr_obj);
     if (idx.size() == 0 || idx.is_fully_const()) return false;  // static path
+
+    // Width actually written per element: the whole element, or just the slice.
+    if (slice_off < 0) { slice_off = 0; slice_w = elem_w; }
+    if (slice_w <= 0 || slice_off + slice_w > elem_w) return false;
+    bool partial = (slice_w != elem_w);
 
     if (!rhs_any) return false;
     auto rhs_expr_obj = dynamic_cast<const UHDM::expr*>(rhs_any);
     if (!rhs_expr_obj) return false;
     int prev_ctx = expression_context_width;
-    expression_context_width = elem_w;
+    expression_context_width = slice_w;
     RTLIL::SigSpec rhs = import_expression(rhs_expr_obj);
     expression_context_width = prev_ctx;
     bool rhs_signed = is_expr_signed(rhs_expr_obj);
-    if (rhs.size() < elem_w) rhs.extend_u0(elem_w, rhs_signed);
-    else if (rhs.size() > elem_w) rhs = rhs.extract(0, elem_w);
+    if (rhs.size() < slice_w) rhs.extend_u0(slice_w, rhs_signed);
+    else if (rhs.size() > slice_w) rhs = rhs.extract(0, slice_w);
 
     // MIXED representation (CVA6 store_buffer's unpacked struct queues): the
     // array ALSO exists as one flat wire `\base`, and the enclosing process
@@ -10239,53 +10267,107 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
         RTLIL::SigSpec cur;
         if (use_flat) {
             RTLIL::SigSpec curbase =
-                (!in_always_ff_body_mode && current_comb_values.count(base_name))
+                (!nb_mode && current_comb_values.count(base_name))
                     ? current_comb_values.at(base_name)
                     : RTLIL::SigSpec(flat_w);
             cur = curbase.extract(off, elem_w);
-        } else if (!in_always_ff_body_mode && current_comb_values.count(ename))
+        } else if (!nb_mode && current_comb_values.count(ename))
             cur = current_comb_values.at(ename);
         else
             cur = RTLIL::SigSpec(ew);
         // sel = (idx == k);  new = sel ? rhs : cur  (Mux: Y = S ? B : A)
+        // For a PARTIAL write only the addressed slice takes part: the rest of
+        // the element must keep its current value, so mux the slice and splice
+        // it back rather than rebuilding the whole element.
+        RTLIL::SigSpec cur_part = partial ? cur.extract(slice_off, slice_w) : cur;
         RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
         module->addEq(NEW_ID, idx,
                       RTLIL::SigSpec(RTLIL::Const(k, GetSize(idx))), sel);
-        RTLIL::Wire* nv = module->addWire(NEW_ID, elem_w);
-        module->addMux(NEW_ID, cur, rhs, RTLIL::SigSpec(sel), nv);
+        RTLIL::Wire* nv = module->addWire(NEW_ID, slice_w);
+        module->addMux(NEW_ID, cur_part, rhs, RTLIL::SigSpec(sel), nv);
         if (use_flat) {
             if (proc)
-                emit_comb_assign(RTLIL::SigSpec(flat_w).extract(off, elem_w),
+                emit_comb_assign(RTLIL::SigSpec(flat_w).extract(off + slice_off, slice_w),
                                  RTLIL::SigSpec(nv), proc);
             else {
                 RTLIL::SigSpec tgt =
-                    RTLIL::SigSpec(flat_tw).extract(off, elem_w);
+                    RTLIL::SigSpec(flat_tw).extract(off + slice_off, slice_w);
                 remove_target_from_switches(case_rule, tgt);
                 case_rule->actions.push_back(
                     RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
             }
-            if (!in_always_ff_body_mode) {
+            if (!nb_mode) {
                 RTLIL::SigSpec curbase = current_comb_values.count(base_name)
                                              ? current_comb_values.at(base_name)
                                              : RTLIL::SigSpec(flat_w);
-                curbase.replace(off, RTLIL::SigSpec(nv));
+                curbase.replace(off + slice_off, RTLIL::SigSpec(nv));
                 current_comb_values[base_name] = curbase;
             }
             continue;
         }
         if (proc) {
-            emit_comb_assign(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv), proc);
+            emit_comb_assign(RTLIL::SigSpec(ew).extract(slice_off, slice_w),
+                             RTLIL::SigSpec(nv), proc);
         } else if (case_rule) {
             std::string temp_name = "$0\\" + ename;
             RTLIL::Wire* tw = module->wire(temp_name);
             RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew);
+            tgt = tgt.extract(slice_off, slice_w);
             remove_target_from_switches(case_rule, tgt);
             case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
         }
-        if (!in_always_ff_body_mode)
-            current_comb_values[ename] = RTLIL::SigSpec(nv);
+        if (!nb_mode) {
+            RTLIL::SigSpec cv = cur;
+            cv.replace(slice_off, RTLIL::SigSpec(nv));
+            current_comb_values[ename] = cv;
+        }
     }
     return true;
+}
+
+// `mem[addr][i*8 +: 8] <= wdata[...]` — a byte-enable write into a
+// dynamically-indexed element of an unpacked array that was expanded to
+// per-element wires.  Surelog represents it as ONE var_select carrying two
+// vpiIndex entries: the element index (dynamic) and a constant
+// indexed_part_select naming the slice.  Recognise that shape and hand it to
+// the per-element emitter; without this the write lands on a stray expression
+// wire and the array reads back as 0 (hpdcache_regbank_wbyteenable_1rw).
+bool UhdmImporter::emit_dynamic_unpacked_array_partial_write(
+        const UHDM::any* lhs,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!lhs || lhs->VpiType() != vpiVarSelect) return false;
+    auto vs = any_cast<const UHDM::var_select*>(lhs);
+    if (!vs || !vs->Exprs() || vs->Exprs()->size() != 2) return false;
+    std::string base_name = std::string(vs->VpiName());
+    if (base_name.empty()) return false;
+    // Only for an EXPANDED array — a real $memory has no element wires, and
+    // the memory path must keep handling it.
+    if (module->memories.count(RTLIL::escape_id(base_name))) return false;
+    if (expanded_array_low(base_name) < 0) return false;
+
+    const UHDM::any* idx_expr = (*vs->Exprs())[0];
+    const UHDM::any* sel      = (*vs->Exprs())[1];
+    if (!idx_expr || !sel || sel->VpiType() != vpiIndexedPartSelect) return false;
+    auto ips = any_cast<const UHDM::indexed_part_select*>(sel);
+    if (!ips || !ips->Base_expr() || !ips->Width_expr()) return false;
+
+    // Both the base offset and the width must fold — an unrolled `i*8` does.
+    RTLIL::SigSpec base_s  = import_expression(
+        dynamic_cast<const UHDM::expr*>(ips->Base_expr()));
+    RTLIL::SigSpec width_s = import_expression(
+        dynamic_cast<const UHDM::expr*>(ips->Width_expr()));
+    if (!base_s.is_fully_const() || !width_s.is_fully_const()) return false;
+    int off = base_s.as_const().as_int();
+    int w   = width_s.as_const().as_int();
+    if (w <= 0 || off < 0) return false;
+    // vpiIndexedPartSelectType 1 = `+:` (ascending from the base), 2 = `-:`.
+    if (ips->VpiIndexedPartSelectType() == 2) off = off - w + 1;
+    if (off < 0) return false;
+
+    return emit_dynamic_unpacked_array_elem_write(
+        base_name, idx_expr, rhs_any, off, w, proc, case_rule);
 }
 
 // Write to a struct field's dynamic bit-select: `s.field[idx] = rhs` where
@@ -11422,6 +11504,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     bs, uhdm_assign->Rhs(), proc, nullptr))
                 return;
         }
+        // Same, but writing only a slice of the element
+        // (`mem[addr][i*8 +: 8] = ...`).
+        if (emit_dynamic_unpacked_array_partial_write(
+                lhs_e, uhdm_assign->Rhs(), proc, nullptr))
+            return;
     }
 
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
@@ -12154,6 +12241,9 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     bs, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
         }
+        if (emit_dynamic_unpacked_array_partial_write(
+                lhs_e, uhdm_assign->Rhs(), nullptr, case_rule))
+            return;
     }
 
     RTLIL::SigSpec lhs;
@@ -13463,6 +13553,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             bs, assign->Rhs(), nullptr, case_rule))
                         return;
                 }
+                if (emit_dynamic_unpacked_array_partial_write(
+                        lhs_e, assign->Rhs(), nullptr, case_rule))
+                    return;
             }
 
             // Dynamic element / bit(-range) writes into a PACKED array

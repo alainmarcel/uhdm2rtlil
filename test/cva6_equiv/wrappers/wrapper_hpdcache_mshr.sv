@@ -397,6 +397,49 @@ module hpdcache_mshr_equiv
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
 
+  //  ---- Input legalization -------------------------------------------
+  //  hpdcache_mshr's own assertion is the interface contract:
+  //      one_command_assert: ack_i |-> !(alloc_i || check_i)
+  //  ("MSHR: ack with concurrent alloc or check").  Random miter/co-sim
+  //  stimulus violates it constantly, and the RAM has ONE port: a concurrent
+  //  ack+alloc is a read and a write of the same array in the same cycle,
+  //  which no consumer ever issues.  Give ack priority (it is the command the
+  //  assertion protects) and suppress alloc/check in that cycle.  The same
+  //  legalizer is compiled into BOTH sides of the miter, so the proof claim
+  //  is equivalence over the contract-legal input space.
+  logic leg_alloc_i, leg_alloc_cs_i, leg_check_i;
+  assign leg_alloc_i    = alloc_i    & ~ack_i;
+  assign leg_alloc_cs_i = alloc_cs_i & ~ack_i;
+  assign leg_check_i    = check_i    & ~ack_i;
+
+  //  The MSHR RAM holds HPDcacheCfg.u.mshrSets entries, but hpdcache_pkg
+  //  forces mshrSetWidth to 1 when there is a single set:
+  //      ret.mshrSetWidth = (p.mshrSets > 1) ? $clog2(p.mshrSets) : 1;
+  //  so with one set the index port is a bit wide while only index 0 exists.
+  //  Selecting mem[1] of a one-entry array is undefined in SystemVerilog, and
+  //  the tools disagree about it by design: yosys' memory model (for BOTH
+  //  read_uhdm and native read_verilog) wraps the address, slang emits X.
+  //  Neither is a frontend defect, so constrain the index to the range the
+  //  language actually defines.  SET_MASK is all-ones for every power-of-two
+  //  set count, i.e. this is a no-op except where the width over-provisions.
+  localparam int unsigned MSHR_SETS = HPDcacheCfg.u.mshrSets;
+  localparam int unsigned MSHR_SETW = HPDcacheCfg.mshrSetWidth;
+  //  Keep every bit above the set index, and inside the index keep only the
+  //  bits a legal set number can use.  Whole-vector AND with a folded constant
+  //  -- no computed part-select bounds, so the legalizer itself cannot become
+  //  the thing under test.
+  localparam logic [63:0] IDX_KEEP = ~((64'd1 << MSHR_SETW) - 64'd1) | (MSHR_SETS - 1);
+
+  mshr_set_t       ack_set_mask, leg_ack_set_i;
+  hpdcache_set_t   check_set_mask, leg_check_set_i;
+  hpdcache_nline_t nline_mask, leg_alloc_nline_i;
+  assign ack_set_mask      = MSHR_SETS - 1;   // truncates to the port width
+  assign check_set_mask    = IDX_KEEP;
+  assign nline_mask        = IDX_KEEP;
+  assign leg_ack_set_i     = ack_set_i     & ack_set_mask;
+  assign leg_check_set_i   = check_set_i   & check_set_mask;
+  assign leg_alloc_nline_i = alloc_nline_i & nline_mask;
+
   hpdcache_mshr #(
       .HPDcacheCfg(HPDcacheCfg),
       .hpdcache_nline_t(hpdcache_nline_t),
@@ -409,6 +452,14 @@ module hpdcache_mshr_equiv
       .mshr_way_t(mshr_way_t),
       .mshr_set_t(mshr_set_t),
       .cbuf_id_t(cbuf_id_t)
-  ) dut (.*);
+  ) dut (
+      .alloc_i      (leg_alloc_i),
+      .alloc_cs_i   (leg_alloc_cs_i),
+      .check_i      (leg_check_i),
+      .ack_set_i    (leg_ack_set_i),
+      .check_set_i  (leg_check_set_i),
+      .alloc_nline_i(leg_alloc_nline_i),
+      .*
+  );
 
 endmodule

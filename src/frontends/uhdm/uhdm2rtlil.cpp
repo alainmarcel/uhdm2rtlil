@@ -3571,6 +3571,122 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
     }
 
+    // Pre-scan: arrays cleared wholesale by the reset branch of an always_ff
+    // with an ASYNCHRONOUS reset —
+    //     always_ff @(posedge clk or negedge rst_n)
+    //         if (!rst_n) for (int i = 0; i < DEPTH; i++) mem[i] <= '0;
+    //         else ...
+    // See async_reset_filled_arrays: these must become registers, not a $mem.
+    async_reset_filled_arrays.clear();
+    {
+        // An async reset is an event control listing MORE THAN ONE edge — the
+        // same shape import_always_ff keys `has_async_reset` off.  Returns the
+        // always block's body when it qualifies.
+        auto async_ff_body = [&](const UHDM::any* s) -> const UHDM::any* {
+            if (!s || s->VpiType() != vpiEventControl) return nullptr;
+            auto ec = any_cast<const event_control*>(s);
+            if (!ec || !ec->VpiCondition()) return nullptr;
+            const any* cond = ec->VpiCondition();
+            if (cond->VpiType() != vpiOperation) return nullptr;
+            auto op = any_cast<const operation*>(cond);
+            if (!op || !op->Operands()) return nullptr;
+            if (op->VpiOpType() != vpiEventOrOp && op->VpiOpType() != vpiListOp)
+                return nullptr;
+            int edges = 0;
+            for (auto o : *op->Operands())
+                if (o->VpiType() == vpiOperation)
+                    if (auto e = any_cast<const operation*>(o))
+                        if (e->VpiOpType() == vpiPosedgeOp || e->VpiOpType() == vpiNegedgeOp)
+                            edges++;
+            return edges > 1 ? ec->Stmt() : nullptr;
+        };
+        // Array elements written anywhere below `node`, collected by base name.
+        std::function<void(const any*, std::set<std::string>&)> elem_writes;
+        elem_writes = [&](const any* node, std::set<std::string>& out) {
+            if (!node) return;
+            switch (node->VpiType()) {
+                case vpiAssignment: case vpiAssignStmt:
+                    if (auto a = any_cast<const assignment*>(node))
+                        if (const any* lhs = a->Lhs())
+                            if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
+                                std::string b = std::string(lhs->VpiName());
+                                if (!b.empty()) out.insert(b);
+                            }
+                    break;
+                case vpiBegin: case vpiNamedBegin:
+                    if (auto stmts = begin_block_stmts(node))
+                        for (auto s : *stmts) elem_writes(s, out);
+                    break;
+                case vpiFor:
+                    if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt(), out);
+                    break;
+                case vpiIf:
+                    if (auto i = any_cast<const if_stmt*>(node)) elem_writes(i->VpiStmt(), out);
+                    break;
+                case vpiIfElse:
+                    if (auto ie = any_cast<const if_else*>(node)) {
+                        elem_writes(ie->VpiStmt(), out);
+                        elem_writes(ie->VpiElseStmt(), out);
+                    }
+                    break;
+                default: break;
+            }
+        };
+        // Only a fill inside a `for` counts.  A reset branch clearing ONE
+        // element (`mem[ptr] <= '0`) is an ordinary write the memory path
+        // handles, and demoting the array for that would expand it needlessly.
+        std::function<void(const any*, std::set<std::string>&)> loop_fills;
+        loop_fills = [&](const any* node, std::set<std::string>& out) {
+            if (!node) return;
+            switch (node->VpiType()) {
+                case vpiFor:
+                    if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt(), out);
+                    break;
+                case vpiBegin: case vpiNamedBegin:
+                    if (auto stmts = begin_block_stmts(node))
+                        for (auto s : *stmts) loop_fills(s, out);
+                    break;
+                case vpiIf:
+                    if (auto i = any_cast<const if_stmt*>(node)) loop_fills(i->VpiStmt(), out);
+                    break;
+                case vpiIfElse:
+                    if (auto ie = any_cast<const if_else*>(node)) {
+                        loop_fills(ie->VpiStmt(), out);
+                        loop_fills(ie->VpiElseStmt(), out);
+                    }
+                    break;
+                default: break;
+            }
+        };
+        // The reset branch is the `then` arm of the body's top-level if.
+        auto reset_arm_of = [&](const any* body) -> const any* {
+            if (!body) return nullptr;
+            if (body->VpiType() == vpiIfElse) {
+                if (auto ie = any_cast<const if_else*>(body)) return ie->VpiStmt();
+            } else if (body->VpiType() == vpiIf) {
+                if (auto i = any_cast<const if_stmt*>(body)) return i->VpiStmt();
+            } else if (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) {
+                if (auto stmts = begin_block_stmts(body))
+                    for (auto s : *stmts) {
+                        if (s->VpiType() == vpiIfElse) {
+                            if (auto ie = any_cast<const if_else*>(s)) return ie->VpiStmt();
+                        } else if (s->VpiType() == vpiIf) {
+                            if (auto i = any_cast<const if_stmt*>(s)) return i->VpiStmt();
+                        }
+                    }
+            }
+            return nullptr;
+        };
+        if (uhdm_module->Process())
+            for (auto proc : *uhdm_module->Process())
+                if (auto al = any_cast<const always*>(proc))
+                    if (const any* arm = reset_arm_of(async_ff_body(al->Stmt())))
+                        loop_fills(arm, async_reset_filled_arrays);
+        for (const auto& n : async_reset_filled_arrays)
+            log("UHDM: array '%s' is cleared by an async reset — importing as "
+                "registers instead of a memory\n", n.c_str());
+    }
+
     // Import module-level variables (logic declarations)
     // We do this in two passes to handle initial values that reference other variables
     std::vector<std::pair<const UHDM::any*, RTLIL::Wire*>> vars_with_init_expr;
@@ -3611,7 +3727,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // path), which support both whole-array copy AND dynamic-index
                 // access.  CVA6 cva6_fifo_v3 `mem_n`/`mem_q`.
                 bool whole_accessed_var = whole_array_accessed_names.count(array_name) > 0;
-                bool should_be_memory = is_mem && !has_const_only && !is_comb_only && !whole_accessed_var;
+                bool async_filled_var = async_reset_filled_arrays.count(array_name) > 0;
+                bool should_be_memory = is_mem && !has_const_only && !is_comb_only &&
+                                        !whole_accessed_var && !async_filled_var;
 
                 if (should_be_memory) {
                     log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
@@ -3706,6 +3824,45 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         log("UHDM: Array_var '%s' is comb-only, creating individual registers\n", array_name.c_str());
                     else
                         log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
+
+                    // A typedef'd unpacked array (`typedef logic [W-1:0] mem_t
+                    // [DEPTH]; mem_t mem;`) has NO Ranges() and NO Variables()
+                    // of its own — both the size and the element width live on
+                    // its array_typespec, the same fallback
+                    // create_memory_from_array() uses.  Without this the loop
+                    // below runs zero times and the array materialises no wires.
+                    if ((!array_var->Ranges() || array_var->Ranges()->empty()) &&
+                        array_var->Typespec() && array_var->Typespec()->Actual_typespec() &&
+                        array_var->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+                        auto ats = any_cast<const UHDM::array_typespec*>(
+                            array_var->Typespec()->Actual_typespec());
+                        int ts_size = 0, ts_low = 0, ts_width = 0;
+                        if (ats->Ranges() && !ats->Ranges()->empty()) {
+                            auto r0 = (*ats->Ranges())[0];
+                            if (r0->Left_expr() && r0->Right_expr()) {
+                                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    ts_size = std::abs(l.as_const().as_int() - r.as_const().as_int()) + 1;
+                                    ts_low  = std::min(l.as_const().as_int(), r.as_const().as_int());
+                                }
+                            }
+                        }
+                        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
+                            ts_width = get_width_from_typespec(
+                                ats->Elem_typespec()->Actual_typespec(), current_instance);
+                        for (int i = 0; ts_size > 0 && ts_width > 0 && i < ts_size; i++) {
+                            std::string ename = array_name + "[" + std::to_string(ts_low + i) + "]";
+                            RTLIL::IdString eid = RTLIL::escape_id(ename);
+                            if (!module->wire(eid)) {
+                                RTLIL::Wire* ew = module->addWire(eid, ts_width);
+                                add_src_attribute(ew->attributes, array_var);
+                                name_map[ename] = ew;
+                                log("UHDM: Created wire '%s' (width=%d) for array element\n",
+                                    ew->name.c_str(), ts_width);
+                            }
+                        }
+                    }
 
                     // Get the array dimensions
                     auto ranges = array_var->Ranges();
@@ -4742,7 +4899,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     }
                 }
 
-                bool should_be_memory = !has_const_only && !is_comb_only_net && !has_mem2reg_attr;
+                bool should_be_memory = !has_const_only && !is_comb_only_net && !has_mem2reg_attr &&
+                                        !async_reset_filled_arrays.count(array_name);
 
                 if (should_be_memory) {
                     log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());

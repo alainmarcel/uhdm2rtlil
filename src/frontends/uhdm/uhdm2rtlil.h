@@ -487,6 +487,17 @@ struct UhdmImporter {
     // wires (matching the Verilog frontend).
     std::set<std::string> whole_array_accessed_names;
 
+    // Arrays an always_ff with an ASYNCHRONOUS reset clears wholesale in its
+    // reset branch (`if (!rst_n) for (i) mem[i] <= '0;`).  An RTLIL $memwr port
+    // is clocked, so that fill is not expressible as a memory write at all:
+    // attaching it to the reset sync rule makes yosys bail ("Async reset causes
+    // memory write"), and on the clock rule async2sync gates it straight back
+    // off.  Both reference frontends answer by demoting the array to registers
+    // ("Replacing memory \mem with list of registers"), and so do we — without
+    // it the fill is silently dropped, the port emitted with EN tied to 0, and
+    // the memory simply never clears.
+    std::set<std::string> async_reset_filled_arrays;
+
     // Element widths for function-local unpacked array_var instances.
     // Key: variable name (within the function evaluation scope).  Value: width
     // of one array element in bits.  Storage is flattened into the per-name
@@ -857,6 +868,23 @@ struct UhdmImporter {
         RTLIL::CaseRule* case_rule);
     bool emit_dynamic_unpacked_array_write(
         const UHDM::bit_select* bs,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule);
+    // Shared implementation.  slice_off >= 0 writes only [slice_off +: slice_w]
+    // of the selected element (`mem[addr][i*8 +: 8] <= ...`).
+    bool emit_dynamic_unpacked_array_elem_write(
+        const std::string& base_name,
+        const UHDM::any* idx_expr,
+        const UHDM::any* rhs_any,
+        int slice_off,
+        int slice_w,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule);
+    // `arr[dyn][const +: W] <= rhs` on an expanded unpacked array: recognises
+    // the var_select shape and routes it to the emitter above.
+    bool emit_dynamic_unpacked_array_partial_write(
+        const UHDM::any* lhs,
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);

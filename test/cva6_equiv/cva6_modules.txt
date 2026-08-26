@@ -110,7 +110,7 @@ hpdcache_mem_to_axi_read               4   400   proven
 hpdcache_mem_to_axi_write              4   400   proven
 hpdcache_memctrl                       4   180   timeout
 hpdcache_miss_handler                  4   180   elabfail  # was crash (segfault); now elabfail
-hpdcache_mshr                          4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_mshr                          4   400   proven   # async-reset RAM clear (mem2reg demotion) + contract-legalized wrapper
 hpdcache_mux                           4   180   proven
 hpdcache_prio_1hot_encoder             4   180   proven
 hpdcache_prio_bin_encoder              4   180   proven
