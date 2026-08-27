@@ -13253,6 +13253,178 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
             // Log a warning and return an unconnected signal
+            // `s.arr[i].sub.f` — a base struct whose FIELD is an array of
+            // structs, indexed, then a FURTHER nested field path:
+            // [ref_obj(s), bit_select(arr,i), ref_obj(sub), ref_obj(f)].
+            // The one-level form resolves elsewhere; this multi-level tail had
+            // no handler and fell through to X, so CVA6
+            // issue_read_operands' `fwd_i.sbe[i].ex.valid` read as X/0 and
+            // fwd_res_valid came out all-zero, killing every rs2 forward.
+            if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 4) {
+                auto& peA = *uhdm_hier->Path_elems();
+                bool tail_ref = peA[0]->UhdmType() == uhdmref_obj &&
+                                peA[1]->UhdmType() == uhdmbit_select;
+                for (size_t t = 2; tail_ref && t < peA.size(); t++)
+                    if (peA[t]->UhdmType() != uhdmref_obj) tail_ref = false;
+                if (tail_ref) {
+                    auto bref = any_cast<const ref_obj*>(peA[0]);
+                    auto abs  = any_cast<const bit_select*>(peA[1]);
+                    std::string bname = std::string(bref->VpiName());
+                    RTLIL::Wire* bw = name_map.count(bname)
+                                          ? name_map[bname]
+                                          : module->wire(RTLIL::escape_id(bname));
+                    const UHDM::typespec* bts = nullptr;
+                    if (auto rt = bref->Typespec()) bts = rt->Actual_typespec();
+                    if (!bts)
+                        if (auto ag = bref->Actual_group())
+                            if (auto e = dynamic_cast<const UHDM::expr*>(ag))
+                                if (auto rt2 = e->Typespec())
+                                    bts = rt2->Actual_typespec();
+                    if (bts) bts = resolve_type_param_typespec(bts, inst);
+                    RTLIL::SigSpec idx_s;
+                    if (abs->VpiIndex())
+                        idx_s = import_expression(abs->VpiIndex(), input_mapping);
+                    if (bw && bts && bts->UhdmType() == uhdmstruct_typespec &&
+                        !idx_s.empty()) {
+                        // Offset of the ARRAY field within the base struct.
+                        auto st = any_cast<const UHDM::struct_typespec*>(bts);
+                        std::string fname = std::string(abs->VpiName());
+                        int off = 0, fw = 0;
+                        const UHDM::typespec* fts = nullptr;
+                        bool ok = false;
+                        if (st->Members())
+                            for (int m2 = (int)st->Members()->size() - 1; m2 >= 0; m2--) {
+                                auto m = (*st->Members())[m2];
+                                int mw = 0;
+                                const UHDM::typespec* mts = nullptr;
+                                if (auto r = m->Typespec())
+                                    if ((mts = r->Actual_typespec())) {
+                                        mts = resolve_type_param_typespec(mts, inst);
+                                        mw = get_width_from_typespec(mts, inst);
+                                    }
+                                if (std::string(m->VpiName()) == fname) {
+                                    fw = mw; fts = mts; ok = true; break;
+                                }
+                                off += mw;
+                            }
+                        // Element geometry of that array field.
+                        const UHDM::typespec* ets = nullptr;
+                        int nelem = 0, decl_l = 0, decl_r = 0;
+                        if (ok && fts) {
+                            const UHDM::VectorOfrange* rg = nullptr;
+                            if (fts->UhdmType() == uhdmpacked_array_typespec) {
+                                auto pa = any_cast<const UHDM::packed_array_typespec*>(fts);
+                                rg = pa->Ranges();
+                                if (pa->Elem_typespec())
+                                    ets = pa->Elem_typespec()->Actual_typespec();
+                            } else if (fts->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = any_cast<const UHDM::logic_typespec*>(fts);
+                                rg = lt->Ranges();
+                                if (lt->Elem_typespec())
+                                    ets = lt->Elem_typespec()->Actual_typespec();
+                            }
+                            if (rg && !rg->empty()) {
+                                auto r0 = (*rg)[0];
+                                RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+                                RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    decl_l = l.as_const().as_int();
+                                    decl_r = r.as_const().as_int();
+                                    nelem = std::abs(decl_l - decl_r) + 1;
+                                }
+                            }
+                        }
+                        if (ok && ets) ets = resolve_type_param_typespec(ets, inst);
+                        if (ok && nelem > 0 && fw % nelem == 0 && ets) {
+                            int elem_w = fw / nelem;
+                            int lo = std::min(decl_l, decl_r);
+                            int hi = std::max(decl_l, decl_r);
+                            int idx = idx_s.is_fully_const()
+                                          ? idx_s.as_const().as_int() : lo;
+                            if (idx >= lo && idx <= hi) {
+                                // Elements are laid out MSB-first for a
+                                // descending declaration, as elsewhere.
+                                int eoff = (decl_l < decl_r) ? (hi - idx) * elem_w
+                                                             : (idx - lo) * elem_w;
+                                int total = off + eoff;
+                                // Descend the remaining field names.
+                                const UHDM::struct_typespec* cur =
+                                    ets->UhdmType() == uhdmstruct_typespec
+                                        ? any_cast<const UHDM::struct_typespec*>(ets)
+                                        : nullptr;
+                                int lw = elem_w;
+                                bool good = true;
+                                for (size_t t = 2; t < peA.size() && good; t++) {
+                                    std::string nm = std::string(peA[t]->VpiName());
+                                    good = false;
+                                    if (!cur || !cur->Members()) break;
+                                    int loff = 0;
+                                    for (int m2 = (int)cur->Members()->size() - 1;
+                                         m2 >= 0; m2--) {
+                                        auto m = (*cur->Members())[m2];
+                                        int mw = 0;
+                                        const UHDM::typespec* mts = nullptr;
+                                        if (auto r = m->Typespec())
+                                            if ((mts = r->Actual_typespec())) {
+                                                mts = resolve_type_param_typespec(mts, inst);
+                                                mw = get_width_from_typespec(mts, inst);
+                                            }
+                                        if (std::string(m->VpiName()) == nm) {
+                                            total += loff; lw = mw; good = mw > 0;
+                                            cur = (mts && mts->UhdmType() == uhdmstruct_typespec)
+                                                      ? any_cast<const UHDM::struct_typespec*>(mts)
+                                                      : nullptr;
+                                            break;
+                                        }
+                                        loff += mw;
+                                    }
+                                }
+                                if (good && lw > 0 && idx_s.is_fully_const() &&
+                                    total + lw <= bw->width) {
+                                    log("    hier_path '%s' -> \\%s [%d +: %d] "
+                                        "(struct array field, nested tail)\n",
+                                        path_name.c_str(), bname.c_str(), total, lw);
+                                    return RTLIL::SigSpec(bw).extract(total, lw);
+                                }
+                                // DYNAMIC element index: the field offset is
+                                // fixed, the element offset is not — shift the
+                                // whole base by idx*elem_w and take the slice.
+                                // CVA6 issue_read_operands reads
+                                // `fwd_i.sbe[idx_hzd_rs1[i]].fu` this way.
+                                if (good && lw > 0 && !idx_s.is_fully_const()) {
+                                    RTLIL::SigSpec sh = idx_s;
+                                    sh.extend_u0(32, false);
+                                    if (lo != 0)
+                                        sh = module->Sub(NEW_ID, sh,
+                                                         RTLIL::Const(lo, 32), false);
+                                    if (decl_l < decl_r) {
+                                        // Ascending declaration: element k sits
+                                        // (hi-k) slots from the base.
+                                        sh = module->Sub(NEW_ID,
+                                                RTLIL::SigSpec(RTLIL::Const(hi - lo, 32)),
+                                                sh, false);
+                                    }
+                                    if (elem_w > 1)
+                                        sh = module->Mul(NEW_ID, sh,
+                                                RTLIL::Const(elem_w, 32), false);
+                                    int fixed = total - ((decl_l < decl_r)
+                                                    ? (hi - idx) : (idx - lo)) * elem_w;
+                                    if (fixed > 0)
+                                        sh = module->Add(NEW_ID, sh,
+                                                RTLIL::Const(fixed, 32), false);
+                                    RTLIL::Wire* ow = module->addWire(NEW_ID, lw);
+                                    module->addShiftx(NEW_ID, RTLIL::SigSpec(bw), sh, ow);
+                                    log("    hier_path '%s' -> \\%s dynamic elem "
+                                        "(elem_w=%d, field_off=%d, w=%d)\n",
+                                        path_name.c_str(), bname.c_str(), elem_w,
+                                        fixed, lw);
+                                    return RTLIL::SigSpec(ow);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
         }
         return RTLIL::SigSpec(RTLIL::State::Sx, width);
