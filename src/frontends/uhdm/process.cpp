@@ -12151,6 +12151,16 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             RTLIL::Wire* temp_wire = find_own_temp_wire(signal_name);
 
             if (temp_wire) {
+                // Later-wins: RTLIL runs a case's actions BEFORE its switches,
+                // so this unconditional root-level write would otherwise be
+                // overridden by an EARLIER conditional write to the same
+                // signal.  emit_comb_assign already does this; the whole-wire
+                // branch here did not, so CVA6 issue_read_operands' trailing
+                //   stall_raw[0] = xrej ? 0 : stall_rs1[0]||stall_rs2[0]||...
+                // lost to `if (rs1_has_raw) stall_raw[i] = 1'b1` in the loop
+                // above it and the issue port stalled spuriously.
+                remove_target_from_switches(&proc->root_case,
+                                            RTLIL::SigSpec(temp_wire));
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
                 // Track current value for task/function inlining and value propagation
                 current_comb_values[signal_name] = rhs;

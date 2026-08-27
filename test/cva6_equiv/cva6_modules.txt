@@ -144,7 +144,7 @@ instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
-issue_read_operands                    4   180   cex      # was 1878-class with scoreboard; now 51/2000 vs RTL (slang 0) - real residue, TRIAGE
+issue_read_operands                    4   180   timeout  # co-sim CLEAN (0/2000 vs RTL, slang 0) after the dyn-index/element-field/supersede fixes; SAT capacity only
 issue_stage                            4   180   timeout
 iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   cex
