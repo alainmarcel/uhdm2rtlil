@@ -7536,6 +7536,38 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             }
         }
 
+        // A packed multi-dim array declared `logic [N:0][W-1:0]` has a
+        // MULTI-RANGE logic_typespec and no Elem_typespec, so the scaling above
+        // cannot fire — but import_port/import_net already tagged the wire with
+        // the geometry that import_bit_select uses for a single element.  Reuse
+        // it so an element RANGE scales too: `issue_pointer[NrIssuePorts-1:0]`
+        // must select whole elements, not the low bits (CVA6 scoreboard's
+        // rvfi_issue_pointer_o came out as {0, arr[1:0]} instead of arr[5:0]).
+        if (width == std::abs(left - right) + 1 && base.is_wire()) {
+            RTLIL::Wire* bw = base.as_wire();
+            auto ew_id = RTLIL::escape_id("packed_elem_width");
+            auto ol_id = RTLIL::escape_id("packed_outer_left");
+            auto or_id = RTLIL::escape_id("packed_outer_right");
+            if (bw && bw->attributes.count(ew_id) &&
+                bw->attributes.count(ol_id) && bw->attributes.count(or_id)) {
+                int ew = bw->attributes.at(ew_id).as_int();
+                int ol = bw->attributes.at(ol_id).as_int();
+                int orr = bw->attributes.at(or_id).as_int();
+                int decl_low = std::min(ol, orr), decl_high = std::max(ol, orr);
+                int nelem = decl_high - decl_low + 1;
+                int ilo = std::min(left, right), ihi = std::max(left, right);
+                if (ew > 1 && base.size() == ew * nelem &&
+                    ilo >= decl_low && ihi <= decl_high) {
+                    offset = (ol < orr) ? (decl_high - ihi) * ew
+                                        : (ilo - decl_low) * ew;
+                    width = (ihi - ilo + 1) * ew;
+                    log("    part_select: packed-array element range [%d:%d] via "
+                        "wire attrs (elem_w=%d) -> bits [%d+:%d]\n",
+                        left, right, ew, offset, width);
+                }
+            }
+        }
+
         // Bounds check to prevent out-of-bounds access
         int base_width = base.size();
         if (offset >= base_width) {

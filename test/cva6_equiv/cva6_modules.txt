@@ -63,7 +63,7 @@ cva6_hpdcache_subsystem                4   180   dead     # instantiates hpdcach
 cva6_hpdcache_subsystem_axi_arbiter    4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 cva6_hpdcache_wrapper                  4   180   dead     # instantiates hpdcache -> same config $fatal
 cva6_icache                            4   900   proven
-cva6_icache_axi_wrapper                4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
+cva6_icache_axi_wrapper                4   400   proven   # proven by the dynamic element-field write + packed element-range fixes
 cva6_mmu                               4   180   proven
 cva6_ptw                               1   900   proven
 cva6_rvfi_probes                       4   180   cex
@@ -144,7 +144,7 @@ instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
 instr_scan                             4   900   proven
-issue_read_operands                    4   180   cex      # measurable since the type-param packed-array struct member fix (fwd_i width); shares forwarding_t with scoreboard - TRIAGE
+issue_read_operands                    4   180   cex      # was 1878-class with scoreboard; now 51/2000 vs RTL (slang 0) - real residue, TRIAGE
 issue_stage                            4   180   timeout
 iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   cex
@@ -164,7 +164,7 @@ popcount                               4   900   proven
 preprocess_mvp                         4   400   proven
 ras                                    4   900   proven
 raw_checker                            4   900   proven
-scoreboard                             4   180   cex      # measurable since the type-param packed-array struct member fix (fwd_o was 518 bits, not 3860); co-sim now shows a REAL divergence (1878/2000 vs RTL, slang 0) - TRIAGE
+scoreboard                             4   180   timeout  # co-sim CLEAN (0/2000 vs RTL) since the type-param write walk + packed element-range fixes; SAT capacity only, still times out at 1800s
 serdiv                                 4   180   timeout
 std_cache_subsystem                    4   180   timeout  # was crash (segfault); now timeout
 std_nbdcache                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
