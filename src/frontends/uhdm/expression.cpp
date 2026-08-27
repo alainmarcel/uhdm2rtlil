@@ -9655,11 +9655,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
                 }
                 int idx = 0;
+                bool idx_const = true;
                 if (memsel->VpiIndex()) {
                     RTLIL::SigSpec is = import_expression(memsel->VpiIndex(), input_mapping);
                     if (is.is_fully_const()) idx = is.as_const().as_int();
+                    else idx_const = false;
                 }
-                if (found_member && inner_st && inner_st->Members() && elem_w > 0) {
+                // A NON-constant index used to leave idx at 0 and return the
+                // slice for element 0 — silently reading the wrong element.
+                // CVA6 issue_read_operands' `fwd_i.sbe[idx_hzd_rs1[i]].fu`
+                // always read entry 0, so rs1_is_not_csr was wrong whenever the
+                // hazard pointed anywhere else.  Decline instead and let the
+                // dynamic-index resolver further down handle it.
+                if (idx_const && found_member && inner_st &&
+                    inner_st->Members() && elem_w > 0) {
                     int field_off = 0, field_w = 0;
                     bool found_field = false;
                     for (int i = (int)inner_st->Members()->size() - 1; i >= 0; i--) {
@@ -13260,7 +13269,13 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // no handler and fell through to X, so CVA6
             // issue_read_operands' `fwd_i.sbe[i].ex.valid` read as X/0 and
             // fwd_res_valid came out all-zero, killing every rs2 forward.
-            if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 4) {
+            // size 3 is `s.arr[i].f` (one field level) and size >=4 adds
+            // further levels.  Both reach here only after every other branch
+            // has declined — for a CONSTANT index the size-3 form is already
+            // handled elsewhere, so in practice this catches the DYNAMIC index
+            // (CVA6 issue_read_operands' `fwd_i.sbe[idx_hzd_rs1[i]].fu`, which
+            // read as X and left rs1_is_not_csr wrong).
+            if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3) {
                 auto& peA = *uhdm_hier->Path_elems();
                 bool tail_ref = peA[0]->UhdmType() == uhdmref_obj &&
                                 peA[1]->UhdmType() == uhdmbit_select;

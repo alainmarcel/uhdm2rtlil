@@ -29,9 +29,12 @@ module dut #(
     }
 ) (
     input  logic [59:0] flat_i,
+    input  logic [1:0]  dyn_i,
     output logic [3:0]  one_o,
     output logic [3:0]  nested_o,
-    output logic [7:0]  hdr_o
+    output logic [7:0]  hdr_o,
+    output logic        dyn1_o,
+    output logic        dyn2_o
 );
   bundle_t b;
   assign b = flat_i;
@@ -47,4 +50,10 @@ module dut #(
   end
 
   assign hdr_o = b.hdr;
+
+  //  DYNAMIC element index.  A non-constant index used to silently default to
+  //  element 0, so these read entry 0 regardless of dyn_i (CVA6
+  //  issue_read_operands' `fwd_i.sbe[idx_hzd_rs1[i]].fu`).
+  assign dyn1_o = b.arr[dyn_i].valid;       // one field level
+  assign dyn2_o = b.arr[dyn_i].sub.valid;   // two field levels
 endmodule
