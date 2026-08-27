@@ -10212,25 +10212,44 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             nsel++;
         }
         const bit_select* fbs2 = nullptr;   // trailing field bit_select
-        bool tail_ok = (nsel == peN.size()) ||
-                       (nsel == peN.size() - 1 &&
-                        (peN[nsel]->UhdmType() == uhdmref_obj ||
-                         peN[nsel]->UhdmType() == uhdmpart_select ||
-                         peN[nsel]->UhdmType() == uhdmbit_select ||
-                         peN[nsel]->UhdmType() == uhdmvar_select));
+        // The tail may name a NESTED field path, not just one field:
+        // `mem_n[idx].sbe.rd` (CVA6 scoreboard) is
+        // [bit_select, ref_obj(sbe), ref_obj(rd)].  Accept a run of ref_objs,
+        // optionally closed by a part_select / bit_select / var_select on the
+        // final field.  Restricting the tail to a SINGLE element left the whole
+        // path unresolved ("Could not resolve struct member access") and the
+        // access silently read/wrote X.
+        size_t ntail = peN.size() - nsel;
+        bool tail_ok = (nsel == peN.size());
+        if (!tail_ok && ntail >= 1) {
+            tail_ok = true;
+            for (size_t t = nsel; t + 1 < peN.size(); t++)
+                if (peN[t]->UhdmType() != uhdmref_obj) { tail_ok = false; break; }
+            if (tail_ok) {
+                UHDM_OBJECT_TYPE lt = peN[peN.size() - 1]->UhdmType();
+                tail_ok = (lt == uhdmref_obj || lt == uhdmpart_select ||
+                           lt == uhdmbit_select || lt == uhdmvar_select);
+            }
+        }
         if (mode_debug)
             log("    Nidx probe: nsel=%zu total=%zu tail_ok=%d run_base='%s'\n",
                 nsel, peN.size(), tail_ok ? 1 : 0, run_base.c_str());
         if (nsel >= 1 && tail_ok) {
             const bit_select* bs0 = any_cast<const bit_select*>(peN[0]);
+            // Names of every field level in the tail, outermost first, and the
+            // LAST element (which alone may carry a part/bit/var select).
+            std::vector<std::string> ftail_names;
+            for (size_t t = nsel; t < peN.size(); t++)
+                ftail_names.push_back(std::string(peN[t]->VpiName()));
+            const size_t flast = peN.size() - 1;
             const ref_obj* fr = (nsel < peN.size() &&
-                                 peN[nsel]->UhdmType() == uhdmref_obj)
-                                    ? any_cast<const ref_obj*>(peN[nsel]) : nullptr;
+                                 peN[flast]->UhdmType() == uhdmref_obj)
+                                    ? any_cast<const ref_obj*>(peN[flast]) : nullptr;
             const part_select* fps = (nsel < peN.size() &&
-                                      peN[nsel]->UhdmType() == uhdmpart_select)
-                                         ? any_cast<const part_select*>(peN[nsel]) : nullptr;
-            if (nsel < peN.size() && peN[nsel]->UhdmType() == uhdmbit_select)
-                fbs2 = any_cast<const bit_select*>(peN[nsel]);
+                                      peN[flast]->UhdmType() == uhdmpart_select)
+                                         ? any_cast<const part_select*>(peN[flast]) : nullptr;
+            if (nsel < peN.size() && peN[flast]->UhdmType() == uhdmbit_select)
+                fbs2 = any_cast<const bit_select*>(peN[flast]);
             // Multi-index field select (`tags_q[i].is_page[2-x][0:0]`,
             // CVA6 cva6_tlb page_match): the field is a var_select whose
             // Indexes() carry per-dim selects; the LAST one may be a
@@ -10279,28 +10298,37 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 bool field_ok = true;
                 const UHDM::typespec* field_ts = nullptr;
                 if ((fr || fps || fbs2 || fvs) && st && st->Members() && nsel == dims.size()) {
-                    std::string field_name = fr ? std::string(fr->VpiName())
-                                              : fps ? std::string(fps->VpiName())
-                                              : fbs2 ? std::string(fbs2->VpiName())
-                                                     : std::string(fvs->VpiName());
                     field_offset = 0; field_width = 0;
                     bool found_field = false;
-                    for (int i2 = (int)st->Members()->size() - 1; i2 >= 0; i2--) {
-                        auto m = (*st->Members())[i2];
-                        int mw = 0;
-                        const UHDM::typespec* ats_r = nullptr;
-                        if (auto mts = m->Typespec())
-                            if (auto ats = mts->Actual_typespec()) {
-                                ats_r = resolve_type_param_typespec(ats, inst);
-                                mw = get_width_from_typespec(ats_r, inst);
+                    // Descend EVERY level of the field path (`.sbe.rd`), adding
+                    // each level's offset within its own struct.  A single-name
+                    // lookup only ever resolved `.field`.
+                    const UHDM::struct_typespec* cur_st = st;
+                    for (size_t fi = 0; fi < ftail_names.size(); fi++) {
+                        const std::string& field_name = ftail_names[fi];
+                        if (!cur_st || !cur_st->Members()) { found_field = false; break; }
+                        found_field = false;
+                        for (int i2 = (int)cur_st->Members()->size() - 1; i2 >= 0; i2--) {
+                            auto m = (*cur_st->Members())[i2];
+                            int mw = 0;
+                            const UHDM::typespec* ats_r = nullptr;
+                            if (auto mts = m->Typespec())
+                                if (auto ats = mts->Actual_typespec()) {
+                                    ats_r = resolve_type_param_typespec(ats, inst);
+                                    mw = get_width_from_typespec(ats_r, inst);
+                                }
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_width = mw;
+                                field_ts = ats_r;
+                                found_field = true;
+                                break;
                             }
-                        if (std::string(m->VpiName()) == field_name) {
-                            field_width = mw;
-                            field_ts = ats_r;
-                            found_field = true;
-                            break;
+                            field_offset += mw;
                         }
-                        field_offset += mw;
+                        if (!found_field) break;
+                        cur_st = field_ts && field_ts->UhdmType() == uhdmstruct_typespec
+                                     ? any_cast<const UHDM::struct_typespec*>(field_ts)
+                                     : nullptr;
                     }
                     field_ok = found_field && field_width > 0;
                     // Constant part-select window of the field (0-based).
