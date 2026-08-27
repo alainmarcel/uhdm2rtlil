@@ -12283,6 +12283,7 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
 
+
     // Dynamic indexed_part_select LHS — synthesise mask/shift/or write
     // (see Process* overload above for the full rationale).
     if (auto lhs_e = uhdm_assign->Lhs()) {
@@ -13591,6 +13592,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
 // Import statement for case rule context
 void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* case_rule) {
+
     if (!uhdm_stmt) {
         if (mode_debug)
             log("        import_statement_comb: null statement\n");
@@ -14162,8 +14164,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // it (firrtl_938: `if(we_a) q_a<=data_a;
                             // q_a<=ram[addr_a];` → q_a is ram[addr_a], not
                             // we_a?data_a:ram[addr_a]).
-                            if (target_sig.is_wire())
-                                remove_target_from_switches(case_rule, target_sig);
+                            // A PARTIAL target supersedes too: `mem[0] <= '0`
+                            // after a conditional write loop targets a SLICE of
+                            // the temp, and the is_wire() guard skipped it, so
+                            // the loop's switch action still won.  CVA6
+                            // ariane_regfile_ff hardwires x0 that way, and
+                            // register 0 read back written data instead of zero.
+                            remove_target_from_switches(case_rule, target_sig);
                             case_rule->actions.push_back(RTLIL::SigSig(target_sig, rhs_sig));
                             if (mode_debug)
                                 log("        Assignment added to case_rule, now has %d actions\n", (int)case_rule->actions.size());
