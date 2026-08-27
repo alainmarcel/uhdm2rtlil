@@ -10701,8 +10701,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         int mw = 0;
                         const UHDM::typespec* ats2 = nullptr;
                         if (auto mts = m->Typespec())
-                            if ((ats2 = mts->Actual_typespec()))
+                            if ((ats2 = mts->Actual_typespec())) {
+                                // Resolve a member whose type is a TYPE
+                                // PARAMETER to the instance's binding, as the
+                                // read path does.  Without it the descent into
+                                // such a member yields no struct_typespec, the
+                                // field path fails to resolve, and the write is
+                                // declined and then dropped — CVA6 scoreboard's
+                                // `mem_q[x_id_i].sbe.rd`, where sbe's type is
+                                // the scoreboard_entry_t type parameter.
+                                ats2 = resolve_type_param_typespec(ats2,
+                                                                   current_instance);
                                 mw = get_width_from_typespec(ats2, current_instance);
+                            }
                         if (std::string(m->VpiName()) == ffields[fi]) {
                             field_width = mw;
                             field_ats = ats2;
@@ -12271,6 +12282,7 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
 
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
+
     // Dynamic indexed_part_select LHS — synthesise mask/shift/or write
     // (see Process* overload above for the full rationale).
     if (auto lhs_e = uhdm_assign->Lhs()) {

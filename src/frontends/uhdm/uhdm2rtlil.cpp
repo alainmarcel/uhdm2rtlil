@@ -4482,6 +4482,42 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
 
+                    // Packed MULTI-DIM variable (`logic [N:0][W-1:0] x;`):
+                    // stamp the same geometry ports and nets get, so an element
+                    // select AND an element RANGE scale by the element width.
+                    // Without it `x[hi:lo]` was read as a BIT range — CVA6
+                    // scoreboard's `issue_pointer[NrIssuePorts-1:0]` yielded
+                    // {0, bits[1:0]} instead of elements 0..1.
+                    if (wire && !wire->attributes.count(
+                            RTLIL::escape_id("packed_elem_width"))) {
+                        const UHDM::VectorOfrange* vr = nullptr;
+                        if (auto ve = dynamic_cast<const UHDM::expr*>(var))
+                            if (auto vts = ve->Typespec())
+                                if (auto ats = vts->Actual_typespec())
+                                    if (ats->UhdmType() == uhdmlogic_typespec)
+                                        vr = any_cast<const UHDM::logic_typespec*>(ats)->Ranges();
+                        if (vr && vr->size() > 1) {
+                            auto r0 = (*vr)[0];
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int ol = l.as_const().as_int();
+                                int orr = r.as_const().as_int();
+                                int osz = std::abs(ol - orr) + 1;
+                                if (osz > 1 && wire->width > 0 &&
+                                    wire->width % osz == 0 &&
+                                    (wire->width / osz) > 1) {
+                                    wire->attributes[RTLIL::escape_id("packed_elem_width")] =
+                                        RTLIL::Const(wire->width / osz);
+                                    wire->attributes[RTLIL::escape_id("packed_outer_left")] =
+                                        RTLIL::Const(ol);
+                                    wire->attributes[RTLIL::escape_id("packed_outer_right")] =
+                                        RTLIL::Const(orr);
+                                }
+                            }
+                        }
+                    }
+
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
                 } else {
                     // Wire already exists, but check if we need to handle initial expression
