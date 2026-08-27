@@ -10640,7 +10640,25 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         // (`arr[i][j].field[k]`).
         const ref_obj* frf = nullptr;
         const bit_select* field_bs = nullptr;
-        if (nsel >= 2 && nsel == peM.size() - 1 &&
+        // Field levels named by the tail, outermost first.  A NESTED path
+        // (`mem_n[idx].sbe.rd`, CVA6 scoreboard) is [bit_select, ref_obj,
+        // ref_obj]: accepting only ONE trailing ref_obj left the write to fall
+        // through to import_hier_path's READ path, which drove a stray temp
+        // wire and inferred a latch instead of updating the array.
+        std::vector<std::string> ffields;
+        if (nsel >= 1 && nsel < peM.size()) {
+            bool all_ref = true;
+            for (size_t t = nsel; t < peM.size(); t++)
+                if (peM[t]->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+            if (all_ref) {
+                for (size_t t = nsel; t < peM.size(); t++)
+                    ffields.push_back(std::string(peM[t]->VpiName()));
+                frf = any_cast<const ref_obj*>(peM[peM.size() - 1]);
+            }
+        }
+        if (frf) {
+            // handled via ffields below
+        } else if (nsel >= 2 && nsel == peM.size() - 1 &&
             peM[nsel]->UhdmType() == uhdmref_obj) {
             frf = any_cast<const ref_obj*>(peM[nsel]);
         } else if (nsel >= 3 && nsel == peM.size()) {
@@ -10658,6 +10676,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
             std::string base_name = std::string(bs0->VpiName());
             std::string field_name = std::string(frf ? frf->VpiName()
                                                      : field_bs->VpiName());
+            if (ffields.empty()) ffields.push_back(field_name);
             RTLIL::Wire* base_wire = name_map.count(base_name)
                                          ? name_map[base_name]
                                          : module->wire(RTLIL::escape_id(base_name));
@@ -10671,20 +10690,32 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 int field_offset = 0, field_width = 0;
                 bool found_field = false;
                 const UHDM::typespec* field_ats = nullptr;
-                for (int i2 = (int)st2->Members()->size() - 1; i2 >= 0; i2--) {
-                    auto m = (*st2->Members())[i2];
-                    int mw = 0;
-                    const UHDM::typespec* ats2 = nullptr;
-                    if (auto mts = m->Typespec())
-                        if ((ats2 = mts->Actual_typespec()))
-                            mw = get_width_from_typespec(ats2, current_instance);
-                    if (std::string(m->VpiName()) == field_name) {
-                        field_width = mw;
-                        field_ats = ats2;
-                        found_field = true;
-                        break;
+                // Descend every level of the field path, summing each level's
+                // offset within its own struct.
+                const UHDM::struct_typespec* cur_st2 = st2;
+                for (size_t fi = 0; fi < ffields.size(); fi++) {
+                    if (!cur_st2 || !cur_st2->Members()) { found_field = false; break; }
+                    found_field = false;
+                    for (int i2 = (int)cur_st2->Members()->size() - 1; i2 >= 0; i2--) {
+                        auto m = (*cur_st2->Members())[i2];
+                        int mw = 0;
+                        const UHDM::typespec* ats2 = nullptr;
+                        if (auto mts = m->Typespec())
+                            if ((ats2 = mts->Actual_typespec()))
+                                mw = get_width_from_typespec(ats2, current_instance);
+                        if (std::string(m->VpiName()) == ffields[fi]) {
+                            field_width = mw;
+                            field_ats = ats2;
+                            found_field = true;
+                            break;
+                        }
+                        field_offset += mw;
                     }
-                    field_offset += mw;
+                    if (!found_field) break;
+                    cur_st2 = field_ats &&
+                              field_ats->UhdmType() == uhdmstruct_typespec
+                                  ? any_cast<const UHDM::struct_typespec*>(field_ats)
+                                  : nullptr;
                 }
                 // With a trailing field index, only the indexed sub-slice of
                 // the member is written.
@@ -10794,6 +10825,29 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         RTLIL::SigSpec cur = current_comb_values.count(base_name)
                                                  ? current_comb_values[base_name]
                                                  : RTLIL::SigSpec(base_wire);
+                        if (!current_comb_values.count(base_name) && case_rule) {
+                            // always_ff: current_comb_values is suppressed to
+                            // keep non-blocking semantics, so the in-flight
+                            // value is not in the ccv chain — it is the RHS of
+                            // the pending action on `$0\base` from earlier in
+                            // this same block (`mem_q <= mem_n;`).  Starting
+                            // from the REGISTERED wire and then removing that
+                            // action below dropped the whole-array update:
+                            // CVA6 scoreboard.sv:310-312 left mem_q holding
+                            // stale entries, visible as a wrong .rd field.
+                            std::string tn0 = "$0\\" + base_name;
+                            RTLIL::Wire* tw0 = module->wire(tn0);
+                            RTLIL::SigSpec want = tw0 ? RTLIL::SigSpec(tw0)
+                                                      : RTLIL::SigSpec(base_wire);
+                            for (int ai = (int)case_rule->actions.size() - 1;
+                                 ai >= 0; ai--) {
+                                if (case_rule->actions[ai].first == want &&
+                                    case_rule->actions[ai].second.size() == base_w2) {
+                                    cur = case_rule->actions[ai].second;
+                                    break;
+                                }
+                            }
+                        }
                         RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w2);
                         module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_m), cleared);
                         RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w2);
@@ -11106,6 +11160,24 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     RTLIL::SigSpec cur = current_comb_values.count(base_name)
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
+    if (!current_comb_values.count(base_name) && case_rule) {
+        // always_ff: current_comb_values is suppressed to keep non-blocking
+        // semantics, so the in-flight value is the RHS of the pending action on
+        // `$0\base` from earlier in this same block (`mem_q <= mem_n;`).
+        // Starting from the REGISTERED wire and then removing that action below
+        // dropped the whole-array update — CVA6 scoreboard.sv:310-312 kept
+        // stale entries, visible as a wrong scoreboard_entry_t.rd.
+        std::string tn0 = "$0\\" + base_name;
+        RTLIL::Wire* tw0 = module->wire(tn0);
+        RTLIL::SigSpec want = tw0 ? RTLIL::SigSpec(tw0) : RTLIL::SigSpec(base_wire);
+        for (int ai = (int)case_rule->actions.size() - 1; ai >= 0; ai--) {
+            if (case_rule->actions[ai].first == want &&
+                case_rule->actions[ai].second.size() == base_w) {
+                cur = case_rule->actions[ai].second;
+                break;
+            }
+        }
+    }
     RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
     module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
     RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w);
