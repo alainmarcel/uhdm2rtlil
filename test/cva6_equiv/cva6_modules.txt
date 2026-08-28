@@ -66,7 +66,7 @@ cva6_icache                            4   900   proven
 cva6_icache_axi_wrapper                4   400   proven   # proven by the dynamic element-field write + packed element-range fixes
 cva6_mmu                               4   180   proven
 cva6_ptw                               1   900   proven
-cva6_rvfi_probes                       4   180   cex
+cva6_rvfi_probes                       4   180   proven
 cva6_shared_tlb                        4   900   proven
 cva6_tlb                               4   900   proven
 cvxif_compressed_if_driver             4   900   proven
