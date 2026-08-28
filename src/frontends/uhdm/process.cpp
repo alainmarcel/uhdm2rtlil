@@ -12217,6 +12217,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 mapped.append(ch);
             }
             if (any_mapped) {
+                // Later-wins, exactly as in the whole-wire branch above: RTLIL
+                // runs a case's actions BEFORE its switches, so this
+                // unconditional root-level write would otherwise be overridden
+                // by an EARLIER conditional write to the same bits.  The
+                // whole-wire branch got this fix but the PART-SELECT branch did
+                // not, even though the CVA6 case that motivated it writes a bit
+                // select: issue_read_operands' trailing
+                //   stall_raw[0] = xrej ? 0 : stall_rs1[0]||stall_rs2[0]||...
+                // still lost to `if (rs1_has_raw) stall_raw[i] = 1'b1` in the
+                // unrolled loop above it.
+                if (!in_always_ff_body_mode && !in_always_ff_context)
+                    remove_target_from_switches(&proc->root_case, mapped);
                 proc->root_case.actions.push_back(RTLIL::SigSig(mapped, rhs));
                 // In always_ff, a same-cycle BLOCKING write to a bit/part-select
                 // must be visible to later reads of the same signal (e.g. the

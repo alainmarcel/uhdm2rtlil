@@ -697,3 +697,18 @@ Test: arb_idx_cast
     as tc_sram's `data_t [NumPorts-1:0][Latency-1:0] rdata_q`, whose second
     index selects a whole sub-element, and wt_dcache_mem then fails to import).
 
+Test: regbank_depth1
+    `rdata` is assigned ONLY inside `if (cs)` of the non-reset branch and
+    never in the async-reset branch, so it has no reset value and holds
+    across `!cs` cycles.  Verilator's 2-state RTL starts it at 0 while the
+    gate-level netlist retains the last value written through the byte-enable
+    memory, so the two drift apart on random stimulus (2 mismatches at cycles
+    136/137, `rtl=0x0 nl=0xac57`).  The harness itself flags the run VACUOUS
+    ("outputs were all-zero every cycle") -- the RTL side never exercised the
+    read port.
+    ADJUDICATED: the SAT-from-reset miter proves UHDM == Verilog over 24
+    cycles ("SAT proof finished - no model found: SUCCESS!"), and
+    triage_cosim.py independently returns EQUIVALENT/ARTEFACT.  Not a
+    frontend bug.  Note the suite's OTHER two gates are both blind here:
+    equiv_make pairs nothing because the design is memory-vs-registers, so
+    equiv_check.log reports "No $equiv cells found" in gold and gate alike.
