@@ -3112,6 +3112,51 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                     }
 
+                    // `$bits(v)` where v's declared type is a TYPE PARAMETER.
+                    // Surelog defers this query to elaboration (it cannot fold
+                    // it at definition time, where the parameter has no
+                    // binding), so it arrives here as a live sys_func_call whose
+                    // argument is a bare ref_obj.  Importing that ref as an
+                    // expression can still yield 1 bit, so take the width from
+                    // the DECLARATION: resolve the variable's typespec through
+                    // the type parameter, falling back to the already-imported
+                    // RTLIL wire.  CVA6 cva6_rvfi_probes gates its whole output
+                    // on `$bits(rvfi_probes_o.instr) == $bits(instr)`.
+                    if (total_bits <= 1) {
+                        if (auto ro2 = dynamic_cast<const UHDM::ref_obj*>(first_arg)) {
+                            std::string vn2 = std::string(ro2->VpiName());
+                            const UHDM::ref_typespec* vrt = nullptr;
+                            if (auto ag2 = ro2->Actual_group()) {
+                                if (auto v2 = dynamic_cast<const UHDM::variables*>(ag2))
+                                    vrt = v2->Typespec();
+                                else if (auto n2 = dynamic_cast<const UHDM::net*>(ag2))
+                                    vrt = n2->Typespec();
+                            }
+                            if (!vrt)
+                                if (auto mi2 = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                                    if (mi2->Variables())
+                                        for (auto v : *mi2->Variables())
+                                            if (std::string(v->VpiName()) == vn2) { vrt = v->Typespec(); break; }
+                                    if (!vrt && mi2->Nets())
+                                        for (auto n : *mi2->Nets())
+                                            if (std::string(n->VpiName()) == vn2) { vrt = n->Typespec(); break; }
+                                }
+                            int w2 = 0;
+                            if (vrt && vrt->Actual_typespec()) {
+                                const UHDM::typespec* vts =
+                                    resolve_type_param_typespec(vrt->Actual_typespec(), current_instance);
+                                if (vts) w2 = get_width_from_typespec(vts, current_instance);
+                            }
+                            if (w2 <= 1 && !vn2.empty()) {
+                                RTLIL::Wire* vw = name_map.count(vn2)
+                                                      ? name_map[vn2]
+                                                      : module->wire(RTLIL::escape_id(vn2));
+                                if (vw) w2 = vw->width;
+                            }
+                            if (w2 > total_bits) total_bits = w2;
+                        }
+                    }
+
                     // Walk a typespec to extract its dimensions in outer→inner
                     // order.  For multi-range packed types (logic [a:b][c:d])
                     // the ranges are dim 1, dim 2, …; nested Elem_typespec
