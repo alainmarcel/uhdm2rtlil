@@ -139,7 +139,7 @@ hpdcache_wbuf                          4   180   elabfail  # was crash (segfault
 hwpf_stride                            4   400   proven
 hwpf_stride_arb                        4   400   proven
 hwpf_stride_wrapper                    4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-id_stage                               4   180   cex
+id_stage                               4   180   proven
 instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
 instr_realign                          4   900   proven
