@@ -4438,7 +4438,41 @@ static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm
     else if (auto sn = dynamic_cast<const UHDM::struct_net*>(lhs)) rt = sn->Typespec();
     else if (auto lv = dynamic_cast<const UHDM::logic_var*>(lhs)) rt = lv->Typespec();
     else if (auto ln = dynamic_cast<const UHDM::logic_net*>(lhs)) rt = ln->Typespec();
+    else if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(lhs)) {
+        if (pav->Elements() && !pav->Elements()->empty())
+            if (auto e0 = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                rt = e0->Typespec();
+    }
     return rt ? rt->Actual_typespec() : nullptr;
+}
+
+// Rewrite chunks of `res` that reference a wire carrying an in-flight (blocking)
+// value in the current always_comb onto that value.  A read of a signal the SAME
+// block writes must observe the value written earlier in the block; reading the
+// process's own output wire instead closes a combinational loop (CVA6 id_stage:
+// `if (!issue_n[0].valid)` follows `issue_n[0].valid = 1'b0`).  Applied only to
+// operation OPERANDS and comb conditions, which are values, never assignment
+// targets, so a write target is never rewritten to a non-wire.
+static RTLIL::SigSpec remap_sig_inflight(const RTLIL::SigSpec& res,
+                                         const std::map<std::string, RTLIL::SigSpec>& ccv) {
+    if (res.empty() || ccv.empty()) return res;
+    RTLIL::SigSpec out;
+    bool changed = false;
+    for (const auto& ch : res.chunks()) {
+        if (ch.wire) {
+            std::string wn = ch.wire->name.str();
+            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+            auto it = ccv.find(wn);
+            if (it != ccv.end() && it->second.size() == ch.wire->width &&
+                ch.offset + ch.width <= it->second.size()) {
+                out.append(it->second.extract(ch.offset, ch.width));
+                changed = true;
+                continue;
+            }
+        }
+        out.append(RTLIL::SigSpec(ch));
+    }
+    return changed ? out : res;
 }
 
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
@@ -5124,6 +5158,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
             }
+            if (input_mapping == &current_comb_values && current_comb_process &&
+                !in_always_ff_body_mode && !in_always_ff_context)
+                op_sig = remap_sig_inflight(op_sig, current_comb_values);
             operands.push_back(op_sig);
         }
     }
