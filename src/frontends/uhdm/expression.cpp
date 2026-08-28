@@ -10756,7 +10756,19 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // hoisted to module scope (`work@t.sat`), which can COLLIDE
                 // with a same-named local variable — bht's `.sat` field read
                 // resolved to the local `sat` wire and corrupted the update.
-                std::string_view ref_full_name = ref->VpiFullName();
+                // The guard above was documented but never implemented: a
+                // struct-FIELD ref still fell through here, and CVA6
+                // instr_queue has BOTH a `.instr`/`.cf` struct field and
+                // module-level wires named `instr`/`cf`.  The continuous
+                // assigns `instr_data_in[i].instr = instr[...]` then resolved
+                // their LHS to the SOURCE array \instr, leaving instr_data_in
+                // undriven and multi-driving \instr -- 140 driver-driver
+                // conflicts that opt_clean resolved to constants, so the whole
+                // frontend fetch datapath came out zero.
+                bool field_ref = ref->Actual_group() &&
+                                 ref->Actual_group()->UhdmType() == uhdmtypespec_member;
+                std::string_view ref_full_name = field_ref ? std::string_view()
+                                                           : ref->VpiFullName();
                 if (!ref_full_name.empty()) {
                     std::string full_str = std::string(ref_full_name);
                     // Extract module-relative path
