@@ -937,6 +937,55 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 } else {
                     log_warning("Part-select LHS %s has non-constant range\n", base_name.c_str());
                 }
+            } else if (assign->Lhs()->UhdmType() == uhdmindexed_part_select) {
+                // Indexed part-select LHS `out[k*W +: W] = …`.  Only the plain
+                // `[hi:lo]` form was handled, so the byte/hword/word replication
+                // loops in CVA6 wt_dcache_wbuffer's repData64/repData32
+                //     2'b00: for (int k = 0; k < 8; k++) out[k*8+:8] = data[offset*8+:8];
+                // wrote nothing: miss_wdata_o's three replication case arms all
+                // collapsed to the same undriven value, so the write buffer fed
+                // the miss unit zeros instead of the replicated store data.
+                const indexed_part_select* ips =
+                    any_cast<const indexed_part_select*>(assign->Lhs());
+                std::string base_name = std::string(ips->VpiName());
+                int base_val = -1, width_val = -1;
+                if (ips->Base_expr()) {
+                    RTLIL::SigSpec s2 = import_expression(
+                        any_cast<const expr*>(ips->Base_expr()), &input_mapping);
+                    if (s2.is_fully_const()) base_val = s2.as_int();
+                }
+                if (ips->Width_expr()) {
+                    RTLIL::SigSpec s2 = import_expression(
+                        any_cast<const expr*>(ips->Width_expr()), &input_mapping);
+                    if (s2.is_fully_const()) width_val = s2.as_int();
+                }
+                if (base_val >= 0 && width_val > 0) {
+                    // `-:` counts DOWN from the base.
+                    int offset = (ips->VpiIndexedPartSelectType() == vpiPosIndexed)
+                                     ? base_val : (base_val - width_val + 1);
+                    RTLIL::SigSpec base_spec;
+                    if (base_name == func_name) {
+                        base_spec = RTLIL::SigSpec(result_wire);
+                    } else {
+                        auto it = input_mapping.find(base_name);
+                        if (it != input_mapping.end())
+                            base_spec = it->second;
+                    }
+                    if (offset >= 0 && base_spec.size() > 0 &&
+                        offset + width_val <= base_spec.size()) {
+                        lhs_sig = base_spec.extract(offset, width_val);
+                        if (mode_debug)
+                            log("  process_stmt_to_case: indexed part-select LHS "
+                                "%s[%d +: %d]\n", base_name.c_str(), offset, width_val);
+                    } else {
+                        log_warning("Indexed part-select LHS %s[%d +: %d] out of "
+                                    "bounds (base_size=%d)\n", base_name.c_str(),
+                                    offset, width_val, base_spec.size());
+                    }
+                } else {
+                    log_warning("Indexed part-select LHS %s has non-constant "
+                                "base/width\n", base_name.c_str());
+                }
             } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
                 // Handle bit select assignment
                 const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
