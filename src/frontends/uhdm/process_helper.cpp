@@ -1714,7 +1714,24 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
         case vpiAssignStmt: {
             const assignment* assign = require_assignment(stmt, "collect_dynamic_expanded_array_writes");
             if (auto lhs = assign->Lhs()) {
-                if (lhs->VpiType() == vpiBitSelect) {
+                // A BYTE-ENABLED write `base[idx][j*W +: W] <= …` (tech_cells
+                // generic tc_sram, which every CVA6 cache SRAM instantiates)
+                // reaches us as a VAR_SELECT, so matching only vpiBitSelect
+                // missed it: the array was never
+                // registered per-element, no `$0\base[k]` temps were made, and
+                // emit_dynamic_unpacked_array_elem_write's case actions -- which
+                // fall back to the RAW element wire when the temp is absent --
+                // were never committed by a sync rule.  The SRAM writes were
+                // silently DROPPED, leaving every element undriven and
+                // self-referential (17416 logic loops in CVA6 wt_dcache).
+                if (lhs->VpiType() == vpiVarSelect) {
+                    // Surelog emits `base[idx][j*W +: W]` as a var_select whose
+                    // Exprs() are the index expressions; the FIRST is the
+                    // element index.
+                    if (auto vs = any_cast<const UHDM::var_select*>(lhs))
+                        if (vs->Exprs() && !vs->Exprs()->empty())
+                            record(std::string(vs->VpiName()), (*vs->Exprs())[0]);
+                } else if (lhs->VpiType() == vpiBitSelect) {
                     const bit_select* bs = any_cast<const bit_select*>(lhs);
                     record(std::string(bs->VpiName()), bs->VpiIndex());
                 }
