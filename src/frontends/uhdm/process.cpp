@@ -9247,6 +9247,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     // collapsed to a passthrough).
                     lhs_name = std::string(lhs_var->VpiName());
                 } else if (lhs_expr->VpiType() == vpiPartSelect ||
+                           lhs_expr->VpiType() == vpiIndexedPartSelect ||
                            lhs_expr->VpiType() == vpiBitSelect) {
                     // Part/bit-select write to a function LOCAL
                     // (`data_tmp[CVA6Cfg.XLEN-1:0] = {…}` in CVA6 store_unit's
@@ -9257,7 +9258,23 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     // was DROPPED silently (d_tmp kept its all-zero init).
                     std::string base;
                     int sel_off = -1, sel_w = -1;
-                    if (lhs_expr->VpiType() == vpiPartSelect) {
+                    if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                        // `local[k*W +: W] = …` — same class as the plain
+                        // part-select below; without it the write was dropped
+                        // with "dropped part/bit-select write".
+                        auto ips = any_cast<const UHDM::indexed_part_select*>(lhs_expr);
+                        base = std::string(ips->VpiName());
+                        RTLIL::SigSpec b = import_expression(
+                            any_cast<const expr*>(ips->Base_expr()), &func_mapping);
+                        RTLIL::SigSpec w = import_expression(
+                            any_cast<const expr*>(ips->Width_expr()), &func_mapping);
+                        if (b.is_fully_const() && w.is_fully_const()) {
+                            int o = b.as_const().as_int();
+                            int wd = w.as_const().as_int();
+                            if (ips->VpiIndexedPartSelectType() == 2) o = o - wd + 1;
+                            if (wd > 0 && o >= 0) { sel_off = o; sel_w = wd; }
+                        }
+                    } else if (lhs_expr->VpiType() == vpiPartSelect) {
                         auto ps = any_cast<const part_select*>(lhs_expr);
                         base = std::string(!ps->VpiName().empty()
                                                ? ps->VpiName() : ps->VpiDefName());
@@ -10646,14 +10663,44 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         // through to import_hier_path's READ path, which drove a stray temp
         // wire and inferred a latch instead of updating the array.
         std::vector<std::string> ffields;
-        if (nsel >= 1 && nsel < peM.size()) {
+        // A trailing INDEXED PART-SELECT element (`arr[i].field[k*8 +: 8]`)
+        // narrows the write to a constant slice of the member, exactly like the
+        // trailing bit-select handled via `field_bs` below.  Without peeling it
+        // the tail-walk's all-ref_obj test failed, `frf` stayed null and the
+        // whole write was DROPPED: CVA6 wt_dcache_wbuffer's byte-enable loop
+        // wrote `.valid[k]`/`.dirty[k]` (bit-selects, already handled) but never
+        // `.data[k*8+:8]`, so the write buffer's control bits were correct while
+        // its DATA field stayed zero.
+        size_t field_end = peM.size();
+        int tail_slice_off = -1, tail_slice_w = -1;
+        if (peM.size() >= 3 &&
+            peM.back()->UhdmType() == uhdmindexed_part_select) {
+            auto lips = any_cast<const UHDM::indexed_part_select*>(peM.back());
+            if (lips && lips->Base_expr() && lips->Width_expr()) {
+                RTLIL::SigSpec bb = import_expression(
+                    dynamic_cast<const UHDM::expr*>(lips->Base_expr()));
+                RTLIL::SigSpec ww = import_expression(
+                    dynamic_cast<const UHDM::expr*>(lips->Width_expr()));
+                if (bb.is_fully_const() && ww.is_fully_const()) {
+                    int o = bb.as_const().as_int();
+                    int wd = ww.as_const().as_int();
+                    if (lips->VpiIndexedPartSelectType() == 2) o = o - wd + 1;
+                    if (wd > 0 && o >= 0) {
+                        tail_slice_off = o;
+                        tail_slice_w = wd;
+                        field_end--;
+                    }
+                }
+            }
+        }
+        if (nsel >= 1 && nsel < field_end) {
             bool all_ref = true;
-            for (size_t t = nsel; t < peM.size(); t++)
+            for (size_t t = nsel; t < field_end; t++)
                 if (peM[t]->UhdmType() != uhdmref_obj) { all_ref = false; break; }
             if (all_ref) {
-                for (size_t t = nsel; t < peM.size(); t++)
+                for (size_t t = nsel; t < field_end; t++)
                     ffields.push_back(std::string(peM[t]->VpiName()));
-                frf = any_cast<const ref_obj*>(peM[peM.size() - 1]);
+                frf = any_cast<const ref_obj*>(peM[field_end - 1]);
             }
         }
         if (frf) {
@@ -10738,6 +10785,16 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         found_field = false;
                     else
                         write_w = sub_w;
+                }
+                // Constant slice of the member from a trailing indexed
+                // part-select: shift the member offset and write only it.
+                if (found_field && tail_slice_w > 0) {
+                    if (tail_slice_off + tail_slice_w > field_width) {
+                        found_field = false;
+                    } else {
+                        field_offset += tail_slice_off;
+                        write_w = tail_slice_w;
+                    }
                 }
                 if (found_field && field_width > 0) {
                     std::vector<int> strides(nsel, elem_w2);

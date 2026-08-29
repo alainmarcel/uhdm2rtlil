@@ -23,7 +23,7 @@ functional difference — 11 of the 25 below are functionally clean.
 | cva6 | timeout | **300** | 0 | 🐛 UHDM_WRONG |
 | std_cache_subsystem | timeout | **300** | 0 | 🐛 UHDM_WRONG |
 | wt_cache_subsystem | timeout | **300** | 0 | 🐛 UHDM_WRONG |
-| wt_dcache | timeout | **300** | 0 | 🐛 UHDM_WRONG |
+| wt_dcache | timeout | ~~300~~ **0** | 0 | ✅ FIXED (PRs #662/#663/#664) |
 | ex_stage | cex | **63** | 0 | 🐛 UHDM_WRONG |
 | fpu_wrap | cex | **62** | 0 | 🐛 UHDM_WRONG |
 | issue_stage | timeout | **1** | 0 | 🐛 UHDM_WRONG |
@@ -46,15 +46,27 @@ functional difference — 11 of the 25 below are functionally clean.
 | macro_decoder | cex | — | — | ❓ co-sim did not run (elaboration error) |
 | zcmt_decoder | cex | — | — | ❓ co-sim did not run (elaboration error) |
 
-Totals: **7 UHDM_WRONG**, 3 BOTH_DIFFER, 11 NO_DIVERGENCE, 4 no-run.
+Totals at sweep time: **7 UHDM_WRONG**, 3 BOTH_DIFFER, 11 NO_DIVERGENCE, 4 no-run.
+(`wt_dcache` has since been fixed; `frontend` was fixed by PR #660.)
 
 ## Reading the UHDM_WRONG group
 
-`cva6` (the whole CPU), `wt_cache_subsystem` and `wt_dcache` are all at 300/300
-with slang clean. `wt_dcache` is instantiated by `wt_cache_subsystem`, which is
-instantiated by `cva6`, so these are very likely **one bug seen three times**;
-`wt_dcache` is the leaf and the right place to attack. `std_cache_subsystem` is
-the alternative (non-WT) cache and may or may not share the cause.
+`cva6` (the whole CPU), `wt_cache_subsystem` and `wt_dcache` were all at 300/300
+with slang clean, and since `wt_dcache` is instantiated by `wt_cache_subsystem`
+which is instantiated by `cva6`, the obvious guess was **one bug seen three
+times**.
+
+**That guess was WRONG, and the correction is worth keeping.** `wt_dcache` is
+now co-sim clean (0/300) after three fixes, and re-adjudicating the parents
+afterwards gives:
+
+    wt_cache_subsystem :: uhdm_vs_rtl=300 slang_vs_rtl=0
+    std_cache_subsystem:: uhdm_vs_rtl=300 slang_vs_rtl=0
+    cva6               :: uhdm_vs_rtl=300 slang_vs_rtl=0
+
+— i.e. **unchanged**.  Each carries its own independent defect; a parent being
+at 300/300 says nothing about the child.  Do not assume nesting implies a shared
+cause: re-adjudicate the parent after fixing the child.
 
 `issue_stage` at 1/300 is the cheapest single item — one divergent cycle,
 usually a crisp localisation.
@@ -72,6 +84,12 @@ usually a crisp localisation.
   271 vs 63) the RTL-vs-synth comparison itself is suspect.
 - The 4 no-run modules need their harness/elaboration issue fixed before they
   can be measured at all.
+
+KNOWN FLAW in the generator: it reads the status column with `awk $NF`, which picks up a trailing `#` comment instead of the status — so
+`wt_dcache_wbuffer`, `wt_dcache_mem` and `wt_dcache_ctrl` never appeared
+above.  Re-adjudicated by hand they are BOTH_DIFFER (299 vs 216), 
+BOTH_DIFFER (63 vs 63) and NO_DIVERGENCE (0/0) respectively, so the
+manifest comments calling the first two "UHDM WRONG" are stale.
 
 Regenerate with the loop in
 `/tmp/.../scratchpad/cosim_all.sh` (300 cycles per module, ~2 h for all 25).
