@@ -1103,6 +1103,9 @@ struct UhdmImporter {
     // instance-bound type (returns input unchanged when no binding applies).
     const UHDM::typespec* resolve_type_param_typespec(const UHDM::typespec* ts,
                                                       const UHDM::scope* inst = nullptr);
+    // One resolution step (no fixed-point iteration); used only by the above.
+        const UHDM::typespec* resolve_type_param_typespec_step(const UHDM::typespec* ts,
+                                                      const UHDM::scope* inst = nullptr);
     // Materialize a whole-accessed / multi-dim unpacked array as ONE flat
     // canonical wire (product of all dims × element width) plus per-ROW
     // alias wires `name[k]` connected to its slices, stamping the
