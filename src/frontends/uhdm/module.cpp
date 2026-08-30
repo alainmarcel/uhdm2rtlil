@@ -3067,40 +3067,72 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
 const UHDM::typespec* UhdmImporter::resolve_type_param_typespec(
         const UHDM::typespec* ts_c, const UHDM::scope* inst) {
     if (!ts_c) return ts_c;
+    if (!uhdm_design || !uhdm_design->AllModules()) return ts_c;
+    // CHAINED type parameters (`parameter type resp_t = base_resp_t`,
+    // type_param_unpacked_port / CVA6 hpdcache) can make one parameter's
+    // binding point at ANOTHER parameter's default, whose resolution points
+    // back — the caller's resolve/recurse pattern then ping-pongs forever.
+    // Iterate to a fixed point here with a seen-set so the result is stable:
+    // resolving the returned typespec again returns it unchanged.
+    std::set<const UHDM::typespec*> tp_seen;
+    const UHDM::typespec* tp_cur = ts_c;
+    for (int tp_it = 0; tp_it < 8; tp_it++) {
+        if (!tp_seen.insert(tp_cur).second) return ts_c;   // cycle: keep original
+        const UHDM::typespec* tp_next =
+            resolve_type_param_typespec_step(tp_cur, inst);
+        if (tp_next == tp_cur) break;
+        tp_cur = tp_next;
+    }
+    return tp_cur;
+}
+
+const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
+        const UHDM::typespec* ts_c, const UHDM::scope* inst) {
     auto mi = dynamic_cast<const UHDM::module_inst*>(
         current_instance ? (const UHDM::scope*)current_instance : inst);
-    if (!mi) return ts_c;
-    bool has_tp = false;
-    if (mi->Parameters())
-        for (auto p : *mi->Parameters())
-            if (p->UhdmType() == uhdmtype_parameter) { has_tp = true; break; }
-    if (!has_tp || !uhdm_design || !uhdm_design->AllModules()) return ts_c;
-    std::string dn = std::string(mi->VpiDefName());
-    const UHDM::module_inst* def = nullptr;
-    for (auto m : *uhdm_design->AllModules())
-        if (std::string(m->VpiDefName()) == dn) { def = m; break; }
-    if (!def || def == mi || !def->Parameters()) return ts_c;
-    for (auto dp : *def->Parameters()) {
-        if (dp->UhdmType() != uhdmtype_parameter) continue;
-        auto dtp = any_cast<const UHDM::type_parameter*>(dp);
-        const UHDM::typespec* d_at =
-            (dtp->Typespec() ? dtp->Typespec()->Actual_typespec() : nullptr);
-        if (!d_at) continue;
-        bool match = (d_at == ts_c) ||
-                     (d_at->UhdmType() == ts_c->UhdmType() &&
-                      d_at->VpiLineNo() == ts_c->VpiLineNo() &&
-                      d_at->VpiColumnNo() == ts_c->VpiColumnNo() &&
-                      d_at->VpiFile() == ts_c->VpiFile());
-        if (!match) continue;
-        for (auto ip : *mi->Parameters()) {
-            if (ip->UhdmType() != uhdmtype_parameter) continue;
-            if (ip->VpiName() != dp->VpiName()) continue;
-            auto itp = any_cast<const UHDM::type_parameter*>(ip);
-            if (itp->Typespec() && itp->Typespec()->Actual_typespec() &&
-                itp->Typespec()->Actual_typespec() != ts_c) {
-                log("UHDM: type-param member default '%s' -> instance-bound type\n",
-                    std::string(dp->VpiName()).c_str());
-                return itp->Typespec()->Actual_typespec();
+    // The default typespec may have been declared by an ANCESTOR that RELAYS
+    // its own type parameter down (CVA6 issue_stage passes scoreboard_entry_t
+    // to the scoreboard: the elem default inside the scoreboard's clone of
+    // forwarding_t is issue_stage's `= logic` at issue_stage.sv:25:41).
+    // Matching only against the CURRENT instance's definition then fails and
+    // the member collapsed to 1 bit (fwd_o 24 vs 3860, sbe 8 vs 3504 — the
+    // RAW-hazard check read all-zero rd values).  Walk UP the elaborated
+    // instance chain and try each level: the declaring ancestor's instance
+    // carries the binding.
+    for (int depth = 0; mi && depth < 8; depth++,
+         mi = dynamic_cast<const UHDM::module_inst*>(mi->VpiParent())) {
+        bool has_tp = false;
+        if (mi->Parameters())
+            for (auto p : *mi->Parameters())
+                if (p->UhdmType() == uhdmtype_parameter) { has_tp = true; break; }
+        if (!has_tp) continue;
+        std::string dn = std::string(mi->VpiDefName());
+        const UHDM::module_inst* def = nullptr;
+        for (auto m : *uhdm_design->AllModules())
+            if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+        if (!def || def == mi || !def->Parameters()) continue;
+        for (auto dp : *def->Parameters()) {
+            if (dp->UhdmType() != uhdmtype_parameter) continue;
+            auto dtp = any_cast<const UHDM::type_parameter*>(dp);
+            const UHDM::typespec* d_at =
+                (dtp->Typespec() ? dtp->Typespec()->Actual_typespec() : nullptr);
+            if (!d_at) continue;
+            bool match = (d_at == ts_c) ||
+                         (d_at->UhdmType() == ts_c->UhdmType() &&
+                          d_at->VpiLineNo() == ts_c->VpiLineNo() &&
+                          d_at->VpiColumnNo() == ts_c->VpiColumnNo() &&
+                          d_at->VpiFile() == ts_c->VpiFile());
+            if (!match) continue;
+            for (auto ip : *mi->Parameters()) {
+                if (ip->UhdmType() != uhdmtype_parameter) continue;
+                if (ip->VpiName() != dp->VpiName()) continue;
+                auto itp = any_cast<const UHDM::type_parameter*>(ip);
+                if (itp->Typespec() && itp->Typespec()->Actual_typespec() &&
+                    itp->Typespec()->Actual_typespec() != ts_c) {
+                    log("UHDM: type-param member default '%s' -> instance-bound type\n",
+                        std::string(dp->VpiName()).c_str());
+                    return itp->Typespec()->Actual_typespec();
+                }
             }
         }
     }
