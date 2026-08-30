@@ -172,7 +172,7 @@ store_buffer                           4   900   proven
 store_unit                             4   900   proven
 tag_cmp                                4   400   cex
 trigger_module                         4   900   proven
-wt_axi_adapter                         4   400   cex      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
+wt_axi_adapter                         4   400   proven      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
