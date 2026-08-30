@@ -272,6 +272,11 @@ struct UhdmImporter {
     // creating a child cell so it lands in the PARENT's specialized module, not
     // the base (EnumParameterInNestedModules: a nested parameterized instance).
     std::map<const UHDM::module_inst*, std::string> inst_to_modname_;
+    // Authoritative RTLIL module name per dedup signature: the typaram widths
+    // probed at signature time are approximate, so a dedup HIT cannot
+    // reconstruct the registered `$paramod…$typaram_…` name — read it from
+    // the name recorded when the signature was first imported.
+    std::map<std::string, std::string> signature_to_modname_;
 
     // Track nets driven by module instance output ports
     // These should not have the \reg attribute even if declared as reg

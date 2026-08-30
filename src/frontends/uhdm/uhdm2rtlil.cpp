@@ -1896,7 +1896,19 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
     
     // Update param_signature to include interface information if needed
     param_signature = build_interface_module_name(module_name, param_signature, uhdm_module);
-    
+
+    // TYPE parameters are invisible to the scalar Param_assigns signature above,
+    // so two instances differing ONLY in a type parameter collide: CVA6
+    // wt_axi_adapter's i_icache_data_fifo and i_dcache_data_fifo are both
+    // `cva6_fifo_v3 #(DEPTH=2, …)` but with different `dtype` bindings.  The
+    // second was deduped against the first, its name lookup then failed
+    // ("Could not find module for …"), and the instance was DROPPED SILENTLY —
+    // dcache_data_empty came out undriven-0 ("never empty") and the subsystem
+    // issued spurious AXI writes on every cycle.  Append the same
+    // type_param_signature import_module/import_instance already use so the
+    // dedup key distinguishes the bindings.
+    param_signature += type_param_signature(uhdm_module);
+
     // Check if we've already imported this module definition with these parameters
     bool module_already_imported = imported_module_signatures.count(param_signature) > 0;
     
@@ -1940,6 +1952,13 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         RTLIL::Module* new_mod = design->module(RTLIL::escape_id(module_name));
         if (new_mod) {
             module = new_mod;
+        }
+        // Record the authoritative registered name for this signature so a
+        // later dedup hit can find the module (see signature_to_modname_).
+        {
+            auto self_it = inst_to_modname_.find(uhdm_module);
+            if (self_it != inst_to_modname_.end())
+                signature_to_modname_[param_signature] = self_it->second;
         }
     } else {
         log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
@@ -1997,6 +2016,20 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         
         RTLIL::IdString mod_id = RTLIL::escape_id(yosys_modname);
         module = design->module(mod_id);
+        if (!module) {
+            // Authoritative name recorded when this signature was first
+            // imported.  The reconstruction below CANNOT succeed for a module
+            // registered with a `$typaram_…` suffix (the widths probed here
+            // are approximate), and a failed lookup silently DROPS the
+            // instance: CVA6 wt_axi_adapter's 2nd/3rd `cva6_fifo_v3` ID fifos
+            // (identical scalar+type bindings) vanished, so dcache_data_empty
+            // was undriven-0 and the subsystem issued spurious AXI writes.
+            auto sig_it = signature_to_modname_.find(param_signature);
+            if (sig_it != signature_to_modname_.end())
+                module = design->module(RTLIL::escape_id(sig_it->second));
+            if (module)
+                inst_to_modname_[uhdm_module] = sig_it->second;
+        }
         if (!module) {
             // Try the original param_signature
             mod_id = RTLIL::escape_id(param_signature);
