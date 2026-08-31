@@ -5354,10 +5354,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // extend_u0() (unlike const_shr, which guards it with
                     // max(result_len, size)), so a result_len of -1 becomes
                     // resize((size_t)-1) and throws std::vector::_M_fill_insert.
-                    // Pass the self-determined Verilog width (left operand size)
-                    // instead of -1; the caller applies any wider context.
+                    // Pass max(context, left-operand size) — same LRM sizing
+                    // rule as the cell path: the context may widen the shift
+                    // but truncation belongs to the assignment.  Using the
+                    // bare operand size folded `1'b1 << 4` (a 1-bit left
+                    // operand) to ZERO inside
+                    //   cnt_d = cnt_q + (1'b1 << CVA6Cfg.DCACHE_OFFSET_WIDTH);
+                    // (CVA6 miss_handler's flush counter), so the FLUSHING
+                    // loop never advanced and the whole flush sequence — and
+                    // everything ordered after it — diverged from the first
+                    // post-reset cycle.  (The "caller applies any wider
+                    // context" note was wrong for a fold nested inside a
+                    // wider arithmetic expression.)
                     result = RTLIL::const_shl(operands[0].as_const(), operands[1].as_const(),
-                                              false, false, operands[0].size());
+                                              false, false,
+                                              std::max(expression_context_width,
+                                                       operands[0].size()));
                 }
                 break;
             case vpiRShiftOp:
