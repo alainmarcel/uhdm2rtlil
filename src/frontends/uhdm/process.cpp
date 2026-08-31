@@ -14483,11 +14483,94 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
             if (ok) {
                 int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
-                for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
-                    loop_values[fl_var] = (int)i;
-                    import_statement_comb(fl_body, case_rule);
+                // A body with `break` is first-match-wins (priority encoder).
+                // The Process-level handler guards each iteration with a
+                // `live` flag; this CaseRule-level handler unrolled forward
+                // with NO break handling, so the LAST matching iteration's
+                // writes survived: CVA6 miss_handler's axi_adapter_arbiter
+                //   IDLE: for (i…) if (req_i[i].req) begin sel_d=i; break; end
+                // granted the HIGHEST requesting port instead of the lowest
+                // (std_cache_subsystem bypass_gnt port 2 vs 0).  Port the same
+                // live-guard structure here, into this case's switches.
+                bool cr_has_break = body_has_break(fl_body);
+                std::vector<std::pair<int, RTLIL::SigSpec>> cr_brk_flags;
+                if (cr_has_break) {
+                    log("        CaseRule for loop body has `break` — forward "
+                        "iteration with live-guarded bodies\n");
+                    RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
+                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                        loop_values[fl_var] = (int)i;
+                        RTLIL::Wire* bw = module->addWire(NEW_ID, 1);
+                        case_rule->actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(bw),
+                                          RTLIL::SigSpec(RTLIL::State::S0)));
+                        RTLIL::SigSpec saved_bf = current_break_flag;
+                        current_break_flag = RTLIL::SigSpec(bw);
+                        bool live_const1 =
+                            live.is_fully_const() && live.as_bool();
+                        RTLIL::SigSpec bf_eff = RTLIL::SigSpec(bw);
+                        if (live_const1) {
+                            import_statement_comb(fl_body, case_rule);
+                        } else {
+                            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                            sw->signal = live;
+                            RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
+                            live_case->compare.push_back(
+                                RTLIL::SigSpec(RTLIL::State::S1));
+                            auto saved_ccv = current_comb_values;
+                            import_statement_comb(fl_body, live_case);
+                            auto then_ccv = current_comb_values;
+                            current_comb_values = saved_ccv;
+                            sw->cases.push_back(live_case);
+                            RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
+                            sw->cases.push_back(dead_case);
+                            thread_comb_if(live, live_case, nullptr,
+                                           &saved_ccv, &then_ccv, nullptr);
+                            case_rule->switches.push_back(sw);
+                            bf_eff = module->And(NEW_ID, live,
+                                                 RTLIL::SigSpec(bw));
+                        }
+                        current_break_flag = saved_bf;
+                        cr_brk_flags.push_back({(int)i, bf_eff});
+                        RTLIL::SigSpec nb =
+                            module->Not(NEW_ID, RTLIL::SigSpec(bw));
+                        live = live_const1
+                                   ? nb
+                                   : RTLIL::SigSpec(
+                                         module->And(NEW_ID, live, nb));
+                    }
+                } else {
+                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                        loop_values[fl_var] = (int)i;
+                        import_statement_comb(fl_body, case_rule);
+                    }
                 }
-                loop_values[fl_var] = (int)(fl_inclusive ? fl_end + fl_inc_val : fl_end);
+                int64_t cr_final = fl_inclusive ? fl_end + fl_inc_val : fl_end;
+                loop_values[fl_var] = (int)cr_final;
+                // Post-loop value of the loop variable with `break`: the index
+                // of the first iteration that broke, else N (one-hot flags, so
+                // fold order is immaterial).  Mirrors the Process handler.
+                if (cr_has_break && !cr_brk_flags.empty()) {
+                    RTLIL::Wire* var_wire = name_map.count(fl_var)
+                                                ? name_map[fl_var] : nullptr;
+                    if (!var_wire)
+                        var_wire = module->wire(RTLIL::escape_id(fl_var));
+                    if (var_wire) {
+                        int w = var_wire->width;
+                        RTLIL::SigSpec sel = RTLIL::Const((int)cr_final, w);
+                        for (auto& bf : cr_brk_flags)
+                            sel = module->Mux(NEW_ID, sel,
+                                              RTLIL::SigSpec(RTLIL::Const(bf.first, w)),
+                                              bf.second);
+                        loop_values.erase(fl_var);
+                        RTLIL::SigSpec tgt =
+                            map_to_temp_wire(RTLIL::SigSpec(var_wire));
+                        remove_target_from_switches(case_rule, tgt);
+                        case_rule->actions.push_back(RTLIL::SigSig(tgt, sel));
+                        if (!in_always_ff_body_mode)
+                            current_comb_values[fl_var] = sel;
+                    }
+                }
             } else {
                 log_warning("import_statement_comb(CaseRule*): unsupported for loop, skipping\n");
             }
