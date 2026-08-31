@@ -93,3 +93,40 @@ manifest comments calling the first two "UHDM WRONG" are stale.
 
 Regenerate with the loop in
 `/tmp/.../scratchpad/cosim_all.sh` (300 cycles per module, ~2 h for all 25).
+
+## Re-sweep 2026-08-31 — after the multi-range elem-select round (all 48 cex/timeout modules)
+
+Run: 2026-08-31, 300 cycles, seed 1, frontend at PR #670 (Surelog/UHDM with
+UHDM#1148).  Every module fixed by the campaign now reads NO_DIVERGENCE;
+the remaining ACTIONABLE backlog is 7 UHDM_WRONG modules, all hpdcache-family
+plus one fpnew slice:
+
+| module | manifest | uhdm | slang | verdict |
+|---|---|---|---|---|
+| cva6_hpdcache_subsystem_axi_arbiter | cex | 300 | 0 | **UHDM_WRONG** |
+| hpdcache_data_resize | cex | 300 | 0 | **UHDM_WRONG** |
+| hpdcache_data_upsize | cex | 300 | 0 | **UHDM_WRONG** |
+| hpdcache_mem_req_write_arbiter | cex | 300 | 0 | **UHDM_WRONG** |
+| hpdcache_flush | cex | 298 | 0 | **UHDM_WRONG** |
+| fpnew_opgroup_multifmt_slice | cex | 99 | 0 | **UHDM_WRONG** |
+| hpdcache_victim_sel | cex | 7 | 0 | **UHDM_WRONG** |
+| div_sqrt_top_mvp | timeout | 55 | 55 | BOTH_DIFFER |
+| fpnew_opgroup_block | cex | 63 | 271 | BOTH_DIFFER |
+| hpdcache_cmo | cex | 298 | 298 | BOTH_DIFFER |
+| hpdcache_fifo_reg_initialized | cex | 150 | 134 | BOTH_DIFFER |
+| hpdcache_uncached | cex | 300 | 300 | BOTH_DIFFER |
+| issue_stage | timeout | 3 | 3 | BOTH_DIFFER |
+| miss_handler | cex | 5 | 1 | BOTH_DIFFER |
+| wt_dcache_mem | cex | 63 | 63 | BOTH_DIFFER |
+| wt_dcache_wbuffer | cex | 216 | 216 | BOTH_DIFFER |
+
+NO_DIVERGENCE (SAT-capacity, not correctness): aes cache_ctrl csr_regfile
+cva6 cva6_hpdcache_if_adapter ex_stage fpnew_fma fpnew_opgroup_fmt_slice
+fpu_wrap frontend hpdcache_rtab issue_read_operands load_store_unit mult
+multiplier scoreboard serdiv std_cache_subsystem std_nbdcache tag_cmp
+wt_cache_subsystem wt_dcache wt_dcache_ctrl
+
+NO_RUN (harness/wrapper build errors, need triage before adjudication):
+hpdcache_core_arbiter hpdcache_ctrl hpdcache_memctrl
+hpdcache_regbank_wmask_1rw hpdcache_sram_wbyteenable
+hpdcache_sram_wbyteenable_1rw hwpf_stride_wrapper macro_decoder zcmt_decoder
