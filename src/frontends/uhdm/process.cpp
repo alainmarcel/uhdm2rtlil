@@ -10974,12 +10974,27 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                                                   : field_bs->VpiName());
     if (base_name.empty() || field_name.empty()) return false;
 
-    // Only the FLAT representation is handled here: `\arr` exists as one wide
-    // wire AND per-element aliases `\arr[k]` exist (the per-element-only
-    // representation goes through emit_dynamic_unpacked_array_write).
+    // FLAT representation: `\arr` exists as one wide wire (per-element
+    // aliases may exist alongside).  PER-ELEMENT-only representation
+    // (`\arr[k]` wires and no flat `\arr` — a mem2reg-demoted async-reset
+    // table, CVA6 bht-style): geometry comes from the element wires and the
+    // write is emitted per element further down; without that branch the
+    // write fell through to import_hier_path's READ path and was DROPPED
+    // ("Could not resolve struct member access").
     RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
-    if (!base_wire) return false;
-    int base_w = base_wire->width;
+    int pe_low = -1, pe_n = 0, pe_w = 0;
+    if (!base_wire) {
+        pe_low = expanded_array_low(base_name);
+        if (pe_low < 0) return false;
+        RTLIL::Wire* fw0 = module->wire(RTLIL::escape_id(
+            base_name + "[" + std::to_string(pe_low) + "]"));
+        pe_w = fw0->width;
+        while (module->wire(RTLIL::escape_id(
+                   base_name + "[" + std::to_string(pe_low + pe_n) + "]")))
+            pe_n++;
+        if (pe_n <= 0 || pe_w <= 0) return false;
+    }
+    int base_w = base_wire ? base_wire->width : pe_w * pe_n;
 
     // Element struct typespec via the inner net mapped to the flat wire.
     const UHDM::struct_typespec* st = nullptr;
@@ -11066,11 +11081,26 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         if (!st && v->Typespec()) take_ats(v->Typespec()->Actual_typespec());
                     break;
                 }
+        // Unpacked array of structs in the elaborated instance: an array_net
+        // (NOT in Nets()) whose inner struct_net carries the element typespec
+        // — the per-element-only representation's declaration shape.
+        if (!st && current_instance->Array_nets())
+            for (auto an : *current_instance->Array_nets())
+                if (an && std::string(an->VpiName()) == base_name) {
+                    if (an->Nets() && !an->Nets()->empty())
+                        if (auto n = dynamic_cast<const UHDM::net*>((*an->Nets())[0]))
+                            if (n->Typespec())
+                                take_ats(n->Typespec()->Actual_typespec());
+                    break;
+                }
     }
     if (!st || !st->Members()) return false;
 
     int elem_w = get_width_from_typespec(st, current_instance);
     if (elem_w <= 0 || base_w % elem_w != 0) return false;
+    // Per-element representation: the struct width must be the element wire
+    // width, or the field offsets below would land on the wrong bits.
+    if (!base_wire && elem_w != pe_w) return false;
     int n_elems = base_w / elem_w;
 
     // Element index low bound: smallest k with an `\arr[k]` alias wire
@@ -11115,6 +11145,136 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         if (!member_sub_geom(field_ats, field_width, sub_w, sub_l, sub_r))
             return false;
         write_w = sub_w;
+    }
+
+    // PER-ELEMENT-only representation: emit the write against the element
+    // wires' `$0\` temps directly (constant element index → one element,
+    // dynamic → hold-mux per element, same shape as
+    // emit_dynamic_unpacked_array_elem_write).  A dynamic trailing field
+    // index RMWs the FIELD slice through one shared shifted mask/value
+    // network so only the addressed sub-element changes.
+    if (!base_wire) {
+        const bool nb_mode = in_always_ff_body_mode || in_always_ff_context;
+        RTLIL::SigSpec eidx = import_expression(bs->VpiIndex(), comb_read_map());
+        if (eidx.size() == 0) return false;
+        bool eidx_const = eidx.is_fully_const();
+        int eidx_k = eidx_const ? eidx.as_const().as_int() : 0;
+        if (eidx_const && (eidx_k < array_low || eidx_k >= array_low + n_elems))
+            return false;
+
+        RTLIL::SigSpec fidx;
+        bool fidx_const = true;
+        int fidx_k = 0;
+        if (field_bs) {
+            fidx = import_expression(field_bs->VpiIndex(), comb_read_map());
+            if (fidx.size() == 0) return false;
+            fidx_const = fidx.is_fully_const();
+            if (fidx_const) fidx_k = fidx.as_const().as_int();
+        }
+
+        auto rhs_e2 = dynamic_cast<const UHDM::expr*>(rhs_any);
+        if (!rhs_e2) return false;
+        int prev_ctx2 = expression_context_width;
+        expression_context_width = write_w;
+        RTLIL::SigSpec rhs = import_expression(rhs_e2, comb_read_map());
+        expression_context_width = prev_ctx2;
+        if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e2));
+        else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
+
+        // Target slice inside the element, and (dynamic field index only)
+        // the shared masked-write network on the whole field.
+        int tgt_off = field_offset, tgt_w = field_width;
+        RTLIL::SigSpec mask_sh_s, val_sh_s;
+        if (!field_bs) {
+            tgt_w = field_width;
+        } else if (fidx_const) {
+            int pos = (sub_l >= sub_r) ? (fidx_k - sub_r) : (sub_r - fidx_k);
+            if (pos < 0 || (pos + 1) * sub_w > field_width) return false;
+            tgt_off = field_offset + pos * sub_w;
+            tgt_w = sub_w;
+        } else {
+            int shw = std::max(fidx.size() + 6, 32);
+            RTLIL::SigSpec fx = fidx;
+            fx.extend_u0(shw, false);
+            RTLIL::SigSpec rel = fx;
+            if (sub_l >= sub_r) {
+                if (sub_r != 0) {
+                    RTLIL::Wire* pw = module->addWire(NEW_ID, shw);
+                    module->addSub(NEW_ID, fx,
+                                   RTLIL::SigSpec(RTLIL::Const(sub_r, shw)), pw, true);
+                    rel = RTLIL::SigSpec(pw);
+                }
+            } else {
+                RTLIL::Wire* pw = module->addWire(NEW_ID, shw);
+                module->addSub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(sub_r, shw)),
+                               fx, pw, true);
+                rel = RTLIL::SigSpec(pw);
+            }
+            RTLIL::Wire* sub_shift = module->addWire(NEW_ID, shw);
+            module->addMul(NEW_ID, rel,
+                           RTLIL::SigSpec(RTLIL::Const(sub_w, shw)), sub_shift, true);
+            std::vector<RTLIL::State> mb(field_width, RTLIL::State::S0);
+            for (int i = 0; i < write_w; i++) mb[i] = RTLIL::State::S1;
+            RTLIL::Wire* msh = module->addWire(NEW_ID, field_width);
+            module->addShl(NEW_ID, RTLIL::SigSpec(RTLIL::Const(mb)),
+                           RTLIL::SigSpec(sub_shift), msh, false);
+            RTLIL::SigSpec rhs_wide2 = rhs;
+            rhs_wide2.extend_u0(field_width, false);
+            RTLIL::Wire* vsh = module->addWire(NEW_ID, field_width);
+            module->addShl(NEW_ID, rhs_wide2,
+                           RTLIL::SigSpec(sub_shift), vsh, false);
+            RTLIL::Wire* imsk = module->addWire(NEW_ID, field_width);
+            module->addNot(NEW_ID, RTLIL::SigSpec(msh), imsk);
+            mask_sh_s = RTLIL::SigSpec(imsk);   // inverted mask
+            val_sh_s = RTLIL::SigSpec(vsh);
+        }
+        bool field_dyn = field_bs && !fidx_const;
+
+        for (int k = array_low; k < array_low + n_elems; k++) {
+            if (eidx_const && k != eidx_k) continue;
+            std::string ename = base_name + "[" + std::to_string(k) + "]";
+            RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
+            if (!ew) continue;
+            RTLIL::SigSpec cur = (!nb_mode && current_comb_values.count(ename))
+                                     ? current_comb_values.at(ename)
+                                     : RTLIL::SigSpec(ew);
+            RTLIL::SigSpec cur_slice = cur.extract(tgt_off, tgt_w);
+            RTLIL::SigSpec cand;
+            if (field_dyn) {
+                RTLIL::Wire* clr = module->addWire(NEW_ID, field_width);
+                module->addAnd(NEW_ID, cur_slice, mask_sh_s, clr);
+                RTLIL::Wire* nf = module->addWire(NEW_ID, field_width);
+                module->addOr(NEW_ID, RTLIL::SigSpec(clr), val_sh_s, nf);
+                cand = RTLIL::SigSpec(nf);
+            } else {
+                cand = rhs;
+            }
+            RTLIL::SigSpec nv = cand;
+            if (!eidx_const) {
+                RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+                module->addEq(NEW_ID, eidx,
+                              RTLIL::SigSpec(RTLIL::Const(k, GetSize(eidx))), sel);
+                RTLIL::Wire* mx = module->addWire(NEW_ID, tgt_w);
+                module->addMux(NEW_ID, cur_slice, cand, RTLIL::SigSpec(sel), mx);
+                nv = RTLIL::SigSpec(mx);
+            }
+            if (proc) {
+                emit_comb_assign(RTLIL::SigSpec(ew).extract(tgt_off, tgt_w),
+                                 nv, proc);
+            } else if (case_rule) {
+                RTLIL::Wire* tw = module->wire("$0\\" + ename);
+                RTLIL::SigSpec tgt = (tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew))
+                                         .extract(tgt_off, tgt_w);
+                remove_target_from_switches(case_rule, tgt);
+                case_rule->actions.push_back(RTLIL::SigSig(tgt, nv));
+            }
+            if (!nb_mode) {
+                RTLIL::SigSpec cv = cur;
+                cv.replace(tgt_off, nv);
+                current_comb_values[ename] = cv;
+            }
+        }
+        return true;
     }
 
     // Constant index: static slice write through the normal machinery.
