@@ -5978,9 +5978,18 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiLShiftOp:
             if (operands.size() == 2) {
                 // Left shift operation: a << b
-                // Result width: use context width if set (avoids clipping bits for e.g. offset = idx << 2),
-                // otherwise fall back to the operand width (self-determined Verilog semantics).
-                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
+                // Result width: MAX of the context width and the left
+                // operand's width (SV context-determined sizing).  The context
+                // may only WIDEN, never clip: a narrow context leaking through
+                // enclosing reductions truncated `~(1 << sel_q)` to 1 BIT in
+                //   assign any_unselected_port_valid = |(req_flat & ~(1 << sel_q));
+                // (CVA6 miss_handler's axi_adapter_arbiter), so the fairness
+                // mask kept only port 0 and the arbiter re-granted the selected
+                // port while others were waiting — std_cache_subsystem served
+                // AXI requests in the wrong order.
+                int result_width = std::max(
+                    expression_context_width > 0 ? expression_context_width : 0,
+                    operands[0].size());
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed
@@ -6018,7 +6027,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // (s1 signed[3:0]) as a 4-bit $sshr that was then ZERO-extended
                 // to 8 bits at the assignment, dropping the sign (operators
                 // test: y rtl=0xf8 vs nl=0x08).
-                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
+                int result_width = std::max(
+                    expression_context_width > 0 ? expression_context_width : 0,
+                    operands[0].size());
+                // (max(), not context alone: a narrow leaked context must not
+                // clip the shift — see the vpiLShiftOp comment above.)
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if the shifted (left) operand is signed.
