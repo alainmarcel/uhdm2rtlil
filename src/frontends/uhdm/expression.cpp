@@ -7510,13 +7510,20 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 // element-wise shift lines up (MemorySlice).
                 (void)e0;
                 int el = -1, er = -1;
-                if (auto le = uhdm_part->Left_range()) {
-                    RTLIL::SigSpec s = import_expression(le, input_mapping);
-                    if (s.is_fully_const()) el = s.as_const().as_int();
-                }
-                if (auto re = uhdm_part->Right_range()) {
-                    RTLIL::SigSpec s = import_expression(re, input_mapping);
-                    if (s.is_fully_const()) er = s.as_const().as_int();
+                {
+                    // Constant bounds per LRM — fold parameter arithmetic
+                    // (same rule as the main bound eval below).
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    if (auto le = uhdm_part->Left_range()) {
+                        RTLIL::SigSpec s = import_expression(le, input_mapping);
+                        if (s.is_fully_const()) el = s.as_const().as_int();
+                    }
+                    if (auto re = uhdm_part->Right_range()) {
+                        RTLIL::SigSpec s = import_expression(re, input_mapping);
+                        if (s.is_fully_const()) er = s.as_const().as_int();
+                    }
+                    force_const_fold = saved_fcf;
                 }
                 std::string gs = get_current_gen_scope();
                 auto elem_wire = [&](int i) -> RTLIL::Wire* {
@@ -7581,17 +7588,29 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
 
     log("      Base signal width: %d\n", base.size());
 
-    // Get range
+    // Get range.  Part-select bounds are CONSTANT expressions per the LRM
+    // (variable ranges are only legal in `+:`/`-:` indexed part-selects), so
+    // evaluate them under force_const_fold: a parameter-built bound like
+    // `lfsr_q[WIDTH-1:1]` otherwise imports as a $sub CELL (the module-body
+    // fold gate rejects it), the bound reads non-const, and the fallback
+    // below silently returned the WHOLE base — hpdcache_lfsr's shift
+    // `{1'b0, lfsr_q[WIDTH-1:1]}` collapsed to identity and the victim-sel
+    // LFSR never shifted.
     int left = -1, right = -1;
-    if (auto left_expr = uhdm_part->Left_range()) {
-        RTLIL::SigSpec left_sig = import_expression(left_expr, input_mapping);
-        if (left_sig.is_fully_const())
-            left = left_sig.as_const().as_int();
-    }
-    if (auto right_expr = uhdm_part->Right_range()) {
-        RTLIL::SigSpec right_sig = import_expression(right_expr, input_mapping);
-        if (right_sig.is_fully_const())
-            right = right_sig.as_const().as_int();
+    {
+        bool saved_fcf = force_const_fold;
+        force_const_fold = true;
+        if (auto left_expr = uhdm_part->Left_range()) {
+            RTLIL::SigSpec left_sig = import_expression(left_expr, input_mapping);
+            if (left_sig.is_fully_const())
+                left = left_sig.as_const().as_int();
+        }
+        if (auto right_expr = uhdm_part->Right_range()) {
+            RTLIL::SigSpec right_sig = import_expression(right_expr, input_mapping);
+            if (right_sig.is_fully_const())
+                right = right_sig.as_const().as_int();
+        }
+        force_const_fold = saved_fcf;
     }
     
     if (left >= 0 && right >= 0) {

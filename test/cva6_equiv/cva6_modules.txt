@@ -134,7 +134,7 @@ hpdcache_sync_buffer                   4   900   proven
 hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
 hpdcache_victim_plru                   4  3600   proven   # PROVEN 2026-08-24: dyn packed elem write used elem-typedef range as outer dim (wrote set*256, read set*8)
 hpdcache_victim_random                 4   180   proven
-hpdcache_victim_sel                    4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_victim_sel                    4   180   proven   # PROVEN after part-select param-bound fold fix
 hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
 hwpf_stride                            4   400   proven
 hwpf_stride_arb                        4   400   proven
