@@ -71,6 +71,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     std::string func_name = std::string(func_def->VpiName());
     log("Evaluating function %s at compile time\n", func_name.c_str());
 
+
     // Reset per-call state for function-local unpacked arrays.  The flat-
     // storage layout in `local_vars` is tracked in this map; keep it scoped
     // to a single call.
@@ -322,6 +323,49 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         // base `any` interface for the name.
                         lhs_name = std::string(assign->Lhs()->VpiName());
                     }
+                } else if (lhs_type == vpiHierPath) {
+                    // Struct-member write on a function LOCAL
+                    // (`res.exp_bits = ...` in fpnew_pkg::super_format):
+                    // resolve the member's offset/width from the local's
+                    // struct typespec and splice like a range write.
+                    // Previously unhandled — super_format evaluated to 0 and
+                    // every SUPER_* width localparam in fpnew_cast_multi
+                    // collapsed.
+                    auto hp = any_cast<const UHDM::hier_path*>(assign->Lhs());
+                    if (hp && hp->Path_elems() && hp->Path_elems()->size() >= 2 &&
+                        (*hp->Path_elems())[0]->UhdmType() == uhdmref_obj) {
+                        auto base_r = any_cast<const ref_obj*>((*hp->Path_elems())[0]);
+                        std::string bn = std::string(base_r->VpiName());
+                        std::string mpath;
+                        bool ok = true;
+                        for (size_t t = 1; t < hp->Path_elems()->size(); t++) {
+                            if ((*hp->Path_elems())[t]->UhdmType() != uhdmref_obj) {
+                                ok = false;
+                                break;
+                            }
+                            if (t > 1) mpath += ".";
+                            mpath += std::string((*hp->Path_elems())[t]->VpiName());
+                        }
+                        const UHDM::typespec* bts = nullptr;
+                        if (auto ag = base_r->Actual_group()) {
+                            const UHDM::ref_typespec* rt = nullptr;
+                            if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rt = sv->Typespec();
+                            else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rt = lv->Typespec();
+                            else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
+                            if (rt) bts = rt->Actual_typespec();
+                        }
+                        int moff = 0, mw = 0;
+                        if (ok && bts && local_vars.count(bn) &&
+                            calculate_struct_member_offset(bts, mpath,
+                                                           current_instance,
+                                                           moff, mw) &&
+                            mw > 0) {
+                            lhs_name = bn;
+                            lhs_is_range = true;
+                            lhs_range_offset = moff;
+                            lhs_range_width = mw;
+                        }
+                    }
                 } else if (lhs_type == vpiBitSelect) {
                     const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                     lhs_name = std::string(bs->VpiName());
@@ -414,6 +458,65 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     // widths folded to 0 and `[LANE_WIDTH-1:0]` crashed on a
                     // negative extract).
                     rhs_value = evaluate_single_operand(assign->Rhs(), local_vars);
+                }
+            }
+
+            // Compound assignment (`res[i] |= x`, `acc += x`): combine the RHS
+            // with the CURRENT target value before storing.  The executor
+            // previously ignored VpiOpType and stored the bare RHS — inside
+            // fpnew_pkg::get_conv_lane_int_formats' (ifmt, fmt) double loop
+            // the LAST fmt iteration clobbered the accumulated |= bits, so
+            // only the int format matching the final fp format survived
+            // (IntFmtConfig stamped 0010 instead of 1111).
+            if (int aop = assign->VpiOpType();
+                aop != 0 && !lhs_name.empty() && local_vars.count(lhs_name) &&
+                rhs_value.size() > 0) {
+                RTLIL::Const cur;
+                bool have_cur = false;
+                if (is_bit_select) {
+                    RTLIL::Const& t = local_vars[lhs_name];
+                    if (bit_index >= 0 && bit_index < t.size()) {
+                        cur = RTLIL::Const(t[bit_index] == RTLIL::S1 ? 1 : 0, 1);
+                        have_cur = true;
+                    }
+                } else if (!lhs_is_array_element && !lhs_is_range &&
+                           !lhs_is_array_bit) {
+                    cur = local_vars[lhs_name];
+                    have_cur = true;
+                }
+                if (have_cur) {
+                    int w = std::max(cur.size(), rhs_value.size());
+                    auto bit_at = [](const RTLIL::Const& c, int i) {
+                        return i < c.size() && c[i] == RTLIL::S1;
+                    };
+                    auto bitwise = [&](char op) {
+                        RTLIL::Const r(0, w);
+                        for (int b = 0; b < w; b++) {
+                            bool x = bit_at(cur, b), y = bit_at(rhs_value, b);
+                            bool v = op == '|' ? (x || y)
+                                   : op == '&' ? (x && y) : (x != y);
+                            r.set(b, v ? RTLIL::S1 : RTLIL::S0);
+                        }
+                        return r;
+                    };
+                    switch (aop) {
+                        case vpiBitOrOp:  rhs_value = bitwise('|'); break;
+                        case vpiBitAndOp: rhs_value = bitwise('&'); break;
+                        case vpiBitXorOp: rhs_value = bitwise('^'); break;
+                        case vpiAddOp:
+                            rhs_value = RTLIL::Const(
+                                (long long)cur.as_int() + rhs_value.as_int(), w);
+                            break;
+                        case vpiSubOp:
+                            rhs_value = RTLIL::Const(
+                                (long long)cur.as_int() - rhs_value.as_int(), w);
+                            break;
+                        case vpiMultOp:
+                            rhs_value = RTLIL::Const(
+                                (long long)cur.as_int() * rhs_value.as_int(), w);
+                            break;
+                        default: break;
+                    }
                 }
             }
 
@@ -804,6 +907,54 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             return last_result;
         }
 
+        case vpiCase: {
+            // `case (sel) ... endcase` inside a function body was UNHANDLED —
+            // it fell through to the default `return RTLIL::Const()`, so a
+            // case-over-enum lookup function (fpnew_pkg::fp_width) evaluated
+            // to 0 for EVERY input, poisoning the whole
+            // get_conv_lane_int_formats chain (IntFmtConfig stamped 0000 and
+            // fpnew_opgroup_multifmt_slice's cast lanes collapsed).
+            const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+            if (!cs || !cs->VpiCondition()) return RTLIL::Const();
+            RTLIL::Const sel;
+            if (cs->VpiCondition()->VpiType() == vpiOperation)
+                sel = evaluate_operation_const(
+                    any_cast<const operation*>(cs->VpiCondition()), local_vars);
+            else
+                sel = evaluate_single_operand(cs->VpiCondition(), local_vars);
+            if (sel.size() == 0) return RTLIL::Const();
+            const case_item* def_item = nullptr;
+            if (cs->Case_items()) {
+                for (auto item : *cs->Case_items()) {
+                    const case_item* ci = any_cast<const case_item*>(item);
+                    if (!ci) continue;
+                    if (!ci->VpiExprs() || ci->VpiExprs()->empty()) {
+                        def_item = ci;
+                        continue;
+                    }
+                    for (auto le : *ci->VpiExprs()) {
+                        RTLIL::Const lv;
+                        if (le->VpiType() == vpiOperation)
+                            lv = evaluate_operation_const(
+                                any_cast<const operation*>(le), local_vars);
+                        else
+                            lv = evaluate_single_operand(le, local_vars);
+                        if (lv.size() > 0 && lv.as_int() == sel.as_int()) {
+                            RTLIL::Const av = ci->Stmt()
+                                ? evaluate_function_stmt(ci->Stmt(),
+                                                         local_vars, func_name)
+                                : RTLIL::Const();
+                            return av;
+                        }
+                    }
+                }
+            }
+            if (def_item && def_item->Stmt())
+                return evaluate_function_stmt(def_item->Stmt(), local_vars,
+                                              func_name);
+            return RTLIL::Const();
+        }
+
         case vpiBreak:
             func_loop_break_ = true;
             return RTLIL::Const();
@@ -859,8 +1010,17 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             int w = ec->VpiSize() > 0 ? ec->VpiSize() : 32;
             val = RTLIL::Const(parse_vpi_value_to_int(std::string(ec->VpiValue())), w);
         } else if (ref->Actual_group() && ref->Actual_group()->VpiType() == vpiParameter) {
-            // Package/scope parameter not in local_vars — resolve via VpiValue()
+            // Module parameter: prefer the module's already-imported (and
+            // possibly re-derived) value — the UHDM parameter's VpiValue can
+            // be a stale Surelog stamp (fpnew_cast_multi's SUPER_EXP_BITS
+            // arrived as the garbage 0 inside `maximum(SUPER_EXP_BITS, ..)`
+            // and INT_EXP_WIDTH folded to 9 instead of 12).
             const parameter* param = any_cast<const parameter*>(ref->Actual_group());
+            RTLIL::IdString vpid = RTLIL::escape_id(var_name);
+            if (module && module->parameter_default_values.count(vpid) &&
+                module->parameter_default_values.at(vpid).size() > 0) {
+                return module->parameter_default_values.at(vpid);
+            }
             if (param && !param->VpiValue().empty()) {
                 std::string val_str = std::string(param->VpiValue());
                 size_t colon_pos = val_str.find(':');
@@ -1492,6 +1652,10 @@ RTLIL::Const UhdmImporter::evaluate_recursive_function_call(const func_call* fc,
                 std::string var_name = std::string(ref->VpiName());
                 if (parent_vars.count(var_name)) {
                     val = parent_vars.at(var_name);
+                } else {
+                    // Enum const / package parameter — the shared resolver
+                    // knows these.
+                    val = evaluate_single_operand(ref, parent_vars);
                 }
             } else if (arg->VpiType() == vpiOperation) {
                 const operation* op = any_cast<const operation*>(arg);
@@ -1499,6 +1663,13 @@ RTLIL::Const UhdmImporter::evaluate_recursive_function_call(const func_call* fc,
             } else if (arg->VpiType() == vpiFuncCall) {
                 const func_call* nested_fc = any_cast<const func_call*>(arg);
                 val = evaluate_recursive_function_call(nested_fc, parent_vars);
+            } else {
+                // hier_path (`res.exp_bits` as a nested-call argument —
+                // fpnew_pkg::super_format's `maximum(res.exp_bits, ...)`),
+                // bit/part-selects, casts: previously DROPPED to an empty
+                // value, so the accumulate-max collapsed to the last
+                // iteration's operand.
+                val = evaluate_single_operand(arg, parent_vars);
             }
             arg_values.push_back(val);
         }
