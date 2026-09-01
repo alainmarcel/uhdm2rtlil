@@ -8282,6 +8282,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 prg = pv->Ranges(); pel = pv->Elements(); pts_ref = pv->Typespec();
             } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(o)) {
                 prg = pn->Ranges(); pel = pn->Elements(); pts_ref = pn->Typespec();
+            } else if (auto av = dynamic_cast<const UHDM::array_var*>(o)) {
+                // UNPACKED array of (type-param'd) structs flattened to one
+                // wire: the own Ranges() carry the unpacked dim and the
+                // element type lives on the inner var (vpiReg).
+                // cva6_hpdcache_subsystem_axi_arbiter's
+                // `hpdcache_mem_resp_r_t mem_resp_read_arb [1:0]` element
+                // reads collapsed to ONE BIT, zeroing the whole icache /
+                // dcache read-response path (300/300 co-sim divergences).
+                prg = av->Ranges();
+                if (av->Variables() && !av->Variables()->empty())
+                    pts_ref = (*av->Variables())[0]->Typespec();
+                if (!pts_ref) pts_ref = av->Typespec();
             }
         };
         take_packed(uhdm_bit->Actual_group());
@@ -8297,12 +8309,23 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 if (auto e0 = dynamic_cast<const UHDM::any*>((*pel)[0]))
                     ew = get_width(e0, inst);
             if (ew <= 0 && pts_ref)
-                if (auto pts = pts_ref->Actual_typespec())
-                    if (pts->UhdmType() == uhdmpacked_array_typespec)
+                if (auto pts = pts_ref->Actual_typespec()) {
+                    if (pts->UhdmType() == uhdmpacked_array_typespec) {
                         if (auto pat = any_cast<const UHDM::packed_array_typespec*>(pts))
                             if (pat->Elem_typespec())
                                 if (auto et = pat->Elem_typespec()->Actual_typespec())
                                     ew = get_width_from_typespec(et, inst);
+                    } else {
+                        // Inner-var typespec of an unpacked array element
+                        // (struct_typespec for mem_resp_read_arb) — its width
+                        // IS the element width.  Resolve type parameters
+                        // first (`mem_resp_t arb[1:0]` where mem_resp_t is a
+                        // module type param bound to a struct).
+                        const UHDM::typespec* rpts =
+                            resolve_type_param_typespec(pts, inst);
+                        ew = get_width_from_typespec(rpts ? rpts : pts, inst);
+                    }
+                }
             if (ew > 1 && prg && !prg->empty()) {
                 auto r0 = (*prg)[0];
                 RTLIL::SigSpec ls = import_expression(r0->Left_expr());
@@ -11395,8 +11418,42 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         }
                     }
                 };
+                // UNPACKED array_var of (type-param'd) structs: the element
+                // struct lives on the inner var (vpiReg) and the unpacked dim
+                // on the var's own Ranges() — same shape as the whole-element
+                // read fix (`hpdcache_mem_resp_r_t mem_resp_read_arb [1:0]`,
+                // then `arb[0].id`-style field reads).
+                auto try_av = [&](const UHDM::any* o) {
+                    auto av = dynamic_cast<const UHDM::array_var*>(o);
+                    if (!av || st) return;
+                    const UHDM::ref_typespec* irt = nullptr;
+                    if (av->Variables() && !av->Variables()->empty())
+                        irt = (*av->Variables())[0]->Typespec();
+                    if (irt && irt->Actual_typespec()) {
+                        const UHDM::typespec* rts2 = resolve_type_param_typespec(
+                            irt->Actual_typespec(), inst);
+                        if (rts2 && rts2->UhdmType() == uhdmstruct_typespec)
+                            st = any_cast<const UHDM::struct_typespec*>(rts2);
+                    }
+                    if (st && av->Ranges() && !av->Ranges()->empty()) {
+                        auto r0 = (*av->Ranges())[0];
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int li = l.as_const().as_int();
+                                int ri = r.as_const().as_int();
+                                outer_low = std::min(li, ri);
+                                outer_high = std::max(li, ri);
+                                ascending = li < ri;
+                                have_range = true;
+                            }
+                        }
+                    }
+                };
                 if (auto e = dynamic_cast<const UHDM::expr*>(bs->Actual_group()))
                     if (e->Typespec()) try_pat(e->Typespec()->Actual_typespec());
+                if (!st) try_av(bs->Actual_group());
                 if (!st) {
                     auto mi = dynamic_cast<const UHDM::module_inst*>(
                         inst ? inst : (const UHDM::scope*)current_instance);
@@ -11409,9 +11466,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
                     if (mi && !st && mi->Variables())
                         for (auto v : *mi->Variables())
-                            if (std::string(v->VpiName()) == base_name &&
-                                v->Typespec()) {
-                                try_pat(v->Typespec()->Actual_typespec());
+                            if (std::string(v->VpiName()) == base_name) {
+                                if (v->Typespec())
+                                    try_pat(v->Typespec()->Actual_typespec());
+                                try_av(v);
                                 break;
                             }
                 }
