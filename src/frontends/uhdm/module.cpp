@@ -1786,6 +1786,121 @@ RTLIL::SigSpec UhdmImporter::reeval_stamped_param_assign(const UHDM::param_assig
     std::string pname = std::string(pa->Lhs()->VpiName());
     if (pname.empty()) return RTLIL::SigSpec();
 
+    // Direct MODULE-localparam shape (no gen scope): the assign hangs on the
+    // module_inst itself.  Re-derive from the AllModules def's same-named
+    // param_assign, evaluated with the current module's already-imported
+    // parameter values — fpnew_cast_multi's SUPER_FORMAT/INT_EXP_WIDTH chain
+    // is stamped garbage in every lane paramod, and the gen-scope walk below
+    // never matched a plain localparam.
+    if (auto pmi = dynamic_cast<const UHDM::module_inst*>(pa->VpiParent())) {
+        // Only for an ALL-ZERO stamped constant (the ExprEval-gave-up
+        // signature this path was built for) — re-deriving OTHER stamp shapes
+        // through this path regressed pmp_data_if (54 co-sim divergences):
+        // the older narrow/var-stamp suspicions must keep using the
+        // gen-scope machinery below.
+        bool zero_stamp = false;
+        if (auto rc = dynamic_cast<const UHDM::constant*>(pa->Rhs())) {
+            RTLIL::SigSpec cz = import_constant(rc);
+            zero_stamp = cz.is_fully_const() && cz.size() > 0 &&
+                         cz.as_const().is_fully_zero();
+        }
+        if (!zero_stamp) goto genscope_path;
+        std::string dn = std::string(pmi->VpiDefName());
+        const UHDM::module_inst* def = nullptr;
+        if (uhdm_design && uhdm_design->AllModules())
+            for (auto m : *uhdm_design->AllModules())
+                if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+        if (def && def != pmi && def->Param_assigns()) {
+            for (auto dpa : *def->Param_assigns()) {
+                auto lp = dynamic_cast<const UHDM::parameter*>(dpa->Lhs());
+                if (!lp || std::string(lp->VpiName()) != pname) continue;
+                if (!dpa->Rhs()) break;
+                auto rut2 = dpa->Rhs()->UhdmType();
+                // A constant def RHS is the same stamp; var stamps carry the
+                // same cloned garbage — only a COMPUTED def expr gains.
+                if (rut2 == uhdmconstant || rut2 == uhdmpacked_array_var ||
+                    rut2 == uhdmstruct_var)
+                    break;
+                // `SUPER_FORMAT.exp_bits`-shape def RHS: slice the member out
+                // of the module's ALREADY re-derived parameter value —
+                // import_hier_path would resolve the parameter through its
+                // stale def-side stamp instead.
+                if (rut2 == uhdmhier_path) {
+                    auto hp2 = dynamic_cast<const UHDM::hier_path*>(dpa->Rhs());
+                    if (hp2 && hp2->Path_elems() &&
+                        hp2->Path_elems()->size() >= 2 &&
+                        (*hp2->Path_elems())[0]->UhdmType() == uhdmref_obj) {
+                        auto br = any_cast<const UHDM::ref_obj*>(
+                            (*hp2->Path_elems())[0]);
+                        RTLIL::IdString bid =
+                            RTLIL::escape_id(std::string(br->VpiName()));
+                        bool all_ref2 = true;
+                        std::string mp2;
+                        for (size_t t = 1; t < hp2->Path_elems()->size(); t++) {
+                            if ((*hp2->Path_elems())[t]->UhdmType() !=
+                                uhdmref_obj) { all_ref2 = false; break; }
+                            if (t > 1) mp2 += ".";
+                            mp2 += std::string(
+                                (*hp2->Path_elems())[t]->VpiName());
+                        }
+                        if (all_ref2 && module &&
+                            module->parameter_default_values.count(bid)) {
+                            const UHDM::typespec* bts2 = nullptr;
+                            if (auto pr = dynamic_cast<const UHDM::parameter*>(
+                                    br->Actual_group()))
+                                if (pr->Typespec())
+                                    bts2 = pr->Typespec()->Actual_typespec();
+                            // The def-side ref often has no Actual_group —
+                            // find the base parameter by NAME in the def.
+                            if (!bts2 && def->Parameters()) {
+                                std::string bn2 = std::string(br->VpiName());
+                                for (auto dp0 : *def->Parameters())
+                                    if (std::string(dp0->VpiName()) == bn2) {
+                                        if (auto pr2 = dynamic_cast<
+                                                const UHDM::parameter*>(dp0))
+                                            if (pr2->Typespec())
+                                                bts2 = pr2->Typespec()
+                                                    ->Actual_typespec();
+                                        break;
+                                    }
+                            }
+                            int mo = 0, mw2 = 0;
+                            bool cok2 = bts2 && calculate_struct_member_offset(
+                                    bts2, mp2, pmi, mo, mw2);
+                            if (cok2 && mw2 > 0) {
+                                RTLIL::Const bv =
+                                    module->parameter_default_values.at(bid);
+                                if (mo >= 0 && mo + mw2 <= bv.size()) {
+                                    RTLIL::Const mv = bv.extract(mo, mw2);
+                                    log("UHDM: re-evaluated stamped param '%s'"
+                                        " from module param field %s\n",
+                                        pname.c_str(),
+                                        mv.as_string().c_str());
+                                    return RTLIL::SigSpec(mv);
+                                }
+                            }
+                        }
+                    }
+                }
+                bool saved_fcf2 = force_const_fold;
+                force_const_fold = true;
+                int saved_ctx2 = expression_context_width;
+                expression_context_width = 0;
+                RTLIL::SigSpec v2 = import_expression(
+                    dynamic_cast<const UHDM::expr*>(dpa->Rhs()));
+                expression_context_width = saved_ctx2;
+                force_const_fold = saved_fcf2;
+                if (v2.is_fully_const() && v2.is_fully_def() && v2.size() > 0) {
+                    log("UHDM: re-evaluated stamped param '%s' from module def expr: %s\n",
+                        pname.c_str(), v2.as_const().as_string().c_str());
+                    return v2;
+                }
+                break;
+            }
+        }
+    }
+
+genscope_path:;
     const UHDM::gen_scope* gs = nullptr;
     const UHDM::module_inst* parent_mi = nullptr;
     const UHDM::any* p = pa->VpiParent();
@@ -2063,6 +2178,25 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
             force_const_fold = true;
             RTLIL::SigSpec value_spec = import_expression(expr);
             force_const_fold = saved_fcf;
+            // `'1` unbased-unsized fill RHS: import_constant returns a single
+            // S1 bit (VpiSize -1); a wider-typed parameter must REPLICATE it.
+            // fpnew_cast_multi's `FpFmtConfig = '1` stored as 1 and
+            // super_format() saw one enabled format.
+            if (value_spec.size() == 1 && value_spec.is_fully_ones()) {
+                if (auto ce = dynamic_cast<const UHDM::constant*>(expr)) {
+                    if (ce->VpiSize() == -1) {
+                        int pw = 0;
+                        if (param_obj->Typespec() &&
+                            param_obj->Typespec()->Actual_typespec())
+                            pw = get_width_from_typespec(
+                                param_obj->Typespec()->Actual_typespec(),
+                                current_instance);
+                        if (pw > 1)
+                            value_spec = RTLIL::SigSpec(
+                                RTLIL::Const(RTLIL::State::S1, pw));
+                    }
+                }
+            }
             // import_expression of an interface struct-parameter field hier_path
             // yields a fully-X constant (is_fully_const() is TRUE for X), so test
             // is_fully_def() and resolve via the interface instead.

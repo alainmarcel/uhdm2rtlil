@@ -1886,6 +1886,44 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         param_signature += val_str;
                         log("UHDM: Added hier_path parameter %s=%s to signature\n",
                             param_name.c_str(), val_str.c_str());
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmfunc_call &&
+                               ![&]() {
+                                   // Never for STRUCT-typed parameters: a
+                                   // config-struct factory like
+                                   // build_config_pkg::build_config() is far
+                                   // beyond the compile-time evaluator, and a
+                                   // wrong value here rebinds the instance to
+                                   // a bogus $paramod (perf_counters cex).
+                                   auto lp9 = dynamic_cast<const parameter*>(
+                                       param_assign->Lhs());
+                                   if (!lp9 || !lp9->Typespec()) return false;
+                                   auto ats9 = lp9->Typespec()->Actual_typespec();
+                                   return ats9 && ats9->UhdmType() ==
+                                                      uhdmstruct_typespec;
+                               }()) {
+                        // Non-constant override RHS Surelog left unevaluated
+                        // (a func_call like `.ICFG(get_conv_lane_int_formats(
+                        // WIDTH, FMTS, ...))` with constant args, or parameter
+                        // arithmetic): evaluate it compile-time.  Appending an
+                        // EMPTY value made two differently-parameterised
+                        // instances collide — and a single instance collide
+                        // with the DEFAULT def, importing the module with its
+                        // default parameter values.
+                        RTLIL::Module* saved_module = this->module;
+                        this->module = design->addModule(NEW_ID);
+                        bool saved_fcf = force_const_fold;
+                        force_const_fold = true;
+                        RTLIL::SigSpec vs2 = this->import_expression(
+                            any_cast<const expr*>(param_assign->Rhs()));
+                        force_const_fold = saved_fcf;
+                        design->remove(this->module);
+                        this->module = saved_module;
+                        if (vs2.is_fully_const() && vs2.is_fully_def() &&
+                            vs2.size() > 0) {
+                            param_signature += std::to_string(vs2.as_int());
+                            log("UHDM: Added evaluated parameter %s=%d to signature\n",
+                                param_name.c_str(), vs2.as_int());
+                        }
                     }
                 }
             }
@@ -3084,6 +3122,43 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             param_string += "\\" + param_name + "=s32'"
                                 + encode_param_bits32("", v);
                         }
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmfunc_call &&
+                               ![&]() {
+                                   // Never for STRUCT-typed parameters: a
+                                   // config-struct factory like
+                                   // build_config_pkg::build_config() is far
+                                   // beyond the compile-time evaluator, and a
+                                   // wrong value here rebinds the instance to
+                                   // a bogus $paramod (perf_counters cex).
+                                   auto lp9 = dynamic_cast<const parameter*>(
+                                       param_assign->Lhs());
+                                   if (!lp9 || !lp9->Typespec()) return false;
+                                   auto ats9 = lp9->Typespec()->Actual_typespec();
+                                   return ats9 && ats9->UhdmType() ==
+                                                      uhdmstruct_typespec;
+                               }()) {
+                        // Override RHS Surelog left as an unevaluated
+                        // expression (a package func_call over constant args —
+                        // `.ICFG(get_conv_lane_int_formats(...))`): evaluate
+                        // it compile-time so the def gets a `$paramod` name.
+                        // Without this the specialized instance collided with
+                        // the plain definition already imported from
+                        // AllModules and kept the DEFAULT parameter values.
+                        RTLIL::Module* saved_m = this->module;
+                        this->module = design->addModule(NEW_ID);
+                        bool saved_fcf = force_const_fold;
+                        force_const_fold = true;
+                        RTLIL::SigSpec vs2 = this->import_expression(
+                            any_cast<const expr*>(param_assign->Rhs()));
+                        force_const_fold = saved_fcf;
+                        design->remove(this->module);
+                        this->module = saved_m;
+                        if (vs2.is_fully_const() && vs2.is_fully_def() &&
+                            vs2.size() > 0) {
+                            param_string += "\\" + param_name + "=s32'"
+                                + encode_param_bits32(
+                                    "", std::to_string(vs2.as_int()));
+                        }
                     }
                 }
             }
@@ -3210,11 +3285,45 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                         current_instance);
                             if (tw > c0->VpiSize()) suspicious_stamp = true;
                         }
+                        // Third stamp signature: a FULL-width ALL-ZERO
+                        // constant.  Surelog's ExprEval gives up on a
+                        // struct-returning package function and stamps 0
+                        // (fpnew_cast_multi's SUPER_FORMAT =
+                        // super_format(FpFmtConfig) under
+                        // fpnew_opgroup_multifmt_slice — every derived
+                        // width localparam then collapsed).  The def-side
+                        // re-eval is authoritative on success, a no-op on
+                        // failure, and a genuine zero re-evals to zero.
+                        // Third stamp signature: a FULL-width ALL-ZERO
+                        // constant on a NON-overridden assign (a stamped
+                        // localparam derivation — fpnew_cast_multi's
+                        // SUPER_FORMAT = super_format(FpFmtConfig) stamped 0
+                        // when Surelog's ExprEval gave up).  Re-eval is
+                        // authoritative on success, a no-op on failure, and a
+                        // genuine zero re-evals to zero.  Restricted to
+                        // all-zero stamps: re-deriving EVERY non-overridden
+                        // localparam regressed axi_adapter/perf_counters/
+                        // pmp_data_if/issue_read_operands (the interpreter is
+                        // not yet trustworthy enough to override non-zero
+                        // stamps).  An explicit `.PARAM(x)` override
+                        // (VpiOverriden) is never touched.
+                        if (!suspicious_stamp && !param_assign->VpiOverriden()) {
+                            RTLIL::SigSpec cs = import_constant(c0);
+                            if (cs.is_fully_const() && cs.size() > 0 &&
+                                cs.as_const().is_fully_zero())
+                                suspicious_stamp = true;
+                        }
                     }
                     if (suspicious_stamp)
                         value_spec = reeval_stamped_param_assign(param_assign);
                     if (value_spec.empty())
                         value_spec = import_expression(rhs_expr);
+                    // NOTE: forcing const-fold here (to collapse operation
+                    // RHS like fpnew's `maximum($clog2(..),..)+1`) regressed
+                    // perf_counters — the fold machinery mis-values some
+                    // param and the netlist diverges from slang.  Left
+                    // unforced; fpnew_cast_multi's INT_EXP_WIDTH residual is
+                    // tracked separately.
                     RTLIL::Const param_value;
                     bool have_value = false;
                     // A hier_path override like `.SYS_DAT(sub.CFG.BUS.DAT)` may evaluate

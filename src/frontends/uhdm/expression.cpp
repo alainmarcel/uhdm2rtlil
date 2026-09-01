@@ -7025,7 +7025,17 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                             }
                         } else if (type_part == "BIN") {
                             RTLIL::Const bin_const = RTLIL::Const::from_string(value_part);
-                            if (bin_const.size() != param_width) {
+                            if (value_part == "1" && param_width > 1) {
+                                // Surelog stamps the `'1` unbased-unsized fill
+                                // as a bare "BIN:1" (the fill-constant
+                                // signature — VpiSize -1 on constants); on a
+                                // wider-typed parameter it must REPLICATE to
+                                // all-ones, not zero-extend.  fpnew's
+                                // `FpFmtConfig = '1` came through as 5'b00001
+                                // and super_format() saw one enabled format.
+                                param_value = RTLIL::Const(RTLIL::State::S1,
+                                                           param_width);
+                            } else if (bin_const.size() != param_width) {
                                 RTLIL::SigSpec sig(bin_const);
                                 sig.extend_u0(param_width, param_signed);
                                 param_value = sig.as_const();
