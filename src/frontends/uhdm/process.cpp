@@ -11463,7 +11463,38 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         return false;
     }
     if (base_name.empty() || !idx0_e) return false;
+    const std::string bare_name = base_name;   // UHDM-side name (no gen prefix)
 
+    // GEN-SCOPE array (`gen_fifo.fifo_mem_q`, hpdcache_fifo_reg's buffer
+    // inside its `else if (FIFO_DEPTH > 1)` arm): the RTLIL wire and its
+    // `$0\` temp carry the scope prefix — without resolving it here the
+    // handler declined and the dynamic write fell through to the generic
+    // LHS READ import (assigned the $shiftx aux wire; the FIFO memory
+    // never stored a word and rdata_o read 0).
+    {
+        std::string gs = get_current_gen_scope();
+        if (!gs.empty()) {
+            std::string qual = gs + "." + base_name;
+            if (name_map.count(qual) ||
+                module->wire(RTLIL::escape_id(qual)))
+                base_name = qual;
+        }
+        // Processes are imported with the gen-scope stack EMPTY; the scan
+        // that created the `$0\` temp resolved the scoped wire, so recover
+        // the qualified name from the temp it registered under the bare key.
+        if (!name_map.count(base_name) &&
+            !module->wire(RTLIL::escape_id(base_name))) {
+            if (RTLIL::Wire* tw = find_own_temp_wire(base_name)) {
+                std::string tn = tw->name.str();
+                if (tn.rfind("$0\\", 0) == 0) {
+                    std::string real = tn.substr(3);
+                    if (name_map.count(real) ||
+                        module->wire(RTLIL::escape_id(real)))
+                        base_name = real;
+                }
+            }
+        }
+    }
     // Flat packed wire only: not a $memory, not an expanded per-element array.
     if (module->memories.count(RTLIL::escape_id(base_name))) return false;
     if (expanded_array_low(base_name) >= 0) return false;
@@ -11519,17 +11550,24 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         auto obj_ranges = [](const UHDM::any* obj) -> const UHDM::VectorOfrange* {
             if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) return pv->Ranges();
             if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) return pn->Ranges();
+            // Elaborated gen-scope var with NO typespec but its own folded
+            // packed dims (`fifo_data_t [FIFO_DEPTH-1:0] fifo_mem_q` in a
+            // typaram'd hpdcache_fifo_reg elaborates as a bare logic_var
+            // with vpiRange [7:0]) — element width falls out of
+            // base_w / outer below.
+            if (auto lv = dynamic_cast<const UHDM::logic_var*>(obj)) return lv->Ranges();
+            if (auto ln = dynamic_cast<const UHDM::logic_net*>(obj)) return ln->Ranges();
             return nullptr;
         };
         ranges = obj_ranges(actual);
         if ((!ranges || ranges->empty()) && current_instance) {
             if (current_instance->Nets())
                 for (auto n0 : *current_instance->Nets())
-                    if (std::string(n0->VpiName()) == base_name)
+                    if (std::string(n0->VpiName()) == bare_name)
                         if (auto r = obj_ranges(n0)) { ranges = r; break; }
             if ((!ranges || ranges->empty()) && current_instance->Variables())
                 for (auto v0 : *current_instance->Variables())
-                    if (std::string(v0->VpiName()) == base_name)
+                    if (std::string(v0->VpiName()) == bare_name)
                         if (auto r = obj_ranges(v0)) { ranges = r; break; }
         }
     }
@@ -11570,13 +11608,13 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         if (elem_w_ts <= 0 && current_instance) {
             if (current_instance->Variables())
                 for (auto v0 : *current_instance->Variables())
-                    if (std::string(v0->VpiName()) == base_name) {
+                    if (std::string(v0->VpiName()) == bare_name) {
                         elem_w_ts = obj_elem_w(v0);
                         break;
                     }
             if (elem_w_ts <= 0 && current_instance->Nets())
                 for (auto n0 : *current_instance->Nets())
-                    if (std::string(n0->VpiName()) == base_name) {
+                    if (std::string(n0->VpiName()) == bare_name) {
                         elem_w_ts = obj_elem_w(n0);
                         break;
                     }
@@ -11597,12 +11635,34 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     int outer_low = std::min(r0l, r0r);
     if (base_w % outer_size != 0) return false;
     int elem_w = base_w / outer_size;
+    // MULTI-dim packed object (`wdata_t [DEPTH-1:0][WR_WORDS-1:0] buf_q` —
+    // hpdcache_data_upsize): ranges[1] is the second packed dim.  The first
+    // index strides base_w/outer (all inner dims), the SECOND index selects a
+    // sub-element of width elem_w/dim2 — treating it as a BIT select stored
+    // one bit of each 64-bit word and the upsizer's read data stayed ~0.
+    int dim2_size = 0, dim2_l = 0, dim2_r = 0;
+    if (ranges->size() >= 2) {
+        auto r1 = (*ranges)[1];
+        if (r1->Left_expr() && r1->Right_expr()) {
+            RTLIL::SigSpec ls = import_expression(r1->Left_expr());
+            RTLIL::SigSpec rs = import_expression(r1->Right_expr());
+            if (ls.is_fully_const() && rs.is_fully_const()) {
+                dim2_l = ls.as_int();
+                dim2_r = rs.as_int();
+                dim2_size = std::abs(dim2_l - dim2_r) + 1;
+                if (dim2_size <= 1 || elem_w % dim2_size != 0) dim2_size = 0;
+            }
+        }
+    }
     // Typedef-alias duplication (`way_vector_t [sets-1:0] plru_q` where
     // way_vector_t is a typedef): the net typespec's Ranges()[0] can be the
     // ELEMENT's range, making elem_w the number of SETS instead of the way
     // width (hpdcache_victim_plru's update wrote set*256 while the read used
-    // set*8).  When the Elem_typespec width disagrees, trust it.
-    if (elem_w_ts > 1 && elem_w_ts != elem_w && (base_w % elem_w_ts) == 0) {
+    // set*8).  When the Elem_typespec width disagrees, trust it — but NOT for
+    // a multi-dim object, whose first-index stride legitimately spans all
+    // inner dims (elem_w_ts describes only the innermost element there).
+    if (dim2_size == 0 &&
+        elem_w_ts > 1 && elem_w_ts != elem_w && (base_w % elem_w_ts) == 0) {
         elem_w = elem_w_ts;
         int new_outer = base_w / elem_w;
         if (new_outer != outer_size) {
@@ -11613,9 +11673,11 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         }
     }
     // A 1-element ARRAY of wide elements (`dtype [0:0] mem` — fifo DEPTH=1)
-    // still element-indexes; only a genuinely 1-bit-element single entry is a
-    // plain vector left to the bit-write paths.
-    if (outer_size <= 1 && elem_w <= 1) return false;
+    // still element-indexes.  A 1x1-bit array (`wordptr_t [0:0] words_d`,
+    // hpdcache_data_upsize at DEPTH=1) is handled here too: the old
+    // "leave it to the bit-write paths" bail dropped the write outright —
+    // words_q never incremented and the upsizer never packed word 1.
+    if (outer_size < 1 || elem_w < 1) return false;
     // NOTE: elem_w == 1 (plain vector dynamic BIT write,
     // `ldbuf_valid_d[windex] = 1'b1` in CVA6 load_unit's CaseRule context)
     // is handled HERE too — the old defer-to-"existing paths" left the write
@@ -11687,10 +11749,43 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             auto e1 = dynamic_cast<const UHDM::expr*>(idx1_e);
             if (!e1) return false;
             RTLIL::SigSpec i1 = import_expression(e1, comb_read_map());
-            write_w = 1;
-            if (i1.is_fully_const())
-                inner_shift = RTLIL::SigSpec(RTLIL::Const(i1.as_const().as_int(), shamt_w));
-            else { inner_shift = make_pos(i1, 1, 0); any_dynamic = true; }
+            if (dim2_size > 0) {
+                // Second packed dim: the index selects a sub-element of
+                // sub_w bits (position honours the dim's declared bounds
+                // and direction).
+                int sub_w = elem_w / dim2_size;
+                write_w = sub_w;
+                bool asc2 = dim2_l < dim2_r;
+                if (i1.is_fully_const()) {
+                    int k = i1.as_const().as_int();
+                    int pos = asc2 ? (std::max(dim2_l, dim2_r) - k)
+                                   : (k - std::min(dim2_l, dim2_r));
+                    if (pos < 0 || (pos + 1) * sub_w > elem_w) return false;
+                    inner_shift =
+                        RTLIL::SigSpec(RTLIL::Const(pos * sub_w, shamt_w));
+                } else {
+                    RTLIL::SigSpec rel = i1;
+                    if (asc2) {
+                        rel.extend_u0(shamt_w, false);
+                        RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                        module->addSub(NEW_ID,
+                            RTLIL::SigSpec(RTLIL::Const(
+                                std::max(dim2_l, dim2_r), shamt_w)),
+                            rel, pw, true);
+                        rel = RTLIL::SigSpec(pw);
+                        inner_shift = make_pos(rel, sub_w, 0);
+                    } else {
+                        inner_shift =
+                            make_pos(rel, sub_w, std::min(dim2_l, dim2_r));
+                    }
+                    any_dynamic = true;
+                }
+            } else {
+                write_w = 1;
+                if (i1.is_fully_const())
+                    inner_shift = RTLIL::SigSpec(RTLIL::Const(i1.as_const().as_int(), shamt_w));
+                else { inner_shift = make_pos(i1, 1, 0); any_dynamic = true; }
+            }
         }
     }
     if (!any_dynamic) return false;  // fully static: existing paths handle

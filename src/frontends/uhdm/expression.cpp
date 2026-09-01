@@ -11334,6 +11334,139 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // PACKED array of structs declared through a NET whose typespec is a
+    // packed_array_typespec (`typedef entry_t [N-1:0] dir_t; dir_t dir_q;` —
+    // hpdcache_flush's flush_dir_q): the branches above discover the element
+    // struct only from packed_array_var/array_var Actual_groups or per-element
+    // wires, so both the genvar read `dir_q[gen_i].nline` and the DYNAMIC read
+    // `dir_q[ack_ptr].nline` fell through to X (flush_ack_nline_o undriven,
+    // 298/300 co-sim divergences).  Resolve the struct via the net/variable
+    // typespec and slice — constant index directly, dynamic index through a
+    // $shiftx of the flat wire.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pePN = *uhdm_hier->Path_elems();
+        if (pePN[0]->UhdmType() == uhdmbit_select &&
+            pePN[1]->UhdmType() == uhdmref_obj) {
+            const bit_select* bs = any_cast<const bit_select*>(pePN[0]);
+            const ref_obj*    fr = any_cast<const ref_obj*>(pePN[1]);
+            std::string base_name = bs ? std::string(bs->VpiName()) : "";
+            std::string field_name = fr ? std::string(fr->VpiName()) : "";
+            RTLIL::Wire* bwire = name_map.count(base_name)
+                ? name_map[base_name]
+                : module->wire(RTLIL::escape_id(base_name));
+            if (bs && fr && bs->VpiIndex() && bwire &&
+                base_name != field_name && !field_name.empty()) {
+                // Element struct + outer range from a packed_array_typespec
+                // reached through the Actual_group's or the instance
+                // net/variable's typespec.
+                const UHDM::struct_typespec* st = nullptr;
+                int outer_low = 0, outer_high = 0;
+                bool ascending = false, have_range = false;
+                auto try_pat = [&](const UHDM::typespec* t) {
+                    if (!t || t->UhdmType() != uhdmpacked_array_typespec) return;
+                    auto pat = any_cast<const UHDM::packed_array_typespec*>(t);
+                    if (pat->Elem_typespec())
+                        if (auto et = pat->Elem_typespec()->Actual_typespec())
+                            if (et->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(et);
+                    if (st && pat->Ranges() && !pat->Ranges()->empty()) {
+                        auto r0 = (*pat->Ranges())[0];
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int li = l.as_const().as_int();
+                                int ri = r.as_const().as_int();
+                                outer_low = std::min(li, ri);
+                                outer_high = std::max(li, ri);
+                                ascending = li < ri;
+                                have_range = true;
+                            }
+                        }
+                    }
+                };
+                if (auto e = dynamic_cast<const UHDM::expr*>(bs->Actual_group()))
+                    if (e->Typespec()) try_pat(e->Typespec()->Actual_typespec());
+                if (!st) {
+                    auto mi = dynamic_cast<const UHDM::module_inst*>(
+                        inst ? inst : (const UHDM::scope*)current_instance);
+                    if (mi && mi->Nets())
+                        for (auto n : *mi->Nets())
+                            if (std::string(n->VpiName()) == base_name &&
+                                n->Typespec()) {
+                                try_pat(n->Typespec()->Actual_typespec());
+                                break;
+                            }
+                    if (mi && !st && mi->Variables())
+                        for (auto v : *mi->Variables())
+                            if (std::string(v->VpiName()) == base_name &&
+                                v->Typespec()) {
+                                try_pat(v->Typespec()->Actual_typespec());
+                                break;
+                            }
+                }
+                if (st && st->Members()) {
+                    int elem_w = get_width_from_typespec(st, inst);
+                    int field_off = 0, field_w = 0;
+                    bool found = false;
+                    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                        auto m = (*st->Members())[i];
+                        int mw = 0;
+                        if (auto mts = m->Typespec())
+                            if (auto a = mts->Actual_typespec())
+                                mw = get_width_from_typespec(a, inst);
+                        if (std::string(m->VpiName()) == field_name) {
+                            field_w = mw; found = true; break;
+                        }
+                        field_off += mw;
+                    }
+                    if (found && field_w > 0 && elem_w > 0 &&
+                        elem_w * ((bwire->width) / elem_w) == bwire->width) {
+                        RTLIL::SigSpec idx_s =
+                            import_expression(bs->VpiIndex(), input_mapping);
+                        if (idx_s.is_fully_const()) {
+                            int k = idx_s.as_const().as_int();
+                            int pos = ascending ? (outer_high - k)
+                                                : (k - outer_low);
+                            if (!have_range) pos = k;
+                            int off = pos * elem_w + field_off;
+                            if (pos >= 0 && off + field_w <= bwire->width) {
+                                log("    hier_path: %s[%d].%s (packed net) -> "
+                                    "[%d+:%d]\n", base_name.c_str(), k,
+                                    field_name.c_str(), off, field_w);
+                                return RTLIL::SigSpec(bwire)
+                                    .extract(off, field_w);
+                            }
+                        } else if (idx_s.size() > 0) {
+                            RTLIL::SigSpec sh = idx_s;
+                            sh.extend_u0(32, false);
+                            if (have_range && ascending)
+                                sh = module->Sub(NEW_ID,
+                                    RTLIL::SigSpec(RTLIL::Const(outer_high, 32)),
+                                    sh, false);
+                            else if (have_range && outer_low != 0)
+                                sh = module->Sub(NEW_ID, sh,
+                                    RTLIL::Const(outer_low, 32), false);
+                            if (elem_w > 1)
+                                sh = module->Mul(NEW_ID, sh,
+                                    RTLIL::Const(elem_w, 32), false);
+                            if (field_off > 0)
+                                sh = module->Add(NEW_ID, sh,
+                                    RTLIL::Const(field_off, 32), false);
+                            RTLIL::Wire* rw = module->addWire(NEW_ID, field_w);
+                            module->addShiftx(NEW_ID, RTLIL::SigSpec(bwire),
+                                              sh, RTLIL::SigSpec(rw));
+                            log("    hier_path: %s[dyn].%s (packed net) -> "
+                                "$shiftx %d bits\n", base_name.c_str(),
+                                field_name.c_str(), field_w);
+                            return RTLIL::SigSpec(rw);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Handle packed array element + struct field access: sig[i].field[hi:lo]
     // Path_elems pattern: [bit_select(sig[i]), part_select(field[hi:lo])]
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {

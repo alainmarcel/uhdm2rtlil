@@ -100,13 +100,13 @@ hpdcache_core_arbiter                  4   180   cex      # cex now measurable (
 hpdcache_ctrl                          4   180   timeout  # was crash (segfault); now timeout
 hpdcache_ctrl_pe                       4   180   proven
 hpdcache_data_downsize                 4   400   dead     # accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
-hpdcache_data_resize                   4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_data_upsize                   4   180   cex      # cex now measurable (was crash) - TRIAGE
+hpdcache_data_resize                   4   180   proven   # PROVEN: typedef-range + packed-write chain fixes
+hpdcache_data_upsize                   4   180   proven   # PROVEN: multi-dim packed dynamic write fixes
 hpdcache_decoder                       4   180   proven
 hpdcache_demux                         4   180   proven
 hpdcache_fifo_reg                      4   900   proven
 hpdcache_fifo_reg_initialized          4   180   cex
-hpdcache_flush                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
+hpdcache_flush                         4   180   proven   # PROVEN: Surelog typedef-range + reader fixes
 hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   proven
