@@ -76,7 +76,7 @@ cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
 div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
-fpnew_cast_multi                       4   180   proven
+fpnew_cast_multi                       4   180   cex      # was proven via accidental orphan-write merge; correct special_results import exposes an out_valid=0-window special-path diff (co-sim 0/0 over 3 seeds x 2000cyc) - same family as multifmt residual
 fpnew_classifier                       4   180   proven
 fpnew_divsqrt_multi                    4   400   elabfail  # harness: fpnew Implementation chain unresolved -> NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
 fpnew_divsqrt_th_32                    4   180   proven

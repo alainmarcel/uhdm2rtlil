@@ -974,7 +974,20 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             const for_stmt* for_loop = any_cast<const for_stmt*>(stmt);
             // Helper: dedup-add an AssignedSignal to `signals` (by name).
             auto dedup_add = [&](AssignedSignal sig) {
-                if (sig.is_part_select) {
+                // ANY select shape inside the loop body may be indexed by the
+                // loop var — not just part-selects.  A bit/var-select
+                // (`local_operands[i] = operands_i[i] >> ...`,
+                // fpnew_opgroup_multifmt_slice's prepare_input) kept its LHS
+                // node, the written-bits scan resolved it as element 0 (loop
+                // unrolling hasn't run), and the STa update shrank to [15:0] —
+                // the upper operand elements were computed into $0\ but never
+                // driven out, so every non-zero lane operand read 0.
+                if (sig.is_part_select ||
+                    (sig.lhs_expr &&
+                     (sig.lhs_expr->VpiType() == vpiBitSelect ||
+                      sig.lhs_expr->VpiType() == vpiVarSelect ||
+                      sig.lhs_expr->VpiType() == vpiIndexedPartSelect ||
+                      sig.lhs_expr->VpiType() == vpiPartSelect))) {
                     sig.is_part_select = false;
                     sig.lhs_expr = nullptr;
                 }

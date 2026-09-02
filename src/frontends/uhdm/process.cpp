@@ -3505,8 +3505,18 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             RTLIL::Wire* base_w = lhs_spec.is_wire() ? lhs_spec.as_wire() : nullptr;
             auto wb = base_w ? comb_written_bits.find(sig_name)
                              : comb_written_bits.end();
+            // The unreliable set records the scan's BARE UHDM name
+            // ("local_operands") while sig_name here is the resolved wire
+            // name ("gen_num_lanes[3].active_lane.local_operands") — check
+            // the suffix too, or a gen-scope local written through a
+            // loop-var select keeps a shrunken update (fpnew multifmt's
+            // prepare_input dropped operands 1..2 of every lane).
+            std::string bare_name = sig_name;
+            if (auto dp = sig_name.rfind('.'); dp != std::string::npos)
+                bare_name = sig_name.substr(dp + 1);
             if (base_w && wb != comb_written_bits.end() &&
                 !comb_written_unreliable.count(sig_name) &&
+                !comb_written_unreliable.count(bare_name) &&
                 (int)wb->second.size() < base_w->width &&
                 (int)temp_wire->width == base_w->width) {
                 // Partially-written base wire: drive only the written bit runs.
@@ -11745,6 +11755,35 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             if (b.is_fully_const())
                 inner_shift = RTLIL::SigSpec(RTLIL::Const(b.as_const().as_int(), shamt_w));
             else { inner_shift = make_pos(b, 1, 0); any_dynamic = true; }
+        } else if (idx1_e->VpiType() == vpiPartSelect) {
+            // Range select on the element (`val[ifmt][INT_WIDTH-1:0] = ...`,
+            // fpnew_cast_multi's sign-extend overlay): the plain-expr
+            // fallback below would import the part_select's VALUE and use it
+            // as a dynamic bit index.
+            auto ps1 = any_cast<const part_select*>(idx1_e);
+            if (!ps1->Left_range() || !ps1->Right_range()) return false;
+            bool saved_fcf = force_const_fold;
+            force_const_fold = true;
+            RTLIL::SigSpec ls = import_expression(ps1->Left_range());
+            RTLIL::SigSpec rs = import_expression(ps1->Right_range());
+            force_const_fold = saved_fcf;
+            if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+            int l = ls.as_int(), r = rs.as_int();
+            int lo = std::min(l, r);
+            write_w = std::abs(l - r) + 1;
+            if (dim2_size > 0) {
+                // The range spans sub-elements of the second packed dim.
+                int sub_w = elem_w / dim2_size;
+                int pos = (dim2_l < dim2_r)
+                              ? (std::max(dim2_l, dim2_r) - std::max(l, r))
+                              : (lo - std::min(dim2_l, dim2_r));
+                if (pos < 0) return false;
+                write_w *= sub_w;
+                inner_shift = RTLIL::SigSpec(RTLIL::Const(pos * sub_w, shamt_w));
+            } else {
+                inner_shift = RTLIL::SigSpec(RTLIL::Const(lo, shamt_w));
+            }
+            if (write_w <= 0 || write_w > elem_w) return false;
         } else {
             auto e1 = dynamic_cast<const UHDM::expr*>(idx1_e);
             if (!e1) return false;
@@ -12351,6 +12390,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (!gs.empty() && current_signal_temp_wires.count(gs + "." + signal_name))
                 signal_name = gs + "." + signal_name;
         }
+        // A NAMED-BLOCK local's ref also carries the bare name
+        // ("special_res") while its temp wire is keyed by the scoped wire
+        // name ("special_results.special_res") — derive the key from the
+        // wire import_expression actually resolved, the same way the
+        // whole-wire branch below does.  Without this the if-branch write
+        // landed on the real wire while defaults/sync used the $0 temp: a
+        // DOUBLE DRIVE that opt merges into const-driving assigns
+        // write_verilog emits as `assign {op_mod_i, 7'h7f} = ...`
+        // (fpnew_cast_multi's special_results, broke every Verilator
+        // co-sim build of the slice).
+        if (!signal_name.empty() &&
+            !current_signal_temp_wires.count(signal_name) && lhs.is_wire()) {
+            std::string wn = lhs.as_wire()->name.str();
+            if (!wn.empty() && wn[0] == '\\' &&
+                current_signal_temp_wires.count(wn.substr(1)))
+                signal_name = wn.substr(1);
+        }
 
         // If we have a temp wire for this signal, assign to it
         log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
@@ -12799,6 +12855,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             std::string gs = get_current_gen_scope();
             if (!gs.empty() && current_signal_temp_wires.count(gs + "." + signal_name))
                 signal_name = gs + "." + signal_name;
+        }
+        // A NAMED-BLOCK local's ref also carries the bare name
+        // ("special_res") while its temp wire is keyed by the scoped wire
+        // name ("special_results.special_res") — derive the key from the
+        // wire import_expression actually resolved, the same way the
+        // whole-wire branch below does.  Without this the if-branch write
+        // landed on the real wire while defaults/sync used the $0 temp: a
+        // DOUBLE DRIVE that opt merges into const-driving assigns
+        // write_verilog emits as `assign {op_mod_i, 7'h7f} = ...`
+        // (fpnew_cast_multi's special_results, broke every Verilator
+        // co-sim build of the slice).
+        if (!signal_name.empty() &&
+            !current_signal_temp_wires.count(signal_name) && lhs.is_wire()) {
+            std::string wn = lhs.as_wire()->name.str();
+            if (!wn.empty() && wn[0] == '\\' &&
+                current_signal_temp_wires.count(wn.substr(1)))
+                signal_name = wn.substr(1);
         }
 
         // If we have a temp wire for this signal, assign to it
@@ -14365,6 +14438,27 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         current_signal_temp_wires.count(gs + "." + signal_name))
                                         signal_name = gs + "." + signal_name;
                                 }
+                                // A NAMED-BLOCK local's ref also carries the
+                                // bare name ("special_res") while its temp is
+                                // keyed by the scoped wire name
+                                // ("special_results.special_res") — derive the
+                                // key from the wire the LHS import actually
+                                // resolved.  Without this the if-branch write
+                                // landed on the real wire while defaults/sync
+                                // used the $0 temp: a DOUBLE DRIVE that opt
+                                // merges into const-driving assigns
+                                // write_verilog emits as
+                                // `assign {op_mod_i, 7'h7f} = ...`
+                                // (fpnew_cast_multi's special_results, broke
+                                // every Verilator co-sim build of the slice).
+                                if (!signal_name.empty() &&
+                                    !current_signal_temp_wires.count(signal_name) &&
+                                    lhs_sig.is_wire()) {
+                                    std::string wn = lhs_sig.as_wire()->name.str();
+                                    if (!wn.empty() && wn[0] == '\\' &&
+                                        current_signal_temp_wires.count(wn.substr(1)))
+                                        signal_name = wn.substr(1);
+                                }
                                 // If we have a temp wire for this signal, use it
                                 if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
                                     RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
@@ -14422,6 +14516,53 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 // Check if this exact LHS expression has a temp wire
                                 if (current_temp_wires.count(lhs)) {
                                     RTLIL::Wire* tw = current_temp_wires[lhs];
+                                    // The pointer map is keyed by the SHARED
+                                    // def-side LHS node, which every gen
+                                    // instance of the block reuses — the entry
+                                    // can hold a stale/degenerate identity
+                                    // (fpnew's special_results: a width-1
+                                    // gen-scope fallback wire).  When it
+                                    // mismatches, re-resolve a temp THIS
+                                    // process owns: its own map, or the temp
+                                    // its own sync rule drains into `\bn`.
+                                    // Falling into the partial-chunk branch
+                                    // instead kept the REAL wire — a double
+                                    // drive opt merges into const-driving
+                                    // assigns write_verilog emits illegally
+                                    // (broke every Verilator build of the
+                                    // multifmt slice).
+                                    if (tw->width != lhs_sig.size() &&
+                                        lhs_sig.is_wire()) {
+                                        std::string bn =
+                                            lhs_sig.as_wire()->name.str();
+                                        if (!bn.empty() && bn[0] == '\\')
+                                            bn = bn.substr(1);
+                                        auto oit = comb_signal_temp_map.find(bn);
+                                        if (oit != comb_signal_temp_map.end()) {
+                                            tw = oit->second;
+                                        } else if (current_comb_process) {
+                                            RTLIL::IdString wid =
+                                                RTLIL::escape_id(bn);
+                                            for (auto* sy :
+                                                 current_comb_process->syncs) {
+                                                for (auto& ua : sy->actions) {
+                                                    if (ua.first.chunks().size() != 1 ||
+                                                        ua.second.chunks().size() != 1)
+                                                        continue;
+                                                    const RTLIL::SigChunk& ulc =
+                                                        *ua.first.chunks().begin();
+                                                    const RTLIL::SigChunk& urc =
+                                                        *ua.second.chunks().begin();
+                                                    if (ulc.wire && urc.wire &&
+                                                        ulc.wire->name == wid &&
+                                                        urc.wire->name.c_str()[0] == '$') {
+                                                        tw = urc.wire;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                     if (tw->width == lhs_sig.size()) {
                                         // Dedicated full-wire or per-slice temp
                                         // wire — drive it directly.
