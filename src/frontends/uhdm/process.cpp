@@ -10426,8 +10426,12 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
     if (!base_wire) return false;
     int base_w = base_wire->width;
 
-    // Find struct typespec on the base.
-    const UHDM::struct_typespec* st = nullptr;
+    // Find struct/union typespec on the base (a UNION member shares offset
+    // 0 — rp32 r5p_csr's `map.a[adr] <= wdt` on csr_map_ut was rejected
+    // here and the write fell through to the read-path aux wire, leaving
+    // the whole register file undriven).
+    const UHDM::VectorOftypespec_member* st_members = nullptr;
+    bool st_is_union = false;
     for (auto& kv : wire_map) {
         if (kv.second != base_wire) continue;
         const ref_typespec* rts = nullptr;
@@ -10435,23 +10439,28 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
         else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first)) rts = lv->Typespec();
         else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
         else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+        else if (auto uv = dynamic_cast<const UHDM::union_var*>(kv.first)) rts = uv->Typespec();
         if (rts) {
             if (auto ats = rts->Actual_typespec()) {
                 if (ats->UhdmType() == uhdmstruct_typespec)
-                    st = any_cast<const UHDM::struct_typespec*>(ats);
+                    st_members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
+                else if (ats->UhdmType() == uhdmunion_typespec) {
+                    st_members = any_cast<const UHDM::union_typespec*>(ats)->Members();
+                    st_is_union = true;
+                }
             }
         }
-        if (st) break;
+        if (st_members) break;
     }
-    if (!st || !st->Members()) return false;
+    if (!st_members) return false;
 
     // Find field offset (from LSB; last listed member = LSB) and typespec.
     int field_offset = 0;
     int field_width = 0;
     const UHDM::typespec* field_ts_actual = nullptr;
     bool found_field = false;
-    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
-        auto m = (*st->Members())[i];
+    for (int i = (int)st_members->size() - 1; i >= 0; i--) {
+        auto m = (*st_members)[i];
         int mw = 0;
         const UHDM::typespec* mts_actual = nullptr;
         if (auto mts = m->Typespec())
@@ -10465,7 +10474,7 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
             found_field = true;
             break;
         }
-        field_offset += mw;
+        if (!st_is_union) field_offset += mw;
     }
     if (!found_field || field_width <= 0) return false;
     if (field_offset + field_width > base_w) return false;
@@ -10550,22 +10559,6 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
     // Without this, mask/shift/or on the full base width would AND in the
     // constants and `opt` then folds the AND, losing the constant
     // `s[other_field] = 1` bits.
-    std::vector<RTLIL::State> mask_bits(field_width, RTLIL::State::S0);
-    for (int i = 0; i < elem_width; i++) mask_bits[i] = RTLIL::State::S1;
-    RTLIL::Const mask_const_val(mask_bits);
-    RTLIL::SigSpec mask_const_sig = RTLIL::SigSpec(mask_const_val);
-    RTLIL::SigSpec rhs_field = rhs;
-    rhs_field.extend_u0(field_width, false);
-
-    RTLIL::Wire* mask_shifted = module->addWire(NEW_ID, field_width);
-    module->addShl(NEW_ID, mask_const_sig,
-                   RTLIL::SigSpec(shift_field_w), mask_shifted, false);
-    RTLIL::Wire* val_shifted = module->addWire(NEW_ID, field_width);
-    module->addShl(NEW_ID, rhs_field,
-                   RTLIL::SigSpec(shift_field_w), val_shifted, false);
-    RTLIL::Wire* inv_mask = module->addWire(NEW_ID, field_width);
-    module->addNot(NEW_ID, RTLIL::SigSpec(mask_shifted), inv_mask);
-
     // cur_val for the FIELD SLICE only (current_comb_values gives the
     // already-tracked value of the full struct wire).
     RTLIL::SigSpec cur_full;
@@ -10575,18 +10568,68 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
         cur_full = RTLIL::SigSpec(base_wire);
     RTLIL::SigSpec cur_field = cur_full.extract(field_offset, field_width);
 
-    RTLIL::Wire* cleared = module->addWire(NEW_ID, field_width);
-    module->addAnd(NEW_ID, cur_field, RTLIL::SigSpec(inv_mask), cleared);
     RTLIL::Wire* new_field = module->addWire(NEW_ID, field_width);
-    module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
-                  RTLIL::SigSpec(val_shifted), new_field);
+    if (field_width > 2048 && field_width % elem_width == 0 &&
+        elem_width * outer_size == field_width) {
+        // WIDE elem-partitioned field (rp32 r5p_csr's 131072-bit CSR map):
+        // three field-width barrel shifters take ~10 minutes to synthesize
+        // and write_verilog emits literals past Verilator's number limit.
+        // Per-element address decode is ~35x smaller: for each element k,
+        // new[k] = (pos == k) ? rhs : cur[k].
+        RTLIL::SigSpec dec;
+        for (int k = 0; k < outer_size; k++) {
+            RTLIL::Wire* eqw = module->addWire(NEW_ID, 1);
+            module->addEq(NEW_ID, RTLIL::SigSpec(pos_w),
+                          RTLIL::SigSpec(RTLIL::Const(k, shamt_w)), eqw);
+            RTLIL::Wire* mw2 = module->addWire(NEW_ID, elem_width);
+            module->addMux(NEW_ID,
+                           cur_field.extract(k * elem_width, elem_width),
+                           rhs, RTLIL::SigSpec(eqw), mw2);
+            dec.append(RTLIL::SigSpec(mw2));
+        }
+        module->connect(RTLIL::SigSpec(new_field), dec);
+    } else {
+        // Operate at field_width — only the field slice gets a new value,
+        // leaving surrounding bits of `\s` driven by their prior (constant)
+        // assignments.  Without this, mask/shift/or on the full base width
+        // would AND in the constants and `opt` then folds the AND, losing
+        // the constant `s[other_field] = 1` bits.
+        std::vector<RTLIL::State> mask_bits(field_width, RTLIL::State::S0);
+        for (int i = 0; i < elem_width; i++) mask_bits[i] = RTLIL::State::S1;
+        RTLIL::Const mask_const_val(mask_bits);
+        RTLIL::SigSpec mask_const_sig = RTLIL::SigSpec(mask_const_val);
+        RTLIL::SigSpec rhs_field = rhs;
+        rhs_field.extend_u0(field_width, false);
+
+        RTLIL::Wire* mask_shifted = module->addWire(NEW_ID, field_width);
+        module->addShl(NEW_ID, mask_const_sig,
+                       RTLIL::SigSpec(shift_field_w), mask_shifted, false);
+        RTLIL::Wire* val_shifted = module->addWire(NEW_ID, field_width);
+        module->addShl(NEW_ID, rhs_field,
+                       RTLIL::SigSpec(shift_field_w), val_shifted, false);
+        RTLIL::Wire* inv_mask = module->addWire(NEW_ID, field_width);
+        module->addNot(NEW_ID, RTLIL::SigSpec(mask_shifted), inv_mask);
+
+        RTLIL::Wire* cleared = module->addWire(NEW_ID, field_width);
+        module->addAnd(NEW_ID, cur_field, RTLIL::SigSpec(inv_mask), cleared);
+        module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
+                      RTLIL::SigSpec(val_shifted), new_field);
+    }
 
     // Drive the field slice of `\s` (or its $0\ temp) — leaves the
     // other struct fields untouched by this assignment.
     RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(base_wire)
                                    .extract(field_offset, field_width);
     if (proc) {
-        emit_comb_assign(lhs_slice, RTLIL::SigSpec(new_field), proc);
+        // In an always_ff body the write must land on THIS process's $0
+        // temp (the sync rule drains it) — writing the real wire made the
+        // register a combinational self-loop (rp32 r5p_csr's
+        // `csr_map.a[adr] <= wdt`-class union writes).
+        RTLIL::Wire* tw0 = find_own_temp_wire(base_name);
+        RTLIL::SigSpec tgt = (tw0 && tw0->width == base_wire->width)
+            ? RTLIL::SigSpec(tw0).extract(field_offset, field_width)
+            : lhs_slice;
+        emit_comb_assign(tgt, RTLIL::SigSpec(new_field), proc);
     } else if (case_rule) {
         std::string temp_name = "$0\\" + base_name;
         RTLIL::Wire* temp_wire = module->wire(temp_name);

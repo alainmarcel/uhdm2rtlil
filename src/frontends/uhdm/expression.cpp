@@ -9614,6 +9614,123 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Packed union/struct member that is itself a PACKED ARRAY, read with an
+    // ELEMENT select: `csr_map.a[csr_ctl.adr]` (rp32 r5p_csr's CSR read) —
+    // Path_elems = [ref_obj(base), bit_select(member, idx)].  The generic
+    // walker returned the WHOLE base: the read collapsed to a 131072-bit mux
+    // Verilator refuses to build and csr_rdt stuck at element [fff].
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe_ua = *uhdm_hier->Path_elems();
+        if (pe_ua[0]->UhdmType() == uhdmref_obj &&
+            pe_ua[1]->UhdmType() == uhdmbit_select) {
+            auto rb  = any_cast<const ref_obj*>(pe_ua[0]);
+            auto mbs = any_cast<const bit_select*>(pe_ua[1]);
+            std::string ua_base(rb->VpiName());
+            std::string ua_member(mbs->VpiName());
+            RTLIL::Wire* bw = name_map.count(ua_base)
+                                  ? name_map[ua_base]
+                                  : module->wire(RTLIL::escape_id(ua_base));
+            // Base typespec (struct or union) from the ref's actual.
+            const UHDM::typespec* bts = nullptr;
+            if (const any* ag = rb->Actual_group()) {
+                const UHDM::ref_typespec* rt = nullptr;
+                if (auto nn = dynamic_cast<const UHDM::net*>(ag)) rt = nn->Typespec();
+                else if (auto vv = dynamic_cast<const UHDM::variables*>(ag)) rt = vv->Typespec();
+                if (rt) bts = rt->Actual_typespec();
+            }
+            const UHDM::VectorOftypespec_member* ua_members = nullptr;
+            if (bts) {
+                if (auto ust = any_cast<const UHDM::union_typespec*>(bts))
+                    ua_members = ust->Members();
+                else if (auto sst = any_cast<const UHDM::struct_typespec*>(bts))
+                    ua_members = sst->Members();
+            }
+            const UHDM::typespec* mts = nullptr;
+            if (ua_members)
+                for (auto m : *ua_members)
+                    if (std::string(m->VpiName()) == ua_member && m->Typespec()) {
+                        mts = m->Typespec()->Actual_typespec();
+                        break;
+                    }
+            // Member must be a packed ARRAY: outer range + element width.
+            const UHDM::VectorOfrange* mrgs = nullptr;
+            if (mts) {
+                if (auto lt = any_cast<const UHDM::logic_typespec*>(mts)) {
+                    if (lt->Ranges() && lt->Ranges()->size() >= 2)
+                        mrgs = lt->Ranges();
+                } else if (auto pt =
+                               any_cast<const UHDM::packed_array_typespec*>(mts)) {
+                    mrgs = pt->Ranges();
+                }
+            }
+            if (bw && mrgs && !mrgs->empty() && mbs->VpiIndex()) {
+                int moff = 0, mw = 0;
+                bool ok = calculate_struct_member_offset(bts, ua_member, inst,
+                                                         moff, mw);
+                RTLIL::SigSpec ls = ok ? import_expression((*mrgs)[0]->Left_expr())
+                                       : RTLIL::SigSpec();
+                RTLIL::SigSpec rs = ok ? import_expression((*mrgs)[0]->Right_expr())
+                                       : RTLIL::SigSpec();
+                if (ok && mw > 0 && moff + mw <= bw->width &&
+                    ls.is_fully_const() && rs.is_fully_const()) {
+                    int l = ls.as_int(), r = rs.as_int();
+                    int n = std::abs(l - r) + 1;
+                    if (n > 0 && mw % n == 0) {
+                        int elem_w = mw / n;
+                        bool asc = l < r;
+                        RTLIL::SigSpec ix =
+                            import_expression(mbs->VpiIndex(), input_mapping);
+                        if (ix.is_fully_const()) {
+                            int iv = ix.as_const().as_int();
+                            int pos = asc ? (std::max(l, r) - iv)
+                                          : (iv - std::min(l, r));
+                            if (pos >= 0 && pos < n) {
+                                log("    hier_path: packed-array member elem "
+                                    "%s.%s[%d] -> \%s[%d +: %d]\n",
+                                    ua_base.c_str(), ua_member.c_str(), iv,
+                                    ua_base.c_str(), moff + pos * elem_w, elem_w);
+                                return RTLIL::SigSpec(bw, moff + pos * elem_w,
+                                                      elem_w);
+                            }
+                        } else {
+                            // Dynamic index: element read via $shiftx on the
+                            // member slice, position honouring the declared
+                            // bounds and direction.
+                            int shw = std::max(32, ix.size() + 7);
+                            RTLIL::SigSpec rel = ix;
+                            rel.extend_u0(shw, false);
+                            if (asc) {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shw);
+                                module->addSub(NEW_ID,
+                                    RTLIL::SigSpec(RTLIL::Const(std::max(l, r), shw)),
+                                    rel, pw, true);
+                                rel = RTLIL::SigSpec(pw);
+                            } else if (std::min(l, r) != 0) {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shw);
+                                module->addSub(NEW_ID, rel,
+                                    RTLIL::SigSpec(RTLIL::Const(std::min(l, r), shw)),
+                                    pw, true);
+                                rel = RTLIL::SigSpec(pw);
+                            }
+                            RTLIL::Wire* sh = module->addWire(NEW_ID, shw);
+                            module->addMul(NEW_ID, rel,
+                                RTLIL::SigSpec(RTLIL::Const(elem_w, shw)), sh, true);
+                            RTLIL::Wire* yw = module->addWire(NEW_ID, elem_w);
+                            RTLIL::Cell* sx = module->addShiftx(NEW_ID,
+                                RTLIL::SigSpec(bw, moff, mw),
+                                RTLIL::SigSpec(sh), yw);
+                            add_src_attribute(sx->attributes, uhdm_hier);
+                            log("    hier_path: packed-array member DYNAMIC elem "
+                                "%s.%s[expr] -> shiftx over %d bits, elem %d\n",
+                                ua_base.c_str(), ua_member.c_str(), mw, elem_w);
+                            return RTLIL::SigSpec(yw);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // General packed union/struct member chain `base.m1.m2...field` where each
     // level is a struct or union member (rp32 dec32: `op.r.opcode.opc` — union
     // -> struct -> struct -> enum field; and imm_i_f's `op.imm_11_0` — a simple
