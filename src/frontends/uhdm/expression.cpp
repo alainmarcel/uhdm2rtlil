@@ -4525,6 +4525,22 @@ static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm
     // A ref_obj LHS points at the declaration that carries the typespec.
     if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
         if (auto ag = r->Actual_group()) lhs = ag;
+    // An ELEMENT write into an unpacked array (`resp_o[1] <= '{err:..,..}`
+    // on a type-param'd struct array — the pattern-write sibling of
+    // typaram_struct_array_elem_read): the element struct lives on the
+    // array_var's INNER var (vpiReg), not on the bit_select or the array.
+    // Without it the pattern fell back to the ctx/count width guess, an
+    // operation member inflated to the LHS width, and the final truncation
+    // kept {data[41:0], last} — err/id silently dropped.
+    if (auto bsl = dynamic_cast<const UHDM::bit_select*>(lhs))
+        if (auto ag = bsl->Actual_group()) lhs = ag;
+    if (auto av = dynamic_cast<const UHDM::array_var*>(lhs)) {
+        if (av->Variables() && !av->Variables()->empty())
+            if (auto v0 = dynamic_cast<const UHDM::variables*>(
+                    (*av->Variables())[0]))
+                if (v0->Typespec())
+                    return v0->Typespec()->Actual_typespec();
+    }
     const UHDM::ref_typespec* rt = nullptr;
     if (auto pm = dynamic_cast<const UHDM::parameter*>(lhs)) rt = pm->Typespec();
     else if (auto sv = dynamic_cast<const UHDM::struct_var*>(lhs)) rt = sv->Typespec();
