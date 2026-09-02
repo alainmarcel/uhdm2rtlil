@@ -7779,7 +7779,22 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
 }
 
 // Import bit select (e.g., sig[3])
+// A bit-select's index (and its own internals) are SELF-DETERMINED: the
+// enclosing expression's context width must not leak in.  With a 1-bit LHS
+// (`ifmt_of_after_round[ifmt] = ~rounded_int_res[INT_WIDTH-2+op_mod_q2]`,
+// fpnew_cast_multi's overflow detect) the index add materialized at width 1
+// and the constant 14 clipped to 1'0 — the read landed on bit op_mod
+// instead of 14+op_mod and every int-to-int cast spuriously took the
+// overflow-special path (result forced to all-ones).
 RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    int saved_ctx = expression_context_width;
+    expression_context_width = 0;
+    RTLIL::SigSpec r = import_bit_select_inner(uhdm_bit, inst, input_mapping);
+    expression_context_width = saved_ctx;
+    return r;
+}
+
+RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing bit select\n");
 

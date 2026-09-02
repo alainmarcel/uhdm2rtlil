@@ -76,7 +76,7 @@ cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
 div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   cex
-fpnew_cast_multi                       4   180   cex      # was proven via accidental orphan-write merge; correct special_results import exposes an out_valid=0-window special-path diff (co-sim 0/0 over 3 seeds x 2000cyc) - same family as multifmt residual
+fpnew_cast_multi                       4   600   proven   # re-proven after bit-select-index self-determination + CPK_FORMATS typespec fix (was briefly cex when the corrected special_results import exposed the then-mirrored CPK geometry)
 fpnew_classifier                       4   180   proven
 fpnew_divsqrt_multi                    4   400   elabfail  # harness: fpnew Implementation chain unresolved -> NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
 fpnew_divsqrt_th_32                    4   180   proven
@@ -86,7 +86,7 @@ fpnew_fma_multi                        4   180   error    # count_id assert FIXE
 fpnew_noncomp                          4   180   proven
 fpnew_opgroup_block                    4   180   cex
 fpnew_opgroup_fmt_slice                4   180   cex
-fpnew_opgroup_multifmt_slice           4   180   cex      # cex now measurable (was timeout w/ collapsed LANE widths pre-evaluator fixes) - shares the arb_idx_cast root
+fpnew_opgroup_multifmt_slice           4   180   timeout  # co-sim CLEAN (was 97 divergences pre-fillgen/CPK rounds); miter exceeds SAT budget at full CPK lane widths (>15min)
 fpnew_rounding                         4   900   proven
 fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
 fpu_wrap                               4   180   cex
