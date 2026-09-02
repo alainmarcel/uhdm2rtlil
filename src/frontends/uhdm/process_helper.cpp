@@ -270,6 +270,25 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
             sig.name = full_name;
         else
             sig.name = base;
+        // A trailing bit-select with a RUNTIME index (`map.a[adr]` — rp32
+        // r5p_csr's union-member CSR write): the touched bits are unknowable
+        // at scan time, and importing the LHS expression READS it (the
+        // $shiftx aux wire), so the SSA always_ff path registered the aux
+        // instead of the base and the write became a combinational
+        // self-loop.  Force the full-wire temp; the dynamic write handler
+        // masks into it.
+        if (hp->Path_elems() && !hp->Path_elems()->empty()) {
+            auto last_pe = hp->Path_elems()->back();
+            if (last_pe->UhdmType() == uhdmbit_select) {
+                auto lbs = any_cast<const bit_select*>(last_pe);
+                if (lbs->VpiIndex()) {
+                    RTLIL::SigSpec is = import_expression(
+                        dynamic_cast<const UHDM::expr*>(lbs->VpiIndex()));
+                    if (is.size() == 0 || !is.is_fully_const())
+                        sig.lhs_expr = nullptr;
+                }
+            }
+        }
         signals.push_back(sig);
     }
 }
@@ -793,6 +812,28 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 RTLIL::escape_id("is_interface"));
                         bool full_is_wire = !full_name.empty() &&
                             module->wire(RTLIL::escape_id(full_name)) != nullptr;
+                        // A trailing bit-select with a RUNTIME index
+                        // (`map.a[adr]` — rp32 r5p_csr's union-member CSR
+                        // write): importing the LHS expression READS it
+                        // (the $shiftx aux), so the always_ff SSA path
+                        // registered the aux instead of the base and the
+                        // write became a combinational self-loop with an
+                        // empty sync.  Force the full-wire temp (mark
+                        // partial, drop the imported-LHS route).
+                        if (hp->Path_elems() && !hp->Path_elems()->empty()) {
+                            auto last_pe = hp->Path_elems()->back();
+                            if (last_pe->UhdmType() == uhdmbit_select) {
+                                auto lbs = any_cast<const bit_select*>(last_pe);
+                                if (lbs->VpiIndex()) {
+                                    RTLIL::SigSpec is = import_expression(
+                                        dynamic_cast<const UHDM::expr*>(lbs->VpiIndex()));
+                                    if (is.size() == 0 || !is.is_fully_const()) {
+                                        sig.lhs_expr = nullptr;
+                                        sig.is_part_select = true;
+                                    }
+                                }
+                            }
+                        }
                         if (full_is_wire && !base_is_wire) {
                             sig.name = full_name;
                         } else if (base_is_wire) {

@@ -339,7 +339,21 @@ def extract_ports(yosys: Path, cr_plugin: Path, simcells: Path,
         f"memory_dff\n"
         f"extract_clocks_resets -o {out_txt}\n"
     )
-    sh([str(yosys), "-q", "-m", str(cr_plugin), "-p", script])
+    p = subprocess.run([str(yosys), "-q", "-m", str(cr_plugin), "-p", script],
+                       check=False, text=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if p.returncode != 0:
+        # A netlist Yosys itself cannot re-read (rp32_r5p_csr's mostly-
+        # constant 131072-bit CSR register file emits a single 131008-bit
+        # literal that overflows read_verilog's lexer buffer — and Verilator
+        # rejects numbers that wide too): the co-sim is inapplicable, not a
+        # failure.  Same convention as the Verilator-build skip below.
+        if "input buffer overflow" in (p.stdout + p.stderr) or \
+           "exceeds implementation limit" in (p.stdout + p.stderr):
+            print("⏭  netlist literal exceeds simulator limits — co-sim not applicable (skipping)")
+            sys.exit(77)
+        sys.stderr.write(f"{p.stdout}\n{p.stderr}\n")
+        sys.exit(p.returncode)
 
 
 def parse_ports(path: Path) -> tuple[list[tuple[str, int, str]],

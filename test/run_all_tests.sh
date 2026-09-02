@@ -367,6 +367,16 @@ run_sim_equivalence_softwarn() {
     if [ ! -f "$script" ] || [ ! -f "$plugin" ]; then
         return 0  # silently skip if the optional tooling isn't built
     fi
+    # SKIP_SIM_EQUIV=1 (sim_config): co-sim is known-inapplicable for this
+    # design AND expensive to discover (rp32_r5p_csr's 131072-bit CSR union
+    # register file synthesizes for ~10min before the netlist's single
+    # 131008-bit literal trips read_verilog's lexer and Verilator's number
+    # limit — dangerously close to STEP_TIMEOUT_S under parallel load, and
+    # a killed step leaves an empty log that reads as a NEW warning).
+    if [ "$(read_test_cfg "$test_dir" SKIP_SIM_EQUIV 0)" = "1" ]; then
+        echo "    ⏭  sim-equiv skipped per sim_config (known N/A)"
+        return 0
+    fi
     local log="$test_dir/sim_equiv.log"
     run_step "$script" "$test_dir" --cycles "$cycles" >"$log" 2>&1
     local rc=$?
