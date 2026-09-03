@@ -3052,7 +3052,19 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             log("UHDM: Found net object\n");
             if (auto typespec = net->Typespec()) {
                 log("UHDM: Net has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec, inst);
+                int w = get_width_from_typespec(typespec, inst);
+                // Elaboration drops the anonymous outer packed dims of
+                // `data_t [3:0] arr` (only `data_t` survives on the
+                // elaborated net) — recover them from the def view.
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
+                    if (auto at = typespec->Actual_typespec())
+                        if (!std::string(at->VpiName()).empty()) {
+                            int wd = widen_from_def_elem_match(
+                                std::string(mi->VpiDefName()),
+                                std::string(net->VpiName()), at, inst);
+                            if (wd > w) return wd;
+                        }
+                return w;
             } else {
                 log("UHDM: Net has no typespec\n");
             }
@@ -3085,6 +3097,50 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                     }
                     if (typespec_has_full_info) {
                         int w = get_width_from_typespec(a, inst);
+                        // The ts may encode only the ELEMENT type while the
+                        // pav's own Ranges carry the outer dims
+                        // (`hpdcache_req_data_t [ways-1:0] x` — ts is just
+                        // req_data_t): multiply them in, unless the ts's
+                        // outermost range DUPLICATES the pav's (the
+                        // function-return form this shortcut was added for).
+                        if (w > 0 && pav->Ranges() && !pav->Ranges()->empty()) {
+                            const UHDM::VectorOfrange* tsrg = nullptr;
+                            if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(a))
+                                tsrg = lt2->Ranges();
+                            else if (auto pt2 = dynamic_cast<const UHDM::packed_array_typespec*>(a))
+                                tsrg = pt2->Ranges();
+                            auto eval_rng = [&](const UHDM::range* r, int& l, int& rr2) {
+                                if (!r->Left_expr() || !r->Right_expr()) return false;
+                                bool sf = force_const_fold;
+                                force_const_fold = true;
+                                RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                force_const_fold = sf;
+                                if (!ls.is_fully_const() || !rs.is_fully_const())
+                                    return false;
+                                l = ls.as_int();
+                                rr2 = rs.as_int();
+                                return true;
+                            };
+                            bool dup = false;
+                            if (tsrg && !tsrg->empty()) {
+                                int pl, pr, tl, tr;
+                                if (eval_rng((*pav->Ranges())[0], pl, pr) &&
+                                    eval_rng((*tsrg)[0], tl, tr) &&
+                                    pl == tl && pr == tr)
+                                    dup = true;
+                            }
+                            if (!dup) {
+                                bool ok = true;
+                                int mult = 1;
+                                for (auto r : *pav->Ranges()) {
+                                    int l, rr2;
+                                    if (!eval_rng(r, l, rr2)) { ok = false; break; }
+                                    mult *= std::abs(l - rr2) + 1;
+                                }
+                                if (ok) w *= mult;
+                            }
+                        }
                         log("UHDM: packed_array_var width from typespec = %d\n", w);
                         return w;
                     }
@@ -3135,6 +3191,17 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             if (auto typespec = variable->Typespec()) {
                 log("UHDM: Net has typespec, calling get_width_from_typespec\n");
                 int w = get_width_from_typespec(typespec, inst);
+                // Elaboration drops the anonymous outer packed dims of
+                // `data_t [3:0] arr` (only `data_t` survives on the
+                // elaborated var) — recover them from the def view.
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
+                    if (auto at = typespec->Actual_typespec())
+                        if (!std::string(at->VpiName()).empty()) {
+                            int wd = widen_from_def_elem_match(
+                                std::string(mi->VpiDefName()),
+                                std::string(variable->VpiName()), at, inst);
+                            if (wd > w) return wd;
+                        }
                 // The elaborated var range may carry a substituted override
                 // hier_path (`[CFG_LSU.BUS.ADR-1:0]`, degu SoC tcb_lite_lib_decoder
                 // `adr`) that references a parent-scope param unresolvable here and
@@ -3616,7 +3683,12 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             if (logic_ts && logic_ts->Elem_typespec() != nullptr) {
                 auto elem_ref = logic_ts->Elem_typespec();
                 if (elem_ref->Actual_typespec()) {
-                    auto elem_actual = elem_ref->Actual_typespec();
+                    const UHDM::typespec* elem_actual = elem_ref->Actual_typespec();
+                    // Resolve a TYPE-PARAMETER element to the instance's
+                    // binding first — `word_t [reqWords-1:0]` over an
+                    // unresolved type param computed elem_width=1 and
+                    // memctrl's data_read_req_word collapsed 512→8.
+                    elem_actual = resolve_type_param_typespec(elem_actual, inst);
                     // Check if elem is itself a packed array (typedef alias case like reg2dim1_t)
                     // In that case, the range on this typespec is redundant and the elem already
                     // accounts for the full array dimensions

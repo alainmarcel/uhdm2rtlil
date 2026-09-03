@@ -2010,6 +2010,140 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 for (auto v : *current_instance->Variables())
                                     if (std::string(v->VpiName()) == base_name) { own_geo(v); break; }
                         }
+                        // Typespec with Elem_typespec (`ram_data_t [3:0]
+                        // [0:0] data_wentry`): the lt path below requires a
+                        // plain multi-range typespec, so expand the FULL dim
+                        // chain here — the outer Ranges(), then the
+                        // element's own dims recursively.  Without this the
+                        // second index of `data_wentry[y][x]` was treated as
+                        // a BIT select of the element and every data-SRAM
+                        // wdata/wbyteenable/rdata connection collapsed to
+                        // one bit.
+                        if (own_dims.empty() && lt && lt->Elem_typespec() &&
+                            lt->Ranges() && !lt->Ranges()->empty()) {
+                            bool chain_ok = true;
+                            const UHDM::logic_typespec* cur_lt = lt;
+                            int guard = 0;
+                            while (cur_lt && chain_ok && guard++ < 8) {
+                                if (cur_lt->Ranges())
+                                    for (auto r : *cur_lt->Ranges()) {
+                                        RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                        if (!l.is_fully_const() || !rr.is_fully_const()) {
+                                            chain_ok = false; break;
+                                        }
+                                        own_dims.push_back({l.as_const().as_int(),
+                                                            rr.as_const().as_int()});
+                                    }
+                                if (!chain_ok) break;
+                                const UHDM::any* ea =
+                                    cur_lt->Elem_typespec() &&
+                                    cur_lt->Elem_typespec()->Actual_typespec()
+                                        ? cur_lt->Elem_typespec()->Actual_typespec()
+                                        : nullptr;
+                                if (!ea) break;
+                                // The innermost element is often a TYPE
+                                // PARAMETER (hpdcache_data_word_t) — resolve
+                                // it to the instance's binding first.
+                                if (auto ets = dynamic_cast<const UHDM::typespec*>(ea))
+                                    ea = resolve_type_param_typespec(ets, current_instance);
+                                if (auto nlt = dynamic_cast<const UHDM::logic_typespec*>(ea)) {
+                                    cur_lt = nlt;
+                                    continue;
+                                }
+                                int ew = get_width_from_typespec(ea, current_instance);
+                                if (ew > 1) own_dims.push_back({ew - 1, 0});
+                                else if (ew != 1) chain_ok = false;
+                                break;
+                            }
+                            if (!chain_ok) own_dims.clear();
+                        }
+                        // Elaboration drops the anonymous outer packed dims
+                        // of `pair_t [1:0][0:0] wentry` — the elaborated var
+                        // carries only `pair_t`, so the chain above totals 32
+                        // against a 64-bit wire.  The AllModules def view
+                        // still has the wrapper typespec (outer Ranges +
+                        // Elem = the very ts we hold): substitute it and
+                        // re-expand.
+                        if (lt && bw && current_instance) {
+                            long chk = 1;
+                            for (auto& d : own_dims)
+                                chk *= (std::abs(d.first - d.second) + 1);
+                            if (own_dims.empty() || chk != bw->width) {
+                                const UHDM::any* elab_at = rt ? rt->Actual_typespec() : nullptr;
+                                std::string dn;
+                                if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance))
+                                    dn = std::string(mi->VpiDefName());
+                                if (elab_at && !dn.empty() &&
+                                    !std::string(elab_at->VpiName()).empty()) {
+                                    if (auto dlt = def_elem_match_ts(
+                                            dn, base_name,
+                                            dynamic_cast<const UHDM::typespec*>(elab_at))) {
+                                        own_dims.clear();
+                                        bool chain_ok = true;
+                                        const UHDM::logic_typespec* cur_lt = dlt;
+                                        int guard = 0;
+                                        while (cur_lt && chain_ok && guard++ < 8) {
+                                            if (cur_lt->Ranges())
+                                                for (auto r : *cur_lt->Ranges()) {
+                                                    RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                                    RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                                    if (!l.is_fully_const() || !rr.is_fully_const()) {
+                                                        chain_ok = false; break;
+                                                    }
+                                                    own_dims.push_back({l.as_const().as_int(),
+                                                                        rr.as_const().as_int()});
+                                                }
+                                            if (!chain_ok) break;
+                                            const UHDM::any* ea =
+                                                cur_lt->Elem_typespec() &&
+                                                cur_lt->Elem_typespec()->Actual_typespec()
+                                                    ? cur_lt->Elem_typespec()->Actual_typespec()
+                                                    : nullptr;
+                                            if (!ea) break;
+                                            if (auto ets = dynamic_cast<const UHDM::typespec*>(ea))
+                                                ea = resolve_type_param_typespec(ets, current_instance);
+                                            if (auto nlt = dynamic_cast<const UHDM::logic_typespec*>(ea)) {
+                                                cur_lt = nlt;
+                                                continue;
+                                            }
+                                            int ew = get_width_from_typespec(ea, current_instance);
+                                            if (ew > 1) own_dims.push_back({ew - 1, 0});
+                                            else if (ew != 1) chain_ok = false;
+                                            break;
+                                        }
+                                        if (!chain_ok) own_dims.clear();
+                                    }
+                                }
+                            }
+                        }
+                        // Multi-dim packed PORT: Surelog leaves the shared
+                        // module's port NETS typespec-less, so neither the
+                        // Actual_group nor the instance net yields dims —
+                        // but import_port stored the stamped geometry on the
+                        // wire.  Rebuild the two-level dim list from it (the
+                        // behavioural SRAM's `wbyteenable[j][i]` guard
+                        // imported as empty without this, silently
+                        // un-guarding the byte write).
+                        if (own_dims.empty() &&
+                            (!lt || !lt->Ranges() || lt->Ranges()->size() < 2) &&
+                            bw) {
+                            auto ew_id = RTLIL::escape_id("packed_elem_width");
+                            auto ol_id = RTLIL::escape_id("packed_outer_left");
+                            auto or_id = RTLIL::escape_id("packed_outer_right");
+                            if (bw->attributes.count(ew_id) &&
+                                bw->attributes.count(ol_id) &&
+                                bw->attributes.count(or_id)) {
+                                int ew = bw->attributes.at(ew_id).as_int();
+                                int ol = bw->attributes.at(ol_id).as_int();
+                                int orr = bw->attributes.at(or_id).as_int();
+                                if (ew > 0 && bw->width % ew == 0 &&
+                                    (std::abs(ol - orr) + 1) * ew == bw->width) {
+                                    own_dims.push_back({ol, orr});
+                                    own_dims.push_back({ew - 1, 0});
+                                }
+                            }
+                        }
                     }
                     if (bw && ((lt && lt->Ranges() && lt->Ranges()->size() >= 2 &&
                                 !lt->Elem_typespec()) || !own_dims.empty())) {
@@ -2691,6 +2825,30 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                     array_low = std::min(lv, rv);
                                 }
                             }
+                        }
+                    }
+                }
+                // Multi-dim packed PORT net: Actual_group() resolves into
+                // the shared AllModules net, which Surelog leaves
+                // typespec-less for ports, so both derivations above come up
+                // empty.  import_port stored the stamped geometry on the wire
+                // (packed_elem_width / packed_outer_left / packed_outer_right)
+                // — read it back (the byte-enable guard `wbyteenable[j][i]`
+                // of the behavioural SRAM imported as empty without this,
+                // silently un-guarding the write).
+                if (elem_w == 0 && base_wire) {
+                    auto ew_id = RTLIL::escape_id("packed_elem_width");
+                    auto ol_id = RTLIL::escape_id("packed_outer_left");
+                    auto or_id = RTLIL::escape_id("packed_outer_right");
+                    if (base_wire->attributes.count(ew_id)) {
+                        int ew = base_wire->attributes.at(ew_id).as_int();
+                        int ol = base_wire->attributes.count(ol_id)
+                                     ? base_wire->attributes.at(ol_id).as_int() : 0;
+                        int orr = base_wire->attributes.count(or_id)
+                                      ? base_wire->attributes.at(or_id).as_int() : 0;
+                        if (ew > 0 && base_wire->width % ew == 0) {
+                            elem_w = ew;
+                            array_low = std::min(ol, orr);
                         }
                     }
                 }
