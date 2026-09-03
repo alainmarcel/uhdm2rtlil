@@ -14592,10 +14592,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                     if (ua.first.chunks().size() != 1 ||
                                                         ua.second.chunks().size() != 1)
                                                         continue;
-                                                    const RTLIL::SigChunk& ulc =
-                                                        *ua.first.chunks().begin();
-                                                    const RTLIL::SigChunk& urc =
-                                                        *ua.second.chunks().begin();
+                                                    RTLIL::SigChunk ulc =
+                                                        ua.first.chunks().front();
+                                                    RTLIL::SigChunk urc =
+                                                        ua.second.chunks().front();
                                                     if (ulc.wire && urc.wire &&
                                                         ulc.wire->name == wid &&
                                                         urc.wire->name.c_str()[0] == '$') {
