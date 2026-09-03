@@ -14593,9 +14593,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                         ua.second.chunks().size() != 1)
                                                         continue;
                                                     RTLIL::SigChunk ulc =
-                                                        ua.first.chunks().front();
+                                                        *ua.first.chunks().begin();
                                                     RTLIL::SigChunk urc =
-                                                        ua.second.chunks().front();
+                                                        *ua.second.chunks().begin();
                                                     if (ulc.wire && urc.wire &&
                                                         ulc.wire->name == wid &&
                                                         urc.wire->name.c_str()[0] == '$') {
