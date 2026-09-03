@@ -2023,7 +2023,22 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         current_func_return_struct_ts = any_cast<const UHDM::struct_typespec*>(
             func_def->Return()->Typespec()->Actual_typespec());
     }
+    // Early-`return` guard: a taken return must kill every later statement
+    // (later unrolled loop iterations included) — otherwise a priority
+    // encoder like CVA6 miss_handler's get_victim_cl OR'd every match and a
+    // bare `if (m[i]) return i;` loop returned the LAST match.  The 1-bit
+    // ret_taken wire starts 0; return sets it; process_stmt_to_case chains
+    // everything after a possibly-taken return behind `switch (ret_taken)
+    // case 0`.
+    // The flag is a pure SSA VALUE in input_mapping (NOT a wire): RTLIL
+    // switch signals do not see in-process assignments, but this route
+    // phi-merges input_mapping through if/else, so the value is correct at
+    // every point and the chained guard switches read the mux network.
+    bool have_ret_guard = stmt_contains_return(func_def->Stmt());
+    if (have_ret_guard)
+        input_mapping["$__ret_taken$"] = RTLIL::SigSpec(RTLIL::State::S0, 1);
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
+    if (have_ret_guard) input_mapping.erase("$__ret_taken$");
     current_func_return_struct_ts = saved_ret_struct;
 
     // Create nosync wires for the function context (these get set to 'x)

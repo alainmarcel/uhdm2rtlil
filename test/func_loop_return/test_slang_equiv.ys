@@ -1,0 +1,20 @@
+# UHDM-vs-slang miter for func_loop_return.  read_verilog rejects the
+# function-local declaration initializer, so the golden reference is the
+# built-in read_slang frontend.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_loop_return
+flatten; proc; opt; techmap; opt
+rename func_loop_return gold
+design -stash gold
+
+read_slang dut.sv --top func_loop_return
+hierarchy -check -top func_loop_return
+flatten; proc; opt; techmap; opt
+rename func_loop_return gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
