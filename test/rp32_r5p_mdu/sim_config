@@ -1,0 +1,4 @@
+# r5p_mdu body is entirely commented out upstream (rp32 r5p_mdu.sv lines 52-106):
+# the module is EMPTY, blackboxed on import, and synth -auto-top has no top to
+# pick. Nothing to simulate.
+SKIP_SIM_EQUIV=1

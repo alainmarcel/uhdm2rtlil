@@ -6220,8 +6220,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // clip the shift — see the vpiLShiftOp comment above.)
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
-                // Check if the shifted (left) operand is signed.
+                // Check if the shifted (left) operand is signed.  The wire
+                // flag alone is NOT enough: a comb in-flight read of a signed
+                // variable assigned earlier in the same block remaps onto the
+                // producing cell's anonymous result wire, which drops
+                // is_signed — r5p_alu's staged barrel shifter
+                // (`shf_tm1 = shf_tm0 >>> ...`) then zero-filled stages 2-5
+                // and SL/SRA results lost their sign bits.  Fall back to the
+                // UHDM operand's own declared signedness.
                 bool is_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
+                if (!is_signed && uhdm_op->Operands() &&
+                    uhdm_op->Operands()->size() == 2)
+                    if (auto e0 = dynamic_cast<const UHDM::expr*>(
+                            (*uhdm_op->Operands())[0]))
+                        is_signed = is_expr_signed(e0);
 
                 // Pick the cell by SHIFT KIND, not just signedness:
                 //   `>>>` (arithmetic) of a SIGNED operand fills vacated bits
