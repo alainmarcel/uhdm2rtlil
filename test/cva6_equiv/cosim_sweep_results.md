@@ -130,3 +130,43 @@ NO_RUN (harness/wrapper build errors, need triage before adjudication):
 hpdcache_core_arbiter hpdcache_ctrl hpdcache_memctrl
 hpdcache_regbank_wmask_1rw hpdcache_sram_wbyteenable
 hpdcache_sram_wbyteenable_1rw hwpf_stride_wrapper macro_decoder zcmt_decoder
+
+## NO_RUN triage 2026-09-02 — all nine resolved, zero frontend bugs among them
+
+Every NO_RUN was a harness defect, fixed in `scripts/adjudicate.py` (or the
+wrapper), not a frontend issue:
+
+1. **async2sync in the netlist pipelines** (macro_decoder, zcmt_decoder,
+   hwpf_stride_wrapper, hpdcache_sram_wbyteenable{,_1rw}): async2sync turns
+   $adff into clockless $ff which write_verilog emits as unresolvable module
+   instances → Verilator "module not found".  Removed — write_verilog
+   expresses $adff/$dlatch directly.  All five now **NO_DIVERGENCE** (0/0).
+2. **clk/reset port-name families**: the sram wrappers use bare `clk`/`rst_n`,
+   which the TB treated as data inputs (and collided with its own `clk` reg).
+   Now classified via CLK/RSTL/RSTH name lists, active-high resets driven
+   with `~rst_ni`.
+3. **Unpacked-port flattening convention**: read_uhdm and read_verilog put
+   element 0 of an unpacked port at the flat LSBs; yosys-slang puts it at the
+   MSBs (proven minimally: `input logic [7:0] a [2]; diff = a[0]-a[1]`).  A
+   single shared flat order mislabeled one side's requesters and read as 289
+   "divergences" on hpdcache_core_arbiter.  The TB now drives shared array
+   views and gives each netlist its own flat view (`ms_*` input reversal for
+   slang, `slo_*` output reorder).  Unresolved unpacked dims
+   (`HPDcacheCfg.u.nRequesters`) are inferred from the flat netlist width.
+4. **hpdcache_core_arbiter also hid a real frontend bug** (the one `cex` that
+   was measurable): `.DATA_WIDTH($bits(hpdcache_tag_t))` — type-query
+   sys_func_call overrides were excluded from the paramod dedup signature, so
+   the 44-bit tag mux deduped onto the 147-bit req mux paramod and arb_tag_o
+   was zeroed.  Fixed in uhdm2rtlil.cpp (both signature/naming gates now
+   evaluate `$bits/$clog2/$size/$high/$low/$left/$right` overrides).  Now
+   **NO_DIVERGENCE** (0/0) and the miter cex is the convention artifact above.
+5. **hpdcache_ctrl / hpdcache_memctrl**: the auto-generated wrappers left
+   `parameter type hpdcache_dir_entry_t = logic` unbound (slang errors out;
+   UHDM elaborates a degenerate design).  Bound to
+   `hpdcache_equiv_pkg::hpdcache_dir_entry_t` (already defined there).
+   After the fix both adjudicate as **BOTH_DIFFER** (memctrl 137 vs 160 —
+   first divergence on the SAME cycle/signal both sides; ctrl 185 vs 187),
+   i.e. the usual RTL-vs-synth comparison artifact class, not one-sided
+   frontend bugs.  Miters remain `timeout` at seq=4 as the manifest says.
+6. **hpdcache_regbank_wmask_1rw**: wrapper exposes no outputs to compare
+   (write-only view) — adjudication is N/A, not a failure.
