@@ -1886,7 +1886,24 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         param_signature += val_str;
                         log("UHDM: Added hier_path parameter %s=%s to signature\n",
                             param_name.c_str(), val_str.c_str());
-                    } else if (param_assign->Rhs()->UhdmType() == uhdmfunc_call &&
+                    } else if ((param_assign->Rhs()->UhdmType() == uhdmfunc_call ||
+                                // Type-query SYSTEM calls ($bits(tag_t) etc.)
+                                // are as deterministic as constant func_calls
+                                // and just as override-shaping: hpdcache's
+                                // `.DATA_WIDTH($bits(hpdcache_tag_t))` mux
+                                // collided the 44-bit tag mux onto the
+                                // 147-bit req mux paramod and arb_tag_o
+                                // zeroed.  Arbitrary sys/ops stay excluded
+                                // (issue_read_operands fallout).
+                                (param_assign->Rhs()->UhdmType() == uhdmsys_func_call &&
+                                 [&]() {
+                                     std::string sn(any_cast<const sys_func_call*>(
+                                         param_assign->Rhs())->VpiName());
+                                     return sn == "$bits" || sn == "$clog2" ||
+                                            sn == "$size" || sn == "$high" ||
+                                            sn == "$low" || sn == "$left" ||
+                                            sn == "$right";
+                                 }())) &&
                                ![&]() {
                                    // Never for STRUCT-typed parameters: a
                                    // config-struct factory like
@@ -3122,7 +3139,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             param_string += "\\" + param_name + "=s32'"
                                 + encode_param_bits32("", v);
                         }
-                    } else if (param_assign->Rhs()->UhdmType() == uhdmfunc_call &&
+                    } else if ((param_assign->Rhs()->UhdmType() == uhdmfunc_call ||
+                                // Type-query SYSTEM calls ($bits(tag_t) etc.)
+                                // are as deterministic as constant func_calls
+                                // and just as override-shaping: hpdcache's
+                                // `.DATA_WIDTH($bits(hpdcache_tag_t))` mux
+                                // collided the 44-bit tag mux onto the
+                                // 147-bit req mux paramod and arb_tag_o
+                                // zeroed.  Arbitrary sys/ops stay excluded
+                                // (issue_read_operands fallout).
+                                (param_assign->Rhs()->UhdmType() == uhdmsys_func_call &&
+                                 [&]() {
+                                     std::string sn(any_cast<const sys_func_call*>(
+                                         param_assign->Rhs())->VpiName());
+                                     return sn == "$bits" || sn == "$clog2" ||
+                                            sn == "$size" || sn == "$high" ||
+                                            sn == "$low" || sn == "$left" ||
+                                            sn == "$right";
+                                 }())) &&
                                ![&]() {
                                    // Never for STRUCT-typed parameters: a
                                    // config-struct factory like

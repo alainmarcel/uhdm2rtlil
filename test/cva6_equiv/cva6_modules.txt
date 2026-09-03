@@ -96,8 +96,8 @@ hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   proven
 hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_core_arbiter                  4   180   cex      # cex now measurable (was error) - TRIAGE
-hpdcache_ctrl                          4   180   timeout  # was crash (segfault); now timeout
+hpdcache_core_arbiter                  4   180   cex      # co-sim 0/0 after $bits dedup-sig fix; residual cex = unpacked-top-port flattening convention vs slang (elem0 LSB vs MSB), not a logic diff
+hpdcache_ctrl                          4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 185v187 (comparison artifact)
 hpdcache_ctrl_pe                       4   180   proven
 hpdcache_data_downsize                 4   400   dead     # accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)
 hpdcache_data_resize                   4   180   proven   # PROVEN: typedef-range + packed-write chain fixes
@@ -110,20 +110,20 @@ hpdcache_flush                         4   180   proven   # PROVEN: Surelog type
 hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven
 hpdcache_mem_req_read_arbiter          4   180   proven
-hpdcache_mem_req_write_arbiter         4   180   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_mem_req_write_arbiter         4   180   proven   # promoted: proves since the fev rounds (co-sim NO_DIVERGENCE)
 hpdcache_mem_resp_demux                4   180   proven
 hpdcache_mem_to_axi_read               4   400   proven
 hpdcache_mem_to_axi_write              4   400   proven
-hpdcache_memctrl                       4   180   timeout
+hpdcache_memctrl                       4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 137v160, same first cycle/signal both sides
 hpdcache_miss_handler                  4   180   elabfail  # was crash (segfault); now elabfail
 hpdcache_mshr                          4   400   proven   # async-reset RAM clear (mem2reg demotion) + contract-legalized wrapper
 hpdcache_mux                           4   180   proven
 hpdcache_prio_1hot_encoder             4   180   proven
 hpdcache_prio_bin_encoder              4   180   proven
 hpdcache_regbank_wbyteenable_1rw       4   180   elabfail  # was crash (segfault); now elabfail
-hpdcache_regbank_wmask_1rw             4   180   cex      # cex now measurable (was crash) - TRIAGE
+hpdcache_regbank_wmask_1rw             4   180   cex      # co-sim N/A: wrapper exposes no outputs to compare
 hpdcache_rrarb                         4   180   proven
-hpdcache_rtab                          4   180   cex      # cex now measurable (was error: rtab_entry_t defaulted to logic) - TRIAGE
+hpdcache_rtab                          4   180   proven   # promoted: proves since the fev rounds (co-sim NO_DIVERGENCE)
 hpdcache_sram                          4   180   proven
 hpdcache_sram_1rw                      4   180   proven
 hpdcache_sram_wbyteenable              4   400   timeout  # now elaborates+miters (was error: 1-bit memory word); SAT budget
@@ -138,7 +138,7 @@ hpdcache_victim_sel                    4   180   proven   # PROVEN after part-se
 hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
 hwpf_stride                            4   400   proven
 hwpf_stride_arb                        4   400   proven
-hwpf_stride_wrapper                    4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hwpf_stride_wrapper                    4   400   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
 id_stage                               4   180   proven
 instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
@@ -150,7 +150,7 @@ iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   cex
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
-macro_decoder                          4   180   cex
+macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
 miss_handler                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
@@ -179,5 +179,5 @@ wt_dcache_ctrl                         4   180   cex      # cex now measurable (
 wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudicated): wr_ack_o rtl=0 uhdm=1 slang=0, seeds 1/2/3
 wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
 wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0
-zcmt_decoder                           4   180   cex
+zcmt_decoder                           4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
 rr_arb_tree                            4   400   proven

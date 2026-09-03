@@ -35,11 +35,15 @@ def sh(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, **kw)
 
 # ---------------------------------------------------------------- netlists
+# NOTE: no async2sync here — these netlists feed write_verilog + Verilator,
+# which express $adff/$dlatch directly; async2sync's clockless $ff latch
+# models are unresolvable module instances in Verilog output
+# (macro_decoder/zcmt_decoder-class designs were NO_RUN).
 if not (os.path.exists("adj_gold.v") and os.path.exists("adj_gate.v")):
     open("adj.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 rename {TOP} gold_{TOP}
@@ -47,7 +51,7 @@ write_verilog -noattr adj_gold.v
 design -reset
 read_slang --ignore-assertions -f {FLIST} {WRAP} --top {TOP}
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 rename {TOP} gate_{TOP}
@@ -70,14 +74,27 @@ ins, outs = [], []
 # rejected the whole build with 'Pin not found' and the run was reported
 # as 'both simulators failed' — indistinguishable from a design problem.
 has_clk_rst = set()
+# Clock/reset ports come in several NAME families (the hpdcache sram
+# wrappers use bare `clk`/`rst_n`); treating them as random data inputs
+# collided with the TB's own `clk` reg ("Duplicate declaration") and would
+# drive the DUT clock with noise anyway.
+CLK_NAMES  = ("clk_i", "clk", "clock", "clock_i")
+RSTL_NAMES = ("rst_ni", "rst_n", "resetn", "rstn", "rst_l")   # active-low
+RSTH_NAMES = ("rst", "rst_i", "reset", "reset_i")             # active-high
 for dirn, rng, name in re.findall(r"^  (input|output)\s+(\[\d+:\d+\]\s+)?(\w+);",
                                   mtxt, re.M):
     w = 1
     if rng:
         hi, lo = map(int, re.findall(r"\d+", rng))
         w = hi - lo + 1
-    if name in ("clk_i", "rst_ni"):
-        has_clk_rst.add(name)
+    if dirn == "input" and name in CLK_NAMES:
+        has_clk_rst.add(("clk", name))
+        continue
+    if dirn == "input" and name in RSTL_NAMES:
+        has_clk_rst.add(("rstl", name))
+        continue
+    if dirn == "input" and name in RSTH_NAMES:
+        has_clk_rst.add(("rsth", name))
         continue
     (ins if dirn == "input" else outs).append((name, w))
 if not outs:
@@ -98,8 +115,9 @@ try:
     wtxt = re.sub(r"//[^\n]*", "", wtxt)
     params = dict(re.findall(r"\bparameter\s+(?:int|int\s+unsigned)\s+(\w+)\s*=\s*(\d+)",
                              wtxt))
-    for pname, dim in re.findall(
-            r"^\s*(?:input|output|inout)\s+\w+\s+(\w+)\s*\[([^\]]+)\]\s*,?\s*$",
+    unresolved = {}     # dim text -> [(port, decl type)]
+    for ptype, pname, dim in re.findall(
+            r"^\s*(?:input|output|inout)\s+(\w+)\s+(\w+)\s*\[([^\]]+)\]\s*,?\s*$",
             wtxt, re.M):
         m = re.fullmatch(r"\s*(\w+)\s*-\s*1\s*:\s*0\s*", dim)
         cnt = None
@@ -113,6 +131,24 @@ try:
             cnt = int(dim)
         if cnt:
             unpacked[pname] = cnt
+        else:
+            unresolved.setdefault(dim.strip(), []).append((pname, ptype))
+    # A dim like `HPDcacheCfg.u.nRequesters` (struct-param field built by a
+    # config function) cannot be resolved textually — but a SAME-dim port
+    # declared plain `logic` (1-bit element, e.g. core_req_valid_i) has a
+    # FLAT netlist width equal to the element count; share it with every
+    # port using that dim (hpdcache_core_arbiter's req/rsp arrays).
+    if unresolved:
+        flatw = dict(ins) | dict(outs)
+        for dim, plist in unresolved.items():
+            cnt = None
+            for pname, ptype in plist:
+                if ptype == "logic" and pname in flatw:
+                    cnt = flatw[pname]
+                    break
+            if cnt:
+                for pname, _ in plist:
+                    unpacked[pname] = cnt
 except OSError:
     pass
 
@@ -136,26 +172,41 @@ if _unres:
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
 
-# Array-shaped views for the RTL instance only; the netlists stay flat.
+# Array-shaped views for the RTL instance; the netlists stay flat — but the
+# two frontends FLATTEN an unpacked port in OPPOSITE element orders (UHDM
+# and read_verilog put element 0 at the LSBs; yosys-slang puts it at the
+# MSBs — verified on `input logic [7:0] a [2]; diff = a[0]-a[1]`), so each
+# netlist gets its OWN flat view of the same driven data.  A single shared
+# order mislabels the requesters of one side and an arbiter then reads as
+# 289/300 "divergences" (hpdcache_core_arbiter).
 arr_decl, arr_glue = [], []
 for n, w in ins:
     if n not in unpacked: continue
     c = unpacked[n]; ew = w // c
     arr_decl.append(f"  wire [{ew-1}:0] a_{n} [0:{c-1}];")
     for k in range(c):
-        _kk = k if os.environ.get("ADJ_ELEM_ORDER","hi") == "lo" else (c-1-k)
-        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(_kk+1)*ew-1}:{_kk*ew}];")
+        # elem 0 at the LSBs of the shared driven vector (UHDM order).
+        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(k+1)*ew-1}:{k*ew}];")
+    # slang view: elem 0 at the MSBs.
+    arr_decl.append(f"  wire [{w-1}:0] ms_{n};")
+    arr_glue.append("  assign ms_%s = {%s};" %
+                    (n, ", ".join(f"a_{n}[{k}]" for k in range(0, c))))
 for n, w in outs:
     if n not in unpacked: continue
     c = unpacked[n]; ew = w // c
     arr_decl.append(f"  wire [{ew-1}:0] a_r_{n} [0:{c-1}];")
-    _order = range(c-1, -1, -1) if os.environ.get("ADJ_ELEM_ORDER","hi") == "lo" \
-             else range(0, c)
+    # RTL array -> flat in UHDM order (elem 0 at LSBs) for comparison.
     arr_glue.append("  assign r_%s = {%s};" %
-                    (n, ", ".join(f"a_r_{n}[{k}]" for k in _order)))
+                    (n, ", ".join(f"a_r_{n}[{k}]" for k in range(c-1, -1, -1))))
+    # slang output arrives elem0-at-MSBs: reorder to the shared order.
+    arr_decl.append(f"  wire [{w-1}:0] slo_{n};")
+    arr_glue.append("  assign slo_%s = {%s};" %
+                    (n, ", ".join(f"s_{n}[{(k+1)*ew-1}:{k*ew}]" for k in range(0, c))))
 arrays = "\n".join(arr_decl + arr_glue)
 
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
+gate_conn = ", ".join(f".{n}(ms_{n})" if n in unpacked else f".{n}({n})"
+                      for n, _ in ins)
 # The RTL sees the array views where a port is unpacked; the netlists never do.
 rtl_conn = ", ".join(f".{n}(a_{n})" if n in unpacked else f".{n}({n})"
                      for n, _ in ins)
@@ -167,7 +218,9 @@ drive = "\n      ".join(rnd(n, w) for n, w in ins)
 # Compare each netlist against the RTL, not against each other.  An X on the
 # RTL side is not a divergence -- it is the reference declining to say.
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
-sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
+sbad = " || ".join(
+    f"((r_{n} === r_{n}) && (slo_{n} !== r_{n}))" if n in unpacked else
+    f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 # Name the first output that diverges, per side -- "they differ" is not a
 # diagnosis, and with a dozen ports the count alone does not say where to look.
 # Track the two sides SEPARATELY.  A single per-output flag is claimed by
@@ -176,16 +229,22 @@ sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 # both are counted as differing.
 seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
 seeni = "\n    ".join(f"repg_{n} = 0; reps_{n} = 0;" for n, _ in outs)
-report = "\n".join(
-    f'      if (!repg_{n} && (r_{n} === r_{n}) && (g_{n} !== r_{n})) '
-    f'begin repg_{n} = 1; $display("FIRST-UHDM %0d {n} rtl=%h uhdm=%h", i, '
-    f'r_{n}, g_{n}); end\n'
-    f'      if (!reps_{n} && (r_{n} === r_{n}) && (s_{n} !== r_{n})) '
-    f'begin reps_{n} = 1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, '
-    f'r_{n}, s_{n}); end' for n, _ in outs)
+def _report_line(n):
+    sname = f"slo_{n}" if n in unpacked else f"s_{n}"
+    return (
+        f'      if (!repg_{n} && (r_{n} === r_{n}) && (g_{n} !== r_{n})) '
+        f'begin repg_{n} = 1; $display("FIRST-UHDM %0d {n} rtl=%h uhdm=%h", i, '
+        f'r_{n}, g_{n}); end\n'
+        f'      if (!reps_{n} && (r_{n} === r_{n}) && ({sname} !== r_{n})) '
+        f'begin reps_{n} = 1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, '
+        f'r_{n}, {sname}); end')
+report = "\n".join(_report_line(n) for n, _ in outs)
 
-ck = "".join((".clk_i(clk), " if "clk_i" in has_clk_rst else "",
-               ".rst_ni(rst_ni), " if "rst_ni" in has_clk_rst else ""))
+ck = "".join(
+    f".{name}(clk), " if kind == "clk" else
+    f".{name}(rst_ni), " if kind == "rstl" else
+    f".{name}(~rst_ni), "
+    for kind, name in sorted(has_clk_rst))
 tb = f"""`timescale 1ns/1ps
 module tb;
   reg clk = 0, rst_ni = 0;
@@ -196,7 +255,7 @@ module tb;
 {seen}
   {TOP}      rtl ({ck}{rtl_conn}, {bind_rtl()});
   gold_{TOP} gold({ck}{conn}, {bind('g')});
-  gate_{TOP} gate({ck}{conn}, {bind('s')});
+  gate_{TOP} gate({ck}{gate_conn}, {bind('s')});
   // Free-running clock, inputs driven on the FALLING edge and outputs sampled
   // after the rising one.  Driving inputs in the same statement sequence that
   // toggles the clock races the three instances against each other and reports

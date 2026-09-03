@@ -317,7 +317,7 @@ module hpdcache_ctrl_equiv
   parameter type hpdcache_word_t = hpdcache_equiv_pkg::hpdcache_word_t,
   parameter type hpdcache_data_word_t = hpdcache_equiv_pkg::hpdcache_data_word_t,
   parameter type hpdcache_data_be_t = hpdcache_equiv_pkg::hpdcache_data_be_t,
-  parameter type hpdcache_dir_entry_t = logic,
+  parameter type hpdcache_dir_entry_t = hpdcache_equiv_pkg::hpdcache_dir_entry_t,
   parameter type hpdcache_way_vector_t = hpdcache_equiv_pkg::hpdcache_way_vector_t,
   parameter type hpdcache_way_t = hpdcache_equiv_pkg::hpdcache_way_t,
   parameter type wbuf_addr_t = hpdcache_equiv_pkg::wbuf_addr_t,
