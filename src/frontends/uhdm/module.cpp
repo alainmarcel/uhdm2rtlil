@@ -3640,7 +3640,18 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                         // 12 -> 6 and every member offset shifted).
                         bool redundant = true;
                         auto elem_logic2 = dynamic_cast<const UHDM::logic_typespec*>(elem_actual);
-                        if (logic_ts->Ranges() && !logic_ts->Ranges()->empty() &&
+                        // A different RANGE COUNT is already decisive: the
+                        // alias duplicates the element's range list verbatim,
+                        // so `pair_t [1:0][1:0] entry_t` (2 outer ranges over
+                        // a 1-range element) is a genuine extension even
+                        // though the first bounds coincide.
+                        if (logic_ts->Ranges() && elem_logic2 &&
+                            elem_logic2->Ranges() &&
+                            logic_ts->Ranges()->size() !=
+                                elem_logic2->Ranges()->size())
+                            redundant = false;
+                        if (redundant &&
+                            logic_ts->Ranges() && !logic_ts->Ranges()->empty() &&
                             elem_logic2 && elem_logic2->Ranges() &&
                             !elem_logic2->Ranges()->empty()) {
                             auto ro = (*logic_ts->Ranges())[0];
@@ -3667,19 +3678,31 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     }
                     int elem_width = get_width_from_typespec(elem_actual, inst);
                     if (elem_width > 0 && logic_ts->Ranges() && !logic_ts->Ranges()->empty()) {
-                        auto range = (*logic_ts->Ranges())[0];
-                        if (range->Left_expr() && range->Right_expr()) {
+                        // EVERY range is a packed dimension over the element
+                        // (`typedef pair_t [1:0][1:0] entry_t` = elem*2*2);
+                        // multiplying only the first under-counted
+                        // hpdcache_memctrl's hpdcache_data_entry_t.
+                        int total = elem_width;
+                        bool all_const = true;
+                        for (auto range : *logic_ts->Ranges()) {
+                            if (!range->Left_expr() || !range->Right_expr()) {
+                                all_const = false;
+                                break;
+                            }
                             RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                             RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                                int l = left_spec.as_int();
-                                int r = right_spec.as_int();
-                                int range_size = abs(l - r) + 1;
-                                int total = elem_width * range_size;
-                                log("UHDM: logic_typespec with Elem_typespec: elem_width=%d, range_size=%d, total=%d\n",
-                                    elem_width, range_size, total);
-                                return total;
+                            if (!left_spec.is_fully_const() ||
+                                !right_spec.is_fully_const()) {
+                                all_const = false;
+                                break;
                             }
+                            total *= abs(left_spec.as_int() -
+                                         right_spec.as_int()) + 1;
+                        }
+                        if (all_const) {
+                            log("UHDM: logic_typespec with Elem_typespec: elem_width=%d, ranges=%d, total=%d\n",
+                                elem_width, (int)logic_ts->Ranges()->size(), total);
+                            return total;
                         }
                     }
                 }

@@ -1,0 +1,20 @@
+# UHDM-vs-slang miter for typaram_typedef_2d.  read_verilog does not support
+# `parameter type`, so the golden reference is the built-in read_slang
+# frontend — the same reference used for CVA6 module equivalence.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top typaram_typedef_2d
+flatten; proc; opt; techmap; opt
+rename typaram_typedef_2d gold
+design -stash gold
+
+read_slang dut.sv --top typaram_typedef_2d
+hierarchy -check -top typaram_typedef_2d
+flatten; proc; opt; techmap; opt
+rename typaram_typedef_2d gate
+design -stash gate
+
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
