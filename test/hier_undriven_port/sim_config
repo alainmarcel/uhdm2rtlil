@@ -1,0 +1,4 @@
+# The DUT deliberately leaves output a1 undriven (hierarchy constant-padding
+# repro), so the observable output is X/constant by construction — the co-sim
+# is vacuous. Formal read/hierarchy behavior is the actual test.
+SKIP_SIM_EQUIV=1

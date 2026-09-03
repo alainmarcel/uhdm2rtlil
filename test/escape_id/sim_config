@@ -1,0 +1,3 @@
+# Name-escaping parse test: \1dff has ports only, no body. The empty module
+# is blackboxed on import and synth -auto-top has no top. Nothing to simulate.
+SKIP_SIM_EQUIV=1

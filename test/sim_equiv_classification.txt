@@ -73,4 +73,6 @@ TaskReturn                            artefact   # procedural assign-in-task + u
 assignment-pattern                    artefact   # self-checking asserts $stop the Verilator sim
 rp32_r5p_mouse        artefact   # reset-dependent CPU core; miter runs without asserting rst -> false NON-EQ; co-sim X-prop adjudicated (verilog netlist diverges from Verilator the same way)
 ibex_register_file_fpga  artefact   # FPGA regfile; Verilator co-sim PASSES (0 mismatches), equiv_induct false NON-EQ on reset-dependent state (same class as rp32_r5p_mouse)
-arb_idx_cast          bug        # packed-array elem bit/part-select with a TYPE-PARAM element drops the 2nd index; see arb_idx_cast/README.md
+rp32_r5p_alu          artefact   # UHDM==slang miter PROVEN (seq 4) after the >>> comb-remap signedness fix; residual co-sim divergence = Verilator-RTL X on illegal instrs (rtl rd=0/sum=carry-only) — both frontends agree
+rp32_r5p_wbu          artefact   # UHDM==slang miter PROVEN (seq 4, async2sync+memory); residual co-sim = same Verilator-RTL X class as rp32_r5p_alu (rtl dat=0 vs netlist value)
+# arb_idx_cast: FIXED 2026-08-23 (PR #638) — co-sim passes; entry removed.

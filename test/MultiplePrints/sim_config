@@ -1,0 +1,4 @@
+# Parse-only test: the module has no processes and o1/o2 are never driven —
+# it exists to exercise $display/$sformatf import. Nothing to co-simulate
+# (vacuous "no output activity" is by construction).
+SKIP_SIM_EQUIV=1
