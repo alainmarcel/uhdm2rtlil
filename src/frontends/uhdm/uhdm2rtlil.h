@@ -701,6 +701,17 @@ struct UhdmImporter {
     // hier_path into the elaborated var range, e.g. `[CFG_LSU.BUS.ADR-1:0]`, which
     // references a parent-scope param that can't resolve here; the definition's
     // range `[ADR-1:0]` refers to the module's own parameter instead).
+    const UHDM::logic_typespec* def_elem_match_ts(const std::string& def_name,
+                                                  const std::string& var_name,
+                                                  const UHDM::typespec* elab_at);
+    void stamp_packed_attrs_from_def(RTLIL::Wire* wire,
+                                     const std::string& def_name,
+                                     const std::string& var_name,
+                                     const UHDM::typespec* elab_at);
+    int widen_from_def_elem_match(const std::string& def_name,
+                                  const std::string& var_name,
+                                  const UHDM::typespec* elab_at,
+                                  const UHDM::scope* inst);
     int width_from_def_var(const std::string& def_name,
                            const std::string& var_name,
                            const UHDM::scope* inst);

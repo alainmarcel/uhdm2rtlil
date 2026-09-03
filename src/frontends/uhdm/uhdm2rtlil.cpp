@@ -1685,6 +1685,87 @@ int UhdmImporter::width_from_def_var(const std::string& def_name,
     return 0;
 }
 
+// Surelog's ELABORATED net/var for `data_t [3:0] arr` (a typedef base with
+// extra packed dims) carries only the NAMED element typespec (`data_t`) — the
+// anonymous outer typespec with the [3:0] range survives ONLY on the
+// AllModules definition view.  When the def view's same-named object has a
+// logic_typespec whose Elem_typespec points at exactly the typespec the
+// elaborated object carries, that def typespec is the SAME type WITH the
+// outer dims: return its width (0 = no such match).
+const UHDM::logic_typespec* UhdmImporter::def_elem_match_ts(
+        const std::string& def_name, const std::string& var_name,
+        const UHDM::typespec* elab_at) {
+    if (!uhdm_design || !uhdm_design->AllModules() || !elab_at) return nullptr;
+    for (auto m : *uhdm_design->AllModules()) {
+        if (std::string(m->VpiDefName()) != def_name) continue;
+        auto try_obj = [&](const UHDM::any* o) -> const UHDM::logic_typespec* {
+            const UHDM::ref_typespec* rt = nullptr;
+            if (auto n = dynamic_cast<const UHDM::net*>(o)) rt = n->Typespec();
+            else if (auto v = dynamic_cast<const UHDM::variables*>(o)) rt = v->Typespec();
+            if (!rt || !rt->Actual_typespec()) return nullptr;
+            auto lts = dynamic_cast<const UHDM::logic_typespec*>(rt->Actual_typespec());
+            if (!lts || !lts->Ranges() || lts->Ranges()->empty()) return nullptr;
+            if (!lts->Elem_typespec()) return nullptr;
+            const UHDM::typespec* det = lts->Elem_typespec()->Actual_typespec();
+            if (!det) return nullptr;
+            bool match = (det == elab_at) ||
+                         (det->UhdmType() == elab_at->UhdmType() &&
+                          det->VpiLineNo() == elab_at->VpiLineNo() &&
+                          det->VpiColumnNo() == elab_at->VpiColumnNo() &&
+                          det->VpiName() == elab_at->VpiName());
+            return match ? lts : nullptr;
+        };
+        if (m->Nets())
+            for (auto n : *m->Nets())
+                if (std::string(n->VpiName()) == var_name)
+                    if (auto lts = try_obj(n)) return lts;
+        if (m->Variables())
+            for (auto v : *m->Variables())
+                if (std::string(v->VpiName()) == var_name)
+                    if (auto lts = try_obj(v)) return lts;
+        return nullptr;
+    }
+    return nullptr;
+}
+
+// Companion to def_elem_match_ts: once a net/var wire was WIDENED to the def
+// view's geometry, its element accessors (`arr[k]` reads and writes) must see
+// the element stride too — stamp the packed_elem_width/outer attrs consumed
+// by import_bit_select.  Element width = wire width / outermost dim size.
+void UhdmImporter::stamp_packed_attrs_from_def(RTLIL::Wire* wire,
+                                               const std::string& def_name,
+                                               const std::string& var_name,
+                                               const UHDM::typespec* elab_at) {
+    if (!wire || wire->attributes.count(RTLIL::escape_id("packed_elem_width")))
+        return;
+    auto lts = def_elem_match_ts(def_name, var_name, elab_at);
+    if (!lts || !lts->Ranges() || lts->Ranges()->empty()) return;
+    auto r0 = (*lts->Ranges())[0];
+    if (!r0->Left_expr() || !r0->Right_expr()) return;
+    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+    RTLIL::SigSpec r = import_expression(r0->Right_expr());
+    if (!l.is_fully_const() || !r.is_fully_const()) return;
+    int ol = l.as_const().as_int(), orr = r.as_const().as_int();
+    int outer = std::abs(ol - orr) + 1;
+    if (outer <= 1 || wire->width % outer != 0) return;
+    int ew = wire->width / outer;
+    if (ew <= 1) return;
+    wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
+    wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
+    wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
+    log("UHDM: def-view packed attrs on '%s': elem=%d outer=[%d:%d]\n",
+        var_name.c_str(), ew, ol, orr);
+}
+
+int UhdmImporter::widen_from_def_elem_match(const std::string& def_name,
+                                            const std::string& var_name,
+                                            const UHDM::typespec* elab_at,
+                                            const UHDM::scope* inst) {
+    if (auto lts = def_elem_match_ts(def_name, var_name, elab_at))
+        return get_width_from_typespec(lts, inst);
+    return 0;
+}
+
 // True if `e` references (possibly nested in an operation) a ref_obj whose name
 // is a parameter present in the current RTLIL module's parameter_default_values.
 bool UhdmImporter::expr_uses_resolved_param(const any* e) {
@@ -4382,6 +4463,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     wire_map[var] = wire;
                     name_map[var_name] = wire;
                     add_src_attribute(wire->attributes, var);
+
+                    // Elaboration drops the anonymous outer packed dims of
+                    // `data_t [3:0] arr` — the width above already recovered
+                    // them from the def view; stamp the element stride too
+                    // so `arr[k]` accessors slice ELEMENTS, not bits.
+                    if (auto vv = dynamic_cast<const UHDM::variables*>(var))
+                        if (vv->Typespec() && vv->Typespec()->Actual_typespec() &&
+                            uhdm_module)
+                            stamp_packed_attrs_from_def(
+                                wire, std::string(uhdm_module->VpiDefName()),
+                                var_name, vv->Typespec()->Actual_typespec());
 
                     // A packed array of a struct / type-param (`struct_t [N:0]
                     // arr`) is elaborated as a packed_array_var and its flat wire
