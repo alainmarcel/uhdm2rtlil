@@ -1,0 +1,6 @@
+DmHaltAddr 437325824 437325824
+DmExceptionAddr 437325832 437325832
+ICache 1 1
+RV32ZC 3 ibex_pkg::RV32ZcaZcbZcmp
+ICacheECC 1 1
+BranchPredictor 0 0

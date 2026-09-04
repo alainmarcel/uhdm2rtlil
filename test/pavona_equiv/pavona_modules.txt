@@ -1,0 +1,41 @@
+# Pavona (Ibex @ OpenTitan-hardened config) per-module equivalence manifest.
+#
+#   <module>  <seq>  <timeout_s>  <expected>
+#
+# expected: proven | cex | timeout | error | elabfail | dead
+# (same semantics and shrink-only ratchet as cva6_equiv/cva6_modules.txt).
+# Baselines verified 2026-09-04 (scripts/baseline_check.py): 25/27 modules
+# elaborate under BOTH read_slang and Verilator; ibex_top is Verilator-only
+# (slang rejects its `logic unused_... = |net` initializer); ibex_top_tracing
+# is DV collateral (needs global RVFI) -> dead.
+#
+# Seeded from the first sweep (2026-09-04): 7 proven, 12 cex (real frontend
+# divergences at this config — the campaign's work queue), 7 error (mix of
+# reader crashes and clock-gating X tie-offs, each needs triage).
+ibex_alu                 4  300  cex
+ibex_branch_predict      4  300  proven
+ibex_compressed_decoder  4  300  cex
+ibex_controller          4  300  cex
+ibex_core                4  600  error
+ibex_counter             4  300  proven
+ibex_cs_registers        4  600  error
+ibex_csr                 4  300  proven
+ibex_decoder             4  300  proven
+ibex_dummy_instr         4  300  proven
+ibex_ex_block            4  300  cex
+ibex_fetch_fifo          4  300  cex
+ibex_icache              4  600  error
+ibex_id_stage            4  600  cex
+ibex_if_stage            4  600  error
+ibex_load_store_unit     4  300  cex
+ibex_lockstep            4  600  error
+ibex_multdiv_fast        4  300  cex
+ibex_multdiv_slow        4  300  cex
+ibex_pmp                 4  600  cex
+ibex_prefetch_buffer     4  300  cex
+ibex_register_file_ff    4  300  proven
+ibex_register_file_fpga  4  300  proven
+ibex_register_file_latch 4  300  error
+ibex_top                 4  600  error
+ibex_top_tracing         4  300  dead       # DV harness (global RVFI define required)
+ibex_wb_stage            4  300  cex

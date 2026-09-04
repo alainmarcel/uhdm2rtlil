@@ -1,0 +1,11 @@
+DbgTriggerEn 1 1
+DbgHwBreakNum 4 4
+ICache 1 1
+MHPMCounterNum 10 10
+MHPMCounterWidth 32 32
+PMPEnable 1 1
+PMPGranularity 0 0
+PMPNumRegions 16 16
+RV32E 0 0
+RV32M 3 ibex_pkg::RV32MSingleCycle
+RV32B 2 ibex_pkg::RV32BOTEarlGrey

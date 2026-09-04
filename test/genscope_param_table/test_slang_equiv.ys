@@ -1,0 +1,16 @@
+# UHDM-vs-slang miter (read_verilog rejects the gen-scope unpacked localparam).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_param_table
+flatten; proc; opt; techmap; opt
+rename genscope_param_table gold
+design -stash gold
+read_slang dut.sv --top genscope_param_table
+hierarchy -check -top genscope_param_table
+flatten; proc; opt; techmap; opt
+rename genscope_param_table gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

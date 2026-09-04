@@ -1,0 +1,1 @@
+RV32M 3 ibex_pkg::RV32MSingleCycle

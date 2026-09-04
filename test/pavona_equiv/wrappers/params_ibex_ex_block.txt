@@ -1,0 +1,3 @@
+RV32M 3 ibex_pkg::RV32MSingleCycle
+RV32B 2 ibex_pkg::RV32BOTEarlGrey
+BranchTargetALU 1 1
