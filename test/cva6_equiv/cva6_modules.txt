@@ -105,7 +105,7 @@ hpdcache_data_upsize                   4   180   proven   # PROVEN: multi-dim pa
 hpdcache_decoder                       4   180   proven
 hpdcache_demux                         4   180   proven
 hpdcache_fifo_reg                      4   900   proven
-hpdcache_fifo_reg_initialized          4   180   cex
+hpdcache_fifo_reg_initialized          4   180   proven   # PROVEN once the wrapper binds real params (was FIFO_DEPTH=0/fifo_data_t=logic degenerate default — [-1:0] ranges); co-sim clean
 hpdcache_flush                         4   180   proven   # PROVEN: Surelog typedef-range + reader fixes
 hpdcache_fxarb                         4   180   proven
 hpdcache_lfsr                          4   900   proven

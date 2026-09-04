@@ -554,9 +554,20 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // the stub didn't infer.
     {
         std::vector<RTLIL::Module*> stubs;
-        for (auto mod : design->modules())
-            if (mod->name.str().find("::") != std::string::npos)
-                stubs.push_back(mod);
+        for (auto mod : design->modules()) {
+            if (mod->name.str().find("::") == std::string::npos) continue;
+            // Only genuine undefined-module stubs: Surelog also scopes some
+            // fully DEFINED modules as "parent::name" (ibex_ex_block::ibex_alu),
+            // and their parameterized imports carry the :: inside a $paramod
+            // name.  Removing those left every ibex_* cell pointing at a
+            // nonexistent bare type ("Module ... is not part of the design").
+            // A real stub has no implementation and no $paramod prefix.
+            if (mod->name.str().rfind("$paramod", 0) == 0) continue;
+            bool is_empty = mod->processes.empty() && mod->cells_.empty() &&
+                            mod->connections_.empty() && mod->memories.empty();
+            if (!is_empty) continue;
+            stubs.push_back(mod);
+        }
         for (auto stub : stubs) {
             std::string sname = stub->name.str();              // "\bug3670::RAMB36E1"
             std::string bare = sname.substr(sname.rfind("::") + 2);
