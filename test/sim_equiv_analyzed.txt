@@ -712,6 +712,24 @@ Test: regbank_depth1
     frontend bug.  Note the suite's OTHER two gates are both blind here:
     equiv_make pairs nothing because the design is memory-vs-registers, so
     equiv_check.log reports "No $equiv cells found" in gold and gate alike.
-ibex_ex_block
-ibex_cs_registers
-ibex_alu
+Test: ibex_ex_block
+    UHDM==slang miter cex is ONLY the unpacked-port element-order convention
+    (imd_val_d_o halves exactly swapped, all other outputs identical on the
+    cex); co-sim mismatches are `unique case (1'b1)` multi-match stimulus
+    (netlist = OR of arms, a superset of the RTL first-match) — unreachable
+    combos in the real CPU.  See sim_equiv_classification.txt.
+
+Test: ibex_cs_registers
+    Both frontends diverge from Verilator-RTL with identical patterns
+    (priv_mode/mstatus_mie; uhdm 508 vs slang 426 over 2000 cycles, X-init
+    offsets) — the shared-artifact class, not a UHDM frontend bug.
+
+Test: ibex_alu
+    UHDM==slang miter PROVEN (seq 4); co-sim divergences are `unique case
+    (1'b1)` multi-match under random stimulus (same class as ibex_ex_block)
+    — required --no-assert to even run.
+
+    NOTE: these three were originally appended as bare names without the
+    `Test: ` prefix, so the suite's SIM_EQUIV_ANALYZED_SET parser (which
+    matches `^Test:`) never picked them up and they were miscounted as NEW
+    warnings despite being adjudicated.

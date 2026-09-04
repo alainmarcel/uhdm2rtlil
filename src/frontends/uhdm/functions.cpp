@@ -366,6 +366,38 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             lhs_range_width = mw;
                         }
                     }
+                } else if (lhs_type == vpiPartSelect) {
+                    // `instr[6:0] = OPCODE_OP_IMM` — constant-range write to a
+                    // function local.  Previously unhandled: lhs_name stayed
+                    // empty, the write was silently dropped, and the function
+                    // returned its zero seed (Pavona/Ibex compressed_decoder's
+                    // cm_zero_a0/cm_ret_ra — zero-arg, so const-folded —
+                    // emitted 32'h0 instead of `li a0,0` / `ret`).
+                    const part_select* ps = any_cast<const part_select*>(assign->Lhs());
+                    lhs_name = std::string(!ps->VpiName().empty() ? ps->VpiName()
+                                                                  : ps->VpiDefName());
+                    RTLIL::Const lval = evaluate_single_operand(
+                        any_cast<const expr*>(ps->Left_range()), local_vars);
+                    RTLIL::Const rval = evaluate_single_operand(
+                        any_cast<const expr*>(ps->Right_range()), local_vars);
+                    if (!lhs_name.empty() && lval.size() > 0 && rval.size() > 0) {
+                        int l = lval.as_int(), r = rval.as_int();
+                        lhs_is_range = true;
+                        lhs_range_offset = std::min(l, r);
+                        lhs_range_width = std::abs(l - r) + 1;
+                        // A local with no declaration initializer is not yet
+                        // in local_vars; materialize it at its declared width
+                        // so the splice has a target.
+                        if (!local_vars.count(lhs_name) && ps->Actual_group()) {
+                            int w = get_width(ps->Actual_group(), current_instance);
+                            if (w > 0)
+                                local_vars[lhs_name] = RTLIL::Const(0, w);
+                        }
+                    } else {
+                        // Non-constant range: cannot const-evaluate this
+                        // write; drop the statement (pre-existing behaviour).
+                        lhs_name.clear();
+                    }
                 } else if (lhs_type == vpiBitSelect) {
                     const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                     lhs_name = std::string(bs->VpiName());
@@ -540,7 +572,9 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (lhs_is_range) {
                     // `result[i][hi:lo] = rhs` — splice rhs into the bit range.
-                    if (local_vars.count(lhs_name)) {
+                    // Never splice an EMPTY rhs (a failed evaluation): that
+                    // would zero the range instead of leaving it unchanged.
+                    if (rhs_value.size() > 0 && local_vars.count(lhs_name)) {
                         RTLIL::Const& target = local_vars[lhs_name];
                         for (int b = 0; b < lhs_range_width; b++) {
                             int dst = lhs_range_offset + b;

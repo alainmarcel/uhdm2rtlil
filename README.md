@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1404 (859 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1359/1404 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1407 (862 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1362/1407 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 917 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 441 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 444 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -75,13 +75,13 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
 - **Verilator sim-equiv warnings**: 32 known-but-untriaged divergences, baselined
   in `test/sim_equiv_warn_baseline.txt` (a ratchet: the suite fails on any warning
   NOT in the baseline, and the baseline may only shrink — it started at 117 and
-  the triage campaign has fixed or adjudicated the rest); plus **50 analyzed**
+  the triage campaign has fixed or adjudicated the rest); plus **53 analyzed**
   known non-bug divergences, all classified — either a SAT miter proves
   UHDM == Verilog (sim/synth artefact) or the read_slang miter proves the UHDM
   netlist while the divergence is a stimulus/X artefact (e.g. `rp32_r5p_alu`,
   whose `unique case` preconditions random stimulus violates)
 
-> The **internal** SystemVerilog suite alone is **853 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **856 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output, including the
 > complete Ibex core (all modules + `ibex_top`) and the rp32 cores/SoCs. The only
 > internal equivalence failures are `CastStructArray` and

@@ -14,7 +14,7 @@
 # reader crashes and clock-gating X tie-offs, each needs triage).
 ibex_alu                 4  300  cex
 ibex_branch_predict      4  300  proven
-ibex_compressed_decoder  4  300  cex
+ibex_compressed_decoder  4  300  proven
 ibex_controller          4  300  cex
 ibex_core                4  600  error
 ibex_counter             4  300  proven
