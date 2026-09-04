@@ -1,133 +1,48 @@
 #
 #
 #
-abc9
-always_comb_tb
-always_display
-always_full_tb
-basic03
-basic05
-blocklocal_struct_width
-bug3670
 Casezx
 ClogOfParamOfInstanceInitializedByStructMember
-code_hdl_models_d_latch_gates
-code_hdl_models_full_subtracter_gates
-code_tidbits_fsm_using_always
-code_tidbits_fsm_using_single_always
-code_verilog_tutorial_comment
-code_verilog_tutorial_escape_id
-code_verilog_tutorial_good_code
-code_verilog_tutorial_tri_buf
-constmuldivmod
 # co-sim diverges from the behavioural RTL but has NOT yet been triaged with
-custom_prims
 #    document the adjudicated divergence in sim_equiv_analyzed.txt.
 # Each entry is a test (by basename, as reported in the suite summary) whose
-edges
 EnumFirstInInitial
 EscapedIdentifiersInHierPath
-ext_ramnet_err
-fib_tern
 Fork
 ForkJoinTypes
-forloop_select
-forloop_select_gate
-forloop_select_nowrshmsk
-func_arg_partsel_loop
 FunctionCallsFunctionWithIndexedPartSelectAsArgument
-genblk_wire
-gen_struct_access
 genvar_async_reset_array
 GetC
-i2c_master_tests
-ibex_core
-ibex_cs_registers
-ibex_dummy_instr
-ibex_ex_block
-ibex_id_stage
-ibex_if_stage
-ibex_lockstep
 ibex_register_file_ff
 ibex_top
 ibex_top_tracing
 iface_array_elem_cfg_param
 iface_array_modport_drive
-ifdef_1
-ifdef_2
 isacode_fold
-LargeModuleParameter
 # listed here so the suite gates only on NEW divergences.
-macro_arg_surrounding_spaces
-map_cmp
-mem2reg_bounds_tern
-mem_arst
 mem_init_for_param
-memlib_block_sp
-memlib_block_sp_full
-memlib_block_tdp
-memlib_wide_sdp
-memlib_wide_sp
 MemoryPort
-mem_simple_4x1_tb
-module_scope_case
 NestedPatternPassedAsPort
 NestedStructArrayParameterInitializedByPatternPassedAsPort
 #  - NEVER add an entry to silence a new warning — triage it instead
 OneClass
 OneNetModport
-opt_expr_cmp
-opt_share_diff_port_widths
-opt_share_extend
-opt_share_large_pmux_cat
-opt_share_large_pmux_cat_multipart
-opt_share_large_pmux_multipart
-opt_share_large_pmux_part
-opt_share_mux_tree
 packed_array_struct
 ParameterWithUnderscoreValueDividedPassedFromCommandLine
 param_x_default
-picorv32
-prims
 PutC
-range_case
 RealValue
-recursive
-recursive_map
-reversed
-roundtrip_tb
 rp32_r5p_mouse_soc_simple_top
 rp32_soc_vfriendly
 rsp_gen_minimal
 # Rules:
 #    (see .claude/skills/verify-uhdm-equivalence): fix the frontend bug, or
-SelectOnMemberSelectedFrom2DArray
 Shortreal
 # Snapshot: 117 tests, 2026-08-14 (CI run 31775787153, identical locally).
-specify
 # standing backlog inherited when co-sim warnings became hard errors; they are
 StructArrayParameterInitializedByPatternPassedAsPort
-svinterface1_tb
-svinterface_at_top_tb
-svinterface_at_top_tb_wrapper
-syntax_err09
 synthesis
-tb_adff
-tb_adffe
-tb_adlatch
-tb_aldff
-tb_aldffe
-tb_dff
-tb_dffe
-tb_dffsr
-tb_dlatch
-tb_dlatchsr
-tb_sdff
-tb_sdffce
-tb_sdffe
-test_unconnected_output
 # the sound SAT miter / an independent reference simulator.  These are the
-TypeParameterAsPortTypeWithLogicAnonymous
 # Verilator co-sim KNOWN-WARNING baseline (ratchet — may only SHRINK).
 #  - When a listed test is triaged or starts passing, DELETE its entry.
 wildcard_eq

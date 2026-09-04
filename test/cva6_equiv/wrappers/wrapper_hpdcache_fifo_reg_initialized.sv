@@ -307,8 +307,8 @@ module hpdcache_fifo_reg_initialized_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned FIFO_DEPTH = 0,
-  parameter type fifo_data_t = logic
+  parameter int unsigned FIFO_DEPTH = 4,
+  parameter type fifo_data_t = logic [7:0]
 ) (
 
     input  logic                        clk_i,
