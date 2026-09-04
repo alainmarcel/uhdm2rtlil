@@ -840,6 +840,22 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                         if (auto a = mts->Actual_typespec())
                                             fw = get_width_from_typespec(a, current_instance);
                     }
+                } else if (assign->Lhs()->UhdmType() == uhdmref_obj ||
+                           dynamic_cast<const UHDM::variables*>(assign->Lhs())) {
+                    // Plain named LHS (`tmp = f(a) + b * 16`): the assignment
+                    // context is the LHS variable's width, not whatever the
+                    // ENCLOSING call site's context happens to be.  Without
+                    // this, a 7-bit-returning function inlined from a 5-bit
+                    // call site built its `base + sp*16` add at width 5 and
+                    // silently dropped the high bits (Pavona/Ibex
+                    // compressed_decoder Zcmp stack offsets: cm_stack_adj's
+                    // spimm*16 term vanished, pop offsets 44 -> 12).
+                    std::string ln = std::string(assign->Lhs()->VpiName());
+                    auto lw = local_var_widths.find(ln);
+                    if (lw != local_var_widths.end())
+                        fw = lw->second;
+                    else if (ln == func_name && result_wire)
+                        fw = result_wire->width;
                 }
                 int saved_ctx = expression_context_width;
                 if (fw > 0) expression_context_width = fw;
@@ -1827,7 +1843,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         // simple_package's `increment_data(bus_in.data)`.
         const return_stmt* ret = any_cast<const return_stmt*>(stmt);
         if (ret && ret->VpiCondition() && result_wire) {
+            // The return expression's assignment context is THIS function's
+            // return width — not the enclosing call site's context, which
+            // still holds the outer LHS width when one inlined function
+            // calls another (Pavona/Ibex compressed_decoder: a 7-bit
+            // `base + spimm*16` built at the caller's 5-bit context lost
+            // the spimm*16 term entirely).
+            int saved_ctx = expression_context_width;
+            expression_context_width = result_wire->width;
             RTLIL::SigSpec rhs_sig = import_expression(ret->VpiCondition(), &input_mapping);
+            expression_context_width = saved_ctx;
             RTLIL::SigSpec lhs_sig = RTLIL::SigSpec(result_wire);
             if (rhs_sig.size() < lhs_sig.size()) {
                 rhs_sig.extend_u0(lhs_sig.size(), false);

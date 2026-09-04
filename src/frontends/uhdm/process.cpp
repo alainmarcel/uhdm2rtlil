@@ -9262,11 +9262,33 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
             auto assign = any_cast<const assignment*>(stmt);
             if (!assign) break;
 
-            // Import RHS with func_mapping for correct value resolution
+            // Import RHS with func_mapping for correct value resolution.
+            // Scope the expression context to the LHS variable's width: the
+            // enclosing call site's context (the OUTER assignment's LHS
+            // width) otherwise leaks into this body and undersizes
+            // arithmetic — a 7-bit `base + sp*16` inlined from a 5-bit call
+            // site was built as a 5-bit add, dropping the sp*16 term
+            // (Pavona/Ibex compressed_decoder Zcmp stack offsets).
             RTLIL::SigSpec rhs;
             if (auto rhs_any = assign->Rhs()) {
                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                    int lhs_ctx = 0;
+                    if (auto lhs_expr = assign->Lhs()) {
+                        std::string peek;
+                        if (lhs_expr->VpiType() == vpiRefObj)
+                            peek = std::string(lhs_expr->VpiName());
+                        else if (auto lv = dynamic_cast<const UHDM::variables*>(lhs_expr))
+                            peek = std::string(lv->VpiName());
+                        if (!peek.empty()) {
+                            auto it = func_mapping.find(peek);
+                            if (it != func_mapping.end())
+                                lhs_ctx = it->second.size();
+                        }
+                    }
+                    int saved_ctx = expression_context_width;
+                    if (lhs_ctx > 0) expression_context_width = lhs_ctx;
                     rhs = import_expression(rhs_expr, &func_mapping);
+                    expression_context_width = saved_ctx;
                 }
             }
 
@@ -9405,7 +9427,17 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
             // `return arg[0][0]` (2DFunctionArg) — left the result Sx.
             auto rs = any_cast<const UHDM::return_stmt*>(stmt);
             if (rs && rs->VpiCondition()) {
+                // Scope the context to THIS function's return width (same
+                // caller-context leak as the assignment case above).
+                int ret_ctx = 0;
+                {
+                    auto itf = func_mapping.find(func_name);
+                    if (itf != func_mapping.end()) ret_ctx = itf->second.size();
+                }
+                int saved_ctx = expression_context_width;
+                if (ret_ctx > 0) expression_context_width = ret_ctx;
                 RTLIL::SigSpec rhs = import_expression(rs->VpiCondition(), &func_mapping);
+                expression_context_width = saved_ctx;
                 if (!rhs.empty()) {
                     auto it = func_mapping.find(func_name);
                     if (it != func_mapping.end() && it->second.size() > 0 &&

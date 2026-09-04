@@ -105,7 +105,7 @@ def parse_project_f(test_dir: Path) -> dict:
                  "slang": []}
     pf = test_dir / "project.f"
     if pf.exists():
-        for raw in pf.read_text().splitlines():
+        for raw in pf.read_text(errors="replace").splitlines():
             line = raw.strip()
             if not line:
                 continue
@@ -147,7 +147,7 @@ def find_top_module(dut_path: Path) -> str:
     that isn't `endmodule`.  In tests using inner+outer wrappers this is
     typically the outer wrapper that takes the runtime stimulus."""
     last = None
-    for line in dut_path.read_text().splitlines():
+    for line in dut_path.read_text(errors="replace").splitlines():
         m = re.match(r"\s*module\s+([A-Za-z_][A-Za-z0-9_]*)", line)
         if m:
             last = m.group(1)
@@ -168,7 +168,7 @@ def detect_unpacked_array_ports(dut_path: Path,
     Limited to constant unpacked dims `[N]` or `[N-1:0]`; anything with a
     parameter or non-trivial expression is left for a follow-up.
     """
-    text = dut_path.read_text()
+    text = dut_path.read_text(errors="replace")
     # Strip line/block comments globally before searching for the module
     # header so commented-out parens don't confuse the bracket counter.
     clean = re.sub(r"//[^\n]*", "", text)
@@ -236,7 +236,7 @@ def detect_unpacked_array_ports(dut_path: Path,
         r"(?:\s+[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?){0,2}"  # 0-2 type/kind words (pkg::type too)
         r"(?:\s*\[[^\]]+\])*"                     # optional packed dims
         r"\s+([A-Za-z_]\w*)"                      # port name
-        r"\s*\[\s*(\d+|[A-Za-z_]\w*)\s*(?:-\s*1\s*:\s*0)?\s*\]"  # unpacked [N]/[P]/[N-1:0]
+        r"\s*\[\s*(\d+|[A-Za-z_]\w*)\s*(-\s*1\s*:\s*0)?\s*\]"  # unpacked [N]/[P]/[N-1:0]
     )
     # A symbolic count ([PMPNumRegions]) resolves through the module header
     # parameter DEFAULTS — the harness elaborates the netlist with default
@@ -244,15 +244,21 @@ def detect_unpacked_array_ports(dut_path: Path,
     param_re = re.compile(
         r"\bparameter\b[^=,;)]*?\b([A-Za-z_]\w*)\s*=\s*(\d+)")
     params = {n: int(v) for n, v in param_re.findall(clean)}
-    for d, name, count in port_re.findall(plist):
+    for d, name, count, desc in port_re.findall(plist):
         # Filter out keywords accidentally captured as a port name.
         if name in ("input", "output", "inout", "wire", "reg",
                     "logic", "bit", "var"):
             continue
+        # Record (element_count, descending?) — the wrapper must mirror the
+        # DUT's unpacked-range FORM: a `[N-1:0]` (descending) port connected
+        # positionally to an ascending `[N]` wrapper array reverses the
+        # elements (left index binds to left index), which flipped every
+        # element read against the netlist's elem0-at-LSB flat view
+        # (unpacked_elem_partsel_comb sel_o, type_param_unpacked_port).
         if count.isdigit():
-            result[name] = int(count)
+            result[name] = (int(count), bool(desc))
         elif count in params:
-            result[name] = params[count]
+            result[name] = (params[count], bool(desc))
     return result
 
 
@@ -309,12 +315,12 @@ def synth_to_netlist(yosys: Path, read_lines: str, plugin_args: list,
     import shutil
     expr_path = Path(str(out_v) + ".expr")
     noexpr_path = Path(str(out_v) + ".noexpr")
-    expr_text = expr_path.read_text() if expr_path.exists() else ""
+    expr_text = expr_path.read_text(errors="replace") if expr_path.exists() else ""
     has_async_ff = bool(re.search(
         r"always @\([^)]*edge[^)]*(?:,|\bor\b)[^)]*edge", expr_text))
     has_memory = False
     if mem_flag.exists():
-        m = re.search(r"(\d+)\s+objects", mem_flag.read_text())
+        m = re.search(r"(\d+)\s+objects", mem_flag.read_text(errors="replace"))
         has_memory = bool(m and int(m.group(1)) > 0)
     chosen = noexpr_path if (has_async_ff or has_memory) else expr_path
     if chosen.exists():
@@ -334,7 +340,7 @@ def synth_to_netlist(yosys: Path, read_lines: str, plugin_args: list,
     # the prefix back to the original SV name.
     name = ""
     if out_top.exists():
-        for line in out_top.read_text().splitlines():
+        for line in out_top.read_text(errors="replace").splitlines():
             s = line.strip()
             if not s or "modules:" in s:
                 continue
@@ -392,7 +398,7 @@ def parse_ports(path: Path) -> tuple[list[tuple[str, int, str]],
     ports: list[tuple[str, int, str]] = []
     clocks: set[str] = set()
     resets: dict[str, bool] = {}
-    for line in path.read_text().splitlines():
+    for line in path.read_text(errors="replace").splitlines():
         toks = line.split()
         if not toks:
             continue
@@ -446,11 +452,12 @@ def emit_wrapper_and_tb(dut_path: Path,
     intermediates: list[str] = []
     def conn(n: str, w: int, d: str) -> str:
         if unpacked and n in unpacked:
-            count = unpacked[n]
+            count, descending = unpacked[n]
             if count > 0 and w % count == 0:
                 ew = w // count
+                dim = f"[{count-1}:0]" if descending else f"[{count}]"
                 intermediates.append(
-                    f"  logic [{ew-1}:0] {n}_arr [{count}];")
+                    f"  logic [{ew-1}:0] {n}_arr {dim};")
                 for i in range(count):
                     # Direction-aware: an unpacked OUTPUT drives the array,
                     # and the flat wrapper port is rebuilt from its elements
