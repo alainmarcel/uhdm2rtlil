@@ -65,7 +65,8 @@ def find_paths(project_root: Path) -> dict[str, Path]:
 
 def frontend_read_setup(frontend: str, paths: dict, uhdm: Path,
                         rtl_srcs: list, test_dir: Path,
-                        lang: str) -> tuple[str, list[str]]:
+                        lang: str,
+                        slang_args: list[str] | None = None) -> tuple[str, list[str]]:
     """Return (read_lines, extra_yosys_args) for a given frontend so the same
     synth/netlist pipeline can be driven by any of the four readers.  Only the
     read step differs; everything downstream is shared with the UHDM path."""
@@ -76,7 +77,8 @@ def frontend_read_setup(frontend: str, paths: dict, uhdm: Path,
         return f"read_verilog {lang} {srcs}\n", []
     if frontend == "slang":
         # read_slang is built into yosys (YOSYS_ENABLE_SLANG=ON); no plugin.
-        return f"read_slang {srcs}\n", []
+        extra = " ".join(slang_args or [])
+        return f"read_slang {extra} {srcs}\n", []
     if frontend == "sv2v":
         if not paths["sv2v_bin"].exists():
             sys.exit(f"❌ sv2v not built: {paths['sv2v_bin']} "
@@ -99,7 +101,8 @@ def parse_project_f(test_dir: Path) -> dict:
     `dut.sv` / `dut.v`.  Mirrors the bash project_files.sh helper used
     by the workflow / equivalence scripts so the three pipelines see
     the same file list."""
-    out: dict = {"srcs": [], "top": "", "mode": "", "verilator": []}
+    out: dict = {"srcs": [], "top": "", "mode": "", "verilator": [],
+                 "slang": []}
     pf = test_dir / "project.f"
     if pf.exists():
         for raw in pf.read_text().splitlines():
@@ -115,6 +118,15 @@ def parse_project_f(test_dir: Path) -> dict:
                     val = val.strip()
                     if key in ("top", "mode"):
                         out[key] = val
+                    elif key == "slang":
+                        # Extra read_slang args (include dirs etc.).  -I paths
+                        # are written test-dir-relative in project.f but the
+                        # netlist-gen yosys runs from the harness cwd —
+                        # absolutize them.
+                        for tok in val.split():
+                            if tok.startswith("-I") and len(tok) > 2:
+                                tok = "-I" + str((test_dir / tok[2:]).resolve())
+                            out["slang"].append(tok)
                     elif key == "verilator":
                         # Per-test extra Verilator flags (e.g. `-Wno-...` or
                         # `+define+FOO`) for imported designs that need them.
@@ -172,6 +184,15 @@ def detect_unpacked_array_ports(dut_path: Path,
     # Skip whitespace.
     while i < n and clean[i].isspace():
         i += 1
+    # Skip any `import pkg::*;` clauses between the module name and the
+    # parameter/port list (ibex_cs_registers).
+    while clean.startswith("import", i):
+        semi = clean.find(";", i)
+        if semi < 0:
+            return {}
+        i = semi + 1
+        while i < n and clean[i].isspace():
+            i += 1
     # Skip optional parameter block `#( ... )` (one level of nesting).
     if i < n and clean[i] == "#":
         i += 1
@@ -212,17 +233,26 @@ def detect_unpacked_array_ports(dut_path: Path,
     # to <name> rather than to the type words.
     port_re = re.compile(
         r"\b(input|output|inout)\b"               # direction
-        r"(?:\s+[A-Za-z_]\w*){0,2}"               # optional 0-2 type/kind words
+        r"(?:\s+[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?){0,2}"  # 0-2 type/kind words (pkg::type too)
         r"(?:\s*\[[^\]]+\])*"                     # optional packed dims
         r"\s+([A-Za-z_]\w*)"                      # port name
-        r"\s*\[\s*(\d+)\s*(?:-\s*1\s*:\s*0)?\s*\]"  # unpacked [N] or [N-1:0]
+        r"\s*\[\s*(\d+|[A-Za-z_]\w*)\s*(?:-\s*1\s*:\s*0)?\s*\]"  # unpacked [N]/[P]/[N-1:0]
     )
+    # A symbolic count ([PMPNumRegions]) resolves through the module header
+    # parameter DEFAULTS — the harness elaborates the netlist with default
+    # parameters, so the RTL side sees the same value.
+    param_re = re.compile(
+        r"\bparameter\b[^=,;)]*?\b([A-Za-z_]\w*)\s*=\s*(\d+)")
+    params = {n: int(v) for n, v in param_re.findall(clean)}
     for d, name, count in port_re.findall(plist):
         # Filter out keywords accidentally captured as a port name.
         if name in ("input", "output", "inout", "wire", "reg",
                     "logic", "bit", "var"):
             continue
-        result[name] = int(count)
+        if count.isdigit():
+            result[name] = int(count)
+        elif count in params:
+            result[name] = params[count]
     return result
 
 
@@ -414,7 +444,7 @@ def emit_wrapper_and_tb(dut_path: Path,
     # the synthesized port (verified via `connect \iP[0] \iP[13:0]` in
     # the IL), so the assigns mirror that ordering.
     intermediates: list[str] = []
-    def conn(n: str, w: int) -> str:
+    def conn(n: str, w: int, d: str) -> str:
         if unpacked and n in unpacked:
             count = unpacked[n]
             if count > 0 and w % count == 0:
@@ -422,11 +452,19 @@ def emit_wrapper_and_tb(dut_path: Path,
                 intermediates.append(
                     f"  logic [{ew-1}:0] {n}_arr [{count}];")
                 for i in range(count):
-                    intermediates.append(
-                        f"  assign {n}_arr[{i}] = {n}[{(i+1)*ew-1}:{i*ew}];")
+                    # Direction-aware: an unpacked OUTPUT drives the array,
+                    # and the flat wrapper port is rebuilt from its elements
+                    # (the input-only form left the output port undriven and
+                    # double-drove the array — ibex_ex_block imd_val_d_o).
+                    if d == "output":
+                        intermediates.append(
+                            f"  assign {n}[{(i+1)*ew-1}:{i*ew}] = {n}_arr[{i}];")
+                    else:
+                        intermediates.append(
+                            f"  assign {n}_arr[{i}] = {n}[{(i+1)*ew-1}:{i*ew}];")
                 return f"    .{n}({n}_arr)"
         return f"    .{n}({n})"
-    inst_conn = [conn(n, w) for (n, w, _d) in ports]
+    inst_conn = [conn(n, w, d) for (n, w, d) in ports]
     wrapper_lines = [
         "// Auto-generated: wraps the original SV top as `dut_rtl`.",
         f"module dut_rtl (\n" + ",\n".join(port_decl) + "\n);",
@@ -563,10 +601,40 @@ def emit_wrapper_and_tb(dut_path: Path,
             cpp.append(f"        tb.{r} = ((rand() & 3) == 0) ? {assert_v} : {deassert_v};")
         tick()
         for n, w in outputs:
+            # >64-bit ports come back as VlWide<N> — compare word-by-word
+            # like the clockless path below (ibex_ex_block's 68-bit
+            # imd_val_d_o failed to even compile with a 64-bit cast).
+            if w > 64:
+                nwords = (w + 31) // 32
+                top_bits = w - 32 * (nwords - 1)
+                top_mask = ((1 << top_bits) - 1) if top_bits < 32 else 0xFFFFFFFF
+                cpp.append("        {")
+                cpp.append("          bool ne = false;")
+                for i in range(nwords):
+                    if i == nwords - 1 and top_bits < 32:
+                        cpp.append(f"          if (((uint32_t)tb.rtl_{n}[{i}] & 0x{top_mask:x}U)"
+                                   f" != ((uint32_t)tb.nl_{n}[{i}] & 0x{top_mask:x}U)) ne = true;")
+                    else:
+                        cpp.append(f"          if ((uint32_t)tb.rtl_{n}[{i}]"
+                                   f" != (uint32_t)tb.nl_{n}[{i}]) ne = true;")
+                cpp.append("          if (ne) {")
+                fmt = " ".join(["%08x"] * nwords)
+                rargs = ", ".join(
+                    [f"(uint32_t)tb.rtl_{n}[{i}]" for i in range(nwords - 1, -1, -1)])
+                nargs = ", ".join(
+                    [f"(uint32_t)tb.nl_{n}[{i}]" for i in range(nwords - 1, -1, -1)])
+                cpp.append('            std::printf("MISMATCH cycle %d: ' + n + ':'
+                           + ' rtl=' + fmt + ' nl=' + fmt + '\\n",'
+                           + ' cycle, ' + rargs + ', ' + nargs + ');')
+                cpp.append("            mismatches++;")
+                cpp.append("          }")
+                for i in range(nwords):
+                    cpp.append(f"          act_or |= (unsigned long long)(uint32_t)tb.rtl_{n}[{i}];")
+                cpp.append("        }")
+                continue
             # Verilator C++ codegen returns sub-byte signals as uint8_t with
             # uninitialised upper bits, so mask to the declared port width
-            # before comparing.  For >64-bit ports we'd need __VlWide
-            # handling; cap at 64 for now and skip the test if wider.
+            # before comparing.
             mask = "((1ULL << %d) - 1)" % w if w < 64 else "~0ULL"
             cpp.append(f"        {{ unsigned long long r = (unsigned long long)tb.rtl_{n} & {mask};")
             cpp.append(f"          unsigned long long s = (unsigned long long)tb.nl_{n}  & {mask};")
@@ -775,7 +843,8 @@ def main() -> int:
     # Language flag for the native verilog reader: -sv if any source is .sv.
     lang = "-sv" if any(str(s).endswith(".sv") for s in rtl_srcs) else ""
     read_lines, plugin_args = frontend_read_setup(
-        args.frontend, paths, uhdm, rtl_srcs, test_dir, lang)
+        args.frontend, paths, uhdm, rtl_srcs, test_dir, lang,
+        slang_args=project.get("slang"))
     print(f"▶ Generating synthesized netlist from {args.frontend} frontend")
     yosys_top = synth_to_netlist(paths["yosys"], read_lines, plugin_args,
                                  work / "dut_netlist.v")
@@ -796,7 +865,15 @@ def main() -> int:
     ports, clocks, resets = parse_ports(work / "ports.txt")
     print(f"  ports={len(ports)} clocks={clocks} resets={list(resets)}")
 
-    unpacked = detect_unpacked_array_ports(dut, orig_top)
+    # The top module is not necessarily in rtl_srcs[0] (multi-file
+    # project.f lists packages first — ibex_ex_block's header lives in the
+    # LAST file, so its unpacked imd_val_* ports went undetected and
+    # Verilator rejected the flat wrapper connection).  Scan every source.
+    unpacked = {}
+    for _src in rtl_srcs:
+        unpacked = detect_unpacked_array_ports(_src, orig_top)
+        if unpacked:
+            break
     if unpacked:
         print(f"  unpacked-array ports: {unpacked}")
     print("▶ Emitting wrapper + testbench")

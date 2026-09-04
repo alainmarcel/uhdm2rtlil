@@ -7,3 +7,8 @@
 # struct parameters), so a test here is a real, tracked frontend bug.
 
 
+# ibex_ex_block: unpacked-top-port element-order convention, NOT a logic bug —
+# imd_val_d_o/imd_val_q_i flatten elem0@LSB (uhdm) vs elem0@MSB (slang); eval
+# on the cex shows the two 34-bit halves exactly swapped and every other
+# output identical.
+ibex_ex_block

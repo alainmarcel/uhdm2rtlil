@@ -1,0 +1,17 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top prim_lfsr_perm_wrap
+flatten; proc; delete t:$check t:$assert t:$assume t:$print
+opt; async2sync; techmap; opt
+rename prim_lfsr_perm_wrap gold
+design -stash gold
+read_slang --ignore-assertions -f project.f -I../ibex/prim -I../ibex/rtl --top prim_lfsr_perm_wrap
+hierarchy -check -top prim_lfsr_perm_wrap
+flatten; proc; delete t:$check t:$assert t:$assume t:$print
+opt; async2sync; techmap; opt
+rename prim_lfsr_perm_wrap gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

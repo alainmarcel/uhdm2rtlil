@@ -2,5 +2,7 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_register_file_ff
 # surelog: -I../ibex/prim -I../ibex/rtl
+# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl +incdir+../../ibex/dv --no-assert
+# slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl -I../ibex/dv
 
 ../ibex/rtl/ibex_register_file_ff.sv
