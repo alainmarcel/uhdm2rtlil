@@ -1,0 +1,28 @@
+name: Sweep cva6
+
+# Per-module cva6 report: formal equivalence vs read_slang + Verilator co-sim
+# (pass / divergence count) with a final co-sim pass-rate.  Table lands in the
+# run's step summary.  Manual dispatch + weekly, so the heavy co-sims don't
+# run on every push (the sharded regression already gates correctness).
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "17 5 * * 1"   # Mondays 05:17 UTC
+
+concurrency:
+  group: sweep-cva6-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: cva6
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 350

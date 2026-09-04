@@ -2,6 +2,7 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_alu
 # surelog: -I../ibex/prim -I../ibex/rtl
+# verilator: --no-assert
 
 ../ibex/rtl/ibex_pkg.sv
 ../ibex/rtl/ibex_alu.sv

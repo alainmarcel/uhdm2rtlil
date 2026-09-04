@@ -1,0 +1,28 @@
+name: Sweep ibex
+
+# Per-module ibex report: formal equivalence vs read_slang + Verilator co-sim
+# (pass / divergence count) with a final co-sim pass-rate.  Table lands in the
+# run's step summary.  Manual dispatch + weekly, so the heavy co-sims don't
+# run on every push (the sharded regression already gates correctness).
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays 04:17 UTC
+
+concurrency:
+  group: sweep-ibex-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: ibex
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
