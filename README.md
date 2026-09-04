@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1402 (857 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1357/1402 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1404 (859 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1359/1404 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 917 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 439 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 441 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -72,15 +72,16 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   including the full Ibex core (`ibex_core`, `ibex_cs_registers`, `ibex_icache`,
   `ibex_top`) — now reads and produces output.
 - **Crashes**: 1 (`memories/wide_all` — upstream Yosys)
-- **Verilator sim-equiv warnings**: 117 known-but-untriaged divergences, baselined
+- **Verilator sim-equiv warnings**: 32 known-but-untriaged divergences, baselined
   in `test/sim_equiv_warn_baseline.txt` (a ratchet: the suite fails on any warning
-  NOT in the baseline, and the baseline may only shrink as entries are triaged);
-  plus **72 analyzed** known non-bug divergences — of which 58 are sim/synth
-  artefacts where a SAT miter proves UHDM == Verilog, and the rest are uhdm-only
-  don't-care divergences (e.g. `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend
-  can't synthesize the SV so no miter is possible)
+  NOT in the baseline, and the baseline may only shrink — it started at 117 and
+  the triage campaign has fixed or adjudicated the rest); plus **50 analyzed**
+  known non-bug divergences, all classified — either a SAT miter proves
+  UHDM == Verilog (sim/synth artefact) or the read_slang miter proves the UHDM
+  netlist while the divergence is a stimulus/X artefact (e.g. `rp32_r5p_alu`,
+  whose `unique case` preconditions random stimulus violates)
 
-> The **internal** SystemVerilog suite alone is **851 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **853 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output, including the
 > complete Ibex core (all modules + `ibex_top`) and the rp32 cores/SoCs. The only
 > internal equivalence failures are `CastStructArray` and
@@ -98,21 +99,29 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
 >
 > **CVA6 per-module equivalence** (`test/cva6_equiv/`): every CVA6 module is
 > compiled standalone with its real-hierarchy parameters and mitered against
-> the `read_slang` reference — **79 of 147 modules formally PROVEN**, the
-> rest tracked with expected verdicts in `cva6_modules.txt` (a ratchet: any
-> module regressing from its recorded verdict fails the suite).
+> the `read_slang` reference — **94 of 142 instantiable modules formally
+> PROVEN (66%)**, the rest tracked with expected verdicts in
+> `cva6_modules.txt` (a ratchet: any module regressing from its recorded
+> verdict fails the suite), and every non-proven module adjudicated with a
+> Verilator co-simulation against the behavioural RTL
+> (`scripts/adjudicate.py` — zero modules show a one-sided UHDM divergence).
 
-### Supported Core IP (rp32 & Ibex)
+### Supported Core IP (rp32, Ibex & Ariane CVA6)
 
-Two real-world RISC-V IP families are imported from their upstream RTL (kept
-verbatim under `test/ibex/` and `test/rp32/`) and exercised end-to-end through
-the UHDM frontend. Run just these with `make test-cores` (or
-`bash run_all_tests.sh --cores`): **41 tests, 40 functional (97%), 0 crashes**.
+Three real-world RISC-V IP families are imported from their upstream RTL
+(kept verbatim under `test/ibex/`, `test/rp32/` and `test/cva6_equiv/rtl/`)
+and exercised end-to-end through the UHDM frontend. Run the rp32 + Ibex set
+with `make test-cores` (or `bash run_all_tests.sh --cores`): **41 tests, 40
+functional (97%), 0 crashes**.  Each core also has a **nightly regression**
+that rebuilds, sweeps every module, and publishes a per-module table (formal
+equivalence vs `read_slang` + Verilator co-sim pass / divergence count with a
+final pass-rate) to the run's step summary.
 
-| IP | What it is | Tests | Result |
-|----|------------|-------|--------|
-| **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **28 / 28 pass**, 0 crashes |
-| **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **12 / 13 pass**, 0 crashes |
+| IP | What it is | Tests | Result | Nightly |
+|----|------------|-------|--------|---------|
+| **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **28 / 28 pass**, 0 crashes | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
+| **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **12 / 13 pass**, 0 crashes | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
+| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 142 formally proven (66%)**, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 
 Highlights:
 
