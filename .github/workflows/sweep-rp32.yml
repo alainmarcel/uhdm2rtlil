@@ -2,7 +2,7 @@ name: Sweep rp32
 
 # Per-module rp32 report: formal equivalence vs read_slang + Verilator co-sim
 # (pass / divergence count) with a final co-sim pass-rate.  Table lands in the
-# run's step summary.  Manual dispatch + weekly, so the heavy co-sims don't
+# run's step summary.  Nightly + manual dispatch, so the heavy co-sims don’t
 # run on every push (the sharded regression already gates correctness).
 
 on:
@@ -13,7 +13,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "47 4 * * 1"   # Mondays 04:47 UTC
+    - cron: "47 2 * * *"   # nightly 02:47 UTC
 
 concurrency:
   group: sweep-rp32-${{ github.ref }}
