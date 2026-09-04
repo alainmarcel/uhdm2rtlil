@@ -2,6 +2,10 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_dummy_instr
 # surelog: -I../ibex/prim -I../ibex/rtl
+# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl +incdir+../../ibex/dv --no-assert
+# slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl -I../ibex/dv
 
+../ibex/prim/prim_cipher_pkg.sv
 ../ibex/rtl/ibex_pkg.sv
+../ibex/prim/prim_lfsr.sv
 ../ibex/rtl/ibex_dummy_instr.sv

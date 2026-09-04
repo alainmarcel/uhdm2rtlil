@@ -2060,6 +2060,119 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // Element select of an UNPACKED-array PARAMETER
+                // (`localparam logic [39:0] T [6]; ... T[idx]` —
+                // prim_lfsr's LFSR_COEFFS feedback table): a parameter has
+                // no wire, so the wire-based paths below return empty and
+                // the Galois feedback collapsed to 0 (every ibex
+                // dummy-instruction LFSR locked up).  Evaluate the table
+                // value at compile time and slice the element (dynamic
+                // index -> $shiftx).  A trailing [hi:lo] arrives as a
+                // separate part_select node wrapping this one.
+                {
+                    const UHDM::parameter* par = nullptr;
+                    if (auto a = vs->Actual_group())
+                        if (a->UhdmType() == uhdmparameter)
+                            par = any_cast<const UHDM::parameter*>(a);
+                    if (par && exprs->size() >= 1 && exprs->size() <= 2) {
+                        RTLIL::SigSpec pval;
+                        RTLIL::IdString pid = RTLIL::escape_id(base_name);
+                        if (module && module->parameter_default_values.count(pid))
+                            pval = RTLIL::SigSpec(module->parameter_default_values.at(pid));
+                        if (pval.empty()) {
+                            std::string vsv = std::string(par->VpiValue());
+                            if (!vsv.empty())
+                                pval = RTLIL::SigSpec(extract_const_from_value(vsv));
+                        }
+                        if (pval.empty() && par->VpiParent() &&
+                            par->VpiParent()->UhdmType() == uhdmparam_assign) {
+                            auto pa2 = any_cast<const UHDM::param_assign*>(par->VpiParent());
+                            if (auto re = dynamic_cast<const UHDM::expr*>(pa2->Rhs())) {
+                                bool sf = force_const_fold;
+                                force_const_fold = true;
+                                pval = import_expression(re, input_mapping);
+                                force_const_fold = sf;
+                            }
+                        }
+                        if (!pval.empty() && pval.is_fully_const()) {
+                            int elem_w = 0, count = 0, low = 0;
+                            const UHDM::typespec* ats2 =
+                                par->Typespec() ? par->Typespec()->Actual_typespec() : nullptr;
+                            if (auto at2 = dynamic_cast<const UHDM::array_typespec*>(ats2)) {
+                                if (at2->Elem_typespec() && at2->Elem_typespec()->Actual_typespec())
+                                    elem_w = get_width_from_typespec(
+                                        at2->Elem_typespec()->Actual_typespec(), current_instance);
+                                if (at2->Ranges() && !at2->Ranges()->empty()) {
+                                    auto r0 = (*at2->Ranges())[0];
+                                    RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
+                                    if (l.is_fully_const() && r.is_fully_const()) {
+                                        count = std::abs(l.as_int() - r.as_int()) + 1;
+                                        low = std::min(l.as_int(), r.as_int());
+                                    }
+                                }
+                            }
+                            if (elem_w <= 0 && count > 0 && pval.size() % count == 0)
+                                elem_w = pval.size() / count;
+                            if (count <= 0 && elem_w > 0 && pval.size() % elem_w == 0)
+                                count = pval.size() / elem_w;
+                            if (elem_w > 0 && count > 0 && elem_w * count == pval.size()) {
+                                RTLIL::SigSpec is = import_expression((*exprs)[0], input_mapping);
+                                RTLIL::SigSpec elem;
+                                // The folded '{e0, e1, ...} value packs
+                                // element 0 at the TOP (verified: T[1] read
+                                // the [4] entry with a bottom-up extract).
+                                if (is.is_fully_const()) {
+                                    int k = is.as_const().as_int() - low;
+                                    if (k >= 0 && k < count)
+                                        elem = pval.extract((count - 1 - k) * elem_w, elem_w);
+                                } else if (!is.empty()) {
+                                    RTLIL::SigSpec sh = is;
+                                    sh.extend_u0(32, false);
+                                    if (low)
+                                        sh = module->Sub(NEW_ID, sh, RTLIL::Const(low, 32), false);
+                                    sh = module->Sub(NEW_ID,
+                                        RTLIL::Const(count - 1, 32), sh, false);
+                                    sh = module->Mul(NEW_ID, sh, RTLIL::Const(elem_w, 32), false);
+                                    RTLIL::Wire* ew2 = module->addWire(NEW_ID, elem_w);
+                                    module->addShiftx(NEW_ID, pval, sh, ew2);
+                                    elem = RTLIL::SigSpec(ew2);
+                                }
+                                if (!elem.empty() && exprs->size() == 2) {
+                                    // Trailing [hi:lo] / [k] within the element.
+                                    const expr* se = (*exprs)[1];
+                                    if (se->VpiType() == vpiPartSelect) {
+                                        auto ps2 = any_cast<const part_select*>(se);
+                                        RTLIL::SigSpec l2 = import_expression(ps2->Left_range(), input_mapping);
+                                        RTLIL::SigSpec r2 = import_expression(ps2->Right_range(), input_mapping);
+                                        if (l2.is_fully_const() && r2.is_fully_const()) {
+                                            int lv = l2.as_const().as_int(), rv = r2.as_const().as_int();
+                                            int wsel = std::abs(lv - rv) + 1;
+                                            int osel = std::min(lv, rv);
+                                            if (osel >= 0 && osel + wsel <= elem.size())
+                                                elem = elem.extract(osel, wsel);
+                                            else elem = RTLIL::SigSpec();
+                                        } else elem = RTLIL::SigSpec();
+                                    } else {
+                                        RTLIL::SigSpec b2 = import_expression(se, input_mapping);
+                                        if (b2.is_fully_const()) {
+                                            int bi = b2.as_const().as_int();
+                                            if (bi >= 0 && bi < elem.size())
+                                                elem = elem.extract(bi, 1);
+                                            else elem = RTLIL::SigSpec();
+                                        } else elem = RTLIL::SigSpec();
+                                    }
+                                }
+                                if (!elem.empty()) {
+                                    log("  vpiVarSelect: parameter table %s[...] resolved (%d bits)\n",
+                                        base_name.c_str(), elem.size());
+                                    return elem;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // PACKED multi-dim var_select (`x[i][j]` on
                 // `logic [0:N][2:0][31:0] x`): resolve every index against
                 // the net's typespec dimensions with correct MSB-first

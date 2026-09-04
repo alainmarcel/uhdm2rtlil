@@ -2,6 +2,11 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_ex_block
 # surelog: -I../ibex/prim -I../ibex/rtl
+# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl --no-assert
+# slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl
 
 ../ibex/rtl/ibex_pkg.sv
+../ibex/rtl/ibex_alu.sv
+../ibex/rtl/ibex_multdiv_fast.sv
+../ibex/rtl/ibex_multdiv_slow.sv
 ../ibex/rtl/ibex_ex_block.sv

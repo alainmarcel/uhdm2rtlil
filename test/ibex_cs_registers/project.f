@@ -2,6 +2,10 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_cs_registers
 # surelog: -I../ibex/prim -I../ibex/rtl
+# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl +incdir+../../ibex/dv --no-assert
+# slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl -I../ibex/dv
 
 ../ibex/rtl/ibex_pkg.sv
+../ibex/rtl/ibex_csr.sv
+../ibex/rtl/ibex_counter.sv
 ../ibex/rtl/ibex_cs_registers.sv

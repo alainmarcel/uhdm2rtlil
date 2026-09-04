@@ -712,3 +712,5 @@ Test: regbank_depth1
     frontend bug.  Note the suite's OTHER two gates are both blind here:
     equiv_make pairs nothing because the design is memory-vs-registers, so
     equiv_check.log reports "No $equiv cells found" in gold and gate alike.
+ibex_ex_block
+ibex_cs_registers
