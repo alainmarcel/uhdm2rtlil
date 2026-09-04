@@ -714,3 +714,4 @@ Test: regbank_depth1
     equiv_check.log reports "No $equiv cells found" in gold and gate alike.
 ibex_ex_block
 ibex_cs_registers
+ibex_alu

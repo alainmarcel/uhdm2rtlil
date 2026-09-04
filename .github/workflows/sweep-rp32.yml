@@ -1,0 +1,28 @@
+name: Sweep rp32
+
+# Per-module rp32 report: formal equivalence vs read_slang + Verilator co-sim
+# (pass / divergence count) with a final co-sim pass-rate.  Table lands in the
+# run's step summary.  Manual dispatch + weekly, so the heavy co-sims don't
+# run on every push (the sharded regression already gates correctness).
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "47 4 * * 1"   # Mondays 04:47 UTC
+
+concurrency:
+  group: sweep-rp32-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: rp32
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

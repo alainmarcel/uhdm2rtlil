@@ -77,4 +77,5 @@ rp32_r5p_alu          artefact   # UHDM==slang miter PROVEN (seq 4) after the >>
 rp32_r5p_wbu          artefact   # UHDM==slang miter PROVEN (seq 4, async2sync+memory); residual co-sim = same Verilator-RTL X class as rp32_r5p_alu (rtl dat=0 vs netlist value)
 ibex_ex_block         artefact   # UHDM==slang miter cex is ONLY the unpacked-port element-order convention (imd_val_d_o halves exactly swapped, all other outputs identical on the cex); co-sim mismatches are `unique case (1'b1)` multi-match stimulus (nl = OR of arms superset of rtl first-match) — unreachable combos in the real CPU
 ibex_cs_registers     artefact   # both frontends diverge from Verilator-RTL identically-patterned (priv_mode/mstatus_mie; uhdm 508 vs slang 426 over 2000cyc, X-init offsets) — shared artifact class
+ibex_alu              artefact   # UHDM==slang miter PROVEN (seq 4); co-sim divergences are `unique case (1'b1)` multi-match under random stimulus (same class as ibex_ex_block) — required --no-assert to even run
 # arb_idx_cast: FIXED 2026-08-23 (PR #638) — co-sim passes; entry removed.

@@ -1,0 +1,18 @@
+# UHDM-vs-slang miter for ibex_alu (read_verilog cannot parse the ibex pkg).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ibex_alu
+flatten; proc; delete t:$check t:$assert t:$assume t:$print
+opt; async2sync; techmap; opt
+rename ibex_alu gold
+design -stash gold
+read_slang --ignore-assertions -f project.f -I../ibex/prim -I../ibex/rtl --top ibex_alu
+hierarchy -check -top ibex_alu
+flatten; proc; delete t:$check t:$assert t:$assume t:$print
+opt; async2sync; techmap; opt
+rename ibex_alu gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

@@ -1,0 +1,176 @@
+name: Core sweep (reusable)
+
+# Reusable per-core sweep: build once (cached by commit), then run the core's
+# formal-vs-slang + Verilator co-sim sweep and publish the per-module table
+# (test/core_sweep.py) to the run's step summary.  Called by sweep-ibex.yml,
+# sweep-rp32.yml and sweep-cva6.yml.
+
+on:
+  workflow_call:
+    inputs:
+      core:
+        description: "Which core to sweep: ibex | rp32 | cva6"
+        required: true
+        type: string
+      cycles:
+        description: "Verilator co-sim cycles per module"
+        required: false
+        type: string
+        default: "300"
+      timeout:
+        description: "Sweep job timeout (minutes)"
+        required: false
+        type: number
+        default: 180
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # Skip the whole build when this commit was already packaged (any core's
+    # sweep or a re-run) — the runtime tarball is keyed by the commit SHA.
+    - name: Cache packaged runtime
+      id: cache-runtime
+      uses: actions/cache@v4
+      with:
+        path: |
+          runtime.tar.gz
+          verilator.tar.gz
+        key: core-sweep-runtime-${{ github.sha }}
+
+    - name: Install dependencies
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential cmake git python3 python3-pip pkg-config \
+          libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+          libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+          libgoogle-perftools-dev ccache help2man
+
+    - name: Setup GCC-13
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        sudo apt install -y g++-13
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
+
+    - name: Cache Verilator build
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      if: steps.cache-runtime.outputs.cache-hit != 'true' && steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
+    - name: Setup ccache
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        # Shares the warm cache with ci.yml / regression-sharded.
+        key: uhdm2rtlil-build-${{ runner.os }}
+        restore-keys: |
+          uhdm2rtlil-build-
+        max-size: 2G
+
+    - name: Build project
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        pip3 install orderedmultidict
+        echo "CC=ccache gcc" >> $GITHUB_ENV
+        echo "CXX=ccache g++" >> $GITHUB_ENV
+        ccache --set-config=cache_dir=$HOME/.ccache
+        ccache --set-config=max_size=2G
+        ccache --set-config=compression=true
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Package runtime
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        sudo tar -czf verilator.tar.gz -C / opt/verilator-5.048
+        tar -czhf runtime.tar.gz \
+          out/current \
+          build/uhdm2rtlil.so \
+          build/extract_clocks_resets.so \
+          build/third_party/Surelog/bin/surelog
+
+    - name: Upload runtime
+      uses: actions/upload-artifact@v4
+      with:
+        name: core-sweep-runtime-${{ inputs.core }}
+        path: |
+          runtime.tar.gz
+          verilator.tar.gz
+        retention-days: 1
+
+  sweep:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.timeout }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install runtime dependencies
+      # ccache is required even though nothing of ours compiles here: the
+      # shipped Verilator was configured with `CXX = ccache g++` baked into
+      # its verilated.mk (see regression-sharded.yml for the full story).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++-13 ccache python3 python3-pip bc \
+          libtcmalloc-minimal4 tcl libreadline8t64 libunwind8 \
+          libgoogle-perftools4t64 zlib1g-dev iverilog help2man || \
+        sudo apt-get install -y build-essential g++-13 ccache python3 bc \
+          libtcmalloc-minimal4 tcl zlib1g-dev iverilog
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+
+    - name: Download runtime
+      uses: actions/download-artifact@v4
+      with:
+        name: core-sweep-runtime-${{ inputs.core }}
+
+    - name: Unpack runtime
+      run: |
+        tar -xzf runtime.tar.gz
+        sudo tar -xzf verilator.tar.gz -C /
+        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
+        ./out/current/bin/yosys -p "help read_slang" >/dev/null \
+          || { echo "this yosys has no built-in read_slang"; exit 1; }
+        /opt/verilator-5.048/bin/verilator --version
+
+    - name: Run ${{ inputs.core }} sweep
+      run: |
+        cd test
+        # JOBS bounds the cva6 miter parallelism (SAT is memory-hungry on
+        # 16 GB runners); core_sweep's own --jobs bounds concurrent co-sims.
+        JOBS=2 python3 core_sweep.py ${{ inputs.core }} \
+          --cycles ${{ inputs.cycles }} --jobs 2 \
+          --out "$GITHUB_WORKSPACE/${{ inputs.core }}-sweep.md"
+
+    - name: Upload sweep report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.core }}-sweep-report
+        path: ${{ inputs.core }}-sweep.md
+        retention-days: 30
+        if-no-files-found: warn
