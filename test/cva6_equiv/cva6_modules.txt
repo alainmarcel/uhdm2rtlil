@@ -151,7 +151,7 @@ load_store_unit                        4   180   cex
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
 macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
-miss_handler                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
+miss_handler                           4   180   cex      # co-sim 1v1 BOTH_DIFFER (same cycle/signal both sides) after the get_victim_cl early-return fix; was asymmetric 5v1
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   900   proven

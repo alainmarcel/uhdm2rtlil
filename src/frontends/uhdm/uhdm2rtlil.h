@@ -1047,6 +1047,13 @@ struct UhdmImporter {
                                    std::set<std::string>& return_vars, const UHDM::function* func_def = nullptr);
     void scan_for_direct_return_assignment(const UHDM::any* stmt, const std::string& func_name, bool& found);
     bool function_body_writes_to(const UHDM::any* stmt, const std::string& var_name);
+    bool stmt_contains_return(const UHDM::any* s, int depth = 0);
+    void process_stmt_return_guarded(const UHDM::any* stmt,
+        RTLIL::CaseRule* case_rule, RTLIL::Wire* result_wire,
+        std::map<std::string, RTLIL::SigSpec>& input_mapping,
+        const std::string& func_name, int& temp_counter,
+        const std::string& func_call_context,
+        const std::map<std::string, int>& local_var_widths);
     void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
                               RTLIL::Wire* result_wire,
                               std::map<std::string, RTLIL::SigSpec>& input_mapping,

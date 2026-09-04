@@ -79,6 +79,99 @@ std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const st
 }
 
 // Helper function to process a statement into a case rule for function process generation
+// True if the statement subtree contains a `return` — used to gate everything
+// AFTER a possibly-taken return behind the per-call ret_taken flag.
+bool UhdmImporter::stmt_contains_return(const UHDM::any* s, int depth) {
+    if (!s || depth > 48) return false;
+    switch (s->UhdmType()) {
+    case uhdmreturn_stmt: return true;
+    case uhdmbegin: {
+        auto bg = any_cast<const begin*>(s);
+        if (bg && bg->Stmts())
+            for (auto c : *bg->Stmts())
+                if (stmt_contains_return(c, depth + 1)) return true;
+        return false;
+    }
+    case uhdmnamed_begin: {
+        auto nb = any_cast<const named_begin*>(s);
+        if (nb && nb->Stmts())
+            for (auto c : *nb->Stmts())
+                if (stmt_contains_return(c, depth + 1)) return true;
+        return false;
+    }
+    case uhdmif_stmt: {
+        auto is2 = any_cast<const if_stmt*>(s);
+        return is2 && stmt_contains_return(is2->VpiStmt(), depth + 1);
+    }
+    case uhdmif_else: {
+        auto ie = any_cast<const if_else*>(s);
+        return ie && (stmt_contains_return(ie->VpiStmt(), depth + 1) ||
+                      stmt_contains_return(ie->VpiElseStmt(), depth + 1));
+    }
+    case uhdmcase_stmt: {
+        auto cs = any_cast<const case_stmt*>(s);
+        if (cs && cs->Case_items())
+            for (auto ci : *cs->Case_items()) {
+                auto item = any_cast<const case_item*>(ci);
+                if (item && stmt_contains_return(item->Stmt(), depth + 1))
+                    return true;
+            }
+        return false;
+    }
+    case uhdmfor_stmt: {
+        auto fs = any_cast<const for_stmt*>(s);
+        return fs && stmt_contains_return(fs->VpiStmt(), depth + 1);
+    }
+    default: return false;
+    }
+}
+
+// Process `stmt` under "only if the function has NOT returned yet": a
+// switch on the ret_taken SSA value with the statement in the ==0 case and a
+// default arm, phi-merging every input_mapping change so values (including
+// ret_taken itself) stay defined when the case is not taken.
+void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
+        RTLIL::CaseRule* case_rule, RTLIL::Wire* result_wire,
+        std::map<std::string, RTLIL::SigSpec>& input_mapping,
+        const std::string& func_name, int& temp_counter,
+        const std::string& func_call_context,
+        const std::map<std::string, int>& local_var_widths) {
+    RTLIL::SigSpec guard = input_mapping["$__ret_taken$"];
+    if (guard.is_fully_const() && guard.is_fully_zero()) {
+        // No return can have happened yet — no wrap needed.
+        process_stmt_to_case(stmt, case_rule, result_wire, input_mapping,
+                             func_name, temp_counter, func_call_context,
+                             local_var_widths);
+        return;
+    }
+    if (guard.is_fully_const()) return;  // definitely returned: dead code
+    RTLIL::SwitchRule* gsw = new RTLIL::SwitchRule;
+    gsw->signal = guard;
+    case_rule->switches.push_back(gsw);
+    RTLIL::CaseRule* gcase = new RTLIL::CaseRule;
+    gcase->compare.push_back(RTLIL::SigSpec(RTLIL::State::S0, 1));
+    gcase->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+    gsw->cases.push_back(gcase);
+    RTLIL::CaseRule* dflt = new RTLIL::CaseRule;
+    dflt->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+    gsw->cases.push_back(dflt);
+    std::map<std::string, RTLIL::SigSpec> pre_map = input_mapping;
+    process_stmt_to_case(stmt, gcase, result_wire, input_mapping, func_name,
+                         temp_counter, func_call_context, local_var_widths);
+    for (auto& pm : pre_map) {
+        auto ci2 = input_mapping.find(pm.first);
+        if (ci2 == input_mapping.end() || ci2->second == pm.second) continue;
+        if (pm.second.is_wire() && pm.second.as_wire() == result_wire) continue;
+        RTLIL::Wire* join = module->addWire(
+            RTLIL::escape_id(stringf("$%s$rphi_%s_%d",
+                func_call_context.c_str(), pm.first.c_str(), incr_autoidx())),
+            pm.second.size());
+        gcase->actions.push_back(RTLIL::SigSig(join, ci2->second));
+        dflt->actions.push_back(RTLIL::SigSig(join, pm.second));
+        input_mapping[pm.first] = RTLIL::SigSpec(join);
+    }
+}
+
 void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
                                         RTLIL::Wire* result_wire,
                                         std::map<std::string, RTLIL::SigSpec>& input_mapping,
@@ -128,8 +221,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
 
             if (bg->Stmts()) {
+                // Statements AFTER a possibly-taken `return` are dead: run
+                // them return-guarded so a priority encoder's later
+                // iterations can't override the first return (CVA6
+                // miss_handler get_victim_cl).
+                bool guard_live = false;
                 for (auto s : *bg->Stmts()) {
-                    process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    if (guard_live && input_mapping.count("$__ret_taken$"))
+                        process_stmt_return_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    else
+                        process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    if (stmt_contains_return(s)) guard_live = true;
                 }
             }
 
@@ -183,8 +285,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
 
             if (nbg->Stmts()) {
+                bool guard_live = false;
                 for (auto s : *nbg->Stmts()) {
-                    process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    if (guard_live && input_mapping.count("$__ret_taken$"))
+                        process_stmt_return_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    else
+                        process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    if (stmt_contains_return(s)) guard_live = true;
                 }
             }
 
@@ -1612,6 +1719,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                     }
                     
+                    bool unroll_guard_live = false;
                     for (int64_t i = start_value; i <= loop_end; i += increment) {
                         // Set the loop variable value - use loop_values for substitution
                         loop_values[loop_var_name] = i;
@@ -1648,7 +1756,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             }
                         }
                         
-                        process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        if (unroll_guard_live && input_mapping.count("$__ret_taken$"))
+                            process_stmt_return_guarded(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        else
+                            process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        if (stmt_contains_return(loop_body)) unroll_guard_live = true;
                         
                         // After processing, get the output of this iteration for chaining
                         if (is_accumulative) {
@@ -1725,6 +1837,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
             if (mode_debug)
                 log("UHDM: return_stmt assigned to result wire %s\n", result_wire->name.c_str());
+        }
+        {
+            // Mark the return as taken (SSA value — the if/else phi-merge
+            // muxes it by the enclosing conditions) so everything chained
+            // behind the `switch (ret_taken) case 0` guards goes dead.
+            auto rg = input_mapping.find("$__ret_taken$");
+            if (rg != input_mapping.end())
+                rg->second = RTLIL::SigSpec(RTLIL::State::S1, 1);
         }
         break;
     }

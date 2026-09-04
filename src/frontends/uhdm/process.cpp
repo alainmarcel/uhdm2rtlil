@@ -9076,6 +9076,36 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
         out_map = func_mapping;
         func_mapping = snap;
     };
+    // Early-`return` support: once a return executes, every LATER statement of
+    // the function is dead.  The 1-bit `$__returned$<func>` entry lives in
+    // func_mapping like any local, so the if/case branch machinery muxes it
+    // per-path automatically; each write below is masked by it (guard ? old :
+    // new).  Without this, get_victim_cl-style priority encoders (`for … if
+    // (m[i]) begin oh[i]=1; return oh; end`) OR'd every match together and a
+    // bare `if (m[i]) return i;` loop returned the LAST match instead of the
+    // first (CVA6 miss_handler evict_way went non-one-hot, req_o=0x9a).
+    const std::string ret_guard_key = "$__returned$" + func_name;
+    auto ret_guard = [&]() -> RTLIL::SigSpec {
+        auto itg = func_mapping.find(ret_guard_key);
+        return itg != func_mapping.end() ? itg->second
+                                         : RTLIL::SigSpec(RTLIL::State::S0, 1);
+    };
+    auto mask_write = [&](const std::string& key,
+                          RTLIL::SigSpec newv) -> RTLIL::SigSpec {
+        RTLIL::SigSpec g = ret_guard();
+        if (g.is_fully_const())
+            return g.as_bool() ? (func_mapping.count(key)
+                                      ? func_mapping[key]
+                                      : RTLIL::SigSpec(RTLIL::State::Sx,
+                                                       newv.size()))
+                               : newv;
+        RTLIL::SigSpec o = func_mapping.count(key)
+                               ? func_mapping[key]
+                               : RTLIL::SigSpec(RTLIL::State::Sx, newv.size());
+        if (o.size() < newv.size()) o.extend_u0(newv.size());
+        else if (o.size() > newv.size()) o = o.extract(0, newv.size());
+        return module->Mux(NEW_ID, newv, o, g);   // g ? old : new
+    };
     // Width-safe conditional select: cond ? t : e (zero-extended to equal width).
     auto mux_val = [&](RTLIL::SigSpec e, RTLIL::SigSpec t,
                        RTLIL::SigSpec cond) -> RTLIL::SigSpec {
@@ -9316,7 +9346,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         if (r2.size() < sel_w) r2.extend_u0(sel_w);
                         else if (r2.size() > sel_w) r2 = r2.extract(0, sel_w);
                         cur.replace(sel_off, r2);
-                        func_mapping[base] = cur;
+                        func_mapping[base] = mask_write(base, cur);
                         log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
                             base.c_str(), sel_off, sel_w, log_signal(r2).c_str());
                     } else if (!base.empty()) {
@@ -9342,7 +9372,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
 
             // Update func_mapping with the new value (key for cell chaining)
             if (!lhs_name.empty() && func_mapping.count(lhs_name)) {
-                func_mapping[lhs_name] = rhs;
+                func_mapping[lhs_name] = mask_write(lhs_name, rhs);
                 log("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs).c_str());
             } else if (!lhs_name.empty()) {
                 // Module signal - assign to $0\ temp wire and update tracking
@@ -9357,6 +9387,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                             else
                                 rhs = rhs.extract(0, temp_wire->width);
                         }
+                        rhs = mask_write(lhs_name, rhs);
                         proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
                         current_comb_values[lhs_name] = rhs;
                         func_mapping[lhs_name] = rhs;
@@ -9384,7 +9415,8 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         else
                             rhs = rhs.extract(0, it->second.size());
                     }
-                    func_mapping[func_name] = rhs;
+                    func_mapping[func_name] = mask_write(func_name, rhs);
+                    func_mapping[ret_guard_key] = RTLIL::SigSpec(RTLIL::State::S1, 1);
                     log("      inline_func_body_comb: return %s = %s\n",
                         func_name.c_str(), log_signal(rhs).c_str());
                 }
