@@ -1,0 +1,1 @@
+RV32B 2 ibex_pkg::RV32BOTEarlGrey

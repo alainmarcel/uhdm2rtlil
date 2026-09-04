@@ -2096,6 +2096,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                         if (!pval.empty() && pval.is_fully_const()) {
                             int elem_w = 0, count = 0, low = 0;
+                            bool asc = true;   // [N] shorthand = [0:N-1]
                             const UHDM::typespec* ats2 =
                                 par->Typespec() ? par->Typespec()->Actual_typespec() : nullptr;
                             if (auto at2 = dynamic_cast<const UHDM::array_typespec*>(ats2)) {
@@ -2109,6 +2110,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                     if (l.is_fully_const() && r.is_fully_const()) {
                                         count = std::abs(l.as_int() - r.as_int()) + 1;
                                         low = std::min(l.as_int(), r.as_int());
+                                        asc = l.as_int() <= r.as_int();
                                     }
                                 }
                             }
@@ -2119,20 +2121,26 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             if (elem_w > 0 && count > 0 && elem_w * count == pval.size()) {
                                 RTLIL::SigSpec is = import_expression((*exprs)[0], input_mapping);
                                 RTLIL::SigSpec elem;
-                                // The folded '{e0, e1, ...} value packs
-                                // element 0 at the TOP (verified: T[1] read
-                                // the [4] entry with a bottom-up extract).
+                                // The '{e0, e1, ...} fold places the FIRST
+                                // entry in the MSBs and binds it to index
+                                // `left` — an ASCENDING dim ([0:N-1] / the
+                                // [N] shorthand) therefore packs element 0
+                                // at the TOP, a descending [N-1:0] dim
+                                // bottom-up (same rule as the bit_select
+                                // machinery).
                                 if (is.is_fully_const()) {
                                     int k = is.as_const().as_int() - low;
+                                    int slot = asc ? (count - 1 - k) : k;
                                     if (k >= 0 && k < count)
-                                        elem = pval.extract((count - 1 - k) * elem_w, elem_w);
+                                        elem = pval.extract(slot * elem_w, elem_w);
                                 } else if (!is.empty()) {
                                     RTLIL::SigSpec sh = is;
                                     sh.extend_u0(32, false);
                                     if (low)
                                         sh = module->Sub(NEW_ID, sh, RTLIL::Const(low, 32), false);
-                                    sh = module->Sub(NEW_ID,
-                                        RTLIL::Const(count - 1, 32), sh, false);
+                                    if (asc)
+                                        sh = module->Sub(NEW_ID,
+                                            RTLIL::Const(count - 1, 32), sh, false);
                                     sh = module->Mul(NEW_ID, sh, RTLIL::Const(elem_w, 32), false);
                                     RTLIL::Wire* ew2 = module->addWire(NEW_ID, elem_w);
                                     module->addShiftx(NEW_ID, pval, sh, ew2);
@@ -8416,6 +8424,36 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         }
                     }
                 }
+                // GENERATE-scope localparam (`if (RV32B...) begin :
+                // g_alu_bitmanip  localparam logic [31:0] FLIP_MASK_L [4]
+                // = '{...}; end` — Pavona/OT-config ibex_alu): the param
+                // lives on a gen_scope, not the module.  Walk the
+                // elaborated generate tree.
+                if (!param) {
+                    std::function<const UHDM::parameter*(const UHDM::gen_scope*)>
+                        scan_gs = [&](const UHDM::gen_scope* gs)
+                            -> const UHDM::parameter* {
+                        if (!gs) return nullptr;
+                        if (gs->Parameters())
+                            for (auto p : *gs->Parameters())
+                                if (std::string(p->VpiName()) == signal_name)
+                                    if (auto pp = dynamic_cast<const UHDM::parameter*>(p))
+                                        return pp;
+                        if (gs->Gen_scope_arrays())
+                            for (auto gsa : *gs->Gen_scope_arrays())
+                                if (gsa->Gen_scopes())
+                                    for (auto g2 : *gsa->Gen_scopes())
+                                        if (auto r = scan_gs(g2)) return r;
+                        return nullptr;
+                    };
+                    if (m->Gen_scope_arrays())
+                        for (auto gsa : *m->Gen_scope_arrays()) {
+                            if (param) break;
+                            if (gsa->Gen_scopes())
+                                for (auto g2 : *gsa->Gen_scopes())
+                                    if ((param = scan_gs(g2))) break;
+                        }
+                }
             }
         }
         if (param) {
@@ -8456,6 +8494,22 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 std::string v = std::string(param->VpiValue());
                 RTLIL::Const c = extract_const_from_value(v);
                 if (c.size() > 0) { param_value = c; got = true; }
+            }
+            // Gen-scope localparams carry the '{...} initializer on their
+            // param_assign parent, not in VpiValue.
+            if (!got && param->VpiParent() &&
+                param->VpiParent()->UhdmType() == uhdmparam_assign) {
+                auto pa2 = any_cast<const UHDM::param_assign*>(param->VpiParent());
+                if (auto re = dynamic_cast<const UHDM::expr*>(pa2->Rhs())) {
+                    bool sf = force_const_fold;
+                    force_const_fold = true;
+                    RTLIL::SigSpec rs = import_expression(re, input_mapping);
+                    force_const_fold = sf;
+                    if (rs.is_fully_const() && rs.size() > 0) {
+                        param_value = rs.as_const();
+                        got = true;
+                    }
+                }
             }
             if (got) {
                 int total = param_value.size();
@@ -8511,6 +8565,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                                         int l = ls.as_int(), r = rs2.as_int();
                                         int arr_size = std::abs(l - r) + 1;
                                         outer_low = std::min(l, r);
+                                        // The '{e0, e1, ...} fold places the
+                                        // FIRST pattern entry in the MSBs, and
+                                        // that entry binds to index `l` — so an
+                                        // ASCENDING dim ([0:3], or the [N]
+                                        // shorthand) puts element 0 at the TOP
+                                        // (gen-scope table T[4] of the
+                                        // OT-config ibex_alu read reversed),
+                                        // while a descending [N-1:0] dim is
+                                        // bottom-up.  Same rule as the
+                                        // packed_array_typespec branch below.
+                                        outer_high = std::max(l, r);
+                                        outer_ascending = (l < r);
                                         if (arr_size > 0 && total % arr_size == 0)
                                             elem_w = total / arr_size;
                                     }

@@ -1,0 +1,4 @@
+DmBaseAddr 437321728 437321728
+DmAddrMask 4095 4095
+PMPGranularity 0 0
+PMPNumRegions 16 16

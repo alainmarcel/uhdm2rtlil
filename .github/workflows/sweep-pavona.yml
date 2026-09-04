@@ -1,0 +1,28 @@
+name: Sweep pavona
+
+# Per-module pavona report: formal equivalence vs read_slang + Verilator co-sim
+# (pass / divergence count) with a final co-sim pass-rate.  Table lands in the
+# run's step summary.  Nightly + manual dispatch, so the heavy co-sims don’t
+# run on every push (the sharded regression already gates correctness).
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "47 3 * * *"   # nightly 03:47 UTC
+
+concurrency:
+  group: sweep-pavona-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: pavona
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

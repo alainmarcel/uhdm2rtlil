@@ -1,0 +1,1 @@
+RV32ZC 3 ibex_pkg::RV32ZcaZcbZcmp

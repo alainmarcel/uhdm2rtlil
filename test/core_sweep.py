@@ -25,6 +25,7 @@ from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent
 CVA6_DIR = TEST_DIR / "cva6_equiv"
+PAVONA_DIR = TEST_DIR / "pavona_equiv"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -168,6 +169,44 @@ def sweep_cva6(cycles, jobs, flt=None):
         return list(ex.map(one, mods))
 
 
+# ------------------------------------------------------------------- pavona
+def sweep_pavona(jobs, flt=None):
+    """Pavona (OT-config hardened Ibex): formal statuses from one
+    run_pavona_equiv.sh pass.  Co-sim adjudication is not wired up for this
+    core yet — the column reports that honestly rather than skipping rows."""
+    cmd = ["./run_pavona_equiv.sh"]
+    if flt:
+        for line in (PAVONA_DIR / "pavona_modules.txt").read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                name = line.split()[0]
+                if re.search(flt, name):
+                    cmd.append(name)
+    env = dict(os.environ, JOBS=str(jobs))
+    try:
+        p = subprocess.run(cmd, cwd=PAVONA_DIR, text=True, timeout=7200,
+                           env=env, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    label = {
+        "proven": "✅ equivalent", "cex": "❌ differs",
+        "timeout": "❓ SAT timeout", "error": "error",
+        "elabfail": "elab-fail",
+    }
+    rows = []
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅⚠❓💥❌🎉]*\s*(\S+)\s+(proven|cex|timeout|error|"
+                     r"elabfail)", line)
+        if m:
+            rows.append({"module": m.group(1),
+                         "formal": label.get(m.group(2), m.group(2)),
+                         "cosim": "— (not wired yet)"})
+    rows.sort(key=lambda r: r["module"])
+    return rows
+
+
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
     lines = [f"## {core} sweep — formal (vs read_slang) + Verilator co-sim "
@@ -192,7 +231,7 @@ def render(core, rows, cycles):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("core", choices=["ibex", "rp32", "cva6"])
+    ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -201,6 +240,8 @@ def main():
 
     if args.core == "cva6":
         rows = sweep_cva6(args.cycles, args.jobs, args.filter)
+    elif args.core == "pavona":
+        rows = sweep_pavona(args.jobs, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
