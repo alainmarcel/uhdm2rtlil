@@ -3979,6 +3979,32 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         }
     }
     
+    // Arrays whose ELEMENTS are written by continuous assigns anywhere in
+    // this scope's subtree (`assign clmul_and_stage[i] = ...` in unrolled
+    // generate-for children).  Such an array must NOT become a $memory: a
+    // memory write needs a process ($memwr), so the cont_assign writes were
+    // silently mis-lowered onto memrd DATA wires and every read returned 0
+    // (Pavona ibex_alu's clmul/CRC stage arrays — the whole tree read 0).
+    std::set<std::string> cont_elem_written;
+    {
+        std::function<void(const UHDM::gen_scope*)> scan =
+            [&](const UHDM::gen_scope* gs) {
+                if (!gs) return;
+                if (gs->Cont_assigns())
+                    for (auto ca : *gs->Cont_assigns())
+                        if (ca->Lhs() &&
+                            (ca->Lhs()->VpiType() == vpiBitSelect ||
+                             ca->Lhs()->VpiType() == vpiVarSelect))
+                            cont_elem_written.insert(
+                                std::string(ca->Lhs()->VpiName()));
+                if (gs->Gen_scope_arrays())
+                    for (auto gsa : *gs->Gen_scope_arrays())
+                        if (gsa->Gen_scopes())
+                            for (auto g : *gsa->Gen_scopes()) scan(g);
+            };
+        scan(uhdm_scope);
+    }
+
     // Import variables declared in the generate scope
     if (uhdm_scope->Variables()) {
         log("UHDM: Found %d variables in generate scope\n", (int)uhdm_scope->Variables()->size());
@@ -4014,6 +4040,50 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                             continue;
                     }
                     if (is_memory_array(av) && !async_reset_filled_arrays.count(var_name)) {
+                        // Element-written by cont_assigns, or comb-only
+                        // (accessed only from combinational always blocks):
+                        // per-element wires under the BARE element names
+                        // (accesses inside the scope use bare names),
+                        // mirroring the module-level branches.  A $memory is
+                        // wrong for both: cont_assign writes have no process
+                        // to carry a $memwr, and comb read-after-write
+                        // in-block semantics need element wires (ibex_alu
+                        // bitcnt_partial's Brent-Kung tree).
+                        if (cont_elem_written.count(var_name) ||
+                            comb_only_arrays.count(var_name)) {
+                            int asize = 0, alow = 0, ew = 0;
+                            if (av->Ranges() && !av->Ranges()->empty()) {
+                                auto r0 = (*av->Ranges())[0];
+                                RTLIL::SigSpec l = import_expression(
+                                    any_cast<const expr*>(r0->Left_expr()));
+                                RTLIL::SigSpec r = import_expression(
+                                    any_cast<const expr*>(r0->Right_expr()));
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    int lv = l.as_const().as_int();
+                                    int rv = r.as_const().as_int();
+                                    asize = std::abs(lv - rv) + 1;
+                                    alow = std::min(lv, rv);
+                                }
+                            }
+                            if (av->Variables() && !av->Variables()->empty())
+                                ew = get_width(av->Variables()->at(0), current_instance);
+                            if (asize > 0 && ew > 0) {
+                                log("UHDM: Gen-scope array_var '%s' element-written by "
+                                    "cont_assigns — per-element wires (n=%d, w=%d)\n",
+                                    var_name.c_str(), asize, ew);
+                                for (int i = 0; i < asize; i++) {
+                                    std::string ename = var_name + "[" +
+                                        std::to_string(alow + i) + "]";
+                                    RTLIL::IdString eid = RTLIL::escape_id(ename);
+                                    if (!module->wire(eid)) {
+                                        RTLIL::Wire* ewire = module->addWire(eid, ew);
+                                        add_src_attribute(ewire->attributes, av);
+                                        name_map[ename] = ewire;
+                                    }
+                                }
+                                continue;
+                            }
+                        }
                         create_memory_from_array(av);
                         continue;
                     }

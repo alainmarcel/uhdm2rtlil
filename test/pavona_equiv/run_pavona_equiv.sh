@@ -49,12 +49,29 @@ run_one() {
     done < "$pfile"
   fi
 
+  # Optional flat-port shim (wrappers/flat_<mod>.sv, top <mod>_flat): modules
+  # with unpacked-array PORTS cannot be mitered directly — the two frontends
+  # flatten such ports with OPPOSITE element orders (read_uhdm packs element
+  # 0 at the LSBs, read_slang at the MSBs), so the miter feeds swapped
+  # elements and reports convention-only counterexamples (ibex_alu's
+  # imd_val_q_i).  The shim maps the array to an explicit flat bus by
+  # part-select; both sides read it, killing the ambiguity.  The shim
+  # forwards the module parameters under the same names, so -P/-G apply
+  # unchanged.
+  local flat="$HERE/wrappers/flat_$mod.sv"
+  local top="$mod" extra_src=""
+  if [ -f "$flat" ]; then
+    top="${mod}_flat"
+    extra_src="$flat"
+  fi
+
   # 1. surelog elaboration (re-run when inputs or surelog are newer).
   if [ ! -f "$work/slpp_all/surelog.uhdm" ] \
      || [ "$SURELOG" -nt "$work/slpp_all/surelog.uhdm" ] \
-     || [ "$pfile" -nt "$work/slpp_all/surelog.uhdm" ]; then
+     || [ "$pfile" -nt "$work/slpp_all/surelog.uhdm" ] \
+     || { [ -n "$extra_src" ] && [ "$flat" -nt "$work/slpp_all/surelog.uhdm" ]; }; then
     (cd "$work" && "$SURELOG" -parse -d uhdm -I"$PRIM" -I"$IBEX" -DSYNTHESIS \
-        "${sl_p[@]}" -top "$mod" $(srcs) > surelog.log 2>&1)
+        "${sl_p[@]}" -top "$top" $(srcs) $extra_src > surelog.log 2>&1)
   fi
   if [ ! -f "$work/slpp_all/surelog.uhdm" ]; then
     echo "  💥 $mod — surelog produced no UHDM (want=$want)"
@@ -64,16 +81,16 @@ run_one() {
   # 2. miter.
   cat > "$work/miter.ys" <<EOF
 read_uhdm slpp_all/surelog.uhdm
-hierarchy -check -top $mod
+hierarchy -check -top $top
 flatten; proc; delete t:\$check t:\$assert t:\$assume t:\$print
 opt; memory; async2sync; techmap; opt
-rename $mod gold
+rename $top gold
 design -stash gold
-read_slang --ignore-assertions -DSYNTHESIS -I $PRIM -I $IBEX ${sg_p[@]} $(srcs | tr '\n' ' ') --top $mod
-hierarchy -check -top $mod
+read_slang --ignore-assertions -DSYNTHESIS -I $PRIM -I $IBEX ${sg_p[@]} $(srcs | tr '\n' ' ') $extra_src --top $top
+hierarchy -check -top $top
 flatten; proc; delete t:\$check t:\$assert t:\$assume t:\$print
 opt; memory; async2sync; techmap; opt
-rename $mod gate
+rename $top gate
 design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate

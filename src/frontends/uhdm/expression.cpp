@@ -5346,12 +5346,75 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
                 field_sigs.push_back(val);
             }
+            // For an UNPACKED-ARRAY target the flat-net convention is
+            // element 0 at the LSBs (the per-element wires are split as
+            // `connect \arr[0] \arr[31:0]`, and ports flatten the same
+            // way).  A pattern's FIRST entry binds to the LEFT index, so
+            // for an ASCENDING dim ([0:N-1] / [N] shorthand) the first
+            // entry is element 0 and must land at the LSBs — the default
+            // first-at-MSB fold put it in the LAST element (Pavona
+            // ibex_alu: `imd_val_d_o = '{operand_a_i, 32'h0}` wrote
+            // operand_a into imd_val_d_o[1]).  Struct targets keep the
+            // first-at-MSB packing (struct member 0 is the top field).
+            bool elem0_at_lsb = false;
+            if (!struct_ts) {
+                // The target's unpacked dim: from the op's array_typespec when
+                // it has Ranges, else from the assignment LHS's array_var /
+                // array_net — where the dim usually lives on the VAR itself
+                // (vpiRange on the array_var; its array_typespec often carries
+                // none).  assignment_lhs_typespec is no help here — for an
+                // array_var it deliberately returns the ELEMENT type.
+                // ONLY for a procedural/continuous ASSIGNMENT target — a
+                // parameter-value fold (param_assign parent) must keep the
+                // established first-at-MSB packing that all the
+                // direction-aware param-table READERS assume (flipping it
+                // reversed every SHUFFLE_MASK_L[i] read in ibex_alu and
+                // broke genscope_param_table).
+                const UHDM::range* dim = nullptr;
+                if (uhdm_op->VpiParent()) {
+                    const UHDM::any* lhs = nullptr;
+                    if (uhdm_op->VpiParent()->UhdmType() == uhdmassignment)
+                        lhs = any_cast<const UHDM::assignment*>(uhdm_op->VpiParent())->Lhs();
+                    else if (uhdm_op->VpiParent()->UhdmType() == uhdmcont_assign)
+                        lhs = any_cast<const UHDM::cont_assign*>(uhdm_op->VpiParent())->Lhs();
+                    if (lhs)
+                        if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
+                            if (auto ag = r->Actual_group()) lhs = ag;
+                    if (lhs) {
+                        if (auto av = dynamic_cast<const UHDM::array_var*>(lhs)) {
+                            if (av->Ranges() && !av->Ranges()->empty())
+                                dim = (*av->Ranges())[0];
+                            if (!dim && av->Typespec())
+                                if (auto t = av->Typespec()->Actual_typespec())
+                                    if (t->UhdmType() == uhdmarray_typespec) {
+                                        auto ats = any_cast<const UHDM::array_typespec*>(t);
+                                        if (ats->Ranges() && !ats->Ranges()->empty())
+                                            dim = (*ats->Ranges())[0];
+                                    }
+                        } else if (auto an = dynamic_cast<const UHDM::array_net*>(lhs)) {
+                            if (an->Ranges() && !an->Ranges()->empty())
+                                dim = (*an->Ranges())[0];
+                        }
+                    }
+                }
+                if (dim) {
+                    RTLIL::SigSpec l = import_expression(
+                        any_cast<const expr*>(dim->Left_expr()), input_mapping);
+                    RTLIL::SigSpec ri = import_expression(
+                        any_cast<const expr*>(dim->Right_expr()), input_mapping);
+                    if (l.is_fully_const() && ri.is_fully_const() &&
+                        l.as_int() <= ri.as_int())
+                        elem0_at_lsb = true;
+                }
+            }
+            bool source_order = uhdm_op->VpiReordered();
+            if (elem0_at_lsb) source_order = !source_order;
             RTLIL::SigSpec result;
-            if (uhdm_op->VpiReordered()) {
-                // Already LSB-first — append in source order.
+            if (source_order) {
+                // First entry lands at the LSBs.
                 for (auto& s : field_sigs) result.append(s);
             } else {
-                // First field at MSB — iterate in reverse and append.
+                // First entry lands at the MSBs — iterate in reverse.
                 for (int i = (int)field_sigs.size() - 1; i >= 0; i--)
                     result.append(field_sigs[i]);
             }
