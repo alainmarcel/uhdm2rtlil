@@ -491,6 +491,12 @@ struct UhdmImporter {
     // bit_select / var_select access patterns can safely flatten to per-element
     // wires (matching the Verilog frontend).
     std::set<std::string> whole_array_accessed_names;
+    // Arrays whose ELEMENTS appear as INSTANCE port actuals
+    // (`.rd_data_o(pmp_addr[i])`, `.counter_val_o(mhpmcounter[N])`): an
+    // instance output cannot drive a $memory or a collapsed wire — these
+    // must materialize as per-element wires.  Filled per module alongside
+    // comb_only_arrays.
+    std::set<std::string> inst_elem_written_arrays;
 
     // Arrays an always_ff with an ASYNCHRONOUS reset clears wholesale in its
     // reset branch (`if (!rst_n) for (i) mem[i] <= '0;`).  An RTLIL $memwr port

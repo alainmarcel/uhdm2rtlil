@@ -12269,6 +12269,62 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             RTLIL::Wire* bwire = name_map.count(base_name)
                 ? name_map[base_name]
                 : module->wire(RTLIL::escape_id(base_name));
+            // PER-ELEMENT-wire form (no flat base wire): a gen-scope
+            // array_net/array_var materialized as \base[k] wires only
+            // (ibex_cs_registers' pmp_cfg).  Resolve the element wire and
+            // slice the member out of it.  Constant (genvar) index only —
+            // the flat-wire branch below owns the dynamic case.
+            if (bs && fr && bs->VpiIndex() && !bwire &&
+                base_name != field_name && !field_name.empty()) {
+                RTLIL::SigSpec idx_s = import_expression(bs->VpiIndex(), input_mapping);
+                if (idx_s.is_fully_const()) {
+                    std::string en = base_name + "[" +
+                        std::to_string(idx_s.as_const().as_int()) + "]";
+                    RTLIL::Wire* ew = find_wire_in_scope(en, "");
+                    const UHDM::struct_typespec* est = nullptr;
+                    if (auto ag = bs->Actual_group()) {
+                        const UHDM::ref_typespec* ert = nullptr;
+                        if (auto an2 = dynamic_cast<const UHDM::array_net*>(ag)) {
+                            if (an2->Nets() && !an2->Nets()->empty())
+                                if (auto n0 = dynamic_cast<const UHDM::net*>((*an2->Nets())[0]))
+                                    ert = n0->Typespec();
+                        } else if (auto av2 = dynamic_cast<const UHDM::array_var*>(ag)) {
+                            if (av2->Variables() && !av2->Variables()->empty())
+                                if (auto v0 = dynamic_cast<const UHDM::variables*>((*av2->Variables())[0]))
+                                    ert = v0->Typespec();
+                        }
+                        const UHDM::typespec* ets2 = ert ? ert->Actual_typespec() : nullptr;
+                        if (ets2) {
+                            const UHDM::typespec* rts3 =
+                                resolve_type_param_typespec(ets2, inst);
+                            if (rts3 && rts3->UhdmType() == uhdmstruct_typespec)
+                                est = any_cast<const UHDM::struct_typespec*>(rts3);
+                        }
+                    }
+                    if (ew && est && est->Members()) {
+                        int field_off = 0, field_w = 0;
+                        bool found = false;
+                        for (int i = (int)est->Members()->size() - 1; i >= 0; i--) {
+                            auto m = (*est->Members())[i];
+                            int mw = 0;
+                            if (auto mts = m->Typespec())
+                                if (auto a = mts->Actual_typespec())
+                                    mw = get_width_from_typespec(a, inst);
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_w = mw; found = true; break;
+                            }
+                            field_off += mw;
+                        }
+                        if (found && field_w > 0 &&
+                            field_off + field_w <= ew->width) {
+                            log("    hier_path: %s.%s (element wire) -> "
+                                "[%d+:%d]\n", en.c_str(), field_name.c_str(),
+                                field_off, field_w);
+                            return RTLIL::SigSpec(ew).extract(field_off, field_w);
+                        }
+                    }
+                }
+            }
             if (bs && fr && bs->VpiIndex() && bwire &&
                 base_name != field_name && !field_name.empty()) {
                 // Element struct + outer range from a packed_array_typespec

@@ -4005,6 +4005,53 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         scan(uhdm_scope);
     }
 
+    // Unpacked-array NETS declared in the generate scope (`pmp_cfg_t
+    // pmp_cfg [PMPNumRegions];` inside g_pmp_registers) — these live in
+    // Array_nets(), which this path never imported: element references
+    // (`.rd_data_o(pmp_cfg[i])` instance actuals, `pmp_cfg[i].lock` field
+    // reads) then found no wire at all — ibex_cs_registers' per-region CSR
+    // outputs imported as constant X.  Create per-element wires under the
+    // BARE element names (in-scope references use bare names), plus the
+    // hierarchical alias.
+    if (uhdm_scope->Array_nets()) {
+        for (auto an : *uhdm_scope->Array_nets()) {
+            std::string an_name = std::string(an->VpiName());
+            int asize = 0, alow = 0, ew = 0;
+            if (an->Ranges() && !an->Ranges()->empty()) {
+                auto r0 = (*an->Ranges())[0];
+                RTLIL::SigSpec l = import_expression(any_cast<const expr*>(r0->Left_expr()));
+                RTLIL::SigSpec r = import_expression(any_cast<const expr*>(r0->Right_expr()));
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    int lv = l.as_const().as_int(), rv = r.as_const().as_int();
+                    asize = std::abs(lv - rv) + 1;
+                    alow = std::min(lv, rv);
+                }
+            }
+            if (an->Nets() && !an->Nets()->empty())
+                ew = get_width((*an->Nets())[0], current_instance);
+            if (asize > 0 && ew > 0) {
+                log("UHDM: Gen-scope array_net '%s' — per-element wires "
+                    "(n=%d, w=%d)\n", an_name.c_str(), asize, ew);
+                std::string gs_path = get_current_gen_scope();
+                for (int i = 0; i < asize; i++) {
+                    std::string ename = an_name + "[" + std::to_string(alow + i) + "]";
+                    RTLIL::IdString eid = RTLIL::escape_id(ename);
+                    if (!module->wire(eid)) {
+                        RTLIL::Wire* ewire = module->addWire(eid, ew);
+                        add_src_attribute(ewire->attributes, an);
+                        name_map[ename] = ewire;
+                        if (!gs_path.empty())
+                            name_map[gs_path + "." + ename] = ewire;
+                    }
+                }
+            } else {
+                log_warning("UHDM: Gen-scope array_net '%s' with unresolved "
+                            "dims (n=%d, w=%d) — skipped\n",
+                            an_name.c_str(), asize, ew);
+            }
+        }
+    }
+
     // Import variables declared in the generate scope
     if (uhdm_scope->Variables()) {
         log("UHDM: Found %d variables in generate scope\n", (int)uhdm_scope->Variables()->size());
@@ -4038,6 +4085,64 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                 var_name, av->Ranges(),
                                 av->Variables()->at(0), av))
                             continue;
+                    }
+                    // STRUCT/complex-element array_var that none of the
+                    // branches below claim (ibex_cs_registers'
+                    // `pmp_cfg_t pmp_cfg [PMPNumRegions]`, written by
+                    // per-region INSTANCE outputs): the generic
+                    // fallthrough made ONE 1-bit wire and every element
+                    // reference dangled (the per-region CSR outputs
+                    // imported as constant X).  Materialize per-element
+                    // wires like the array_net path above.
+                    {
+                        const UHDM::any* inner =
+                            (av->Variables() && !av->Variables()->empty())
+                                ? (*av->Variables())[0] : nullptr;
+                        bool inner_struct = inner &&
+                            inner->UhdmType() == uhdmstruct_var;
+                        bool whole2 = whole_array_accessed_names.count(var_name) > 0;
+                        bool multi2 = av->Ranges() && av->Ranges()->size() > 1;
+                        bool inst_written2 =
+                            inst_elem_written_arrays.count(var_name) > 0;
+                        if ((inner_struct || inst_written2) && !whole2 && !multi2 &&
+                            (inst_written2 || !is_memory_array(av)) &&
+                            !async_reset_filled_arrays.count(var_name)) {
+                            int asize = 0, alow = 0, ew = 0;
+                            if (av->Ranges() && !av->Ranges()->empty()) {
+                                auto r0 = (*av->Ranges())[0];
+                                RTLIL::SigSpec l = import_expression(
+                                    any_cast<const expr*>(r0->Left_expr()));
+                                RTLIL::SigSpec r = import_expression(
+                                    any_cast<const expr*>(r0->Right_expr()));
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    int lv = l.as_const().as_int();
+                                    int rv = r.as_const().as_int();
+                                    asize = std::abs(lv - rv) + 1;
+                                    alow = std::min(lv, rv);
+                                }
+                            }
+                            if (inner) ew = get_width(inner, current_instance);
+                            if (asize > 0 && ew > 0) {
+                                log("UHDM: Gen-scope struct array_var '%s' — "
+                                    "per-element wires (n=%d, w=%d)\n",
+                                    var_name.c_str(), asize, ew);
+                                std::string gs_path = get_current_gen_scope();
+                                for (int i = 0; i < asize; i++) {
+                                    std::string ename = var_name + "[" +
+                                        std::to_string(alow + i) + "]";
+                                    RTLIL::IdString eid = RTLIL::escape_id(ename);
+                                    if (!module->wire(eid)) {
+                                        RTLIL::Wire* ewire =
+                                            module->addWire(eid, ew);
+                                        add_src_attribute(ewire->attributes, av);
+                                        name_map[ename] = ewire;
+                                        if (!gs_path.empty())
+                                            name_map[gs_path + "." + ename] = ewire;
+                                    }
+                                }
+                                continue;
+                            }
+                        }
                     }
                     if (is_memory_array(av) && !async_reset_filled_arrays.count(var_name)) {
                         // Element-written by cont_assigns, or comb-only
