@@ -12267,6 +12267,51 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
     }
 
+    // Expanded-array ELEMENT write with a (loop-)constant index — including
+    // inside GENERATE scopes, where the per-element wires are registered
+    // under their bare names.  The `gen_scope_stack.empty()` fast path below
+    // never fires there, so the LHS fell to the generic
+    // import_expression(), which substitutes the element's TRACKED VALUE —
+    // the write became `assign 6'0 <rhs>` and was dropped (ibex_alu's
+    // bitcnt_partial Brent-Kung stages: CTZ/CLZ/CPOP all read 0).
+    // Only INSIDE a generate scope: at module level the established
+    // slice-temp machinery below handles expanded-array element writes and
+    // coordinates with sibling var_select bit writes into the same element
+    // (comb_2d_bitsel's `lut[i]='0; lut[i][i-B]=1'b1`) — hijacking the
+    // whole-element write there orphans the bit write's temp.
+    if (!gen_scope_stack.empty()) if (auto lhs_e = uhdm_assign->Lhs()) {
+        // VpiOpType 82 (vpiAssignmentOp) is a PLAIN blocking assignment;
+        // compound ops carry the operator code (vpiBitOrOp for `|=`, ...).
+        int aop = uhdm_assign->VpiOpType();
+        if (lhs_e->VpiType() == vpiBitSelect && (aop == 0 || aop == 82)) {
+            const bit_select* bs = any_cast<const bit_select*>(lhs_e);
+            std::string bs_name = std::string(bs->VpiName());
+            if (!bs_name.empty() &&
+                !module->memories.count(RTLIL::escape_id(bs_name)) &&
+                bs->VpiIndex() && expanded_array_low(bs_name) >= 0) {
+                RTLIL::SigSpec idx =
+                    import_expression(bs->VpiIndex(), comb_read_map());
+                if (idx.is_fully_const()) {
+                    std::string en = bs_name + "[" +
+                        std::to_string(idx.as_const().as_int()) + "]";
+                    RTLIL::Wire* ew = nullptr;
+                    if (name_map.count(en)) ew = name_map[en];
+                    if (!ew) ew = module->wire(RTLIL::escape_id(en));
+                    if (ew) {
+                        RTLIL::SigSpec rhs_e;
+                        if (auto rhs_any = uhdm_assign->Rhs())
+                            if (auto re = dynamic_cast<const expr*>(rhs_any))
+                                rhs_e = import_expression(re, comb_read_map());
+                        if (rhs_e.size() > 0) {
+                            emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Bit-select LHS on a plain register with a (loop-)constant index, e.g.
     // `q[k] = ...` in an unrolled for loop.  Resolve it to the `\q[idx]`
     // chunk so map_to_temp_wire redirects the write to `$0\q[idx]`.  Without
@@ -12424,7 +12469,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     // Surelog uses vpiOpType on assignments: vpiAssignmentOp = regular assign, others = compound op
     int op_type = uhdm_assign->VpiOpType();
     if (op_type != vpiAssignmentOp && op_type != 0) {
-        // Get the current value of the LHS signal for the compound operation
+        // Get the current value of the LHS signal for the compound operation.
+        // In a GENERATE scope the tracked in-flight value is keyed by the
+        // scope-qualified wire name, not the bare ref name — the bare-only
+        // lookup fell through to the raw wire and a `mask |= mask << k`
+        // chain closed a combinational LOOP through its own final value
+        // (ibex_alu's bitcnt_bit_mask smear, exposed once bitcnt_partial
+        // gained real consumers).
         RTLIL::SigSpec lhs_current_val = lhs;
         if (auto lhs_expr = uhdm_assign->Lhs()) {
             if (lhs_expr->VpiType() == vpiRefObj) {
@@ -12432,6 +12483,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 std::string sig_name = std::string(ref->VpiName());
                 if (current_comb_values.count(sig_name)) {
                     lhs_current_val = current_comb_values[sig_name];
+                } else {
+                    std::string gs = get_current_gen_scope();
+                    if (!gs.empty() &&
+                        current_comb_values.count(gs + "." + sig_name)) {
+                        lhs_current_val =
+                            current_comb_values[gs + "." + sig_name];
+                    } else if (lhs.is_wire()) {
+                        std::string wn = lhs.as_wire()->name.str().substr(1);
+                        if (current_comb_values.count(wn))
+                            lhs_current_val = current_comb_values[wn];
+                    }
                 }
             }
         }

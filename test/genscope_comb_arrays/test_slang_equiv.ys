@@ -1,0 +1,14 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_comb_arrays
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename genscope_comb_arrays gold
+design -stash gold
+read_slang dut.sv --top genscope_comb_arrays
+hierarchy -check -top genscope_comb_arrays
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename genscope_comb_arrays gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+sat -verify -prove-asserts -seq 8 -set-init-zero -show-inputs -show-outputs miter
