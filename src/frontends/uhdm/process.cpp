@@ -2197,7 +2197,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (is_simple_if_else && simple_if_stmt) {
                 // Create temporary wires for regular assigned signals
                 std::map<std::string, RTLIL::Wire*> temp_wires;
-                for (const auto& sig_name : assigned_signals) {
+                for (const auto& bare_name : assigned_signals) {
+                    // Resolve through the generate-scope stack: inside a
+                    // nested gen scope (g_writeback_stage.g_wb_regs_nr) the
+                    // extracted LHS name is bare ("rf_we_wb_q") but the wire
+                    // is "\g_writeback_stage.rf_we_wb_q".  The old bare
+                    // module->wire lookup returned null and silently SKIPPED
+                    // the temp wire AND the sync update — the switch then
+                    // assigned the real wire with an empty sync, and proc
+                    // turned the whole register bank into a combinational
+                    // passthrough (Pavona ibex_wb_stage: every wb_*_q output
+                    // led its slang counterpart by one cycle).
+                    RTLIL::Wire* orig_wire = find_wire_in_scope(bare_name, "");
+                    if (!orig_wire) continue;
+                    std::string sig_name = orig_wire->name.str().substr(1);
                     // A struct wire (`man.req`) written by several field/slice
                     // assignments in the same process appears multiple times in
                     // assigned_signals (each `man.req.<field>[…]` maps to the
@@ -2205,10 +2218,6 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     if (temp_wires.count(sig_name)) continue;
                     // Create temp wire name matching Verilog frontend format
                     std::string temp_name = "$0\\" + sig_name;
-
-                    // Get the original wire
-                    RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
-                    if (!orig_wire) continue;
 
                     // Add the array notation.  If another process already
                     // created a `$0\<sig>` temp, bump the index ($1\, $2\, …)
@@ -2354,9 +2363,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
 
-                // Add single update for each signal
+                // Add single update for each signal.  temp_wires is keyed by
+                // the RESOLVED wire name (gen-scope prefix included), so the
+                // escaped lookup is exact.
                 for (const auto& [sig_name, temp_wire] : temp_wires) {
-                    RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
+                    RTLIL::Wire* orig_wire = module->wire("\\" + sig_name);
                     if (!orig_wire) continue;
                     auto wb = if_written_bits.find(sig_name);
                     if (wb != if_written_bits.end() &&
