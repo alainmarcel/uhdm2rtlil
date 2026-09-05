@@ -76,6 +76,17 @@ run_one() {
   seq=${SEQ:-$(echo "$spec" | awk '{print $2}')};     seq=${seq:-4}
   tmo=${TIMEOUT:-$(echo "$spec" | awk '{print $3}')}; tmo=${tmo:-900}
   want=$(echo "$spec" | awk '{print $4}');            want=${want:-proven}
+  # Long-budget modules (SAT budget > LONG_BUDGET_S, default 900s — currently
+  # the two 3600s proofs hpdcache_victim_plru / wt_dcache_missunit) are
+  # skipped in interactive runs in the interest of productivity: a single
+  # 1-hour SAT job dominates the whole sweep's wall clock.  The nightly
+  # sweep sets FULL_SWEEP=1 and still proves them.  Skips are reported
+  # separately and never count as regressions.
+  if [ -z "${FULL_SWEEP:-}" ] && [ -z "${TIMEOUT:-}" ] &&
+     [ "$tmo" -gt "${LONG_BUDGET_S:-900}" ]; then
+    printf "  ⊘  %-34s long-budget (%ss) — skipped locally, nightly covers it (FULL_SWEEP=1 to include)\n" "$mod" "$tmo"
+    echo "SKIP $mod long" >> "$WORKROOT/.results"; return 0
+  fi
   # `dead` = the module cannot be elaborated at THIS configuration, so there is
   # nothing to measure and it must not count against coverage.  Not a harness
   # gap and not a frontend bug: e.g. hpdcache and everything that instantiates

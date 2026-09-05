@@ -162,7 +162,9 @@ jobs:
         cd test
         # JOBS bounds the cva6 miter parallelism (SAT is memory-hungry on
         # 16 GB runners); core_sweep's own --jobs bounds concurrent co-sims.
-        JOBS=2 python3 core_sweep.py ${{ inputs.core }} \
+        # FULL_SWEEP=1: the nightly also proves the long-budget (>900s SAT)
+        # modules that interactive sweeps skip for productivity.
+        JOBS=2 FULL_SWEEP=1 python3 core_sweep.py ${{ inputs.core }} \
           --cycles ${{ inputs.cycles }} --jobs 2 \
           --out "$GITHUB_WORKSPACE/${{ inputs.core }}-sweep.md"
 
