@@ -33,6 +33,7 @@ for f in prim_assert.sv prim_assert_dummy_macros.svh \
          prim_mubi_pkg.sv prim_count_pkg.sv \
          prim_count.sv prim_lfsr.sv prim_ram_1p_scr.sv \
          prim_secded_inv_39_32_dec.sv prim_secded_inv_39_32_enc.sv \
+         prim_secded_inv_28_22_dec.sv prim_secded_inv_28_22_enc.sv \
          prim_prince.sv prim_present.sv prim_subst_perm.sv \
          prim_onehot_check.sv prim_mubi4_dec.sv prim_mubi4_sender.sv \
          prim_sec_anchor_buf.sv prim_sec_anchor_flop.sv; do

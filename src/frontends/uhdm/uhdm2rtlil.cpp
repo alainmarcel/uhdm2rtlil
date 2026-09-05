@@ -3572,6 +3572,40 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Such arrays must NOT be created as $memory objects; instead they get individual
     // element wires so that write-then-read semantics work correctly in the same block.
     comb_only_arrays.clear();
+    inst_elem_written_arrays.clear();
+    {
+        // Arrays element-referenced in INSTANCE port actuals, module-wide
+        // (gen scopes included).
+        std::function<void(const UHDM::VectorOfmodule_inst*)> scan_mods;
+        std::function<void(const UHDM::gen_scope*)> scan_gs;
+        auto scan_ports = [&](const UHDM::module_inst* mi) {
+            if (!mi || !mi->Ports()) return;
+            for (auto p : *mi->Ports()) {
+                const UHDM::any* hc = p->High_conn();
+                if (hc && (hc->VpiType() == vpiBitSelect ||
+                           hc->VpiType() == vpiVarSelect) &&
+                    !hc->VpiName().empty())
+                    inst_elem_written_arrays.insert(std::string(hc->VpiName()));
+            }
+        };
+        scan_mods = [&](const UHDM::VectorOfmodule_inst* mods) {
+            if (!mods) return;
+            for (auto mi : *mods) scan_ports(mi);
+        };
+        scan_gs = [&](const UHDM::gen_scope* gs) {
+            if (!gs) return;
+            scan_mods(gs->Modules());
+            if (gs->Gen_scope_arrays())
+                for (auto gsa : *gs->Gen_scope_arrays())
+                    if (gsa->Gen_scopes())
+                        for (auto g : *gsa->Gen_scopes()) scan_gs(g);
+        };
+        scan_mods(uhdm_module->Modules());
+        if (uhdm_module->Gen_scope_arrays())
+            for (auto gsa : *uhdm_module->Gen_scope_arrays())
+                if (gsa->Gen_scopes())
+                    for (auto g : *gsa->Gen_scopes()) scan_gs(g);
+    }
     {
         // Collect which array names are touched by clocked vs combinational always blocks.
         std::set<std::string> clocked_access;
@@ -3996,8 +4030,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // access.  CVA6 cva6_fifo_v3 `mem_n`/`mem_q`.
                 bool whole_accessed_var = whole_array_accessed_names.count(array_name) > 0;
                 bool async_filled_var = async_reset_filled_arrays.count(array_name) > 0;
+                // An array whose elements are INSTANCE port actuals cannot
+                // be a $memory (an instance output has no $memwr to drive):
+                // ibex_cs_registers' mhpmcounter[32] is written by per-index
+                // ibex_counter outputs and read at a dynamic index.
+                bool inst_written_var = inst_elem_written_arrays.count(array_name) > 0;
                 bool should_be_memory = is_mem && !has_const_only && !is_comb_only &&
-                                        !whole_accessed_var && !async_filled_var;
+                                        !whole_accessed_var && !async_filled_var &&
+                                        !inst_written_var;
 
                 if (should_be_memory) {
                     log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
