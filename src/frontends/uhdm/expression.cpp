@@ -5347,8 +5347,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
             }
             int field_idx = 0;
+            std::vector<std::string> field_tags;  // tag name per field ("" = untagged)
             for (auto operand : *uhdm_op->Operands()) {
                 const expr* field_expr = nullptr;
+                std::string this_tag;
                 // Named-field patterns (`'{a: 0, b: 1, ...}`) wrap each value in a
                 // `tagged_pattern` (not an expr), so unwrap its Pattern(); these
                 // are emitted in struct field order (PatternAssignmentOfStructParam).
@@ -5362,6 +5364,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (struct_ts && struct_ts->Members() && tp && tp->Typespec()) {
                         if (auto tag = tp->Typespec()->Actual_typespec()) {
                             std::string fname = std::string(tag->VpiName());
+                            this_tag = fname;
                             for (auto m : *struct_ts->Members())
                                 if (std::string(m->VpiName()) == fname) {
                                     if (auto mt = m->Typespec())
@@ -5405,6 +5408,30 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (mode_debug)
                     log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
                 field_sigs.push_back(val);
+                field_tags.push_back(this_tag);
+            }
+            // NAMED-tag patterns pack by MEMBER declaration order, not source
+            // order.  Surelog leaves PROCEDURAL patterns in source order
+            // (cont_assign/parameter ones arrive reordered), so
+            // '{irq_ext: 1'b1, irq_int: 1'b0, ...} against a struct declared
+            // {irq_int, irq_ext, ...} swapped the two 1-bit fields —
+            // ibex_controller reported the internal-NMI cause for a fast
+            // IRQ.  When every field is tagged and resolves to a distinct
+            // member, re-emit field_sigs in member order.
+            if (struct_ts && struct_ts->Members() &&
+                field_sigs.size() == struct_ts->Members()->size() &&
+                !field_tags.empty() &&
+                std::none_of(field_tags.begin(), field_tags.end(),
+                             [](const std::string& t) { return t.empty(); })) {
+                std::vector<RTLIL::SigSpec> ordered;
+                bool ok = true;
+                for (auto m : *struct_ts->Members()) {
+                    std::string mn = std::string(m->VpiName());
+                    auto it = std::find(field_tags.begin(), field_tags.end(), mn);
+                    if (it == field_tags.end()) { ok = false; break; }
+                    ordered.push_back(field_sigs[it - field_tags.begin()]);
+                }
+                if (ok) field_sigs = ordered;
             }
             // For an UNPACKED-ARRAY target the flat-net convention is
             // element 0 at the LSBs (the per-element wires are split as

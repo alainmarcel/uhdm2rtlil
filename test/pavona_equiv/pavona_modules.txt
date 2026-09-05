@@ -15,7 +15,7 @@
 ibex_alu                 4  300  timeout  # was cex: 4 fixes (flat-port shim, pattern elem order, gen-scope comb arrays, compound in-flight); 60-vector random eval UHDM==slang on ALL outputs; miter now SAT-capacity-bound (clmul trees)
 ibex_branch_predict      4  300  proven
 ibex_compressed_decoder  4  300  proven
-ibex_controller          4  300  cex
+ibex_controller          4  300  proven
 ibex_core                4  600  error
 ibex_counter             4  300  proven
 ibex_cs_registers        4  600  error
@@ -25,12 +25,12 @@ ibex_dummy_instr         4  300  proven
 ibex_ex_block            4  300  timeout  # was cex: flat-port shim (imd_val) + inherited alu fixes; 60-vector random eval UHDM==slang on ALL outputs; SAT-bound (contains the alu clmul trees)
 ibex_fetch_fifo          4  300  proven
 ibex_icache              4  600  error
-ibex_id_stage            4  600  cex
+ibex_id_stage            4  600  proven
 ibex_if_stage            4  600  error
 ibex_load_store_unit     4  300  proven
 ibex_lockstep            4  600  error
-ibex_multdiv_fast        4  300  cex
-ibex_multdiv_slow        4  300  cex
+ibex_multdiv_fast        4  300  timeout  # was cex: flat-port shim (imd_val); 60-vector state-pinned random eval UHDM==slang on ALL outputs (360/360); SAT-bound (single-cycle 32x32 multiplier at RV32MSingleCycle)
+ibex_multdiv_slow        4  300  proven
 ibex_pmp                 4  600  timeout  # was cex: 3 rounds of fixes (elem0@LSB field reads, non-zero-LSB elem writes, loop-local SSA self-loop); 80-vector random eval UHDM==slang on all outputs; SAT-bound (16 NAPOT regions x 34-bit compares)
 ibex_prefetch_buffer     4  300  proven
 ibex_register_file_ff    4  300  proven
