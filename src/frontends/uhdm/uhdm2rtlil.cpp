@@ -3582,7 +3582,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (!mi || !mi->Ports()) return;
             for (auto p : *mi->Ports()) {
                 const UHDM::any* hc = p->High_conn();
-                if (hc && (hc->VpiType() == vpiBitSelect ||
+                if (!hc) continue;
+                if ((hc->VpiType() == vpiBitSelect ||
                            hc->VpiType() == vpiVarSelect) &&
                     !hc->VpiName().empty())
                     inst_elem_written_arrays.insert(std::string(hc->VpiName()));
