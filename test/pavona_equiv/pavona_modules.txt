@@ -31,7 +31,7 @@ ibex_load_store_unit     4  300  proven
 ibex_lockstep            4  600  error
 ibex_multdiv_fast        4  300  cex
 ibex_multdiv_slow        4  300  cex
-ibex_pmp                 4  600  cex      # progress: unpacked elem0@LSB field-read + non-zero-LSB elem bit-write fixed (no cex <900s now); residual = function-inline self-loop (!matched reads its own $logic_not output in g_access_check[1])
+ibex_pmp                 4  600  timeout  # was cex: 3 rounds of fixes (elem0@LSB field reads, non-zero-LSB elem writes, loop-local SSA self-loop); 80-vector random eval UHDM==slang on all outputs; SAT-bound (16 NAPOT regions x 34-bit compares)
 ibex_prefetch_buffer     4  300  proven
 ibex_register_file_ff    4  300  proven
 ibex_register_file_fpga  4  300  proven

@@ -934,12 +934,21 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         // - output/inout parameters: their mapped wire IS
                         //   the caller's destination — renaming orphans the
                         //   caller's read (function_output/fib_simple);
-                        // - inside an unrolled for-loop body: the loop
-                        //   accumulator machinery threads values by
+                        // - the loop ACCUMULATOR variable inside an unrolled
+                        //   for body: its machinery threads values by
                         //   temporarily remapping the variable and restoring
                         //   it afterwards, which would clobber SSA renames
-                        //   (const_arg_loop).
-                        bool ssa_excluded = !loop_values.empty();
+                        //   (const_arg_loop).  Only THAT variable is
+                        //   excluded — a blanket !loop_values.empty()
+                        //   exclusion also killed SSA for ordinary
+                        //   conditionally-written locals in loops, so their
+                        //   case-arm writes landed on ONE wire that the
+                        //   condition CELLS read (RTLIL switch signals never
+                        //   see in-process assignments): ibex_pmp's
+                        //   `if (!matched && match_all[r])` priority loop
+                        //   read its own $logic_not output — a comb
+                        //   self-loop that left channel results undriven.
+                        bool ssa_excluded = loop_accumulators.count(lhs_name) > 0;
                         // The return binding must stay on the result-wire
                         // chain: the function name and any return variable
                         // map to a `...$result$N` wire, and nested case/if
