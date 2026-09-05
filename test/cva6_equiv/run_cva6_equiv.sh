@@ -148,8 +148,22 @@ miter -equiv -flatten -make_assert gold gate miter
 hierarchy -top miter
 sat -verify -prove-asserts -seq $seq -set-init-zero -show-inputs miter
 EOF
-  timeout -k 10 "$tmo" "$YOSYS" -m "$PLUGIN" miter.ys > miter.log 2>&1
+  # MEM_LIMIT_KB (CI): cap yosys's address space so a big-module SAT blowup
+  # kills yosys instead of the runner VM — the 16 GB GitHub runners' agent
+  # died mid-SAT ("runner received a shutdown signal") on cva6/mult/
+  # std_cache_subsystem, failing whole shards.  The kill surfaces as a
+  # bad_alloc/signal exit, which the classifier below folds into `timeout`
+  # (a budget outcome, not a crash) when the limit is active.
+  if [ -n "${MEM_LIMIT_KB:-}" ]; then
+    timeout -k 10 "$tmo" bash -c       "ulimit -Sv $MEM_LIMIT_KB; exec \"$YOSYS\" -m \"$PLUGIN\" miter.ys"       > miter.log 2>&1
+  else
+    timeout -k 10 "$tmo" "$YOSYS" -m "$PLUGIN" miter.ys > miter.log 2>&1
+  fi
   rc=$?
+  if [ -n "${MEM_LIMIT_KB:-}" ] && [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ] &&
+     grep -qiE "bad_alloc|out of memory|failed to allocate" miter.log; then
+    rc=124  # memory-limit kill = budget outcome
+  fi
   cex=$(grep -c "model found: FAIL" miter.log 2>/dev/null); cex=${cex:-0}
   if [ "$rc" -eq 0 ]; then                     got=proven
   elif [ "$cex" -gt 0 ]; then                  got=cex

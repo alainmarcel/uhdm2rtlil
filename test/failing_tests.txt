@@ -116,11 +116,10 @@ opt/opt_rmdff.v
 #       pytest), not a synth-equiv flow.  Its local `rom[0:15]` shows the memory
 #       frontend-expansion divergence tracked for simple/mem_arst.
 #   hana/test_simulation_vlib - multi-module simulation-library test
-#   rpc/design              - Yosys RPC frontend (python_inv over a unix socket)
+#   (rpc/design passes as of 2026-09-05 — removed from the list)
 #   verific/mixed_flist     - Verific-only (`verific -f -sv ...flist`)
 functional/picorv32_tb.v
 hana/test_simulation_vlib.v
-rpc/design.v
 verific/mixed_flist.sv
 
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---

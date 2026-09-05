@@ -189,6 +189,11 @@ jobs:
     - name: Run shard ${{ matrix.shard }}/12
       run: |
         cd test
+        # MEM_LIMIT_KB: cap each CVA6 miter's yosys at ~12 GB so a SAT
+        # blowup kills yosys (classified as a budget timeout) instead of
+        # the 16 GB runner VM's agent — un-capped runs lost whole shards
+        # to "runner received a shutdown signal" mid-SAT.
+        MEM_LIMIT_KB=12000000 \
         JOBS=${{ github.event.inputs.jobs || 1 }} \
         ./run_all_tests.sh --all \
           --shard ${{ matrix.shard }}/12 \
