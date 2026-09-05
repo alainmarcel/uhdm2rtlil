@@ -3178,6 +3178,51 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
 
                 RTLIL::SigSpec result = element_sig;
 
+                // The ELEMENT's own declared packed range: for
+                // `logic [33:2] region_addr_mask [N]` the second index is a
+                // DECLARED position (2..33), not 0-based — raw extract()
+                // wrote/read the wrong bit and indices past the element
+                // width fell through as whole-element accesses (ibex_pmp's
+                // NAPOT mask bits collapsed, region_match_eq wrong).
+                int elem_dlo = 0, elem_dhi = -1;
+                bool elem_ddesc = true;
+                if (auto ag2 = vs->Actual_group()) {
+                    const UHDM::ref_typespec* ert = nullptr;
+                    if (auto av2 = dynamic_cast<const UHDM::array_var*>(ag2)) {
+                        if (av2->Variables() && !av2->Variables()->empty())
+                            if (auto v0 = dynamic_cast<const UHDM::variables*>(
+                                    (*av2->Variables())[0]))
+                                ert = v0->Typespec();
+                    } else if (auto an2 = dynamic_cast<const UHDM::array_net*>(ag2)) {
+                        if (an2->Nets() && !an2->Nets()->empty())
+                            if (auto n0 = dynamic_cast<const UHDM::net*>((*an2->Nets())[0]))
+                                ert = n0->Typespec();
+                    }
+                    const UHDM::typespec* ets2 = ert ? ert->Actual_typespec() : nullptr;
+                    if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(ets2))
+                        if (!lt2->Elem_typespec() && lt2->Ranges() &&
+                            lt2->Ranges()->size() == 1) {
+                            auto r0 = (*lt2->Ranges())[0];
+                            RTLIL::SigSpec dl = import_expression(r0->Left_expr(), input_mapping);
+                            RTLIL::SigSpec dr = import_expression(r0->Right_expr(), input_mapping);
+                            if (dl.is_fully_const() && dr.is_fully_const()) {
+                                int dli = dl.as_const().as_int();
+                                int dri = dr.as_const().as_int();
+                                elem_dlo = std::min(dli, dri);
+                                elem_dhi = std::max(dli, dri);
+                                elem_ddesc = dli >= dri;
+                            }
+                        }
+                }
+                // Map a DECLARED bit position within the element to a 0-based
+                // extract offset; -1 when out of the declared range.
+                auto map_elem_bit = [&](int di) -> int {
+                    if (elem_dhi < elem_dlo || elem_dlo == 0)
+                        return di;  // no declared range info / already 0-based
+                    if (di < elem_dlo || di > elem_dhi) return -1;
+                    return elem_ddesc ? (di - elem_dlo) : (elem_dhi - di);
+                };
+
                 // If there's a second expression (part_select / bit_select), apply it
                 if (exprs->size() > 1) {
                     const expr* second_idx = (*exprs)[1];
@@ -3186,7 +3231,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         // — mem2reg_test6).  Extract that bit of the element.
                         RTLIL::SigSpec b = import_expression(second_idx, input_mapping);
                         if (b.is_fully_const()) {
-                            int bit_idx = b.as_const().as_int();
+                            int bit_idx = map_elem_bit(b.as_const().as_int());
                             if (bit_idx >= 0 && bit_idx < element_sig.size())
                                 result = element_sig.extract(bit_idx, 1);
                         }
@@ -3199,6 +3244,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             int right_val = right_sig.as_const().as_int();
                             int width = std::abs(left_val - right_val) + 1;
                             int offset = std::min(left_val, right_val);
+                            {
+                                int mlo = map_elem_bit(std::min(left_val, right_val));
+                                int mhi = map_elem_bit(std::max(left_val, right_val));
+                                if (mlo >= 0 && mhi >= 0)
+                                    offset = std::min(mlo, mhi);
+                            }
                             if (offset + width <= element_sig.size()) {
                                 result = element_sig.extract(offset, width);
                             } else {
@@ -3258,7 +3309,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             ? import_expression(any_cast<const expr*>(bs->VpiIndex()), input_mapping)
                             : RTLIL::SigSpec();
                         if (bit_sig.is_fully_const()) {
-                            int bit_idx = bit_sig.as_const().as_int();
+                            int bit_idx = map_elem_bit(bit_sig.as_const().as_int());
                             if (bit_idx >= 0 && bit_idx < element_sig.size())
                                 result = element_sig.extract(bit_idx, 1);
                         } else if (!bit_sig.empty()) {
@@ -3275,7 +3326,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         // through and got truncated to bit 0.
                         RTLIL::SigSpec bit_sig = import_expression(second_idx, input_mapping);
                         if (bit_sig.is_fully_const()) {
-                            int bit_idx = bit_sig.as_const().as_int();
+                            int bit_idx = map_elem_bit(bit_sig.as_const().as_int());
                             if (bit_idx >= 0 && bit_idx < element_sig.size())
                                 result = element_sig.extract(bit_idx, 1);
                         } else if (!bit_sig.empty()) {
@@ -8901,6 +8952,15 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         const UHDM::VectorOfrange* prg = nullptr;
         const UHDM::VectorOfany* pel = nullptr;
         const UHDM::ref_typespec* pts_ref = nullptr;
+        // Whether the outer dim is an UNPACKED one: the flat-net convention
+        // for unpacked arrays is element 0 at the LSBs REGARDLESS of the
+        // declared direction (port flattening and element splits both do
+        // this), while a packed ascending dim puts element `left` at the
+        // MSBs.  Applying the packed flip to an unpacked `[N]` dim reversed
+        // the elements (ibex_pmp's `priv_lvl_e priv_mode[2]`: the shim's
+        // per-channel writes landed swapped and channel 0 read channel 1's
+        // privilege level).
+        bool outer_unpacked = false;
         auto take_packed = [&](const UHDM::any* o) {
             if (prg) return;
             if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(o)) {
@@ -8916,6 +8976,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // reads collapsed to ONE BIT, zeroing the whole icache /
                 // dcache read-response path (300/300 co-sim divergences).
                 prg = av->Ranges();
+                outer_unpacked = true;
                 if (av->Variables() && !av->Variables()->empty())
                     pts_ref = (*av->Variables())[0]->Typespec();
                 if (!pts_ref) pts_ref = av->Typespec();
@@ -8959,6 +9020,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     packed_elem_w = ew;
                     packed_outer_l = ls.as_int();
                     packed_outer_r = rs.as_int();
+                    if (outer_unpacked) {
+                        // Normalize to elem0@LSB slot math: present the dim
+                        // as descending so the `asc` flip below never fires.
+                        int lo = std::min(packed_outer_l, packed_outer_r);
+                        int hi = std::max(packed_outer_l, packed_outer_r);
+                        packed_outer_l = hi;
+                        packed_outer_r = lo;
+                    }
                 }
             }
         }
@@ -12172,6 +12241,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 const UHDM::struct_typespec* st = nullptr;
                 int outer_low = 0, outer_high = 0;
                 bool ascending = false, have_range = false;
+                // Set by try_av: an UNPACKED dim's flat order is elem0@LSB
+                // regardless of declared direction (ibex_pmp
+                // csr_pmp_cfg_i[16]: the ascending flip read element 15-k's
+                // fields); a packed ascending dim (try_pat) keeps the flip.
+                bool outer_unpacked = false;
                 auto try_pat = [&](const UHDM::typespec* t) {
                     if (!t || t->UhdmType() != uhdmpacked_array_typespec) return;
                     auto pat = any_cast<const UHDM::packed_array_typespec*>(t);
@@ -12224,6 +12298,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 outer_high = std::max(li, ri);
                                 ascending = li < ri;
                                 have_range = true;
+                                // UNPACKED dim: flat order is elem0@LSB
+                                // regardless of declared direction (ibex_pmp
+                                // csr_pmp_cfg_i[16]: the ascending flip read
+                                // element 15-k's fields).
+                                outer_unpacked = true;
                             }
                         }
                     }
@@ -12271,8 +12350,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             import_expression(bs->VpiIndex(), input_mapping);
                         if (idx_s.is_fully_const()) {
                             int k = idx_s.as_const().as_int();
-                            int pos = ascending ? (outer_high - k)
-                                                : (k - outer_low);
+                            int pos = (ascending && !outer_unpacked)
+                                          ? (outer_high - k)
+                                          : (k - outer_low);
                             if (!have_range) pos = k;
                             int off = pos * elem_w + field_off;
                             if (pos >= 0 && off + field_w <= bwire->width) {
@@ -12285,7 +12365,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         } else if (idx_s.size() > 0) {
                             RTLIL::SigSpec sh = idx_s;
                             sh.extend_u0(32, false);
-                            if (have_range && ascending)
+                            if (have_range && ascending && !outer_unpacked)
                                 sh = module->Sub(NEW_ID,
                                     RTLIL::SigSpec(RTLIL::Const(outer_high, 32)),
                                     sh, false);
