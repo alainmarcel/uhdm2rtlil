@@ -8268,6 +8268,43 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             }
         }
 
+        // Plain vector declared with a NON-ZERO LSB index (`logic [31:1]
+        // instr_addr_q`): the select indices are in the DECLARED range, so
+        // the raw min(left,right) offset over-shoots by the declared low
+        // bound — `q[31:1]` warned "partially out of bounds" and padded X
+        // (ibex_fetch_fifo's instr_addr_next collapsed to 31'x).  Map
+        // through the declared range when no element scaling fired.
+        if (width == std::abs(left - right) + 1 &&
+            offset == std::min(left, right) && offset != 0) {
+            const UHDM::ref_typespec* rts2 = nullptr;
+            if (auto ag = uhdm_part->Actual_group()) {
+                if (auto v = dynamic_cast<const UHDM::variables*>(ag)) rts2 = v->Typespec();
+                else if (auto n = dynamic_cast<const UHDM::net*>(ag)) rts2 = n->Typespec();
+            }
+            const UHDM::typespec* at2 = rts2 ? rts2->Actual_typespec() : nullptr;
+            const UHDM::VectorOfrange* rgs = nullptr;
+            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at2))
+                if (!lt->Elem_typespec()) rgs = lt->Ranges();
+            if (rgs && rgs->size() == 1) {
+                auto r0 = (*rgs)[0];
+                RTLIL::SigSpec dl = import_expression(r0->Left_expr(), input_mapping);
+                RTLIL::SigSpec dr = import_expression(r0->Right_expr(), input_mapping);
+                if (dl.is_fully_const() && dr.is_fully_const()) {
+                    int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
+                    int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+                    int ilo = std::min(left, right), ihi = std::max(left, right);
+                    if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
+                        ilo >= dlow && ihi <= dhigh) {
+                        offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
+                                              : (dhigh - ihi);    // ascending  [lo:hi]
+                        log("    part_select: non-zero-based vector [%d:%d], "
+                            "select [%d:%d] -> bits [%d+:%d]\n",
+                            dli, dri, left, right, offset, width);
+                    }
+                }
+            }
+        }
+
         // Bounds check to prevent out-of-bounds access
         int base_width = base.size();
         if (offset >= base_width) {
@@ -9018,6 +9055,41 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 return RTLIL::SigSpec(RTLIL::State::Sx, packed_elem_w);
             }
             return base.extract(off, packed_elem_w);
+        }
+
+        // Vector declared with a NON-ZERO LSB index (`logic [31:1] q`):
+        // the RTLIL wire was created with start_offset 0, so the
+        // from_hdl_index path below can't correct the index — map through
+        // the DECLARED range from the typespec (q[1] must read bit 0;
+        // ibex_fetch_fifo's addr_incr_two read the wrong address bit).
+        if (wire && !wire->upto && wire->start_offset == 0) {
+            const UHDM::ref_typespec* rts2 = nullptr;
+            if (auto ag = uhdm_bit->Actual_group()) {
+                if (auto v = dynamic_cast<const UHDM::variables*>(ag)) rts2 = v->Typespec();
+                else if (auto n = dynamic_cast<const UHDM::net*>(ag)) rts2 = n->Typespec();
+            }
+            const UHDM::typespec* at2 = rts2 ? rts2->Actual_typespec() : nullptr;
+            const UHDM::VectorOfrange* rgs = nullptr;
+            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at2))
+                if (!lt->Elem_typespec()) rgs = lt->Ranges();
+            if (rgs && rgs->size() == 1) {
+                auto r0 = (*rgs)[0];
+                RTLIL::SigSpec dl = import_expression(r0->Left_expr(), input_mapping);
+                RTLIL::SigSpec dr = import_expression(r0->Right_expr(), input_mapping);
+                if (dl.is_fully_const() && dr.is_fully_const()) {
+                    int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
+                    int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+                    if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
+                        idx >= dlow && idx <= dhigh) {
+                        int off = (dli >= dri) ? (idx - dlow)   // descending
+                                               : (dhigh - idx); // ascending
+                        if (mode_debug)
+                            log("    bit_select: non-zero-based vector [%d:%d], "
+                                "index %d -> bit %d\n", dli, dri, idx, off);
+                        return base.extract(off, 1);
+                    }
+                }
+            }
         }
 
         // Check if the wire has reversed bit ordering

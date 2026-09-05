@@ -22,17 +22,17 @@ ibex_cs_registers        4  600  error
 ibex_csr                 4  300  proven
 ibex_decoder             4  300  proven
 ibex_dummy_instr         4  300  proven
-ibex_ex_block            4  300  cex
-ibex_fetch_fifo          4  300  cex
+ibex_ex_block            4  300  timeout  # was cex: flat-port shim (imd_val) + inherited alu fixes; 60-vector random eval UHDM==slang on ALL outputs; SAT-bound (contains the alu clmul trees)
+ibex_fetch_fifo          4  300  proven
 ibex_icache              4  600  error
 ibex_id_stage            4  600  cex
 ibex_if_stage            4  600  error
-ibex_load_store_unit     4  300  cex
+ibex_load_store_unit     4  300  proven
 ibex_lockstep            4  600  error
 ibex_multdiv_fast        4  300  cex
 ibex_multdiv_slow        4  300  cex
 ibex_pmp                 4  600  cex
-ibex_prefetch_buffer     4  300  cex
+ibex_prefetch_buffer     4  300  proven
 ibex_register_file_ff    4  300  proven
 ibex_register_file_fpga  4  300  proven
 ibex_register_file_latch 4  300  error
