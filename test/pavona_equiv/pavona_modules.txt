@@ -18,7 +18,7 @@ ibex_compressed_decoder  4  300  proven
 ibex_controller          4  300  proven
 ibex_core                4  600  error
 ibex_counter             4  300  proven
-ibex_cs_registers        4  600  cex      # progress: was error (dropped instance-output element connections); pmp cfg/addr CSRs + counters now materialize; residual = 15 FFs still missing vs slang (next round)
+ibex_cs_registers        4  600  cex      # progress: was error then FF-gap; ALL 71 registers now materialize (tmatch CSRs + 12 counters via instance-elem arrays + dynamic-read mux); residual = mstatus read assembly (csr_rdata_o=0x80 MPIE bit diff)
 ibex_csr                 4  300  proven
 ibex_decoder             4  300  proven
 ibex_dummy_instr         4  300  proven

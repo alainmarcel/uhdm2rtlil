@@ -3181,8 +3181,44 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     module->addShiftx(NEW_ID, RTLIL::SigSpec(base_wire), shift_amt, ew);
                     element_sig = RTLIL::SigSpec(ew);
                 } else {
-                    log_warning("vpiVarSelect '%s': non-constant array index\n", base_name.c_str());
-                    return RTLIL::SigSpec();
+                    // No flat base wire — the array materialized as PER-ELEMENT
+                    // wires only (instance-output-written arrays like
+                    // ibex_cs_registers' mhpmcounter[32]).  Build the dynamic
+                    // read as an index-compare mux tree over the element wires
+                    // (`base[i]` looked up through the scope walk).  Without
+                    // this the read returned empty and the driving instances'
+                    // registers went dead.
+                    int cnt = 0, lo = -1;
+                    for (int probe = 0; probe <= 4096; probe++) {
+                        std::string en = base_name + "[" + std::to_string(probe) + "]";
+                        RTLIL::Wire* w0 = find_wire_in_scope(en, "");
+                        if (w0) { if (lo < 0) lo = probe; cnt = probe - lo + 1; }
+                        else if (lo >= 0) break;
+                    }
+                    if (lo >= 0 && cnt > 0) {
+                        int ewid = 0;
+                        {
+                            RTLIL::Wire* w0 = find_wire_in_scope(
+                                base_name + "[" + std::to_string(lo) + "]", "");
+                            ewid = w0 ? w0->width : 0;
+                        }
+                        if (ewid > 0) {
+                            RTLIL::SigSpec acc(RTLIL::State::Sx, ewid);
+                            for (int i = 0; i < cnt; i++) {
+                                RTLIL::Wire* w0 = find_wire_in_scope(
+                                    base_name + "[" + std::to_string(lo + i) + "]", "");
+                                if (!w0) continue;
+                                RTLIL::SigSpec sel = module->Eq(NEW_ID, idx_sig,
+                                    RTLIL::Const(lo + i, idx_sig.size()));
+                                acc = module->Mux(NEW_ID, acc, RTLIL::SigSpec(w0), sel);
+                            }
+                            element_sig = acc;
+                        }
+                    }
+                    if (element_sig.empty()) {
+                        log_warning("vpiVarSelect '%s': non-constant array index\n", base_name.c_str());
+                        return RTLIL::SigSpec();
+                    }
                 }
 
                 RTLIL::SigSpec result = element_sig;

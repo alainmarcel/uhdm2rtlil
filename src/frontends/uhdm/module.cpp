@@ -3986,6 +3986,13 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     // silently mis-lowered onto memrd DATA wires and every read returned 0
     // (Pavona ibex_alu's clmul/CRC stage arrays — the whole tree read 0).
     std::set<std::string> cont_elem_written;
+    // Arrays whose ELEMENTS are written by INSTANCE outputs within THIS
+    // scope's subtree (`.rd_data_o(tmatch_value_q[i])`).  Computed locally
+    // here rather than reusing the member inst_elem_written_arrays, because
+    // the nested ibex_csr/ibex_counter module imports triggered by these
+    // very instances clear that member before this scope's arrays are
+    // materialized (tmatch_value_q then wrongly became a $memory).
+    std::set<std::string> scope_inst_elem_written;
     {
         std::function<void(const UHDM::gen_scope*)> scan =
             [&](const UHDM::gen_scope* gs) {
@@ -3997,6 +4004,18 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                              ca->Lhs()->VpiType() == vpiVarSelect))
                             cont_elem_written.insert(
                                 std::string(ca->Lhs()->VpiName()));
+                if (gs->Modules())
+                    for (auto mi : *gs->Modules())
+                        if (mi->Ports())
+                            for (auto p : *mi->Ports()) {
+                                const UHDM::any* hc = p->High_conn();
+                                if (hc &&
+                                    (hc->VpiType() == vpiBitSelect ||
+                                     hc->VpiType() == vpiVarSelect) &&
+                                    !hc->VpiName().empty())
+                                    scope_inst_elem_written.insert(
+                                        std::string(hc->VpiName()));
+                            }
                 if (gs->Gen_scope_arrays())
                     for (auto gsa : *gs->Gen_scope_arrays())
                         if (gsa->Gen_scopes())
@@ -4155,7 +4174,17 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                         // in-block semantics need element wires (ibex_alu
                         // bitcnt_partial's Brent-Kung tree).
                         if (cont_elem_written.count(var_name) ||
-                            comb_only_arrays.count(var_name)) {
+                            comb_only_arrays.count(var_name) ||
+                            scope_inst_elem_written.count(var_name) ||
+                            inst_elem_written_arrays.count(var_name)) {
+                            // Also the INSTANCE-output-written case: an array
+                            // declared in a gen scope (`gen_trigger_regs`'
+                            // tmatch_value_q [DbgHwBreakNum]) whose elements
+                            // are per-index ibex_csr `.rd_data_o` outputs and
+                            // read dynamically (`tmatch_value_q[tselect_q]`) —
+                            // an instance output cannot drive a $memory, so it
+                            // became one with no writers and every read
+                            // returned 0.
                             int asize = 0, alow = 0, ew = 0;
                             if (av->Ranges() && !av->Ranges()->empty()) {
                                 auto r0 = (*av->Ranges())[0];
