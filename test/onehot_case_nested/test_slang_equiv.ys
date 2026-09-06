@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top onehot_case_nested
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename onehot_case_nested gold
+design -stash gold
+read_slang --ignore-assertions dut.sv --top onehot_case_nested
+hierarchy -check -top onehot_case_nested
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename onehot_case_nested gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
