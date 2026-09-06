@@ -2033,6 +2033,29 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             log("UHDM: Added evaluated parameter %s=%d to signature\n",
                                 param_name.c_str(), vs2.as_int());
                         }
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmoperation) {
+                        // Struct/array PATTERN or concat override RHS that
+                        // Surelog left unfolded (`.ResetValue({DCSR_RESET_VAL})`
+                        // where DCSR_RESET_VAL uses `default:'0`, unlike the
+                        // all-named MSTATUS_RST_VAL which Surelog folds to a
+                        // constant).  Without a value here two instances with
+                        // the same scalar params (ibex dcsr and dscratch0, both
+                        // Width=32/ShadowCopy=0) collapse to one $paramod and
+                        // the child FF reset is lost.  Fold in an isolated
+                        // module — same as the modname builder in import_module —
+                        // so the signature (and thus the cell type) carries the
+                        // distinct reset value.
+                        RTLIL::Module* saved_module = this->module;
+                        this->module = design->addModule(NEW_ID);
+                        RTLIL::SigSpec vs3 = this->import_expression(
+                            any_cast<const expr*>(param_assign->Rhs()));
+                        design->remove(this->module);
+                        this->module = saved_module;
+                        if (vs3.is_fully_const() && vs3.size() > 0) {
+                            param_signature += std::to_string(vs3.as_const().as_int());
+                            log("UHDM: Added operation parameter %s=%d to signature\n",
+                                param_name.c_str(), vs3.as_const().as_int());
+                        }
                     }
                 }
             }
@@ -3285,6 +3308,30 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 + encode_param_bits32(
                                     "", std::to_string(vs2.as_int()));
                         }
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmoperation) {
+                        // A struct/array PATTERN or concat RHS
+                        // (`.ResetValue({MSTATUS_RST_VAL})` with
+                        // MSTATUS_RST_VAL = '{mie:0, mpie:1, ...}`): none of
+                        // the branches above append anything, so all
+                        // same-Width instances (ibex_cs_registers' 17
+                        // ibex_csr CSRs) collapsed to ONE $paramod module
+                        // that kept a single ResetValue (0) — u_mstatus_csr
+                        // lost its mpie reset bit and a post-reset read
+                        // returned 0 instead of 0x80.  Fold the pattern to a
+                        // constant and put it in the module name so distinct
+                        // reset values become distinct modules, each with its
+                        // own ResetValue applied below.
+                        RTLIL::Module* saved_m = this->module;
+                        this->module = design->addModule(NEW_ID);
+                        RTLIL::SigSpec vs5 = this->import_expression(
+                            any_cast<const expr*>(param_assign->Rhs()));
+                        design->remove(this->module);
+                        this->module = saved_m;
+                        if (vs5.is_fully_const() && vs5.size() > 0) {
+                            param_string += "\\" + param_name + "=s32'"
+                                + encode_param_bits32(
+                                    "", std::to_string(vs5.as_const().as_int()));
+                        }
                     }
                 }
             }
@@ -3474,6 +3521,32 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 iv = eval_iface_param_field(hpath, parent);
                         if (!iv.empty()) {
                             param_value = RTLIL::Const(std::stoi(iv), 32);
+                            have_value = true;
+                        }
+                    } else if (rhs_expr &&
+                               rhs_expr->UhdmType() == uhdmoperation) {
+                        // Struct/array PATTERN or concat RHS
+                        // (`.ResetValue({MSTATUS_RST_VAL})`,
+                        // `.ResetValue({DCSR_RESET_VAL})`): fold in an ISOLATED
+                        // module so the value matches the modname built the same
+                        // way above.  The in-context fold can pick up a bad
+                        // stamped value for the pattern's localparam (ibex dcsr's
+                        // DCSR_RESET_VAL stamps to 0, and being fully-const it
+                        // would win here), diverging from the modname — which
+                        // correctly re-derives 0x40000003 — and leaving the child
+                        // FF reset at 0.  Isolated re-derivation is what the
+                        // modname committed to, so the applied value must match it;
+                        // fall back to the in-context const only if it doesn't fold.
+                        RTLIL::Module* saved_m = this->module;
+                        this->module = design->addModule(NEW_ID);
+                        RTLIL::SigSpec vs6 = this->import_expression(rhs_expr);
+                        design->remove(this->module);
+                        this->module = saved_m;
+                        if (vs6.is_fully_const() && vs6.size() > 0) {
+                            param_value = vs6.as_const();
+                            have_value = true;
+                        } else if (value_spec.is_fully_const()) {
+                            param_value = value_spec.as_const();
                             have_value = true;
                         }
                     } else if (value_spec.is_fully_const()) {
