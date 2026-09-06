@@ -13374,11 +13374,19 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
     if (in_always_ff_body_mode) return;
     if (!sw || case_sig.empty()) return;
 
-    // Wildcard compares (casez/casex) can't be modelled by an equality mux.
+    // Wildcard compares (casez/casex) can't be modelled by an equality mux:
+    // a wildcard is a CONSTANT carrying x/z don't-care bits.  A non-constant
+    // compare (a wire) is NOT a wildcard — it is the `case (1'b1) sig_a: … sig_b:
+    // …` one-hot idiom (ibex cs_registers' exception_pc / depc_d), where the
+    // case items are signals; `$eq(case_sig, sig)` models those fine, so only
+    // bail on a width mismatch or a constant-with-x/z (true wildcard).
     for (auto* c : sw->cases)
-        for (auto& cmp : c->compare)
-            if (!cmp.is_fully_def() || cmp.size() != case_sig.size())
+        for (auto& cmp : c->compare) {
+            if (cmp.size() != case_sig.size())
                 return;
+            if (cmp.is_fully_const() && !cmp.is_fully_def())
+                return;
+        }
 
     // The pre-case value for a base name: its pre_ccv snapshot, else the
     // registered wire.
