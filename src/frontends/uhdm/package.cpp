@@ -40,9 +40,36 @@ void UhdmImporter::import_package(const package* uhdm_package) {
             if (auto param_obj = dynamic_cast<const parameter*>(param)) {
                 std::string param_name = std::string(param_obj->VpiName());
                 std::string full_name = package_name + "::" + param_name;
-                
+
                 log("UHDM: Importing package parameter: %s\n", full_name.c_str());
-                
+
+                // Outer element count of an array/table parameter (for a later
+                // `pkg::TABLE[idx]` element-select to derive its element width).
+                // The OUTER packed/unpacked range count of the parameter's
+                // typespec — e.g. `logic [15:0][3:0]` -> 16 (PRESENT_SBOX4).
+                auto record_elem_count = [&]() {
+                    if (!param_obj->Typespec()) return;
+                    auto ats = param_obj->Typespec()->Actual_typespec();
+                    if (!ats) return;
+                    UHDM::VectorOfrange* rngs = nullptr;
+                    if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats))
+                        rngs = lt->Ranges();
+                    else if (auto at = dynamic_cast<const UHDM::array_typespec*>(ats))
+                        rngs = at->Ranges();
+                    else if (auto pt =
+                                 dynamic_cast<const UHDM::packed_array_typespec*>(ats))
+                        rngs = pt->Ranges();
+                    if (!rngs || rngs->empty()) return;
+                    auto r0 = (*rngs)[0];
+                    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                    RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                    if (l.is_fully_const() && r.is_fully_const()) {
+                        int n = std::abs(l.as_const().as_int() -
+                                         r.as_const().as_int()) + 1;
+                        if (n > 1) package_parameter_elem_count[full_name] = n;
+                    }
+                };
+
                 // Get parameter value
                 if (auto expr = param_obj->Expr()) {
                     // Temporarily set module to nullptr since we're in package context
@@ -124,10 +151,11 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                     log_warning("UHDM: Package parameter %s has no expression\n",
                                full_name.c_str());
                 }
+                if (package_parameter_map.count(full_name)) record_elem_count();
             }
         }
     }
-    
+
     // Import package typespecs
     if (uhdm_package->Typespecs()) {
         log("UHDM: Found %d typespecs in package %s\n", 
