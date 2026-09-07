@@ -10206,6 +10206,53 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     if (rhs.size() < part_w) rhs.extend_u0(part_w, rhs_signed);
     else if (rhs.size() > part_w) rhs = rhs.extract(0, part_w);
 
+    // COMB (latch) context: a single mask/shift write feeds the WHOLE base back
+    // through itself (`new = cur & ~mask | val`), so proc_dlatch infers one wide
+    // latch whose D depends on its own Q for the HELD bytes — a transparent-latch
+    // combinational loop, formally undefined (latch_002's held bytes came out
+    // 0xFF).  Decompose an ALIGNED dynamic-slice write into PER-ELEMENT writes
+    // `base[k*W+:W] = (offset==k*W) ? rhs : base[k*W+:W]` so proc infers one
+    // CLEAN latch per element (EN = guard & offset==k*W, D = rhs), exactly as
+    // read_verilog does.  Only for the comb path (a sync/always_ff write
+    // registers the whole reg, no loop), a `+:` select, aligned, and a small
+    // element count.
+    if (!out_new_val && !in_always_ff_body_mode && !in_always_ff_context &&
+        indexed_up && base_w % part_w == 0 && base_w / part_w <= 64) {
+        int nelem = base_w / part_w;
+        RTLIL::Wire* base_tw = case_rule ? module->wire("$0\\" + base_name) : nullptr;
+        int iw = std::max(GetSize(offset), 32);
+        RTLIL::SigSpec off_ext = offset;
+        off_ext.extend_u0(iw, false);
+        for (int k = 0; k < nelem; k++) {
+            int soff = k * part_w;
+            RTLIL::SigSpec cur =
+                (current_comb_values.count(base_name)
+                     ? current_comb_values.at(base_name)
+                     : RTLIL::SigSpec(base_wire)).extract(soff, part_w);
+            RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+            module->addEq(NEW_ID, off_ext,
+                          RTLIL::SigSpec(RTLIL::Const(soff, iw)), sel);
+            RTLIL::Wire* nv = module->addWire(NEW_ID, part_w);
+            module->addMux(NEW_ID, cur, rhs, RTLIL::SigSpec(sel), nv); // sel?rhs:cur
+            if (proc) {
+                emit_comb_assign(RTLIL::SigSpec(base_wire).extract(soff, part_w),
+                                 RTLIL::SigSpec(nv), proc);
+            } else if (case_rule) {
+                RTLIL::SigSpec tgt = base_tw
+                    ? RTLIL::SigSpec(base_tw).extract(soff, part_w)
+                    : RTLIL::SigSpec(base_wire).extract(soff, part_w);
+                remove_target_from_switches(case_rule, tgt);
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
+            }
+            RTLIL::SigSpec cv = current_comb_values.count(base_name)
+                ? current_comb_values.at(base_name) : RTLIL::SigSpec(base_wire);
+            cv.replace(soff, RTLIL::SigSpec(nv));
+            current_comb_values[base_name] = cv;
+        }
+        return true;
+    }
+
     // Build base-width mask (low part_w bits set) and zero-extended RHS
     std::vector<RTLIL::State> mask_bits(base_w, RTLIL::State::S0);
     for (int i = 0; i < part_w; i++) mask_bits[i] = RTLIL::State::S1;
