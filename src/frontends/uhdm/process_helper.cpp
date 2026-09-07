@@ -576,12 +576,29 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Handle indexed part selects like result[i*8 +: 8]
                         auto indexed_part_sel = any_cast<const indexed_part_select*>(lhs_expr);
                         sig.is_part_select = true;
-                        
+
                         // Get the signal name
                         if (!indexed_part_sel->VpiName().empty()) {
                             sig.name = std::string(indexed_part_sel->VpiName());
                         }
-                        
+
+                        // A DYNAMIC-offset write (`dword[8*sel +: 8] <= v`) is
+                        // lowered to per-element writes over the FULL base wire
+                        // (emit_dynamic_indexed_part_select_write), so the base
+                        // needs a full-width `$0\<base>` temp with a self-hold
+                        // default — else a conditional (`if (st) …`) leaves the
+                        // else-branch at X and the latch a comb block should
+                        // infer is lost (latch_002).  Null lhs_expr makes the
+                        // temp-wire pre-pass size the temp to the full base wire
+                        // (same as vpiFor dynamic-index writes).  A constant
+                        // offset keeps the per-slice temp (static path).
+                        bool dyn_off = true;
+                        if (auto be = indexed_part_sel->Base_expr()) {
+                            RTLIL::SigSpec o = import_expression(be);
+                            if (o.is_fully_const()) dyn_off = false;
+                        }
+                        if (dyn_off) sig.lhs_expr = nullptr;
+
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to indexed part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiPartSelect) {
