@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_comb_local_thread
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename genscope_comb_local_thread gold
+design -stash gold
+read_slang --ignore-assertions dut.sv --top genscope_comb_local_thread
+hierarchy -check -top genscope_comb_local_thread
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename genscope_comb_local_thread gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter

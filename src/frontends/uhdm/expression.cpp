@@ -7416,8 +7416,8 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 return RTLIL::SigSpec(const_val);
             }
             
-            log("UHDM: Function parameter %s mapped to signal %s\n", 
-                ref_name.c_str(), it->second.is_wire() ? 
+            log("UHDM: Function parameter %s mapped to signal %s\n",
+                ref_name.c_str(), it->second.is_wire() ?
                 it->second.as_wire()->name.c_str() : "const/temp");
             return it->second;
         }
@@ -7801,9 +7801,18 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (name_map.count(hierarchical_name)) {
             RTLIL::Wire* wire = name_map[hierarchical_name];
             log("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
+            // In-flight blocking value of a gen-scope local written earlier in
+            // this same always_comb (keyed by the FULL wire name), so a copy
+            // chain / read-modify-write threads instead of reading the final net
+            // and forming a self-loop (ibex prim_subst_perm).
+            if (input_mapping) {
+                auto im = input_mapping->find(hierarchical_name);
+                if (im != input_mapping->end() && im->second.size() == wire->width)
+                    return im->second;
+            }
             return RTLIL::SigSpec(wire);
         }
-        
+
         // If not found, try parent scopes
         // For example, if we're in gen3[0].gen4[0] looking for tmp2,
         // we should also check gen3[0].tmp2
@@ -7817,6 +7826,15 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             if (name_map.count(parent_hierarchical)) {
                 RTLIL::Wire* wire = name_map[parent_hierarchical];
                 log("UHDM: Found wire %s in parent scope %s\n", ref_name.c_str(), parent_path.c_str());
+                // In-flight value of a local declared in an OUTER gen scope
+                // (prim_subst_perm's data_state_sbox: declared in gen_round,
+                // written in the inner gen_enc always_comb).
+                if (input_mapping) {
+                    auto im = input_mapping->find(parent_hierarchical);
+                    if (im != input_mapping->end() &&
+                        im->second.size() == wire->width)
+                        return im->second;
+                }
                 return RTLIL::SigSpec(wire);
             }
         }
@@ -8230,6 +8248,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     if (input_mapping && !base_signal_name.empty() &&
         !(comb_lhs_keep_base && base.is_wire())) {
         auto im = input_mapping->find(base_signal_name);
+        // Generate-scope local: map keyed by full wire name, part_select carries
+        // the bare base name — look up by the RESOLVED base wire's own name
+        // (ibex prim_subst_perm's SBOX RMW `s[k*4+:4] = SBOX[s[k*4+:4]]`).
+        if (im == input_mapping->end() && base.is_wire()) {
+            std::string wn = base.as_wire()->name.str();
+            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+            im = input_mapping->find(wn);
+        }
         if (im != input_mapping->end() && im->second.size() == base.size())
             base = im->second;
     }
@@ -9029,6 +9055,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // so `arr[idx]` writes the wire slice, not a constant bit of its value.
     if (input_mapping && !signal_name.empty() && !comb_lhs_keep_base) {
         auto im = input_mapping->find(signal_name);
+        // Generate-scope local: the comb-value map is keyed by the FULL wire
+        // name (`gen_round[0].data_state_sbox`) but the bit_select carries the
+        // bare VpiName — look it up by the RESOLVED base wire's own name so a
+        // bit-select read of a gen-scope local written earlier in the same
+        // always_comb sees its in-flight value (ibex prim_subst_perm's flip
+        // loop `f[..]=s[k]`).  Uses the actual wire name (not a gen-scope guess)
+        // because the local may be declared in an OUTER scope than the block.
+        if (im == input_mapping->end() && base.is_wire()) {
+            std::string wn = base.as_wire()->name.str();
+            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+            im = input_mapping->find(wn);
+        }
         if (im != input_mapping->end() && im->second.size() == base.size())
             base = im->second;
     }
