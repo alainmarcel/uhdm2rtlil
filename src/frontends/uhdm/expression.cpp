@@ -8662,6 +8662,43 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             if (a->UhdmType() == uhdmparameter)
                 param = any_cast<const UHDM::parameter*>(a);
         }
+        // A PACKAGE array/table parameter element-select `pkg::TABLE[idx]`
+        // (ibex prim_present/prim_subst_perm's `prim_cipher_pkg::PRESENT_SBOX4
+        // [nibble]`): Surelog leaves the elaborated bit_select's Actual_group
+        // NULL and the parameter lives in a package (not the module's
+        // Parameters()), so `param` stays null and the plain wire lookup below
+        // errors.  The constant table was folded into package_parameter_map at
+        // package import, with its outer element count in
+        // package_parameter_elem_count — resolve the element directly.
+        if (!param) {
+            auto vit = package_parameter_map.find(signal_name);
+            auto cit = package_parameter_elem_count.find(signal_name);
+            if (vit != package_parameter_map.end() &&
+                cit != package_parameter_elem_count.end() && cit->second > 0 &&
+                vit->second.size() % cit->second == 0) {
+                RTLIL::Const pv = vit->second;
+                int total = pv.size();
+                int elem_w = total / cit->second;
+                RTLIL::SigSpec index =
+                    import_expression(uhdm_bit->VpiIndex(), input_mapping);
+                // Packed `[N-1:0]` table: element idx sits at idx*elem_w from
+                // the LSB (element 0 at the LSBs).
+                if (index.is_fully_const()) {
+                    int off = index.as_const().as_int() * elem_w;
+                    if (off >= 0 && off + elem_w <= total)
+                        return RTLIL::SigSpec(pv).extract(off, elem_w);
+                } else {
+                    int iw = std::max(GetSize(index), 32);
+                    RTLIL::SigSpec idx_ext = index;
+                    idx_ext.extend_u0(iw, false);
+                    RTLIL::SigSpec off = module->Mul(NEW_ID, idx_ext,
+                        RTLIL::SigSpec(RTLIL::Const(elem_w, iw)));
+                    RTLIL::Wire* out = module->addWire(NEW_ID, elem_w);
+                    module->addShiftx(NEW_ID, RTLIL::SigSpec(pv), off, out);
+                    return RTLIL::SigSpec(out);
+                }
+            }
+        }
         if (!param && current_instance) {
             if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
                 if (m->Parameters()) {
@@ -8742,6 +8779,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 std::string v = std::string(param->VpiValue());
                 RTLIL::Const c = extract_const_from_value(v);
                 if (c.size() > 0) { param_value = c; got = true; }
+            }
+            // A PACKAGE parameter table (`prim_cipher_pkg::PRESENT_SBOX4[nibble]`
+            // in ibex prim_present/prim_subst_perm): its constant value is not on
+            // the elaborated parameter node (no VpiValue, parent is the package,
+            // no local param_assign) — it was folded into package_parameter_map
+            // at package import.  signal_name is the `pkg::NAME` key.
+            if (!got) {
+                auto pit = package_parameter_map.find(signal_name);
+                if (pit != package_parameter_map.end() && pit->second.size() > 1) {
+                    param_value = pit->second;
+                    got = true;
+                }
             }
             // Gen-scope localparams carry the '{...} initializer on their
             // param_assign parent, not in VpiValue.

@@ -305,6 +305,10 @@ struct UhdmImporter {
     // Track package parameters
     // Key: fully qualified name (package::param), Value: constant value
     std::map<std::string, RTLIL::Const> package_parameter_map;
+    // Outer (unpacked/packed) element count of a package parameter that is an
+    // array/table (e.g. prim_cipher_pkg::PRESENT_SBOX4 `logic [15:0][3:0]` -> 16),
+    // so a `pkg::TABLE[idx]` element-select can derive its element width.
+    std::map<std::string, int> package_parameter_elem_count;
     
     // Import modes and options
     bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
