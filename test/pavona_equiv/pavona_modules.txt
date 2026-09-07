@@ -36,6 +36,6 @@ ibex_prefetch_buffer     4  300  proven
 ibex_register_file_ff    4  300  proven
 ibex_register_file_fpga  4  300  proven
 ibex_register_file_latch 4  300  proven
-ibex_top                 4  600  error
+ibex_top                 4  600  proven
 ibex_top_tracing         4  300  dead       # DV harness (global RVFI define required)
 ibex_wb_stage            4  300  proven
