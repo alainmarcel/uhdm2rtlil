@@ -253,6 +253,36 @@ def _pavona_cosim(mod, cycles):
     return "error" if rc else "skip"
 
 
+def _pavona_check(mod):
+    """Structural opt-level check of the read_uhdm netlist: flatten, opt_clean,
+    then `check` for nets with no driver.  read_slang produces ZERO undriven
+    nets for these modules, so any undriven net in the read_uhdm netlist is a
+    dropped driver (the gen-scope enum-array / enum-const class that the
+    whole-core cosim divergence traced back to).  Fast — no SAT, no cosim — so
+    it runs on every module and catches dropped drivers structurally, without
+    needing a deep co-sim to reach them."""
+    work = PAVONA_DIR / "work" / mod
+    if not (work / "slpp_all" / "surelog.uhdm").exists():
+        return "— (no run)"
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    flat = PAVONA_DIR / "wrappers" / f"flat_{mod}.sv"
+    top = f"{mod}_flat" if flat.exists() else mod
+    (work / "check.ys").write_text(
+        f"read_uhdm slpp_all/surelog.uhdm\n"
+        f"hierarchy -check -top {top}\n"
+        f"flatten; opt_clean\n"
+        f"check\n")
+    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check.ys"],
+                 cwd=work, timeout=1800)
+    undriven = len(re.findall(r"used but has no driver", out or ""))
+    if undriven:
+        return f"❌ {undriven} undriven"
+    if rc:
+        return "error"
+    return "✅ 0 undriven"
+
+
 def sweep_pavona(jobs, cycles=300, flt=None):
     """Pavona (OT-config hardened Ibex): formal (read_uhdm vs read_slang) from
     one run_pavona_equiv.sh pass, PLUS a per-module Verilator co-sim (RTL vs
@@ -293,7 +323,9 @@ def sweep_pavona(jobs, cycles=300, flt=None):
     def one(r):
         if r["formal_raw"] in ("error", "elabfail"):
             r["cosim"] = "— (no elaboration)"
+            r["check"] = "— (no elaboration)"
         else:
+            r["check"] = _pavona_check(r["module"])
             r["cosim"] = _pavona_cosim(r["module"], cycles)
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
@@ -305,12 +337,23 @@ def sweep_pavona(jobs, cycles=300, flt=None):
 
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
+    # The pavona sweep adds a structural opt-level "check" column (undriven-net
+    # detection on the flattened+opt'd read_uhdm netlist) — a fast dropped-driver
+    # probe that runs on every module without needing a deep co-sim.
+    has_check = any("check" in r for r in rows)
     lines = [f"## {core} sweep — formal (vs read_slang) + Verilator co-sim "
-             f"({cycles} cycles)", "",
-             "| module | formal vs slang | co-sim vs RTL |",
-             "|---|---|---|"]
-    for r in rows:
-        lines.append(f"| {r['module']} | {r['formal']} | {r['cosim']} |")
+             f"({cycles} cycles)", ""]
+    if has_check:
+        lines += ["| module | formal vs slang | opt check (undriven) | co-sim vs RTL |",
+                  "|---|---|---|---|"]
+        for r in rows:
+            lines.append(f"| {r['module']} | {r['formal']} | "
+                         f"{r.get('check', '—')} | {r['cosim']} |")
+    else:
+        lines += ["| module | formal vs slang | co-sim vs RTL |",
+                  "|---|---|---|"]
+        for r in rows:
+            lines.append(f"| {r['module']} | {r['formal']} | {r['cosim']} |")
     npass = sum(1 for r in rows if r["cosim"].startswith("✅"))
     nfail = sum(1 for r in rows if r["cosim"].startswith("❌"))
     nadj = sum(1 for r in rows if r["cosim"].startswith("⚠"))
@@ -325,6 +368,11 @@ def render(core, rows, cycles):
               f"(⚠ rows, excluded), "
               f"{len(rows) - comparable - nadj} not comparable "
               f"(skipped / no run)."]
+    if has_check:
+        nclean = sum(1 for r in rows if r.get("check", "").startswith("✅"))
+        ndirty = sum(1 for r in rows if r.get("check", "").startswith("❌"))
+        lines.append(f"**Opt check:** {nclean}/{nclean + ndirty} modules with "
+                     f"zero undriven nets ({ndirty} with dropped drivers).")
     return "\n".join(lines) + "\n"
 
 
