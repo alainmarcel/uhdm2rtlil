@@ -1746,6 +1746,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                     }
                     
+                    // Save any outer loop_values entry for this name so a NESTED
+                    // unrolled loop that shares the loop-var name (prim_cipher's
+                    // sbox4_64bit and the sbox4_8bit it calls in its body BOTH
+                    // use `k`) restores the outer value on exit instead of
+                    // erasing it — otherwise the inner loop's cleanup wiped the
+                    // outer `k`, so the outer `state_out[k*8+:8]` base went
+                    // non-constant and the whole write was dropped (ibex_top's
+                    // prim_prince SRAM-scramble S-boxes read undriven).
+                    bool had_outer_lv = loop_values.count(loop_var_name) > 0;
+                    int outer_lv = had_outer_lv ? loop_values[loop_var_name] : 0;
                     bool unroll_guard_live = false;
                     for (int64_t i = start_value; i <= loop_end; i += increment) {
                         // Set the loop variable value - use loop_values for substitution
@@ -1833,8 +1843,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         loop_accumulators.erase(accumulator_var);
                     }
                     
-                    // Clear loop variable after loop
-                    loop_values.erase(loop_var_name);
+                    // Restore the outer loop-var value (or clear if there was
+                    // none) — see had_outer_lv above.
+                    if (had_outer_lv) loop_values[loop_var_name] = outer_lv;
+                    else loop_values.erase(loop_var_name);
                     
                     // Loop has been unrolled into the case rule
                 } else {
