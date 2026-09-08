@@ -513,6 +513,31 @@ void UhdmImporter::collect_live_assigned_signals(const any* stmt, bool live,
     }
 }
 
+bool UhdmImporter::offset_is_dynamic(const UHDM::any* e) {
+    if (!e) return false;
+    if (e->VpiType() == vpiConstant) return false;
+    if (e->VpiType() == vpiOperation) {
+        auto op = any_cast<const operation*>(e);
+        if (op->Operands())
+            for (auto o : *op->Operands())
+                if (offset_is_dynamic(o)) return true;
+        return false;
+    }
+    if (e->VpiType() == vpiRefObj) {
+        auto r = any_cast<const ref_obj*>(e);
+        // A genvar / loop var already substituted (in loop_values) folds to a
+        // constant on import, so it is NOT dynamic here (imd_val_q's `arr[i]`).
+        if (loop_values.count(std::string(r->VpiName()))) return false;
+        const UHDM::any* act = r->Actual_group();
+        if (act && (act->UhdmType() == uhdmparameter ||
+                    act->UhdmType() == uhdmenum_const ||
+                    act->UhdmType() == uhdmconstant))
+            return false;   // compile-time constant
+        return true;        // net / variable / not-yet-unrolled for-loop var
+    }
+    return true;            // bit/part/var-selects etc. index a runtime signal
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
 
@@ -592,10 +617,18 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // temp-wire pre-pass size the temp to the full base wire
                         // (same as vpiFor dynamic-index writes).  A constant
                         // offset keeps the per-slice temp (static path).
+                        // A runtime / unsubstituted-loop-var offset is not a
+                        // compile-time constant here; don't IMPORT it merely to
+                        // test const-ness (that fabricates an undriven loop-var
+                        // wire — the ibex_alu g_alu_rvb `.b`/`.h` residual).  The
+                        // dyn_off verdict is unchanged (such offsets were already
+                        // non-const -> dyn_off stays true).
                         bool dyn_off = true;
                         if (auto be = indexed_part_sel->Base_expr()) {
-                            RTLIL::SigSpec o = import_expression(be);
-                            if (o.is_fully_const()) dyn_off = false;
+                            if (!offset_is_dynamic(be)) {
+                                RTLIL::SigSpec o = import_expression(be);
+                                if (o.is_fully_const()) dyn_off = false;
+                            }
                         }
                         if (dyn_off) sig.lhs_expr = nullptr;
 
@@ -714,8 +747,16 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             bool is_const_idx = false;
                             if (idx) {
                                 if (auto e = dynamic_cast<const expr*>(idx)) {
-                                    is = import_expression(e);
-                                    is_const_idx = is.is_fully_const();
+                                    // Don't import an unsubstituted for-loop-var
+                                    // index (`sel[b*2+0]` before unrolling) just
+                                    // to test const-ness — it fabricates an
+                                    // undriven `b` wire (the g_alu_rvb `.b`/`.h`
+                                    // residual).  A genvar already in loop_values
+                                    // (imd_val_q) or a parameter still folds.
+                                    if (!offset_is_dynamic(idx)) {
+                                        is = import_expression(e);
+                                        is_const_idx = is.is_fully_const();
+                                    }
                                 }
                             }
                             if (!is_const_idx) {

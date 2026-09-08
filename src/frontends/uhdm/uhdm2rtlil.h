@@ -1012,6 +1012,14 @@ struct UhdmImporter {
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     UHDM::VectorOfany *begin_block_stmts(const any *stmt);
     void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
+    // Whether an offset/index expression (of an indexed part-select or a
+    // bit-select LHS) references a runtime signal or an UNSUBSTITUTED for-loop
+    // variable — in which case extract_assigned_signals must NOT import it to
+    // test const-ness (importing a bare loop-var ref fabricates an undriven
+    // wire + dead cell: the ibex_alu g_alu_rvb `.b`/`.h` residual).  A genvar
+    // already in loop_values, or a parameter/constant, is compile-time constant
+    // (folds on import), so it returns false.
+    bool offset_is_dynamic(const UHDM::any* e);
     // Collect the control-variable names of every `for` loop in a statement
     // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
     // a loop counter is not a flip-flop and has no constant async-reset value.
