@@ -2377,6 +2377,24 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                     return true;
                 }
             }
+            // An ENUM element (`e_t arr [N]`) is a packed multi-bit element just
+            // like `logic [W-1:0] arr [N]`, but its element typespec is an
+            // enum_typespec, not a logic_typespec — so the logic-only check above
+            // misses it and the array collapses to a single 1-bit wire (a
+            // gen-scope enum array passed to a submodule port then reads
+            // undriven: ibex_core's g_pmp.pmp_req_type/pmp_priv_lvl
+            // `pmp_req_e/priv_lvl_e [PMPNumChan]`).  Treat a multi-bit enum
+            // element the same way.
+            if (typespec && typespec->UhdmType() == uhdmenum_typespec) {
+                int ew = get_width(underlying_var->at(0), current_instance);
+                if (ew > 1) {
+                    if (mode_debug)
+                        log("    Detected memory array: %s (array_var with enum "
+                            "element, width=%d)\n",
+                            std::string(uhdm_array->VpiName()).c_str(), ew);
+                    return true;
+                }
+            }
         }
     }
 

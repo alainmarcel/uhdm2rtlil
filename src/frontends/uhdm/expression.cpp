@@ -20,6 +20,8 @@
 #include <uhdm/union_typespec.h>
 #include <uhdm/typespec_member.h>
 #include <uhdm/vpi_visitor.h>
+#include <uhdm/UhdmListener.h>
+#include <uhdm/enum_const.h>
 #include <uhdm/assignment.h>
 #include <uhdm/uhdm_vpi_user.h>
 #include <uhdm/parameter.h>
@@ -7349,6 +7351,40 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
     return wire;
 }
 
+// Build a design-wide map of enum-constant name -> value.  A ref_obj that is a
+// bare reference to a gen-scope-local (or otherwise Actual_group-less) enum
+// constant carries no link to its enum_const node, only the name; walk every
+// enum_const in the design once and record its value so import_ref_obj can
+// resolve such a name instead of fabricating an undriven wire.  A name that maps
+// to conflicting values is marked ambiguous and left for the normal path.
+void UhdmImporter::build_enum_const_map() {
+    if (enum_const_map_built_) return;
+    enum_const_map_built_ = true;
+    if (!uhdm_design) return;
+    struct EnumCollector : public UHDM::UhdmListener {
+        std::map<std::string, RTLIL::Const>* vals;
+        std::set<std::string>* ambig;
+        void enterEnum_const(const UHDM::enum_const* const o) override {
+            std::string nm(o->VpiName());
+            if (nm.empty()) return;
+            int w = o->VpiSize() > 0 ? o->VpiSize() : 32;
+            RTLIL::Const c(parse_vpi_value_to_int(std::string(o->VpiValue())), w);
+            auto it = vals->find(nm);
+            if (it == vals->end()) (*vals)[nm] = c;
+            else if (it->second != c) ambig->insert(nm);
+        }
+    };
+    EnumCollector col;
+    col.vals = &enum_const_values_;
+    col.ambig = &enum_const_ambiguous_;
+    if (uhdm_design->AllModules())
+        for (auto m : *uhdm_design->AllModules())
+            col.listenAny(m);
+    if (uhdm_design->AllPackages())
+        for (auto p : *uhdm_design->AllPackages())
+            col.listenAny(p);
+}
+
 // Import reference to object
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Break reference CYCLES.  A parameter whose value resolves back to itself
@@ -8019,6 +8055,20 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             log("    ref_obj '%s' is an interface localparam (constant width via "
                 "typespec); not a signal\n", ref_name.c_str());
     } else {
+        // Last resort: a bare reference to an enum CONSTANT whose ref_obj has no
+        // Actual_group (a gen-scope-local `typedef enum {MULL,MULH}` used as
+        // `mult_state_d = MULL` — ibex_multdiv_fast's gen_mult_single_cycle).
+        // Resolve it from the design-wide enum-constant map instead of leaving a
+        // fabricated undriven wire that `check` flags.
+        build_enum_const_map();
+        auto ecit = enum_const_values_.find(ref_name);
+        if (ecit != enum_const_values_.end() &&
+            !enum_const_ambiguous_.count(ref_name)) {
+            if (mode_debug)
+                log("    ref_obj '%s' resolved as enum constant = %s\n",
+                    ref_name.c_str(), ecit->second.as_string().c_str());
+            return RTLIL::SigSpec(ecit->second);
+        }
         log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
     }
     RTLIL::SigSpec wire_sig = create_wire(wire_name, 1);

@@ -131,13 +131,71 @@ if not outs:
 def rnd(n, w):
     return " ".join(f"{n}[{min(b+31, w-1)}:{b}] <= $random;" for b in range(0, w, 32))
 
-# The flat shim already flattens unpacked-array ports to plain vectors, so the
-# RTL top (the flat shim) and the netlists share the same flat port shapes —
-# no per-element array glue needed (unlike the cva6 harness).
+# Unpacked-array ports.  A flat-shim module already flattens them, so nothing to
+# do.  A whole-core module (ibex_core/top/lockstep) has NO shim and still
+# declares e.g. `ic_tag_rdata_i [IC_NUM_WAYS]` as an array, while the netlists
+# flatten it to one wide vector — Verilator rejects connecting the flat wire to
+# the array port.  read_uhdm and read_slang flatten it the SAME way here (the
+# formal miter PROVES these modules, so the two orders agree), so gold and gate
+# share the flat vector; only the RTL instance needs an array-shaped view
+# (element 0 at the LSBs, the read_uhdm convention).
+unpacked = {}     # port name -> element count
+if not has_flat:
+    syms = {}
+    if os.path.exists(PFILE):
+        for line in open(PFILE):
+            p = line.split()
+            if len(p) >= 2 and p[1].lstrip('-').isdigit():
+                syms[p[0]] = int(p[1])
+    for nm, val in re.findall(
+            r"parameter\s+int(?:\s+unsigned)?\s+(\w+)\s*=\s*(\d+)\b",
+            open(f"{IBEX}/ibex_pkg.sv").read()):
+        syms.setdefault(nm, int(val))
+    def _resolve(expr):
+        try:
+            return int(eval(expr, {"__builtins__": {}}, dict(syms)))
+        except Exception:
+            return None
+    hdr = ""
+    for f in srcs():
+        t = open(f).read()
+        m = re.search(rf"\bmodule\s+{re.escape(mod)}\b.*?\)\s*;", t, re.S)
+        if m:
+            hdr = m.group(0); break
+    allw = {n: w for n, w in ins + outs}
+    for nm, dim in re.findall(
+            r"\b(\w+)\s*\[([^\]:]+)\]\s*(?:,|\n)", hdr):
+        if nm in allw:
+            c = _resolve(dim)
+            if c and c > 1 and allw[nm] % c == 0:
+                unpacked[nm] = c
+
+arr_decl, arr_glue = [], []
+for n, w in ins:
+    if n not in unpacked:
+        continue
+    c = unpacked[n]; ew = w // c
+    arr_decl.append(f"  wire [{ew-1}:0] a_{n} [0:{c-1}];")
+    for k in range(c):
+        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(k+1)*ew-1}:{k*ew}];")
+for n, w in outs:
+    if n not in unpacked:
+        continue
+    c = unpacked[n]; ew = w // c
+    arr_decl.append(f"  wire [{ew-1}:0] a_r_{n} [0:{c-1}];")
+    arr_glue.append("  assign r_%s = {%s};" %
+                    (n, ", ".join(f"a_r_{n}[{k}]" for k in range(c-1, -1, -1))))
+arrays = "\n".join(arr_decl + arr_glue)
+
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
-conn  = ", ".join(f".{n}({n})" for n, _ in ins)
+conn  = ", ".join(f".{n}({n})" for n, _ in ins)                       # gold/gate ins
+rtl_conn = ", ".join(f".{n}(a_{n})" if n in unpacked else f".{n}({n})"
+                     for n, _ in ins)
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
+def bind_rtl():
+    return ", ".join(f".{n}(a_r_{n})" if n in unpacked else f".{n}(r_{n})"
+                     for n, _ in outs)
 # Optional per-module input constraint spliced in AFTER the random drive each
 # cycle: legalises `unique case (1'b1)` one-hot select groups the free random
 # stimulus otherwise violates (e.g. ibex_alu's `multdiv_sel_i` vs the SHxADD
@@ -171,9 +229,10 @@ module tb;
   reg clk = 0, rst_ni = 0;
 {decl}
 {wires}
+{arrays}
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
-  {TOP}{bake_str} rtl ({ck}{conn}, {bind('r')});
+  {TOP}{bake_str} rtl ({ck}{rtl_conn}, {bind_rtl()});
   gold_{TOP} gold({ck}{conn}, {bind('g')});
   gate_{TOP} gate({ck}{conn}, {bind('s')});
   always #5 clk = ~clk;
@@ -208,8 +267,14 @@ open("adj_tb.sv", "w").write(tb)
 # ---------------------------------------------------------------- run
 rtl_wrap = [FLAT] if has_flat else []
 def run_verilator():
+    # -DSYNTHESIS: the netlists were elaborated with it (surelog + read_slang),
+    # so the behavioural RTL must match — it drops the `ifndef SYNTHESIS
+    # translate_off debug blocks, some of which read UPWARD hierarchical paths
+    # (ibex_controller's `$display(... u_ibex_core.hart_id_i ...)`) that only
+    # resolve inside the full core hierarchy and otherwise fail the whole-core
+    # Verilator build ("Can't find scope 'u_ibex_core'").
     r = sh(["verilator", "--binary", "-j", "0", "-Wno-lint", "-Wno-style",
-            "-Wno-fatal", "--timing", "--no-assert", "-o", "adjsim",
+            "-Wno-fatal", "--timing", "--no-assert", "-DSYNTHESIS", "-o", "adjsim",
             "-f", FLIST, f"+incdir+{HERE}/wrappers"] + rtl_wrap +
            ["adj_gold.v", "adj_gate.v", "adj_tb.sv", "--top-module", "tb"])
     if r.returncode:
@@ -221,7 +286,7 @@ def run_iverilog():
     inc = [f"-I{PRIM}", f"-I{IBEX}", f"-I{HERE}/wrappers"]
     src = [l.strip() for l in open(FLIST)
            if l.strip() and not l.strip().startswith(("+", "-"))]
-    r = sh(["iverilog", "-g2012", "-o", "adjsim.vvp", "-s", "tb"] + inc + src +
+    r = sh(["iverilog", "-g2012", "-DSYNTHESIS", "-o", "adjsim.vvp", "-s", "tb"] + inc + src +
            rtl_wrap + ["adj_gold.v", "adj_gate.v", "adj_tb.sv"])
     if r.returncode:
         return None, r.stderr[-600:]

@@ -305,6 +305,15 @@ struct UhdmImporter {
     // Track package parameters
     // Key: fully qualified name (package::param), Value: constant value
     std::map<std::string, RTLIL::Const> package_parameter_map;
+    // Design-wide enum-constant name -> value, for a bare ref to a gen-scope/
+    // local enum constant whose ref_obj has no Actual_group (ibex_multdiv's
+    // gen-scope-local `typedef enum {MULL,MULH}` used as `mult_state_d = MULL`).
+    // Names that map to conflicting values across the design are ambiguous and
+    // left unresolved.  Built lazily on first miss.
+    std::map<std::string, RTLIL::Const> enum_const_values_;
+    std::set<std::string> enum_const_ambiguous_;
+    bool enum_const_map_built_ = false;
+    void build_enum_const_map();
     // Outer (unpacked/packed) element count of a package parameter that is an
     // array/table (e.g. prim_cipher_pkg::PRESENT_SBOX4 `logic [15:0][3:0]` -> 16),
     // so a `pkg::TABLE[idx]` element-select can derive its element width.
