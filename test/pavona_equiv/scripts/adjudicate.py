@@ -138,7 +138,17 @@ decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
-drive = "\n      ".join(rnd(n, w) for n, w in ins)
+# Optional per-module input constraint spliced in AFTER the random drive each
+# cycle: legalises `unique case (1'b1)` one-hot select groups the free random
+# stimulus otherwise violates (e.g. ibex_alu's `multdiv_sel_i` vs the SHxADD
+# adder-shift selects — illegal multi-hot makes behavioural priority and the
+# synthesised netlists diverge on both frontends, a shared non-bug).  Without a
+# file the stimulus is unconstrained (previous behaviour).
+constr = ""
+_cf = f"{HERE}/wrappers/cosim_constr_{mod}.sv"
+if os.path.exists(_cf):
+    constr = "\n      " + open(_cf).read().strip()
+drive = "\n      ".join(rnd(n, w) for n, w in ins) + constr
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
