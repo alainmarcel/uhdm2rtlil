@@ -8077,7 +8077,16 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         if (loop_values.count(base_signal_name)) {
             int lv = loop_values.at(base_signal_name);
             RTLIL::Wire* w = find_wire_in_scope(base_signal_name, "part select width");
-            int bw = w ? w->width : 32;
+            // The loop variable is a compile-time CONSTANT (`lv`); size its base
+            // to at least an int (32) so the part-select `i[msb:lsb]` can extract
+            // every selected bit.  Trusting a stray narrow `\i` wire — one gets
+            // materialised when the same loop var is also used as a bit-select
+            // INDEX earlier in the block (`gnt_o[i] = 1; … id_o = i[$clog2(N)-1:0]`)
+            // — collapsed the base to 1 bit, so only bit 0 of `i[1:0]` survived
+            // and the arbiter's id/one-hot came out with an X upper bit (CVA6
+            // tag_cmp / any priority-select `for` loop).  A wider constant is
+            // always safe: its upper bits are 0.
+            int bw = std::max(w ? w->width : 32, 32);
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
             log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
         } else if (input_mapping && input_mapping->count(base_signal_name) &&

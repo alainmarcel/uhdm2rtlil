@@ -10216,7 +10216,48 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     // read_verilog does.  Only for the comb path (a sync/always_ff write
     // registers the whole reg, no loop), a `+:` select, aligned, and a small
     // element count.
-    if (!out_new_val && !in_always_ff_body_mode && !in_always_ff_context &&
+    // The decomposition assumes the dynamic offset is ALIGNED to part_w (each
+    // write lands exactly on element k*W).  That holds for the element-indexed
+    // form `base[i*W +: W]` (offset = W*i, low log2(W) bits const 0), but NOT
+    // for an arbitrary bit offset `base[off +: W]` (sign_part_assign's
+    // `data_o[offset_i +: 4]`, offset_i any value) — an unaligned offset would
+    // match no element and the write would be DROPPED.  Only decompose when
+    // part_w is a power of two and the offset's low log2(part_w) bits are a
+    // constant zero; otherwise fall through to the mask/shift below.
+    // Aligned iff the OFFSET EXPRESSION guarantees a multiple of part_w: the
+    // element-indexed forms `W*idx` / `idx*W` (a mult by a multiple of part_w)
+    // or `idx << s` with s >= log2(part_w).  (The RTLIL offset bits can't show
+    // this — `8*sel` is a $mul whose low bits are not statically zero.)
+    bool part_aligned = (part_w == 1);
+    if (!part_aligned) {
+        if (auto op = dynamic_cast<const UHDM::operation*>(base_idx_expr)) {
+            int ot = op->VpiOpType();
+            auto ops = op->Operands();
+            if (ops && ops->size() == 2) {
+                auto ceval = [&](const UHDM::any* a, long& out) -> bool {
+                    auto e = dynamic_cast<const UHDM::expr*>(a);
+                    if (!e) return false;
+                    RTLIL::SigSpec s = import_expression(e);
+                    if (!s.is_fully_const()) return false;
+                    out = s.as_const().as_int();
+                    return true;
+                };
+                long c0, c1;
+                bool k0 = ceval((*ops)[0], c0), k1 = ceval((*ops)[1], c1);
+                if (ot == vpiMultOp) {
+                    if ((k0 && c0 != 0 && c0 % part_w == 0) ||
+                        (k1 && c1 != 0 && c1 % part_w == 0))
+                        part_aligned = true;
+                } else if (ot == vpiLShiftOp && k1) {
+                    int lb = 0; while ((1 << lb) < part_w) lb++;
+                    if ((part_w & (part_w - 1)) == 0 && c1 >= lb)
+                        part_aligned = true;
+                }
+            }
+        }
+    }
+    if (part_aligned && !out_new_val && !in_always_ff_body_mode &&
+        !in_always_ff_context &&
         indexed_up && base_w % part_w == 0 && base_w / part_w <= 64) {
         int nelem = base_w / part_w;
         RTLIL::Wire* base_tw = case_rule ? module->wire("$0\\" + base_name) : nullptr;
