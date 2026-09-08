@@ -226,10 +226,37 @@ def sweep_cva6(cycles, jobs, flt=None):
 
 
 # ------------------------------------------------------------------- pavona
-def sweep_pavona(jobs, flt=None):
-    """Pavona (OT-config hardened Ibex): formal statuses from one
-    run_pavona_equiv.sh pass.  Co-sim adjudication is not wired up for this
-    core yet — the column reports that honestly rather than skipping rows."""
+def _pavona_cosim(mod, cycles):
+    """Verilator co-sim of one pavona module (RTL vs read_uhdm vs read_slang),
+    reusing the work/<mod> elaboration run_pavona_equiv.sh already produced.
+    Returns the cosim cell text.  uhdm==0 → PASS; uhdm>0 & slang>0 → the
+    established shared-artefact class (both frontends agree, both differ from
+    the behavioural sim = X-init / synth-vs-behavioural, not a UHDM bug);
+    uhdm>0 & slang==0 → a genuine UHDM divergence."""
+    rc, out = sh([sys.executable, "scripts/adjudicate.py", mod, str(cycles), "1"],
+                 cwd=PAVONA_DIR, timeout=2400)
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
+                  out or "")
+    if m:
+        u, sl = int(m.group(1)), int(m.group(2))
+        if u == 0:
+            return "✅ PASS"
+        if sl > 0:
+            return f"⚠ shared div (uhdm={u}, slang={sl})"
+        return f"❌ {u} div (slang clean)"
+    if "no outputs to compare" in (out or ""):
+        return "skip (no outputs)"
+    if "netlist generation FAILED" in (out or "") or "NO_RUN" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or ""):
+        return "skip (sim build)"
+    return "error" if rc else "skip"
+
+
+def sweep_pavona(jobs, cycles=300, flt=None):
+    """Pavona (OT-config hardened Ibex): formal (read_uhdm vs read_slang) from
+    one run_pavona_equiv.sh pass, PLUS a per-module Verilator co-sim (RTL vs
+    both frontends) for the full formal+cosim picture."""
     cmd = ["./run_pavona_equiv.sh"]
     if flt:
         for line in (PAVONA_DIR / "pavona_modules.txt").read_text().splitlines():
@@ -258,8 +285,21 @@ def sweep_pavona(jobs, flt=None):
         if m:
             rows.append({"module": m.group(1),
                          "formal": label.get(m.group(2), m.group(2)),
-                         "cosim": "— (not wired yet)"})
+                         "formal_raw": m.group(2), "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
+
+    # Co-sim EVERY module that elaborated (not error/elabfail) — the user wants
+    # the full cosim+formal picture, and pavona's ~26 modules fit the budget.
+    def one(r):
+        if r["formal_raw"] in ("error", "elabfail"):
+            r["cosim"] = "— (no elaboration)"
+        else:
+            r["cosim"] = _pavona_cosim(r["module"], cycles)
+        return r
+    with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
+        rows = list(ex.map(one, rows))
+    for r in rows:
+        r.pop("formal_raw", None)
     return rows
 
 
@@ -300,7 +340,7 @@ def main():
     if args.core == "cva6":
         rows = sweep_cva6(args.cycles, args.jobs, args.filter)
     elif args.core == "pavona":
-        rows = sweep_pavona(args.jobs, args.filter)
+        rows = sweep_pavona(args.jobs, args.cycles, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 

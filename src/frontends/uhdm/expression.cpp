@@ -10042,6 +10042,32 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (!module)
         return RTLIL::SigSpec();
 
+    // Gen-scope-aware base-wire resolution for hier_path bases.  A struct/array
+    // base signal declared inside a generate scope (e.g. ibex_cs_registers'
+    // `pmp_mseccfg_q` in the `g_pmp_registers` if-generate, member-accessed as
+    // `pmp_mseccfg_q.mml` from the nested `g_pmp_csrs[i]` for-generate) has its
+    // RTLIL wire under the hierarchical name `g_pmp_registers.pmp_mseccfg_q`; a
+    // bare `name_map[base]` / `module->wire(base)` lookup misses it and the whole
+    // member access falls through to X, corrupting the pmp write-legalisation
+    // path.  Walk the current gen-scope stack first (mirrors import_ref_obj's
+    // parent-scope walk), then fall back to the flat name.
+    auto scoped_base_wire = [&](const std::string& bn) -> RTLIL::Wire* {
+        std::string gs = get_current_gen_scope();
+        if (!gs.empty()) {
+            std::string h = gs + "." + bn;
+            if (name_map.count(h)) return name_map[h];
+            for (int i = (int)gen_scope_stack.size() - 1; i >= 0; i--) {
+                std::string pp;
+                for (int j = 0; j <= i; j++) { if (j) pp += "."; pp += gen_scope_stack[j]; }
+                std::string ph = pp + "." + bn;
+                if (name_map.count(ph)) return name_map[ph];
+            }
+        }
+        if (name_map.count(bn)) return name_map[bn];
+        return module->wire(RTLIL::escape_id(bn));
+    };
+    (void)scoped_base_wire;
+
     // Get the full path name first
     std::string path_name;
     std::string_view name_view = uhdm_hier->VpiName();
@@ -14906,6 +14932,82 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 }
                             }
                         }
+                    }
+                }
+            }
+            // Final fallback: a plain struct-member (or member bit/part-select)
+            // whose BASE signal lives in a generate scope, so every earlier
+            // branch's flat `name_map[base]` lookup missed it and the access
+            // fell through to X.  ibex cs_registers reads `pmp_mseccfg_q.mml` /
+            // `.rlb` (base declared in the `g_pmp_registers` if-generate) from
+            // the nested `g_pmp_csrs[i]` for-generate; the unresolved X
+            // corrupted pmp_cfg_locked / pmp_cfg_wr_suppress and the write
+            // legalisation.  Resolve the base with the gen-scope-aware walk and
+            // slice the member off the flat wire.
+            if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+                (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmref_obj) {
+                auto& pe = *uhdm_hier->Path_elems();
+                auto bref = any_cast<const ref_obj*>(pe[0]);
+                std::string bname = std::string(bref->VpiName());
+                RTLIL::Wire* bw = scoped_base_wire(bname);
+                const UHDM::any* fld = pe[1];
+                std::string fname;
+                if (fld->UhdmType() == uhdmref_obj ||
+                    fld->UhdmType() == uhdmbit_select ||
+                    fld->UhdmType() == uhdmpart_select ||
+                    fld->UhdmType() == uhdmvar_select)
+                    fname = std::string(fld->VpiName());
+                const UHDM::typespec* bts = nullptr;
+                if (auto rt = bref->Typespec()) bts = rt->Actual_typespec();
+                if (!bts)
+                    if (auto ag = bref->Actual_group())
+                        if (auto e = dynamic_cast<const UHDM::expr*>(ag))
+                            if (auto rt2 = e->Typespec())
+                                bts = rt2->Actual_typespec();
+                if (bts) bts = resolve_type_param_typespec(bts, inst);
+                if (bw && bts && bts->UhdmType() == uhdmstruct_typespec &&
+                    !fname.empty()) {
+                    int off = 0, mw = 0;
+                    if (calculate_struct_member_offset(bts, fname, inst, off, mw) &&
+                        mw > 0 && off + mw <= bw->width) {
+                        RTLIL::SigSpec fs = RTLIL::SigSpec(bw).extract(off, mw);
+                        if (fld->UhdmType() == uhdmref_obj) {
+                            log("    hier_path '%s' -> \\%s [%d +: %d] "
+                                "(scoped gen-scope struct member)\n",
+                                path_name.c_str(), bw->name.c_str(), off, mw);
+                            return fs;
+                        }
+                        if (fld->UhdmType() == uhdmbit_select) {
+                            auto bs = any_cast<const bit_select*>(fld);
+                            RTLIL::SigSpec ix = import_expression(bs->VpiIndex(), input_mapping);
+                            if (ix.is_fully_const()) {
+                                int i = ix.as_const().as_int();
+                                if (i >= 0 && i < mw) {
+                                    log("    hier_path '%s' -> \\%s [%d] "
+                                        "(scoped gen-scope member bit)\n",
+                                        path_name.c_str(), bw->name.c_str(), off + i);
+                                    return fs.extract(i, 1);
+                                }
+                            }
+                        }
+                        if (fld->UhdmType() == uhdmpart_select) {
+                            auto ps = any_cast<const part_select*>(fld);
+                            RTLIL::SigSpec l = import_expression(ps->Left_range(), input_mapping);
+                            RTLIL::SigSpec r = import_expression(ps->Right_range(), input_mapping);
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int hi = l.as_const().as_int();
+                                int lo = r.as_const().as_int();
+                                int lsb = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
+                                if (lsb >= 0 && lsb + w2 <= mw) {
+                                    log("    hier_path '%s' -> \\%s [%d +: %d] "
+                                        "(scoped gen-scope member part)\n",
+                                        path_name.c_str(), bw->name.c_str(), off + lsb, w2);
+                                    return fs.extract(lsb, w2);
+                                }
+                            }
+                        }
+                        // Whole field for any residual selector shape.
+                        return fs;
                     }
                 }
             }
