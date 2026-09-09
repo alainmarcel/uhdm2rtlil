@@ -762,6 +762,64 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     if (foreign)
         log_error("UHDM: import produced %d cross-module wire reference(s) "
                   "(see warnings above) — this is an importer bug.\n", foreign);
+
+    // Drive the initial X of any function block-local that was read before it
+    // was assigned on some control path (leaving those bits undriven).
+    drive_undriven_func_locals();
+}
+
+// Drive with constant X exactly the bits of tracked function block-local
+// "initial" wires that have NO driver once their module is fully built.  This
+// makes a genuine incomplete-synthesis symptom (a local read on a path where it
+// was never assigned) into the LRM-correct X, without masking any other
+// undriven net: only the specifically-tracked initial wires are touched, and
+// only their truly-undriven bits.  Cell INPUT bits (e.g. an initial wire feeding
+// a phi mux's A input) are correctly NOT counted as driven.
+void UhdmImporter::drive_undriven_func_locals() {
+    if (pending_func_local_inits.empty()) return;
+    std::map<RTLIL::Module*, std::vector<RTLIL::Wire*>> by_mod;
+    for (auto w : pending_func_local_inits)
+        if (w && w->module) by_mod[w->module].push_back(w);
+    for (auto& [mod, wires] : by_mod) {
+        pool<RTLIL::SigBit> driven;
+        for (auto& conn : mod->connections())
+            for (auto bit : conn.first) driven.insert(bit);
+        for (auto cell : mod->cells())
+            for (auto& c : cell->connections())
+                // Unknown (sub-module instance) cells: conservatively treat all
+                // ports as driving so we never double-drive; those bits are not
+                // function-local initials anyway.
+                if (!cell->known() || cell->output(c.first))
+                    for (auto bit : c.second) driven.insert(bit);
+        // CRITICAL: RTLIL processes are still un-lowered at this point (proc
+        // runs later), so a block-local driven by a process switch/sync action
+        // is NOT yet a connection or cell.  Count those LHS bits as driven too,
+        // otherwise we would X-drive a process-driven wire and double-drive it
+        // once proc lowers the process.
+        std::function<void(const RTLIL::CaseRule*)> scan_case =
+            [&](const RTLIL::CaseRule* cs) {
+                for (auto& a : cs->actions)
+                    for (auto bit : a.first) driven.insert(bit);
+                for (auto sw : cs->switches)
+                    for (auto c : sw->cases) scan_case(c);
+            };
+        for (auto& pr : mod->processes) {
+            scan_case(&pr.second->root_case);
+            for (auto sync : pr.second->syncs)
+                for (auto& a : sync->actions)
+                    for (auto bit : a.first) driven.insert(bit);
+        }
+        for (auto w : wires) {
+            RTLIL::SigSpec undr;
+            for (int i = 0; i < w->width; i++) {
+                RTLIL::SigBit b(w, i);
+                if (!driven.count(b)) undr.append(b);
+            }
+            if (undr.size())
+                mod->connect(undr, RTLIL::SigSpec(RTLIL::State::Sx, undr.size()));
+        }
+    }
+    pending_func_local_inits.clear();
 }
 
 // Within a struct value `val` (an assignment-pattern operation), return the

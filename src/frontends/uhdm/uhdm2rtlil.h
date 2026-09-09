@@ -469,6 +469,14 @@ struct UhdmImporter {
     // scopes) is not wrongly aliased to that module signal.
     std::set<std::string> block_local_promoted;
 
+    // Initial (pre-assignment) wires of function block-local variables.  A
+    // local read on a control path where it was never assigned would leave
+    // these bits undriven; drive_undriven_func_locals() drives exactly those
+    // bits (and no others — never masking a real dropped driver) with X once
+    // the enclosing module is fully built.
+    std::vector<RTLIL::Wire*> pending_func_local_inits;
+    void drive_undriven_func_locals();
+
     // Value map a process RHS read should consult: in always_ff body mode use
     // the blocking-temp map (registers keep their original value); otherwise
     // the comb-value tracking map; null when not inside a process.

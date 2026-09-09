@@ -215,6 +215,15 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         func_call_context.c_str(), var_name.c_str(), incr_autoidx());
                     RTLIL::Wire* local_wire = module->addWire(RTLIL::escape_id(local_wire_name), width);
                     input_mapping[var_name] = RTLIL::SigSpec(local_wire);
+                    // A function-local reads as X until first assigned.  Track
+                    // this INITIAL wire so that, once the function body is fully
+                    // built, any bits left with NO driver (a var read on a path
+                    // where it was never assigned — e.g. prim_fifo_async's
+                    // genuinely-unused `unused_decsub_msb`, written in only one
+                    // if-branch) can be driven with constant X.  Doing it lazily
+                    // (only truly-undriven bits) avoids double-driving a local
+                    // that IS assigned; an undriven net is incomplete synthesis.
+                    pending_func_local_inits.push_back(local_wire);
 
                     if (mode_debug) {
                         log("    Created block-local variable %s (width=%d)\n", var_name.c_str(), width);
@@ -278,6 +287,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         func_call_context.c_str(), block_name.c_str(), var_name.c_str(), incr_autoidx());
                     RTLIL::Wire* local_wire = module->addWire(RTLIL::escape_id(local_wire_name), width);
                     input_mapping[var_name] = RTLIL::SigSpec(local_wire);
+                    // Track for lazy X-init of never-assigned bits (see the
+                    // plain-begin case above).
+                    pending_func_local_inits.push_back(local_wire);
 
                     if (mode_debug) {
                         log("    Created block-local variable %s in named block %s (width=%d)\n",
