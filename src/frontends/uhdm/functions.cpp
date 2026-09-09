@@ -1864,6 +1864,18 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 }
             }
             
+            // A STRUCT / enum / packed-array-typed local (var->UhdmType() is
+            // struct_var / enum_var / packed_array_var, none handled above)
+            // fell through to the default width 1, so every field write and the
+            // struct return collapsed to a single bit -> 0.  tlul's
+            // extract_d2h_rsp_intg returns a `tl_d2h_rsp_intg_t` struct built
+            // field-by-field; a 1-bit `payload` dropped opcode/size/error and
+            // the whole D-channel integrity ECC computed over garbage.  Recover
+            // the real width from the typespec.
+            if (var_width <= 1) {
+                int gw = get_width(var, current_instance);
+                if (gw > var_width) var_width = gw;
+            }
             local_var_widths[var_name] = var_width;
             if (mode_debug) {
                 log("UHDM: Function %s local variable %s width=%d\n", 

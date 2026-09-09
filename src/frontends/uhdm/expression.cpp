@@ -1291,11 +1291,29 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (base_name == func_name)
                         st = current_func_return_struct_ts;
                     if (!st)
-                        if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0]))
+                        if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0])) {
                             if (auto bts = bref->Typespec())
                                 if (auto a = bts->Actual_typespec())
                                     if (a->UhdmType() == uhdmstruct_typespec)
                                         st = any_cast<const UHDM::struct_typespec*>(a);
+                            // The ref_obj's Typespec is often null for a
+                            // function-local struct var; recover it from the
+                            // bound variable (Actual_group).
+                            if (!st)
+                                if (auto ag = bref->Actual_group())
+                                    if (auto e = dynamic_cast<const UHDM::expr*>(ag))
+                                        if (auto ets = e->Typespec())
+                                            if (auto a = ets->Actual_typespec())
+                                                if (a->UhdmType() == uhdmstruct_typespec)
+                                                    st = any_cast<const UHDM::struct_typespec*>(a);
+                        }
+                    // Final fallback: `base` is the function's return variable
+                    // (`local_t p; p.f = …; return p;`), whose type IS the
+                    // return struct — the same typespec funcname.field uses.
+                    // (tlul's extract_d2h_rsp_intg builds `payload` this way; its
+                    // ref_obj carries no typespec, so the field writes were
+                    // dropped and the D-channel integrity ECC saw all-zero.)
+                    if (!st) st = current_func_return_struct_ts;
                     if (!base_sig.empty() && st && st->Members()) {
                         // LSB-first iteration: the struct's last member is the LSB.
                         int field_off = 0, field_w = 0;

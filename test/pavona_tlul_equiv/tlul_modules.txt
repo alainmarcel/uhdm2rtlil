@@ -1,8 +1,8 @@
 # Pavona TL-UL (OpenTitan bus) per-module equivalence: read_uhdm vs read_slang.
 # Columns: module seq timeout expected.  Sources = per-module closure
 # (scripts/tlul_srcs.py).  Sweep: ./run_tlul_equiv.sh
-# 6 proven, 4 cex (integrity ECC path — d_user rsp_intg/data_intg diverge),
-# 11 SAT-timeout (need adjudication).  Deferred (need jtag/dmi/lc packages):
+# 10 proven (incl. the 4 integrity modules — struct-return function fix),
+# 11 SAT-timeout (need adjudication). Deferred (jtag/dmi/lc): dmi,shim,jtag_dtm,lc_gate.
 # tlul_adapter_dmi, tlul_adapter_shim, tlul_jtag_dtm, tlul_lc_gate.
 sram2tlul                 4  300  proven
 tlul_adapter_racl         4  300  proven
@@ -10,10 +10,10 @@ tlul_data_integ_dec       4  300  proven
 tlul_data_integ_enc       4  300  proven
 tlul_err                  4  300  proven
 tlul_sram_byte            4  300  proven
-tlul_cmd_intg_chk         4  300  cex      # d_user/a_user integrity ECC path diverges
-tlul_cmd_intg_gen         4  300  cex      # a_user cmd_intg/data_intg computed differently
-tlul_rsp_intg_chk         4  300  cex      # d_user integrity check diverges
-tlul_rsp_intg_gen         4  300  cex      # d_user rsp_intg/data_intg computed differently
+tlul_cmd_intg_chk         4  300  proven
+tlul_cmd_intg_gen         4  300  proven
+tlul_rsp_intg_chk         4  300  proven
+tlul_rsp_intg_gen         4  300  proven
 tlul_adapter_host         4  300  timeout
 tlul_adapter_reg          4  300  timeout
 tlul_adapter_reg_racl     4  300  timeout

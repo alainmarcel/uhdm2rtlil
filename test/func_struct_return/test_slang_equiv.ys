@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_struct_return
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename func_struct_return gold
+design -stash gold
+read_slang --ignore-assertions dut.sv --top func_struct_return
+hierarchy -check -top func_struct_return
+flatten; proc; opt; memory; async2sync; techmap; opt
+rename func_struct_return gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
