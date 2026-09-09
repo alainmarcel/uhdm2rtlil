@@ -1343,6 +1343,36 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
 
+            // Concat LHS `{a, b, ...} = rhs` — none of the named/select cases
+            // above claim it, so lhs_sig stayed empty and the whole assignment
+            // was dropped.  tlul's get_cmd_intg does
+            //   {cmd_intg, unused} = prim_secded_enc(...); return cmd_intg;
+            // so the return `cmd_intg` read UNDRIVEN (tlul_socket_1n/m1).  Build
+            // lhs_sig as the concat of each element's write-target sigspec; the
+            // single assignment below then splits rhs across them.  UHDM lists
+            // concat operands MSB-first, and SigSpec::append adds at the MSB
+            // end, so append in reverse (LSB element first).
+            if (lhs_sig.empty() &&
+                assign->Lhs()->UhdmType() == uhdmoperation) {
+                auto cop = any_cast<const operation*>(assign->Lhs());
+                if (cop->VpiOpType() == vpiConcatOp && cop->Operands()) {
+                    std::vector<RTLIL::SigSpec> parts;
+                    bool ok = true;
+                    for (auto el : *cop->Operands()) {
+                        RTLIL::SigSpec es = import_expression(
+                            any_cast<const expr*>(el), &input_mapping);
+                        if (es.empty()) { ok = false; break; }
+                        parts.push_back(es);
+                    }
+                    if (ok && !parts.empty()) {
+                        RTLIL::SigSpec cat;
+                        for (auto it = parts.rbegin(); it != parts.rend(); ++it)
+                            cat.append(*it);
+                        lhs_sig = cat;
+                    }
+                }
+            }
+
             // Compound assignment (`x |= y`, `x += y`, ...): UHDM encodes the
             // operator on the assignment's VpiOpType (a binary op, not the plain
             // vpiAssignmentOp) and stores only `y` as the RHS.  Combine with the
