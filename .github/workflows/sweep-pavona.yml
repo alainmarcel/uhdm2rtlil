@@ -37,3 +37,13 @@ jobs:
       core: tlul
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # The Pavona ACC (OTBN-family asymmetric-crypto bignum core) per-module
+  # equivalence campaign (test/pavona_acc_equiv): formal vs read_slang +
+  # structural undriven check.  Runs under the same workflow.
+  sweep-acc:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: acc
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
