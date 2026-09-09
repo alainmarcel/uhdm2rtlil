@@ -7957,6 +7957,19 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
     }
     
+    // No RTLIL module context: we are resolving a reference inside a PACKAGE
+    // parameter's value expression (import_package runs before any module is
+    // created).  None of the module-based lookups below — parameter_default_
+    // values, module->wire(), module->cell(), create_wire() — are valid, and
+    // dereferencing the null `module` segfaults (OpenTitan otp_ctrl_pkg's
+    // OTP_LC_DATA_DEFAULT reaches here).  The ref could not be resolved from its
+    // Actual_group above, so return empty rather than crashing.
+    if (!module) {
+        log_warning("UHDM: unresolved reference '%s' in package-parameter "
+                    "context — returning empty\n", ref_name.c_str());
+        return RTLIL::SigSpec();
+    }
+
     // Check if this is a parameter reference
     RTLIL::IdString param_id = RTLIL::escape_id(ref_name);
     if (module->parameter_default_values.count(param_id)) {
