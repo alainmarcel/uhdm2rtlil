@@ -26,3 +26,14 @@ jobs:
       core: pavona
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # The Pavona TL-UL bus library (test/pavona_tlul_equiv): formal vs read_slang
+  # + structural undriven check + multi-clock Verilator co-sim (adjudicates the
+  # dual-clock CDC fifo the SAT miter cannot reach).  Runs under the same
+  # workflow as the Ibex pavona sweep.
+  sweep-tlul:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: tlul
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

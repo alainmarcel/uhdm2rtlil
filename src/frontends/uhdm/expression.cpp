@@ -1472,6 +1472,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 int64_t end_value = 0;
                 int64_t increment = 1;
                 bool inclusive = false;
+                bool downward = false;   // for (i=N; i>M; i--) style loops
                 
                 if (mode_debug) {
                     log("    Attempting to unroll for loop in function %s\n", func_name.c_str());
@@ -1489,11 +1490,30 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         // int_var/integer_var/logic_var), not a ref_obj/ref_var.
                         // Any of these carries the name via VpiName().
                         loop_var_name = init_assign->Lhs()->VpiName();
-                        
-                        if (!loop_var_name.empty() && init_assign->Rhs() && init_assign->Rhs()->UhdmType() == uhdmconstant) {
-                            const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
-                            RTLIL::SigSpec init_spec = import_constant(const_val);
-                            if (init_spec.is_fully_const()) {
+
+                        if (!loop_var_name.empty() && init_assign->Rhs()) {
+                            const any* rhs = init_assign->Rhs();
+                            RTLIL::SigSpec init_spec;
+                            if (rhs->UhdmType() == uhdmconstant) {
+                                init_spec = import_constant(any_cast<const constant*>(rhs));
+                            } else if (rhs->UhdmType() == uhdmoperation) {
+                                // A start value like `PTR_WIDTH-1` is an
+                                // operation, not a constant; reduce it the same
+                                // way the end value is (below).
+                                const operation* op = any_cast<const operation*>(rhs);
+                                ExprEval eval; bool invalidValue = false;
+                                expr* res = eval.reduceExpr(
+                                    const_cast<operation*>(op), invalidValue,
+                                    current_instance, op->VpiParent(), true);
+                                if (res && res->UhdmType() == uhdmconstant)
+                                    init_spec = import_constant(
+                                        any_cast<const constant*>(res));
+                            } else {
+                                // ref_obj to a parameter, etc.
+                                init_spec = import_expression(
+                                    any_cast<const expr*>(rhs), &input_mapping);
+                            }
+                            if (init_spec.is_fully_const() && init_spec.is_fully_def()) {
                                 start_value = init_spec.as_const().as_int();
                                 can_unroll = true;
                             }
@@ -1510,6 +1530,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         inclusive = true;
                     } else if (op_type == vpiLtOp) {
                         inclusive = false;
+                    } else if (op_type == vpiGeOp) {
+                        inclusive = true; downward = true;   // i >= M, i--
+                    } else if (op_type == vpiGtOp) {
+                        inclusive = false; downward = true;  // i > M, i--
                     } else {
                         can_unroll = false;
                     }
@@ -1668,22 +1692,31 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Extract increment: i++ or i = i + 1
                 if (can_unroll && inc_stmt->UhdmType() == uhdmoperation) {
                     const operation* inc_op = any_cast<const operation*>(inc_stmt);
-                    if (inc_op->VpiOpType() == vpiPostIncOp) { 
+                    int io = inc_op->VpiOpType();
+                    if (io == vpiPostIncOp || io == vpiPreIncOp) {
                         increment = 1;
-                    } else if (inc_op->VpiOpType() == vpiAddOp) {
-                        // Check for i = i + 1 pattern
-                        increment = 1; // Simplified for now
+                    } else if (io == vpiPostDecOp || io == vpiPreDecOp) {
+                        increment = -1;   // i-- / --i
+                    } else if (io == vpiAddOp) {
+                        increment = 1; // i = i + 1
+                    } else if (io == vpiSubOp) {
+                        increment = -1; // i = i - 1
                     }
                 } else if (can_unroll && inc_stmt->UhdmType() == uhdmassignment) {
-                    // Handle i = i + 1 style increment
+                    // Handle i = i + 1 / i = i - 1 style increment
                     const assignment* inc_assign = any_cast<const assignment*>(inc_stmt);
                     if (inc_assign->Rhs() && inc_assign->Rhs()->UhdmType() == uhdmoperation) {
                         const operation* add_op = any_cast<const operation*>(inc_assign->Rhs());
                         if (add_op->VpiOpType() == vpiAddOp) {
-                            increment = 1; // Simplified assumption
+                            increment = 1;
+                        } else if (add_op->VpiOpType() == vpiSubOp) {
+                            increment = -1;
                         }
                     }
                 }
+                // A downward condition (i > M / i >= M) with a mis-parsed
+                // increment sign would spin forever; force the sign to match.
+                if (downward && increment > 0) increment = -increment;
                 
                 if (mode_debug) {
                     log("DEBUG: Loop unroll check: can_unroll=%d, start=%lld, end=%lld, increment=%lld\n",
@@ -1691,8 +1724,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 
                 if (can_unroll) {
-                    // Unroll the loop
-                    int64_t loop_end = inclusive ? end_value : end_value - 1;
+                    // Unroll the loop.  loop_end is the value of the LAST
+                    // iteration (inclusive of the direction of travel).
+                    int64_t loop_end = downward
+                        ? (inclusive ? end_value : end_value + 1)
+                        : (inclusive ? end_value : end_value - 1);
                     
                     log("UHDM: Unrolling for loop: %s from %lld to %lld in function %s\n", 
                         loop_var_name.c_str(), (long long)start_value, (long long)loop_end, func_name.c_str());
@@ -1805,11 +1841,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     bool had_outer_lv = loop_values.count(loop_var_name) > 0;
                     int outer_lv = had_outer_lv ? loop_values[loop_var_name] : 0;
                     bool unroll_guard_live = false;
-                    for (int64_t i = start_value; i <= loop_end; i += increment) {
+                    for (int64_t i = start_value;
+                         downward ? (i >= loop_end) : (i <= loop_end);
+                         i += increment) {
                         // Set the loop variable value - use loop_values for substitution
                         loop_values[loop_var_name] = i;
-                        
-                        bool is_last_iteration = (i + increment > loop_end);
+
+                        bool is_last_iteration = downward ? (i + increment < loop_end)
+                                                          : (i + increment > loop_end);
                         
                         if (mode_debug) {
                             log("      Iteration %lld (last=%d)\n", (long long)i, is_last_iteration);
