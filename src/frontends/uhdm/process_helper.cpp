@@ -2034,13 +2034,14 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
     
     // We need to scan all processes in the module to check array accesses
     auto uhdm_module = current_instance;
-    if (!uhdm_module || !uhdm_module->Process()) {
-        return true;  // If no processes, assume constant access (will be unrolled)
+    if (!uhdm_module) {
+        return true;  // If no instance, assume constant access (will be unrolled)
     }
-    
+
     // Always log this for debugging array issues
-    log("UHDM: Checking array accesses for '%s' in %d processes\n", 
-        array_name.c_str(), (int)uhdm_module->Process()->size());
+    log("UHDM: Checking array accesses for '%s' in %d module-level processes\n",
+        array_name.c_str(),
+        uhdm_module->Process() ? (int)uhdm_module->Process()->size() : 0);
     log("      Current instance: %p, Module: %p\n", current_instance, module);
     
     // Capture the module for lambda access
@@ -2268,31 +2269,56 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
         return true;  // No non-constant access found
     };
     
-    // Check all processes in the module
-    int process_count = 0;
-    for (auto proc : *uhdm_module->Process()) {
-        log("      Process type: %d (vpiAlways=%d, vpiAlwaysComb=%d, vpiAlwaysFF=%d)\n",
-            proc->VpiType(), vpiAlways, vpiAlwaysComb, vpiAlwaysFF);
-        if (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysComb || 
-            proc->VpiType() == vpiAlwaysFF || proc->VpiType() == vpiInitial) {
-            auto always_proc = any_cast<const process_stmt*>(proc);
-            if (always_proc && always_proc->Stmt()) {
-                process_count++;
-                log("    Checking process %d for array accesses\n", process_count);
-                if (!check_array_access(always_proc->Stmt(), 1)) {
-                    if (mode_debug) {
-                        log("    Found non-constant access in process %d\n", process_count);
+    // Scan processes in the module scope AND recursively in every generate
+    // scope.  A module-level array (e.g. prim_fifo_async's `storage`) is
+    // frequently WRITTEN by an always_ff that lives inside a generate block
+    // (`if (Depth>1) begin : g_storage_mux ... end`); scanning only the
+    // module's own Process() vector misses that write entirely and wrongly
+    // concludes the array is const-indexed → it degrades to per-element wires
+    // and the dynamic write/read silently drop to X.
+    //
+    // Deliberately ONLY processes (not continuous assignments): the original
+    // classifier never scanned cont_assigns, and doing so mis-flags an array
+    // whose index is a compile-time-constant *function call* (mem2reg_test4's
+    // `intermediate[depth2Index(1)]`) as non-constant, degrading a const-index
+    // register file into a $memory.  A genuine clocked memory always has its
+    // non-constant write in a process, which the process scan catches.
+    std::function<bool(const UHDM::VectorOfprocess_stmt*,
+                       const UHDM::VectorOfgen_scope_array*)> scan_scope =
+        [&](const UHDM::VectorOfprocess_stmt* procs,
+            const UHDM::VectorOfgen_scope_array* gsas) -> bool {
+        if (procs) {
+            for (auto proc : *procs) {
+                if (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysComb ||
+                    proc->VpiType() == vpiAlwaysFF || proc->VpiType() == vpiInitial) {
+                    auto always_proc = any_cast<const process_stmt*>(proc);
+                    if (always_proc && always_proc->Stmt() &&
+                        !check_array_access(always_proc->Stmt(), 1)) {
+                        return false;  // Found non-constant access
                     }
-                    return false;  // Found non-constant access
                 }
             }
         }
+        if (gsas) {
+            for (auto gsa : *gsas) {
+                if (!gsa->Gen_scopes()) continue;
+                for (auto gs : *gsa->Gen_scopes()) {
+                    if (!scan_scope(gs->Process(), gs->Gen_scope_arrays()))
+                        return false;
+                }
+            }
+        }
+        return true;
+    };
+
+    if (!scan_scope(uhdm_module->Process(), uhdm_module->Gen_scope_arrays())) {
+        return false;  // Found non-constant access somewhere
     }
-    
+
     if (mode_debug) {
         log("    Array %s has only constant index accesses\n", array_name.c_str());
     }
-    
+
     return true;  // All accesses are constant
 }
 
