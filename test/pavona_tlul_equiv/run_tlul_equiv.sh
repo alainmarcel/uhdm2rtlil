@@ -22,11 +22,11 @@ run_one() {
   cat > "$w/miter.ys" <<EOF
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $m
-flatten; proc; delete t:\$check t:\$assert t:\$assume t:\$print
+flatten; proc; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
 rename $m gold; design -stash gold
 read_slang --ignore-assertions -DSYNTHESIS -I $PRIM -I $TLUL $SR --top $m
 hierarchy -check -top $m
-flatten; proc; delete t:\$check t:\$assert t:\$assume t:\$print
+flatten; proc; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
 rename $m gate; design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate

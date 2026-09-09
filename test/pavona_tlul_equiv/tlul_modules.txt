@@ -1,27 +1,27 @@
 # Pavona TL-UL (OpenTitan bus) per-module equivalence: read_uhdm vs read_slang.
 # Columns: module seq timeout expected.  Sources = per-module closure
-# (scripts/tlul_srcs.py).  Sweep: ./run_tlul_equiv.sh
-# 10 proven (incl. the 4 integrity modules — struct-return function fix),
-# 11 SAT-timeout (need adjudication). Deferred (jtag/dmi/lc): dmi,shim,jtag_dtm,lc_gate.
-# tlul_adapter_dmi, tlul_adapter_shim, tlul_jtag_dtm, tlul_lc_gate.
+# (scripts/tlul_srcs.py); the miter runs async2sync (TL-UL uses async rst_ni).
+# Sweep: ./run_tlul_equiv.sh.  18 proven, 2 cex (socket arbiter path), 1 timeout
+# (fifo_async = dual-clock CDC, SAT-miter limitation).  Deferred (need jtag/dmi/
+# lc packages): tlul_adapter_dmi, tlul_adapter_shim, tlul_jtag_dtm, tlul_lc_gate.
 sram2tlul                 4  300  proven
+tlul_adapter_host         4  300  proven
 tlul_adapter_racl         4  300  proven
+tlul_adapter_reg          4  300  proven
+tlul_adapter_reg_racl     4  300  proven
+tlul_adapter_sram         4  300  proven
+tlul_adapter_sram_racl    4  300  proven
+tlul_cmd_intg_chk         4  300  proven
+tlul_cmd_intg_gen         4  300  proven
 tlul_data_integ_dec       4  300  proven
 tlul_data_integ_enc       4  300  proven
 tlul_err                  4  300  proven
-tlul_sram_byte            4  300  proven
-tlul_cmd_intg_chk         4  300  proven
-tlul_cmd_intg_gen         4  300  proven
+tlul_err_resp             4  300  proven
+tlul_fifo_sync            4  300  proven
+tlul_request_loopback     4  300  proven
 tlul_rsp_intg_chk         4  300  proven
 tlul_rsp_intg_gen         4  300  proven
-tlul_adapter_host         4  300  timeout
-tlul_adapter_reg          4  300  timeout
-tlul_adapter_reg_racl     4  300  timeout
-tlul_adapter_sram         4  300  timeout
-tlul_adapter_sram_racl    4  300  timeout
-tlul_err_resp             4  300  timeout
-tlul_fifo_async           4  300  timeout
-tlul_fifo_sync            4  300  timeout
-tlul_request_loopback     4  300  timeout
-tlul_socket_1n            4  300  timeout
-tlul_socket_m1            4  300  timeout
+tlul_sram_byte            4  300  proven
+tlul_socket_1n            4  300  cex      # socket arbiter/FIFO path diverges (exposed by async2sync)
+tlul_socket_m1            4  300  cex      # socket arbiter/FIFO path diverges (exposed by async2sync)
+tlul_fifo_async           4  600  timeout  # dual-clock async FIFO — SAT-miter capacity
