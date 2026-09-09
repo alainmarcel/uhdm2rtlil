@@ -14,20 +14,27 @@ run_one() {
   local m="$1" seq="$2" tmo="$3" want="$4"
   local w="$HERE/work/$m"; mkdir -p "$w"
   local SR; SR=$(python3 "$HERE/scripts/tlul_srcs.py" "$m")
+  # Optional flat shim: flattens unpacked-array-of-struct ports to explicit
+  # elem0@LSB buses so uhdm & slang agree on element order (pure convention
+  # artifact — neither frontend is wrong; see wrappers/flat_*.sv).
+  local top="$m"
+  if [ -f "$HERE/wrappers/flat_$m.sv" ]; then
+    top="${m}_flat"; SR="$SR $HERE/wrappers/flat_$m.sv"
+  fi
   # 1. surelog (re-run if uhdm missing or surelog newer)
-  if [ ! -f "$w/slpp_all/surelog.uhdm" ] || [ "$S" -nt "$w/slpp_all/surelog.uhdm" ]; then
-    (cd "$w" && timeout 300 "$S" -parse -d uhdm -DSYNTHESIS -I"$PRIM" -I"$TLUL" -top "$m" $SR > surelog.log 2>&1)
+  if [ ! -f "$w/slpp_all/surelog.uhdm" ] || [ "$S" -nt "$w/slpp_all/surelog.uhdm" ] || [ "$HERE/wrappers/flat_$m.sv" -nt "$w/slpp_all/surelog.uhdm" ]; then
+    (cd "$w" && timeout 300 "$S" -parse -d uhdm -DSYNTHESIS -I"$PRIM" -I"$TLUL" -top "$top" $SR > surelog.log 2>&1)
   fi
   [ -f "$w/slpp_all/surelog.uhdm" ] || { printf "  ‼  %-28s elabfail (surelog)\n" "$m"; echo "$m elabfail"; return; }
   cat > "$w/miter.ys" <<EOF
 read_uhdm slpp_all/surelog.uhdm
-hierarchy -check -top $m
+hierarchy -check -top $top
 flatten; proc; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
-rename $m gold; design -stash gold
-read_slang --ignore-assertions -DSYNTHESIS -I $PRIM -I $TLUL $SR --top $m
-hierarchy -check -top $m
+rename $top gold; design -stash gold
+read_slang --ignore-assertions -DSYNTHESIS -I $PRIM -I $TLUL $SR --top $top
+hierarchy -check -top $top
 flatten; proc; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
-rename $m gate; design -stash gate
+rename $top gate; design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate
 miter -equiv -flatten -make_assert gold gate miter

@@ -1,7 +1,7 @@
 # Pavona TL-UL (OpenTitan bus) per-module equivalence: read_uhdm vs read_slang.
 # Columns: module seq timeout expected.  Sources = per-module closure
 # (scripts/tlul_srcs.py); the miter runs async2sync (TL-UL uses async rst_ni).
-# Sweep: ./run_tlul_equiv.sh.  18 proven, 2 cex (socket arbiter path), 1 timeout
+# Sweep: ./run_tlul_equiv.sh.  20 proven, 1 timeout (fifo_async CDC)
 # (fifo_async = dual-clock CDC, SAT-miter limitation).  Deferred (need jtag/dmi/
 # lc packages): tlul_adapter_dmi, tlul_adapter_shim, tlul_jtag_dtm, tlul_lc_gate.
 sram2tlul                 4  300  proven
@@ -22,6 +22,6 @@ tlul_request_loopback     4  300  proven
 tlul_rsp_intg_chk         4  300  proven
 tlul_rsp_intg_gen         4  300  proven
 tlul_sram_byte            4  300  proven
-tlul_socket_1n            4  300  cex      # socket arbiter/FIFO path diverges (exposed by async2sync)
-tlul_socket_m1            4  300  cex      # socket arbiter/FIFO path diverges (exposed by async2sync)
+tlul_socket_1n            4  300  proven   # via wrappers/flat_*.sv (unpacked-array-of-struct port order)
+tlul_socket_m1            4  300  proven   # via wrappers/flat_*.sv (unpacked-array-of-struct port order)
 tlul_fifo_async           4  600  timeout  # dual-clock async FIFO — SAT-miter capacity
