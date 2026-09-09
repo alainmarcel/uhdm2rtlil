@@ -106,7 +106,7 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
 > Verilator co-simulation against the behavioural RTL
 > (`scripts/adjudicate.py` — zero modules show a one-sided UHDM divergence).
 
-### Supported Core IP (rp32, Ibex & Ariane CVA6)
+### Supported Core IP (rp32, Ibex, OpenTitan-hardened Ibex & Ariane CVA6)
 
 Three real-world RISC-V IP families are imported from their upstream RTL
 (kept verbatim under `test/ibex/`, `test/rp32/` and `test/cva6_equiv/rtl/`)
@@ -121,6 +121,7 @@ final pass-rate) to the run's step summary.
 |----|------------|-------|--------|---------|
 | **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **28 / 28 pass**, 0 crashes | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **12 / 13 pass**, 0 crashes | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
+| **Pavona — OpenTitan-hardened [Ibex](https://github.com/lowRISC/ibex)** | Ibex at the OpenTitan security config: SecureIbex, ICache **scrambling** (PRINCE) + ECC, ePMP (16 NAPOT regions), RV32IMCB (`OTEarlGrey` bitmanip), dual-core **lockstep** | **26** modules (`test/pavona_equiv/`), each UHDM-vs-`read_slang` mitered, plus a structural opt-check (`flatten; opt_clean; check`) and Verilator co-sim | **20 / 26 formally proven** (rest SAT-capacity-bound, co-sim-equivalent); **26 / 26 opt-check clean (0 undriven)**; **23 / 23 co-sim PASS (100%)**; full core (`ibex_core` / `ibex_top` / `ibex_lockstep`) proven **and** co-sim `NO_DIVERGENCE` | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 142 formally proven (66%)**, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 
 Highlights:
@@ -135,6 +136,14 @@ Highlights:
   power-up `$meminit` now matches the Verilog frontend); the other advanced-SV
   Ibex modules are UHDM-only (the native Verilog frontend cannot parse them) and
   verified against **Verilator** co-simulation.
+- The **OpenTitan-hardened Ibex** ("Pavona", `test/pavona_equiv/`) is imported
+  **verbatim** — `read_slang` and Verilator accept the RTL as-is, no source
+  edits. Its per-module sweep pairs three checks — formal (UHDM vs `read_slang`),
+  a fast structural **opt-check** (dropped-driver detection), and Verilator
+  co-sim — and drove a run of real frontend fixes: struct-pattern paramod dedup,
+  one-hot `case` read-after-case, package table element-select, gen-scope enum
+  arrays / enum constants, and a nested-loop / genvar loop-variable collision in
+  the PRINCE SRAM-scramble S-boxes. **All 26 modules now opt-check clean.**
 - Both interface-based rp32 SoCs (`degu`, `mouse`) boot and run a program
   end-to-end in a Yosys functional simulation of the UHDM-synthesised netlist.
 - The single non-pass, `rp32_r5p_mouse`, is a known `equiv_induct` incompleteness
