@@ -5746,8 +5746,36 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         }
     }
 
+    // An operand that references a variable currently being LOOP-UNROLLED
+    // (in loop_values) must NOT be folded by ExprEval against `inst`: when an
+    // OUTER genvar and an inlined function's for-loop share a name (`k` in
+    // prim_prince's genvar rounds loop vs the sbox4_64bit/sbox4_8bit it calls),
+    // ExprEval resolves `k` to the genvar value elaborated in `inst` — so the
+    // inner `state_out[k*4+:8]` base folded to genvar*4 (out of bounds) and the
+    // write dropped (ibex_top's PRINCE S-boxes read undriven).  Fall through to
+    // the operand-wise import, where import_ref_obj resolves the name from
+    // loop_values (the authoritative per-iteration value).
+    bool has_loop_value_operand = false;
+    if (!loop_values.empty() && uhdm_op->Operands()) {
+        std::function<bool(const UHDM::any*)> refs_lv =
+            [&](const UHDM::any* e) -> bool {
+                if (!e) return false;
+                if (e->VpiType() == vpiRefObj)
+                    return loop_values.count(std::string(e->VpiName())) > 0;
+                if (e->VpiType() == vpiOperation) {
+                    auto op2 = any_cast<const operation*>(e);
+                    if (op2->Operands())
+                        for (auto o2 : *op2->Operands())
+                            if (refs_lv(o2)) return true;
+                }
+                return false;
+            };
+        for (auto o : *uhdm_op->Operands())
+            if (refs_lv(o)) { has_loop_value_operand = true; break; }
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
-        !has_struct_param_hier_operand) {
+        !has_struct_param_hier_operand && !has_loop_value_operand) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -7432,8 +7460,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // wire width (CVA6 frontend: the second loop's `cf_type[i]` wrote element
     // 0 on EVERY iteration).  Genuine function-argument mappings keep
     // priority: a function body's own parameter shadows any outer loop var.
-    if (input_mapping && !getCurrentFunctionContext() && loop_values.count(ref_name))
+    if (input_mapping && !getCurrentFunctionContext() && loop_values.count(ref_name)) {
         return RTLIL::SigSpec(RTLIL::Const(loop_values[ref_name], 32));
+    }
 
     // Check if this is a function input parameter
     if (input_mapping) {
@@ -7494,8 +7523,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // imported, so a bare `k` correctly reads the wire in unrelated blocks.
     // e.g. forloops01: `x <= k + {a,b}` in the always_ff must see k=2 (its
     // loop's final value), not the shared `\k` net the always_comb drives to 4.
-    if (loop_values.count(ref_name))
+    if (loop_values.count(ref_name)) {
         return RTLIL::SigSpec(RTLIL::Const(loop_values[ref_name], 32));
+    }
 
     // A bare reference to a whole UNPACKED ARRAY (`logic [2:0] a [3:0]`,
     // `int x [1:0][0:0]`) — e.g. passing it as a function argument
