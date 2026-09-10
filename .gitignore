@@ -58,3 +58,4 @@ __pycache__/
 # CVA6 equivalence suite: per-run scratch (UHDM, netlists, logs)
 test/cva6_equiv/work/
 test/cva6_equiv/cva6_modules.generated.txt
+test/pavona_kmac_equiv/work/
