@@ -3582,7 +3582,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             have_value = true;
                         }
                     } else if (rhs_expr &&
-                               rhs_expr->UhdmType() == uhdmoperation) {
+                               rhs_expr->UhdmType() == uhdmoperation &&
+                               param_assign->VpiOverriden()) {
+                        // The ISOLATED-module re-derivation below is for an
+                        // explicit `.PARAM({PATTERN})` OVERRIDE, whose value
+                        // must match the isolated modname re-derivation (ibex
+                        // dcsr DCSR_RESET_VAL).  A NON-overridden localparam
+                        // whose RHS is a concat/pattern referencing OTHER
+                        // params (`localparam ResetValues = {{W{1'b1}}-RV, RV}`
+                        // in OpenTitan prim_count) must NOT be folded in
+                        // isolation — RV/W are undefined there, so the concat
+                        // mis-folds (RV -> empty -> `{...}` collapses).  Such a
+                        // param keeps its IN-CONTEXT value_spec (below).
                         // Struct/array PATTERN or concat RHS
                         // (`.ResetValue({MSTATUS_RST_VAL})`,
                         // `.ResetValue({DCSR_RESET_VAL})`): fold in an ISOLATED
