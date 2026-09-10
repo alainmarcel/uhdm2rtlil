@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   sweep:
+    name: pavona - ibex
     uses: ./.github/workflows/core-sweep.yml
     with:
       core: pavona
@@ -32,6 +33,7 @@ jobs:
   # dual-clock CDC fifo the SAT miter cannot reach).  Runs under the same
   # workflow as the Ibex pavona sweep.
   sweep-tlul:
+    name: pavona - tlul
     uses: ./.github/workflows/core-sweep.yml
     with:
       core: tlul
@@ -42,6 +44,7 @@ jobs:
   # equivalence campaign (test/pavona_acc_equiv): formal vs read_slang +
   # structural undriven check.  Runs under the same workflow.
   sweep-acc:
+    name: pavona - acc
     uses: ./.github/workflows/core-sweep.yml
     with:
       core: acc
