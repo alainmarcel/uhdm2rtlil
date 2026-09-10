@@ -456,6 +456,30 @@ def _acc_check(mod):
     return "error" if rc else "✅ 0 undriven"
 
 
+def _acc_cosim(mod, cycles):
+    """Verilator/iverilog co-sim of one ACC module (behavioural RTL vs read_uhdm
+    vs read_slang).  Adjudicates a module the SAT miter cannot close — the
+    combinational bignum multiplier unified_mul (SAT-hard)."""
+    rc, out = sh([sys.executable, "scripts/acc_cosim.py", mod, str(cycles), "1"],
+                 cwd=ACC_DIR, timeout=1800)
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
+                  out or "")
+    if m:
+        u, sl = int(m.group(1)), int(m.group(2))
+        if u == 0:
+            return "✅ PASS"
+        if sl > 0:
+            return f"⚠ shared div (uhdm={u}, slang={sl})"
+        return f"❌ {u} div (slang clean)"
+    if "no outputs to compare" in (out or ""):
+        return "— (no outputs)"
+    if "NO_RUN" in (out or "") or "netlist generation FAILED" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or ""):
+        return "skip (sim build)"
+    return "error" if rc else "skip"
+
+
 def sweep_acc(jobs, cycles=300, flt=None):
     """Pavona ACC (OTBN-family asymmetric-crypto bignum core): per-module formal
     (read_uhdm vs read_slang) from one run_acc_equiv.sh pass, plus a structural
@@ -491,8 +515,15 @@ def sweep_acc(jobs, cycles=300, flt=None):
     def one(r):
         if r["formal_raw"] in ("error", "elabfail"):
             r["check"] = "— (no elaboration)"
+            r["cosim"] = "— (no elaboration)"
         else:
             r["check"] = _acc_check(r["module"])
+            # Co-sim adjudicates ONLY where the formal verdict left a question
+            # (SAT timeout / cex).  A formally-proven module needs no co-sim.
+            if r["formal_raw"] == "proven":
+                r["cosim"] = "— (formally proven)"
+            elif r["formal_raw"] in ("timeout", "cex"):
+                r["cosim"] = _acc_cosim(r["module"], cycles)
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
