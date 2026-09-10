@@ -960,14 +960,32 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
         // interrupt_cause: `'0`-initialized, a cv-miss leg fed the interrupt
         // arm — the X leaked into instruction_o.ex).  Only the zero-raw-use
         // tier is sound.
+        // ext_uses counts EXTERNAL observations only — every reader EXCEPT the
+        // dead self-hold fallback legs of the signal's own thread_comb_case/if
+        // muxes.  An ssa-safe signal (prescan: write-before-read within its
+        // process) may still be observed OUTSIDE that process — most commonly a
+        // `_d` next-state read by the always_ff FF (`q <= d`), or a continuous
+        // assign.  X-ing such a signal latches X downstream (CVA6 macro_decoder
+        // state_d).  Only zero EXTERNAL readers is safe to X.
+        dict<RTLIL::Wire*, int> ext_uses;
         auto count = [&](const RTLIL::SigSpec& s) {
             for (auto& ch : s.chunks())
                 if (ch.wire) uses[ch.wire]++;
         };
-        for (auto* cell : mod->cells())
-            for (auto& conn : cell->connections())
-                count(conn.second);
-        for (auto& conn : mod->connections()) { count(conn.first); count(conn.second); }
+        auto countx = [&](const RTLIL::SigSpec& s) {
+            for (auto& ch : s.chunks())
+                if (ch.wire) { uses[ch.wire]++; ext_uses[ch.wire]++; }
+        };
+        for (auto* cell : mod->cells()) {
+            bool dead_leg = cell->type == ID($mux) &&
+                (cell->name.str().find("thread_comb_case") != std::string::npos ||
+                 cell->name.str().find("thread_comb_if")   != std::string::npos);
+            for (auto& conn : cell->connections()) {
+                if (dead_leg) count(conn.second);
+                else          countx(conn.second);
+            }
+        }
+        for (auto& conn : mod->connections()) { countx(conn.first); countx(conn.second); }
         for (auto& pit : mod->processes) {
             RTLIL::Process* p = pit.second;
             // Skip only THIS process's candidate self-hold action RHS.
@@ -976,15 +994,16 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
                 if (c.proc == p) { skip = c.act; break; }
             // (multiple candidates in one process handled below via cand_count)
             collect_case_uses(&p->root_case, skip, uses);
+            collect_case_uses(&p->root_case, skip, ext_uses);
             for (auto* sync : p->syncs) {
-                count(sync->signal);
-                for (auto& ua : sync->actions) count(ua.second);
+                count(sync->signal);   // clock/enable — not an ext observation of a temp
+                for (auto& ua : sync->actions) { count(ua.second); countx(ua.second); }
             }
         }
         // The sync `update \sig temp` counted temp (fine) — but candidate
         // self-hold RHSs in processes with SEVERAL candidates were skipped
         // only for the first; recount precisely: subtract each candidate's
-        // own RHS contribution that wasn't skipped.
+        // own RHS contribution that wasn't skipped (from both counters).
         {
             dict<const RTLIL::SigSig*, bool> skipped;
             for (auto& pit : mod->processes) {
@@ -993,19 +1012,44 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
                     if (c.proc == p) { skipped[c.act] = true; break; }
             }
             for (auto& c : cands)
-                if (!skipped.count(c.act)) uses[c.sig]--;
+                if (!skipped.count(c.act)) { uses[c.sig]--; ext_uses[c.sig]--; }
         }
+
+        // Which module owns the SSA-safe set for this pass.
+        auto ssa_it = comb_ssa_safe_.find(mod);
 
         for (auto& c : cands) {
             if (cand_count[c.sig] > 1) continue;          // multi-writer
             if (c.sig->port_input || c.sig->port_output) continue;
             if (c.sig->get_bool_attribute(RTLIL::ID::keep)) continue;
             if (c.sig->attributes.count(RTLIL::ID::init)) continue;
-            if (uses.count(c.sig) && uses.at(c.sig) > 0) continue;
+            // The prescan (prescan_write_before_read) proves a signal is
+            // write-before-read on EVERY path where it is read: it is written
+            // somewhere and never appears in `observed` (never read while not
+            // definitely assigned).  For such a signal the held value is never
+            // observed, so its only raw-wire readers are the DEAD self-hold
+            // fallback legs of its own thread_comb_case/if muxes — the
+            // non-zero use count is entirely those dead legs.  X the self-hold
+            // regardless.  A signal read while not definitely assigned (the
+            // CVA6 decoder interrupt_cause danger) lands in `observed`, is NOT
+            // ssa-safe, and stays gated by the raw-use count below.
+            std::string bare = c.sig->name.str();
+            if (!bare.empty() && bare[0] == '\\') bare = bare.substr(1);
+            bool ssa_safe = ssa_it != comb_ssa_safe_.end() &&
+                            ssa_it->second.count(bare);
+            if (ssa_safe) {
+                // Dead thread_comb legs don't count, but ANY external reader
+                // (FF `_d` input, other process, cont-assign) means the X would
+                // be observed downstream — keep the self-hold then.
+                if (ext_uses.count(c.sig) && ext_uses.at(c.sig) > 0) continue;
+            } else if (uses.count(c.sig) && uses.at(c.sig) > 0) {
+                continue;
+            }
             c.act->second = RTLIL::SigSpec(RTLIL::State::Sx, c.sig->width);
             log("UHDM: %s.%s: self-hold default replaced with X (held value "
-                "never observed — write-before-read comb temp)\n",
-                log_id(mod->name), log_id(c.sig->name));
+                "never observed — write-before-read comb temp%s)\n",
+                log_id(mod->name), log_id(c.sig->name),
+                ssa_safe ? ", prescan-ssa" : "");
         }
     }
 }
