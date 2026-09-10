@@ -11,7 +11,7 @@ acc_alu_base              4  150  proven
 acc_rnd                   4  200  proven
 # --- real cex, next-round frontend targets ---
 acc_stack                 4  200  proven
-acc_loop_controller       4  200  cex
+acc_loop_controller       4  200  proven
 # --- SAT-hard / needs cosim adjudication (bignum datapath / control) ---
 acc_start_stop_control    4  200  timeout
 unified_mul               4  200  timeout   # big multiplier — SAT-hard, cosim later
