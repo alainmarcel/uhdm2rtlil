@@ -1,46 +1,47 @@
 #!/usr/bin/env python3
-"""Verilator/iverilog co-sim adjudication for a TL-UL module.
+"""Verilator/iverilog co-sim adjudication for a Pavona ACC module.
 
-The TL-UL sweep's formal column mitres read_uhdm vs read_slang.  For a
-dual-clock CDC module (tlul_fifo_async) the SAT miter times out — sat -seq
-cannot reason across two independent clocks — so formal alone cannot say
-whether read_uhdm matches the behavioural RTL.  This runs three instances
-under identical random stimulus and identical clock/reset waveforms:
+The ACC sweep's formal column mitres read_uhdm vs read_slang.  For a module the
+SAT miter cannot close (unified_mul: a 256-bit multi-mode combinational
+multiplier — SAT-hard), formal alone cannot say whether read_uhdm matches the
+behavioural RTL.  This runs three instances under identical random stimulus:
 
     the behavioural RTL   (the reference — same .sv sources)
     the read_uhdm netlist (gold)
     the read_slang netlist (gate)
 
-and reports how many cycles each netlist diverges from the RTL.  It is
-MULTI-CLOCK aware: every input whose name matches clk_*  / *clk* gets its own
-free-running clock (distinct periods so a CDC design actually crosses
-domains); every rst_*_ni / *rst*n* input is an active-low reset released after
-a few cycles.  All three instances see the SAME waveforms, so an equivalent
-trio matches bit-for-bit at every sample point regardless of CDC timing.
+and reports how many samples each netlist diverges from the RTL.
 
-Reuses the per-module elaboration produced by run_tlul_equiv.sh
-(work/<mod>/slpp_all/surelog.uhdm) and the same closure source list.
+Multi-clock aware (like tlul_cosim.py): clk_* inputs get free-running clocks,
+rst_*_ni inputs an active-low reset.  ALSO handles a purely COMBINATIONAL module
+(no clock port — unified_mul): a synthetic clock paces the random stimulus and
+samples the outputs, so a comb DUT (with or without a benign don't-care latch)
+is exercised across all input modes.
 
-Usage: tlul_cosim.py <module> [cycles] [seed]
+Reuses the per-module elaboration produced by run_acc_equiv.sh
+(work/<mod>/slpp_all/surelog.uhdm) and the same acc_srcs.py closure.
+
+Usage: acc_cosim.py <module> [cycles] [seed]
 """
 import re, sys, os, subprocess
 
 mod    = sys.argv[1]
 CYCLES = int(sys.argv[2]) if len(sys.argv) > 2 else 400
 SEED   = int(sys.argv[3]) if len(sys.argv) > 3 else 1
-HERE   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # pavona_tlul_equiv
+HERE   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # pavona_acc_equiv
 _ROOT  = os.environ.get("UHDM2RTLIL_ROOT", os.path.abspath(
     os.path.join(HERE, "..", "..")))
+TLUL   = os.path.normpath(os.path.join(HERE, "..", "pavona_tlul_equiv"))
 YOSYS  = os.path.join(_ROOT, "out", "current", "bin", "yosys")
 PLUGIN = os.path.join(_ROOT, "build", "uhdm2rtlil.so")
-PRIM   = f"{HERE}/rtl/prim"
-TLUL   = f"{HERE}/rtl/tlul"
-PKG    = f"{HERE}/rtl/pkg"
+# ACC shares the prim library + base pkgs with the TL-UL campaign.
+INCS   = [f"{HERE}/rtl/acc", f"{HERE}/rtl/pkg",
+          f"{TLUL}/rtl/prim", f"{TLUL}/rtl/tlul", f"{TLUL}/rtl/pkg"]
 WORK   = f"{HERE}/work/{mod}"
 TOP    = mod
 
 if not os.path.isdir(WORK) or not os.path.exists(f"{WORK}/slpp_all/surelog.uhdm"):
-    print(f"{mod}: NO_RUN (no elaboration; run run_tlul_equiv.sh first)")
+    print(f"{mod}: NO_RUN (no elaboration; run run_acc_equiv.sh first)")
     sys.exit(2)
 os.chdir(WORK)
 
@@ -48,10 +49,12 @@ def sh(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, **kw)
 
 # ---------------------------------------------------------------- source list
-SR = sh([sys.executable, f"{HERE}/scripts/tlul_srcs.py", mod]).stdout.split()
+SR = sh([sys.executable, f"{HERE}/scripts/acc_srcs.py", mod]).stdout.split()
+incdir = "\n".join(f"+incdir+{d}" for d in INCS)
+inc_ys = " ".join(f"-I {d}" for d in INCS)
 FLIST = f"{WORK}/cosim.f"
 with open(FLIST, "w") as fh:
-    fh.write(f"+incdir+{PRIM}\n+incdir+{TLUL}\n+incdir+{PKG}\n")
+    fh.write(incdir + "\n")
     for f in SR:
         fh.write(f + "\n")
 
@@ -66,7 +69,7 @@ simplemap t:$bwmux
 rename {TOP} gold_{TOP}
 write_verilog -noattr cs_gold.v
 design -reset
-read_slang --ignore-assertions -DSYNTHESIS -I {PRIM} -I {TLUL} -I {PKG} {' '.join(SR)} --top {TOP}
+read_slang --ignore-assertions -DSYNTHESIS {inc_ys} {' '.join(SR)} --top {TOP}
 hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
@@ -101,9 +104,8 @@ for dirn, rng, name in re.findall(r"^  (input|output)\s+(\[\d+:\d+\]\s+)?(\w+);"
 if not outs:
     print(f"{mod}: no outputs to compare"); sys.exit(2)
 
-# A purely COMBINATIONAL module has no clock port: pace the random stimulus with
-# a synthetic clock and connect the DUTs by data ports only, so a comb DUT (with
-# or without a benign don't-care latch) is still exercised across all inputs.
+# A purely combinational module (unified_mul) has no clock port.  Pace the
+# stimulus with a synthetic clock and connect the DUTs by data ports only.
 comb = not clks
 SAMPLE = clks[0] if clks else "cs_vclk"
 
@@ -112,7 +114,6 @@ def rnd(n, w):
 
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
-# distinct clock periods so a CDC design crosses domains (host 5ns half, dev 7ns)
 periods = [5, 7, 9, 11]
 clkdecl = "\n".join(f"  reg {c} = 0;" for c in clks)
 if comb:
@@ -124,14 +125,14 @@ if comb:
 rstdecl = "\n".join(f"  reg {n} = {'1' if ah else '0'};" for n, ah in rsts)
 rst_assert  = "\n    ".join(f"{n} = {'1' if ah else '0'};" for n, ah in rsts)
 rst_release = "\n    ".join(f"{n} = {'0' if ah else '1'};" for n, ah in rsts)
+# DUT clock/reset port binding (empty for a comb module: cs_vclk is tb-only).
 allck = ", ".join(f".{c}({c})" for c in clks) + \
         ("," if clks and rsts else "") + \
         ", ".join(f".{n}({n})" for n, _ in rsts)
-head  = (allck + ", ") if allck else ""   # empty for a comb DUT (cs_vclk is tb-only)
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
+head  = (allck + ", ") if allck else ""
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
 drive = "\n      ".join(rnd(n, w) for n, w in ins)
-# only compare where RTL output is fully defined (=== itself)
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
@@ -144,8 +145,8 @@ def _rep(n):
       f'begin reps_{n}=1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, r_{n}, s_{n}); end')
 report = "\n".join(_rep(n) for n, _ in outs)
 
-# Comb DUTs settle within a sample cycle; the reset preamble only applies to a
-# clocked module.
+# Comb DUTs settle within a sample cycle; a reset preamble only applies to
+# clocked modules.
 preamble = "" if comb else (rst_assert + "\n    " + drive +
                             f"\n    repeat (6) @(negedge {SAMPLE});\n    " + rst_release)
 
@@ -190,7 +191,7 @@ open("cs_tb.sv", "w").write(tb)
 def run_verilator():
     r = sh(["verilator", "--binary", "-j", "0", "-Wno-lint", "-Wno-style",
             "-Wno-fatal", "--timing", "--no-assert", "-DSYNTHESIS", "-o", "cssim",
-            "-f", FLIST, f"+incdir+{HERE}/wrappers",
+            "-f", FLIST,
             "cs_gold.v", "cs_gate.v", "cs_tb.sv", "--top-module", "tb"])
     if r.returncode:
         return None, r.stderr[-800:]
@@ -198,7 +199,7 @@ def run_verilator():
     return r.stdout, r.stderr[-800:]
 
 def run_iverilog():
-    inc = [f"-I{PRIM}", f"-I{TLUL}", f"-I{PKG}"]
+    inc = [f"-I{d}" for d in INCS]
     r = sh(["iverilog", "-g2012", "-DSYNTHESIS", "-o", "cssim.vvp", "-s", "tb"]
            + inc + SR + ["cs_gold.v", "cs_gate.v", "cs_tb.sv"])
     if r.returncode:
