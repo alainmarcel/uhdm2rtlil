@@ -13,5 +13,5 @@ acc_rnd                   4  200  proven
 acc_stack                 4  200  proven
 acc_loop_controller       4  200  proven
 # --- SAT-hard / needs cosim adjudication (bignum datapath / control) ---
-acc_start_stop_control    4  200  timeout
+acc_start_stop_control    4  200  proven
 unified_mul               4  200  timeout   # big multiplier — SAT-hard, cosim later

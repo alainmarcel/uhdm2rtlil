@@ -12,6 +12,7 @@ ROOTS = [f'{HERE}/rtl/acc', f'{HERE}/rtl/pkg',
          f'{TLUL}/rtl/prim', f'{TLUL}/rtl/tlul', f'{TLUL}/rtl/pkg']
 defs = {}
 files = {}
+macro_bodies = {}   # `define NAME ... (with \-continuations)  ->  full body text
 for d in ROOTS:
     for f in sorted(glob.glob(f'{d}/*.sv')):
         t = open(f, errors='replace').read()
@@ -20,6 +21,34 @@ for d in ROOTS:
         for p in re.findall(r'^\s*package\s+(\w+)', t, re.M):
             defs.setdefault(p, f); is_pkg = True
         files.setdefault(f, is_pkg)
+        # Collect `define macro bodies (backslash-continued): a module may be
+        # instantiated ONLY inside a macro (prim_sparse_fsm_flop via
+        # PRIM_FLOP_SPARSE_FSM in prim_flop_macros.sv), invisible to the token
+        # scan below.  Keep the body so refs() can pull those modules in.
+        lines = t.split('\n')
+        i = 0
+        while i < len(lines):
+            m = re.match(r'\s*`define\s+(\w+)', lines[i])
+            if m:
+                name = m.group(1); body = [lines[i]]
+                while lines[i].rstrip().endswith('\\') and i + 1 < len(lines):
+                    i += 1; body.append(lines[i])
+                macro_bodies[name] = '\n'.join(body)
+            i += 1
+# Defs (modules/pkgs) referenced from inside a macro body, transitively through
+# nested macro references — precomputed per macro name.
+_macro_defs_cache = {}
+def macro_def_refs(mname, seen=None):
+    if mname in _macro_defs_cache: return _macro_defs_cache[mname]
+    if seen is None: seen = set()
+    if mname in seen: return set()
+    seen.add(mname)
+    toks = set(re.findall(r'[A-Za-z_]\w*', macro_bodies.get(mname, '')))
+    r = toks & set(defs.keys())
+    for sub in toks & set(macro_bodies.keys()):
+        r |= macro_def_refs(sub, seen)
+    _macro_defs_cache[mname] = r
+    return r
 _tok_cache = {}
 def refs(f):
     if f in _tok_cache: return _tok_cache[f]
@@ -27,6 +56,8 @@ def refs(f):
     txt = re.sub(r'/\*.*?\*/', '', txt, flags=re.S)
     toks = set(re.findall(r'[A-Za-z_]\w*', txt))
     r = toks & set(defs.keys())
+    for mname in toks & set(macro_bodies.keys()):
+        r |= macro_def_refs(mname)
     _tok_cache[f] = r
     return r
 def closure(target):
