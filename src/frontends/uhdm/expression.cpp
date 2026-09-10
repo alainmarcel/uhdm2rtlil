@@ -6253,9 +6253,18 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             case vpiConcatOp:
                 if (operands.size() >= 1) {
                     RTLIL::Const concat_result;
-                    for (int i = operands.size() - 1; i >= 0; i--) {
-                        RTLIL::Const op_const = operands[i].as_const();
-                        concat_result.append(op_const);
+                    // Leftmost item at the MSBs → append in reverse list order
+                    // (append puts the first-appended at the LSB).  UNLESS
+                    // vpiReordered:1 — Surelog already reordered the operands
+                    // LSB-first in the elaborated model (prim_count's overridden
+                    // `ResetValues = {{W{1'b1}}-RV, RV}`); append in list order
+                    // then.  Same rule as the SigSpec concat path below.
+                    if (uhdm_op->VpiReordered()) {
+                        for (size_t i = 0; i < operands.size(); i++)
+                            concat_result.append(operands[i].as_const());
+                    } else {
+                        for (int i = operands.size() - 1; i >= 0; i--)
+                            concat_result.append(operands[i].as_const());
                     }
                     result = concat_result;
                 }
@@ -7100,13 +7109,28 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             {
                 log_debug("UHDM: Processing vpiConcatOp with %d operands\n", (int)operands.size());
                 RTLIL::SigSpec result;
-                // In SystemVerilog concatenation, the leftmost item appears in the MSBs
-                // So we need to reverse the order when building the result
-                for (int i = operands.size() - 1; i >= 0; i--) {
-                    if (operands[i].size() == 0) {
-                        log_warning("Empty operand in concatenation at position %d\n", i);
+                // In SystemVerilog concatenation the leftmost item is at the
+                // MSBs, so we append in REVERSE list order (SigSpec::append puts
+                // the first-appended at the LSB).  UNLESS the operation carries
+                // vpiReordered:1 — Surelog already reordered the operands into
+                // LSB-first order in the elaborated model (seen on prim_count's
+                // `localparam ResetValues = {{Width{1'b1}}-ResetValue, ResetValue}`
+                // when ResetValue is OVERRIDDEN: the always-reverse swapped the
+                // two 32-bit halves, resetting the counter to 0 instead of the
+                // overridden value — acc_loop_controller cex).  Then append in
+                // list order.  Mirrors the vpiAssignmentPatternOp path above.
+                if (uhdm_op->VpiReordered()) {
+                    for (size_t i = 0; i < operands.size(); i++) {
+                        if (operands[i].size() == 0)
+                            log_warning("Empty operand in concatenation at position %zu\n", i);
+                        result.append(operands[i]);
                     }
-                    result.append(operands[i]);
+                } else {
+                    for (int i = operands.size() - 1; i >= 0; i--) {
+                        if (operands[i].size() == 0)
+                            log_warning("Empty operand in concatenation at position %d\n", i);
+                        result.append(operands[i]);
+                    }
                 }
                 log_debug("UHDM: Concatenation result size: %d\n", result.size());
                 return result;
