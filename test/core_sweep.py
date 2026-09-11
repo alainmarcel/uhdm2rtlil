@@ -518,12 +518,12 @@ def sweep_acc(jobs, cycles=300, flt=None):
             r["cosim"] = "— (no elaboration)"
         else:
             r["check"] = _acc_check(r["module"])
-            # Co-sim adjudicates ONLY where the formal verdict left a question
-            # (SAT timeout / cex).  A formally-proven module needs no co-sim.
-            if r["formal_raw"] == "proven":
-                r["cosim"] = "— (formally proven)"
-            elif r["formal_raw"] in ("timeout", "cex"):
-                r["cosim"] = _acc_cosim(r["module"], cycles)
+            # Co-sim EVERY module (not just cex/timeout): a formal SAT proof runs
+            # under -set-init-zero and can miss a real reset/init divergence that
+            # only shows in from-X simulation (e.g. tlul_fifo_sync proves yet the
+            # co-sim diverges).  Running the co-sim on formally-proven modules
+            # too surfaces those.
+            r["cosim"] = _acc_cosim(r["module"], cycles)
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
