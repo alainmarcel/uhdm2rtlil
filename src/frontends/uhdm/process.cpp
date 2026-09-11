@@ -10382,8 +10382,11 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     if (proc) {
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_val), proc);
     } else if (case_rule) {
-        std::string temp_name = "$0\\" + base_name;
-        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        // find_own_temp_wire (not a bare module->wire("$0\\"+name)) so a
+        // PARTIALLY-written signal's ranged temp `$0\<name>[msb:lsb]` is found
+        // rather than falling back to the real wire (which double-drives the
+        // sync FF's Q and drops the store — see emit_dynamic_packed_select_write).
+        RTLIL::Wire* temp_wire = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt = temp_wire ? RTLIL::SigSpec(temp_wire)
                                        : RTLIL::SigSpec(base_wire);
         // Unconditional at this case level — supersedes identical-target
@@ -11675,8 +11678,16 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     if (proc) {
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
     } else if (case_rule) {
-        std::string temp_name = "$0\\" + base_name;
-        RTLIL::Wire* tw = module->wire(temp_name);
+        // The per-process temp for a PARTIALLY-written signal is named
+        // `$0\<name>[msb:lsb]` (with the range suffix), NOT `$0\<name>` — a bare
+        // module->wire("$0\\"+name) misses it, so the write falls back to the
+        // real wire `\<name>`.  In an always_ff that both DOUBLE-DRIVES the wire
+        // (also the sync FF's Q) and leaves the FF temp holding only the old
+        // value, dropping the dynamic store (prim_fifo_sync `storage[wptr] <=
+        // wdata_i` — the FIFO never stored a word, rdata read 0 after the memory
+        // pass).  find_own_temp_wire consults the per-signal temp maps (keyed by
+        // the bare name) first, then falls back to `$0\<name>`.
+        RTLIL::Wire* tw = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
         remove_target_from_switches(case_rule, tgt);
         case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
@@ -12137,8 +12148,16 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     if (proc) {
         emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
     } else if (case_rule) {
-        std::string temp_name = "$0\\" + base_name;
-        RTLIL::Wire* tw = module->wire(temp_name);
+        // The per-process temp for a PARTIALLY-written signal is named
+        // `$0\<name>[msb:lsb]` (with the range suffix), NOT `$0\<name>` — a bare
+        // module->wire("$0\\"+name) misses it, so the write falls back to the
+        // real wire `\<name>`.  In an always_ff that both DOUBLE-DRIVES the wire
+        // (also the sync FF's Q) and leaves the FF temp holding only the old
+        // value, dropping the dynamic store (prim_fifo_sync `storage[wptr] <=
+        // wdata_i` — the FIFO never stored a word, rdata read 0 after the memory
+        // pass).  find_own_temp_wire consults the per-signal temp maps (keyed by
+        // the bare name) first, then falls back to `$0\<name>`.
+        RTLIL::Wire* tw = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
         remove_target_from_switches(case_rule, tgt);
         case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
