@@ -102,7 +102,7 @@ def parse_project_f(test_dir: Path) -> dict:
     by the workflow / equivalence scripts so the three pipelines see
     the same file list."""
     out: dict = {"srcs": [], "top": "", "mode": "", "verilator": [],
-                 "slang": []}
+                 "slang": [], "incdirs": []}
     pf = test_dir / "project.f"
     if pf.exists():
         for raw in pf.read_text(errors="replace").splitlines():
@@ -131,6 +131,18 @@ def parse_project_f(test_dir: Path) -> dict:
                         # Per-test extra Verilator flags (e.g. `-Wno-...` or
                         # `+define+FOO`) for imported designs that need them.
                         out["verilator"] += val.split()
+                    elif key == "surelog":
+                        # Derive Verilator include dirs from the surelog `-I`
+                        # flags so imported designs that `\`include` shared
+                        # headers (ibex's prim_assert.sv `\`ASSERT` macros,
+                        # etc.) build for co-sim without needing a separate
+                        # `# verilator:` line.  Paths are test-dir-relative in
+                        # project.f but Verilator runs from the harness work
+                        # dir — absolutize them.
+                        for tok in val.split():
+                            if tok.startswith("-I") and len(tok) > 2:
+                                out["incdirs"].append(
+                                    str((test_dir / tok[2:]).resolve()))
                 continue
             out["srcs"].append(test_dir / line)
     if not out["srcs"]:
@@ -888,8 +900,15 @@ def main() -> int:
                         unpacked=unpacked, cycles=args.cycles)
 
     print("▶ Running Verilator co-sim")
-    rc, out = run_verilator(work, paths, rtl_srcs,
-                            extra_flags=project.get("verilator") or [])
+    # Include dirs derived from the surelog `-I` flags (so `\`include`d shared
+    # headers resolve) plus any explicit `# verilator:` flags.  --no-assert:
+    # assertions never drive outputs, and expanding prim_assert's `\`ASSERT`
+    # SVA under Verilator only adds build fragility to an output-only co-sim.
+    vflags = ["-I" + inc for inc in project.get("incdirs") or []]
+    if project.get("incdirs"):
+        vflags.append("--no-assert")
+    vflags += project.get("verilator") or []
+    rc, out = run_verilator(work, paths, rtl_srcs, extra_flags=vflags)
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)

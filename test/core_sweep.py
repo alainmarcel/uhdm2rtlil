@@ -24,6 +24,9 @@ import sys
 from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent
+# Flattened read_uhdm cell counts, populated by _undriven_check and read by the
+# auto-miter size gate (keyed by resolved work-dir path).
+_CELLS: dict = {}
 CVA6_DIR = TEST_DIR / "cva6_equiv"
 PAVONA_DIR = TEST_DIR / "pavona_equiv"
 TLUL_DIR = TEST_DIR / "pavona_tlul_equiv"
@@ -87,10 +90,16 @@ def _undriven_check(work_dir, top):
         f"read_uhdm slpp_all/surelog.uhdm\n"
         f"hierarchy -check -top {top}\n"
         f"flatten; opt_clean\n"
+        f"stat\n"
         f"check\n")
     rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check_undriven.ys"],
                  cwd=work_dir, timeout=1800)
     out = out or ""
+    # Cache the flattened cell count (from `stat`) so the auto-miter gate can
+    # skip SoC-scale designs without a second flatten.
+    mcell = re.search(r"Number of cells:\s*(\d+)", out)
+    if mcell:
+        _CELLS[str(Path(work_dir).resolve())] = int(mcell.group(1))
     # A leaf extraction whose child-module sources are not in the source list
     # leaves those instances as BLACKBOXES: yosys resizes the unknown cell ports
     # to 1 bit and every wider fanout net reads as undriven.  That is not a
@@ -115,6 +124,97 @@ def _project_top(d):
             if m:
                 return m.group(1)
     return d.name
+
+
+def _slang_args(d):
+    """read_slang arguments for a test dir, from the `# slang:` directive in
+    project.f (e.g. `--ignore-assertions -I../ibex/prim -I../ibex/rtl`), falling
+    back to the `-I` include dirs of the `# surelog:` line.  Returns a string."""
+    pf = d / "project.f"
+    if not pf.exists():
+        return "--ignore-assertions"
+    slang = None
+    incs = []
+    for line in pf.read_text().splitlines():
+        s = line.strip()
+        m = re.match(r"#\s*slang:\s*(.+)", s)
+        if m:
+            slang = m.group(1).strip()
+        m = re.match(r"#\s*surelog:\s*(.+)", s)
+        if m:
+            incs = [t for t in m.group(1).split() if t.startswith("-I")]
+    if slang:
+        return slang
+    return "--ignore-assertions " + " ".join(incs)
+
+
+def _auto_slang_miter(d, top, known_fail, timeout=600):
+    """Run an on-the-fly read_uhdm-vs-read_slang miter for a test dir that ships
+    no committed `test_slang_equiv.ys`.  The miter is the same boilerplate the
+    committed ones use (both frontends elaborate `top` from project.f, lower to a
+    comparable gate netlist, then `miter -equiv` + bounded SAT).  read_slang is
+    attempted first: a LEAF-extraction dir for a parent module (project.f lists
+    only the module + its packages, not the submodule RTL) cannot elaborate
+    standalone — that is reported honestly as "needs submodules", not a diff.
+    Returns the `formal` cell string."""
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    slang = _slang_args(d)
+    script = f"""\
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top {top}
+flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
+opt; memory; async2sync; techmap; opt
+rename {top} gold
+design -stash gold
+read_slang -f project.f {slang} --top {top}
+hierarchy -check -top {top}
+flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
+opt; memory; async2sync; techmap; opt
+rename {top} gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
+"""
+    (d / "auto_slang_equiv.ys").write_text(script)
+    rc, out = sh([str(yosys), "-m", str(plugin), "auto_slang_equiv.ys"],
+                 cwd=d, timeout=timeout)
+    out = out or ""
+    # A module whose submodule RTL is not in project.f (parent modules —
+    # ibex_core, *_id_stage, *_top, or a *_latch/top with a prim_clock_gating
+    # cell) cannot be mitered standalone: read_slang fails to elaborate
+    # ("unknown module"/"Build failed"), or the read_uhdm hierarchy check flags
+    # the missing child ("is not part of the design").  Honestly "no miter", not
+    # a divergence.
+    if re.search(r"unknown module|Design elaboration failed|Build failed:"
+                 r"|is not part of the design", out):
+        return "— (no miter: needs submodules)"
+    if "SUCCESS!" in out:
+        return "✅ equivalent (auto)"
+    if rc == 124 or "[timeout]" in out:
+        return "⚠ SAT timeout (auto)"
+    # A cell with no SAT model (e.g. an unmapped $mem after write_verilog round
+    # trips) means the miter itself could not be solved — not a proven diff.
+    if "No SAT model available" in out:
+        return "— (no miter: unmappable cell)"
+    # An empty module (body commented out upstream — rp32 r5p_mdu) or one that
+    # `opt` removes entirely leaves nothing to stash under `gold`/`gate`.
+    if re.search(r"Can't find (gold|gate) module", out):
+        return "— (no miter: empty module)"
+    if "FAIL!" in out or "model found" in out:
+        # An auto-miter diff is NOT proof of a UHDM bug: it can be an
+        # unpacked-array output-port encoding difference between the two
+        # frontends, or a slang-side divergence from the RTL — both of which the
+        # UHDM-vs-RTL co-sim (the authoritative adjudicator, run next) clears.
+        # Report it as a soft warning, not a hard ❌, so the reader weighs it
+        # against the co-sim column.
+        return "⚠ known-diff (auto)" if d.name in known_fail else "⚠ differs (auto)"
+    # Anything else (a lowering error on one side, an internal abort) is not a
+    # trustworthy diff verdict.
+    return "— (no miter: setup error)"
 
 
 def sweep_testdirs(prefix, cycles, jobs, flt=None):
@@ -142,7 +242,10 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             return row
         # Structural undriven-net probe (fast dropped-driver check, every dir).
         row["check"] = _undriven_check(d, _project_top(d))
-        # 1. slang miter (only where the test ships one).
+        # 1. slang miter.  A committed test_slang_equiv.ys takes precedence
+        # (hand-tuned lowering for the tricky modules); otherwise auto-generate
+        # the standard boilerplate miter from project.f so a self-contained
+        # module is actually compared instead of showing a bare "no miter".
         if (d / "test_slang_equiv.ys").exists():
             rc, _ = sh([str(TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"),
                         "-m", str(TEST_DIR / ".." / "build" / "uhdm2rtlil.so"),
@@ -153,6 +256,16 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
                 row["formal"] = "⚠ known-diff"
             else:
                 row["formal"] = "❌ differs"
+        elif (d / "project.f").exists():
+            # An on-the-fly bounded-SAT miter is only practical for UNIT-scale
+            # modules.  A full core / SoC would just burn the auto-miter timeout,
+            # so gate it on the flattened cell count (cached by the undriven
+            # check above) and leave large designs to their dedicated flows.
+            ncells = _CELLS.get(str(d.resolve()), 0)
+            if ncells > 8000:
+                row["formal"] = "— (no miter: core-scale)"
+            else:
+                row["formal"] = _auto_slang_miter(d, _project_top(d), known_fail)
         # 2. Verilator co-sim.
         cfg = d / "sim_config"
         if cfg.exists() and "SKIP_SIM_EQUIV=1" in cfg.read_text():
