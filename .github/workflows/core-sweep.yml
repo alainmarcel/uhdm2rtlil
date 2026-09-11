@@ -22,6 +22,11 @@ on:
         required: false
         type: number
         default: 180
+      shards:
+        description: "Split the sweep across N parallel jobs (round-robin over modules). 1 = single job (ibex/rp32); >1 for the heavy cva6 sweep."
+        required: false
+        type: number
+        default: 1
 
 jobs:
   build:
@@ -121,10 +126,25 @@ jobs:
           verilator.tar.gz
         retention-days: 1
 
-  sweep:
+  # Build the shard matrix list [1..shards] so the sweep can fan out.
+  prep:
     needs: build
     runs-on: ubuntu-24.04
+    outputs:
+      shards: ${{ steps.gen.outputs.shards }}
+    steps:
+    - id: gen
+      run: |
+        echo "shards=[$(seq -s, 1 ${{ inputs.shards }})]" >> "$GITHUB_OUTPUT"
+
+  sweep:
+    needs: [build, prep]
+    runs-on: ubuntu-24.04
     timeout-minutes: ${{ inputs.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.prep.outputs.shards) }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -157,16 +177,55 @@ jobs:
           || { echo "this yosys has no built-in read_slang"; exit 1; }
         /opt/verilator-5.048/bin/verilator --version
 
-    - name: Run ${{ inputs.core }} sweep
+    - name: Run ${{ inputs.core }} sweep (shard ${{ matrix.shard }}/${{ inputs.shards }})
       run: |
         cd test
         # JOBS bounds the cva6 miter parallelism (SAT is memory-hungry on
         # 16 GB runners); core_sweep's own --jobs bounds concurrent co-sims.
         # FULL_SWEEP=1: the nightly also proves the long-budget (>900s SAT)
         # modules that interactive sweeps skip for productivity.
+        # --shard runs only this shard's ~1/N of the modules; each shard writes
+        # its rows as JSON, merged into the final table by the `merge` job.
         MEM_LIMIT_KB=12000000 \
         JOBS=2 FULL_SWEEP=1 python3 core_sweep.py ${{ inputs.core }} \
           --cycles ${{ inputs.cycles }} --jobs 2 \
+          --shard ${{ matrix.shard }}/${{ inputs.shards }} \
+          --emit-json "$GITHUB_WORKSPACE/${{ inputs.core }}-shard-${{ matrix.shard }}.json" \
+          --out "$GITHUB_WORKSPACE/${{ inputs.core }}-shard-${{ matrix.shard }}.md"
+
+    - name: Upload shard rows
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.core }}-shard-${{ matrix.shard }}
+        path: |
+          ${{ inputs.core }}-shard-${{ matrix.shard }}.json
+          ${{ inputs.core }}-shard-${{ matrix.shard }}.md
+        retention-days: 7
+        if-no-files-found: warn
+
+  # Merge the per-shard JSON row dumps into the final table + step summary.
+  merge:
+    needs: sweep
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download shard rows
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ${{ inputs.core }}-shard-*
+        path: shards
+        merge-multiple: true
+
+    - name: Merge into final report
+      run: |
+        cd test
+        python3 core_sweep.py ${{ inputs.core }} \
+          --cycles ${{ inputs.cycles }} \
+          --merge "$GITHUB_WORKSPACE"/shards/${{ inputs.core }}-shard-*.json \
           --out "$GITHUB_WORKSPACE/${{ inputs.core }}-sweep.md"
 
     - name: Upload sweep report

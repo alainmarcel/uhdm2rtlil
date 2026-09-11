@@ -25,4 +25,8 @@ jobs:
     with:
       core: cva6
       cycles: ${{ github.event.inputs.cycles || '300' }}
-      timeout: 350
+      # 6-way shard: the full cva6 sweep (SAT miters + per-module co-sim) ran
+      # ~3h48m in one job and hit the timeout, so split it round-robin across
+      # 6 parallel jobs (~1/6 each) with a generous per-shard timeout.
+      shards: 6
+      timeout: 180
