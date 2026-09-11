@@ -530,6 +530,19 @@ struct UhdmImporter {
     // the memory simply never clears.
     std::set<std::string> async_reset_filled_arrays;
 
+    // Arrays (incl. unpacked-array ports) whose ELEMENTS are written
+    // individually — by a process (`arr[i] <= …` in an always block, incl. a
+    // genvar-for-loop of always_ff each writing one element) or by a per-
+    // element continuous assign (`assign arr[i] = …`).  For such an array the
+    // per-element wires are the write targets, so a whole-array flat alias must
+    // be assembled FROM the elements (flat ← element).  When the array is
+    // instead written AS A WHOLE (`assign q_o = q`), it is NOT in this set and
+    // the elements are read-aliases of the flat wire (element ← flat).  Consumed
+    // both by the array_var/array_net flat-alias path and by import_port's
+    // unpacked-array OUTPUT-port element aliasing.  Populated per module (before
+    // ports are imported) by collect_proc_elem_written().
+    std::set<std::string> proc_elem_written;
+
     // Element widths for function-local unpacked array_var instances.
     // Key: variable name (within the function evaluation scope).  Value: width
     // of one array element in bits.  Storage is flattened into the per-name
@@ -643,6 +656,12 @@ struct UhdmImporter {
     // Main import functions
     void import_design(UHDM::design* uhdm_design);
     void import_module(const UHDM::module_inst* uhdm_module);
+    // Populate proc_elem_written for `uhdm_module`: names of arrays whose
+    // elements are written individually (per-element process or continuous
+    // assign, recursing through generate scopes).  Called before ports/vars/
+    // nets are imported so import_port can choose the flat/element alias
+    // direction for an unpacked-array output port.
+    void collect_proc_elem_written(const UHDM::module_inst* uhdm_module);
     void import_module_hierarchy(const UHDM::module_inst* uhdm_module, bool create_instances = true);
     void import_port(const UHDM::port* uhdm_port, int positional_idx = 0);
     void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
