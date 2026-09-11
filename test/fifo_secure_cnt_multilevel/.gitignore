@@ -1,0 +1,5 @@
+slpp_all/
+obj_dir/
+*.log
+dut_netlist.v
+cosim
