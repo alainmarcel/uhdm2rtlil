@@ -2,8 +2,10 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_id_stage
 # surelog: -I../ibex/prim -I../ibex/rtl -I../ibex/dv
-# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl +incdir+../../ibex/dv --no-assert
+# verilator: --no-assert
 # slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl -I../ibex/dv
 
 ../ibex/rtl/ibex_pkg.sv
+../ibex/rtl/ibex_controller.sv
+../ibex/rtl/ibex_decoder.sv
 ../ibex/rtl/ibex_id_stage.sv

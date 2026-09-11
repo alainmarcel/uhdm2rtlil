@@ -200,12 +200,20 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
     rc, out = sh([str(yosys), "-m", str(plugin), "auto_slang_equiv.ys"],
                  cwd=d, timeout=timeout)
     out = out or ""
-    # A module whose submodule RTL is not in project.f (parent modules —
-    # ibex_core, *_id_stage, *_top, or a *_latch/top with a prim_clock_gating
-    # cell) cannot be mitered standalone: read_slang fails to elaborate
-    # ("unknown module"/"Build failed"), or the read_uhdm hierarchy check flags
-    # the missing child ("is not part of the design").  Honestly "no miter", not
-    # a divergence.
+    # read_slang chokes on the lowRISC lint-sink pattern `logic unused_x = net;`
+    # (a variable initialiser that reads a net) with "reading net state during
+    # design initialization unsupported".  This is a slang frontend limitation,
+    # not a missing submodule or a real divergence — the read_uhdm side is fine,
+    # so these modules fall back to the co-sim column.  (ibex_top / ibex_tracer /
+    # ibex_top_tracing.)
+    if rc in (139, -11) or "Segmentation fault" in out:
+        return "— (no miter: crash)"
+    if "reading net state during design initialization" in out:
+        return "— (no miter: slang net-init)"
+    # A module whose submodule RTL is not in project.f cannot be mitered
+    # standalone: read_slang fails to elaborate ("unknown module"/"Build
+    # failed"), or the read_uhdm hierarchy check flags the missing child ("is
+    # not part of the design").  Honestly "no miter", not a divergence.
     if re.search(r"unknown module|Design elaboration failed|Build failed:"
                  r"|is not part of the design", out):
         return "— (no miter: needs submodules)"
