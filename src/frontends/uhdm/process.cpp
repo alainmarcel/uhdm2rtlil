@@ -7200,11 +7200,29 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             break;
         }
+        case vpiForeachStmt: {
+            // `foreach (arr[i]) body` in a sync (always_ff) context — unroll
+            // over the array dimension.
+            auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
+            std::string var; int low = 0, count = 0;
+            if (fe && foreach_loop_bounds(fe, var, low, count)) {
+                bool had = loop_values.count(var);
+                int saved = had ? loop_values[var] : 0;
+                for (int i = 0; i < count; i++) {
+                    loop_values[var] = low + i;
+                    import_statement_sync(fe->VpiStmt(), sync, is_reset);
+                }
+                if (had) loop_values[var] = saved; else loop_values.erase(var);
+            } else {
+                log_warning("Cannot unroll foreach in sync context\n");
+            }
+            break;
+        }
         default:
             log_warning("Unsupported statement type in sync context: %d\n", stmt_type);
             break;
     }
-    
+
     log("        import_statement_sync returning\n");
     log_flush();
 }
@@ -7455,6 +7473,45 @@ void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
     if (mode_debug)
         log("    Created $print cell '%s' for '%s' (EN=%s)\n",
             cell_id.c_str(), task_name.c_str(), en_wire->name.c_str());
+}
+
+// Resolve a `foreach (arr[var])` to its unroll bounds.  SINGLE loop var only.
+bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
+                                       std::string& var, int& low, int& count) {
+    if (!fe || !fe->VpiLoopVars() || fe->VpiLoopVars()->size() != 1) return false;
+    const any* lv = (*fe->VpiLoopVars())[0];
+    if (!lv) return false;
+    var = std::string(lv->VpiName());
+    if (var.empty()) return false;
+
+    // The iterated array is Variable(); its typespec carries the dimension.
+    const any* arr = fe->Variable();
+    if (!arr) return false;
+    const UHDM::ref_typespec* rts = nullptr;
+    if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) rts = rv->Typespec();
+    else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) rts = ro->Typespec();
+    else if (auto lvv = dynamic_cast<const UHDM::logic_var*>(arr)) rts = lvv->Typespec();
+    if (!rts || !rts->Actual_typespec()) return false;
+
+    const UHDM::VectorOfrange* ranges = nullptr;
+    auto ats = rts->Actual_typespec();
+    if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) ranges = arrts->Ranges();
+    else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pkts->Ranges();
+    else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lts->Ranges();
+    if (!ranges || ranges->empty()) return false;
+
+    auto r0 = (*ranges)[0];
+    if (!r0->Left_expr() || !r0->Right_expr()) return false;
+    bool saved = force_const_fold;
+    force_const_fold = true;
+    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+    RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+    force_const_fold = saved;
+    if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+    int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+    low = std::min(l, r);
+    count = std::abs(l - r) + 1;
+    return count > 0 && count <= 4096;
 }
 
 // Import statement for combinational context
@@ -7975,6 +8032,25 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             break;
         case vpiContinue:
             break;
+        case vpiForeachStmt: {
+            // `foreach (arr[i]) body` — unroll over the array dimension, the
+            // same static loop_values mechanism as vpiFor (kmac_msgfifo's
+            // msgfifo_empty_all / packer_flush reductions were dropped).
+            auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
+            std::string var; int low = 0, count = 0;
+            if (fe && foreach_loop_bounds(fe, var, low, count)) {
+                bool had = loop_values.count(var);
+                int saved = had ? loop_values[var] : 0;
+                for (int i = 0; i < count; i++) {
+                    loop_values[var] = low + i;
+                    import_statement_comb(fe->VpiStmt(), proc);
+                }
+                if (had) loop_values[var] = saved; else loop_values.erase(var);
+            } else {
+                log_warning("Cannot unroll foreach in comb context\n");
+            }
+            break;
+        }
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
             break;
@@ -15767,6 +15843,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         case vpiContinue:
             break;
+        case vpiForeachStmt: {
+            // `foreach (arr[i]) body` inside an if/case branch — unroll over the
+            // array dimension (same as the Process* overload).
+            auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
+            std::string var; int low = 0, count = 0;
+            if (fe && foreach_loop_bounds(fe, var, low, count)) {
+                bool had = loop_values.count(var);
+                int saved = had ? loop_values[var] : 0;
+                for (int i = 0; i < count; i++) {
+                    loop_values[var] = low + i;
+                    import_statement_comb(fe->VpiStmt(), case_rule);
+                }
+                if (had) loop_values[var] = saved; else loop_values.erase(var);
+            } else {
+                log_warning("Cannot unroll foreach in case context\n");
+            }
+            break;
+        }
         default:
             if (mode_debug)
                 log("        Unsupported statement type in case: %s (vpiType=%d)\n",

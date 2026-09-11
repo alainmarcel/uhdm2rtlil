@@ -895,6 +895,13 @@ struct UhdmImporter {
     
     // Statement import for different contexts
     void import_statement_sync(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
+    // Resolve a `foreach (arr[var])` loop to its unroll bounds: the loop
+    // variable name and the iterated dimension's [low, low+count) index range.
+    // Handles only a SINGLE loop var (multi-dim `arr[i][j]` returns false so
+    // the caller falls through).  Returns false when the array dimension is not
+    // a constant-foldable range.
+    bool foreach_loop_bounds(const UHDM::foreach_stmt* fe, std::string& var,
+                             int& low, int& count);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::CaseRule* case_rule);
     void import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
