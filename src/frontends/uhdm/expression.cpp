@@ -5873,8 +5873,47 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (refs_lv(o)) { has_loop_value_operand = true; break; }
     }
 
+    // A REPLICATION whose count references a MODULE PARAMETER
+    // (`{Width{1'b1}}`) must be sized from the parameter's ELABORATED value,
+    // which lives in `module->parameter_default_values` — not from whatever
+    // ExprEval resolves the count to against the (possibly wrong-level) UHDM
+    // `inst`.  When a module is instantiated several levels deep through
+    // parameter pass-through (prim_fifo_sync -> prim_fifo_sync_cnt ->
+    // prim_count), ExprEval folds `{Width{1'b1}}` using prim_count's DEFAULT
+    // `Width` (or an ancestor's same-named `Width`) instead of the elaborated
+    // one, so the computed localparam `ResetValues = {{Width{1'b1}}-RV, RV}`
+    // came out the wrong total width; the genvar element select
+    // `ResetValues[k]` then read a wrong-width slot (0 instead of the reset
+    // magnitude), resetting a secure counter wrong and raising spurious errors.
+    // Falling through to the operand-wise import below resolves the count via
+    // import_ref_obj -> parameter_default_values (the elaborated value) — which
+    // is exactly why a directly-instantiated (single-level) instance already
+    // works: there ExprEval could not fold and took the same fall-through.
+    bool has_param_replication_count = false;
+    if (module && uhdm_op->Operands()) {
+        std::function<bool(const UHDM::any*)> refs_param_rep =
+            [&](const UHDM::any* e) -> bool {
+                if (!e || e->VpiType() != vpiOperation) return false;
+                auto op2 = any_cast<const operation*>(e);
+                if (op2->VpiOpType() == vpiMultiConcatOp && op2->Operands() &&
+                    !op2->Operands()->empty()) {
+                    const UHDM::any* cnt = (*op2->Operands())[0];
+                    if (cnt && cnt->VpiType() == vpiRefObj &&
+                        module->parameter_default_values.count(
+                            RTLIL::escape_id(std::string(cnt->VpiName()))))
+                        return true;
+                }
+                if (op2->Operands())
+                    for (auto o2 : *op2->Operands())
+                        if (refs_param_rep(o2)) return true;
+                return false;
+            };
+        has_param_replication_count = refs_param_rep(uhdm_op);
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
-        !has_struct_param_hier_operand && !has_loop_value_operand) {
+        !has_struct_param_hier_operand && !has_loop_value_operand &&
+        !has_param_replication_count) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -7572,7 +7611,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     }
     // Get the referenced object name
     std::string ref_name = std::string(uhdm_ref->VpiName());
-    
+
     if (mode_debug)
         log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
     
@@ -7975,7 +8014,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             }
             
             if (mode_debug)
-                log("UHDM: ref_obj %s refers to parameter with value %s\n", 
+                log("UHDM: ref_obj %s refers to parameter with value %s\n",
                     ref_name.c_str(), param_value.as_string().c_str());
             return RTLIL::SigSpec(param_value);
         }
@@ -8003,7 +8042,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 ref_name.c_str(), param_value.as_string().c_str(), param_value.size());
         return RTLIL::SigSpec(param_value);
     }
-    
+
     // If we're in a generate scope, try hierarchical lookups
     std::string gen_scope = get_current_gen_scope();
     if (!gen_scope.empty()) {
