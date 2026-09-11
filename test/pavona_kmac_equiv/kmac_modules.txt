@@ -4,6 +4,6 @@
 #   ./run_kmac_equiv.sh            # all      ./run_kmac_equiv.sh <module>
 #   module                 seq  timeout  want
 keccak_round               4  200  timeout
-kmac_errchk                4  150  cex
+kmac_errchk                4  150  proven
 kmac_staterd               4  150  cex
 kmac_msgfifo               4  200  cex
