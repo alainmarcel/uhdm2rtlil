@@ -17,11 +17,28 @@ set it is appended there too, so the Action run page shows it directly.
 """
 import argparse
 import concurrent.futures as cf
+import glob
+import json
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+# Round-robin shard selection, set from --shard "i/N" (1-based i).  A shard runs
+# only the modules whose sorted index is congruent to (i-1) mod N, so a set of N
+# parallel CI jobs together cover every module while each does ~1/N of the work
+# (the cva6 sweep's SAT miters + co-sims otherwise blow the job timeout).
+# Default (0, 1) = one shard = everything.
+_SHARD = (0, 1)
+
+
+def _apply_shard(items):
+    """Return this shard's slice of a sorted item list (round-robin)."""
+    idx, cnt = _SHARD
+    if cnt <= 1:
+        return items
+    return items[idx::cnt]
 
 TEST_DIR = Path(__file__).resolve().parent
 # Flattened read_uhdm cell counts, populated by _undriven_check and read by the
@@ -226,6 +243,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
                   if d.is_dir() and d.name.startswith(prefix + "_")
                   and ((d / "project.f").exists() or (d / "dut.sv").exists())
                   and (flt is None or re.search(flt, d.name)))
+    dirs = _apply_shard(dirs)
 
     def one(d):
         name = d.name
@@ -304,17 +322,32 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
 # --------------------------------------------------------------------- cva6
 def sweep_cva6(cycles, jobs, flt=None):
     """Run the cva6_equiv miter suite, then adjudicate each module's co-sim."""
-    # 1. Formal statuses from one run_cva6_equiv.sh pass (narrowed to the
-    # filter when one is given — the script accepts module arguments).
-    cmd = ["./run_cva6_equiv.sh"]
-    if flt:
-        manifest = CVA6_DIR / "cva6_modules.txt"
+    # 1. Formal statuses from one run_cva6_equiv.sh pass.  The SAT miters are
+    # the sweep's dominant cost, so when a filter or a shard narrows the module
+    # set we pass those modules explicitly (the script accepts module arguments)
+    # — a shard then only SAT-runs its ~1/N slice, not the whole core.
+    manifest = CVA6_DIR / "cva6_modules.txt"
+    all_mods = []
+    if manifest.exists():
         for line in manifest.read_text().splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
                 name = line.split()[0]
-                if re.search(flt, name):
-                    cmd.append(name)
+                if flt is None or re.search(flt, name):
+                    all_mods.append(name)
+    all_mods.sort()
+    target_mods = _apply_shard(all_mods)
+    subset = flt is not None or _SHARD[1] > 1
+    # A subset run with no modules for this shard (e.g. shards > module count)
+    # must NOT fall through to a bare `run_cva6_equiv.sh` (which sweeps ALL
+    # modules) — there is simply nothing to do for this shard.
+    if subset and not target_mods:
+        return []
+    cmd = ["./run_cva6_equiv.sh"]
+    # Pass explicit modules whenever we are running a proper subset (a filter or
+    # a real shard).  With neither, run bare so the script sweeps its full set.
+    if subset:
+        cmd += target_mods
     rc, out = sh(cmd, cwd=CVA6_DIR, timeout=10800)
     formal = {}
     for line in out.splitlines():
@@ -340,6 +373,7 @@ def sweep_cva6(cycles, jobs, flt=None):
                 formal[parts[0]] = parts[3] if parts[3] in label else "skipped"
     mods = sorted(m for m, st in formal.items()
                   if st != "dead" and (flt is None or re.search(flt, m)))
+    mods = _apply_shard(mods)
 
     def one(mod):
         row = {"module": mod, "formal": label.get(formal[mod], formal[mod]),
@@ -686,13 +720,52 @@ def render(core, rows, cycles):
 
 
 def main():
+    global _SHARD
     ap = argparse.ArgumentParser()
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul", "acc"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--filter", help="regex: only sweep matching modules")
+    ap.add_argument("--shard", help='"i/N": run only shard i of N (1-based), '
+                    "round-robin over the sorted module list")
+    ap.add_argument("--emit-json", type=Path,
+                    help="also write this shard's rows as JSON (for --merge)")
+    ap.add_argument("--merge", nargs="+", metavar="JSON",
+                    help="merge these per-shard JSON row files into one table "
+                    "instead of sweeping (globs allowed); no sweep is run")
     args = ap.parse_args()
+
+    # Merge mode: combine per-shard JSON row dumps into the final table.
+    if args.merge:
+        files = []
+        for pat in args.merge:
+            files.extend(sorted(glob.glob(pat)))
+        rows, cycles = [], args.cycles
+        for f in files:
+            data = json.loads(Path(f).read_text())
+            rows.extend(data.get("rows", []))
+            cycles = data.get("cycles", cycles)
+        # De-dup by module (a module should appear in one shard only) and sort.
+        seen, uniq = set(), []
+        for r in sorted(rows, key=lambda r: r["module"]):
+            if r["module"] in seen:
+                continue
+            seen.add(r["module"])
+            uniq.append(r)
+        report = render(args.core, uniq, cycles)
+        print(report)
+        if args.out:
+            args.out.write_text(report)
+        summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary:
+            with open(summary, "a") as f:
+                f.write(report)
+        return 0 if uniq else 1
+
+    if args.shard:
+        i, n = (int(x) for x in args.shard.split("/"))
+        _SHARD = (i - 1, n)
 
     if args.core == "cva6":
         rows = sweep_cva6(args.cycles, args.jobs, args.filter)
@@ -709,8 +782,14 @@ def main():
     print(report)
     if args.out:
         args.out.write_text(report)
+    if args.emit_json:
+        args.emit_json.write_text(json.dumps(
+            {"core": args.core, "cycles": args.cycles, "rows": rows}))
+    # A shard invocation (identified by --emit-json, which feeds the merge job)
+    # does NOT write the step summary — the final --merge job posts the combined
+    # table.  A plain (non-sharded) run still writes it directly.
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary:
+    if summary and not args.emit_json:
         with open(summary, "a") as f:
             f.write(report)
     # Exit status: informational sweep — fail only if nothing ran.
