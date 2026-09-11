@@ -2,8 +2,21 @@
 # Ordered package deps + the module; shared RTL in ../ibex/.
 # top: ibex_if_stage
 # surelog: -I../ibex/prim -I../ibex/rtl -I../ibex/dv
-# verilator: +incdir+../../ibex/prim +incdir+../../ibex/rtl +incdir+../../ibex/dv --no-assert
+# verilator: --no-assert
 # slang: --ignore-assertions -I../ibex/prim -I../ibex/rtl -I../ibex/dv
 
 ../ibex/rtl/ibex_pkg.sv
+../ibex/prim/prim_cipher_pkg.sv
+../ibex/rtl/ibex_branch_predict.sv
+../ibex/rtl/ibex_compressed_decoder.sv
+../ibex/rtl/ibex_dummy_instr.sv
+../ibex/rtl/ibex_fetch_fifo.sv
+../ibex/rtl/ibex_icache.sv
 ../ibex/rtl/ibex_if_stage.sv
+../ibex/rtl/ibex_prefetch_buffer.sv
+../ibex/prim_generic/prim_buf.sv
+../ibex/prim/prim_lfsr.sv
+../ibex/prim/prim_secded_inv_28_22_dec.sv
+../ibex/prim/prim_secded_inv_28_22_enc.sv
+../ibex/prim/prim_secded_inv_39_32_dec.sv
+../ibex/prim/prim_secded_inv_39_32_enc.sv

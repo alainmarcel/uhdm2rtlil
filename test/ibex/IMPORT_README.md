@@ -30,13 +30,23 @@ Generated with the reusable `test/import_design.py`:
 ```
 python3 test/import_design.py --design test/ibex --prefix ibex \
     --incdir ibex/prim --incdir ibex/rtl --incdir ibex/dv \
-    --skip-glob '*/prim/*' --skip-glob '*/prim_generic/*'
+    --skip-glob '*/prim/*' --skip-glob '*/prim_generic/*' \
+    --verilator=--no-assert --module-define ibex_top_tracing:RVFI
 ```
 
-This writes one `test/ibex_<module>/project.f` per synthesizable Ibex module (the
-ordered package deps + the module + the `-I` include dirs); the `prim*` library is
-skipped as a test *top* (it stays available as submodule dependencies).  Each
-module is elaborated in isolation — instantiated submodules it does not list are
-treated as blackboxes — and checked the same way as the rest of the suite (formal
-equivalence where the Yosys Verilog frontend can read the source, else UHDM-only
-Verilator co-simulation against the RTL).
+This writes one `test/ibex_<module>/project.f` per synthesizable Ibex module.
+Each project.f lists, in order: the package deps (from both `import pkg::*` AND
+`pkg::name` scope references), then the module **and the full transitive set of
+submodules it instantiates** — so a parent module (`ibex_core`, `ibex_if_stage`,
+`ibex_top`, `ibex_lockstep`, ...) elaborates completely instead of treating its
+children as blackboxes, and can be formally mitered against `read_slang` and
+co-simulated.  The `prim*` library is skipped as a test *top* (`--skip-glob`) but
+is still pulled in as a submodule **dependency**.  `--module-define` adds a
+per-module define (`ibex_top_tracing` fatals without `RVFI`).
+
+A few parents still can't be slang-mitered — `ibex_top` / `ibex_tracer` /
+`ibex_top_tracing` use the lowRISC `logic unused_x = <net>;` lint-sink pattern,
+which `read_slang` rejects ("reading net state during design initialization
+unsupported") — so the sweep labels those `slang net-init` and falls back to the
+UHDM-vs-RTL co-sim.  Modules the Yosys Verilog frontend can otherwise read are
+checked by formal equivalence; the rest by Verilator co-simulation.
