@@ -3206,6 +3206,90 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
     return sig;
 }
 
+void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
+    proc_elem_written.clear();
+    if (!uhdm_module) return;
+    // Unwrap the @(...) event control to reach the always block's body.
+    auto unwrap_ec = [&](const any* s) -> const any* {
+        if (s && s->VpiType() == vpiEventControl)
+            if (auto ec = any_cast<const event_control*>(s)) return ec->Stmt();
+        return s;
+    };
+    // Record the base name of any per-element write LHS (`arr[i] <= …`,
+    // `arr[i] = …`) found anywhere below `node`.
+    std::function<void(const any*)> elem_writes;
+    elem_writes = [&](const any* node) {
+        if (!node) return;
+        switch (node->VpiType()) {
+            case vpiAssignment: case vpiAssignStmt:
+                if (auto a = any_cast<const assignment*>(node))
+                    if (const any* lhs = a->Lhs())
+                        if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
+                            std::string b = std::string(lhs->VpiName());
+                            if (!b.empty()) proc_elem_written.insert(b);
+                        }
+                break;
+            case vpiBegin: case vpiNamedBegin:
+                if (auto stmts = begin_block_stmts(node))
+                    for (auto s : *stmts) elem_writes(s);
+                break;
+            case vpiFor:
+                if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt());
+                break;
+            case vpiIf:
+                if (auto i = any_cast<const if_stmt*>(node)) elem_writes(i->VpiStmt());
+                break;
+            case vpiIfElse:
+                if (auto ie = any_cast<const if_else*>(node)) {
+                    elem_writes(ie->VpiStmt());
+                    elem_writes(ie->VpiElseStmt());
+                }
+                break;
+            case vpiCase:
+                if (auto cs = any_cast<const case_stmt*>(node))
+                    if (cs->Case_items())
+                        for (auto it : *cs->Case_items()) elem_writes(it->Stmt());
+                break;
+            default: break;
+        }
+    };
+    // A per-element CONTINUOUS assign (`assign arr[i] = …`) also makes the
+    // elements the write targets.
+    auto cont_elem_write = [&](const any* lhs) {
+        if (!lhs) return;
+        if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
+            std::string b = std::string(lhs->VpiName());
+            if (!b.empty()) proc_elem_written.insert(b);
+        }
+    };
+    std::function<void(const UHDM::scope*)> scan_scope;
+    scan_scope = [&](const UHDM::scope* sc) {
+        if (!sc) return;
+        const UHDM::VectorOfprocess_stmt* procs = nullptr;
+        const UHDM::VectorOfgen_scope_array* gsas = nullptr;
+        const UHDM::VectorOfcont_assign* casgns = nullptr;
+        if (auto md = dynamic_cast<const UHDM::module_inst*>(sc)) {
+            procs = md->Process(); gsas = md->Gen_scope_arrays(); casgns = md->Cont_assigns();
+        } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(sc)) {
+            procs = gs->Process(); gsas = gs->Gen_scope_arrays(); casgns = gs->Cont_assigns();
+        }
+        if (procs)
+            for (auto proc : *procs)
+                if (auto al = any_cast<const always*>(proc))
+                    elem_writes(unwrap_ec(al->Stmt()));
+        if (casgns)
+            for (auto ca : *casgns) cont_elem_write(ca->Lhs());
+        if (gsas)
+            for (auto gsa : *gsas)
+                if (gsa->Gen_scopes())
+                    for (auto gs : *gsa->Gen_scopes()) scan_scope(gs);
+    };
+    scan_scope(uhdm_module);
+    for (const auto& n : proc_elem_written)
+        log("UHDM: array '%s' has per-element writes — flat alias assembled "
+            "from elements\n", n.c_str());
+}
+
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Null check
     if (!uhdm_module) {
@@ -3645,6 +3729,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Determine which arrays (incl. unpacked-array output ports) are written
+    // per-element vs whole, BEFORE ports are imported — import_port needs this
+    // to pick the flat/element alias direction for an output port.
+    collect_proc_elem_written(uhdm_module);
+
     // Import ports
     if (uhdm_module->Ports()) {
         log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
@@ -4023,6 +4112,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     //         else ...
     // See async_reset_filled_arrays: these must become registers, not a $mem.
     async_reset_filled_arrays.clear();
+    // proc_elem_written (arrays whose elements are written individually) is
+    // populated earlier by collect_proc_elem_written(), before ports.
     {
         // An async reset is an event control listing MORE THAN ONE edge — the
         // same shape import_always_ff keys `has_async_reset` off.  Returns the
@@ -4251,6 +4342,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 flat_wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_count);
                             }
                         }
+                        // Alias direction: normally element ← flat (a whole-
+                        // array assign drives the flat; per-element reads pull
+                        // slices).  But an array WRITTEN PER-ELEMENT by a process
+                        // (`for(i) always_ff … q[i] <= …`) and READ WHOLE
+                        // (`assign q_o = q;`) has the FF driving the element
+                        // wires, so the flat must be assembled FROM them
+                        // (flat ← element) — else the flat is undriven and every
+                        // whole read is X (ibex_id_stage imd_val_q_ex_o).
+                        bool elem_driven =
+                            async_reset_filled_arrays.count(array_name) > 0 ||
+                            proc_elem_written.count(array_name) > 0;
                         for (int i = 0; i < array_size; i++) {
                             std::string ename =
                                 array_name + "[" + std::to_string(array_low + i) + "]";
@@ -4258,8 +4360,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             if (!module->wire(eid)) {
                                 RTLIL::Wire* ew = module->addWire(eid, row_w);
                                 add_src_attribute(ew->attributes, array_var);
-                                module->connect(RTLIL::SigSpec(ew),
-                                    RTLIL::SigSpec(flat_wire).extract(i * row_w, row_w));
+                                RTLIL::SigSpec slice =
+                                    RTLIL::SigSpec(flat_wire).extract(i * row_w, row_w);
+                                if (elem_driven)
+                                    module->connect(slice, RTLIL::SigSpec(ew));
+                                else
+                                    module->connect(RTLIL::SigSpec(ew), slice);
                                 name_map[ename] = ew;
                             }
                         }
@@ -5314,7 +5420,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (auto array : *uhdm_module->Array_nets()) {
             std::string array_name = std::string(array->VpiName());
             log("UHDM: Found array_net: '%s'\n", array_name.c_str());
-            
+
+            // An unpacked-array INPUT port was already fully materialized by
+            // import_port: a flat port wire + per-element read-alias wires
+            // (`\name[i]` ← flat slice).  It must NEVER be re-imported as a
+            // $memory here — an input port is driven from outside as one flat
+            // vector and has no write port, so a $mem shadowing it is never
+            // written and every `name[i]` read comes back 0 (ibex_id_stage
+            // imd_val_d_ex_i, read as `imd_val_d_ex_i[i]` in a genvar-unrolled
+            // always_ff — the genvar index isn't folded to a constant by
+            // has_only_constant_array_accesses, so it was misclassified as
+            // dynamically-indexed and turned into an unwritten memory).  The
+            // per-element wires already resolve constant `name[i]` reads.
+            if (RTLIL::Wire* pw = module->wire(RTLIL::escape_id(array_name)))
+                if (pw->port_input) {
+                    log("UHDM: Array net '%s' is an INPUT port — already "
+                        "materialized as flat + per-element wires, skipping\n",
+                        array_name.c_str());
+                    continue;
+                }
+
             // Check if this is a shift register first
             if (shift_register_arrays.count(array_name)) {
                 log("UHDM: Array net '%s' is a shift register, creating individual wires\n", array_name.c_str());

@@ -829,7 +829,20 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 add_src_attribute(ew->attributes, uhdm_port);
                 RTLIL::SigSpec slice =
                     RTLIL::SigSpec(w).extract(i * unpacked_elem_w, unpacked_elem_w);
-                if (direction == vpiOutput)
+                // An OUTPUT port is assembled from its per-element wires
+                // (flat ← element) ONLY when the elements are actually driven
+                // individually — a per-element process/continuous assign, or a
+                // pass-through of a child instance's per-element output (e.g.
+                // `always_comb out_o[i]=…`).  When the output is instead driven
+                // AS A WHOLE (`assign q_o = q`, ibex_id_stage imd_val_q_ex_o),
+                // the element wires are undriven, so assembling the flat from
+                // them injects X and multi-drives the flat that the whole-assign
+                // already drives; there the elements must be read-aliases of the
+                // flat wire (element ← flat), same as an input.
+                bool out_elem_driven =
+                    direction == vpiOutput &&
+                    proc_elem_written.count(portname) > 0;
+                if (out_elem_driven)
                     module->connect(slice, RTLIL::SigSpec(ew));
                 else
                     module->connect(RTLIL::SigSpec(ew), slice);
