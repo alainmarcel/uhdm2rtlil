@@ -148,7 +148,7 @@ def _slang_args(d):
     return "--ignore-assertions " + " ".join(incs)
 
 
-def _auto_slang_miter(d, top, known_fail, timeout=600):
+def _auto_slang_miter(d, top, known_fail, timeout=240):
     """Run an on-the-fly read_uhdm-vs-read_slang miter for a test dir that ships
     no committed `test_slang_equiv.ys`.  The miter is the same boilerplate the
     committed ones use (both frontends elaborate `top` from project.f, lower to a
