@@ -71,6 +71,52 @@ def read_analyzed_names():
     return names
 
 
+def _undriven_check(work_dir, top):
+    """Structural opt-level undriven-net probe on the read_uhdm netlist: flatten,
+    opt_clean, then `check` for nets with no driver.  read_slang produces zero
+    undriven nets for equivalent modules, so an undriven net in the read_uhdm
+    netlist is a dropped driver — a fast probe (no SAT, no cosim) that catches
+    the dropped-driver class structurally.  `work_dir` must contain
+    slpp_all/surelog.uhdm; `top` is the module to elaborate."""
+    work_dir = Path(work_dir)
+    if not (work_dir / "slpp_all" / "surelog.uhdm").exists():
+        return "— (no run)"
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    (work_dir / "check_undriven.ys").write_text(
+        f"read_uhdm slpp_all/surelog.uhdm\n"
+        f"hierarchy -check -top {top}\n"
+        f"flatten; opt_clean\n"
+        f"check\n")
+    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check_undriven.ys"],
+                 cwd=work_dir, timeout=1800)
+    out = out or ""
+    # A leaf extraction whose child-module sources are not in the source list
+    # leaves those instances as BLACKBOXES: yosys resizes the unknown cell ports
+    # to 1 bit and every wider fanout net reads as undriven.  That is not a
+    # dropped driver, so the undriven count is not meaningful for an incomplete
+    # design — flag it instead of a misleading ❌.  Complete designs (the pavona/
+    # tlul/acc/cva6 wrappers, the self-contained ibex/rp32 dirs) have no
+    # blackboxes and take the real count below.
+    if "Resizing cell port" in out or "is not part of the design" in out:
+        return "— (blackbox children)"
+    undriven = len(re.findall(r"used but has no driver", out))
+    if undriven:
+        return f"❌ {undriven} undriven"
+    return "error" if rc else "✅ 0 undriven"
+
+
+def _project_top(d):
+    """Top module for a test dir: the `# top:` line of project.f, else dir name."""
+    pf = d / "project.f"
+    if pf.exists():
+        for line in pf.read_text().splitlines():
+            m = re.match(r"#\s*top:\s*(\S+)", line.strip())
+            if m:
+                return m.group(1)
+    return d.name
+
+
 def sweep_testdirs(prefix, cycles, jobs, flt=None):
     """Sweep test/<prefix>_* dirs: slang miter + test_sim_equivalence.py."""
     known_fail = read_names_file(TEST_DIR / "slang_miter_expected_fail.txt")
@@ -83,7 +129,8 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
 
     def one(d):
         name = d.name
-        row = {"module": name, "formal": "— (no miter)", "cosim": "—"}
+        row = {"module": name, "formal": "— (no miter)", "cosim": "—",
+               "check": "—"}
         # Elaborate (surelog + read check) if the UHDM is missing.
         if not (d / "slpp_all" / "surelog.uhdm").exists():
             rc, _ = sh(["./test_uhdm_workflow.sh", name],
@@ -91,7 +138,10 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         if not (d / "slpp_all" / "surelog.uhdm").exists():
             row["formal"] = "elab-fail"
             row["cosim"] = "skip (no UHDM)"
+            row["check"] = "— (no UHDM)"
             return row
+        # Structural undriven-net probe (fast dropped-driver check, every dir).
+        row["check"] = _undriven_check(d, _project_top(d))
         # 1. slang miter (only where the test ships one).
         if (d / "test_slang_equiv.ys").exists():
             rc, _ = sh([str(TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"),
@@ -180,25 +230,23 @@ def sweep_cva6(cycles, jobs, flt=None):
 
     def one(mod):
         row = {"module": mod, "formal": label.get(formal[mod], formal[mod]),
-               "cosim": "—"}
-        # Adjudicate the co-sim ONLY where the formal verdict left a
-        # question (cex / SAT timeout).  Proven modules need no co-sim, and
-        # adjudicating all ~140 modules serially can never fit a CI job
-        # (the first nightly burned the whole 2h budget in the miter pass
-        # alone).
+               "cosim": "—", "check": "—"}
         st = formal[mod]
-        if st == "proven":
-            row["cosim"] = "— (formally proven)"
-            return row
-        if st == "timeout":
-            # SAT-budget class: co-sim adjudication for these runs locally;
-            # doing all of them nightly cannot fit the job budget.
-            row["cosim"] = "— (SAT-bound; adjudicate locally)"
-            return row
-        if st != "cex":
+        work = CVA6_DIR / "work" / mod
+        # A module that elaborated (proven / cex / SAT-timeout) has a read_uhdm
+        # netlist; error / crash / elabfail / dead / skipped do not.
+        elaborated = st in ("proven", "cex", "timeout")
+        # Structural undriven-net probe on every elaborated module.
+        row["check"] = (_undriven_check(work, f"{mod}_equiv")
+                        if elaborated else "— (no elaboration)")
+        # Co-sim EVERY elaborated module, not just cex: a module PROVEN under the
+        # SAT miter (which runs -set-init-zero) can still diverge in co-sim from
+        # an X-init / undriven net the miter hides (the tlul_fifo_sync class), so
+        # the sweep must adjudicate all of them to surface that.  Modules that
+        # did not elaborate cannot cosim.
+        if not elaborated:
             row["cosim"] = "— (not runnable)"
             return row
-        work = CVA6_DIR / "work" / mod
         for f in ("obj_dir", "adj_gold.v", "adj_gate.v", "adj_tb.sv", "adj.ys"):
             sh(["rm", "-rf", str(work / f)])
         rc, out = sh([sys.executable, "scripts/adjudicate.py", mod,
@@ -263,26 +311,9 @@ def _pavona_check(mod):
     whole-core cosim divergence traced back to).  Fast — no SAT, no cosim — so
     it runs on every module and catches dropped drivers structurally, without
     needing a deep co-sim to reach them."""
-    work = PAVONA_DIR / "work" / mod
-    if not (work / "slpp_all" / "surelog.uhdm").exists():
-        return "— (no run)"
-    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
-    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
     flat = PAVONA_DIR / "wrappers" / f"flat_{mod}.sv"
-    top = f"{mod}_flat" if flat.exists() else mod
-    (work / "check.ys").write_text(
-        f"read_uhdm slpp_all/surelog.uhdm\n"
-        f"hierarchy -check -top {top}\n"
-        f"flatten; opt_clean\n"
-        f"check\n")
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check.ys"],
-                 cwd=work, timeout=1800)
-    undriven = len(re.findall(r"used but has no driver", out or ""))
-    if undriven:
-        return f"❌ {undriven} undriven"
-    if rc:
-        return "error"
-    return "✅ 0 undriven"
+    return _undriven_check(PAVONA_DIR / "work" / mod,
+                           f"{mod}_flat" if flat.exists() else mod)
 
 
 def sweep_pavona(jobs, cycles=300, flt=None):
@@ -339,26 +370,10 @@ def sweep_pavona(jobs, cycles=300, flt=None):
 
 # ---------------------------------------------------------------------- tlul
 def _tlul_check(mod):
-    """Structural opt-level undriven-net check on the read_uhdm netlist of one
-    TL-UL module (same idea as _pavona_check)."""
-    work = TLUL_DIR / "work" / mod
-    if not (work / "slpp_all" / "surelog.uhdm").exists():
-        return "— (no run)"
-    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
-    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    """Structural opt-level undriven-net check on one TL-UL module."""
     flat = TLUL_DIR / "wrappers" / f"flat_{mod}.sv"
-    top = f"{mod}_flat" if flat.exists() else mod
-    (work / "check.ys").write_text(
-        f"read_uhdm slpp_all/surelog.uhdm\n"
-        f"hierarchy -check -top {top}\n"
-        f"flatten; opt_clean\n"
-        f"check\n")
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check.ys"],
-                 cwd=work, timeout=1800)
-    undriven = len(re.findall(r"used but has no driver", out or ""))
-    if undriven:
-        return f"❌ {undriven} undriven"
-    return "error" if rc else "✅ 0 undriven"
+    return _undriven_check(TLUL_DIR / "work" / mod,
+                           f"{mod}_flat" if flat.exists() else mod)
 
 
 def _tlul_cosim(mod, cycles):
@@ -434,26 +449,10 @@ def sweep_tlul(jobs, cycles=300, flt=None):
 
 # ----------------------------------------------------------------------- acc
 def _acc_check(mod):
-    """Structural opt-level undriven-net check on the read_uhdm netlist of one
-    ACC module (same idea as _tlul_check)."""
-    work = ACC_DIR / "work" / mod
-    if not (work / "slpp_all" / "surelog.uhdm").exists():
-        return "— (no run)"
-    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
-    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    """Structural opt-level undriven-net check on one ACC module."""
     flat = ACC_DIR / "wrappers" / f"flat_{mod}.sv"
-    top = f"{mod}_flat" if flat.exists() else mod
-    (work / "check.ys").write_text(
-        f"read_uhdm slpp_all/surelog.uhdm\n"
-        f"hierarchy -check -top {top}\n"
-        f"flatten; opt_clean\n"
-        f"check\n")
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check.ys"],
-                 cwd=work, timeout=1800)
-    undriven = len(re.findall(r"used but has no driver", out or ""))
-    if undriven:
-        return f"❌ {undriven} undriven"
-    return "error" if rc else "✅ 0 undriven"
+    return _undriven_check(ACC_DIR / "work" / mod,
+                           f"{mod}_flat" if flat.exists() else mod)
 
 
 def _acc_cosim(mod, cycles):
