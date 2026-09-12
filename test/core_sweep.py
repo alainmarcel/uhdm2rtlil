@@ -48,6 +48,7 @@ CVA6_DIR = TEST_DIR / "cva6_equiv"
 PAVONA_DIR = TEST_DIR / "pavona_equiv"
 TLUL_DIR = TEST_DIR / "pavona_tlul_equiv"
 ACC_DIR = TEST_DIR / "pavona_acc_equiv"
+KMAC_DIR = TEST_DIR / "pavona_kmac_equiv"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -710,6 +711,91 @@ def sweep_acc(jobs, cycles=300, flt=None):
     return rows
 
 
+# ---------------------------------------------------------------------- kmac
+def _kmac_check(mod):
+    """Structural opt-level undriven-net check on one KMAC module."""
+    flat = KMAC_DIR / "wrappers" / f"flat_{mod}.sv"
+    return _undriven_check(KMAC_DIR / "work" / mod,
+                           f"{mod}_flat" if flat.exists() else mod)
+
+
+def _kmac_cosim(mod, cycles):
+    """Verilator co-sim of one KMAC module (behavioural RTL vs read_uhdm vs
+    read_slang).  Adjudicates the modules the SAT miter cannot close — the
+    1600-bit Keccak-f permutation keccak_round (SAT-hard, like acc's
+    unified_mul) and any msgfifo residual the bounded miter misses."""
+    rc, out = sh([sys.executable, "scripts/kmac_cosim.py", mod, str(cycles), "1"],
+                 cwd=KMAC_DIR, timeout=1800)
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
+                  out or "")
+    if m:
+        u, sl = int(m.group(1)), int(m.group(2))
+        if u == 0:
+            return "✅ PASS"
+        if sl > 0:
+            return f"⚠ shared div (uhdm={u}, slang={sl})"
+        return f"❌ {u} div (slang clean)"
+    if "no outputs to compare" in (out or "") or "no clocks found" in (out or ""):
+        return "— (comb/no clk)"
+    if "NO_RUN" in (out or "") or "netlist generation FAILED" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or ""):
+        return "skip (sim build)"
+    return "error" if rc else "skip"
+
+
+def sweep_kmac(jobs, cycles=300, flt=None):
+    """Pavona KMAC (OpenTitan Keccak-MAC / SHA3 core): per-module formal
+    (read_uhdm vs read_slang) from one run_kmac_equiv.sh pass, plus a structural
+    undriven-net check and a Verilator co-sim vs the behavioural RTL (adjudicates
+    the SAT-hard Keccak permutation the bounded miter times out on)."""
+    cmd = ["./run_kmac_equiv.sh"]
+    if flt:
+        for line in (KMAC_DIR / "kmac_modules.txt").read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                name = line.split()[0]
+                if re.search(flt, name):
+                    cmd.append(name)
+    try:
+        p = subprocess.run(cmd, cwd=KMAC_DIR, text=True, timeout=7200,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    label = {
+        "proven": "✅ equivalent", "cex": "❌ differs",
+        "timeout": "❓ SAT timeout", "error": "error", "elabfail": "elab-fail",
+    }
+    rows = []
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅⚠❓💥❌‼🎉]*\s*(\S+)\s+(proven|cex|timeout|error|"
+                     r"elabfail)\b", line)
+        # Skip the "KMAC equivalence: …" summary line (its first token is KMAC).
+        if m and m.group(1) not in ("KMAC",):
+            rows.append({"module": m.group(1),
+                         "formal": label.get(m.group(2), m.group(2)),
+                         "formal_raw": m.group(2), "cosim": "—"})
+    rows.sort(key=lambda r: r["module"])
+
+    def one(r):
+        if r["formal_raw"] in ("error", "elabfail"):
+            r["check"] = "— (no elaboration)"
+            r["cosim"] = "— (no elaboration)"
+        else:
+            r["check"] = _kmac_check(r["module"])
+            # Co-sim EVERY elaborated module (not just cex/timeout): a from-X sim
+            # can catch a reset/init divergence the -set-init-zero SAT proof
+            # misses, and it adjudicates the SAT-hard keccak_round.
+            r["cosim"] = _kmac_cosim(r["module"], cycles)
+        return r
+    with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
+        rows = list(ex.map(one, rows))
+    for r in rows:
+        r.pop("formal_raw", None)
+    return rows
+
+
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
     # The pavona sweep adds a structural opt-level "check" column (undriven-net
@@ -754,7 +840,8 @@ def render(core, rows, cycles):
 def main():
     global _SHARD
     ap = argparse.ArgumentParser()
-    ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul", "acc"])
+    ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
+                                     "acc", "kmac"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -807,6 +894,8 @@ def main():
         rows = sweep_tlul(args.jobs, args.cycles, args.filter)
     elif args.core == "acc":
         rows = sweep_acc(args.jobs, args.cycles, args.filter)
+    elif args.core == "kmac":
+        rows = sweep_kmac(args.jobs, args.cycles, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
