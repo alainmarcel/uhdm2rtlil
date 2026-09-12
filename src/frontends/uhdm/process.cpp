@@ -9094,6 +9094,36 @@ bool UhdmImporter::varselect_const_bitslice(
     return true;
 }
 
+bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
+                                       int& elem_w, int& outer_lo) {
+    if (!ag || total_width <= 0) return false;
+    UHDM::VectorOfrange* rngs = nullptr;
+    if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
+    else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
+    else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
+    // A TYPEDEF'd multi-dim type (plane_t/box_t): the var carries no ranges of
+    // its own — the dimensions live on its typespec's logic_typespec Ranges().
+    if (!rngs || rngs->empty()) {
+        const UHDM::ref_typespec* rt = nullptr;
+        if (auto e = dynamic_cast<const UHDM::expr*>(ag)) rt = e->Typespec();
+        else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
+        if (rt)
+            if (auto a = rt->Actual_typespec())
+                if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(a))
+                    rngs = lt->Ranges();
+    }
+    if (!rngs || rngs->empty()) return false;
+    auto r0 = (*rngs)[0];
+    RTLIL::SigSpec l = import_expression(r0->Left_expr());
+    RTLIL::SigSpec rr = import_expression(r0->Right_expr());
+    if (!l.is_fully_const() || !rr.is_fully_const()) return false;
+    int osz = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+    if (osz <= 0 || total_width % osz != 0) return false;
+    elem_w = total_width / osz;
+    outer_lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
+    return true;
+}
+
 RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::Process* proc) {
     auto func_def = fc->Function();
     if (!func_def) {
