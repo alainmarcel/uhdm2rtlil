@@ -2,6 +2,11 @@
 # submodules).  Hand-written.  CSR disabled (ENABLE_CSR undefined; the
 # riscv_csr_pkg / r5p_pkg imports are commented out — the generator's
 # riscv_csr_pkg "dep" was a false match on the comment).
+# NOTE: r5p_hamster is v0.5 WIP upstream (jeras/rp32 README) — it references
+# nested decode-struct members (`dec_t.alu/.bru/.uiu`, `gpr_ena_t.adr`) that are
+# defined NOWHERE upstream, and there is no sim/sources-hamster.mk (only degu/
+# mouse are buildable).  read_uhdm imports it (missing members -> X); read_slang
+# rejects it ("upstream RTL incomplete").  uhdm-only import test only.
 # top: r5p_hamster
 # mode: uhdm-only
 # surelog: -top r5p_hamster
