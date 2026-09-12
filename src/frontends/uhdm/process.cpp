@@ -272,7 +272,18 @@ void UhdmImporter::import_immediate_cover(const UHDM::immediate_cover* cover_stm
 // Import a process statement (always block)
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
-    
+
+    // A `final` block (UHDM final_stmt, VpiType 676) is simulation-only — it
+    // runs once at the END of simulation ($fclose, end-of-run $display, ...) and
+    // has NO synthesis semantics.  Importing it as a generic always block (the
+    // old `default` path) built a bogus process whose `$fclose(fh)` / local-int
+    // logic segfaulted yosys `proc_memwr` (ibex_top_tracing's tracer.sv:850).
+    // Skip it, like a synthesis tool would.
+    if (uhdm_process->UhdmType() == uhdmfinal_stmt) {
+        log("UHDM: skipping `final` block (simulation-only, not synthesizable)\n");
+        return;
+    }
+
     log("UHDM: === Starting import_process ===\n");
     
     // Clear assert enable wires tracking for this process
@@ -2012,7 +2023,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     action.memid = info.mem_id;
                     action.address = RTLIL::SigSpec(info.addr_wire);
                     action.data = RTLIL::SigSpec(info.data_wire);
-                    action.priority_mask = RTLIL::Const(RTLIL::State::S1, (int)pi);
+                    // Priority only over PRIOR writes to the SAME memory — see
+                    // the detailed note at the other memwr site; an all-ones
+                    // mask makes proc_memwr write past this memory's per-memid
+                    // port range and SEGFAULT when the sync mixes several
+                    // many-port memories (ibex RVFI rvfi_ext_stage_*).
+                    std::vector<RTLIL::State> pmask((int)pi, RTLIL::State::S0);
+                    for (size_t j = 0; j < pi; j++)
+                        if (ff_ordered_memwrites[j].mem_id == info.mem_id)
+                            pmask[j] = RTLIL::State::S1;
+                    action.priority_mask = RTLIL::Const(pmask);
                     action.enable = RTLIL::SigSpec(info.en_wire);
                     log("      Added memory write action for %s on clock edge\n",
                         info.mem_id.c_str());
@@ -2889,10 +2909,22 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         action.memid = info.mem_id;
                         action.address = RTLIL::SigSpec(info.addr_wire);
                         action.data = RTLIL::SigSpec(info.data_wire);
-                        // This write has priority over every earlier write port
-                        // (one bit per prior port, all set) — proc_memwr indexes
-                        // priority_mask[0..pi-1], so an empty mask would crash.
-                        action.priority_mask = RTLIL::Const(RTLIL::State::S1, (int)pi);
+                        // priority_mask has one bit per PRIOR write port in this
+                        // sync (proc_memwr indexes priority_mask[0..pi-1]); a bit
+                        // is set only when this write must take priority over
+                        // that prior port — i.e. only for a prior write to the
+                        // SAME memory (last-wins).  It must NOT be set for a
+                        // prior write to a DIFFERENT memory: proc_memwr would
+                        // then `priority_mask.set(prev_port_ids[j], ...)` at that
+                        // other memory's (independent, possibly larger) per-memid
+                        // port id, writing past this memory's mask and
+                        // SEGFAULTing (ibex RVFI's rvfi_ext_stage_mhpmcounters
+                        // shares a sync with several other 30+-port stage arrays).
+                        std::vector<RTLIL::State> pmask((int)pi, RTLIL::State::S0);
+                        for (size_t j = 0; j < pi; j++)
+                            if (ordered_memwrites[j].mem_id == info.mem_id)
+                                pmask[j] = RTLIL::State::S1;
+                        action.priority_mask = RTLIL::Const(pmask);
 
                         // Per-bit enable wire is already memory-width.
                         action.enable = RTLIL::SigSpec(info.en_wire);
@@ -7081,8 +7113,22 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                         action.data = memwr_data_wires[i];
                                         action.enable = memwr_en_wires[i];
                                         
-                                        // Priority based on iteration number
-                                        action.priority_mask = RTLIL::Const(i, 32);
+                                        // priority_mask: one bit per PRIOR write
+                                        // port in this sync, set only for a prior
+                                        // write to the SAME memory (last-wins).
+                                        // An all-ones mask (or a fixed 32-bit
+                                        // const holding `i`) makes proc_memwr
+                                        // write past this memory's per-memid port
+                                        // range and SEGFAULT when the sync mixes
+                                        // several many-port memories (ibex RVFI
+                                        // rvfi_ext_stage_* arrays, >32 ports).
+                                        std::vector<RTLIL::State> pmask(
+                                            i, RTLIL::State::S0);
+                                        for (size_t j = 0; j < i; j++)
+                                            if (pending_memory_writes[j].mem_id ==
+                                                mem_write.mem_id)
+                                                pmask[j] = RTLIL::State::S1;
+                                        action.priority_mask = RTLIL::Const(pmask);
                                     }
                                     
                                     // Clear pending memory writes

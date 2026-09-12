@@ -1,0 +1,5 @@
+slpp_all/
+*_from_uhdm*
+*_from_verilog*
+*.log
+sim_equiv/
