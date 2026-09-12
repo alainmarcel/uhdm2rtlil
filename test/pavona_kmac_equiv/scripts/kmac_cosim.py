@@ -105,6 +105,23 @@ for dirn, rng, name in re.findall(r"^  (input|output)\s+(\[\d+:\d+\]\s+)?(\w+);"
 if not outs:
     print(f"{mod}: no outputs to compare"); sys.exit(2)
 
+# Unpacked-ARRAY ports (`logic [W-1:0] name [Share]`, e.g. keccak_round data_i/
+# state_o, msgfifo fifo_*_i / msg_*_o) are FLATTENED to one [N*W-1:0] vector in
+# the synth netlist (gold/gate) but stay arrays in the behavioural RTL (the `rtl`
+# instance read from source), so a flat actual cannot bind the rtl port.  Detect
+# them by the per-element internal wires yosys emits for the flattened port
+# (`wire [W-1:0] \name[k] ;` — an ESCAPED id, unlike a `name[k]` part-select),
+# deriving N = distinct element count and W = flat_width / N.  The rtl instance
+# is then bound through an array-shaped intermediate; element [0] occupies the
+# MSB slice of the flat vector (verified: yosys writes `y[0]`->`y[N*W-1 -: W]`).
+def _arr_n(name):
+    return len(set(re.findall(rf"\\{re.escape(name)}\[(\d+)\]", gv)))
+arr = {}   # port name -> (N elements, W element-width) for unpacked-array ports
+for _n, _w in ins + outs:
+    _N = _arr_n(_n)
+    if _N >= 1 and _w % _N == 0:
+        arr[_n] = (_N, _w // _N)
+
 # A purely combinational module (unified_mul) has no clock port.  Pace the
 # stimulus with a synthetic clock and connect the DUTs by data ports only.
 comb = not clks
@@ -115,6 +132,23 @@ def rnd(n, w):
 
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
+# Array-shaped intermediates for the rtl instance's unpacked-array ports.  Inputs
+# slice the flat driver vector into elements; outputs re-concatenate the rtl's
+# array output back into the flat r_<name> compared against gold/gate.  Element
+# [0] = MSB slice, [N-1] = LSB (yosys flatten order).
+_outset = {n for n, _ in outs}
+arr_lines = []
+for _n, (_N, _W) in arr.items():
+    if _n in _outset:
+        arr_lines.append(f"  wire [{_W-1}:0] r_{_n}__ra [0:{_N-1}];")
+        _cat = "{" + ", ".join(f"r_{_n}__ra[{k}]" for k in range(_N)) + "}"
+        arr_lines.append(f"  assign r_{_n} = {_cat};")
+    else:
+        arr_lines.append(f"  wire [{_W-1}:0] {_n}__ra [0:{_N-1}];")
+        for k in range(_N):
+            _lo = (_N - 1 - k) * _W
+            arr_lines.append(f"  assign {_n}__ra[{k}] = {_n}[{_lo + _W - 1}:{_lo}];")
+arr_decl = "\n".join(arr_lines)
 periods = [5, 7, 9, 11]
 clkdecl = "\n".join(f"  reg {c} = 0;" for c in clks)
 if comb:
@@ -130,9 +164,18 @@ rst_release = "\n    ".join(f"{n} = {'0' if ah else '1'};" for n, ah in rsts)
 allck = ", ".join(f".{c}({c})" for c in clks) + \
         ("," if clks and rsts else "") + \
         ", ".join(f".{n}({n})" for n, _ in rsts)
-conn  = ", ".join(f".{n}({n})" for n, _ in ins)
+# Input connections: gold/gate take the flat driver; the rtl instance takes the
+# array-shaped view (name__ra) for its unpacked-array ports.
+conn      = ", ".join(f".{n}({n})" for n, _ in ins)                 # gold/gate (flat)
+conn_rtl  = ", ".join(f".{n}({n + '__ra' if n in arr else n})" for n, _ in ins)
 head  = (allck + ", ") if allck else ""
-def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
+# Output binding: gold/gate flat (g_/s_); the rtl instance's array outputs bind
+# to the array intermediate r_<name>__ra (whose concat drives flat r_<name>).
+def bind(p):
+    if p == "r":
+        return ", ".join(f".{n}(r_{n}__ra)" if n in arr else f".{n}(r_{n})"
+                         for n, _ in outs)
+    return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
 drive = "\n      ".join(rnd(n, w) for n, w in ins)
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
@@ -157,9 +200,10 @@ module tb;
 {rstdecl}
 {decl}
 {wires}
+{arr_decl}
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
-  {TOP} rtl ({head}{conn}, {bind('r')});
+  {TOP} rtl ({head}{conn_rtl}, {bind('r')});
   gold_{TOP} gold({head}{conn}, {bind('g')});
   gate_{TOP} gate({head}{conn}, {bind('s')});
 {clkgen}
