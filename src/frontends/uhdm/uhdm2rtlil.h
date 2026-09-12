@@ -938,6 +938,14 @@ struct UhdmImporter {
         const UHDM::var_select* vs,
         std::map<std::string, RTLIL::SigSpec>* ctx,
         int& off, int& width);
+    // Outer-dimension geometry of a SINGLE-index bit_select `base[i]` on a packed
+    // multi-dim local/param (`plane_t c; c[x]` = `logic [4:0][W-1:0]`, box_t):
+    // the selected element is the whole first-dim slice = total_width/outer_size
+    // bits, at (i-outer_lo)*elem_w.  The dims may live on the var's own Ranges()
+    // OR, for a TYPEDEF'd type, on its typespec's logic_typespec Ranges().
+    // Returns false if the outer dim isn't a resolvable constant range.
+    bool bitselect_outer_dim(const UHDM::any* ag, int total_width,
+                             int& elem_w, int& outer_lo);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
     // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
     bool emit_dynamic_packed_select_write(

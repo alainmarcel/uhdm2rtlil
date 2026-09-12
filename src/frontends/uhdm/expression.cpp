@@ -1202,6 +1202,27 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 if (element_width <= 0) element_width = 1;
 
+                // Typedef'd packed multi-dim local/return (plane_t/box_t): the
+                // detection above only handles packed_array_var, so a logic_var
+                // whose dimensions live on its TYPESPEC (keccak theta's
+                // `plane_t c; c[x] = …`) kept element_width=1 and only the LSB
+                // was written.  Recompute the element width from the outer dim
+                // against the base's total width.
+                if (element_width <= 1) {
+                    if (auto actual = bs->Actual_group()) {
+                        int total = 0;
+                        if (base_name == func_name)
+                            total = result_wire ? result_wire->width : 0;
+                        else if (auto it = input_mapping.find(base_name);
+                                 it != input_mapping.end())
+                            total = (int)it->second.size();
+                        int ew = 1, olo = 0;
+                        if (total > 0 &&
+                            bitselect_outer_dim(actual, total, ew, olo) && ew > 0)
+                            element_width = ew;
+                    }
+                }
+
                 if (base_name == func_name) {
                     // Assigning to a bit of the return value
                     RTLIL::SigSpec index_sig;
@@ -9315,27 +9336,15 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     int idx = index.as_const().as_int();
                     // Unpacked-array param `logic [2:0] mat [3:0]`: `mat[i]`
                     // selects the i-th element (W bits), not bit i.  Derive W
-                    // from the param's unpacked dimension on the bit_select's
-                    // Actual_group (SelectFromUnpackedInFunction).
+                    // from the param's outer dimension on the bit_select's
+                    // Actual_group (SelectFromUnpackedInFunction).  The dims may
+                    // be on the var's own Ranges() OR — for a TYPEDEF'd packed
+                    // multi-dim type (keccak theta's `plane_t c; c[x]`) — on its
+                    // typespec, so bitselect_outer_dim covers both; without the
+                    // typespec fallback c[x] kept elem_w=1 and only the LSB read.
                     int elem_w = 1, outer_lo = 0;
-                    if (auto ag = uhdm_bit->Actual_group()) {
-                        UHDM::VectorOfrange* rngs = nullptr;
-                        if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
-                        else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
-                        else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
-                        if (rngs && !rngs->empty()) {
-                            auto r0 = (*rngs)[0];
-                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
-                            RTLIL::SigSpec rr = import_expression(r0->Right_expr());
-                            if (l.is_fully_const() && rr.is_fully_const()) {
-                                int osz = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
-                                if (osz > 0 && it->second.size() % osz == 0) {
-                                    elem_w = it->second.size() / osz;
-                                    outer_lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
-                                }
-                            }
-                        }
-                    }
+                    if (auto ag = uhdm_bit->Actual_group())
+                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     int off = (idx - outer_lo) * elem_w;
                     if (off >= 0 && off + elem_w <= it->second.size()) {
                         return it->second.extract(off, elem_w);
