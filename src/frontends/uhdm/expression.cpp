@@ -2609,9 +2609,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         bool idx_ok = dims_ok && total == bw->width &&
                                       exprs->size() <= dims.size();
                         // A TRAILING constant indexed-part-select
-                        // (`mshr_rdata[i][0 +: K]`) selects a sub-slice of
-                        // the resolved element; other part-selects bail.
+                        // (`mshr_rdata[i][0 +: K]`) OR plain part-select
+                        // (keccak pi/rho `state[x][y][W-1:0]`) selects a
+                        // sub-slice of the resolved element; a NON-trailing
+                        // part-select bails.
                         const UHDM::indexed_part_select* trail_ips = nullptr;
+                        const UHDM::part_select* trail_ps = nullptr;
                         size_t n_idx = exprs->size();
                         if (idx_ok)
                             for (size_t ei = 0; ei < exprs->size(); ei++) {
@@ -2619,6 +2622,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 if (t == vpiIndexedPartSelect &&
                                     ei == exprs->size() - 1) {
                                     trail_ips = any_cast<const UHDM::indexed_part_select*>((*exprs)[ei]);
+                                    n_idx = ei;
+                                } else if (t == vpiPartSelect &&
+                                           ei == exprs->size() - 1) {
+                                    trail_ps = any_cast<const UHDM::part_select*>((*exprs)[ei]);
                                     n_idx = ei;
                                 } else if (t == vpiPartSelect ||
                                            t == vpiIndexedPartSelect) {
@@ -2682,6 +2689,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                         ips_w = w.as_const().as_int();
                                         int bb = b.as_const().as_int();
                                         ips_off = pos ? bb : (bb - ips_w + 1);
+                                    } else fail = true;
+                                } else if (trail_ps) {
+                                    RTLIL::SigSpec l = import_expression(
+                                        trail_ps->Left_range(), input_mapping);
+                                    RTLIL::SigSpec r = import_expression(
+                                        trail_ps->Right_range(), input_mapping);
+                                    if (l.is_fully_const() && r.is_fully_const()) {
+                                        int hi = l.as_const().as_int();
+                                        int lo = r.as_const().as_int();
+                                        ips_off = std::min(hi, lo);
+                                        ips_w = std::abs(hi - lo) + 1;
                                     } else fail = true;
                                 }
                                 if (!fail && ips_w > 0 &&
