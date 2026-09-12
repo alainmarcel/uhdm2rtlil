@@ -9044,6 +9044,56 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 
 // Inline function call into a combinational process
 // Returns the SigSpec of the function result
+bool UhdmImporter::varselect_const_bitslice(
+        const UHDM::var_select* vs,
+        std::map<std::string, RTLIL::SigSpec>* ctx,
+        int& off, int& width) {
+    if (!vs || !vs->Exprs() || vs->Exprs()->empty()) return false;
+    // Base variable's packed typespec -> dimension (hi,lo) list, outer->inner.
+    const UHDM::ref_typespec* rt = nullptr;
+    if (auto ag = vs->Actual_group()) {
+        if (auto e = dynamic_cast<const UHDM::expr*>(ag)) rt = e->Typespec();
+        else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
+    }
+    const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
+    auto lt = a ? dynamic_cast<const UHDM::logic_typespec*>(a) : nullptr;
+    if (!lt || !lt->Ranges() || lt->Ranges()->empty()) return false;
+    std::vector<std::pair<int, int>> dims;
+    for (auto r : *lt->Ranges()) {
+        RTLIL::SigSpec l = import_expression(r->Left_expr(), ctx);
+        RTLIL::SigSpec rr = import_expression(r->Right_expr(), ctx);
+        if (!l.is_fully_const() || !rr.is_fully_const()) return false;
+        dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+    }
+    auto exprs = vs->Exprs();
+    size_t n_idx = exprs->size();
+    if (n_idx == 0 || n_idx > dims.size()) return false;
+    // stride[i] = product (in bits) of the sizes of all dims after i; the
+    // innermost dim is the bit dim, so strides are already bit offsets.
+    std::vector<long> stride(dims.size(), 1);
+    for (int i = (int)dims.size() - 2; i >= 0; i--)
+        stride[i] = stride[i + 1] *
+                    (std::abs(dims[i + 1].first - dims[i + 1].second) + 1);
+    long const_off = 0;
+    for (size_t i = 0; i < n_idx; i++) {
+        const expr* ie = (*exprs)[i];
+        if (ie->VpiType() == vpiBitSelect)
+            ie = any_cast<const expr*>(
+                any_cast<const UHDM::bit_select*>(ie)->VpiIndex());
+        RTLIL::SigSpec is = import_expression(ie, ctx);
+        if (!is.is_fully_const()) return false;
+        int l = dims[i].first, r = dims[i].second;
+        bool asc = l < r;
+        int idx = is.as_const().as_int();
+        long slot = asc ? (long)(r - idx) : (long)(idx - r);
+        if (slot < 0 || slot > std::abs(l - r)) return false;
+        const_off += slot * stride[i];
+    }
+    off = (int)const_off;
+    width = (int)stride[n_idx - 1];
+    return true;
+}
+
 RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::Process* proc) {
     auto func_def = fc->Function();
     if (!func_def) {

@@ -928,6 +928,16 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    // Constant-index bit-slice of a PACKED multi-dim var_select (`box[x][y][z]`
+    // inside a function body).  Mirrors the read path's packed-flatten formula
+    // (dims outer->inner, stride in bits, MSB-first).  `ctx` resolves the index
+    // and typespec-range expressions (loop-unrolled constants + function
+    // localparams).  Returns true and sets off/width for the fully/partially-
+    // indexed CONSTANT case (used by the function inliner's var_select LHS).
+    bool varselect_const_bitslice(
+        const UHDM::var_select* vs,
+        std::map<std::string, RTLIL::SigSpec>* ctx,
+        int& off, int& width);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
     // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
     bool emit_dynamic_packed_select_write(

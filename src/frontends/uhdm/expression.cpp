@@ -1132,6 +1132,40 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     log_warning("Indexed part-select LHS %s has non-constant "
                                 "base/width\n", base_name.c_str());
                 }
+            } else if (assign->Lhs()->UhdmType() == uhdmvar_select) {
+                // Multi-dim PACKED var_select LHS (`box[x][y][z] = …` in
+                // keccak_2share's bitarray_to_box / box_to_bitarray / theta / …,
+                // filled bit-by-bit in nested for-loops).  Resolve the constant
+                // bit-slice with the same packed-flatten formula the read path
+                // uses and splice it into the local's (or the return value's)
+                // tracked wire.  Without this the write was DROPPED and the whole
+                // Keccak permutation datapath folded to X/0 (keccak_round).
+                const var_select* vs = any_cast<const var_select*>(assign->Lhs());
+                std::string base_name = std::string(vs->VpiName());
+                int off = -1, w = -1;
+                if (varselect_const_bitslice(vs, &input_mapping, off, w)) {
+                    RTLIL::SigSpec base_spec;
+                    if (base_name == func_name) {
+                        base_spec = RTLIL::SigSpec(result_wire);
+                    } else {
+                        auto it = input_mapping.find(base_name);
+                        if (it != input_mapping.end()) base_spec = it->second;
+                    }
+                    if (off >= 0 && w > 0 && base_spec.size() > 0 &&
+                        off + w <= base_spec.size()) {
+                        lhs_sig = base_spec.extract(off, w);
+                        if (mode_debug)
+                            log("  process_stmt_to_case: var-select LHS %s → "
+                                "[%d +: %d]\n", base_name.c_str(), off, w);
+                    } else {
+                        log_warning("var-select LHS %s [%d +: %d] out of bounds "
+                                    "(base_size=%d)\n", base_name.c_str(), off, w,
+                                    base_spec.size());
+                    }
+                } else {
+                    log_warning("var-select LHS %s: could not resolve constant "
+                                "slice\n", base_name.c_str());
+                }
             } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
                 // Handle bit select assignment
                 const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
