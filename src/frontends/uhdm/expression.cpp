@@ -2276,7 +2276,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     if (auto a = vs->Actual_group())
                         if (a->UhdmType() == uhdmparameter)
                             par = any_cast<const UHDM::parameter*>(a);
-                    if (par && exprs->size() >= 1 && exprs->size() <= 2) {
+                    if (par && exprs->size() >= 1 && exprs->size() <= 4) {
                         RTLIL::SigSpec pval;
                         RTLIL::IdString pid = RTLIL::escape_id(base_name);
                         if (module && module->parameter_default_values.count(pid))
@@ -2297,6 +2297,100 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             }
                         }
                         if (!pval.empty() && pval.is_fully_const()) {
+                            // MULTI-DIM unpacked param array (keccak pi's
+                            // `PiRot[x][y]`, `localparam int PiRot [5][5]`): the
+                            // 1D path below reads only the FIRST dim and treats a
+                            // 2nd index as a within-element bit, so a genuine 2nd
+                            // ARRAY dimension was dropped.  Build the full dim
+                            // list from the array_typespec (all Ranges + nested
+                            // Elem_typespec) and index it with the '{} MSB-first
+                            // packing (ascending dim: index `low` at the top).
+                            const UHDM::typespec* ats0 =
+                                par->Typespec() ? par->Typespec()->Actual_typespec() : nullptr;
+                            std::vector<int> pcnt, plow; std::vector<bool> pasc;
+                            int leaf_w = 0; bool dims_ok = true;
+                            for (const UHDM::typespec* cur = ats0; cur; ) {
+                                auto at = dynamic_cast<const UHDM::array_typespec*>(cur);
+                                if (!at) {
+                                    leaf_w = get_width_from_typespec(
+                                        const_cast<UHDM::typespec*>(cur), current_instance);
+                                    break;
+                                }
+                                if (at->Ranges())
+                                    for (auto rg : *at->Ranges()) {
+                                        RTLIL::SigSpec l = import_expression(rg->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(rg->Right_expr(), input_mapping);
+                                        if (!l.is_fully_const() || !r.is_fully_const()) { dims_ok = false; break; }
+                                        pcnt.push_back(std::abs(l.as_int() - r.as_int()) + 1);
+                                        plow.push_back(std::min(l.as_int(), r.as_int()));
+                                        pasc.push_back(l.as_int() <= r.as_int());
+                                    }
+                                if (!dims_ok) break;
+                                cur = at->Elem_typespec() ? at->Elem_typespec()->Actual_typespec() : nullptr;
+                            }
+                            long prod = 1; for (int c : pcnt) prod *= c;
+                            if (dims_ok && pcnt.size() >= 2 && leaf_w > 0 &&
+                                prod * leaf_w == (long)pval.size()) {
+                                // A trailing part/bit-select is a sub-range in the
+                                // leaf element; the leading exprs are array dims.
+                                const expr* trail = nullptr;
+                                size_t n_arr = exprs->size();
+                                if (n_arr > 0) {
+                                    int t = (*exprs)[n_arr - 1]->VpiType();
+                                    if (t == vpiPartSelect || t == vpiIndexedPartSelect ||
+                                        (t == vpiBitSelect && n_arr - 1 >= pcnt.size())) {
+                                        trail = (*exprs)[n_arr - 1]; n_arr--;
+                                    }
+                                }
+                                if (n_arr >= 1 && n_arr <= pcnt.size()) {
+                                    std::vector<long> stride(pcnt.size(), 1);
+                                    for (int d = (int)pcnt.size() - 2; d >= 0; d--)
+                                        stride[d] = stride[d + 1] * pcnt[d + 1];
+                                    long slot = 0; bool ok = true;
+                                    for (size_t d = 0; d < n_arr; d++) {
+                                        RTLIL::SigSpec is = import_expression((*exprs)[d], input_mapping);
+                                        if (!is.is_fully_const()) { ok = false; break; }
+                                        int k = is.as_const().as_int() - plow[d];
+                                        if (k < 0 || k >= pcnt[d]) { ok = false; break; }
+                                        slot += (long)(pasc[d] ? (pcnt[d] - 1 - k) : k) * stride[d];
+                                    }
+                                    long sel_elems = 1;
+                                    for (size_t d = n_arr; d < pcnt.size(); d++) sel_elems *= pcnt[d];
+                                    long sel_w = sel_elems * leaf_w;
+                                    if (ok && slot * leaf_w >= 0 &&
+                                        slot * leaf_w + sel_w <= (long)pval.size()) {
+                                        RTLIL::SigSpec elem =
+                                            pval.extract((int)(slot * leaf_w), (int)sel_w);
+                                        if (trail && trail->VpiType() == vpiPartSelect) {
+                                            auto ps2 = any_cast<const part_select*>(trail);
+                                            RTLIL::SigSpec l2 = import_expression(ps2->Left_range(), input_mapping);
+                                            RTLIL::SigSpec r2 = import_expression(ps2->Right_range(), input_mapping);
+                                            if (l2.is_fully_const() && r2.is_fully_const()) {
+                                                int o = std::min(l2.as_int(), r2.as_int());
+                                                int w = std::abs(l2.as_int() - r2.as_int()) + 1;
+                                                elem = (o >= 0 && o + w <= elem.size())
+                                                           ? elem.extract(o, w) : RTLIL::SigSpec();
+                                            } else elem = RTLIL::SigSpec();
+                                        } else if (trail) {
+                                            const expr* be = (trail->VpiType() == vpiBitSelect)
+                                                ? any_cast<const expr*>(any_cast<const bit_select*>(trail)->VpiIndex())
+                                                : trail;
+                                            RTLIL::SigSpec b2 = import_expression(be, input_mapping);
+                                            if (b2.is_fully_const()) {
+                                                int bi = b2.as_const().as_int();
+                                                elem = (bi >= 0 && bi < elem.size())
+                                                           ? elem.extract(bi, 1) : RTLIL::SigSpec();
+                                            } else elem = RTLIL::SigSpec();
+                                        }
+                                        if (!elem.empty()) {
+                                            log("  vpiVarSelect: %zuD param array %s[...]"
+                                                " -> %d bits\n", pcnt.size(),
+                                                base_name.c_str(), elem.size());
+                                            return elem;
+                                        }
+                                    }
+                                }
+                            }
                             int elem_w = 0, count = 0, low = 0;
                             bool asc = true;   // [N] shorthand = [0:N-1]
                             const UHDM::typespec* ats2 =
