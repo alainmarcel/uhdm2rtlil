@@ -124,7 +124,14 @@ def _undriven_check(work_dir, top):
     # design — flag it instead of a misleading ❌.  Complete designs (the pavona/
     # tlul/acc/cva6 wrappers, the self-contained ibex/rp32 dirs) have no
     # blackboxes and take the real count below.
-    if "Resizing cell port" in out or "is not part of the design" in out:
+    # A GENUINE blackbox (child sources missing) either flags "is not part of the
+    # design" or has its unknown-module ports truncated to 1 bit.  A resize to a
+    # wider/matching width (e.g. an interface delay-line array `req_dly` going
+    # 76<->152, `trn_dly` 1<->2 in the rp32 degu SoC) is a benign width
+    # adaptation yosys resolves correctly, NOT a blackbox — those designs fully
+    # elaborate and their real undriven count below is meaningful.
+    if "is not part of the design" in out or \
+       re.search(r"Resizing cell port \S+ from \d+ bits to 1 bits", out):
         return "— (blackbox children)"
     undriven = len(re.findall(r"used but has no driver", out))
     if undriven:
@@ -210,6 +217,23 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
         return "— (no miter: crash)"
     if "reading net state during design initialization" in out:
         return "— (no miter: slang net-init)"
+    # UPSTREAM RTL that is itself incomplete: a WIP module referencing a type or
+    # struct member that was never defined in the source project (jeras/rp32
+    # r5p_csr's `dec_csr_t`/`dec_priv_t`, r5p_hamster's `dec_t.alu` — referenced
+    # but typedef'd nowhere upstream, on any branch or submodule).  Surelog is
+    # lenient and elaborates these to X; read_slang correctly rejects them.  Not
+    # a missing submodule and not fixable by vendoring — flag it honestly.
+    if re.search(r"use of undeclared identifier|no member named|"
+                 r"is not a valid type", out):
+        return "— (no miter: upstream RTL incomplete)"
+    # A synthesis-time $readmemh (opening a .mem file) or a dynamic-size string
+    # is unsupported by read_slang's elaboration (rp32 gowin_inference SoC RAM).
+    if re.search(r"failed to open file|dynamic size unsupported", out):
+        return "— (no miter: slang $readmemh)"
+    # A core whose top has an unbound interface PORT can't be a slang top without
+    # a wrapper that connects the interface (rp32 r5p_degu's tcb_ifu).
+    if "unconnected interface port" in out:
+        return "— (no miter: iface port at top)"
     # A module whose submodule RTL is not in project.f cannot be mitered
     # standalone: read_slang fails to elaborate ("unknown module"/"Build
     # failed"), or the read_uhdm hierarchy check flags the missing child ("is
