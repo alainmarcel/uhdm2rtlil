@@ -10073,7 +10073,24 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
     RTLIL::Module* child = design->module(cell->type);
     if (!child) return;
     RTLIL::Wire* cw = child->wire(RTLIL::escape_id(sig));
-    if (!cw) return;
+    if (!cw) {
+        // MULTI-LEVEL XMR read: `sig` = "subinst.rest" reaches a signal deeper
+        // inside `child` (e.g. ibex_core reads
+        // cs_registers_i.mcycle_counter_i.counter_val_o for RVFI).  Recurse to
+        // materialise "subinst.rest" as a driven wire in `child` first, then
+        // expose THAT up through this level — so the promotion chains all the
+        // way to the leaf signal instead of leaving an undriven placeholder.
+        auto dot = sig.find('.');
+        if (dot != std::string::npos) {
+            std::string subinst = sig.substr(0, dot);
+            std::string rest = sig.substr(dot + 1);
+            if (RTLIL::Cell* subcell = child->cell(RTLIL::escape_id(subinst))) {
+                resolve_xmr_read(child, subcell, rest);
+                cw = child->wire(RTLIL::escape_id(sig));
+            }
+        }
+        if (!cw) return;
+    }
     if (!cw->port_output && !cw->port_input) {
         cw->port_output = true;
         child->fixup_ports();
@@ -10083,8 +10100,18 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
     std::string pn = inst + "." + sig;
     RTLIL::Wire* pw = mod->wire(RTLIL::escape_id(pn));
     if (!pw) pw = mod->addWire(RTLIL::escape_id(pn), cw->width);
-    if (!cell->hasPort(RTLIL::escape_id(sig)))
+    if (cell->hasPort(RTLIL::escape_id(sig))) {
+        // The port is already a real connection (an output used elsewhere, e.g.
+        // ibex_counter.counter_val_o driving cs_registers, or controller.
+        // id_exception_o).  Don't add a second connection — that would leave the
+        // reader wire undriven.  Alias the reader to the net the port already
+        // drives so it carries the same value.
+        RTLIL::SigSpec existing = cell->getPort(RTLIL::escape_id(sig));
+        if (existing.size() == pw->width && existing != RTLIL::SigSpec(pw))
+            mod->connect(RTLIL::SigSpec(pw), existing);
+    } else {
         cell->setPort(RTLIL::escape_id(sig), pw);
+    }
 }
 
 // Import hierarchical path (e.g., bus.a, interface.signal)
@@ -10539,21 +10566,38 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // flatten.  Only fires when the first element is genuinely a cell instance
     // (interface-port `sub.clk` and struct-field `s.f` reads fall through: their
     // base is a wire/port, not a cell).
-    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
         auto& xpe = *uhdm_hier->Path_elems();
-        if (xpe[0]->UhdmType() == uhdmref_obj &&
-            xpe[1]->UhdmType() == uhdmref_obj) {
+        // A DOWNWARD XMR read `inst0.inst1.….sig` — every element a bare
+        // ref_obj.  Two elements is the common `inst.sig`; deeper chains
+        // (ibex RVFI's cs_registers_i.mcycle_counter_i.counter_val_o,
+        // id_stage_i.controller_i.<sig>) read a signal several instances down.
+        // Treat elem[0] as the child instance and join the rest as the (dotted)
+        // signal path, which resolve_xmr_read promotes recursively.
+        bool all_ref = true;
+        for (auto* e : xpe)
+            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+        if (all_ref) {
             std::string inst = std::string(any_cast<const ref_obj*>(xpe[0])->VpiName());
-            std::string sig  = std::string(any_cast<const ref_obj*>(xpe[1])->VpiName());
+            std::string sig;
+            for (size_t k = 1; k < xpe.size(); k++) {
+                if (k > 1) sig += ".";
+                sig += std::string(any_cast<const ref_obj*>(xpe[k])->VpiName());
+            }
+            const ref_obj* leaf = any_cast<const ref_obj*>(xpe.back());
             RTLIL::Cell* xcell = inst.empty() ? nullptr
                                : module->cell(RTLIL::escape_id(inst));
             RTLIL::Module* xchild = xcell ? design->module(xcell->type) : nullptr;
             if (xchild && !sig.empty()) {
-                if (xchild->wire(RTLIL::escape_id(sig))) {
-                    resolve_xmr_read(module, xcell, sig);
+                // resolve_xmr_read handles both a direct child wire and a nested
+                // subinst.rest path (recursively), so just try it and return the
+                // reader wire if it materialised.
+                resolve_xmr_read(module, xcell, sig);
+                if (RTLIL::Wire* rw =
+                        module->wire(RTLIL::escape_id(inst + "." + sig))) {
                     log("    XMR read %s.%s: exposed child output port\n",
                         inst.c_str(), sig.c_str());
-                    return RTLIL::SigSpec(module->wire(RTLIL::escape_id(inst + "." + sig)));
+                    return RTLIL::SigSpec(rw);
                 }
             } else if (!xcell && !inst.empty() && !sig.empty() &&
                        !module->wire(RTLIL::escape_id(inst)) &&
@@ -10570,7 +10614,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // reader at the end of import_design once every cell exists.
                 pending_xmr_reads_.push_back({module, inst, sig});
                 int xw = 1;
-                if (auto ag = any_cast<const ref_obj*>(xpe[1])->Actual_group()) {
+                if (auto ag = leaf->Actual_group()) {
                     int w = get_width(ag, current_instance);
                     if (w > 0) xw = w;
                 }
