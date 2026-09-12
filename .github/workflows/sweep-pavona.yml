@@ -50,3 +50,16 @@ jobs:
       core: acc
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # The Pavona KMAC (OpenTitan Keccak-MAC / SHA3 hashing core) per-module
+  # equivalence campaign (test/pavona_kmac_equiv): formal vs read_slang +
+  # structural undriven check + Verilator co-sim (adjudicates the SAT-hard
+  # 1600-bit Keccak-f permutation the bounded miter times out on).  Runs under
+  # the same workflow.
+  sweep-kmac:
+    name: pavona - kmac
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: kmac
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
