@@ -1,0 +1,5 @@
+# ibex_register_file_latch.sv has `ifdef VERILATOR $fatal` — the latch-based
+# register file explicitly refuses Verilator simulation upstream, so an
+# RTL-vs-netlist co-sim cannot run.  Formal (read_uhdm vs read_slang) still
+# covers it (✅ equivalent).
+SKIP_SIM_EQUIV=1

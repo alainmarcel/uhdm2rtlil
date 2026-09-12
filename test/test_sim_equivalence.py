@@ -92,6 +92,26 @@ def frontend_read_setup(frontend: str, paths: dict, uhdm: Path,
     sys.exit(f"❌ unknown frontend: {frontend}")
 
 
+TRANSLATE_OFF_RE = re.compile(
+    r"//\s*(?:synopsys|pragma|synthesis)\s+translate_off\b.*?"
+    r"//\s*(?:synopsys|pragma|synthesis)\s+translate_on\b[^\n]*",
+    re.IGNORECASE | re.DOTALL)
+
+
+def strip_translate_off(text: str) -> str:
+    """Remove `// synopsys translate_off ... translate_on` regions.
+
+    Synthesis tools (Surelog/slang, so the UHDM netlist) drop these, but
+    Verilator — a simulator — compiles them, and ibex wraps debug `$display`s
+    that reach UP into the parent scope (`u_ibex_core.hart_id_i`) in such a
+    region.  When the module is co-simulated standalone that upward hierarchical
+    reference is unresolvable and Verilator errors out, so the co-sim never runs.
+    The regions are simulation-only debug/asserts with no effect on the design's
+    outputs, so stripping them for the Verilator RTL reference is safe and keeps
+    it consistent with the (translate_off-free) synthesized netlist."""
+    return TRANSLATE_OFF_RE.sub("\n", text)
+
+
 def parse_project_f(test_dir: Path) -> dict:
     """Read `project.f` if present.  Returns a dict with keys:
         srcs: list[Path]   — source files (relative to test_dir)
@@ -169,7 +189,8 @@ def find_top_module(dut_path: Path) -> str:
 
 
 def detect_unpacked_array_ports(dut_path: Path,
-                                orig_top: str) -> dict[str, int]:
+                                orig_top: str,
+                                param_srcs=()) -> dict[str, int]:
     """Find input/output ports declared with an unpacked-array dimension
     like `input logic [W:0] iP [4]` — Yosys flattens them to a single
     flat-width wire, but Verilator still sees the original unpacked-array
@@ -250,12 +271,27 @@ def detect_unpacked_array_ports(dut_path: Path,
         r"\s+([A-Za-z_]\w*)"                      # port name
         r"\s*\[\s*(\d+|[A-Za-z_]\w*)\s*(-\s*1\s*:\s*0)?\s*\]"  # unpacked [N]/[P]/[N-1:0]
     )
-    # A symbolic count ([PMPNumRegions]) resolves through the module header
-    # parameter DEFAULTS — the harness elaborates the netlist with default
-    # parameters, so the RTL side sees the same value.
+    # A symbolic count ([PMPNumRegions], [IC_NUM_WAYS]) resolves through simple
+    # `parameter`/`localparam NAME = <int>` definitions.  Scan the module header
+    # AND the other project sources (packages), since the dim may be a package
+    # constant (ibex_pkg's IC_NUM_WAYS gives ic_data_rdata_i [IC_NUM_WAYS]).  The
+    # harness elaborates the netlist with default parameters, so the RTL side
+    # sees the same value.
     param_re = re.compile(
-        r"\bparameter\b[^=,;)]*?\b([A-Za-z_]\w*)\s*=\s*(\d+)")
-    params = {n: int(v) for n, v in param_re.findall(clean)}
+        r"\b(?:parameter|localparam)\b[^=,;)]*?\b([A-Za-z_]\w*)\s*=\s*(\d+)\b")
+    params = {}
+    for src in param_srcs:
+        try:
+            ptext = Path(src).read_text(errors="replace")
+        except OSError:
+            continue
+        ptext = re.sub(r"//[^\n]*", "", ptext)
+        ptext = re.sub(r"/\*.*?\*/", "", ptext, flags=re.DOTALL)
+        for n, v in param_re.findall(ptext):
+            params.setdefault(n, int(v))
+    # Module-header params win over any same-named package default.
+    for n, v in param_re.findall(clean):
+        params[n] = int(v)
     for d, name, count, desc in port_re.findall(plist):
         # Filter out keywords accidentally captured as a port name.
         if name in ("input", "output", "inout", "wire", "reg",
@@ -890,7 +926,9 @@ def main() -> int:
     # Verilator rejected the flat wrapper connection).  Scan every source.
     unpacked = {}
     for _src in rtl_srcs:
-        unpacked = detect_unpacked_array_ports(_src, orig_top)
+        # Pass all sources so a symbolic unpacked dim that is a PACKAGE constant
+        # (ibex_pkg's IC_NUM_WAYS) still resolves.
+        unpacked = detect_unpacked_array_ports(_src, orig_top, rtl_srcs)
         if unpacked:
             break
     if unpacked:
@@ -908,7 +946,19 @@ def main() -> int:
     if project.get("incdirs"):
         vflags.append("--no-assert")
     vflags += project.get("verilator") or []
-    rc, out = run_verilator(work, paths, rtl_srcs, extra_flags=vflags)
+    # Feed Verilator RTL with `synopsys translate_off` debug regions stripped
+    # (they hold sim-only $display/asserts with upward hierarchical refs that
+    # break a standalone co-sim); the synthesized netlist already excludes them.
+    vsrcs = []
+    for s in rtl_srcs:
+        txt = Path(s).read_text(errors="replace")
+        if re.search(r"translate_off", txt, re.IGNORECASE):
+            dst = work / ("noxlate_" + Path(s).name)
+            dst.write_text(strip_translate_off(txt))
+            vsrcs.append(dst.resolve())
+        else:
+            vsrcs.append(s)
+    rc, out = run_verilator(work, paths, vsrcs, extra_flags=vflags)
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)
