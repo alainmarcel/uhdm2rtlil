@@ -9067,6 +9067,19 @@ bool UhdmImporter::varselect_const_bitslice(
     }
     auto exprs = vs->Exprs();
     size_t n_idx = exprs->size();
+    // A TRAILING part-select / indexed-part-select is a sub-range WITHIN the
+    // selected element, not an index (keccak pi/rho: `result[x][y][W-1:0]`).
+    // Peel it off; the remaining leading entries are the packed indices.
+    const UHDM::part_select* trail_ps = nullptr;
+    const UHDM::indexed_part_select* trail_ips = nullptr;
+    if (n_idx > 0) {
+        const expr* last = (*exprs)[n_idx - 1];
+        if (last->VpiType() == vpiPartSelect) {
+            trail_ps = any_cast<const UHDM::part_select*>(last); n_idx--;
+        } else if (last->VpiType() == vpiIndexedPartSelect) {
+            trail_ips = any_cast<const UHDM::indexed_part_select*>(last); n_idx--;
+        }
+    }
     if (n_idx == 0 || n_idx > dims.size()) return false;
     // stride[i] = product (in bits) of the sizes of all dims after i; the
     // innermost dim is the bit dim, so strides are already bit offsets.
@@ -9089,8 +9102,27 @@ bool UhdmImporter::varselect_const_bitslice(
         if (slot < 0 || slot > std::abs(l - r)) return false;
         const_off += slot * stride[i];
     }
-    off = (int)const_off;
-    width = (int)stride[n_idx - 1];
+    long res_w = stride[n_idx - 1];   // width of the selected element
+    // Apply a trailing [hi:lo] / [base +: w] within that element.
+    long sub_off = 0, sub_w = res_w;
+    if (trail_ps) {
+        RTLIL::SigSpec l = import_expression(trail_ps->Left_range(), ctx);
+        RTLIL::SigSpec r = import_expression(trail_ps->Right_range(), ctx);
+        if (!l.is_fully_const() || !r.is_fully_const()) return false;
+        int hi = l.as_const().as_int(), lo = r.as_const().as_int();
+        sub_off = std::min(hi, lo);
+        sub_w = std::abs(hi - lo) + 1;
+    } else if (trail_ips) {
+        RTLIL::SigSpec b = import_expression(trail_ips->Base_expr(), ctx);
+        RTLIL::SigSpec w = import_expression(trail_ips->Width_expr(), ctx);
+        if (!b.is_fully_const() || !w.is_fully_const()) return false;
+        int bb = b.as_const().as_int(); sub_w = w.as_const().as_int();
+        sub_off = (trail_ips->VpiIndexedPartSelectType() == vpiPosIndexed)
+                      ? bb : (bb - sub_w + 1);
+    }
+    if (sub_off < 0 || sub_w <= 0 || sub_off + sub_w > res_w) return false;
+    off = (int)(const_off + sub_off);
+    width = (int)sub_w;
     return true;
 }
 
