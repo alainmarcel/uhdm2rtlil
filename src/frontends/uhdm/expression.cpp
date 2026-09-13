@@ -3910,6 +3910,40 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
 
                     auto first_arg = func_call->Tf_call_args()->at(0);
 
+                    // `$bits(arr[idx].field)` on an unpacked array of packed
+                    // structs: the MEMBER's width — the generic path below
+                    // sized the whole element struct (kmac_app's strb->byte-
+                    // mask loop `for (i < $bits(app_i[app_id].strb))` ran 140
+                    // iterations instead of 8).
+                    if (func_name == "$bits")
+                        if (auto hp0 = dynamic_cast<const UHDM::hier_path*>(first_arg))
+                            if (hp0->Path_elems() && hp0->Path_elems()->size() == 2 &&
+                                (*hp0->Path_elems())[0]->UhdmType() == uhdmbit_select) {
+                                auto& pe = *hp0->Path_elems();
+                                auto bsb = any_cast<const bit_select*>(pe[0]);
+                                std::string fname = std::string(pe[1]->VpiName());
+                                const UHDM::typespec* ets = unpacked_array_elem_struct_ts(
+                                    std::string(bsb->VpiName()), bsb->Actual_group(),
+                                    current_instance, nullptr);
+                                int off = 0, mw = 0;
+                                if (ets && !fname.empty() &&
+                                    calculate_struct_member_offset(ets, fname, current_instance, off, mw) &&
+                                    mw > 0) {
+                                    if (pe[1]->UhdmType() == uhdmref_obj)
+                                        return RTLIL::SigSpec(RTLIL::Const(mw, 32));
+                                    if (pe[1]->UhdmType() == uhdmbit_select)
+                                        return RTLIL::SigSpec(RTLIL::Const(1, 32));
+                                    if (pe[1]->UhdmType() == uhdmpart_select) {
+                                        auto ps = any_cast<const part_select*>(pe[1]);
+                                        RTLIL::SigSpec l = import_expression(ps->Left_range());
+                                        RTLIL::SigSpec r = import_expression(ps->Right_range());
+                                        if (l.is_fully_const() && r.is_fully_const())
+                                            return RTLIL::SigSpec(RTLIL::Const(
+                                                std::abs(l.as_const().as_int() - r.as_const().as_int()) + 1, 32));
+                                    }
+                                }
+                            }
+
                     // `$bits(T)` where T is a TYPE PARAMETER.  Surelog folds
                     // `$bits(pkg::struct_t)` to a constant during elaboration,
                     // but leaves the type-parameter form as an unevaluated
@@ -10490,6 +10524,84 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
     return result;
 }
 
+
+// Element STRUCT typespec of an unpacked array of packed structs named `base`
+// (`arr[idx].field` reads / `$bits(arr[idx].field)`): from the bit_select's
+// Actual_group (an expr-derived var/net: array_typespec -> Elem_typespec; an
+// elaborated PORT is a packed_array_var whose packed_array_typespec hangs the
+// element struct; an array_net / array_var carries it on its elements), else
+// from the module wire's UHDM object, else BY NAME in the enclosing module's
+// ports / array_nets / array_vars / nets / variables.  nullptr when the
+// element is not a struct.
+const UHDM::typespec* UhdmImporter::unpacked_array_elem_struct_ts(
+    const std::string& base, const UHDM::any* actual, const UHDM::scope* inst,
+    RTLIL::Wire* elem0) {
+    auto struct_of = [&](const UHDM::ref_typespec* rt) -> const UHDM::typespec* {
+        if (!rt || !rt->Actual_typespec()) return nullptr;
+        const UHDM::typespec* ts = rt->Actual_typespec();
+        if (ts->UhdmType() == uhdmarray_typespec) {
+            auto arr = any_cast<const UHDM::array_typespec*>(ts);
+            ts = arr->Elem_typespec() ? arr->Elem_typespec()->Actual_typespec() : nullptr;
+        } else if (ts->UhdmType() == uhdmpacked_array_typespec) {
+            auto pa = any_cast<const UHDM::packed_array_typespec*>(ts);
+            ts = pa->Elem_typespec() ? pa->Elem_typespec()->Actual_typespec() : nullptr;
+        }
+        if (ts) ts = resolve_type_param_typespec(ts, inst);
+        return (ts && ts->UhdmType() == uhdmstruct_typespec) ? ts : nullptr;
+    };
+    const UHDM::typespec* ets = nullptr;
+    if (actual) {
+        if (auto e = dynamic_cast<const UHDM::expr*>(actual)) ets = struct_of(e->Typespec());
+        if (!ets)
+            if (auto an = dynamic_cast<const UHDM::array_net*>(actual))
+                if (an->Nets() && !an->Nets()->empty())
+                    ets = struct_of((*an->Nets())[0]->Typespec());
+        if (!ets)
+            if (auto av = dynamic_cast<const UHDM::array_var*>(actual))
+                if (av->Variables() && !av->Variables()->empty())
+                    ets = struct_of((*av->Variables())[0]->Typespec());
+    }
+    if (!ets && elem0) {
+        for (auto& pr : wire_map) {
+            if (pr.second != elem0) continue;
+            if (auto e = dynamic_cast<const UHDM::expr*>(pr.first)) ets = struct_of(e->Typespec());
+            break;
+        }
+    }
+    if (!ets) {
+        const UHDM::module_inst* mi = dynamic_cast<const UHDM::module_inst*>(
+            inst ? (const UHDM::any*)inst : (const UHDM::any*)current_instance);
+        if (!mi) mi = dynamic_cast<const UHDM::module_inst*>((const UHDM::any*)current_instance);
+        if (mi) {
+            if (mi->Ports())
+                for (auto po : *mi->Ports())
+                    if (!ets && std::string(po->VpiName()) == base) ets = struct_of(po->Typespec());
+            if (!ets && mi->Array_nets())
+                for (auto an : *mi->Array_nets())
+                    if (!ets && std::string(an->VpiName()) == base) {
+                        ets = struct_of(an->Typespec());
+                        if (!ets && an->Nets() && !an->Nets()->empty())
+                            ets = struct_of((*an->Nets())[0]->Typespec());
+                    }
+            if (!ets && mi->Array_vars())
+                for (auto av0 : *mi->Array_vars())
+                    if (auto av = dynamic_cast<const UHDM::array_var*>(av0))
+                        if (!ets && std::string(av->VpiName()) == base) {
+                            ets = struct_of(av->Typespec());
+                            if (!ets && av->Variables() && !av->Variables()->empty())
+                                ets = struct_of((*av->Variables())[0]->Typespec());
+                        }
+            if (!ets && mi->Nets())
+                for (auto nn : *mi->Nets())
+                    if (!ets && std::string(nn->VpiName()) == base) ets = struct_of(nn->Typespec());
+            if (!ets && mi->Variables())
+                for (auto vv : *mi->Variables())
+                    if (!ets && std::string(vv->VpiName()) == base) ets = struct_of(vv->Typespec());
+        }
+    }
+    return ets;
+}
+
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing hier_path\n");
@@ -11429,6 +11541,154 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // the port wire, so the demultiplexer's `assign man[i].vld = ...` (in a
     // genvar loop) never drives tcb_per[i].vld and the degu SoC's peripheral bus
     // is dead.  Works for both reads and the assign LHS.
+    // `arr[idx].field`, `arr[idx].field[b]`, `arr[idx].field[hi:lo]` READ on an
+    // UNPACKED array of packed structs — materialised either as per-element
+    // wires `\arr[k]` (internal arrays) or as ONE flat wire `\arr` (unpacked
+    // array PORTS: kmac_app's `input app_req_t app_i [NumAppIntf]`, whose
+    // `app_i[app_id].strb[i]` strb->byte-mask expansion read as 0 and whose
+    // `$bits(app_i[app_id].strb)` loop bound came out as the WHOLE 140-bit
+    // struct).  Resolve the element struct typespec (array_typespec ->
+    // Elem_typespec, or the array_net/array_var element's), locate the member,
+    // then select the element: constant index -> that element (wire or flat
+    // slice); dynamic -> an index-compare mux over the element wires (X when
+    // the index can fall outside the array, like the plain `arr[idx]` read) or
+    // a $shiftx over the flat wire.  Elements written earlier in the same comb
+    // block are read at their in-flight value.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+        (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmbit_select) {
+        auto& pe_ef = *uhdm_hier->Path_elems();
+        auto bs0 = any_cast<const bit_select*>(pe_ef[0]);
+        std::string base = std::string(bs0->VpiName());
+        std::string field;
+        const bit_select*  fbit  = nullptr;
+        const part_select* fpart = nullptr;
+        if (pe_ef[1]->UhdmType() == uhdmref_obj)
+            field = std::string(any_cast<const ref_obj*>(pe_ef[1])->VpiName());
+        else if (pe_ef[1]->UhdmType() == uhdmbit_select) {
+            fbit = any_cast<const bit_select*>(pe_ef[1]);
+            field = std::string(fbit->VpiName());
+        } else if (pe_ef[1]->UhdmType() == uhdmpart_select) {
+            fpart = any_cast<const part_select*>(pe_ef[1]);
+            field = std::string(fpart->VpiName());
+        }
+        if (!field.empty() && !base.empty() && bs0->VpiIndex() &&
+            !module->wire(RTLIL::escape_id(base + "." + field))) {
+            int low = expanded_array_low(base);
+            std::vector<RTLIL::Wire*> elems;
+            if (low >= 0)
+                for (int k = low;; k++) {
+                    RTLIL::Wire* ew = find_wire_in_scope(base + "[" + std::to_string(k) + "]");
+                    if (!ew) break;
+                    elems.push_back(ew);
+                }
+            RTLIL::Wire* flat = elems.empty() ? find_wire_in_scope(base) : nullptr;
+            const UHDM::typespec* ets = unpacked_array_elem_struct_ts(
+                base, bs0->Actual_group(), inst, elems.empty() ? nullptr : elems[0]);
+            int ew = ets ? get_width_from_typespec(ets, inst) : 0;
+            int n = !elems.empty() ? (int)elems.size()
+                  : (flat && ew > 0 && flat->width % ew == 0) ? flat->width / ew : 0;
+            if (flat && low < 0) {
+                low = 0;
+                auto lo_id = RTLIL::escape_id("unpacked_outer_low");
+                if (flat->attributes.count(lo_id)) low = flat->attributes.at(lo_id).as_int();
+            }
+            int off = 0, mw = 0;
+            if (mode_debug)
+                log("    hier_path '%s': elem-array struct field probe: elems=%d flat=%s ew=%d n=%d ets=%s actual=%s\n",
+                    path_name.c_str(), (int)elems.size(), flat ? "yes" : "no", ew, n, ets ? "yes" : "no",
+                    bs0->Actual_group() ? UhdmName(bs0->Actual_group()->UhdmType()).c_str() : "null");
+            if (n > 0 && ets && ew > 0 &&
+                calculate_struct_member_offset(ets, field, inst, off, mw) && mw > 0 &&
+                off + mw <= ew) {
+                auto flat_val = [&]() -> RTLIL::SigSpec {
+                    std::string fn = flat->name.str().substr(1);
+                    if (!in_always_ff_body_mode && !comb_lhs_keep_base &&
+                        current_comb_values.count(fn) &&
+                        current_comb_values.at(fn).size() == flat->width)
+                        return current_comb_values.at(fn);
+                    return RTLIL::SigSpec(flat);
+                };
+                auto elem_val = [&](int k) -> RTLIL::SigSpec {
+                    if (elems.empty()) return flat_val().extract(k * ew, ew);
+                    std::string en = base + "[" + std::to_string(low + k) + "]";
+                    if (!in_always_ff_body_mode && !comb_lhs_keep_base &&
+                        current_comb_values.count(en) &&
+                        current_comb_values.at(en).size() == elems[k]->width)
+                        return current_comb_values.at(en);
+                    return RTLIL::SigSpec(elems[k]);
+                };
+                RTLIL::SigSpec idx = import_expression(bs0->VpiIndex(), input_mapping);
+                RTLIL::SigSpec elem;
+                if (idx.is_fully_const()) {
+                    int k = idx.as_const().as_int() - low;
+                    if (k >= 0 && k < n) elem = elem_val(k);
+                    else elem = RTLIL::SigSpec(RTLIL::State::Sx, ew);
+                } else if (elems.empty()) {
+                    // Flat array: element = flat >> ((idx - low) * ew), X past the end.
+                    RTLIL::SigSpec sh = idx;
+                    sh.extend_u0(32, false);
+                    if (low != 0)
+                        sh = module->Sub(NEW_ID, sh, RTLIL::Const(low, 32), false);
+                    if (ew > 1)
+                        sh = module->Mul(NEW_ID, sh, RTLIL::Const(ew, 32), false);
+                    RTLIL::Wire* yw = module->addWire(NEW_ID, ew);
+                    module->addShiftx(NEW_ID, flat_val(), sh, yw, false);
+                    elem = RTLIL::SigSpec(yw);
+                } else {
+                    int idx_w = GetSize(idx);
+                    bool oob = (idx_w >= 31) || (low > 0) || ((1LL << idx_w) > (long long)n);
+                    int start;
+                    if (oob) {
+                        elem = RTLIL::SigSpec(RTLIL::State::Sx, ew);
+                        start = n - 1;
+                    } else {
+                        elem = elem_val(n - 1);
+                        start = n - 2;
+                    }
+                    for (int k = start; k >= 0; k--) {
+                        RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+                        module->addEq(NEW_ID, idx,
+                                      RTLIL::SigSpec(RTLIL::Const(low + k, GetSize(idx))), sel);
+                        RTLIL::Wire* m = module->addWire(NEW_ID, ew);
+                        module->addMux(NEW_ID, elem, elem_val(k), RTLIL::SigSpec(sel), m);
+                        elem = RTLIL::SigSpec(m);
+                    }
+                }
+                RTLIL::SigSpec fs = elem.extract(off, mw);
+                if (fbit && fbit->VpiIndex()) {
+                    RTLIL::SigSpec bi = import_expression(fbit->VpiIndex(), input_mapping);
+                    if (bi.is_fully_const()) {
+                        int b = bi.as_const().as_int();
+                        if (b >= 0 && b < mw) {
+                            log("    hier_path '%s' -> elem-array struct field bit\n", path_name.c_str());
+                            return fs.extract(b, 1);
+                        }
+                    } else {
+                        RTLIL::Wire* yw = module->addWire(NEW_ID, 1);
+                        module->addShiftx(NEW_ID, fs, bi, yw, false);
+                        log("    hier_path '%s' -> elem-array struct field dyn bit\n", path_name.c_str());
+                        return RTLIL::SigSpec(yw);
+                    }
+                } else if (fpart && fpart->Left_range() && fpart->Right_range()) {
+                    RTLIL::SigSpec l = import_expression(fpart->Left_range(), input_mapping);
+                    RTLIL::SigSpec r = import_expression(fpart->Right_range(), input_mapping);
+                    if (l.is_fully_const() && r.is_fully_const()) {
+                        int hi = l.as_const().as_int(), lo = r.as_const().as_int();
+                        int lsb = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
+                        if (lsb >= 0 && lsb + w2 <= mw) {
+                            log("    hier_path '%s' -> elem-array struct field part\n", path_name.c_str());
+                            return fs.extract(lsb, w2);
+                        }
+                    }
+                } else if (!fbit && !fpart) {
+                    log("    hier_path '%s' -> elem-array struct field [%d +: %d]\n",
+                        path_name.c_str(), off, mw);
+                    return fs;
+                }
+            }
+        }
+    }
+
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
         auto& pe_af = *uhdm_hier->Path_elems();
         if (pe_af[0]->UhdmType() == uhdmbit_select &&

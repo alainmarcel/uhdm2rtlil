@@ -10489,6 +10489,46 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
 
 // Create a cell for compound assignment operators (+=, -=, *=, etc.)
 // Returns the result SigSpec from the operation cell.
+// `acc[7:0] ^= x` inside a comb block must RMW the block's in-flight value of
+// `acc`, not the raw `\acc` wire the LHS import keeps as the WRITE TARGET
+// (comb_lhs_keep_base): chaining on the output wire is a combinational loop
+// (Verilator DIDNOTCONVERGE on kmac_app's unmasked `keymgr_key[0][W-1:0] ^=
+// keymgr_key_i.key[i]`, which then read as 0 and zeroed key_data_o).  A plain
+// ref_obj target reads its map entry directly; a select-shaped target is
+// re-imported as a read with the map so the base's threaded value is sliced.
+RTLIL::SigSpec UhdmImporter::compound_lhs_current(const UHDM::any* lhs_expr,
+                                                  const RTLIL::SigSpec& lhs) {
+    if (!lhs_expr) return lhs;
+    int lt = lhs_expr->VpiType();
+    if (lt == vpiRefObj) {
+        std::string sig_name = std::string(lhs_expr->VpiName());
+        auto* rm = comb_read_map();
+        if (rm) {
+            if (rm->count(sig_name)) return rm->at(sig_name);
+            std::string gs = get_current_gen_scope();
+            if (!gs.empty() && rm->count(gs + "." + sig_name))
+                return rm->at(gs + "." + sig_name);
+            if (lhs.is_wire()) {
+                std::string wn = lhs.as_wire()->name.str().substr(1);
+                if (rm->count(wn)) return rm->at(wn);
+            }
+        }
+        return lhs;
+    }
+    if (lt == vpiBitSelect || lt == vpiPartSelect || lt == vpiIndexedPartSelect ||
+        lt == vpiVarSelect || lt == vpiHierPath) {
+        if (in_always_ff_body_mode) return lhs;   // NB semantics: read the register
+        bool saved = comb_lhs_keep_base;
+        comb_lhs_keep_base = false;
+        RTLIL::SigSpec cur;
+        if (auto e = dynamic_cast<const UHDM::expr*>(lhs_expr))
+            cur = import_expression(e, comb_read_map());
+        comb_lhs_keep_base = saved;
+        if (cur.size() == lhs.size()) return cur;
+    }
+    return lhs;
+}
+
 RTLIL::SigSpec UhdmImporter::create_compound_op_cell(int vpi_op_type, RTLIL::SigSpec lhs_val, RTLIL::SigSpec rhs_val, const assignment* uhdm_assign) {
     int width = lhs_val.size();
     RTLIL::SigSpec result = module->addWire(NEW_ID, width);
@@ -13013,27 +13053,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         // chain closed a combinational LOOP through its own final value
         // (ibex_alu's bitcnt_bit_mask smear, exposed once bitcnt_partial
         // gained real consumers).
-        RTLIL::SigSpec lhs_current_val = lhs;
-        if (auto lhs_expr = uhdm_assign->Lhs()) {
-            if (lhs_expr->VpiType() == vpiRefObj) {
-                const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
-                std::string sig_name = std::string(ref->VpiName());
-                if (current_comb_values.count(sig_name)) {
-                    lhs_current_val = current_comb_values[sig_name];
-                } else {
-                    std::string gs = get_current_gen_scope();
-                    if (!gs.empty() &&
-                        current_comb_values.count(gs + "." + sig_name)) {
-                        lhs_current_val =
-                            current_comb_values[gs + "." + sig_name];
-                    } else if (lhs.is_wire()) {
-                        std::string wn = lhs.as_wire()->name.str().substr(1);
-                        if (current_comb_values.count(wn))
-                            lhs_current_val = current_comb_values[wn];
-                    }
-                }
-            }
-        }
+        RTLIL::SigSpec lhs_current_val = compound_lhs_current(uhdm_assign->Lhs(), lhs);
         rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
         // Compound op result is no longer a raw fill constant
         rhs_is_fill = false;
@@ -13507,16 +13527,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     // Handle compound assignment operators (+=, -=, *=, etc.)
     int op_type = uhdm_assign->VpiOpType();
     if (op_type != vpiRhs && op_type != 0) {
-        RTLIL::SigSpec lhs_current_val = lhs;
-        if (auto lhs_expr = uhdm_assign->Lhs()) {
-            if (lhs_expr->VpiType() == vpiRefObj) {
-                const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
-                std::string sig_name = std::string(ref->VpiName());
-                if (current_comb_values.count(sig_name)) {
-                    lhs_current_val = current_comb_values[sig_name];
-                }
-            }
-        }
+        RTLIL::SigSpec lhs_current_val = compound_lhs_current(uhdm_assign->Lhs(), lhs);
         rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
         rhs_is_fill = false;
     }
@@ -15050,12 +15061,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             {
                                 int cop = assign->VpiOpType();
                                 if (cop != vpiRhs && cop != 0) {
-                                    RTLIL::SigSpec cur = lhs_sig;
-                                    if (lhs && lhs->VpiType() == vpiRefObj) {
-                                        std::string cn(any_cast<const ref_obj*>(lhs)->VpiName());
-                                        auto* rm = comb_read_map();
-                                        if (rm && rm->count(cn)) cur = rm->at(cn);
-                                    }
+                                    RTLIL::SigSpec cur = compound_lhs_current(lhs, lhs_sig);
                                     rhs_sig = create_compound_op_cell(cop, cur, rhs_sig, assign);
                                 }
                             }

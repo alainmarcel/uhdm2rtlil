@@ -22,5 +22,22 @@ mirroring the ACC/TL-UL campaigns.
   mixed unpacked array followed by element chunk writes that double-drove the
   element aliases — `storage_d = keccak_out; … storage_d[j][i*DIN+:DIN] = …`).
 - kmac_errchk / kmac_staterd / kmac_msgfifo: proven / cosim NO_DIVERGENCE.
+- kmac_core / sha3pad / sha3 / kmac_entropy: **proven** (seq=4) + cosim
+  NO_DIVERGENCE.  (kmac_entropy needed `csrng_pkg`/`entropy_src_pkg`/
+  `csrng_reg_pkg`, kmac_app `keymgr_reg_pkg` — vendored into
+  ../pavona_acc_equiv/rtl/pkg next to edn_pkg/keymgr_pkg, else read_slang
+  fails elaboration and the runner reports a bogus timeout/cex.)
+- kmac_app: cosim NO_DIVERGENCE; formal **cex** — Surelog folds
+  `$bits(app_i[app_id].strb)` to the WHOLE element struct (140, not 8)
+  (compileBits sizes the first identifier and ignores the `[idx].member`
+  select), so the strb->byte-mask loop runs 140 times.  Surelog fix pending.
+- kmac_reg_top: formal **cex** through `wrappers/flat_kmac_reg_top.sv` (the
+  2-element `tl_win_o/i` array ports need the elem0@LSB shim, like
+  tlul_socket_1n) — Surelog parses `a inside {..} ? x : b inside {..} ? y : z`
+  as `((a inside {..}) ? x : b) inside {..} ? y : z` (the brace-form `inside`
+  alternative is the lowest-precedence one in SV3_1aParser.g4).  Surelog fix
+  pending.  `scripts/cex_diff.py <sat -show-public log>` diffs a gold/gate
+  counterexample per step (top-level, or `--all`).
+- Remaining: kmac (top, EnMasking=1 → 2-share array ports), kmac_reduced.
 - NOTE `kmac_cosim.py` regenerates `work/<mod>/cs_gold.v` / `cs_gate.v` when
   they are older than the plugin or the UHDM; delete them by hand to force it.
