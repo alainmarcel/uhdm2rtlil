@@ -27,17 +27,14 @@ mirroring the ACC/TL-UL campaigns.
   `csrng_reg_pkg`, kmac_app `keymgr_reg_pkg` — vendored into
   ../pavona_acc_equiv/rtl/pkg next to edn_pkg/keymgr_pkg, else read_slang
   fails elaboration and the runner reports a bogus timeout/cex.)
-- kmac_app: cosim NO_DIVERGENCE; formal **cex** — Surelog folds
-  `$bits(app_i[app_id].strb)` to the WHOLE element struct (140, not 8)
-  (compileBits sizes the first identifier and ignores the `[idx].member`
-  select), so the strb->byte-mask loop runs 140 times.  Surelog fix pending.
-- kmac_reg_top: formal **cex** through `wrappers/flat_kmac_reg_top.sv` (the
-  2-element `tl_win_o/i` array ports need the elem0@LSB shim, like
-  tlul_socket_1n) — Surelog parses `a inside {..} ? x : b inside {..} ? y : z`
-  as `((a inside {..}) ? x : b) inside {..} ? y : z` (the brace-form `inside`
-  alternative is the lowest-precedence one in SV3_1aParser.g4).  Surelog fix
-  pending.  `scripts/cex_diff.py <sat -show-public log>` diffs a gold/gate
-  counterexample per step (top-level, or `--all`).
+- kmac_app / kmac_reg_top: **proven** + cosim NO_DIVERGENCE once the two
+  Surelog fixes land (chipsalliance/Surelog PR: `inside {..}` parsed below
+  `?:`; `$bits(arr[idx].member)` folded to the whole element struct).
+  kmac_reg_top is mitered through `wrappers/flat_kmac_reg_top.sv` (2-element
+  `tl_win_o/i` array ports → elem0@LSB flat buses, like tlul_socket_1n);
+  `kmac_cosim.py` co-simulates the wrapper top when one exists.
+  `scripts/cex_diff.py <sat -show-public log>` diffs a gold/gate counterexample
+  per step (top-level, or `--all`).
 - Remaining: kmac (top, EnMasking=1 → 2-share array ports), kmac_reduced.
 - NOTE `kmac_cosim.py` regenerates `work/<mod>/cs_gold.v` / `cs_gate.v` when
   they are older than the plugin or the UHDM; delete them by hand to force it.

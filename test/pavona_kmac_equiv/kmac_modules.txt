@@ -12,5 +12,5 @@ kmac_core                  4  300  proven
 sha3pad                    4  300  proven
 sha3                       4  300  proven
 kmac_entropy               4  300  proven
-kmac_app                   4  300  cex       # Surelog folds $bits(app_i[app_id].strb) to the WHOLE struct (140); cosim NO_DIVERGENCE
-kmac_reg_top               4  300  cex       # Surelog parses `a inside {..} ? x : b inside {..} ? y : z` with wrong precedence (via wrappers/flat_kmac_reg_top.sv)
+kmac_app                   4  300  proven    # needs Surelog compileBits fix (selected-member $bits); cosim NO_DIVERGENCE
+kmac_reg_top               4  300  proven    # needs Surelog inside-precedence fix; via wrappers/flat_kmac_reg_top.sv; cosim NO_DIVERGENCE

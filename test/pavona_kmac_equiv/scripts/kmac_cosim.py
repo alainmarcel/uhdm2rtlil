@@ -40,6 +40,13 @@ INCS   = [f"{HERE}/rtl/kmac", f"{HERE}/rtl/pkg", f"{ACCD}/rtl/pkg",
           f"{TLUL}/rtl/prim", f"{TLUL}/rtl/tlul", f"{TLUL}/rtl/pkg"]
 WORK   = f"{HERE}/work/{mod}"
 TOP    = mod
+# A module with multi-element unpacked-array ports is mitered through
+# wrappers/flat_<mod>.sv (module <mod>_flat, elem0@LSB flat buses — see
+# run_kmac_equiv.sh); the work dir's UHDM has that wrapper as its top, so
+# co-simulate the wrapper too (its ports are already flat).
+WRAPPER = f"{HERE}/wrappers/flat_{mod}.sv"
+if os.path.exists(WRAPPER):
+    TOP = f"{mod}_flat"
 
 if not os.path.isdir(WORK) or not os.path.exists(f"{WORK}/slpp_all/surelog.uhdm"):
     print(f"{mod}: NO_RUN (no elaboration; run run_acc_equiv.sh first)")
@@ -51,6 +58,8 @@ def sh(cmd, **kw):
 
 # ---------------------------------------------------------------- source list
 SR = sh([sys.executable, f"{HERE}/scripts/kmac_srcs.py", mod]).stdout.split()
+if os.path.exists(WRAPPER):
+    SR.append(WRAPPER)
 incdir = "\n".join(f"+incdir+{d}" for d in INCS)
 inc_ys = " ".join(f"-I {d}" for d in INCS)
 FLIST = f"{WORK}/cosim.f"
