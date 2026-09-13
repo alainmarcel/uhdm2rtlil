@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1427 (882 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1382/1427 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1431 (886 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1386/1431 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 922 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 459 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 463 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -81,7 +81,7 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   netlist while the divergence is a stimulus/X artefact (e.g. `rp32_r5p_alu`,
   whose `unique case` preconditions random stimulus violates)
 
-> The **internal** SystemVerilog suite alone is **876 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **880 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output, including the
 > complete Ibex core (all modules + `ibex_top`) and the rp32 cores/SoCs. The only
 > internal equivalence failures are `CastStructArray` and
@@ -119,10 +119,16 @@ final pass-rate) to the run's step summary.
 
 | IP | What it is | Tests | Result | Nightly |
 |----|------------|-------|--------|---------|
-| **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **28 / 28 pass**, 0 crashes | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
-| **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **12 / 13 pass**, 0 crashes | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| **Pavona — OpenTitan-hardened [Ibex](https://github.com/lowRISC/ibex)** | Ibex at the OpenTitan security config: SecureIbex, ICache **scrambling** (PRINCE) + ECC, ePMP (16 NAPOT regions), RV32IMCB (`OTEarlGrey` bitmanip), dual-core **lockstep** | **26** modules (`test/pavona_equiv/`), each UHDM-vs-`read_slang` mitered, plus a structural opt-check (`flatten; opt_clean; check`) and Verilator co-sim | **20 / 26 formally proven** (rest SAT-capacity-bound, co-sim-equivalent); **26 / 26 opt-check clean (0 undriven)**; **23 / 23 co-sim PASS (100%)**; full core (`ibex_core` / `ibex_top` / `ibex_lockstep`) proven **and** co-sim `NO_DIVERGENCE` | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
-| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 142 formally proven (66%)**, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **19 / 28 formally proven** vs `read_slang` (rest SAT-capacity-bound), **20 / 20 co-sim PASS (100%)**, **26 / 28 opt-check clean** — 2026-09-13 nightly | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
+| **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **6 / 13 formally proven**, **3 / 3 co-sim PASS (100%)**, **9 / 13 opt-check clean** (the `needs submodules` rows are upstream-WIP RTL, not frontend bugs) — 2026-09-13 nightly | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
+| **Pavona — OpenTitan-hardened [Ibex](https://github.com/lowRISC/ibex)** | Ibex at the OpenTitan security config: SecureIbex, ICache **scrambling** (PRINCE) + ECC, ePMP (16 NAPOT regions), RV32IMCB (`OTEarlGrey` bitmanip), dual-core **lockstep** | **26** modules (`test/pavona_equiv/`), each UHDM-vs-`read_slang` mitered, plus a structural opt-check (`flatten; opt_clean; check`) and Verilator co-sim | **21 / 26 formally proven** (rest SAT-capacity-bound, co-sim-equivalent); **26 / 26 opt-check clean (0 undriven)**; **23 / 23 co-sim PASS (100%)**; full core (`ibex_core` / `ibex_top` / `ibex_lockstep`) proven **and** co-sim `NO_DIVERGENCE` — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **83 / 118 formally proven (70%)** in the nightly sweep, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences — 2026-09-13 nightly | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **Pavona OpenTitan TL-UL fabric** | TileLink-UL adapters, sockets, FIFOs, integrity checkers (`test/pavona_tlul_equiv/`) | **21** modules | **20 / 21 formally proven**, **19 / 19 co-sim PASS**, **21 / 21 opt-check clean** — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan ACC** | accelerator block (`test/pavona_acc_equiv/`) | **11** modules | **10 / 11 formally proven** (unified_mul SAT-hard, co-sim clean), **11 / 11 co-sim PASS**, **11 / 11 opt-check clean** — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan KMAC** | Keccak-MAC / SHA3 core incl. the EnMasking=1 (2-share DOM) variants (`test/pavona_kmac_equiv/`) | **15** modules | **13 / 15 formally proven** (keccak_2share_m + kmac_msgfifo SAT-hard, directed co-sim clean), **15 / 15 co-sim `NO_DIVERGENCE`** (local run after #758; the 2026-09-13 nightly, taken before it, shows 9 / 10) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan HMAC** | HMAC-SHA2 core + prim_sha2 / prim_packer primitives incl. MultimodeEn=1 (`test/pavona_hmac_equiv/`) | **10** modules | **10 / 10 formally proven**, **10 / 10 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan EDN** | entropy distribution network (`test/pavona_edn_equiv/`) | **6** modules | **6 / 6 formally proven**, **6 / 6 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan CSRNG** | CTR-DRBG incl. the AES cipher core it instantiates (`test/pavona_csrng_equiv/`) | **18** modules (10 csrng + 8 AES sub-blocks) | **18 / 18 formally proven**, **18 / 18 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 
 Highlights:
 

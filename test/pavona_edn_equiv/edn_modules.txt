@@ -1,0 +1,12 @@
+# EDN (Pavona OpenTitan entropy distribution network) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/edn_srcs.py closure; shared
+# prim/tlul/base-pkgs from ../pavona_tlul_equiv, csrng/edn pkgs from
+# ../pavona_acc_equiv).
+#   ./run_edn_equiv.sh            # all      ./run_edn_equiv.sh <module>
+#   module                 seq  timeout  want
+edn_field_en               4  150  proven
+edn_ack_sm                 4  150  proven
+edn_main_sm                4  300  proven
+edn_core                   4  600  proven
+edn_reg_top                4  300  proven
+edn                        4  600  proven

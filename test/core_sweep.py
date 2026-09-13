@@ -50,6 +50,8 @@ TLUL_DIR = TEST_DIR / "pavona_tlul_equiv"
 ACC_DIR = TEST_DIR / "pavona_acc_equiv"
 KMAC_DIR = TEST_DIR / "pavona_kmac_equiv"
 HMAC_DIR = TEST_DIR / "pavona_hmac_equiv"
+EDN_DIR = TEST_DIR / "pavona_edn_equiv"
+CSRNG_DIR = TEST_DIR / "pavona_csrng_equiv"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -713,10 +715,10 @@ def sweep_acc(jobs, cycles=300, flt=None):
 
 
 # ---------------------------------------------------------------------- kmac
-# The KMAC and HMAC campaigns share one layout (test/pavona_<ip>_equiv:
+# The KMAC, HMAC, EDN and CSRNG campaigns share one layout (test/pavona_<ip>_equiv:
 # run_<ip>_equiv.sh, <ip>_modules.txt, scripts/<ip>_cosim.py, wrappers/
 # flat_<mod>.sv), so the helpers below take the ip name and its directory.
-_IP_DIRS = {"kmac": KMAC_DIR, "hmac": HMAC_DIR}
+_IP_DIRS = {"kmac": KMAC_DIR, "hmac": HMAC_DIR, "edn": EDN_DIR, "csrng": CSRNG_DIR}
 
 
 def _kmac_check(mod, ip="kmac"):
@@ -784,7 +786,7 @@ def sweep_kmac(jobs, cycles=300, flt=None, ip="kmac"):
         m = re.match(r"\s*[✅⚠❓💥❌‼🎉]*\s*(\S+)\s+(proven|cex|timeout|error|"
                      r"elabfail)\b", line)
         # Skip the "KMAC equivalence: …" summary line (its first token is KMAC).
-        if m and m.group(1) not in ("KMAC", "HMAC"):
+        if m and m.group(1) not in ("KMAC", "HMAC", "EDN", "CSRNG"):
             rows.append({"module": m.group(1),
                          "formal": label.get(m.group(2), m.group(2)),
                          "formal_raw": m.group(2), "cosim": "—"})
@@ -853,7 +855,7 @@ def main():
     global _SHARD
     ap = argparse.ArgumentParser()
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
-                                     "acc", "kmac", "hmac"])
+                                     "acc", "kmac", "hmac", "edn", "csrng"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -910,6 +912,8 @@ def main():
         rows = sweep_kmac(args.jobs, args.cycles, args.filter)
     elif args.core == "hmac":
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip="hmac")
+    elif args.core in ("edn", "csrng"):
+        rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip=args.core)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
