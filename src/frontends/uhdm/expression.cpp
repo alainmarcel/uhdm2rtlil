@@ -4141,8 +4141,15 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     };
 
                     std::function<void(const UHDM::any*)> resolve_leaf;
+                    // Cycle guard: a member bit-select with no Actual_group
+                    // (`keymgr_key_i.key[0]`, a 2-D packed struct member's
+                    // element) climbs to its parent hier_path, whose last
+                    // element is that same bit-select — unbounded recursion
+                    // (kmac_app `localparam KeyMgrKeyW = $bits(...)`).
+                    std::set<const UHDM::any*> leaf_seen;
                     resolve_leaf = [&](const UHDM::any* expr) {
                         if (!expr) return;
+                        if (!leaf_seen.insert(expr).second) return;
                         // `z[3][3]` is a single `var_select` with two
                         // indices in its `Exprs()` list — each index
                         // strips one outer dim.  We treat it as N nested
