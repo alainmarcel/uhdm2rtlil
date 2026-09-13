@@ -2845,8 +2845,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     RTLIL::SigSpec i0 = import_expression((*exprs)[0], input_mapping);
                     RTLIL::SigSpec i1 = import_expression((*exprs)[1], input_mapping);
                     if (i0.is_fully_const() && i1.is_fully_const()) {
-                        RTLIL::IdString wire_id = RTLIL::escape_id(base_name);
-                        if (RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire : module->wire(wire_id)) {
+                        if (RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire
+                                                                      : find_wire_in_scope(base_name)) {
                             auto& a = base_wire->attributes;
                             auto have = [&](const char* k){
                                 return a.count(RTLIL::escape_id(k)) > 0;
@@ -3321,8 +3321,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // `logic [N-1:0][M-1:0] x`, `x[idx]` is an element_width-bit slice
                 // of the single packed wire `x` (element_width = base/outer or the
                 // Elem_typespec width).
+                // A generate-scope local (`g_rho[0].rho_in`, keccak_2share's
+                // rho lanes) lives under its scope-qualified name — walk the
+                // enclosing scopes like every other base lookup, else the packed
+                // 3-D box is mistaken for an element array (`rho_in[0]` not
+                // found -> empty RHS for every rotated lane).
                 RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire
-                                       : module->wire(RTLIL::escape_id(base_name));
+                                       : find_wire_in_scope(base_name);
                 int elem_w = 0, array_low = 0;
                 if (base_wire) {
                     if (auto actual = vs->Actual_group()) {
@@ -3429,7 +3434,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     //   {dout_array[0][1],dout_array[0][0]} = dout_array[0][0] + ...
                     // reads the wire being written and folds to `dout[0] ^ ...`
                     // (mem2reg_test6).
-                    if (!in_always_ff_body_mode && current_comb_values.count(element_name)) {
+                    // Not for a WRITE TARGET (comb_lhs_keep_base): the LHS
+                    // must stay the element wire so it maps onto `$0\arr`;
+                    // substituting the threaded value here retargeted
+                    // keccak_round's storage_d chunk writes onto the
+                    // thread_comb_if mux wire (a second driver of it).
+                    if (!in_always_ff_body_mode && !comb_lhs_keep_base &&
+                        current_comb_values.count(element_name)) {
                         element_sig = current_comb_values.at(element_name);
                     } else if (element_wire) {
                         element_sig = RTLIL::SigSpec(element_wire);
@@ -9052,7 +9063,8 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // next clock.  (Mirrors emit_comb_assign's scalar suppression.)
                 int i = idx.as_const().as_int();
                 std::string elem_name = signal_name + "[" + std::to_string(i) + "]";
-                if (!in_always_ff_body_mode && current_comb_values.count(elem_name))
+                if (!in_always_ff_body_mode && !comb_lhs_keep_base &&
+                    current_comb_values.count(elem_name))
                     return current_comb_values.at(elem_name);
                 RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
                 if (w) return RTLIL::SigSpec(w);

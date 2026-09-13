@@ -3377,6 +3377,44 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     for (const auto& sig : assigned_signals)
         base_slice_count[sig.name]++;
 
+    // MIXED unpacked arrays (flat `\arr` + alias elements `\arr[k]`, alias-
+    // connected by import_module) that this process writes WHOLE (`arr = src`).
+    // Every element / element-slice write to such an array must fold onto the
+    // ONE full-width `$0\arr` temp: a per-element `$0\arr[k]` temp would add a
+    // second STa update (`update \arr[k] $0\arr[k]` next to `update \arr
+    // $0\arr`) driving the same bits through the alias connect — proc_dlatch
+    // then latches the element against the flat's source (keccak_round
+    // `storage_d = keccak_out; … storage_d[j][i*DIN+:DIN] = …` read back 0).
+    std::set<RTLIL::Wire*> flat_written_arrays;
+    for (const auto& sig : assigned_signals) {
+        RTLIL::SigSpec s;
+        if (!sig.lhs_expr) {
+            // A loop-var-indexed element write (`for (j) arr[j][..] = …`) is
+            // scanned as a dynamic write of the BASE with no LHS expr; the loop
+            // below allocates the full flat `$0\arr` for it — so it must fold
+            // element writes exactly like a whole-array write does.
+            RTLIL::Wire* w = name_map.count(sig.name) ? name_map[sig.name] : nullptr;
+            if (!w) w = module->wire(RTLIL::escape_id(sig.name));
+            if (!w) {
+                std::string gs = get_current_gen_scope();
+                if (!gs.empty()) w = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+            }
+            if (!w) continue;
+            s = RTLIL::SigSpec(w);
+        } else {
+            if (sig.is_part_select || sig.lhs_expr->VpiType() != vpiRefObj ||
+                std::string(sig.lhs_expr->VpiName()) != sig.name)
+                continue;
+            s = import_expression(sig.lhs_expr);
+        }
+        if (mode_debug)
+            log("    always_comb: whole-write scan %s -> %s\n", sig.name.c_str(), log_signal(s));
+        if (!s.is_wire()) continue;
+        std::string wn = s.as_wire()->name.str();
+        if (!wn.empty() && wn[0] == '\\' && expanded_array_low(wn.substr(1)) >= 0)
+            flat_written_arrays.insert(s.as_wire());
+    }
+
     for (const auto& sig : assigned_signals) {
         // Skip memory writes — they don't need `$0\` temp wires (they go
         // through the EN/ADDR/DATA infrastructure set up below). Without
@@ -3436,6 +3474,28 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 lhs_spec = RTLIL::SigSpec(wire);
             }
         }
+        // Element / element-slice write of a flat-written mixed array (see
+        // flat_written_arrays): retarget every alias-element chunk onto the
+        // flat wire's slice so the dedup below shares the flat's `$0\arr`.
+        bool retargeted_to_flat = false;
+        if (!flat_written_arrays.empty() && lhs_spec.size() > 0) {
+            RTLIL::SigSpec re;
+            bool all = true;
+            for (const auto& ch : lhs_spec.chunks()) {
+                int eoff = 0;
+                RTLIL::Wire* flat = ch.wire ? alias_elem_base(ch.wire, eoff) : nullptr;
+                if (flat && flat_written_arrays.count(flat))
+                    re.append(RTLIL::SigChunk(flat, eoff + ch.offset, ch.width));
+                else { all = false; break; }
+            }
+            if (all) {
+                if (mode_debug)
+                    log("    always_comb: element write %s of flat-written array "
+                        "retargeted to %s\n", log_signal(lhs_spec), log_signal(re));
+                lhs_spec = re;
+                retargeted_to_flat = true;
+            }
+        }
         lhs_specs[sig.lhs_expr] = lhs_spec;
 
         // Derive dedup key for temp wire naming.
@@ -3457,7 +3517,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             lhs_spec.chunks().begin()->wire != nullptr &&
             lhs_spec.size() < lhs_spec.chunks().begin()->wire->width;
         bool collapse_to_base =
-            lhs_is_slice && base_slice_count[sig.name] > 1;
+            lhs_is_slice && (base_slice_count[sig.name] > 1 || retargeted_to_flat);
         std::string dedup_key;
         if (lhs_spec.size() > 0) {
             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
@@ -7315,6 +7375,7 @@ void UhdmImporter::record_comb_partial_write(const RTLIL::SigSpec& lhs,
     current_comb_values[bn] = cur;
     auto ai = comb_value_aliases.find(bn);
     if (ai != comb_value_aliases.end()) current_comb_values[ai->second] = cur;
+    splice_alias_elem_inflight(fc.wire, fc.offset, rv);
 }
 
 static void remove_target_from_switches(RTLIL::CaseRule* cr,
@@ -7353,6 +7414,12 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
         auto alias_it = comb_value_aliases.find(signal_name);
         if (alias_it != comb_value_aliases.end())
             current_comb_values[alias_it->second] = rhs;
+        // Mixed unpacked array: a whole-array write is what every later
+        // `arr[k]` read must observe (else it falls back to the raw element
+        // wire, a self-hold of this process's own output); an element write
+        // must show in a later whole-array read likewise.
+        seed_alias_elems_inflight(target_wire, rhs);
+        splice_alias_elem_inflight(target_wire, 0, rhs);
     } else if (!in_always_ff_body_mode) {
         // Concat LHS over FULL element wires (a whole-array copy
         // `counter_d = counter_q` expanded to {\arr[N]..\arr[1]} =
@@ -7390,8 +7457,78 @@ RTLIL::Wire* UhdmImporter::find_own_temp_wire(const std::string& signal_name) {
     return module->wire("$0\\" + signal_name);
 }
 
+// `\arr[k]` -> `\arr` (+ element bit offset).  Both wires exist only for a
+// MIXED unpacked array: import_module materialises the flat wire and one
+// alias wire per element, alias-connected to the flat's slices.
+RTLIL::Wire* UhdmImporter::alias_elem_base(RTLIL::Wire* w, int& off) {
+    off = 0;
+    if (!w || !module) return nullptr;
+    const std::string n = w->name.str();
+    if (n.size() < 4 || n[0] != '\\' || n.back() != ']') return nullptr;
+    size_t lb = n.rfind('[');
+    if (lb == std::string::npos || lb < 2 || lb + 2 >= n.size()) return nullptr;
+    std::string ks = n.substr(lb + 1, n.size() - lb - 2);
+    for (char c : ks) if (!isdigit((unsigned char)c)) return nullptr;
+    RTLIL::Wire* flat = module->wire(n.substr(0, lb));
+    if (!flat || flat == w || w->width <= 0 || flat->width % w->width != 0)
+        return nullptr;
+    int low = expanded_array_low(n.substr(1, lb - 1));
+    if (low < 0) return nullptr;
+    int k = atoi(ks.c_str());
+    off = (k - low) * w->width;
+    if (off < 0 || off + w->width > flat->width) { off = 0; return nullptr; }
+    return flat;
+}
+
+void UhdmImporter::seed_alias_elems_inflight(RTLIL::Wire* flat, const RTLIL::SigSpec& val) {
+    if (!flat || in_always_ff_body_mode || val.size() != flat->width) return;
+    std::string base = flat->name.str();
+    if (base.empty() || base[0] != '\\') return;
+    base = base.substr(1);
+    int low = expanded_array_low(base);
+    if (low < 0) return;
+    for (int k = low;; k++) {
+        std::string en = base + "[" + std::to_string(k) + "]";
+        RTLIL::Wire* ew = name_map.count(en) ? name_map[en]
+                                             : module->wire(RTLIL::escape_id(en));
+        if (!ew) break;
+        int off = (k - low) * ew->width;
+        if (off + ew->width > flat->width) break;
+        current_comb_values[en] = val.extract(off, ew->width);
+    }
+}
+
+void UhdmImporter::splice_alias_elem_inflight(RTLIL::Wire* elem, int off, const RTLIL::SigSpec& val) {
+    if (!elem || in_always_ff_body_mode) return;
+    int eoff = 0;
+    RTLIL::Wire* flat = alias_elem_base(elem, eoff);
+    if (!flat) return;
+    std::string bn = flat->name.str().substr(1);
+    auto it = current_comb_values.find(bn);
+    if (it == current_comb_values.end() || it->second.size() != flat->width) return;
+    if (off < 0 || eoff + off + val.size() > flat->width) return;
+    RTLIL::SigSpec cur = it->second;
+    cur.replace(eoff + off, val);
+    current_comb_values[bn] = cur;
+}
+
 RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
     if (current_temp_wires.empty()) return sig;
+    // A chunk on a per-element ALIAS wire (`\arr[k]`) that has no temp of its
+    // own but whose flat base does (this process also writes `arr` whole, so
+    // import_always_comb folded every element write onto ONE full-width
+    // `$0\arr`): redirect to the element's slice of that temp.  Writing the
+    // alias wire itself would double-drive it against the flat's STa update.
+    auto alias_redirect = [&](RTLIL::Wire* w, int offset, int width,
+                              RTLIL::SigSpec& out) -> bool {
+        int eoff = 0;
+        RTLIL::Wire* flat = alias_elem_base(w, eoff);
+        if (!flat) return false;
+        RTLIL::Wire* tw = find_own_temp_wire(flat->name.str().substr(1));
+        if (!tw || tw->width != flat->width) return false;
+        out.append(RTLIL::SigChunk(tw, eoff + offset, width));
+        return true;
+    };
     // Full-wire LHS: swap `\foo` for its own-process temp outright.
     if (sig.is_wire()) {
         RTLIL::Wire* target_wire = sig.as_wire();
@@ -7402,6 +7539,9 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
         RTLIL::Wire* temp_wire = find_own_temp_wire(signal_name);
         if (temp_wire)
             return RTLIL::SigSpec(temp_wire);
+        RTLIL::SigSpec red;
+        if (alias_redirect(target_wire, 0, target_wire->width, red))
+            return red;
         return sig;
     }
     // Part-select / chunked LHS (e.g. `\dout[31:11]`): rewrite each
@@ -7423,6 +7563,9 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
                     changed = true;
                     continue;
                 }
+            } else if (alias_redirect(chunk.wire, chunk.offset, chunk.width, out)) {
+                changed = true;
+                continue;
             }
         }
         out.append(chunk);
@@ -12818,9 +12961,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
     }
 
-    // Import LHS (always an expr)
+    // Import LHS (always an expr).  A select-shaped LHS is a WRITE TARGET:
+    // keep its base wire (comb_lhs_keep_base) rather than the element's
+    // in-flight value the read paths would substitute (see the CaseRule
+    // dispatcher's identical guard).
     if (auto lhs_expr = uhdm_assign->Lhs()) {
+        int lt = lhs_expr->VpiType();
+        bool keep = (lt == vpiBitSelect || lt == vpiPartSelect ||
+                     lt == vpiIndexedPartSelect || lt == vpiVarSelect);
+        bool saved_keep = comb_lhs_keep_base;
+        if (keep) comb_lhs_keep_base = true;
         lhs = import_expression(lhs_expr);
+        comb_lhs_keep_base = saved_keep;
     }
 
     // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing
@@ -13108,6 +13260,19 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     ff_blocking_temps[signal_name] = RTLIL::SigSpec(temp_wire);
                 return;
             }
+            // Whole-element write (`arr[k] = v`) on a mixed array whose flat
+            // base owns the temp (this process also writes `arr` whole):
+            // map_to_temp_wire redirects onto `$0\arr`'s element slice.
+            if (!in_always_ff_body_mode && !in_always_ff_context) {
+                RTLIL::SigSpec red = map_to_temp_wire(lhs);
+                if (red != lhs) {
+                    remove_target_from_switches(&proc->root_case, red);
+                    proc->root_case.actions.push_back(RTLIL::SigSig(red, rhs));
+                    current_comb_values[signal_name] = rhs;
+                    splice_alias_elem_inflight(target_wire, 0, rhs);
+                    return;
+                }
+            }
         } else if (!lhs.empty()) {
             // Remap EACH chunk of the LHS to its `$0\<wire>` temp at the same
             // offset.  This handles a single part-select as well as a
@@ -13142,6 +13307,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     if (RTLIL::Wire* tw = find_own_temp_wire(signal_name)) {
                         if (tw->width >= ch.offset + ch.width) {
                             mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
+                            any_mapped = true;
+                            continue;
+                        }
+                    }
+                    // Alias-element chunk (`\arr[k] [7:4]`) of a flat-written
+                    // mixed array: land on `$0\arr` at the element's offset.
+                    int eoff = 0;
+                    if (RTLIL::Wire* flat = alias_elem_base(ch.wire, eoff)) {
+                        RTLIL::Wire* tw = find_own_temp_wire(flat->name.str().substr(1));
+                        if (tw && tw->width == flat->width) {
+                            mapped.append(RTLIL::SigChunk(tw, eoff + ch.offset, ch.width));
                             any_mapped = true;
                             continue;
                         }
@@ -14810,7 +14986,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     ? comb_read_map() : nullptr;
                             // Fold the index but keep the base wire as the write
                             // target (see comb_lhs_keep_base).
-                            comb_lhs_keep_base = (lhs_map_ != nullptr);
+                            // A var_select target (`arr[j][i*W+:W]`) keeps its
+                            // base too, but WITHOUT the read map: the var_select
+                            // handler resolves a mapped base wire from
+                            // input_mapping, which would retarget the write onto
+                            // the array's in-flight source (`\ko`).
+                            comb_lhs_keep_base = (lhs_map_ != nullptr) || llt_ == vpiVarSelect;
                             RTLIL::SigSpec lhs_sig = import_expression(lhs, lhs_map_);
                             comb_lhs_keep_base = false;
                             // Declaration initializer (`automatic logic [3:0]
@@ -15153,7 +15334,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         // drop bits [31:0].
                                         RTLIL::SigSpec mapped;
                                         for (const auto& ch : lhs_sig.chunks()) {
-                                            if (ch.wire && tw->width >= ch.offset + ch.width)
+                                            // An alias-element chunk (`\arr[k]
+                                            // [7:4]`) whose flat base owns `tw`
+                                            // sits at the ELEMENT's offset in
+                                            // `$0\arr`, not at ch.offset.
+                                            int eoff = 0;
+                                            RTLIL::Wire* flat =
+                                                ch.wire ? alias_elem_base(ch.wire, eoff) : nullptr;
+                                            if (flat && tw->width == flat->width &&
+                                                find_own_temp_wire(flat->name.str().substr(1)) == tw)
+                                                mapped.append(RTLIL::SigChunk(tw, eoff + ch.offset, ch.width));
+                                            else if (ch.wire && tw->width >= ch.offset + ch.width)
                                                 mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
                                             else
                                                 mapped.append(ch);
@@ -15258,6 +15449,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 std::string bn = lhs_sig.as_wire()->name.str();
                                 if (!bn.empty() && bn[0] == '\\')
                                     current_comb_values[bn.substr(1)] = rhs_sig;
+                                seed_alias_elems_inflight(lhs_sig.as_wire(), rhs_sig);
+                                splice_alias_elem_inflight(lhs_sig.as_wire(), 0, rhs_sig);
                                 // A block-local `automatic` temp has a PRIVATE
                                 // ($-prefixed) SCOPED wire name (`$unnamed_block$N.idx`)
                                 // — the `\`-strip above skips it — while reads use the
