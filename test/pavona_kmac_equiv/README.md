@@ -13,9 +13,9 @@ mirroring the ACC/TL-UL campaigns.
   (`flatten; proc; opt; memory; async2sync`). `kmac_modules.txt` = the manifest.
 
 ## Status
-- keccak_round: formal SAT-timeout (1600-bit Keccak-f permutation, like
-  unified_mul) — adjudicated by `scripts/kmac_cosim.py keccak_round 2000`:
-  **NO_DIVERGENCE** (was UHDM_WRONG: a 5-bug hydra — function returning a 3-D
+- keccak_round: **proven** at seq=4 (it timed out until the compound-op RMW
+  fix removed a combinational loop) and `scripts/kmac_cosim.py keccak_round
+  2000`: **NO_DIVERGENCE** (was UHDM_WRONG: a 5-bug hydra — function returning a 3-D
   packed array via var_select writes, bit_select element width on typedef'd
   packed locals, trailing part-select on a packed var_select, N-D unpacked
   param-array element as an index, and an always_comb whole-array default on a
@@ -27,9 +27,9 @@ mirroring the ACC/TL-UL campaigns.
   `csrng_reg_pkg`, kmac_app `keymgr_reg_pkg` — vendored into
   ../pavona_acc_equiv/rtl/pkg next to edn_pkg/keymgr_pkg, else read_slang
   fails elaboration and the runner reports a bogus timeout/cex.)
-- kmac_app / kmac_reg_top: **proven** + cosim NO_DIVERGENCE once the two
-  Surelog fixes land (chipsalliance/Surelog PR: `inside {..}` parsed below
-  `?:`; `$bits(arr[idx].member)` folded to the whole element struct).
+- kmac_app / kmac_reg_top: **proven** + cosim NO_DIVERGENCE with Surelog
+  #4170 (`inside {..}` was parsed below `?:`; `$bits(arr[idx].member)` was
+  folded to the whole element struct).
   kmac_reg_top is mitered through `wrappers/flat_kmac_reg_top.sv` (2-element
   `tl_win_o/i` array ports → elem0@LSB flat buses, like tlul_socket_1n);
   `kmac_cosim.py` co-simulates the wrapper top when one exists.
