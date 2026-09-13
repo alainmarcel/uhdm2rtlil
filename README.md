@@ -113,9 +113,11 @@ Three real-world RISC-V IP families are imported from their upstream RTL
 and exercised end-to-end through the UHDM frontend. Run the rp32 + Ibex set
 with `make test-cores` (or `bash run_all_tests.sh --cores`): **41 tests, 40
 functional (97%), 0 crashes**.  Each core also has a **nightly regression**
-that rebuilds, sweeps every module, and publishes a per-module table (formal
-equivalence vs `read_slang` + Verilator co-sim pass / divergence count with a
-final pass-rate) to the run's step summary.
+that rebuilds, sweeps every module, and publishes a per-module table (the
+`read_slang` netlist's own Verilator co-sim vs the RTL as the left-most
+**slang baseline** column, formal equivalence vs `read_slang`, opt-check, and
+the read_uhdm Verilator co-sim pass / divergence count with a final pass-rate)
+to the run's step summary.
 
 | IP | What it is | Tests | Result | Nightly |
 |----|------------|-------|--------|---------|
