@@ -63,3 +63,15 @@ jobs:
       core: kmac
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # The Pavona HMAC (OpenTitan HMAC-SHA2 core) per-module equivalence campaign
+  # (test/pavona_hmac_equiv): same layout and checks as kmac (hmac, hmac_core,
+  # hmac_reg_top + the prim_sha2_* / prim_packer primitives it instantiates,
+  # incl. the MultimodeEn=1 wrappers).  prim_packer is SAT-hard (1500 s).
+  sweep-hmac:
+    name: pavona - hmac
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: hmac
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

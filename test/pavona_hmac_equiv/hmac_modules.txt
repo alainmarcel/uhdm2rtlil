@@ -1,0 +1,16 @@
+# HMAC (Pavona OpenTitan HMAC-SHA2) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/hmac_srcs.py closure; shared
+# prim/tlul/base-pkgs from ../pavona_tlul_equiv, edn/keymgr pkgs from
+# ../pavona_acc_equiv).
+#   ./run_hmac_equiv.sh            # all      ./run_hmac_equiv.sh <module>
+#   module                 seq  timeout  want
+prim_sha2_pad              4  300  proven
+prim_sha2_compression      4  300  proven
+prim_sha2                  4  300  proven
+prim_sha2_32               4  300  proven
+prim_sha2_mm               4  300  proven    # prim_sha2 MultimodeEn=1 via wrappers/flat_prim_sha2_mm.sv
+prim_sha2_32_mm            4  300  proven    # prim_sha2_32 MultimodeEn=1 (hmac's configuration) via wrappers/flat_prim_sha2_32_mm.sv
+prim_packer                4 1500  proven    # SAT-hard at 300 s, proves in ~20 min; cosim NO_DIVERGENCE (data_o moving 513/1000 cycles)
+hmac_core                  4  300  proven
+hmac_reg_top               4  300  proven
+hmac                       4  600  proven
