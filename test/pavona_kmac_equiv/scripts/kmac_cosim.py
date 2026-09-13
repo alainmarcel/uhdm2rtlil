@@ -157,9 +157,29 @@ _KECCAK_ROUND_DIRECTED = {
     "run_i":            "(i % 160 == 12)",   # ... then run the 24 rounds
     "rand_valid_i":     "1'b1",              # masked phases wait for randomness
 }
+# sha3pad / sha3 / kmac_reduced: the padder FSM needs a legal mode/strength,
+# lc Off, a start pulse, a process pulse once some words went in, and a done
+# pulse later; random control parked it in the sparse-FSM error state.
+_SHA3_DIRECTED = {
+    "lc_escalate_en_i": "4'b1010",           # lc_ctrl_pkg::Off
+    "mode_i":           "2'b00",             # sha3_pkg::Sha3
+    "strength_i":       "3'b010",            # sha3_pkg::L256
+    "start_i":          "(i % 400 == 5)",
+    "process_i":        "(i % 400 == 120)",
+    "done_i":           "((i % 400 == 380) ? 4'h6 : 4'h9)",   # MuBi4True pulse, else False
+    "run_i":            "(i % 400 == 60)",   # sha3 only (manual keccak run request)
+    "entropy_ready_i":  "1'b1",              # kmac_reduced only
+    "entropy_ack_i":    "1'b1",
+    "err_processed_i":  "1'b0",
+    "entropy_mode_i":   "2'b10",             # EntropyModeSw
+}
 DIRECTED = {
     "keccak_round":   _KECCAK_ROUND_DIRECTED,
     "keccak_round_m": _KECCAK_ROUND_DIRECTED,
+    "sha3pad":        _SHA3_DIRECTED,
+    "sha3pad_m":      _SHA3_DIRECTED,
+    "sha3":           _SHA3_DIRECTED,
+    "kmac_reduced":   _SHA3_DIRECTED,
 }
 _directed = DIRECTED.get(mod, {})
 
