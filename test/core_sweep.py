@@ -327,6 +327,20 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             return row
         rc, out = sh([sys.executable, "test_sim_equivalence.py", name,
                       "--cycles", str(cycles)], cwd=TEST_DIR, timeout=2400)
+        # Slang correctness baseline: the same co-sim with the read_slang
+        # netlist on the netlist side.
+        rc2, out2 = sh([sys.executable, "test_sim_equivalence.py", name,
+                        "--cycles", str(cycles), "--frontend", "slang"],
+                       cwd=TEST_DIR, timeout=2400)
+        m2 = re.search(r"FAIL: \d+ cycles, (\d+) mismatches", out2)
+        if re.search(r"PASS: \d+ cycles, 0 mismatches", out2):
+            row["slang_cosim"] = "✅ PASS"
+        elif m2:
+            row["slang_cosim"] = f"❌ {m2.group(1)} div"
+        elif "vacuous" in out2:
+            row["slang_cosim"] = "vacuous"
+        else:
+            row["slang_cosim"] = "skip" if (rc2 == 77 or "SKIPPED" in out2) else "error"
         m = re.search(r"FAIL: \d+ cycles, (\d+) mismatches", out)
         if re.search(r"PASS: \d+ cycles, 0 mismatches", out):
             row["cosim"] = "✅ PASS"
@@ -434,6 +448,7 @@ def sweep_cva6(cycles, jobs, flt=None):
             sh(["rm", "-rf", str(work / f)])
         rc, out = sh([sys.executable, "scripts/adjudicate.py", mod,
                       str(cycles), "1"], cwd=CVA6_DIR, timeout=2400)
+        row["slang_cosim"] = _slang_cell(out)
         m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+)"
                       r" slang_vs_rtl=(\d+)", out)
         if m:
@@ -459,6 +474,33 @@ def sweep_cva6(cycles, jobs, flt=None):
 
 
 # ------------------------------------------------------------------- pavona
+# ---------------------------------------------------------------- slang co-sim
+# The 3-way co-sims (behavioural RTL vs read_uhdm vs read_slang netlists) also
+# tell how the read_slang netlist tracks the RTL: that is the CORRECTNESS
+# BASELINE of the reference frontend the formal column compares against.  It is
+# reported as the left-most column of every sweep table.
+_SLANG_COSIM = {}   # module -> cell text, filled by the co-sim helpers
+
+
+def _slang_cell(out):
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
+                  out or "")
+    if m:
+        sl = int(m.group(2))
+        return "✅ PASS" if sl == 0 else f"❌ {sl} div"
+    if "no outputs to compare" in (out or "") or "no clocks found" in (out or ""):
+        return "— (comb/no clk)"
+    if "NO_RUN" in (out or "") or "netlist generation FAILED" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or ""):
+        return "skip (sim build)"
+    return "skip"
+
+
+def _record_slang(mod, out):
+    _SLANG_COSIM[mod] = _slang_cell(out)
+
+
 def _pavona_cosim(mod, cycles):
     """Verilator co-sim of one pavona module (RTL vs read_uhdm vs read_slang),
     reusing the work/<mod> elaboration run_pavona_equiv.sh already produced.
@@ -468,6 +510,7 @@ def _pavona_cosim(mod, cycles):
     uhdm>0 & slang==0 → a genuine UHDM divergence."""
     rc, out = sh([sys.executable, "scripts/adjudicate.py", mod, str(cycles), "1"],
                  cwd=PAVONA_DIR, timeout=2400)
+    _record_slang(mod, out)
     m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
                   out or "")
     if m:
@@ -543,6 +586,7 @@ def sweep_pavona(jobs, cycles=300, flt=None):
         else:
             r["check"] = _pavona_check(r["module"])
             r["cosim"] = _pavona_cosim(r["module"], cycles)
+            r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
@@ -565,6 +609,7 @@ def _tlul_cosim(mod, cycles):
     (tlul_fifo_async) that the SAT miter cannot reach."""
     rc, out = sh([sys.executable, "scripts/tlul_cosim.py", mod, str(cycles), "1"],
                  cwd=TLUL_DIR, timeout=1800)
+    _record_slang(mod, out)
     m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
                   out or "")
     if m:
@@ -622,6 +667,7 @@ def sweep_tlul(jobs, cycles=300, flt=None):
         else:
             r["check"] = _tlul_check(r["module"])
             r["cosim"] = _tlul_cosim(r["module"], cycles)
+            r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
@@ -644,6 +690,7 @@ def _acc_cosim(mod, cycles):
     combinational bignum multiplier unified_mul (SAT-hard)."""
     rc, out = sh([sys.executable, "scripts/acc_cosim.py", mod, str(cycles), "1"],
                  cwd=ACC_DIR, timeout=1800)
+    _record_slang(mod, out)
     m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
                   out or "")
     if m:
@@ -706,6 +753,7 @@ def sweep_acc(jobs, cycles=300, flt=None):
             # co-sim diverges).  Running the co-sim on formally-proven modules
             # too surfaces those.
             r["cosim"] = _acc_cosim(r["module"], cycles)
+            r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
@@ -738,6 +786,7 @@ def _kmac_cosim(mod, cycles, ip="kmac"):
     simulation reaches (hmac_core's 64-bit size-cast message lengths)."""
     rc, out = sh([sys.executable, f"scripts/{ip}_cosim.py", mod, str(cycles), "1"],
                  cwd=_IP_DIRS[ip], timeout=1800)
+    _record_slang(mod, out)
     m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
                   out or "")
     if m:
@@ -802,6 +851,7 @@ def sweep_kmac(jobs, cycles=300, flt=None, ip="kmac"):
             # can catch a reset/init divergence the -set-init-zero SAT proof
             # misses, and it adjudicates the SAT-hard keccak_round.
             r["cosim"] = _kmac_cosim(r["module"], cycles, ip)
+            r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
         rows = list(ex.map(one, rows))
@@ -818,17 +868,23 @@ def render(core, rows, cycles):
     has_check = any("check" in r for r in rows)
     lines = [f"## {core} sweep — formal (vs read_slang) + Verilator co-sim "
              f"({cycles} cycles)", ""]
+    # Left-most column: the read_slang netlist's own co-sim vs the behavioural
+    # RTL — the correctness baseline of the reference frontend that the
+    # "formal vs slang" column compares read_uhdm against.
+    sc = lambda r: r.get("slang_cosim", "—")
     if has_check:
-        lines += ["| module | formal vs slang | opt check (undriven) | co-sim vs RTL |",
-                  "|---|---|---|---|"]
+        lines += ["| slang co-sim vs RTL | module | formal vs slang | opt check (undriven) | co-sim vs RTL |",
+                  "|---|---|---|---|---|"]
         for r in rows:
-            lines.append(f"| {r['module']} | {r['formal']} | "
+            lines.append(f"| {sc(r)} | {r['module']} | {r['formal']} | "
                          f"{r.get('check', '—')} | {r['cosim']} |")
     else:
-        lines += ["| module | formal vs slang | co-sim vs RTL |",
-                  "|---|---|---|"]
+        lines += ["| slang co-sim vs RTL | module | formal vs slang | co-sim vs RTL |",
+                  "|---|---|---|---|"]
         for r in rows:
-            lines.append(f"| {r['module']} | {r['formal']} | {r['cosim']} |")
+            lines.append(f"| {sc(r)} | {r['module']} | {r['formal']} | {r['cosim']} |")
+    spass = sum(1 for r in rows if sc(r).startswith("✅"))
+    sfail = sum(1 for r in rows if sc(r).startswith("❌"))
     npass = sum(1 for r in rows if r["cosim"].startswith("✅"))
     nfail = sum(1 for r in rows if r["cosim"].startswith("❌"))
     nadj = sum(1 for r in rows if r["cosim"].startswith("⚠"))
@@ -836,6 +892,9 @@ def render(core, rows, cycles):
     pct = (100.0 * npass / comparable) if comparable else 100.0
     nequiv = sum(1 for r in rows if r["formal"].startswith("✅"))
     lines += ["",
+              f"**Slang co-sim baseline:** {spass}/{spass + sfail} read_slang "
+              f"netlists track the RTL ({sfail} diverge; "
+              f"{len(rows) - spass - sfail} not comparable).",
               f"**Formal:** {nequiv}/{len(rows)} modules equivalent with "
               f"read_slang.",
               f"**Co-sim pass rate:** {npass}/{comparable} "
