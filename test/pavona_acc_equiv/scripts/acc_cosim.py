@@ -59,7 +59,16 @@ with open(FLIST, "w") as fh:
         fh.write(f + "\n")
 
 # ---------------------------------------------------------------- netlists
-if not (os.path.exists("cs_gold.v") and os.path.exists("cs_gate.v")):
+# Regenerate the netlists when either is missing OR older than the frontend
+# plugin / the UHDM it reads — a cached cs_gold.v silently kept adjudicating a
+# PRE-fix read_uhdm netlist (keccak_round showed UHDM_WRONG after the fix).
+def _stale(path):
+    if not os.path.exists(path):
+        return True
+    m = os.path.getmtime(path)
+    return any(os.path.exists(d) and os.path.getmtime(d) > m
+               for d in (PLUGIN, "slpp_all/surelog.uhdm"))
+if _stale("cs_gold.v") or _stale("cs_gate.v"):
     open("cs.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {TOP}

@@ -1039,6 +1039,15 @@ struct UhdmImporter {
     // Side-effect helpers for assignment expressions and inc/dec
     void emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc);
     RTLIL::SigSpec map_to_temp_wire(RTLIL::SigSpec sig);
+    // `\arr[k]` per-element alias wire of a flat unpacked array `\arr` (both
+    // wires exist; import_module alias-connects them) -> the flat wire, with
+    // `off` = element k's bit offset in it.  nullptr for any other wire.
+    RTLIL::Wire* alias_elem_base(RTLIL::Wire* w, int& off);
+    // In-flight (current_comb_values) bookkeeping across the flat/element
+    // alias: a whole-array write seeds every `arr[k]`; an element write is
+    // spliced into `arr`.
+    void seed_alias_elems_inflight(RTLIL::Wire* flat, const RTLIL::SigSpec& val);
+    void splice_alias_elem_inflight(RTLIL::Wire* elem, int off, const RTLIL::SigSpec& val);
 
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);
