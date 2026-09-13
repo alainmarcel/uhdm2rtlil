@@ -145,7 +145,27 @@ for _n, _w in ins + outs:
 comb = not clks
 SAMPLE = clks[0] if clks else "cs_vclk"
 
+# DIRECTED stimulus.  Fully random control inputs drive an FSM straight into
+# its sparse-FSM error state (keccak_round: $onehot0({valid_i, run_i}) violated
+# on cycle 1 -> every output froze, and the 2000-cycle compare was vacuous — the
+# ACTIVITY line printed by the tb shows it).  Per-module overrides: a Verilog
+# expression of the loop counter `i`; every other input stays random.
+_KECCAK_ROUND_DIRECTED = {
+    "lc_escalate_en_i": "4'b1010",           # lc_ctrl_pkg::Off
+    "clear_i":          "4'h9",              # prim_mubi_pkg::MuBi4False
+    "valid_i":          "(i % 160 == 4)",    # absorb one block ...
+    "run_i":            "(i % 160 == 12)",   # ... then run the 24 rounds
+    "rand_valid_i":     "1'b1",              # masked phases wait for randomness
+}
+DIRECTED = {
+    "keccak_round":   _KECCAK_ROUND_DIRECTED,
+    "keccak_round_m": _KECCAK_ROUND_DIRECTED,
+}
+_directed = DIRECTED.get(mod, {})
+
 def rnd(n, w):
+    if n in _directed:
+        return f"{n} <= {_directed[n]};"
     return " ".join(f"{n}[{min(b+31, w-1)}:{b}] <= $random;" for b in range(0, w, 32))
 
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
@@ -206,6 +226,16 @@ def _rep(n):
       f'      if (!reps_{n} && (r_{n}===r_{n}) && (s_{n}!==r_{n})) '
       f'begin reps_{n}=1; $display("FIRST-SLANG %0d {n} rtl=%h slang=%h", i, r_{n}, s_{n}); end')
 report = "\n".join(_rep(n) for n, _ in outs)
+# Output ACTIVITY: cycles in which each rtl output changed value.  A compare
+# that never sees an output move proves nothing (keccak_round's random stimulus
+# never completed a round, so a 24-of-25-lane-dead rho went unnoticed for a
+# whole campaign) — the counts make a vacuous NO_DIVERGENCE visible.
+actdecl = "\n".join(f"  reg [{w-1}:0] prev_{n}; integer act_{n};" for n, w in outs)
+acti = "\n    ".join(f"act_{n} = 0; prev_{n} = 'x;" for n, _ in outs)
+actupd = "\n      ".join(f"if (r_{n} !== prev_{n}) act_{n} = act_{n} + 1; prev_{n} = r_{n};"
+                          for n, _ in outs)
+actfmt = " ".join(f"{n}=%0d" for n, _ in outs)
+actargs = ", ".join(f"act_{n}" for n, _ in outs)
 
 # Comb DUTs settle within a sample cycle; a reset preamble only applies to
 # clocked modules.
@@ -221,6 +251,7 @@ module tb;
 {arr_decl}
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
+{actdecl}
   {TOP} rtl ({head}{conn_rtl}, {bind('r')});
   gold_{TOP} gold({head}{conn}, {bind('g')});
   gate_{TOP} gate({head}{conn}, {bind('s')});
@@ -228,6 +259,7 @@ module tb;
   initial begin
     seed_r = {SEED}; i = $random(seed_r);
     {seeni}
+    {acti}
     {preamble}
     for (i = 0; i < {CYCLES}; i = i + 1) begin
       @(negedge {SAMPLE});
@@ -237,7 +269,9 @@ module tb;
       if ({gbad}) g_err = g_err + 1;
       if ({sbad}) s_err = s_err + 1;
 {report}
+      {actupd}
     end
+    $display("ACTIVITY (cycles each rtl output changed): {actfmt}", {actargs});
     $display("ADJUDICATION %0d cycles: uhdm_vs_rtl=%0d slang_vs_rtl=%0d",
              {CYCLES}, g_err, s_err);
     if (g_err > 0 && s_err == 0) $display("VERDICT UHDM_WRONG");
@@ -283,5 +317,5 @@ if out is None or "ADJUDICATION" not in (out or ""):
     sys.exit(1)
 
 for line in out.splitlines():
-    if line.startswith(("ADJUDICATION", "VERDICT", "FIRST")):
+    if line.startswith(("ACTIVITY", "ADJUDICATION", "VERDICT", "FIRST")):
         print(f"{mod} [{tool}] {line}")

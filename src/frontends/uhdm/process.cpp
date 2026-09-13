@@ -1649,10 +1649,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     std::string base = s.name.substr(0, br);
                                     if (!bases.count(base)) return false;
                                     // Only when the element really is an
-                                    // alias of the flat wire.
+                                    // alias of the flat wire.  A ONE-element
+                                    // array (sha3pad Share=1 `msg_buf [1]`)
+                                    // has `\arr[0]` the same width as `\arr`;
+                                    // keeping its entry left an orphan
+                                    // `$0\arr[0]` (hold + sync update, the
+                                    // element write lands on `$0\arr`) whose
+                                    // async-reset value proc_arst rejects as
+                                    // non-constant.
                                     RTLIL::Wire* ew = module->wire(RTLIL::escape_id(s.name));
                                     RTLIL::Wire* bw = module->wire(RTLIL::escape_id(base));
-                                    return ew && bw && ew->width < bw->width;
+                                    return ew && bw && ew != bw && ew->width <= bw->width;
                                 }),
                             assigned_signals.end());
                 }
@@ -7489,8 +7496,7 @@ void UhdmImporter::seed_alias_elems_inflight(RTLIL::Wire* flat, const RTLIL::Sig
     if (low < 0) return;
     for (int k = low;; k++) {
         std::string en = base + "[" + std::to_string(k) + "]";
-        RTLIL::Wire* ew = name_map.count(en) ? name_map[en]
-                                             : module->wire(RTLIL::escape_id(en));
+        RTLIL::Wire* ew = find_wire_in_scope(en);
         if (!ew) break;
         int off = (k - low) * ew->width;
         if (off + ew->width > flat->width) break;
@@ -12804,7 +12810,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
                 for (int i = 0; i < num_elems; i++) {
                     std::string elem_name = bs_name + "[" + std::to_string(i) + "]";
-                    RTLIL::Wire* elem_wire = module->wire(RTLIL::escape_id(elem_name));
+                    RTLIL::Wire* elem_wire = find_wire_in_scope(elem_name);
                     int elem_w = elem_wire->width;
 
                     // Current value of this element (from comb tracking or the wire itself)
@@ -12864,7 +12870,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         std::to_string(idx.as_const().as_int()) + "]";
                     RTLIL::Wire* ew = nullptr;
                     if (name_map.count(en)) ew = name_map[en];
-                    if (!ew) ew = module->wire(RTLIL::escape_id(en));
+                    if (!ew) ew = find_wire_in_scope(en);
                     if (ew) {
                         RTLIL::SigSpec rhs_e;
                         if (auto rhs_any = uhdm_assign->Rhs())
@@ -12935,7 +12941,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     if (uw_low >= 0 && idx_sig.size() > 0 && idx_sig.is_fully_const()) {
                         std::string en = bs_name + "[" +
                             std::to_string(idx_sig.as_const().as_int()) + "]";
-                        if (RTLIL::Wire* ew = module->wire(RTLIL::escape_id(en))) {
+                        if (RTLIL::Wire* ew = find_wire_in_scope(en)) {
                             RTLIL::SigSpec rhs_e;
                             if (auto rhs_any = uhdm_assign->Rhs())
                                 if (auto re = dynamic_cast<const expr*>(rhs_any))
@@ -15231,9 +15237,22 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         for (const auto& ch : lhs_sig.chunks()) {
                                             if (ch.wire && ch.wire->name.str() == actual_wire_name) {
                                                 mapped.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
-                                            } else {
-                                                mapped.append(ch);
+                                                continue;
                                             }
+                                            // ALIAS-element chunk (`\buf_q[i]`) of the flat
+                                            // unpacked array whose `$0\buf_q` temp this
+                                            // process owns (sha3pad's `msg_buf <= '{default:
+                                            // '0}` reset + `for (i) msg_buf[i] <= …`, Share=2):
+                                            // writing the alias wire double-drives every
+                                            // element bit against the flat's update.
+                                            int eoff = 0;
+                                            RTLIL::Wire* flat = ch.wire ? alias_elem_base(ch.wire, eoff) : nullptr;
+                                            if (flat && flat->name.str() == actual_wire_name &&
+                                                temp_wire->width == flat->width) {
+                                                mapped.append(RTLIL::SigChunk(temp_wire, eoff + ch.offset, ch.width));
+                                                continue;
+                                            }
+                                            mapped.append(ch);
                                         }
                                         target_sig = mapped;
                                     } else {
@@ -15274,7 +15293,40 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 }
                             } else if (!current_temp_wires.empty()) {
                                 // Check if this exact LHS expression has a temp wire
-                                if (current_temp_wires.count(lhs)) {
+                                // A whole unpacked-array write (`state_out =
+                                // phase1_out` in a case arm) lowers to a concat
+                                // of per-element wires {\arr[1] \arr[0]} while
+                                // extract_assigned_signals keyed EVERY element's
+                                // temp on the same whole-array ref_obj — the
+                                // pointer map then holds only the LAST element's
+                                // temp, and the slice remap below drove
+                                // {$0\arr[1] $0\arr[1]} (keccak_2share Share=2:
+                                // state_out[0] held, s_o[0] undriven).  Route
+                                // each chunk to its own element's temp instead.
+                                RTLIL::SigSpec per_elem_mapped;
+                                bool per_elem_ok = false;
+                                if (current_temp_wires.count(lhs) &&
+                                    lhs_sig.chunks().size() >= 2) {
+                                    per_elem_ok = true;
+                                    std::set<RTLIL::Wire*> seen_ws;
+                                    for (const auto& ch : lhs_sig.chunks()) {
+                                        if (!ch.wire) { per_elem_ok = false; break; }
+                                        seen_ws.insert(ch.wire);
+                                        std::string wn = ch.wire->name.str();
+                                        if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                                        RTLIL::Wire* etw = find_own_temp_wire(wn);
+                                        if (!etw || etw->width != ch.wire->width) {
+                                            per_elem_ok = false; break;
+                                        }
+                                        per_elem_mapped.append(RTLIL::SigChunk(etw, ch.offset, ch.width));
+                                    }
+                                    if (seen_ws.size() < 2) per_elem_ok = false;
+                                }
+                                if (per_elem_ok) {
+                                    target_sig = per_elem_mapped;
+                                    if (mode_debug)
+                                        log("        Using per-element temp wires for concat assignment\n");
+                                } else if (current_temp_wires.count(lhs)) {
                                     RTLIL::Wire* tw = current_temp_wires[lhs];
                                     // The pointer map is keyed by the SHARED
                                     // def-side LHS node, which every gen

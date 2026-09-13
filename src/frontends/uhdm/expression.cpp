@@ -2164,6 +2164,24 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
 }
 
 // Import any expression
+// An index position of a var_select may hold a bit_select node in two
+// shapes: Surelog's wrapper around a plain index (unnamed, or named like the
+// selected base) — unwrap to its VpiIndex — or a REAL element read of another
+// object used as the index (`c[ThetaIndexX1[x]][z]`, keccak_2share theta's
+// column-parity table; `d[x]` in `state[x][y] ^ d[x]`).  Unwrapping the latter
+// silently replaced the table lookup by its loop index (theta read column x
+// instead of column (x-1)%5 — every Keccak round wrong; the seq=4 miter and
+// the random co-sim never completed a round and missed it).
+static const expr* unwrap_index_bit_select(const expr* ie, const std::string& base_name) {
+    if (ie && ie->VpiType() == vpiBitSelect) {
+        auto bs = any_cast<const bit_select*>(ie);
+        std::string n = std::string(bs->VpiName());
+        if ((n.empty() || n == base_name) && bs->VpiIndex())
+            return any_cast<const expr*>(bs->VpiIndex());
+    }
+    return ie;
+}
+
 RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!uhdm_expr)
         return RTLIL::SigSpec();
@@ -2276,6 +2294,53 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     if (auto a = vs->Actual_group())
                         if (a->UhdmType() == uhdmparameter)
                             par = any_cast<const UHDM::parameter*>(a);
+                    // Surelog leaves the var_select's Actual_group NULL for a
+                    // module-level table localparam read inside a function of
+                    // a paramod instantiated with an explicit override from a
+                    // wrapper (keccak_2share #(.EnMasking(1)) — `PiRotate[x][y]`
+                    // in pi(), `RC[rnd]` in iota()); the unbound select then
+                    // fell through to the wire paths and returned EMPTY (pi
+                    // dropped every lane, iota lost its round constant).
+                    // Resolve the parameter by name on the elaborated instance
+                    // (module Parameters(), then the generate tree).
+                    if (!par && !vs->Actual_group() && current_instance) {
+                        if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                            if (m->Parameters())
+                                for (auto p : *m->Parameters())
+                                    if (std::string(p->VpiName()) == base_name) {
+                                        par = dynamic_cast<const UHDM::parameter*>(p);
+                                        break;
+                                    }
+                            if (!par) {
+                                std::function<const UHDM::parameter*(const UHDM::gen_scope*)>
+                                    scan_gs = [&](const UHDM::gen_scope* gs)
+                                        -> const UHDM::parameter* {
+                                    if (!gs) return nullptr;
+                                    if (gs->Parameters())
+                                        for (auto p : *gs->Parameters())
+                                            if (std::string(p->VpiName()) == base_name)
+                                                if (auto pp = dynamic_cast<const UHDM::parameter*>(p))
+                                                    return pp;
+                                    if (gs->Gen_scope_arrays())
+                                        for (auto gsa : *gs->Gen_scope_arrays())
+                                            if (gsa->Gen_scopes())
+                                                for (auto g2 : *gsa->Gen_scopes())
+                                                    if (auto r = scan_gs(g2)) return r;
+                                    return nullptr;
+                                };
+                                if (m->Gen_scope_arrays())
+                                    for (auto gsa : *m->Gen_scope_arrays()) {
+                                        if (par) break;
+                                        if (gsa->Gen_scopes())
+                                            for (auto g2 : *gsa->Gen_scopes())
+                                                if ((par = scan_gs(g2))) break;
+                                    }
+                            }
+                            if (par && mode_debug)
+                                log("  vpiVarSelect '%s': unbound select resolved to instance parameter\n",
+                                    base_name.c_str());
+                        }
+                    }
                     if (par && exprs->size() >= 1 && exprs->size() <= 4) {
                         RTLIL::SigSpec pval;
                         RTLIL::IdString pid = RTLIL::escape_id(base_name);
@@ -2372,9 +2437,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                                            ? elem.extract(o, w) : RTLIL::SigSpec();
                                             } else elem = RTLIL::SigSpec();
                                         } else if (trail) {
-                                            const expr* be = (trail->VpiType() == vpiBitSelect)
-                                                ? any_cast<const expr*>(any_cast<const bit_select*>(trail)->VpiIndex())
-                                                : trail;
+                                            const expr* be = unwrap_index_bit_select(trail, base_name);
                                             RTLIL::SigSpec b2 = import_expression(be, input_mapping);
                                             if (b2.is_fully_const()) {
                                                 int bi = b2.as_const().as_int();
@@ -2738,10 +2801,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             RTLIL::SigSpec dyn_off;   // accumulated dynamic bit offset
                             bool fail = false;
                             for (size_t i = 0; i < n_idx; i++) {
-                                const expr* ie = (*exprs)[i];
-                                if (ie->VpiType() == vpiBitSelect)
-                                    ie = any_cast<const expr*>(
-                                        any_cast<const UHDM::bit_select*>(ie)->VpiIndex());
+                                const expr* ie = unwrap_index_bit_select((*exprs)[i], base_name);
                                 RTLIL::SigSpec is = import_expression(ie, input_mapping);
                                 int l = dims[i].first, r = dims[i].second;
                                 bool asc = l < r;
@@ -3107,6 +3167,30 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                                      rr.as_const().as_int()) + 1;
                                     int rel = lo - pdims[k].second;
                                     if (rel < 0 || rel + w > pdims[k].first) { ok = false; break; }
+                                    off += (long)rel * inner;
+                                    sel_w = w * inner;
+                                    continue;
+                                }
+                                // Trailing INDEXED part-select of the last dim
+                                // (`rho_in[x][y][ShiftAmt+:Offset]` — keccak_2share's
+                                // g_rho lane rotation): importing the node as an
+                                // index returned a 1-bit value, so every rotated
+                                // lane became `{rho_in[1] rho_in[1]}` (24 of 25
+                                // lanes of rho were zero; the keccak_round seq=4
+                                // miter and the random co-sim never reached a
+                                // completed round and missed it).
+                                if (k == K - 1 &&
+                                    (*exprs)[k]->UhdmType() == uhdmindexed_part_select) {
+                                    auto ipx = any_cast<const UHDM::indexed_part_select*>((*exprs)[k]);
+                                    RTLIL::SigSpec b = import_expression(ipx->Base_expr(), input_mapping);
+                                    RTLIL::SigSpec wd = import_expression(ipx->Width_expr(), input_mapping);
+                                    if (!b.is_fully_const() || !wd.is_fully_const()) { ok = false; break; }
+                                    int w = wd.as_const().as_int();
+                                    int bv = b.as_const().as_int();
+                                    int lo = (ipx->VpiIndexedPartSelectType() == vpiPosIndexed)
+                                                 ? bv : bv - w + 1;
+                                    int rel = lo - pdims[k].second;
+                                    if (w <= 0 || rel < 0 || rel + w > pdims[k].first) { ok = false; break; }
                                     off += (long)rel * inner;
                                     sel_w = w * inner;
                                     continue;
@@ -3522,6 +3606,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // NAPOT mask bits collapsed, region_match_eq wrong).
                 int elem_dlo = 0, elem_dhi = -1;
                 bool elem_ddesc = true;
+                int elem_row_w = 0;  // >0: multi-range packed element (dims below)
+                struct ElemDim { int lo, hi; bool desc; };
+                std::vector<ElemDim> elem_dims;   // outer -> inner packed ranges
                 if (auto ag2 = vs->Actual_group()) {
                     const UHDM::ref_typespec* ert = nullptr;
                     if (auto av2 = dynamic_cast<const UHDM::array_var*>(ag2)) {
@@ -3535,6 +3622,30 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 ert = n0->Typespec();
                     }
                     const UHDM::typespec* ets2 = ert ? ert->Actual_typespec() : nullptr;
+                    // MULTI-RANGE packed element (`sheet_t sheet0 [Share]` with
+                    // `typedef logic [4:0][W-1:0] sheet_t`, keccak_2share's DOM
+                    // chi): the second index selects a packed ROW of the element,
+                    // not a bit — record the row geometry for the index code below.
+                    if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(ets2))
+                        if (!lt2->Elem_typespec() && lt2->Ranges() &&
+                            lt2->Ranges()->size() >= 2) {
+                            bool ok = true;
+                            for (auto rr : *lt2->Ranges()) {
+                                RTLIL::SigSpec dl = import_expression(rr->Left_expr(), input_mapping);
+                                RTLIL::SigSpec dr = import_expression(rr->Right_expr(), input_mapping);
+                                if (!dl.is_fully_const() || !dr.is_fully_const()) { ok = false; break; }
+                                int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
+                                elem_dims.push_back({std::min(dli, dri), std::max(dli, dri), dli >= dri});
+                            }
+                            if (ok) {
+                                long long total = 1;
+                                for (auto& d : elem_dims) total *= (d.hi - d.lo + 1);
+                                if (total == element_sig.size()) elem_row_w = 1;   // enable the dim walk
+                                else elem_dims.clear();
+                            } else {
+                                elem_dims.clear();
+                            }
+                        }
                     if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(ets2))
                         if (!lt2->Elem_typespec() && lt2->Ranges() &&
                             lt2->Ranges()->size() == 1) {
@@ -3558,6 +3669,90 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     if (di < elem_dlo || di > elem_dhi) return -1;
                     return elem_ddesc ? (di - elem_dlo) : (elem_dhi - di);
                 };
+
+                // Row select on a multi-range packed element: `[k]` = row k
+                // (elem_row_w bits at its declared position), an optional
+                // trailing part/indexed-part-select slices within that row.
+                if (elem_row_w > 0 && exprs->size() > 1) {
+                    // Walk the remaining indices down the element's packed
+                    // dims (`box[x][y]` on `logic [4:0][4:0][W-1:0]`): each
+                    // index selects one slot of the current dim, the slice
+                    // narrows to the inner product; whatever follows the last
+                    // index (part / indexed-part / bit select) applies within.
+                    RTLIL::SigSpec row = element_sig;
+                    size_t level = 0, ei = 1;
+                    for (; ei < exprs->size() && level < elem_dims.size(); ei++) {
+                        const expr* ix = (*exprs)[ei];
+                        int t = ix->VpiType();
+                        if (t == vpiPartSelect || t == vpiIndexedPartSelect) break;
+                        long long stride = 1;
+                        for (size_t d = level + 1; d < elem_dims.size(); d++)
+                            stride *= (elem_dims[d].hi - elem_dims[d].lo + 1);
+                        int cnt = elem_dims[level].hi - elem_dims[level].lo + 1;
+                        RTLIL::SigSpec ks = import_expression(ix, input_mapping);
+                        if (ks.is_fully_const()) {
+                            int k = ks.as_const().as_int();
+                            int slot = elem_dims[level].desc ? (k - elem_dims[level].lo)
+                                                             : (elem_dims[level].hi - k);
+                            if (slot >= 0 && slot < cnt)
+                                row = row.extract((int)(slot * stride), (int)stride);
+                            else
+                                row = RTLIL::SigSpec(RTLIL::State::Sx, (int)stride);
+                        } else if (!ks.empty()) {
+                            RTLIL::SigSpec sh = ks;
+                            sh.extend_u0(32, false);
+                            if (elem_dims[level].lo != 0)
+                                sh = module->Sub(NEW_ID, sh, RTLIL::Const(elem_dims[level].lo, 32), false);
+                            if (!elem_dims[level].desc)
+                                sh = module->Sub(NEW_ID, RTLIL::Const(cnt - 1, 32), sh, false);
+                            sh = module->Mul(NEW_ID, sh, RTLIL::Const((int)stride, 32), false);
+                            RTLIL::Wire* rw = module->addWire(NEW_ID, (int)stride);
+                            module->addShiftx(NEW_ID, row, sh, rw, false);
+                            row = RTLIL::SigSpec(rw);
+                        } else {
+                            row = RTLIL::SigSpec();
+                            break;
+                        }
+                        level++;
+                    }
+                    if (!row.empty()) {
+                        result = row;
+                        if (ei < exprs->size()) {
+                            const expr* third = (*exprs)[ei];
+                            if (third->VpiType() == vpiPartSelect) {
+                                auto ps = any_cast<const part_select*>(third);
+                                RTLIL::SigSpec l = import_expression(ps->Left_range(), input_mapping);
+                                RTLIL::SigSpec r = import_expression(ps->Right_range(), input_mapping);
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    int lo = std::min(l.as_const().as_int(), r.as_const().as_int());
+                                    int w = std::abs(l.as_const().as_int() - r.as_const().as_int()) + 1;
+                                    if (lo >= 0 && lo + w <= row.size()) result = row.extract(lo, w);
+                                }
+                            } else if (third->VpiType() == vpiIndexedPartSelect) {
+                                auto ips = any_cast<const indexed_part_select*>(third);
+                                RTLIL::SigSpec b = import_expression(ips->Base_expr(), input_mapping);
+                                RTLIL::SigSpec w = import_expression(ips->Width_expr(), input_mapping);
+                                if (b.is_fully_const() && w.is_fully_const()) {
+                                    int wv = w.as_const().as_int(), bv = b.as_const().as_int();
+                                    int lo = (ips->VpiIndexedPartSelectType() == vpiPosIndexed) ? bv : bv - wv + 1;
+                                    if (lo >= 0 && lo + wv <= row.size()) result = row.extract(lo, wv);
+                                }
+                            } else {
+                                RTLIL::SigSpec bsig = import_expression(third, input_mapping);
+                                if (bsig.is_fully_const()) {
+                                    int b = bsig.as_const().as_int();
+                                    if (b >= 0 && b < row.size()) result = row.extract(b, 1);
+                                } else if (!bsig.empty()) {
+                                    RTLIL::Wire* y = module->addWire(NEW_ID, 1);
+                                    module->addShiftx(NEW_ID, row, bsig, y);
+                                    result = RTLIL::SigSpec(y);
+                                }
+                            }
+                        }
+                        log("  vpiVarSelect: multi-range element row select, result size=%d\n", result.size());
+                        return result;
+                    }
+                }
 
                 // If there's a second expression (part_select / bit_select), apply it
                 if (exprs->size() > 1) {
@@ -3640,10 +3835,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     } else if (second_idx->VpiType() == vpiBitSelect) {
                         // Bit select within the element.  Index may be dynamic
                         // (SelfSelects… `a[0][a[0][3:0]]`) → $shiftx.
-                        const bit_select* bs = any_cast<const bit_select*>(second_idx);
-                        RTLIL::SigSpec bit_sig = bs->VpiIndex()
-                            ? import_expression(any_cast<const expr*>(bs->VpiIndex()), input_mapping)
-                            : RTLIL::SigSpec();
+                        const expr* bie = unwrap_index_bit_select(second_idx, base_name);
+                        RTLIL::SigSpec bit_sig = bie ? import_expression(bie, input_mapping)
+                                                     : RTLIL::SigSpec();
                         if (bit_sig.is_fully_const()) {
                             int bit_idx = map_elem_bit(bit_sig.as_const().as_int());
                             if (bit_idx >= 0 && bit_idx < element_sig.size())
@@ -8691,7 +8885,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                     std::string en = base_signal_name + "[" + std::to_string(i) + "]";
                     if (!gs.empty() && name_map.count(gs + "." + en)) return name_map[gs + "." + en];
                     if (name_map.count(en)) return name_map[en];
-                    return module->wire(RTLIL::escape_id(en));
+                    return find_wire_in_scope(en);
                 };
                 if (el >= 0 && er >= 0) {
                     int lo = std::min(el, er), hi = std::max(el, er);
@@ -9107,7 +9301,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 if (!in_always_ff_body_mode && !comb_lhs_keep_base &&
                     current_comb_values.count(elem_name))
                     return current_comb_values.at(elem_name);
-                RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
+                RTLIL::Wire* w = find_wire_in_scope(elem_name);
                 if (w) return RTLIL::SigSpec(w);
                 // Constant index outside the array bounds reads X — SV leaves an
                 // out-of-range access unspecified (verilog/mem_bounds.sv reads
@@ -9480,7 +9674,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             int idx = index.as_const().as_int();
             // Try to find the wire with the array index in the name
             std::string indexed_name = stringf("\\%s[%d]", signal_name.c_str(), idx);
-            wire = module->wire(indexed_name);
+            // scope-aware: a generate-iteration element lives as
+            // `\<scope>.<sig>[idx]` (bare name_map alias = current iteration)
+            wire = find_wire_in_scope(stringf("%s[%d]", signal_name.c_str(), idx));
             if (wire) {
                 if (mode_debug)
                     log("    Found shift register element: %s\n", indexed_name.c_str());
@@ -11663,7 +11859,74 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
                 RTLIL::SigSpec fs = elem.extract(off, mw);
                 if (fbit && fbit->VpiIndex()) {
+                    // `field[k]` selects a BIT only for a 1-D member.  A member
+                    // that is itself an array — unpacked `foo_t f [7]`
+                    // (unpacked_struct_array_typedef: `fb[0].f[0]` is the 8-bit
+                    // element 0, elem0@LSB) or multi-range packed
+                    // `logic [3:0][7:0]` (row k at its declared position) —
+                    // selects one ELEMENT of it.
+                    int fe_w = 1, fe_cnt = 0, fe_lo = 0; bool fe_desc = true;
+                    if (auto sts = dynamic_cast<const UHDM::struct_typespec*>(ets)) {
+                        if (sts->Members())
+                            for (auto tm : *sts->Members()) {
+                                if (std::string(tm->VpiName()) != field) continue;
+                                const UHDM::typespec* mts =
+                                    tm->Typespec() ? tm->Typespec()->Actual_typespec() : nullptr;
+                                if (auto ats = dynamic_cast<const UHDM::array_typespec*>(mts)) {
+                                    if (ats->Ranges() && ats->Ranges()->size() == 1) {
+                                        auto rg = (*ats->Ranges())[0];
+                                        RTLIL::SigSpec l = import_expression(rg->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(rg->Right_expr(), input_mapping);
+                                        if (l.is_fully_const() && r.is_fully_const()) {
+                                            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                                            fe_cnt = std::abs(li - ri) + 1;
+                                            fe_lo = std::min(li, ri);
+                                            fe_desc = true;   // unpacked: elem `lo` at the LSB
+                                            if (fe_cnt > 0 && mw % fe_cnt == 0) fe_w = mw / fe_cnt;
+                                            else fe_cnt = 0;
+                                        }
+                                    }
+                                } else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(mts)) {
+                                    if (lts->Ranges() && lts->Ranges()->size() >= 2) {
+                                        auto rg = (*lts->Ranges())[0];
+                                        RTLIL::SigSpec l = import_expression(rg->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(rg->Right_expr(), input_mapping);
+                                        if (l.is_fully_const() && r.is_fully_const()) {
+                                            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                                            fe_cnt = std::abs(li - ri) + 1;
+                                            fe_lo = std::min(li, ri);
+                                            fe_desc = li >= ri;
+                                            if (fe_cnt > 0 && mw % fe_cnt == 0) fe_w = mw / fe_cnt;
+                                            else fe_cnt = 0;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                    }
                     RTLIL::SigSpec bi = import_expression(fbit->VpiIndex(), input_mapping);
+                    if (fe_cnt > 0 && fe_w > 1) {
+                        if (bi.is_fully_const()) {
+                            int k = bi.as_const().as_int();
+                            int slot = fe_desc ? (k - fe_lo) : (fe_lo + fe_cnt - 1 - k);
+                            log("    hier_path '%s' -> elem-array struct field element %d (w=%d)\n",
+                                path_name.c_str(), k, fe_w);
+                            if (slot >= 0 && slot < fe_cnt) return fs.extract(slot * fe_w, fe_w);
+                            return RTLIL::SigSpec(RTLIL::State::Sx, fe_w);
+                        }
+                        RTLIL::SigSpec sh = bi;
+                        sh.extend_u0(32, false);
+                        if (fe_lo != 0)
+                            sh = module->Sub(NEW_ID, sh, RTLIL::Const(fe_lo, 32), false);
+                        if (!fe_desc)
+                            sh = module->Sub(NEW_ID, RTLIL::Const(fe_cnt - 1, 32), sh, false);
+                        sh = module->Mul(NEW_ID, sh, RTLIL::Const(fe_w, 32), false);
+                        RTLIL::Wire* yw = module->addWire(NEW_ID, fe_w);
+                        module->addShiftx(NEW_ID, fs, sh, yw, false);
+                        log("    hier_path '%s' -> elem-array struct field dyn element (w=%d)\n",
+                            path_name.c_str(), fe_w);
+                        return RTLIL::SigSpec(yw);
+                    }
                     if (bi.is_fully_const()) {
                         int b = bi.as_const().as_int();
                         if (b >= 0 && b < mw) {
@@ -13586,7 +13849,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     RTLIL::Wire* elem_wire =
                         name_map.count(elem_name) ? name_map[elem_name] : nullptr;
                     if (!elem_wire)
-                        elem_wire = module->wire(RTLIL::escape_id(elem_name));
+                        elem_wire = find_wire_in_scope(elem_name);
 
                     // Find the struct typespec via the bit_select's
                     // Actual_group (which resolves to the array_var,

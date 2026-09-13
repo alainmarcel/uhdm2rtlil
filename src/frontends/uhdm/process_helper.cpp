@@ -339,7 +339,8 @@ int UhdmImporter::expanded_array_low(const std::string& base_name) {
     if (base_name.empty() || !module) return -1;
     for (int probe = 0; probe <= 64; probe++) {
         std::string en = base_name + "[" + std::to_string(probe) + "]";
-        if (name_map.count(en) || module->wire(RTLIL::escape_id(en)))
+        if (name_map.count(en) || module->wire(RTLIL::escape_id(en)) ||
+            find_wire_in_scope(en))
             return probe;
     }
     return -1;
@@ -1809,7 +1810,23 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
         // -> proc_arst "async reset yields non-constant value").
         bool const_idx = false;
         if (idx) {
-            if (idx->VpiType() == vpiConstant) const_idx = true;
+            // A procedural loop variable (`for (int i …) arr[i] <= …` — the
+            // loop is unrolled later, so `i` is neither a wire nor in
+            // loop_values yet): importing it here only warned "unknown
+            // signal" and left a junk 1-bit `\i` wire behind.  It is
+            // dynamic by construction — skip the probe.
+            bool proc_loop_var = false;
+            if (idx->VpiType() == vpiRefObj) {
+                auto ro = any_cast<const ref_obj*>(idx);
+                std::string rn = std::string(ro->VpiName());
+                const any* act = ro->Actual_group();
+                if (act && (act->UhdmType() == uhdmint_var ||
+                            act->UhdmType() == uhdminteger_var) &&
+                    !loop_values.count(rn) && !find_wire_in_scope(rn))
+                    proc_loop_var = true;
+            }
+            if (proc_loop_var) const_idx = false;
+            else if (idx->VpiType() == vpiConstant) const_idx = true;
             else if (auto e = dynamic_cast<const expr*>(idx)) {
                 RTLIL::SigSpec s = import_expression(e);
                 if (s.is_fully_const()) const_idx = true;

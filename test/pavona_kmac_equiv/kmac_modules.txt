@@ -14,3 +14,8 @@ sha3                       4  300  proven
 kmac_entropy               4  300  proven
 kmac_app                   4  600  proven    # needs Surelog compileBits fix (selected-member $bits); cosim NO_DIVERGENCE
 kmac_reg_top               4  300  proven    # needs Surelog inside-precedence fix; via wrappers/flat_kmac_reg_top.sv; cosim NO_DIVERGENCE
+sha3pad_m                  4  300  proven    # sha3pad EnMasking=1 (Share=2) via wrappers/flat_sha3pad_m.sv
+keccak_2share_m            4  600  timeout   # keccak_2share EnMasking=1 via wrappers/flat_keccak_2share_m.sv: 3200-bit DOM datapath, SAT-hard (timeout at 1500 s too); cosim NO_DIVERGENCE with s_o_flat moving every cycle
+keccak_round_m             4 1500  proven    # keccak_round EnMasking=1 via wrappers/flat_keccak_round_m.sv (proves in ~20 min); directed cosim NO_DIVERGENCE
+kmac_reduced               4  600  proven    # EnMasking=1 reduced top via wrappers/flat_kmac_reduced.sv (imports kmac_reg_pkg for HashCntW)
+kmac                       4  600  proven    # full top (EnMasking=1)
