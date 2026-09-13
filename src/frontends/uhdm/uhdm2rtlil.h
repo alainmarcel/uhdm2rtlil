@@ -1047,6 +1047,16 @@ struct UhdmImporter {
     // alias: a whole-array write seeds every `arr[k]`; an element write is
     // spliced into `arr`.
     void seed_alias_elems_inflight(RTLIL::Wire* flat, const RTLIL::SigSpec& val);
+    // Current (in-flight) value of a compound-assignment target (`x op= rhs`):
+    // a select-shaped LHS (`acc[7:0]`, `key[0][7:0]`, `s.f`) is re-imported as
+    // a READ through the comb map so the RMW chains on the threaded value.
+    RTLIL::SigSpec compound_lhs_current(const UHDM::any* lhs_expr, const RTLIL::SigSpec& lhs);
+    // Element struct typespec of an unpacked array of packed structs (see
+    // expression.cpp) — nullptr when the element is not a struct.
+    const UHDM::typespec* unpacked_array_elem_struct_ts(const std::string& base,
+                                                        const UHDM::any* actual,
+                                                        const UHDM::scope* inst,
+                                                        RTLIL::Wire* elem0);
     void splice_alias_elem_inflight(RTLIL::Wire* elem, int off, const RTLIL::SigSpec& val);
 
     // Utility functions

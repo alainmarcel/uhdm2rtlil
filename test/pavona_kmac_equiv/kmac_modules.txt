@@ -1,9 +1,16 @@
 # KMAC (Pavona OpenTitan Keccak-MAC / SHA3) per-module equivalence.
 # read_uhdm vs read_slang SAT miter (scripts/kmac_srcs.py closure, shared prim/
-# tlul/base-pkgs from ../pavona_tlul_equiv + edn/keymgr from ../pavona_acc_equiv).
+# tlul/base-pkgs from ../pavona_tlul_equiv + edn/keymgr/csrng/entropy_src pkgs
+# from ../pavona_acc_equiv).
 #   ./run_kmac_equiv.sh            # all      ./run_kmac_equiv.sh <module>
 #   module                 seq  timeout  want
-keccak_round               4  200  timeout
+keccak_round               4  200  timeout   # 1600-bit Keccak-f: SAT-hard; cosim NO_DIVERGENCE
 kmac_errchk                4  150  proven
-kmac_staterd               4  150  cex
-kmac_msgfifo               4  200  cex
+kmac_staterd               4  150  proven
+kmac_msgfifo               4  200  timeout   # secure-counter sum invariant: SAT-hard; cosim NO_DIVERGENCE
+kmac_core                  4  300  proven
+sha3pad                    4  300  proven
+sha3                       4  300  proven
+kmac_entropy               4  300  proven
+kmac_app                   4  300  cex       # Surelog folds $bits(app_i[app_id].strb) to the WHOLE struct (140); cosim NO_DIVERGENCE
+kmac_reg_top               4  300  cex       # Surelog parses `a inside {..} ? x : b inside {..} ? y : z` with wrong precedence (via wrappers/flat_kmac_reg_top.sv)
