@@ -69,9 +69,15 @@ mirroring the ACC/TL-UL campaigns.
   kmac_core (msg_data_o 1000), kmac_entropy (rand_data_o 513), kmac_app
   (key_data_o 1000), kmac_reg_top (tl_o 1000), keccak_2share_m (s_o_flat
   1000), keccak_round / keccak_round_m (directed, state_o 249 / 688), kmac
-  (tl_o 543, hashing idle).  **Vacuous** (main outputs never move — FSM parked
-  by the random handshake): sha3pad, sha3pad_m, sha3, kmac_reduced.  Those
-  rest on the seq=4 SAT miters only; a directed message-stream stimulus is
-  the next step for them.
+  (tl_o 543, hashing idle).  sha3pad / sha3pad_m / sha3 / kmac_reduced were
+  **vacuous** under random control (FSM parked by the handshake); with the
+  `_SHA3_DIRECTED` table (lc Off, Sha3/L256, start pulse, process pulse, done
+  pulse every 400 cycles, entropy ready/ack held) they now absorb blocks:
+  sha3pad keccak_data_o 354 / absorbed_o 7 changes, sha3 state_o 6 /
+  block_processed_o 6, kmac_reduced state_o_flat 6 — all NO_DIVERGENCE for
+  read_uhdm.  kmac_reduced reports **SLANG_WRONG** (read_slang's netlist
+  leaves the RTL at cycle 238 on state_o_flat while read_uhdm tracks it) —
+  a read_slang issue, not a frontend bug; the seq=4 miter is too shallow to
+  see it.
 - NOTE `kmac_cosim.py` regenerates `work/<mod>/cs_gold.v` / `cs_gate.v` when
   they are older than the plugin or the UHDM; delete them by hand to force it.
