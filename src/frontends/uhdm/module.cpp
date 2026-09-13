@@ -4162,11 +4162,15 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                 for (int i = 0; i < asize; i++) {
                                     std::string ename = var_name + "[" +
                                         std::to_string(alow + i) + "]";
-                                    RTLIL::IdString eid = RTLIL::escape_id(ename);
-                                    if (!module->wire(eid)) {
-                                        RTLIL::Wire* ewire =
-                                            module->addWire(eid, ew);
+                                    // scope-qualified id (see the cont_assign branch below)
+                                    std::string wname = gs_path.empty() ? ename : gs_path + "." + ename;
+                                    RTLIL::IdString eid = RTLIL::escape_id(wname);
+                                    RTLIL::Wire* ewire = module->wire(eid);
+                                    if (!ewire) {
+                                        ewire = module->addWire(eid, ew);
                                         add_src_attribute(ewire->attributes, av);
+                                    }
+                                    {
                                         name_map[ename] = ewire;
                                         if (!gs_path.empty())
                                             name_map[gs_path + "." + ename] = ewire;
@@ -4218,15 +4222,27 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                 log("UHDM: Gen-scope array_var '%s' element-written by "
                                     "cont_assigns — per-element wires (n=%d, w=%d)\n",
                                     var_name.c_str(), asize, ew);
+                                // Wire ids are SCOPE-QUALIFIED: a generate FOR
+                                // loop (keccak_2share's `g_chi_w[x]` with
+                                // `sheet_t sheet0[Share]` in every iteration)
+                                // otherwise collapses all iterations onto one
+                                // `\sheet0[k]` wire — every iteration's assign
+                                // drove it (320 conflicting drivers).  The bare
+                                // name_map alias tracks the CURRENT iteration
+                                // (its own assigns/processes are imported next).
+                                std::string gs_path2 = get_current_gen_scope();
                                 for (int i = 0; i < asize; i++) {
                                     std::string ename = var_name + "[" +
                                         std::to_string(alow + i) + "]";
-                                    RTLIL::IdString eid = RTLIL::escape_id(ename);
-                                    if (!module->wire(eid)) {
-                                        RTLIL::Wire* ewire = module->addWire(eid, ew);
+                                    std::string wname = gs_path2.empty() ? ename : gs_path2 + "." + ename;
+                                    RTLIL::IdString eid = RTLIL::escape_id(wname);
+                                    RTLIL::Wire* ewire = module->wire(eid);
+                                    if (!ewire) {
+                                        ewire = module->addWire(eid, ew);
                                         add_src_attribute(ewire->attributes, av);
-                                        name_map[ename] = ewire;
                                     }
+                                    name_map[ename] = ewire;
+                                    if (!gs_path2.empty()) name_map[wname] = ewire;
                                 }
                                 continue;
                             }

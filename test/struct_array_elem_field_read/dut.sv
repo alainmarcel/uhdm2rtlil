@@ -1,7 +1,9 @@
 package p; typedef struct packed { logic valid; logic [63:0] data; logic [7:0] strb; } req_t; endpackage
-module struct_array_elem_field_read(input logic [3*73-1:0] af, input logic [1:0] app_id, input logic sel, output logic [63:0] mask_o, output logic [63:0] mask2_o);
-  p::req_t app_i [3];
-  for (genvar k = 0; k < 3; k++) begin : g
+// 4 elements: a 2-bit app_id can never read out of range (an OOB element read
+// is X in SV, an unspecified value in Verilator — a false co-sim mismatch).
+module struct_array_elem_field_read(input logic [4*73-1:0] af, input logic [1:0] app_id, input logic sel, output logic [63:0] mask_o, output logic [63:0] mask2_o);
+  p::req_t app_i [4];
+  for (genvar k = 0; k < 4; k++) begin : g
     assign app_i[k] = af[k*73 +: 73];
   end
   always_comb begin

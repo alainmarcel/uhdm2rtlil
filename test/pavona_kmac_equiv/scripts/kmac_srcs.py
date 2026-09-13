@@ -64,6 +64,13 @@ def refs(f):
     return r
 def closure(target):
     seen = set(); st = [target]
+    # A wrapper-only top (wrappers/flat_<target>.sv defines <target>_flat and
+    # instantiates a parameterised RTL module, e.g. a masked EnMasking=1
+    # variant) has no definition under ROOTS: seed the closure from the
+    # wrapper's references (the runner adds the wrapper file itself).
+    wf = f'{HERE}/wrappers/flat_{target}.sv'
+    if target not in defs and os.path.exists(wf):
+        st = list(refs(wf))
     while st:
         n = st.pop()
         if n in seen or n not in defs: continue
