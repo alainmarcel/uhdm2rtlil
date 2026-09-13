@@ -17,13 +17,14 @@ miter, mirroring the EDN / HMAC / KMAC / ACC / TL-UL campaigns.
   per-output ACTIVITY line and the `DIRECTED[mod]` stimulus table.
 
 ## Status
-- **All 18 manifest modules proven** (seq=4): the 8 AES sub-blocks
-  (aes_sbox_lut, aes_sbox_canright, aes_shift_rows, aes_mix_single_column,
-  aes_mix_columns, aes_key_expand, aes_cipher_control_fsm, aes_cipher_control)
+- **All 19 manifest modules proven** (seq=4): the 9 AES sub-blocks
+  (aes_sbox_lut, aes_sbox_canright, aes_sub_bytes [DOM S-box], aes_shift_rows,
+  aes_mix_single_column, aes_mix_columns, aes_key_expand,
+  aes_cipher_control_fsm, aes_cipher_control)
   and the 10 csrng modules (csrng_main_sm, csrng_cmd_stage, csrng_state_db,
   csrng_ctr_drbg_cmd, csrng_ctr_drbg_upd, csrng_ctr_drbg_gen,
   csrng_block_encrypt, csrng_core, csrng_reg_top, csrng).
-- Co-sim (1000 cycles, seed 1): NO_DIVERGENCE on all 18 with real activity
+- Co-sim (1000 cycles, seed 1): NO_DIVERGENCE on all 19 with real activity
   (csrng_block_encrypt rsp_data_o 815 changes, aes_key_expand key_o 1000,
   csrng_ctr_drbg_gen cmd_rsp_data_o 793, csrng tl_o 481 / cs_aes_halt_o 250);
   only csrng_main_sm (a sparse FSM under random control) and
@@ -56,6 +57,9 @@ Splitting the AES cipher core into its sub-blocks localized five bugs:
    the share index instead of 3).  Operations on function locals/args are no
    longer folded against the instance scope.
 
-Still open: Surelog SEGFAULTs elaborating `aes_sub_bytes` with its default
-`SecSBoxImpl = SBoxImplDom` (masked DOM S-box) — not on csrng's path (LUT /
-Canright), tracked for the AES campaign.
+6. `aes_sub_bytes` with its default `SecSBoxImpl = SBoxImplDom` (masked DOM
+   S-box, not on csrng's own LUT / Canright path) SEGFAULTed Surelog:
+   `outer(inner(a ^ b))` with both functions declaring a formal `g` made
+   ExprEval bind `outer`'s `g` to the nested call and recurse until the stack
+   was gone (chipsalliance/UHDM#1154 + #1155, Surelog#4172).  Now in the
+   manifest: proven at seq=4, `check` 0 problems, 3-way co-sim clean.
