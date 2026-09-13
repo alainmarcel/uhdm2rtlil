@@ -1934,12 +1934,39 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 }
                 
                 int direction = io_decl->VpiDirection();
-                
+
+                // UNPACKED-array formal (`logic [7:0] mat_a [8]`): the typespec
+                // width is the ELEMENT width; the unpacked dims live on the
+                // io_decl's Ranges().  Size the staged wire to the whole array
+                // (elem0@LSB) and remember the geometry for `mat_a[j][i]` reads.
+                int unp_elem_w = 0, unp_low = 0;
+                if (io_decl->Ranges() && !io_decl->Ranges()->empty()) {
+                    long long n = 1; bool ok = true; bool first = true;
+                    for (auto rg : *io_decl->Ranges()) {
+                        RTLIL::SigSpec l = import_expression(rg->Left_expr());
+                        RTLIL::SigSpec r = import_expression(rg->Right_expr());
+                        if (!l.is_fully_const() || !r.is_fully_const()) { ok = false; break; }
+                        int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                        n *= (std::abs(li - ri) + 1);
+                        if (first) { unp_low = std::min(li, ri); first = false; }
+                    }
+                    if (ok && n > 1 && width > 0) {
+                        unp_elem_w = width;
+                        width = (int)(width * n);
+                    }
+                }
+
                 if (direction == vpiInput) {
                     // Input parameter - create temp wire and copy input value
                     std::string temp_name = stringf("$0\\%s.%s$%d",
                         func_call_id.c_str(), io_name.c_str(), incr_autoidx());
                     RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
+                    if (unp_elem_w > 0) {
+                        temp_wire->attributes[RTLIL::escape_id("unpacked_elem_width")] =
+                            RTLIL::Const(unp_elem_w, 32);
+                        temp_wire->attributes[RTLIL::escape_id("unpacked_outer_low")] =
+                            RTLIL::Const(unp_low, 32);
+                    }
 
                     // Add source attribute to temp wire
                     if (fc) {
@@ -1951,6 +1978,38 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                     // Add assignment from actual argument to temp wire.
                     // Sign-extend if the argument wire is signed, zero-extend otherwise.
                     RTLIL::SigSpec arg_val = args[arg_idx];
+                    // A '{...}-folded PARAMETER table passed as the unpacked
+                    // actual keeps its FIRST entry at the MSBs when the table's
+                    // outer range is ascending (`localparam logic [7:0] A2X [8]`,
+                    // aes_sbox_canright_pkg) — reverse the elements onto the
+                    // elem0@LSB layout the formal uses.
+                    if (unp_elem_w > 0 && arg_val.size() == width && fc &&
+                        fc->Tf_call_args() && arg_idx < (int)fc->Tf_call_args()->size()) {
+                        const any* ae = (*fc->Tf_call_args())[arg_idx];
+                        const parameter* ap = nullptr;
+                        if (ae && ae->VpiType() == vpiRefObj)
+                            if (auto ag = any_cast<const ref_obj*>(ae)->Actual_group())
+                                if (ag->UhdmType() == uhdmparameter)
+                                    ap = any_cast<const parameter*>(ag);
+                        bool tbl_asc = false;
+                        if (ap && ap->Typespec() && ap->Typespec()->Actual_typespec())
+                            if (auto ats = dynamic_cast<const array_typespec*>(
+                                    ap->Typespec()->Actual_typespec()))
+                                if (ats->Ranges() && !ats->Ranges()->empty()) {
+                                    auto rg = (*ats->Ranges())[0];
+                                    RTLIL::SigSpec l = import_expression(rg->Left_expr());
+                                    RTLIL::SigSpec r = import_expression(rg->Right_expr());
+                                    if (l.is_fully_const() && r.is_fully_const())
+                                        tbl_asc = l.as_const().as_int() < r.as_const().as_int();
+                                }
+                        if (ap && tbl_asc && arg_val.is_fully_const()) {
+                            int n = width / unp_elem_w;
+                            RTLIL::SigSpec rev;
+                            for (int k = n - 1; k >= 0; k--)
+                                rev.append(arg_val.extract(k * unp_elem_w, unp_elem_w));
+                            arg_val = rev;
+                        }
+                    }
                     if (arg_val.size() < width) {
                         bool is_signed_arg = false;
                         auto chunks_it = arg_val.chunks().begin();

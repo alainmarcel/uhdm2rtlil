@@ -1,0 +1,25 @@
+# CSRNG (Pavona OpenTitan CTR-DRBG) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/csrng_srcs.py closure; the AES
+# cipher core csrng_block_encrypt instantiates is vendored under rtl/aes; prim/
+# tlul/base-pkgs from ../pavona_tlul_equiv, entropy_src/edn pkgs from
+# ../pavona_acc_equiv).
+#   ./run_csrng_equiv.sh            # all      ./run_csrng_equiv.sh <module>
+#   module                 seq  timeout  want
+aes_sbox_lut               4  150  proven    # rtl/aes: the cipher core csrng_block_encrypt instantiates
+aes_sbox_canright          4  150  proven    # (the csrng top's SBoxImpl); aes_mvm unpacked-table arg + bit accumulator
+aes_shift_rows             4  150  proven
+aes_mix_single_column      4  150  proven
+aes_mix_columns            4  150  proven
+aes_key_expand             4  300  proven    # packed-ROW range writes, key_i[s][k] on an unpacked port of packed words, local s vs genvar s
+aes_cipher_control_fsm     4  300  proven
+aes_cipher_control         4  300  proven
+csrng_main_sm              4  300  proven
+csrng_cmd_stage            4  300  proven
+csrng_state_db             4  300  proven
+csrng_ctr_drbg_cmd         4  300  proven
+csrng_ctr_drbg_upd         4  600  proven
+csrng_ctr_drbg_gen         4  600  proven
+csrng_block_encrypt        4  600  proven
+csrng_core                 4  600  proven
+csrng_reg_top              4  300  proven
+csrng                      4  900  proven

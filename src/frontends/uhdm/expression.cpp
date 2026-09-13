@@ -1260,8 +1260,32 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             int idx = index_sig.as_int();
                             RTLIL::SigSpec base_sig = it->second;
                             int offset = idx * element_width;
+                            RTLIL::SigSpec bit_rhs = rhs_sig;
                             if (offset >= 0 && offset + element_width <= base_sig.size()) {
-                                lhs_sig = base_sig.extract(offset, element_width);
+                                // SSA-rename the local on a constant element
+                                // write, exactly like the dynamic path below:
+                                // writing the mapped wire's slice in place made a
+                                // bit ACCUMULATOR `vec_c[i] = vec_c[i] ^ …` (aes_mvm,
+                                // 8 unrolled writes of the same bit) read the very
+                                // wire it drives — a combinational loop that the
+                                // SAT miter still "proved" and the Canright S-box
+                                // silently computed wrong.
+                                RTLIL::SigSpec data = rhs_sig;
+                                bit_rhs = rhs_sig;
+                                if (data.size() > element_width)
+                                    data = data.extract(0, element_width);
+                                else if (data.size() < element_width)
+                                    data.extend_u0(element_width, false);
+                                RTLIL::SigSpec merged = base_sig;
+                                merged.replace(offset, data);
+                                RTLIL::Wire* ssa_w = module->addWire(NEW_ID, base_sig.size());
+                                add_src_attribute(ssa_w->attributes, assign);
+                                lhs_sig = RTLIL::SigSpec(ssa_w);
+                                rhs_sig = merged;
+                                input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
+                                if (mode_debug)
+                                    log("UHDM: const bit-select write %s[%d] -> SSA rename (ew=%d)\n",
+                                        base_name.c_str(), idx, element_width);
                             }
 
                             // If the base variable has a const-folded value
@@ -1274,14 +1298,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             // returns `num * original_inp` instead of
                             // `num * (inp with bit flipped)`.
                             FunctionCallContext* ctx = getCurrentFunctionContext();
+                            // (`bit_rhs` is the ORIGINAL rhs: rhs_sig now holds
+                            // the merged SSA value, which is never fully const.)
                             if (ctx && ctx->const_wire_values.count(base_name) &&
-                                rhs_sig.is_fully_const() &&
+                                bit_rhs.is_fully_const() &&
                                 element_width == 1) {
                                 RTLIL::Const& cur = ctx->const_wire_values[base_name];
                                 if (idx >= 0 && idx < (int)cur.size()) {
                                     RTLIL::Const new_val = cur;
                                     new_val.set(idx,
-                                        rhs_sig.as_const().is_fully_zero()
+                                        bit_rhs.as_const().is_fully_zero()
                                             ? RTLIL::State::S0
                                             : RTLIL::State::S1);
                                     ctx->const_wire_values[base_name] = new_val;
@@ -2761,6 +2787,21 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         long total = 1;
                         if (dims_ok)
                             for (auto& d : dims) total *= (std::abs(d.first - d.second) + 1);
+                        // UNPACKED array of packed multi-dim elements (`logic
+                        // [7:0][31:0] key_i [NumShares]`, aes_key_expand's key
+                        // port: flat wire + `\key_i[k]` aliases): exprs[0] is
+                        // the ELEMENT index and the dims above only describe
+                        // the element — `key_i[s][3]` was folded as bit 3 of the
+                        // flat wire.  Prepend the unpacked dim (elem0@LSB, so a
+                        // descending pair), also for a one-element array.
+                        if (dims_ok && total > 0 && bw->width % total == 0) {
+                            int ulow = expanded_array_low(base_name);
+                            if (ulow >= 0) {
+                                int n = (int)(bw->width / total);
+                                dims.insert(dims.begin(), {ulow + n - 1, ulow});
+                                total *= n;
+                            }
+                        }
                         // Only plain index expressions (no part-selects) and
                         // no more indices than dims.
                         bool idx_ok = dims_ok && total == bw->width &&
@@ -2855,6 +2896,24 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                         ips_off = std::min(hi, lo);
                                         ips_w = std::abs(hi - lo) + 1;
                                     } else fail = true;
+                                }
+                                // The trailing select addresses dim n_idx: a
+                                // RANGE OF SLOTS of that dim (`key_i[s][3:0]` =
+                                // key words 0..3 = 128 bits, not bits [3:0])
+                                // scaled by the slot width; only on the
+                                // innermost dim is it a bit range.  Slots
+                                // follow the dim's declared direction.
+                                if (!fail && ips_w > 0 && n_idx < dims.size()) {
+                                    int dl = dims[n_idx].first, dr = dims[n_idx].second;
+                                    bool dasc = dl < dr;
+                                    long k_lo = ips_off, k_hi = ips_off + ips_w - 1;
+                                    long dlo = std::min(dl, dr), dhi = std::max(dl, dr);
+                                    if (k_lo < dlo || k_hi > dhi) fail = true;
+                                    else {
+                                        long slot_lo = dasc ? (dr - k_hi) : (k_lo - dr);
+                                        ips_off = slot_lo * stride[n_idx];
+                                        ips_w = ips_w * stride[n_idx];
+                                    }
                                 }
                                 if (!fail && ips_w > 0 &&
                                     (ips_off < 0 || ips_off + ips_w > res_w))
@@ -3109,6 +3168,32 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                                  std::min(ol, orr)});
                                 pdims.push_back({ew, 0});
                             }
+                        }
+                    }
+                    // UNPACKED array of packed multi-dim elements (`logic
+                    // [7:0][31:0] key_i [NumShares]` — aes_key_expand's key
+                    // port, flat wire + `\key_i[k]` aliases): exprs[0] is the
+                    // ELEMENT index, the rest address the packed dims.  The
+                    // stamped/typespec dims only describe the element, so
+                    // `key_i[s][3]` was folded as bit 3 of the flat wire
+                    // (32-bit key word → 1 bit).  Prepend the unpacked dim
+                    // (elem0@LSB) when the flat width is N× the packed product.
+                    // (Also for a ONE-element array — NumShares=1: the flat
+                    // width equals the packed product, but exprs[0] is still
+                    // the element index; the alias `\key_i[0]` tells them apart.)
+                    if (pdim_ok && !pdims.empty() && bw) {
+                        long long prod = 1;
+                        for (auto& d : pdims) prod *= d.first;
+                        int ulow = expanded_array_low(base_name);
+                        if (mode_debug)
+                            log("  vpiVarSelect: unpacked-dim probe '%s': width=%d prod=%lld ulow=%d ndims=%d nexprs=%d\n",
+                                base_name.c_str(), bw->width, prod, ulow, (int)pdims.size(), (int)exprs->size());
+                        if (prod > 0 && bw->width >= prod && bw->width % prod == 0 && ulow >= 0) {
+                            int n = (int)(bw->width / prod);
+                            pdims.insert(pdims.begin(), {n, ulow});
+                            if (mode_debug)
+                                log("  vpiVarSelect: unpacked [%d] of packed element prepended for '%s'\n",
+                                    n, base_name.c_str());
                         }
                     }
                     size_t K = exprs->size();
@@ -3480,6 +3565,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // — read it back (the byte-enable guard `wbyteenable[j][i]`
                 // of the behavioural SRAM imported as empty without this,
                 // silently un-guarding the write).
+                // UNPACKED-array FUNCTION ARGUMENT (`logic [7:0] mat_a [8]`,
+                // aes_pkg::aes_mvm): the staged temp wire carries the formal's
+                // geometry (functions.cpp stamps unpacked_elem_width /
+                // unpacked_outer_low, elem0@LSB) — without it `mat_a[j][i]`
+                // found no element and the Canright S-box result was empty.
+                if (elem_w == 0 && base_wire) {
+                    auto uew_id = RTLIL::escape_id("unpacked_elem_width");
+                    auto ulo_id = RTLIL::escape_id("unpacked_outer_low");
+                    if (base_wire->attributes.count(uew_id)) {
+                        int ew = base_wire->attributes.at(uew_id).as_int();
+                        if (ew > 0 && base_wire->width % ew == 0) {
+                            elem_w = ew;
+                            array_low = base_wire->attributes.count(ulo_id)
+                                            ? base_wire->attributes.at(ulo_id).as_int() : 0;
+                        }
+                    }
+                }
                 if (elem_w == 0 && base_wire) {
                     auto ew_id = RTLIL::escape_id("packed_elem_width");
                     auto ol_id = RTLIL::escape_id("packed_outer_left");
@@ -3719,14 +3821,37 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         result = row;
                         if (ei < exprs->size()) {
                             const expr* third = (*exprs)[ei];
+                            // A part / indexed-part select at dim `level`
+                            // selects a RANGE OF SLOTS of that dim (rows of the
+                            // packed element when dims remain below it:
+                            // `regular[s][7:4] = key_i[s][3:0]` on
+                            // `logic [7:0][31:0] regular [NumShares]` — aes_key_expand;
+                            // treating it as bits [7:4] / [3:0] latched 7 of the
+                            // 8 key words), or bits of the innermost dim.  Slot
+                            // positions follow the dim's declared direction.
+                            auto slot_range = [&](int k_lo, int k_hi) -> RTLIL::SigSpec {
+                                if (level >= elem_dims.size()) return RTLIL::SigSpec();
+                                long long stride = 1;
+                                for (size_t d = level + 1; d < elem_dims.size(); d++)
+                                    stride *= (elem_dims[d].hi - elem_dims[d].lo + 1);
+                                const ElemDim& dm = elem_dims[level];
+                                if (k_lo < dm.lo || k_hi > dm.hi || k_lo > k_hi)
+                                    return RTLIL::SigSpec(RTLIL::State::Sx,
+                                                          (int)((k_hi - k_lo + 1) * stride));
+                                long long off = dm.desc ? (k_lo - dm.lo) * stride
+                                                        : (dm.hi - k_hi) * stride;
+                                long long w = (k_hi - k_lo + 1) * stride;
+                                if (off < 0 || off + w > row.size()) return RTLIL::SigSpec();
+                                return row.extract((int)off, (int)w);
+                            };
                             if (third->VpiType() == vpiPartSelect) {
                                 auto ps = any_cast<const part_select*>(third);
                                 RTLIL::SigSpec l = import_expression(ps->Left_range(), input_mapping);
                                 RTLIL::SigSpec r = import_expression(ps->Right_range(), input_mapping);
                                 if (l.is_fully_const() && r.is_fully_const()) {
-                                    int lo = std::min(l.as_const().as_int(), r.as_const().as_int());
-                                    int w = std::abs(l.as_const().as_int() - r.as_const().as_int()) + 1;
-                                    if (lo >= 0 && lo + w <= row.size()) result = row.extract(lo, w);
+                                    int a = l.as_const().as_int(), b = r.as_const().as_int();
+                                    RTLIL::SigSpec sel = slot_range(std::min(a, b), std::max(a, b));
+                                    if (!sel.empty()) result = sel;
                                 }
                             } else if (third->VpiType() == vpiIndexedPartSelect) {
                                 auto ips = any_cast<const indexed_part_select*>(third);
@@ -3734,8 +3859,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 RTLIL::SigSpec w = import_expression(ips->Width_expr(), input_mapping);
                                 if (b.is_fully_const() && w.is_fully_const()) {
                                     int wv = w.as_const().as_int(), bv = b.as_const().as_int();
-                                    int lo = (ips->VpiIndexedPartSelectType() == vpiPosIndexed) ? bv : bv - wv + 1;
-                                    if (lo >= 0 && lo + wv <= row.size()) result = row.extract(lo, wv);
+                                    int k_lo = (ips->VpiIndexedPartSelectType() == vpiPosIndexed) ? bv : bv - wv + 1;
+                                    RTLIL::SigSpec sel = slot_range(k_lo, k_lo + wv - 1);
+                                    if (!sel.empty()) result = sel;
                                 }
                             } else {
                                 RTLIL::SigSpec bsig = import_expression(third, input_mapping);
@@ -6284,6 +6410,30 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             };
         for (auto o : *uhdm_op->Operands())
             if (refs_lv(o)) { has_loop_value_operand = true; break; }
+    }
+    // An operand that names a FUNCTION LOCAL / ARGUMENT (staged in
+    // input_mapping) must never be folded by ExprEval against `inst`: the
+    // instance scope can hold a same-named parameter — aes_pkg's
+    // aes_circ_byte_shift computes `8*((7-s)%4)` on its local `s` while the
+    // caller sits in `for (genvar s …)`, and ExprEval resolved `s` to the
+    // GENVAR (rot_word_out shifted by the share index instead of 3).
+    if (!has_loop_value_operand && input_mapping && !input_mapping->empty() &&
+        uhdm_op->Operands()) {
+        std::function<bool(const UHDM::any*)> refs_fl =
+            [&](const UHDM::any* e) -> bool {
+                if (!e) return false;
+                if (e->VpiType() == vpiRefObj)
+                    return input_mapping->count(std::string(e->VpiName())) > 0;
+                if (e->VpiType() == vpiOperation) {
+                    auto op2 = any_cast<const operation*>(e);
+                    if (op2->Operands())
+                        for (auto o2 : *op2->Operands())
+                            if (refs_fl(o2)) return true;
+                }
+                return false;
+            };
+        for (auto o : *uhdm_op->Operands())
+            if (refs_fl(o)) { has_loop_value_operand = true; break; }
     }
 
     // A REPLICATION whose count references a MODULE PARAMETER

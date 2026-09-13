@@ -75,3 +75,21 @@ jobs:
       core: hmac
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # EDN (entropy distribution network) and CSRNG (CTR-DRBG, with the AES
+  # cipher core it instantiates vendored under rtl/aes): same layout/checks.
+  sweep-edn:
+    name: pavona - edn
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: edn
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
+
+  sweep-csrng:
+    name: pavona - csrng
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: csrng
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
