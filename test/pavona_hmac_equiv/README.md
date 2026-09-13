@@ -23,8 +23,8 @@ the KMAC / ACC / TL-UL campaigns.
   prim_packer (SAT-hard, ~20 min), hmac_core, hmac_reg_top, hmac.
 - Co-sim (`hmac_cosim.py <mod> 1000 1`): NO_DIVERGENCE on every module with
   real output activity (hmac_core hash_done_o 574 / sha_rdata_o 1496 changes
-  in 1500 cycles; hmac tl_o 833; prim_packer data_o 513) — **except that
-  hmac_core needs UHDM PR #1153**: `localparam bit [63:0] BlockSizeSHA256in64
+  in 1500 cycles; hmac tl_o 833; prim_packer data_o 513).  hmac_core needed
+  UHDM PR #1153 (Surelog #4171, bumped here): `localparam bit [63:0] BlockSizeSHA256in64
   = 64'(BlockSizeSHA256)` folded to 0 in UHDM's ExprEval (`1ULL << 64` is
   undefined), so the OPad message lengths were 256/384/512 instead of
   768/1408/1536.  The seq=4 miter could not see it (the reader re-evaluates
