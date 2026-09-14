@@ -113,3 +113,13 @@ jobs:
       core: entropy_src
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # keymgr (OpenTitan key manager: identity / key derivation through KMAC,
+  # sideload keys; hw/ip/keymgr/rtl vendored whole): same layout/checks.
+  sweep-keymgr:
+    name: pavona - keymgr
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: keymgr
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
