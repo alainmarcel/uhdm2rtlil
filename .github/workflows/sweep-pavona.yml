@@ -133,3 +133,12 @@ jobs:
       core: periph
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # Small peripherals set 2 (sysrst_ctrl, i2c, spi_host, adc_ctrl).
+  sweep-periph2:
+    name: pavona - periph2
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: periph2
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

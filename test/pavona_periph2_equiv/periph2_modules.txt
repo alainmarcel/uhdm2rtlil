@@ -1,0 +1,39 @@
+# Small peripherals set 2 (Pavona OpenTitan sysrst_ctrl, i2c, spi_host,
+# adc_ctrl) per-module equivalence.  read_uhdm vs read_slang SAT miter
+# (scripts/periph2_srcs.py closure over rtl/<ip> + rtl/pkg; prim/tlul/base-pkgs
+# from ../pavona_tlul_equiv, edn/lc/keymgr pkgs from ../pavona_acc_equiv).
+#   ./run_periph2_equiv.sh            # all      ./run_periph2_equiv.sh <module>
+#   module                            seq  timeout  want
+sysrst_ctrl                           4  900  proven    # sysrst_ctrl
+sysrst_ctrl_autoblock                 4  300  proven    # sysrst_ctrl
+sysrst_ctrl_combo                     4  300  proven    # sysrst_ctrl
+sysrst_ctrl_comboact                  4  300  proven    # sysrst_ctrl
+sysrst_ctrl_detect                    4  300  proven    # sysrst_ctrl
+sysrst_ctrl_intr                      4  300  proven    # sysrst_ctrl
+sysrst_ctrl_keyintr                   4  300  proven    # sysrst_ctrl
+sysrst_ctrl_pin                       4  300  proven    # sysrst_ctrl
+sysrst_ctrl_reg_top                   4  300  proven    # sysrst_ctrl
+sysrst_ctrl_ulp                       4  300  proven    # sysrst_ctrl
+i2c                                   4  900  proven    # i2c
+i2c_bus_monitor                       4  300  proven    # i2c
+i2c_controller_fsm                    4  300  proven    # i2c
+i2c_core                              4  300  proven    # i2c
+i2c_fifo_sync_sram_adapter            4  300  proven    # i2c
+i2c_fifos                             4  300  proven    # i2c
+i2c_reg_top                           4  300  proven    # i2c
+i2c_target_fsm                        4  300  proven    # i2c
+spi_host                              4  900  proven    # spi_host
+spi_host_byte_merge                   4  300  proven    # spi_host
+spi_host_byte_select                  4  300  proven    # spi_host
+spi_host_command_queue                4  300  proven    # spi_host
+spi_host_core                         4  300  proven    # spi_host
+spi_host_data_fifos                   4  300  proven    # spi_host
+spi_host_fsm                          4  300  proven    # spi_host
+spi_host_reg_top                      4  300  proven    # spi_host: flat wrapper — tl_win_o/i [2] unpacked struct ports flattened elem0@LSB (raw miter compares swapped windows)
+spi_host_shift_register               4  300  proven    # spi_host
+spi_host_window                       4  300  proven    # spi_host
+adc_ctrl                              4  900  proven    # adc_ctrl
+adc_ctrl_core                         4  300  proven    # adc_ctrl
+adc_ctrl_fsm                          4  300  proven    # adc_ctrl
+adc_ctrl_intr                         4  300  proven    # adc_ctrl
+adc_ctrl_reg_top                      4  300  proven    # adc_ctrl
