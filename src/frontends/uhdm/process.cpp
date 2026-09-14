@@ -9282,16 +9282,26 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
     if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
     else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
     else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
+    else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(ag)) rngs = pv->Ranges();
     // A TYPEDEF'd multi-dim type (plane_t/box_t): the var carries no ranges of
     // its own — the dimensions live on its typespec's logic_typespec Ranges().
+    // A packed array of a TYPEDEF'd element (`sp2v_e [N-1:0] out` — aes_ctr's
+    // aes_rev_order_sp2v formal/local/return) is a packed_array_typespec whose
+    // outer dim sits on the typespec's own Ranges(); only logic_typespec was
+    // accepted here, so `out[i]` / `in[N-1-i]` stayed a SINGLE BIT and the
+    // reversed sp2v_e table came back as 8 one-bit values (ctr_we_o = 0x000024
+    // instead of 0x924924).
     if (!rngs || rngs->empty()) {
         const UHDM::ref_typespec* rt = nullptr;
         if (auto e = dynamic_cast<const UHDM::expr*>(ag)) rt = e->Typespec();
         else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
         if (rt)
-            if (auto a = rt->Actual_typespec())
+            if (auto a = rt->Actual_typespec()) {
                 if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(a))
                     rngs = lt->Ranges();
+                else if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(a))
+                    rngs = pat->Ranges();
+            }
     }
     if (!rngs || rngs->empty()) return false;
     auto r0 = (*rngs)[0];
@@ -15112,6 +15122,22 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                 is_partial = false;
                                             }
                                         }
+                                    }
+                                } else if (lhs->VpiType() == vpiVarSelect) {
+                                    // Multi-index element write `q[s][i] <= d[s][i]`
+                                    // (unpacked element + packed word — aes_core's
+                                    // key_init_reg loops) in a process that also
+                                    // resets the WHOLE array (`q <= '{default:'0}`,
+                                    // so the flat `$0\q` temp is canonical).  With
+                                    // no var_select case here signal_name stayed
+                                    // empty, the write landed on the alias element
+                                    // wire \q[s] instead of a `$0\q` slice, and the
+                                    // sync update overwrote it: every key share
+                                    // stayed 0 and aes_wrap's ciphertext was wrong.
+                                    const var_select* vsl = any_cast<const var_select*>(lhs);
+                                    if (!vsl->VpiName().empty()) {
+                                        signal_name = std::string(vsl->VpiName());
+                                        is_partial = true;
                                     }
                                 } else if (lhs->VpiType() == vpiPartSelect) {
                                     const part_select* ps = any_cast<const part_select*>(lhs);

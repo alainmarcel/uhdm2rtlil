@@ -3689,6 +3689,37 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             }
         }
 
+        // Multi-dimensional `logic [A-1:0][B-1:0]` with no Elem_typespec: fold
+        // every range through import_expression BEFORE consulting ExprEval.
+        // ExprEval cannot see a GENERATE-SCOPE localparam, and rather than
+        // flagging invalidValue it silently dropped that dimension: prim_lfsr's
+        // gen_out_non_linear `typedef logic [NumSboxes-1:0][LfsrIdxDw-1:0]
+        // matrix_col_t` sized 6 instead of 96, so every function local of that
+        // type in the non-linear output layer held one column entry and the
+        // PRINCE S-box input indices were garbage (aes_prng_clearing).
+        if (typespec->UhdmType() == uhdmlogic_typespec) {
+            auto lts_md = dynamic_cast<const UHDM::logic_typespec*>(typespec);
+            if (lts_md && lts_md->Elem_typespec() == nullptr &&
+                lts_md->Ranges() && lts_md->Ranges()->size() >= 2) {
+                bool saved_fcf = force_const_fold;
+                force_const_fold = true;
+                long total = 1;
+                bool ok = true;
+                for (auto r : *lts_md->Ranges()) {
+                    if (!r->Left_expr() || !r->Right_expr()) { ok = false; break; }
+                    RTLIL::SigSpec l = import_expression(r->Left_expr());
+                    RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                    if (!l.is_fully_const() || !rr.is_fully_const()) { ok = false; break; }
+                    total *= (long)std::abs(l.as_int() - rr.as_int()) + 1;
+                }
+                force_const_fold = saved_fcf;
+                if (ok && total > 0) {
+                    log("UHDM: logic_typespec multi-range width = %ld\n", total);
+                    return (int)total;
+                }
+            }
+        }
+
         // Handle logic_typespec with Elem_typespec (e.g., reg8_t [0:3] → array of 8-bit elements)
         // ExprEval::size() only returns the outer range size, so we need to multiply by element width
         if (typespec->UhdmType() == uhdmlogic_typespec) {
@@ -4012,23 +4043,16 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 if (!gs) return;
                 if (gs->Cont_assigns())
                     for (auto ca : *gs->Cont_assigns())
-                        if (ca->Lhs() &&
-                            (ca->Lhs()->VpiType() == vpiBitSelect ||
-                             ca->Lhs()->VpiType() == vpiVarSelect))
-                            cont_elem_written.insert(
-                                std::string(ca->Lhs()->VpiName()));
+                        if (ca->Lhs())
+                            collect_elem_select_bases(ca->Lhs(), cont_elem_written);
                 if (gs->Modules())
                     for (auto mi : *gs->Modules())
                         if (mi->Ports())
-                            for (auto p : *mi->Ports()) {
-                                const UHDM::any* hc = p->High_conn();
-                                if (hc &&
-                                    (hc->VpiType() == vpiBitSelect ||
-                                     hc->VpiType() == vpiVarSelect) &&
-                                    !hc->VpiName().empty())
-                                    scope_inst_elem_written.insert(
-                                        std::string(hc->VpiName()));
-                            }
+                            for (auto p : *mi->Ports())
+                                // element selects, also inside a concat
+                                // actual (`{state_done_buf[1], state_done_buf[0]}`)
+                                collect_elem_select_bases(p->High_conn(),
+                                                          scope_inst_elem_written);
                 if (gs->Gen_scope_arrays())
                     for (auto gsa : *gs->Gen_scope_arrays())
                         if (gsa->Gen_scopes())

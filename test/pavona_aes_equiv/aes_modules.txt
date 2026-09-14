@@ -1,0 +1,43 @@
+# AES (Pavona OpenTitan AES accelerator) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/aes_srcs.py closure; hw/ip/aes/rtl
+# vendored whole under rtl/aes; prim/tlul/base-pkgs from ../pavona_tlul_equiv,
+# edn/keymgr/lc pkgs from ../pavona_acc_equiv).  Default parameters =
+# SecMasking=1 (two shares) + SecSBoxImpl=SBoxImplDom unless noted.
+#   ./run_aes_equiv.sh            # all      ./run_aes_equiv.sh <module>
+#   module                            seq  timeout  want
+aes_sbox_lut                          4  150  proven
+aes_sbox_canright                     4  150  proven
+aes_sbox_canright_masked              4  300  timeout   # SAT-hard masked GF arithmetic; co-sim adjudicates (NO_DIVERGENCE)
+aes_sbox_canright_masked_noreuse      4  300  proven
+aes_sbox_dom                          4  300  proven
+aes_sbox                              4  150  proven    # default SecSBoxImpl=SBoxImplLut
+aes_sub_bytes                         4  300  proven    # DOM S-box
+aes_shift_rows                        4  150  proven
+aes_mix_single_column                 4  150  proven
+aes_mix_columns                       4  150  proven
+aes_key_expand                        4  300  proven    # default SecMasking=0 / LUT
+aes_key_expand_m                      4  600  proven    # wrapper-only top: SecMasking=1 + DOM (as the masked cipher core instantiates it)
+aes_reduced_round                     4  300  proven
+aes_sel_buf_chk                       4  150  proven
+aes_reg_status                        4  150  proven
+aes_prng_clearing                     4  300  proven    # wrappers/flat_: data_o [NumSharesKey]; prim_lfsr NonLinearOut (below)
+prim_lfsr_nl                          4  300  proven    # wrapper-only top: prim_lfsr as aes_prng_clearing configures it (GAL_XOR 64, StatePerm, NonLinearOut=1)
+aes_prng_masking                      4  600  timeout   # SAT-hard (160-bit LFSR + perm); co-sim: read_uhdm == RTL, read_slang DIVERGES
+aes_cipher_control_fsm                4  300  proven
+aes_cipher_control_fsm_p              4  300  proven
+aes_cipher_control_fsm_n              4  300  proven
+aes_cipher_control                    4  300  proven
+aes_cipher_core                       4  900  proven    # SecMasking=1, DOM; wrappers/flat_: [NumShares] state/key ports
+aes_control_fsm                       4  300  proven
+aes_control_fsm_p                     4  300  proven
+aes_control_fsm_n                     4  300  proven
+aes_control                           4  600  proven    # wrappers/flat_: key_init_qe_i / key_init_we_o [NumSharesKey]
+aes_ctr_fsm                           4  300  proven
+aes_ctr_fsm_p                         4  300  proven
+aes_ctr_fsm_n                         4  300  proven
+aes_ctr                               4  600  proven
+aes_ctrl_reg_shadowed                 4  600  proven
+aes_reg_top                           4  600  proven
+aes_core                              4  1800 proven
+aes                                   4  1800 proven
+aes_wrap_dut                          4  1800 proven    # wrappers/flat_: aes_wrap (TL-UL self-driving encrypt wrapper) minus its data_intg double drive — the DEEP directed co-sim (ciphertext at cycle ~139)

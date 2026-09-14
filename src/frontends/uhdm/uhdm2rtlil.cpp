@@ -300,6 +300,21 @@ UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
 }
 
 // Import entire UHDM design
+void UhdmImporter::collect_elem_select_bases(const UHDM::any* e,
+                                             std::set<std::string>& out) {
+    if (!e) return;
+    int t = e->VpiType();
+    if ((t == vpiBitSelect || t == vpiVarSelect) && !e->VpiName().empty()) {
+        out.insert(std::string(e->VpiName()));
+        return;
+    }
+    if (t == vpiOperation) {
+        auto op = any_cast<const UHDM::operation*>(e);
+        if (op && op->Operands())
+            for (auto o : *op->Operands()) collect_elem_select_bases(o, out);
+    }
+}
+
 void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log("UHDM: Starting import_design\n");
     
@@ -3814,10 +3829,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             for (auto p : *mi->Ports()) {
                 const UHDM::any* hc = p->High_conn();
                 if (!hc) continue;
-                if ((hc->VpiType() == vpiBitSelect ||
-                           hc->VpiType() == vpiVarSelect) &&
-                    !hc->VpiName().empty())
-                    inst_elem_written_arrays.insert(std::string(hc->VpiName()));
+                // Bare `a[i]` actuals AND element selects inside a concat
+                // actual (`.out_o({buf[1], buf[0]})`): the concat form was
+                // invisible here, so aes_core's state_done_buf (declared in a
+                // generate scope, written only through prim_buf's output
+                // concat) became a writer-less $memory whose $memrd data
+                // wires the instance output was wired onto — both masked
+                // shares read 0 and the ciphertext XORed to 0.
+                collect_elem_select_bases(hc, inst_elem_written_arrays);
             }
         };
         scan_mods = [&](const UHDM::VectorOfmodule_inst* mods) {

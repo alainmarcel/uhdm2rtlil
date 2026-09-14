@@ -93,3 +93,13 @@ jobs:
       core: csrng
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # AES (OpenTitan AES-128/192/256 accelerator, hw/ip/aes/rtl vendored whole;
+  # default SecMasking=1 two-share DOM S-box): same layout/checks.
+  sweep-aes:
+    name: pavona - aes
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: aes
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
