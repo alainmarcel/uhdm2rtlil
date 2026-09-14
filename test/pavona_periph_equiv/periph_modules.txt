@@ -1,0 +1,36 @@
+# Small peripherals set (Pavona OpenTitan rom_ctrl, uart, aon_timer, rv_timer,
+# pattgen, sram_ctrl) per-module equivalence.  read_uhdm vs read_slang SAT
+# miter (scripts/periph_srcs.py closure over rtl/<ip>; prim/tlul/base-pkgs
+# from ../pavona_tlul_equiv, edn/lc/keymgr pkgs from ../pavona_acc_equiv,
+# kmac_pkg from ../pavona_kmac_equiv).
+#   ./run_periph_equiv.sh            # all      ./run_periph_equiv.sh <module>
+#   module                            seq  timeout  want
+rom_ctrl_compare                      4  300  proven    # rom_ctrl
+rom_ctrl_counter                      4  300  proven    # rom_ctrl
+rom_ctrl_fsm                          4  300  proven    # rom_ctrl
+rom_ctrl_mux                          4  300  proven    # rom_ctrl
+rom_ctrl_regs_reg_top                 4  300  proven    # rom_ctrl
+rom_ctrl_rom_reg_top                  4  300  error     # rom_ctrl: the generated window-only reg_top never drives tl_reg_d2h (tl_o undriven in the RTL itself); read_slang rejects it
+rom_ctrl_scrambled_rom_init           4  300  proven    # rom_ctrl: wrapper-only top with a deterministic 16x40 ROM image (an image-less ROM is unconstrained in the miter and uninitialised in the RTL sim)
+rom_ctrl                              4  900  proven    # rom_ctrl
+uart_core                             4  300  proven    # uart
+uart_reg_top                          4  300  proven    # uart
+uart_rx                               4  300  proven    # uart
+uart                                  4  900  proven    # uart
+uart_tx                               4  300  proven    # uart
+aon_timer_core                        4  300  proven    # aon_timer
+aon_timer_reg_top                     4  300  proven    # aon_timer
+aon_timer                             4  900  proven    # aon_timer
+rv_timer_reg_top                      4  300  proven    # rv_timer
+rv_timer                              4  900  proven    # rv_timer
+timer_core                            4  300  proven    # rv_timer
+pattgen_chan                          4  300  proven    # pattgen
+pattgen_core                          4  300  proven    # pattgen
+pattgen_reg_top                       4  300  proven    # pattgen
+pattgen                               4  900  proven    # pattgen
+sram_ctrl_ram_reg_top                 4  300  error     # sram_ctrl: same window-only reg_top shape (tl_reg_d2h / racl_error_o undriven in the RTL); read_slang rejects it
+sram_ctrl_regs_reg_top                4  300  proven    # sram_ctrl
+sram_ctrl                             4  1800 proven    # sram_ctrl
+tlul_lc_gate                          4  300  proven    # tlul: the life-cycle TL-UL gate sram_ctrl instantiates (not in the TL-UL campaign's manifest)
+prim_subst_perm_r2                    4  300  proven    # prim: the substitution-permutation scrambler rom_ctrl / sram_ctrl use, NumRounds=2 as they instantiate it (in-place S-box rewrite of a generate-parent local; 31 rounds is SAT-hard)
+prim_prince_hw                        4  300  timeout   # prim: PRINCE 64/128, 3 half rounds, halfway data+key regs as rom_ctrl / sram_ctrl instantiate it; SAT-hard once the S-boxes are live (1500 s, even 32/64 one-half-round) -> adjudicated by the co-sim (NO_DIVERGENCE, data_o toggles ~55%)

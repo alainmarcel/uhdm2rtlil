@@ -123,3 +123,13 @@ jobs:
       core: keymgr
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # Small peripherals set (rom_ctrl, uart, aon_timer, rv_timer, pattgen,
+  # sram_ctrl; hw/ip/<ip>/rtl vendored whole): same layout/checks.
+  sweep-periph:
+    name: pavona - periph
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: periph
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

@@ -1625,6 +1625,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
 
+                // Whole + part/field writes of one signal: keep the whole
+                // entry only (the part write remaps onto the full temp).
+                {
+                    std::set<std::string> whole;
+                    for (const auto& a : assigned_signals)
+                        if (!a.is_part_select) whole.insert(a.name);
+                    if (!whole.empty())
+                        assigned_signals.erase(
+                            std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                                [&](const AssignedSignal& a) {
+                                    return a.is_part_select && whole.count(a.name);
+                                }),
+                            assigned_signals.end());
+                }
                 // Canonicalize a MIXED unpacked-array representation (CVA6
                 // store_buffer): the flat wire `\arr` is canonical (the
                 // per-element wires are alias-CONNECTED to its slices), so
@@ -3088,9 +3102,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                     ? name_map[sig.name] : nullptr;
                             if (!wire) wire = module->wire(RTLIL::escape_id(sig.name));
                             if (!wire) {
+                                // Walk UP the generate-scope chain: the local
+                                // may be declared in an OUTER scope than the
+                                // block (prim_subst_perm's data_state_sbox lives
+                                // in gen_round[r], the always_comb in
+                                // gen_round[r].gen_enc).
                                 std::string gs = get_current_gen_scope();
-                                if (!gs.empty())
+                                while (!wire && !gs.empty()) {
                                     wire = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                                    size_t dot = gs.rfind('.');
+                                    gs = (dot == std::string::npos) ? "" : gs.substr(0, dot);
+                                }
                             }
                             if (!wire) {
                                 log_warning("import_always_ff: cannot find wire '%s' for for-loop signal\n",
@@ -3392,6 +3414,26 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // $0\arr`) driving the same bits through the alias connect — proc_dlatch
     // then latches the element against the flat's source (keccak_round
     // `storage_d = keccak_out; … storage_d[j][i*DIN+:DIN] = …` read back 0).
+    // A signal written WHOLE and by a part/field select in the same process
+    // (tlul_lc_gate: `tl_h2d_int[0] = tl_h2d_i;` then `if (block_cmd)
+    // tl_h2d_int[0].a_valid = 1'b0;`) needs ONE temp — the part write remaps
+    // onto the full temp's slice (find_own_temp_wire).  A second, ranged
+    // `$0\x[msb:lsb]` temp was created for the part entry, so the field write
+    // landed on an orphan the update never carried and proc_dlatch turned it
+    // into a latch whose Q — through the whole-write alias — drove the INPUT
+    // port bit (sram_ctrl: conflicting driver on ram_tl_i.a_valid).
+    {
+        std::set<std::string> whole;
+        for (const auto& a : assigned_signals)
+            if (!a.is_part_select) whole.insert(a.name);
+        if (!whole.empty())
+            assigned_signals.erase(
+                std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                    [&](const AssignedSignal& a) {
+                        return a.is_part_select && whole.count(a.name);
+                    }),
+                assigned_signals.end());
+    }
     std::set<RTLIL::Wire*> flat_written_arrays;
     for (const auto& sig : assigned_signals) {
         RTLIL::SigSpec s;
@@ -3403,8 +3445,21 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             RTLIL::Wire* w = name_map.count(sig.name) ? name_map[sig.name] : nullptr;
             if (!w) w = module->wire(RTLIL::escape_id(sig.name));
             if (!w) {
+                // Walk UP the generate-scope chain (prim_subst_perm: the
+                // loop-written local data_state_sbox is declared in
+                // gen_round[r], the always_comb sits in gen_round[r].gen_enc);
+                // the one-level lookup missed it, the loop writes were
+                // dropped from the temp setup and the in-place S-box rewrite
+                // `data_state_sbox[k*4 +: 4] = SBOX[data_state_sbox[k*4 +: 4]]`
+                // read its own output through the wire — a logic loop in
+                // every scrambler (rom_ctrl, sram_ctrl: co-sim did not
+                // converge, proofs vacuous).
                 std::string gs = get_current_gen_scope();
-                if (!gs.empty()) w = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                while (!w && !gs.empty()) {
+                    w = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                    size_t dot = gs.rfind('.');
+                    gs = (dot == std::string::npos) ? "" : gs.substr(0, dot);
+                }
             }
             if (!w) continue;
             s = RTLIL::SigSpec(w);
@@ -3469,9 +3524,19 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                                         ? name_map[sig.name] : nullptr;
                 if (!wire) wire = module->wire(RTLIL::escape_id(sig.name));
                 if (!wire) {
+                    // Walk UP the generate-scope chain: prim_subst_perm's
+                    // data_state_sbox is declared in gen_round[r] while the
+                    // always_comb sits in gen_round[r].gen_enc — the one-level
+                    // lookup dropped the loop's writes from the temp setup and
+                    // the in-place S-box rewrite read its own output through
+                    // the wire (logic loops in every rom_ctrl / sram_ctrl
+                    // scrambler; the ROM co-sim never converged).
                     std::string gs = get_current_gen_scope();
-                    if (!gs.empty())
+                    while (!wire && !gs.empty()) {
                         wire = module->wire(RTLIL::escape_id(gs + "." + sig.name));
+                        size_t dot = gs.rfind('.');
+                        gs = (dot == std::string::npos) ? "" : gs.substr(0, dot);
+                    }
                 }
                 if (!wire) {
                     log_warning("import_always_comb: cannot find wire '%s' for for-loop signal\n",
@@ -4299,11 +4364,21 @@ bool UhdmImporter::emit_initial_readmem(const any* stmt) {
     std::function<void(const any*)> scan = [&](const any* s) {
         if (!s || handled) return;
         switch (s->VpiType()) {
-            case vpiBegin:
-            case vpiNamedBegin: {
-                if (auto b = any_cast<const UHDM::begin*>(s))
+            case vpiBegin: {
+                if (auto b = dynamic_cast<const UHDM::begin*>(s))
                     if (b->Stmts())
                         for (auto sub : *b->Stmts()) scan(sub);
+                return;
+            }
+            case vpiNamedBegin: {
+                // `if (MemInitFile != "") begin : gen_meminit $readmemh(...)`
+                // (prim_util_memload.svh, every OpenTitan prim_rom / prim_ram):
+                // a named_begin is NOT a `begin` in UHDM, the cast returned
+                // null and the ROM stayed uninitialised (rom_ctrl's scrambled
+                // ROM read 0 for every word).
+                if (auto nb = dynamic_cast<const UHDM::named_begin*>(s))
+                    if (nb->Stmts())
+                        for (auto sub : *nb->Stmts()) scan(sub);
                 return;
             }
             case vpiIf:
@@ -15018,7 +15093,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // handler resolves a mapped base wire from
                             // input_mapping, which would retarget the write onto
                             // the array's in-flight source (`\ko`).
-                            comb_lhs_keep_base = (lhs_map_ != nullptr) || llt_ == vpiVarSelect;
+                            // A hier_path target (`tl_h2d_int[0].a_valid = 1'b0`
+                            // after `tl_h2d_int[0] = tl_h2d_i;`, tlul_lc_gate)
+                            // must keep its base too: the elem-array struct-
+                            // field handler otherwise resolved the element at
+                            // its IN-FLIGHT value — the input port — and the
+                            // field write landed on tl_h2d_i[108] (sram_ctrl:
+                            // conflicting driver on the module input).
+                            comb_lhs_keep_base = (lhs_map_ != nullptr) || llt_ == vpiVarSelect ||
+                                                 llt_ == vpiHierPath;
                             RTLIL::SigSpec lhs_sig = import_expression(lhs, lhs_map_);
                             comb_lhs_keep_base = false;
                             // Declaration initializer (`automatic logic [3:0]
