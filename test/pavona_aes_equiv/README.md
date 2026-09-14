@@ -41,8 +41,8 @@ has them.
   (aes_wrap_dut's `aes_output` = the ciphertext at cycle ~139, `aes` tl_o 172
   changes, aes_key_expand key_o 400, aes_ctr ctr_o 400); the 36th is the
   read_slang divergence above.
-- Requires chipsalliance/Surelog#4173 (bug 3 below) for `aes_prng_clearing`
-  and `prim_lfsr_nl`; until the submodule is bumped those two rows fail.
+- `aes_prng_clearing` and `prim_lfsr_nl` need chipsalliance/Surelog#4173
+  (bug 3 below); the submodule is bumped to that merge (319e32763f).
 
 ## The deep test: `aes_wrap_dut`
 
@@ -105,7 +105,8 @@ row.
 Internal tests: `func_packed_enum_array_reverse`,
 `enum_array_unpacked_elem_write`, `genscope_func_typedef_multirange`,
 `genscope_array_inst_concat_write`,
-`ff_whole_array_reset_varselect_elem_write`; Surelog `tests/StreamSliceParam`.
+`ff_whole_array_reset_varselect_elem_write`, `genscope_func_stream_slice_param`;
+Surelog `tests/StreamSliceParam`.
 
 ## Localizing a divergence in an assembled top
 
