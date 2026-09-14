@@ -79,3 +79,4 @@ ibex_ex_block         artefact   # UHDM==slang miter cex is ONLY the unpacked-po
 ibex_cs_registers     artefact   # both frontends diverge from Verilator-RTL identically-patterned (priv_mode/mstatus_mie; uhdm 508 vs slang 426 over 2000cyc, X-init offsets) — shared artifact class
 ibex_alu              artefact   # UHDM==slang miter PROVEN (seq 4); co-sim divergences are `unique case (1'b1)` multi-match under random stimulus (same class as ibex_ex_block) — required --no-assert to even run
 # arb_idx_cast: FIXED 2026-08-23 (PR #638) — co-sim passes; entry removed.
+dyn_elem_member_slice_compound_write  artefact   # Verilator DIDNOTCONVERGE on the behavioural RTL instance alone (self-RMW comb block through a dynamic slot index); netlist-only tb passes, slang miter PROVES (seq=3) — UHDM-only, no read_verilog reference

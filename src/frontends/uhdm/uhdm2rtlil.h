@@ -940,7 +940,8 @@ struct UhdmImporter {
         const UHDM::hier_path* hp,
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
-        RTLIL::CaseRule* case_rule);
+        RTLIL::CaseRule* case_rule,
+        const UHDM::assignment* asg = nullptr);
     // Constant-index bit-slice of a PACKED multi-dim var_select (`box[x][y][z]`
     // inside a function body).  Mirrors the read path's packed-flatten formula
     // (dims outer->inner, stride in bits, MSB-first).  `ctx` resolves the index
@@ -957,6 +958,7 @@ struct UhdmImporter {
     // bits, at (i-outer_lo)*elem_w.  The dims may live on the var's own Ranges()
     // OR, for a TYPEDEF'd type, on its typespec's logic_typespec Ranges().
     // Returns false if the outer dim isn't a resolvable constant range.
+    RTLIL::Const vpi_value_to_const(const std::string& val_str, int width);
     bool bitselect_outer_dim(const UHDM::any* ag, int total_width,
                              int& elem_w, int& outer_lo);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):

@@ -58,6 +58,7 @@ KEYMGR_DIR = TEST_DIR / "pavona_keymgr_equiv"
 PERIPH_DIR = TEST_DIR / "pavona_periph_equiv"
 PERIPH2_DIR = TEST_DIR / "pavona_periph2_equiv"
 PERIPH3_DIR = TEST_DIR / "pavona_periph3_equiv"
+PERIPH4_DIR = TEST_DIR / "pavona_periph4_equiv"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -774,7 +775,7 @@ def sweep_acc(jobs, cycles=300, flt=None):
 # flat_<mod>.sv), so the helpers below take the ip name and its directory.
 _IP_DIRS = {"kmac": KMAC_DIR, "hmac": HMAC_DIR, "edn": EDN_DIR, "csrng": CSRNG_DIR,
             "aes": AES_DIR, "entropy_src": ENTROPY_SRC_DIR,
-            "keymgr": KEYMGR_DIR, "periph": PERIPH_DIR, "periph2": PERIPH2_DIR, "periph3": PERIPH3_DIR}
+            "keymgr": KEYMGR_DIR, "periph": PERIPH_DIR, "periph2": PERIPH2_DIR, "periph3": PERIPH3_DIR, "periph4": PERIPH4_DIR}
 
 
 def _kmac_check(mod, ip="kmac"):
@@ -843,7 +844,7 @@ def sweep_kmac(jobs, cycles=300, flt=None, ip="kmac"):
         m = re.match(r"\s*[✅⚠❓💥❌‼🎉]*\s*(\S+)\s+(proven|cex|timeout|error|"
                      r"elabfail)\b", line)
         # Skip the "KMAC equivalence: …" summary line (its first token is KMAC).
-        if m and m.group(1) not in ("KMAC", "HMAC", "EDN", "CSRNG", "AES", "ENTROPY_SRC", "KEYMGR", "PERIPH", "PERIPH2", "PERIPH3"):
+        if m and m.group(1) not in ("KMAC", "HMAC", "EDN", "CSRNG", "AES", "ENTROPY_SRC", "KEYMGR", "PERIPH", "PERIPH2", "PERIPH3", "PERIPH4"):
             rows.append({"module": m.group(1),
                          "formal": label.get(m.group(2), m.group(2)),
                          "formal_raw": m.group(2), "cosim": "—"})
@@ -923,7 +924,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
-                                     "entropy_src", "keymgr", "periph", "periph2", "periph3"])
+                                     "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -980,7 +981,7 @@ def main():
         rows = sweep_kmac(args.jobs, args.cycles, args.filter)
     elif args.core == "hmac":
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip="hmac")
-    elif args.core in ("edn", "csrng", "aes", "entropy_src", "keymgr", "periph", "periph2", "periph3"):
+    elif args.core in ("edn", "csrng", "aes", "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4"):
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip=args.core)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)

@@ -726,3 +726,17 @@ Test: ibex_alu
     `Test: ` prefix, so the suite's SIM_EQUIV_ANALYZED_SET parser (which
     matches `^Test:`) never picked them up and they were miscounted as NEW
     warnings despite being adjudicated.
+
+Test: dyn_elem_member_slice_compound_write
+    Verilator settle-loop artefact on the BEHAVIOURAL side, not a frontend
+    diff: the always_comb reads and writes its own module-level output
+    `key_slots_d` through a dynamic slot index (`key_slots_d = key_slots_q;
+    ... key_slots_d[slot_dst_sel_i].key[j][cnt*W +: W] = ...;
+    key_slots_d[slot_dst_sel_i].key[0] ^= root_key_i[0]`, the OpenTitan
+    keymgr_dpe_ctrl shape the test reproduces).  Verilator reports
+    DIDNOTCONVERGE ("Input combinational region did not converge") for the
+    RTL instance ALONE in the sim-equiv tb; the UHDM-netlist instance alone
+    passes the same tb (50 cycles, 0 mismatches), `check` finds no logic
+    loop in the netlist, and the read_uhdm-vs-read_slang SAT miter PROVES
+    the test (seq=3).  A block-local accumulator makes Verilator converge
+    but changes the shape under test, so the module-level form is kept.
