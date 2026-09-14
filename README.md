@@ -172,18 +172,20 @@ only when one of those checks proves it equivalent; *SV-only* means the frontend
 synthesized SystemVerilog that the native Verilog frontend cannot even read (no
 golden to compare against, so it is verified against the RTL by co-simulation).
 
-Ranked by total tests handled correctly (1237-test matrix):
+Ranked by total tests handled correctly (1456-test matrix, nightly run of 2026-09-13):
 
 | Rank | Frontend | Verified correct | SV-only (no golden) | **Total correct** | Incorrect | Failed to read |
 |-----:|----------|-----------------:|--------------------:|------------------:|----------:|---------------:|
-| 🥇 1 | **`uhdm`** (this project) | 814 | 293 | **1107 (89%)** | 25 | 37 |
-| 🥈 2 | `sv2v` | 768 | 237 | 1005 (81%) | 0 | 175 |
-| 🥉 3 | `slang` (Yosys sv-elab) | 640 | 243 | 883 (71%) | 0 | 242 |
-| 4 | `verilog` (Yosys native, the golden) | 852 | — | 852 (69%) | 9 | 375 |
+| 🥇 1 | **`uhdm`** (this project) | 904 | 434 | **1338 (92%)** | 24 | 33 |
+| 🥈 2 | `sv2v` | 843 | 350 | 1193 (82%) | 0 | 203 |
+| 🥉 3 | `slang` (Yosys sv-elab) | 714 | 358 | 1072 (74%) | 0 | 268 |
+| 4 | `verilog` (Yosys native, the golden) | 931 | — | 931 (64%) | 9 | 516 |
 
-On this corpus the UHDM frontend converts the most SystemVerilog — **1107 of
-1237** tests verified correct, including **293 designs the native Verilog frontend
-cannot read at all**.
+On this corpus the UHDM frontend converts the most SystemVerilog — **1338 of
+1456** tests verified correct, including **434 designs the native Verilog frontend
+cannot read at all**.  (*Failed to read* = failed + crashed; the remaining tests
+per frontend are *Unknown* — a formal non-equivalence the co-sim could not
+adjudicate: 60 for `uhdm` and `sv2v`, 115 for `slang`.)
 
 **How to read this table honestly:**
 
@@ -192,13 +194,13 @@ cannot read at all**.
   chipsalliance/UHDM-integration tests), and many tests were added specifically to
   exercise constructs this frontend targets. The ranking is real but it is *not* a
   neutral third-party comparison — a tool graded on the set its authors curated is
-  playing at home. Read "#1 by ~18 points" in that light.
+  playing at home. Read "#1 by ~10 points" in that light.
 - **The benchmark rewards breadth over conservatism.** `sv2v` and `slang` report
-  **0 incorrect** results here; `uhdm`'s **25** are a real (tracked) triage backlog
+  **0 incorrect** results here; `uhdm`'s **24** are a real (tracked) triage backlog
   in `test/failing_tests.txt`. The README's ranking metric (total handled) favors
   reading more SV, but "accepts less yet is never wrong on what it accepts" is a
   legitimate — sometimes preferable — posture, and it's the one `sv2v`/`slang` show
-  on this corpus. Their higher "Failed to read" counts (175 / 242 vs 37) reflect
+  on this corpus. Their higher "Failed to read" counts (203 / 268 vs 33) reflect
   that trade-off, not a defect.
 - **Coverage ≠ ecosystem fit.** `slang`/sv-elab is the frontend that has been
   **upstreamed into Yosys itself**, ships in the OSS CAD Suite, and is used by
