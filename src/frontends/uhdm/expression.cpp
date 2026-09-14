@@ -9424,9 +9424,20 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             if (idx_sig.is_fully_const()) {
                 int idx = idx_sig.as_int();
                 const RTLIL::Const& cur = ctx->const_wire_values[signal_name];
-                if (idx >= 0 && idx < (int)cur.size()) {
-                    return RTLIL::SigSpec(RTLIL::Const(
-                        std::vector<RTLIL::State>{cur[idx]}));
+                // A packed multi-dim formal bound to a CONSTANT table
+                // (keymgr's `perm_data(data, RndCnstRandPerm)`: `rand_perm_t
+                // perm_sel` = logic [31:0][4:0]) — `perm_sel[k]` is the k-th
+                // 5-bit ENTRY, not bit k.  This fast path returned a single
+                // bit, so every permutation index folded to 0/1 and the decoy
+                // data / sideload keys came out wrong.
+                int elem_w = 1, outer_lo = 0;
+                if (auto ag = uhdm_bit->Actual_group())
+                    bitselect_outer_dim(ag, (int)cur.size(), elem_w, outer_lo);
+                int off = (idx - outer_lo) * elem_w;
+                if (off >= 0 && off + elem_w <= (int)cur.size()) {
+                    std::vector<RTLIL::State> bits(cur.begin() + off,
+                                                   cur.begin() + off + elem_w);
+                    return RTLIL::SigSpec(RTLIL::Const(bits));
                 }
             }
         }
@@ -10978,6 +10989,21 @@ const UHDM::typespec* UhdmImporter::unpacked_array_elem_struct_ts(
             if (auto av = dynamic_cast<const UHDM::array_var*>(actual))
                 if (av->Variables() && !av->Variables()->empty())
                     ets = struct_of((*av->Variables())[0]->Typespec());
+        // PACKED array of structs (`rom_ctrl_pkg::keymgr_data_t [N-1:0]
+        // rom_digest_i`, keymgr_input_checks): a packed_array_net / _var whose
+        // own Typespec is absent and whose Elements()[0] is the struct_net /
+        // struct_var — `rom_digest_i[k].data` otherwise fell to the generic
+        // walker, which read ONE bit at the member's offset.
+        if (!ets)
+            if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual))
+                if (pn->Elements() && !pn->Elements()->empty())
+                    if (auto e0 = dynamic_cast<const UHDM::expr*>((*pn->Elements())[0]))
+                        ets = struct_of(e0->Typespec());
+        if (!ets)
+            if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual))
+                if (pv->Elements() && !pv->Elements()->empty())
+                    if (auto e0 = dynamic_cast<const UHDM::expr*>((*pv->Elements())[0]))
+                        ets = struct_of(e0->Typespec());
     }
     if (!ets && elem0) {
         for (auto& pr : wire_map) {

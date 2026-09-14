@@ -1,0 +1,19 @@
+# keymgr (Pavona OpenTitan key manager) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/keymgr_srcs.py closure;
+# hw/ip/keymgr/rtl vendored whole under rtl/keymgr, flash_ctrl_pkg /
+# rom_ctrl_pkg under rtl/pkg; kmac_pkg from ../pavona_kmac_equiv; prim/tlul/
+# base-pkgs from ../pavona_tlul_equiv, edn/lc pkgs from ../pavona_acc_equiv).
+#   ./run_keymgr_equiv.sh            # all      ./run_keymgr_equiv.sh <module>
+#   module                            seq  timeout  want
+keymgr_cfg_en                         4  150  proven
+keymgr_op_state_ctrl                  4  300  proven
+keymgr_data_en_state                  4  300  proven
+keymgr_err                            4  300  proven
+keymgr_input_checks                   4  300  proven
+keymgr_reseed_ctrl                    4  300  proven
+keymgr_sideload_key                   4  300  proven
+keymgr_sideload_key_ctrl              4  600  proven
+keymgr_kmac_if                        4  600  proven
+keymgr_ctrl                           4  1800 timeout   # SAT-hard (the whole key-derivation control path); co-sim adjudicates (NO_DIVERGENCE)
+keymgr_reg_top                        4  600  proven
+keymgr                                4  1800 proven
