@@ -160,3 +160,12 @@ jobs:
       core: periph4
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # Small peripherals set 5 (usbdev, spi_device).
+  sweep-periph5:
+    name: pavona - periph5
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: periph5
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

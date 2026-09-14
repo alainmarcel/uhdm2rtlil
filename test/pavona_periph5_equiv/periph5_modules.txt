@@ -1,0 +1,36 @@
+# Small peripherals set 5 (Pavona OpenTitan usbdev, spi_device) per-module
+# equivalence.  read_uhdm vs read_slang SAT miter (scripts/periph5_srcs.py
+# closure over rtl/<ip>; prim/tlul/base-pkgs from ../pavona_tlul_equiv,
+# edn/lc/keymgr/otp pkgs from ../pavona_acc_equiv).
+#   ./run_periph5_equiv.sh            # all      ./run_periph5_equiv.sh <module>
+#   module                            seq  timeout  want
+usb_fs_nb_in_pe                       4  300  proven    # usbdev
+usb_fs_nb_out_pe                      4  300  proven    # usbdev
+usb_fs_nb_pe                          4  300  proven    # usbdev
+usb_fs_rx                             4  300  proven    # usbdev
+usb_fs_tx                             4  300  proven    # usbdev
+usb_fs_tx_mux                         4  300  proven    # usbdev
+usbdev                                4  1800 timeout   # usbdev: the full device top (packet buffer, 12 endpoints, link state) is SAT-hard at seq=4 (no verdict in 1800 s) — adjudicated by the co-sim
+usbdev_aon_wake                       4  300  proven    # usbdev
+usbdev_counter                        4  300  proven    # usbdev
+usbdev_iomux                          4  300  proven    # usbdev
+usbdev_linkstate                      4  300  proven    # usbdev
+usbdev_reg_top                        4  300  proven    # usbdev
+usbdev_usbif                          4  300  proven    # usbdev
+spi_cmdparse                          4  300  proven    # spi_device
+spi_device                            4  1800 nosat     # spi_device: contains spid_dpram's dual-clock RAM (see above); adjudicated by the co-sim
+spi_device_reg_top                    4  300  proven    # spi_device: flat wrapper — tl_win_o/i [2] unpacked struct ports flattened elem0@LSB
+spi_p2s                               4  300  proven    # spi_device
+spi_passthrough                       4  300  proven    # spi_device
+spi_readcmd                           4  300  proven    # spi_device
+spi_s2p                               4  300  proven    # spi_device
+spi_tpm                               4  300  proven    # spi_device
+spid_addr_4b                          4  300  proven    # spi_device
+spid_csb_sync                         4  300  proven    # spi_device
+spid_dpram                            4  300  nosat     # spi_device: dual-clock 2-port RAM (sys + SPI write clocks) — memory_map refuses it on both sides, no SAT model; adjudicated by the co-sim
+spid_fifo2sram_adapter                4  300  proven    # spi_device
+spid_jedec                            4  300  proven    # spi_device
+spid_readbuffer                       4  300  proven    # spi_device
+spid_readsram                         4  300  proven    # spi_device
+spid_status                           4  300  proven    # spi_device
+spid_upload                           4  300  proven    # spi_device
