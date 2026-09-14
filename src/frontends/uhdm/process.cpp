@@ -11460,8 +11460,31 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         const UHDM::hier_path* hp,
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
-        RTLIL::CaseRule* case_rule) {
+        RTLIL::CaseRule* case_rule,
+        const UHDM::assignment* asg) {
     if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return false;
+    // A COMPOUND assignment (`slots[i].key[0] ^= root_key_i[0]`,
+    // keymgr_dpe_ctrl): the helper used to store the bare RHS — the current
+    // value of the target never entered the operation.  Read it through the
+    // hier_path read path (in-flight aware) and fold it with the operator.
+    auto compound_fold = [&](RTLIL::SigSpec rhs, int w) -> RTLIL::SigSpec {
+        if (!asg) return rhs;
+        int ot = asg->VpiOpType();
+        if (ot == vpiAssignmentOp || ot == 0) return rhs;
+        bool saved_kb = comb_lhs_keep_base;
+        comb_lhs_keep_base = false;
+        RTLIL::SigSpec cur = import_expression(hp, comb_read_map());
+        comb_lhs_keep_base = saved_kb;
+        if (cur.size() < w) cur.extend_u0(w, false);
+        else if (cur.size() > w) cur = cur.extract(0, w);
+        return create_compound_op_cell(ot, cur, rhs, asg);
+    };
+    if (mode_debug) {
+        std::string tys;
+        for (auto e : *hp->Path_elems()) tys += UHDM::UhdmName(e->UhdmType()) + "(" + std::string(e->VpiName()) + ") ";
+        log("    dyn_elem_field_write: '%s' (%zu elems: %s)\n",
+            std::string(hp->VpiName()).c_str(), hp->Path_elems()->size(), tys.c_str());
+    }
 
     // MULTI-index chain `arr[i][j].field = rhs` (CVA6 bht/btb tables): a run
     // of bit_selects then the field ref.  Combined bit shift
@@ -11499,12 +11522,27 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     if (hp->Path_elems()->size() >= 3) {
         auto& peM = *hp->Path_elems();
         size_t nsel = 0;
-        while (nsel < peM.size() && peM[nsel]->UhdmType() == uhdmbit_select) nsel++;
+        // Leading ARRAY selects only: a bit_select carrying a different name
+        // is a MEMBER select (`slots[i].key[j]`), not another array dim —
+        // absorbing it as an index made the field walk fail and the write
+        // fell through to a READ aux (keymgr_dpe_ctrl's
+        // `key_slots_d[slot].key[j][cnt*EntropyWidth +: EntropyWidth]`).
+        // (An UNNAMED bit_select is the next dim of the same array — Surelog
+        // leaves `d[upd_pc][upd_row]`'s inner select nameless.)
+        while (nsel < peM.size() && peM[nsel]->UhdmType() == uhdmbit_select &&
+               (nsel == 0 || std::string(peM[nsel]->VpiName()).empty() ||
+                std::string(peM[nsel]->VpiName()) == std::string(peM[0]->VpiName())))
+            nsel++;
         // Field elem: a plain ref_obj (`arr[i][j].field`) or, since the
         // trailing member select is preserved, a NAMED bit_select
         // (`arr[i][j].field[k]`).
         const ref_obj* frf = nullptr;
         const bit_select* field_bs = nullptr;
+        // Member select carried by a VAR_SELECT (`slots[i].key[j][lo +: w]`:
+        // Surelog folds the member index AND the trailing slice into one
+        // var_select named `key` with Exprs() = [j, indexed_part_select]).
+        const UHDM::any* field_idx_any = nullptr;
+        std::string field_sel_name;
         // Field levels named by the tail, outermost first.  A NESTED path
         // (`mem_n[idx].sbe.rd`, CVA6 scoreboard) is [bit_select, ref_obj,
         // ref_obj]: accepting only ONE trailing ref_obj left the write to fall
@@ -11521,14 +11559,28 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         // its DATA field stayed zero.
         size_t field_end = peM.size();
         int tail_slice_off = -1, tail_slice_w = -1;
+        // A DYNAMIC tail base (`.key[j][cnt*EntropyWidth +: EntropyWidth]`):
+        // the slice position joins the shift amount below.
+        RTLIL::SigSpec tail_dyn_base;
+        bool tail_dyn = false, tail_dyn_neg = false;
+        if (mode_debug)
+            log("    dyn_elem_field_write: last elem type=%s\n",
+                UHDM::UhdmName(peM.back()->UhdmType()).c_str());
         if (peM.size() >= 3 &&
             peM.back()->UhdmType() == uhdmindexed_part_select) {
             auto lips = any_cast<const UHDM::indexed_part_select*>(peM.back());
+            if (mode_debug)
+                log("    dyn_elem_field_write: tail base type=%s width type=%s\n",
+                    lips->Base_expr() ? UHDM::UhdmName(lips->Base_expr()->UhdmType()).c_str() : "null",
+                    lips->Width_expr() ? UHDM::UhdmName(lips->Width_expr()->UhdmType()).c_str() : "null");
             if (lips && lips->Base_expr() && lips->Width_expr()) {
                 RTLIL::SigSpec bb = import_expression(
-                    dynamic_cast<const UHDM::expr*>(lips->Base_expr()));
+                    dynamic_cast<const UHDM::expr*>(lips->Base_expr()), comb_read_map());
                 RTLIL::SigSpec ww = import_expression(
                     dynamic_cast<const UHDM::expr*>(lips->Width_expr()));
+                if (mode_debug)
+                    log("    dyn_elem_field_write: tail bb=%d bits const=%d ww const=%d\n",
+                        bb.size(), bb.is_fully_const() ? 1 : 0, ww.is_fully_const() ? 1 : 0);
                 if (bb.is_fully_const() && ww.is_fully_const()) {
                     int o = bb.as_const().as_int();
                     int wd = ww.as_const().as_int();
@@ -11538,6 +11590,74 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         tail_slice_w = wd;
                         field_end--;
                     }
+                } else if (ww.is_fully_const() && bb.size() > 0) {
+                    int wd = ww.as_const().as_int();
+                    if (wd > 0) {
+                        tail_dyn = true;
+                        tail_dyn_neg = lips->VpiIndexedPartSelectType() == 2;
+                        tail_dyn_base = bb;
+                        tail_slice_w = wd;
+                        field_end--;
+                    }
+                }
+            }
+        }
+        // Two encodings: a NAMED var_select right after the array selects
+        // (`... .key[j][lo +: w]` as var_select(key)), or the member ref_obj
+        // followed by an UNNAMED var_select carrying its indices
+        // (ref_obj(key), var_select() — keymgr_dpe_ctrl's key_slots_d).
+        const UHDM::var_select* mvs = nullptr;
+        std::string mvs_name;
+        if (nsel >= 1 && nsel == peM.size() - 1 &&
+            peM[nsel]->UhdmType() == uhdmvar_select) {
+            mvs = any_cast<const UHDM::var_select*>(peM[nsel]);
+            mvs_name = mvs ? std::string(mvs->VpiName()) : "";
+        } else if (nsel >= 1 && nsel + 2 == peM.size() &&
+                   peM[nsel]->UhdmType() == uhdmref_obj &&
+                   peM[nsel + 1]->UhdmType() == uhdmvar_select) {
+            mvs = any_cast<const UHDM::var_select*>(peM[nsel + 1]);
+            mvs_name = std::string(peM[nsel]->VpiName());
+        }
+        if (mvs) {
+            auto vs = mvs;
+            if (vs && vs->Exprs() && !vs->Exprs()->empty() && vs->Exprs()->size() <= 2 &&
+                !mvs_name.empty() &&
+                mvs_name != std::string(peM[0]->VpiName())) {
+                bool ok = true;
+                if (vs->Exprs()->size() == 2) {
+                    const UHDM::any* e1 = (*vs->Exprs())[1];
+                    if (e1->UhdmType() == uhdmindexed_part_select) {
+                        auto lips = any_cast<const UHDM::indexed_part_select*>(e1);
+                        RTLIL::SigSpec bb = lips->Base_expr() ? import_expression(
+                            dynamic_cast<const UHDM::expr*>(lips->Base_expr()), comb_read_map()) : RTLIL::SigSpec();
+                        RTLIL::SigSpec ww = lips->Width_expr() ? import_expression(
+                            dynamic_cast<const UHDM::expr*>(lips->Width_expr())) : RTLIL::SigSpec();
+                        if (ww.is_fully_const() && ww.as_const().as_int() > 0 && bb.size() > 0) {
+                            int wd = ww.as_const().as_int();
+                            if (bb.is_fully_const()) {
+                                int o = bb.as_const().as_int();
+                                if (lips->VpiIndexedPartSelectType() == 2) o = o - wd + 1;
+                                if (o < 0) ok = false;
+                                else { tail_slice_off = o; tail_slice_w = wd; }
+                            } else {
+                                tail_dyn = true;
+                                tail_dyn_neg = lips->VpiIndexedPartSelectType() == 2;
+                                tail_dyn_base = bb; tail_slice_w = wd;
+                            }
+                        } else ok = false;
+                    } else if (dynamic_cast<const UHDM::expr*>(e1)) {
+                        // `.key[j][b]` — a single bit of the sub-element
+                        RTLIL::SigSpec bb = import_expression(
+                            dynamic_cast<const UHDM::expr*>(e1), comb_read_map());
+                        if (bb.is_fully_const()) { tail_slice_off = bb.as_const().as_int(); tail_slice_w = 1; }
+                        else if (bb.size() > 0) { tail_dyn = true; tail_dyn_base = bb; tail_slice_w = 1; }
+                        else ok = false;
+                    } else ok = false;
+                }
+                if (ok) {
+                    field_idx_any = (*vs->Exprs())[0];
+                    field_sel_name = mvs_name;
+                    field_end = nsel + 1;
                 }
             }
         }
@@ -11556,6 +11676,14 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         } else if (nsel >= 2 && nsel == peM.size() - 1 &&
             peM[nsel]->UhdmType() == uhdmref_obj) {
             frf = any_cast<const ref_obj*>(peM[nsel]);
+        } else if (nsel >= 1 && nsel == field_end - 1 &&
+                   peM[nsel]->UhdmType() == uhdmbit_select) {
+            // `arr[i].field[k]` (+ optional tail slice): the member select
+            // is the element right after the array selects.
+            const bit_select* cand = any_cast<const bit_select*>(peM[nsel]);
+            if (cand && cand->VpiIndex() && !std::string(cand->VpiName()).empty() &&
+                std::string(cand->VpiName()) != std::string(peM[0]->VpiName()))
+                field_bs = cand;
         } else if (nsel >= 3 && nsel == peM.size()) {
             const bit_select* cand = any_cast<const bit_select*>(peM[nsel - 1]);
             const bit_select* first = any_cast<const bit_select*>(peM[0]);
@@ -11566,11 +11694,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 nsel -= 1;   // leading ARRAY selects only
             }
         }
-        if (frf || field_bs) {
+        if (field_bs && !field_idx_any) {
+            field_idx_any = field_bs->VpiIndex();
+            field_sel_name = std::string(field_bs->VpiName());
+        }
+        bool has_field_idx = field_idx_any != nullptr;
+        if (mode_debug)
+            log("    dyn_elem_field_write: nsel=%zu field_end=%zu frf=%d field_idx=%d tail_dyn=%d tail_w=%d\n",
+                nsel, field_end, frf ? 1 : 0, has_field_idx ? 1 : 0, tail_dyn ? 1 : 0, tail_slice_w);
+        if (frf || has_field_idx) {
             const bit_select* bs0 = any_cast<const bit_select*>(peM[0]);
             std::string base_name = std::string(bs0->VpiName());
             std::string field_name = std::string(frf ? frf->VpiName()
-                                                     : field_bs->VpiName());
+                                                     : field_sel_name.c_str());
             if (ffields.empty()) ffields.push_back(field_name);
             RTLIL::Wire* base_wire = name_map.count(base_name)
                                          ? name_map[base_name]
@@ -11578,10 +11714,13 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
             std::vector<std::pair<int,int>> dims;
             const UHDM::struct_typespec* st2 = nullptr;
             int elem_w2 = 0;
-            if (base_wire && !field_name.empty() &&
+            bool geom_ok = base_wire && !field_name.empty() &&
                 flat_struct_array_geom(base_name, bs0->Actual_group(),
-                                       current_instance, dims, &st2, &elem_w2) &&
-                nsel == dims.size() && st2 && st2->Members()) {
+                                       current_instance, dims, &st2, &elem_w2);
+            if (mode_debug)
+                log("    dyn_elem_field_write: base_wire=%d geom=%d dims=%zu elem_w=%d st2=%d\n",
+                    base_wire ? 1 : 0, geom_ok ? 1 : 0, dims.size(), elem_w2, st2 ? 1 : 0);
+            if (geom_ok && nsel == dims.size() && st2 && st2->Members()) {
                 int field_offset = 0, field_width = 0;
                 bool found_field = false;
                 const UHDM::typespec* field_ats = nullptr;
@@ -11627,7 +11766,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 // the member is written.
                 int write_w = field_width;
                 int sub_w = 0, sub_l = 0, sub_r = 0;
-                if (found_field && field_bs) {
+                if (found_field && has_field_idx) {
                     if (!member_sub_geom(field_ats, field_width, sub_w, sub_l,
                                          sub_r))
                         found_field = false;
@@ -11637,7 +11776,11 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 // Constant slice of the member from a trailing indexed
                 // part-select: shift the member offset and write only it.
                 if (found_field && tail_slice_w > 0) {
-                    if (tail_slice_off + tail_slice_w > field_width) {
+                    int within = has_field_idx ? sub_w : field_width;
+                    if (tail_dyn) {
+                        if (tail_slice_w > within) found_field = false;
+                        else write_w = tail_slice_w;
+                    } else if (tail_slice_off + tail_slice_w > within) {
                         found_field = false;
                     } else {
                         field_offset += tail_slice_off;
@@ -11661,9 +11804,10 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         idxs.push_back(ix);
                     }
                     RTLIL::SigSpec field_idx;
-                    if (idx_ok && field_bs) {
+                    if (idx_ok && has_field_idx) {
                         field_idx =
-                            import_expression(field_bs->VpiIndex(), comb_read_map());
+                            import_expression(dynamic_cast<const UHDM::expr*>(field_idx_any),
+                                              comb_read_map());
                         if (field_idx.size() == 0) idx_ok = false;
                         else shamt_w = std::max(shamt_w, field_idx.size() + 6);
                     }
@@ -11687,7 +11831,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                             module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw3), aw, true);
                             acc = RTLIL::SigSpec(aw);
                         }
-                        if (field_bs) {
+                        if (has_field_idx) {
                             // Sub-element position within the member: element k
                             // sits at (k - lo)*sub_w for a descending [hi:lo]
                             // dim, (hi - k)*sub_w for an ascending [lo:hi].
@@ -11716,6 +11860,26 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                             module->addAdd(NEW_ID, acc, RTLIL::SigSpec(mw4), aw2, true);
                             acc = RTLIL::SigSpec(aw2);
                         }
+                        if (tail_dyn) {
+                            RTLIL::SigSpec tb = tail_dyn_base;
+                            if (tb.size() + 6 > shamt_w) {
+                                // widen the accumulator to the tail base
+                                int nw = tb.size() + 6;
+                                RTLIL::SigSpec acc2 = acc; acc2.extend_u0(nw, false);
+                                acc = acc2; shamt_w = nw;
+                            }
+                            tb.extend_u0(shamt_w, false);
+                            if (tail_dyn_neg) {
+                                RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+                                module->addSub(NEW_ID, tb,
+                                    RTLIL::SigSpec(RTLIL::Const(tail_slice_w - 1, shamt_w)),
+                                    pw, true);
+                                tb = RTLIL::SigSpec(pw);
+                            }
+                            RTLIL::Wire* aw3 = module->addWire(NEW_ID, shamt_w);
+                            module->addAdd(NEW_ID, acc, tb, aw3, true);
+                            acc = RTLIL::SigSpec(aw3);
+                        }
                         int base_w2 = base_wire->width;
                         auto rhs_e2 = dynamic_cast<const UHDM::expr*>(rhs_any);
                         if (!rhs_e2) return false;
@@ -11727,6 +11891,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                             rhs2.extend_u0(write_w, is_expr_signed(rhs_e2));
                         else if (rhs2.size() > write_w)
                             rhs2 = rhs2.extract(0, write_w);
+                        rhs2 = compound_fold(rhs2, write_w);
                         std::vector<RTLIL::State> mb(base_w2, RTLIL::State::S0);
                         for (int i2 = 0; i2 < write_w; i2++) mb[i2] = RTLIL::State::S1;
                         RTLIL::SigSpec mask_c = RTLIL::SigSpec(RTLIL::Const(mb));
@@ -12028,6 +12193,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         expression_context_width = prev_ctx2;
         if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e2));
         else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
+        rhs = compound_fold(rhs, write_w);
 
         // Target slice inside the element, and (dynamic field index only)
         // the shared masked-write network on the whole field.
@@ -12139,6 +12305,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         expression_context_width = prev_ctx;
         if (rhs.size() < field_width) rhs.extend_u0(field_width, is_expr_signed(rhs_e));
         else if (rhs.size() > field_width) rhs = rhs.extract(0, field_width);
+        rhs = compound_fold(rhs, field_width);
         RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(base_wire).extract(off, field_width);
         if (proc) emit_comb_assign(lhs_slice, rhs, proc);
         else if (case_rule) {
@@ -12219,6 +12386,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     expression_context_width = prev_ctx;
     if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e));
     else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
+    rhs = compound_fold(rhs, write_w);
 
     std::vector<RTLIL::State> mask_bits(base_w, RTLIL::State::S0);
     for (int i = 0; i < write_w; i++) mask_bits[i] = RTLIL::State::S1;
@@ -12776,7 +12944,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     hp, uhdm_assign->Rhs(), proc, nullptr))
                 return;
             if (emit_dynamic_array_elem_field_write(
-                    hp, uhdm_assign->Rhs(), proc, nullptr))
+                    hp, uhdm_assign->Rhs(), proc, nullptr, uhdm_assign))
                 return;
         }
     }
@@ -13621,7 +13789,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     hp, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
             if (emit_dynamic_array_elem_field_write(
-                    hp, uhdm_assign->Rhs(), nullptr, case_rule))
+                    hp, uhdm_assign->Rhs(), nullptr, case_rule, uhdm_assign))
                 return;
         }
     }
@@ -15002,7 +15170,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             hp, assign->Rhs(), nullptr, case_rule))
                         return;
                     if (emit_dynamic_array_elem_field_write(
-                            hp, assign->Rhs(), nullptr, case_rule))
+                            hp, assign->Rhs(), nullptr, case_rule, assign))
                         return;
                 }
             }

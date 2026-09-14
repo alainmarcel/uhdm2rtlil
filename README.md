@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1449 (904 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1404/1449 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1453 (908 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1408/1453 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 923 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 480 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 484 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -148,6 +148,9 @@ to the run's step summary.
 | **Pavona OpenTitan dma** | DMA controller (multi-address-space transfers, SHA-2 inline hashing, interrupt clearing) with its reg_top (`test/pavona_periph3_equiv/`) | **2** modules | **2 / 2 formally proven** (with Surelog #4174), **2 / 2 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan soc_dbg_ctrl** | SoC debug-policy controller: decode, core / JTAG reg_tops and the `soc_dbg_ctrl` top (`test/pavona_periph3_equiv/`) | **4** modules | **4 / 4 formally proven**, **4 / 4 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan ascon** | Ascon AEAD accelerator: core, reg_top and the `ascon` top (`test/pavona_periph3_equiv/`) | **3** modules | **3 / 3 formally proven**, **3 / 3 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan keymgr_dpe** | DPE key manager: control FSM with its key-slot array, operation-state control, reg_top and the `keymgr_dpe` top (`test/pavona_periph4_equiv/`) | **4** modules | **4 / 4 formally proven**, **4 / 4 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan lc_ctrl** | life-cycle controller: FSM, state decode / transition, signal decode, KMAC interface, regs / DMI reg_tops and the `lc_ctrl` top over the 320-bit redundantly-encoded states (`test/pavona_periph4_equiv/`) | **8** modules | **8 / 8 formally proven** (with Surelog #4175, merged and bumped), **8 / 8 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan rv_dm** | RISC-V debug module: DMI gate, dbg / mem / regs reg_tops and the `rv_dm` top over the pulp_riscv_dbg `dm_top` / `dmi_jtag` vendor sources (`test/pavona_periph4_equiv/`) | **5** modules | **5 / 5 formally proven** (with Surelog #4175, merged and bumped), **5 / 5 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 
 Highlights:
 

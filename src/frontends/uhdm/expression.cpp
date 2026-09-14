@@ -2208,6 +2208,46 @@ static const expr* unwrap_index_bit_select(const expr* ie, const std::string& ba
     return ie;
 }
 
+
+// Parse a VpiValue string ("BIN:1010", "HEX:ff", "UINT:5", "INT:-1", "DEC:7")
+// into a Const of the requested width — arbitrary width for BIN / HEX (enum
+// members wider than 64 bits), integer parse otherwise.
+RTLIL::Const UhdmImporter::vpi_value_to_const(const std::string& val_str, int width) {
+    if (width <= 0) width = 32;
+    auto colon = val_str.find(':');
+    std::string kind = colon == std::string::npos ? "" : val_str.substr(0, colon);
+    std::string body = colon == std::string::npos ? val_str : val_str.substr(colon + 1);
+    if (kind == "BIN") {
+        std::vector<RTLIL::State> bits;
+        for (auto it = body.rbegin(); it != body.rend(); ++it) {
+            if (*it == '0') bits.push_back(RTLIL::State::S0);
+            else if (*it == '1') bits.push_back(RTLIL::State::S1);
+            else if (*it == 'x' || *it == 'X') bits.push_back(RTLIL::State::Sx);
+            else if (*it == 'z' || *it == 'Z') bits.push_back(RTLIL::State::Sz);
+            else if (*it == '_') continue;
+        }
+        RTLIL::Const c(bits);
+        c.extu(width);
+        return c.extract(0, width);
+    }
+    if (kind == "HEX") {
+        std::vector<RTLIL::State> bits;
+        for (auto it = body.rbegin(); it != body.rend(); ++it) {
+            char ch = *it; int v;
+            if (ch >= '0' && ch <= '9') v = ch - '0';
+            else if (ch >= 'a' && ch <= 'f') v = ch - 'a' + 10;
+            else if (ch >= 'A' && ch <= 'F') v = ch - 'A' + 10;
+            else if (ch == '_') continue;
+            else { for (int i = 0; i < 4; i++) bits.push_back(RTLIL::State::Sx); continue; }
+            for (int i = 0; i < 4; i++) bits.push_back((v >> i) & 1 ? RTLIL::State::S1 : RTLIL::State::S0);
+        }
+        RTLIL::Const c(bits);
+        c.extu(width);
+        return c.extract(0, width);
+    }
+    return RTLIL::Const(parse_vpi_value_to_int(val_str), width);
+}
+
 RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!uhdm_expr)
         return RTLIL::SigSpec();
@@ -6641,9 +6681,48 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         has_gen_scope_param_operand = refs_gsp(uhdm_op);
     }
 
+    // An ENUM member whose VpiSize disagrees with its enum's base width
+    // (lc_ctrl_state_pkg's `enum logic [vbits(NumLcStates)-1:0]` members
+    // carry vpiSize 64, the evaluator's default for a function-sized base):
+    // ExprEval folds `{DecLcStateNumRep{DecLcStInvalid}}` /
+    // `trans_target_i == {6{DecLcStScrap}}` with 64-bit members, so the
+    // 30-bit result held ONE copy (lc_ctrl_state_decode) and the scrap
+    // transition never matched.  The reader's own fold sizes the member
+    // from the typespec — keep those operations out of ExprEval.
+    bool has_missized_enum_operand = false;
+    if (uhdm_op->Operands()) {
+        std::function<bool(const UHDM::any*)> refs_mse =
+            [&](const UHDM::any* e) -> bool {
+                if (!e) return false;
+                if (e->VpiType() == vpiRefObj) {
+                    auto ro = any_cast<const ref_obj*>(e);
+                    const UHDM::any* ag = ro->Actual_group();
+                    if (ag && ag->UhdmType() == uhdmenum_const) {
+                        auto ec = any_cast<const UHDM::enum_const*>(ag);
+                        if (auto ets = dynamic_cast<const UHDM::enum_typespec*>(ec->VpiParent()))
+                            if (ets->Base_typespec() && ets->Base_typespec()->Actual_typespec()) {
+                                int bw = get_width_from_typespec(
+                                    ets->Base_typespec()->Actual_typespec(), current_instance);
+                                if (bw > 0 && ec->VpiSize() > 0 && bw != ec->VpiSize()) return true;
+                            }
+                    }
+                    return false;
+                }
+                if (e->VpiType() == vpiOperation) {
+                    auto op2 = any_cast<const operation*>(e);
+                    if (op2->Operands())
+                        for (auto o2 : *op2->Operands())
+                            if (refs_mse(o2)) return true;
+                }
+                return false;
+            };
+        has_missized_enum_operand = refs_mse(uhdm_op);
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
         !has_struct_param_hier_operand && !has_loop_value_operand &&
-        !has_param_replication_count && !has_gen_scope_param_operand) {
+        !has_param_replication_count && !has_gen_scope_param_operand &&
+        !has_missized_enum_operand) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -8514,14 +8593,30 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 log("UHDM: Found enum constant %s with value %s\n", ref_name.c_str(), val_str.c_str());
             
             // Parse value from format like "INT:0", "UINT:1", "HEX:BB", etc.
+            // The WIDTH comes from the enum's base typespec when it resolves
+            // (lc_ctrl_state_pkg's `enum logic [vbits(NumLcStates)-1:0]`
+            // members carry vpiSize 64 — the evaluator's default when the
+            // base width is a function call — and `{6{DecLcStInvalid}}`
+            // replicated 64-bit members, truncated to ONE copy), else from
+            // VpiSize.  Values wider than 64 bits (the 320-bit lc_state_e /
+            // 384-bit lc_cnt_e members, BIN strings) go through the string
+            // parser — parse_vpi_value_to_int silently overflowed them.
             RTLIL::Const enum_value;
+            int width = enum_val->VpiSize() > 0 ? enum_val->VpiSize() : 32;
+            if (auto ets = dynamic_cast<const UHDM::enum_typespec*>(enum_val->VpiParent())) {
+                if (ets->Base_typespec() && ets->Base_typespec()->Actual_typespec()) {
+                    int bw = get_width_from_typespec(ets->Base_typespec()->Actual_typespec(),
+                                                     current_instance);
+                    if (bw > 0) width = bw;
+                }
+            }
+            if (mode_debug)
+                log("UHDM: enum constant %s width=%d (VpiSize=%d)\n", ref_name.c_str(), width, enum_val->VpiSize());
             if (!val_str.empty()) {
-                int width = enum_val->VpiSize() > 0 ? enum_val->VpiSize() : 32;
-                int int_val = parse_vpi_value_to_int(val_str);
-                enum_value = RTLIL::Const(int_val, width);
+                enum_value = vpi_value_to_const(val_str, width);
             } else {
                 // Default to 0 if no value specified
-                enum_value = RTLIL::Const(0, 32);
+                enum_value = RTLIL::Const(0, width);
             }
             
             return RTLIL::SigSpec(enum_value);
@@ -13227,6 +13322,23 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         module->addAdd(NEW_ID, acc, RTLIL::SigSpec(fm), fa, true);
                         acc = RTLIL::SigSpec(fa);
                     }
+                    // Read the IN-FLIGHT value of the base when this block
+                    // already wrote it (`key_slots_d = key_slots_q; …
+                    // key_slots_d[slot].key[0] ^= root_key_i[0]`,
+                    // keymgr_dpe_ctrl): shifting the raw wire read the
+                    // process's own OUTPUT, so the compound XOR missed the
+                    // default copy and the slot key came out wrong.
+                    RTLIL::SigSpec a_sig(base_flat);
+                    if (input_mapping && !comb_lhs_keep_base) {
+                        auto im = input_mapping->find(base_name);
+                        if (im == input_mapping->end()) {
+                            std::string wn = base_flat->name.str();
+                            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                            im = input_mapping->find(wn);
+                        }
+                        if (im != input_mapping->end() && im->second.size() == base_flat->width)
+                            a_sig = im->second;
+                    }
                     RTLIL::Wire* out = module->addWire(NEW_ID, field_width);
                     RTLIL::Cell* sx = module->addCell(NEW_ID, ID($shiftx));
                     sx->setParam(ID::A_SIGNED, 0);
@@ -13234,7 +13346,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     sx->setParam(ID::A_WIDTH, base_flat->width);
                     sx->setParam(ID::B_WIDTH, shamt_w);
                     sx->setParam(ID::Y_WIDTH, field_width);
-                    sx->setPort(ID::A, RTLIL::SigSpec(base_flat));
+                    sx->setPort(ID::A, a_sig);
                     sx->setPort(ID::B, acc);
                     sx->setPort(ID::Y, out);
                     add_src_attribute(sx->attributes, uhdm_hier);

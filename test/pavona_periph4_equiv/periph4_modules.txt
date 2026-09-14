@@ -1,0 +1,24 @@
+# Small peripherals set 4 (Pavona OpenTitan keymgr_dpe, lc_ctrl, rv_dm)
+# per-module equivalence.  read_uhdm vs read_slang SAT miter
+# (scripts/periph4_srcs.py closure over rtl/<ip> + rtl/riscv_dbg (pulp_riscv_dbg
+# vendor sources rv_dm instantiates) + rtl/pkg; prim/tlul/base-pkgs from
+# ../pavona_tlul_equiv, edn/lc/keymgr/otp pkgs from ../pavona_acc_equiv).
+#   ./run_periph4_equiv.sh            # all      ./run_periph4_equiv.sh <module>
+#   module                            seq  timeout  want
+keymgr_dpe                            4  900  proven    # keymgr_dpe
+keymgr_dpe_ctrl                       4  1800 proven    # keymgr_dpe: SAT-hard key-slot array RMW (proves in ~20 min)
+keymgr_dpe_op_state_ctrl              4  300  proven    # keymgr_dpe
+keymgr_dpe_reg_top                    4  300  proven    # keymgr_dpe
+lc_ctrl                               4  900  proven    # lc_ctrl
+lc_ctrl_dmi_reg_top                   4  300  proven    # lc_ctrl
+lc_ctrl_fsm                           4  300  proven    # lc_ctrl
+lc_ctrl_kmac_if                       4  300  proven    # lc_ctrl
+lc_ctrl_regs_reg_top                  4  300  proven    # lc_ctrl
+lc_ctrl_signal_decode                 4  300  proven    # lc_ctrl
+lc_ctrl_state_decode                  4  300  proven    # lc_ctrl
+lc_ctrl_state_transition              4  300  proven    # lc_ctrl
+rv_dm                                 4  900  proven    # rv_dm
+rv_dm_dbg_reg_top                     4  300  proven    # rv_dm
+rv_dm_dmi_gate                        4  300  proven    # rv_dm
+rv_dm_mem_reg_top                     4  300  proven    # rv_dm
+rv_dm_regs_reg_top                    4  300  proven    # rv_dm
