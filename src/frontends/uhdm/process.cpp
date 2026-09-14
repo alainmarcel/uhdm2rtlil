@@ -1628,9 +1628,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // Whole + part/field writes of one signal: keep the whole
                 // entry only (the part write remaps onto the full temp).
                 {
+                    // Only a TRUE whole write (a bare ref_obj / element name, or a
+                    // for-loop full-wire entry) may prune the part entries: a struct
+                    // MEMBER write (`sys_req_d.write_data = …`, a hier_path) is
+                    // registered un-flagged too, and treating it as whole pruned the
+                    // sibling ELEMENT writes (`sys_req_d.metadata_vec[SysCmdWrite] =
+                    // …`) — their bits never entered the written-bits scan and the
+                    // OpenTitan dma sys_req_d update carried only [39:0] of 184.
                     std::set<std::string> whole;
                     for (const auto& a : assigned_signals)
-                        if (!a.is_part_select) whole.insert(a.name);
+                        if (!a.is_part_select &&
+                            (!a.lhs_expr || a.lhs_expr->VpiType() != vpiHierPath))
+                            whole.insert(a.name);
                     if (!whole.empty())
                         assigned_signals.erase(
                             std::remove_if(assigned_signals.begin(), assigned_signals.end(),
@@ -3423,9 +3432,18 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // into a latch whose Q — through the whole-write alias — drove the INPUT
     // port bit (sram_ctrl: conflicting driver on ram_tl_i.a_valid).
     {
+        // Only a TRUE whole write (a bare ref_obj / element name, or a
+        // for-loop full-wire entry) may prune the part entries: a struct
+        // MEMBER write (`sys_req_d.write_data = …`, a hier_path) is
+        // registered un-flagged too, and treating it as whole pruned the
+        // sibling ELEMENT writes (`sys_req_d.metadata_vec[SysCmdWrite] =
+        // …`) — their bits never entered the written-bits scan and the
+        // OpenTitan dma sys_req_d update carried only [39:0] of 184.
         std::set<std::string> whole;
         for (const auto& a : assigned_signals)
-            if (!a.is_part_select) whole.insert(a.name);
+            if (!a.is_part_select &&
+                (!a.lhs_expr || a.lhs_expr->VpiType() != vpiHierPath))
+                whole.insert(a.name);
         if (!whole.empty())
             assigned_signals.erase(
                 std::remove_if(assigned_signals.begin(), assigned_signals.end(),
@@ -3682,11 +3700,70 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // with a constant 1'0 driver").
     std::map<std::string, std::set<int>> comb_written_bits;
     std::set<std::string> comb_written_unreliable;
+    // A loop-indexed STRUCT MEMBER write (`hw2reg.sha2_digest[i].d = …`, the
+    // OpenTitan dma hw2reg block) is bounded to the whole MEMBER's bits: the
+    // dotted path up to the first non-constant select is resolved on the
+    // base's struct typespec.  The full-wire fallback drove ALL of hw2reg,
+    // conflicting with the prim_intr_hw instance outputs on
+    // hw2reg.intr_state.*.d ("Driver-driver conflict … resolved using
+    // constant": the error / done interrupts never fired).
+    auto bound_loop_member = [&](const expr* e) -> bool {
+        if (!e || e->VpiType() != vpiHierPath) return false;
+        auto hp = any_cast<const hier_path*>(e);
+        if (!hp->Path_elems() || hp->Path_elems()->size() < 2) return false;
+        const auto& pe = *hp->Path_elems();
+        if (pe[0]->UhdmType() != uhdmref_obj) return false;
+        auto base_ref = any_cast<const ref_obj*>(pe[0]);
+        std::string base = std::string(base_ref->VpiName());
+        RTLIL::Wire* bw = name_map.count(base) ? name_map[base]
+                                               : module->wire(RTLIL::escape_id(base));
+        if (!bw) return false;
+        const UHDM::ref_typespec* rts = nullptr;
+        if (auto a = base_ref->Actual_group()) {
+            if (auto v = dynamic_cast<const UHDM::variables*>(a)) rts = v->Typespec();
+            else if (auto n = dynamic_cast<const UHDM::net*>(a)) rts = n->Typespec();
+        }
+        if (!rts || !rts->Actual_typespec()) return false;
+        auto ats = rts->Actual_typespec();
+        if (ats->UhdmType() != uhdmstruct_typespec && ats->UhdmType() != uhdmunion_typespec)
+            return false;
+        std::string mp;
+        for (size_t k = 1; k < pe.size(); k++) {
+            const any* el = pe[k];
+            if (el->UhdmType() == uhdmref_obj) {
+                mp += (mp.empty() ? "" : ".") + std::string(el->VpiName());
+            } else if (el->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const bit_select*>(el);
+                mp += (mp.empty() ? "" : ".") + std::string(bs->VpiName());
+                const any* ix = bs->VpiIndex();
+                if (ix && ix->UhdmType() == uhdmconstant) {
+                    RTLIL::SigSpec c = import_constant(any_cast<const constant*>(ix));
+                    if (c.is_fully_const()) { mp += "[" + std::to_string(c.as_int()) + "]"; continue; }
+                }
+                break;   // loop-var / runtime element: bound to the whole member
+            } else break;
+        }
+        if (mp.empty()) return false;
+        int off = 0, w = 0;
+        if (!calculate_struct_member_offset(ats, mp, dynamic_cast<const UHDM::scope*>(current_instance),
+                                            off, w) || w <= 0 || off + w > bw->width)
+            return false;
+        std::string wn = bw->name.str();
+        if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+        for (int b = 0; b < w; b++) comb_written_bits[wn].insert(off + b);
+        if (mode_debug)
+            log("    comb_written loop member: %s.%s -> [%d+:%d]\n", base.c_str(), mp.c_str(), off, w);
+        return true;
+    };
     for (const auto& s : assigned_signals) {
         if (!s.lhs_expr) {
             // for-loop write with a dynamic/loop-var index — the touched bits
-            // are unknowable here; force the full-wire update for this base.
-            comb_written_unreliable.insert(s.name);
+            // are unknowable here; bound struct-member paths to their member,
+            // else force the full-wire update for this base.
+            bool bounded = !s.loop_lhs_exprs.empty();
+            for (auto e : s.loop_lhs_exprs)
+                if (!bound_loop_member(e)) { bounded = false; break; }
+            if (!bounded) comb_written_unreliable.insert(s.name);
             continue;
         }
         RTLIL::SigSpec ls = import_expression(s.lhs_expr);

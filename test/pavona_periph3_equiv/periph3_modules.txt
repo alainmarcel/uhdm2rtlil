@@ -1,0 +1,24 @@
+# Small peripherals set 3 (Pavona OpenTitan mbx, dma, soc_dbg_ctrl, ascon)
+# per-module equivalence.  read_uhdm vs read_slang SAT miter
+# (scripts/periph3_srcs.py closure over rtl/<ip> + rtl/pkg; prim/tlul/base-pkgs
+# from ../pavona_tlul_equiv, edn/lc/keymgr pkgs from ../pavona_acc_equiv).
+#   ./run_periph3_equiv.sh            # all      ./run_periph3_equiv.sh <module>
+#   module                            seq  timeout  want
+mbx                                   4  900  proven    # mbx
+mbx_core_reg_top                      4  300  proven    # mbx
+mbx_fsm                               4  300  proven    # mbx
+mbx_hostif                            4  300  proven    # mbx
+mbx_imbx                              4  300  proven    # mbx
+mbx_ombx                              4  300  proven    # mbx
+mbx_soc_reg_top                       4  300  proven    # mbx: flat wrapper — tl_win_o/i [2] unpacked struct ports flattened elem0@LSB (raw miter compares swapped windows)
+mbx_sramrwarb                         4  300  proven    # mbx
+mbx_sysif                             4  300  proven    # mbx
+dma                                   4  900  proven    # dma
+dma_reg_top                           4  300  proven    # dma
+soc_dbg_ctrl                          4  900  proven    # soc_dbg_ctrl
+soc_dbg_ctrl_core_reg_top             4  300  proven    # soc_dbg_ctrl
+soc_dbg_ctrl_decode                   4  300  proven    # soc_dbg_ctrl
+soc_dbg_ctrl_jtag_reg_top             4  300  proven    # soc_dbg_ctrl
+ascon                                 4  900  proven    # ascon
+ascon_core                            4  300  proven    # ascon
+ascon_reg_top                         4  300  proven    # ascon

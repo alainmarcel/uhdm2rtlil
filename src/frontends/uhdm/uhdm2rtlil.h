@@ -625,6 +625,13 @@ struct UhdmImporter {
         int msb = -1;
         int lsb = -1;
         bool is_part_select = false;
+        // LHS expressions of loop-body / runtime-indexed writes whose exact
+        // bits are unknowable at scan time (lhs_expr was nulled).  The comb
+        // written-bits scan bounds a struct-member path among them to the
+        // whole MEMBER instead of the whole wire (dma `hw2reg.sha2_digest[i]
+        // .d` — a full-wire update conflicted with the prim_intr_hw instance
+        // outputs driving hw2reg.intr_state.*.d).
+        std::vector<const expr*> loop_lhs_exprs;
     };
 
     // Track pending sync assignments to merge multiple updates to same signal
