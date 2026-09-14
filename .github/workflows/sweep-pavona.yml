@@ -142,3 +142,12 @@ jobs:
       core: periph2
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # Small peripherals set 3 (mbx, dma, soc_dbg_ctrl, ascon).
+  sweep-periph3:
+    name: pavona - periph3
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: periph3
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

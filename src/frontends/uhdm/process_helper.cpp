@@ -918,6 +918,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     RTLIL::SigSpec is = import_expression(
                                         dynamic_cast<const UHDM::expr*>(lbs->VpiIndex()));
                                     if (is.size() == 0 || !is.is_fully_const()) {
+                                        if (sig.lhs_expr) sig.loop_lhs_exprs.push_back(sig.lhs_expr);
                                         sig.lhs_expr = nullptr;
                                         sig.is_part_select = true;
                                     }
@@ -1121,11 +1122,15 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                       sig.lhs_expr->VpiType() == vpiVarSelect ||
                       sig.lhs_expr->VpiType() == vpiIndexedPartSelect ||
                       sig.lhs_expr->VpiType() == vpiPartSelect))) {
+                    if (sig.lhs_expr) sig.loop_lhs_exprs.push_back(sig.lhs_expr);
                     sig.is_part_select = false;
                     sig.lhs_expr = nullptr;
                 }
                 for (auto& existing : signals)
                     if (existing.name == sig.name) {
+                        existing.loop_lhs_exprs.insert(existing.loop_lhs_exprs.end(),
+                                                       sig.loop_lhs_exprs.begin(),
+                                                       sig.loop_lhs_exprs.end());
                         // A loop-body write with UNKNOWABLE bits (indexed by
                         // the loop var — lhs_expr was nulled above) must widen
                         // the surviving entry to the FULL wire, or the
@@ -1134,6 +1139,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // `shared_tlb_update_o.is_page[x][y]` after the
                         // top-level `.valid`/`.pad` field writes).
                         if (!sig.lhs_expr && existing.lhs_expr) {
+                            existing.loop_lhs_exprs.push_back(existing.lhs_expr);
                             existing.is_part_select = false;
                             existing.lhs_expr = nullptr;
                         }
