@@ -740,3 +740,14 @@ Test: dyn_elem_member_slice_compound_write
     loop in the netlist, and the read_uhdm-vs-read_slang SAT miter PROVES
     the test (seq=3).  A block-local accumulator makes Verilator converge
     but changes the shape under test, so the module-level form is kept.
+
+Test: block_local_packed_struct_array_dyn_write
+    Verilator artefact on the BEHAVIOURAL side, not a frontend diff: the
+    always_comb keeps a 495-bit block-local packed array of structs
+    (`slot_t [N-1:0] slots;`) that it updates through a dynamic slot index;
+    Verilator's generated C++ for the RTL instance ALONE dies with
+    "*** stack smashing detected ***" in the sim-equiv tb, while the
+    UHDM-netlist instance alone passes the same tb (200 cycles, 0
+    mismatches) and the read_uhdm-vs-read_slang SAT miter PROVES the test
+    (seq=3).  The block-local form is the point of the test (the writer's
+    geometry for a block-local base), so it is kept as is.
