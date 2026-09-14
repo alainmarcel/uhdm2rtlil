@@ -43,20 +43,66 @@ run_one() {
     (cd "$w" && timeout 400 "$S" -parse -d uhdm -DSYNTHESIS "${INCS[@]}" -top "$top" $SR > surelog.log 2>&1)
   fi
   [ -f "$w/slpp_all/surelog.uhdm" ] || { printf "  ‼  %-30s elabfail (surelog)\n" "$m"; echo "$m elabfail"; return; }
+  # Dual-clock modules (wrappers/clk_excl_<m>.txt names the two clock ports):
+  # `memory_map` refuses a RAM whose write ports sit on different clocks, so
+  # the RAM stayed a $mem_v2 the SAT solver has no model for ("nosat").  The
+  # global-clock flow instead: `memory -nordff -nomap` keeps the read ports
+  # combinational, `clk2fflogic` turns every FF (and the RAM's write ports)
+  # into sampled logic under one global step, `memory_map -formal` maps the
+  # now-unclocked write ports to FFs.  Both write ports hitting one address in
+  # the SAME global step is a race in the RTL that memory_map resolves by port
+  # ORDER — which differs between frontends (false cex) — so the miter assumes
+  # the two clocks never rise in the same step (scripts/add_clk_excl.py) and
+  # the SAT runs with -set-assumes.  seq counts GLOBAL steps (2 per clock).
+  # The 1024x36 RAM as FFs is SAT-hard at any depth (no verdict in 1800 s
+  # even at seq=4), so the same file may carry a second line
+  # `memsize <cell glob> <words>`: the $mem_v2 matching the glob is shrunk to
+  # that many words on BOTH sides before mapping (setparam SIZE) — a
+  # bounded-address abstraction of the RAM identical for the two frontends
+  # (words beyond it read as constants); the co-sim keeps the full depth.
+  local FLOW='flatten; proc; opt; memory; async2sync; delete t:$check t:$assert t:$assume t:$print'
+  local CSTR='' SATX=''
+  if [ -f "$HERE/wrappers/clk_excl_$m.txt" ]; then
+    local clks; clks=$(grep -v '^memsize' "$HERE/wrappers/clk_excl_$m.txt" | head -1)
+    local MEMS=''; local ms; ms=$(grep '^memsize' "$HERE/wrappers/clk_excl_$m.txt" | head -1)
+    [ -n "$ms" ] && MEMS="setparam -set SIZE $(echo "$ms" | awk '{print $3}') c:$(echo "$ms" | awk '{print $2}'); "
+    FLOW="flatten; proc; opt; memory -nordff -nomap; ${MEMS}clk2fflogic; memory_map -formal; opt_clean; delete t:\$check t:\$assert t:\$assume t:\$print"
+    CSTR="write_rtlil miter.il
+!python3 $HERE/scripts/add_clk_excl.py miter.il $(for c in $clks; do printf 'in_%s ' "$c"; done)
+design -reset
+read_rtlil miter.il"
+    # Even with the exclusion assumption the free clock inputs leave the
+    # solver every interleaving (64-word RAM, seq=8: no verdict in 1800 s),
+    # so the clocks follow a FIXED two-phase schedule: the first clock
+    # toggles every step (rises on even steps), the second every two steps
+    # (rises on 3, 7, …), any further clock (scan) is held 0.  A sys write is
+    # then read back on the SPI side (and vice versa) within seq=8.
+    SATX='-set-assumes'
+    local ci=0 st
+    for c in $clks; do
+      for ((st=1; st<=seq; st++)); do
+        local v=0
+        if [ $ci = 0 ]; then v=$(( st % 2 == 0 ));
+        elif [ $ci = 1 ]; then v=$(( (st % 4 == 3) || (st % 4 == 0) )); fi
+        SATX+=" -set-at $st in_$c $v"
+      done; ci=$((ci+1))
+    done
+  fi
   cat > "$w/miter.ys" <<EOF
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $top
-flatten; proc; opt; memory; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
+$FLOW
 rename $top gold; design -stash gold
 read_slang --ignore-assertions -DSYNTHESIS --single-unit --relax-enum-conversions ${SINCS[@]} $SR --top $top
 hierarchy -check -top $top
-flatten; proc; opt; memory; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
+$FLOW
 rename $top gate; design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate
 miter -equiv -flatten -make_assert gold gate miter
 hierarchy -top miter
-sat -verify -prove-asserts -seq $seq -set-init-zero miter
+$CSTR
+sat -verify -prove-asserts $SATX -seq $seq -set-init-zero miter
 EOF
   local out rc; out=$( (cd "$w" && timeout "$tmo" "$Y" -m "$P" miter.ys 2>&1) ); rc=$?
   local got
@@ -67,9 +113,9 @@ EOF
   # ("wire … not found in hierarchical lookup") matched the error pattern.
   if grep -q "no model found: SUCCESS" <<< "$out"; then got=proven
   elif grep -q "model found: FAIL" <<< "$out"; then got=cex
-  # A memory `memory_map` refuses (two write ports on different clocks —
-  # spid_dpram's sys/SPI dual-clock RAM) stays a $mem_v2 the SAT solver has
-  # no model for; identical on BOTH sides, adjudicated by the co-sim.
+  # A memory `memory_map` refuses (two write ports on different clocks) stays
+  # a $mem_v2 the SAT solver has no model for — give the module a
+  # wrappers/clk_excl_<m>.txt (global-clock flow above).
   elif grep -q "No SAT model available" <<< "$out"; then got=nosat
   elif [ "$rc" = 124 ]; then got=timeout
   elif grep -qiE "Design elaboration failed|No such|ERROR.*read_slang|not found" <<< "$out"; then got=error

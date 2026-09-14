@@ -1,0 +1,2 @@
+clk_sys_i clk_spi_i
+memsize *u_mem.mem 64

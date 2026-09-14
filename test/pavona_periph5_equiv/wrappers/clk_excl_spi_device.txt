@@ -1,0 +1,2 @@
+clk_i cio_sck_i scan_clk_i
+memsize *u_mem.mem 64
