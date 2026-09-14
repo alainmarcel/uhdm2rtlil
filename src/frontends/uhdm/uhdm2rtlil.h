@@ -468,6 +468,12 @@ struct UhdmImporter {
     // name is here, so a block-local shadowing a module var (asgn_expr_sv,
     // scopes) is not wrongly aliased to that module signal.
     std::set<std::string> block_local_promoted;
+    // The UHDM variable object behind each promoted block-local wire: a
+    // bit_select on a block-local carries NO Actual_group, so the dynamic
+    // writers' by-name lookups (module-level Nets / Variables) miss its
+    // packed dims (`slot_t [N-1:0] slots;` inside an always_comb — the
+    // element clear was applied at the whole-array width).
+    std::map<std::string, const UHDM::any*> block_local_var_objs;
 
     // Initial (pre-assignment) wires of function block-local variables.  A
     // local read on a control path where it was never assigned would leave

@@ -80,3 +80,4 @@ ibex_cs_registers     artefact   # both frontends diverge from Verilator-RTL ide
 ibex_alu              artefact   # UHDM==slang miter PROVEN (seq 4); co-sim divergences are `unique case (1'b1)` multi-match under random stimulus (same class as ibex_ex_block) — required --no-assert to even run
 # arb_idx_cast: FIXED 2026-08-23 (PR #638) — co-sim passes; entry removed.
 dyn_elem_member_slice_compound_write  artefact   # Verilator DIDNOTCONVERGE on the behavioural RTL instance alone (self-RMW comb block through a dynamic slot index); netlist-only tb passes, slang miter PROVES (seq=3) — UHDM-only, no read_verilog reference
+block_local_packed_struct_array_dyn_write  artefact   # Verilator "stack smashing detected" on the behavioural RTL instance alone (495-bit block-local packed array updated via dynamic index); netlist-only tb passes 200 cycles, slang miter PROVES (seq=3) — UHDM-only, no read_verilog reference

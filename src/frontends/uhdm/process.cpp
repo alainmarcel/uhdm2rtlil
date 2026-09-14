@@ -4380,6 +4380,7 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
             add_src_attribute(wire->attributes, v);
             name_map[vname] = wire;
             block_local_promoted.insert(vname);
+            block_local_var_objs[vname] = v;
             if (mode_debug)
                 log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
                     vname.c_str(), w, wire->is_signed);
@@ -11906,6 +11907,9 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         RTLIL::SigSpec cur = current_comb_values.count(base_name)
                                                  ? current_comb_values[base_name]
                                                  : RTLIL::SigSpec(base_wire);
+                        if (mode_debug)
+                            log("    dyn_elem_field_write: cur base='%s' ccv_hit=%d\n", base_name.c_str(),
+                                current_comb_values.count(base_name) ? 1 : 0);
                         if (!current_comb_values.count(base_name) && case_rule) {
                             // always_ff: current_comb_values is suppressed to
                             // keep non-blocking semantics, so the in-flight
@@ -12488,6 +12492,10 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     }
     if (base_name.empty() || !idx0_e) return false;
     const std::string bare_name = base_name;   // UHDM-side name (no gen prefix)
+    // Block-local base (no Actual_group on the select): use the promoted
+    // variable's own object for the packed geometry below.
+    if (!actual && block_local_var_objs.count(bare_name))
+        actual = block_local_var_objs.at(bare_name);
 
     // GEN-SCOPE array (`gen_fifo.fifo_mem_q`, hpdcache_fifo_reg's buffer
     // inside its `else if (FIFO_DEPTH > 1)` arm): the RTLIL wire and its
@@ -12541,9 +12549,23 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         // 8 ways as the outer dim (writes at set*256 while reads used set*8).
         else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) {
             if (!pv->Ranges() || pv->Ranges()->empty()) rts = pv->Typespec();
-            if (pv->Typespec() && pv->Typespec()->Actual_typespec())
-                elem_w_ts = get_width_from_typespec(
-                    pv->Typespec()->Actual_typespec(), current_instance);
+            if (pv->Typespec() && pv->Typespec()->Actual_typespec()) {
+                auto ats = pv->Typespec()->Actual_typespec();
+                elem_w_ts = get_width_from_typespec(ats, current_instance);
+                // A BLOCK-LOCAL packed array (`slot_t [N-1:0] slots;` in an
+                // always_comb) carries the WHOLE-array typespec next to its own
+                // outer Ranges(): the "element" width then equals the flat
+                // wire and the dynamic element clear covered the whole array
+                // at once.  Descend to the typespec's element when it spans
+                // the entire wire.
+                if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats))
+                    if (elem_w_ts == base_w && pv->Ranges() && !pv->Ranges()->empty() &&
+                        pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec()) {
+                        int ew = get_width_from_typespec(
+                            pt->Elem_typespec()->Actual_typespec(), current_instance);
+                        if (ew > 0 && ew < base_w && base_w % ew == 0) elem_w_ts = ew;
+                    }
+            }
         } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) {
             if (!pn->Ranges() || pn->Ranges()->empty()) rts = pn->Typespec();
             if (pn->Typespec() && pn->Typespec()->Actual_typespec())
@@ -12893,6 +12915,10 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                           current_comb_values.count(base_name))
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
+    if (mode_debug)
+        log("    dyn_packed_select_write: base='%s' ccv_hit=%d base_w=%d elem_w=%d write_w=%d elem_shift=%s inner_shift=%s\n", base_name.c_str(),
+            (!in_always_ff_body_mode && current_comb_values.count(base_name)) ? 1 : 0,
+            base_w, elem_w, write_w, log_signal(elem_shift), log_signal(inner_shift));
     RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
     module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
     RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w);
