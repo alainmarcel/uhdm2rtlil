@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1454 (909 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1409/1454 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1455 (910 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1410/1455 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 923 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 485 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **UHDM-Only Success**: 486 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -152,7 +152,7 @@ to the run's step summary.
 | **Pavona OpenTitan lc_ctrl** | life-cycle controller: FSM, state decode / transition, signal decode, KMAC interface, regs / DMI reg_tops and the `lc_ctrl` top over the 320-bit redundantly-encoded states (`test/pavona_periph4_equiv/`) | **8** modules | **8 / 8 formally proven** (with Surelog #4175, merged and bumped), **8 / 8 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan rv_dm** | RISC-V debug module: DMI gate, dbg / mem / regs reg_tops and the `rv_dm` top over the pulp_riscv_dbg `dm_top` / `dmi_jtag` vendor sources (`test/pavona_periph4_equiv/`) | **5** modules | **5 / 5 formally proven** (with Surelog #4175, merged and bumped), **5 / 5 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan usbdev** | USB 2.0 full-speed device: line-state / RX / TX engines, non-blocking IN / OUT protocol engines, packet buffer, AON wake, iomux, reg_top and the `usbdev` top (`test/pavona_periph5_equiv/`) | **13** modules | **12 / 13 formally proven** (the `usbdev` top SAT-hard, co-sim clean), **13 / 13 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
-| **Pavona OpenTitan spi_device** | SPI flash / passthrough / TPM device: command parser, S2P / P2S, read / status / JEDEC / upload / read-buffer engines, TPM, passthrough, dual-port RAM, reg_top and the `spi_device` top (`test/pavona_periph5_equiv/`) | **17** modules | **15 / 15 SAT-modellable rows proven** (`spid_dpram` and the top hold a dual-clock 2-port RAM the solver cannot model, co-sim clean), **17 / 17 co-sim `NO_DIVERGENCE`** (spid_status: identical RTL-side sim artefact on both netlists) (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan spi_device** | SPI flash / passthrough / TPM device: command parser, S2P / P2S, read / status / JEDEC / upload / read-buffer engines, TPM, passthrough, dual-port RAM, reg_top and the `spi_device` top (`test/pavona_periph5_equiv/`) | **17** modules | **17 / 17 proven** (`spid_dpram` and the top through a global-clock flow for their dual-clock 2-port RAM: clk2fflogic + `memory_map -formal`, bounded RAM, no-simultaneous-clock-edge assumption), **17 / 17 co-sim `NO_DIVERGENCE`** (spid_status: identical RTL-side sim artefact on both netlists); 1 reader bug fixed (nested named pattern into a struct member packed in source order — TPM_CAP) (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 
 Highlights:
 

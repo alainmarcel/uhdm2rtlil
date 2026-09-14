@@ -6030,11 +6030,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // whole LHS object there produced a 104256-bit constant in
             // rp32_r5p_csr (Verilator then refused to build the netlist).  The
             // vector case keeps using the context width, as before.
-            if (!ats)
-                if (auto lt = assignment_lhs_typespec(uhdm_op))
-                    if (lt->UhdmType() == uhdmstruct_typespec ||
-                        lt->UhdmType() == uhdmunion_typespec)
-                        ats = lt;
+            if (!ats) {
+                auto lt = assignment_lhs_typespec(uhdm_op);
+                if (!lt) lt = assignment_lhs_hier_path_typespec(uhdm_op);
+                if (lt && (lt->UhdmType() == uhdmstruct_typespec ||
+                           lt->UhdmType() == uhdmunion_typespec))
+                    ats = lt;
+            }
             const VectorOftypespec_member* members = nullptr;
             if (ats && ats->UhdmType() == uhdmstruct_typespec)
                 members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
@@ -6204,9 +6206,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // number, giving field_w 0, no per-field resizing, and a concat
                 // wider than the target whose TOP fields (sign, exponent) were
                 // then truncated away: 0x00400000 instead of 0x7fc00000.
-                if (!cand || cand->UhdmType() != uhdmstruct_typespec)
-                    if (auto lt = assignment_lhs_typespec(uhdm_op))
-                        if (lt->UhdmType() == uhdmstruct_typespec) cand = lt;
+                if (!cand || cand->UhdmType() != uhdmstruct_typespec) {
+                    auto lt = assignment_lhs_typespec(uhdm_op);
+                    // A hier_path LHS (`hw2reg.tpm_cap = '{…}`): the member's type.
+                    if (!lt) lt = assignment_lhs_hier_path_typespec(uhdm_op);
+                    if (lt && lt->UhdmType() == uhdmstruct_typespec) cand = lt;
+                }
                 if (cand && cand->UhdmType() == uhdmstruct_typespec)
                     struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
             }
@@ -6221,6 +6226,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // The tagged_pattern's typespec (a string_typespec) names the
                 // target field — use it to look up that field's exact width.
                 int field_w = pelem_w;
+                const UHDM::typespec* field_member_ts = nullptr;
                 if (operand->UhdmType() == uhdmtagged_pattern) {
                     auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
                     if (tp && tp->Pattern())
@@ -6232,8 +6238,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             for (auto m : *struct_ts->Members())
                                 if (std::string(m->VpiName()) == fname) {
                                     if (auto mt = m->Typespec())
-                                        if (auto at = mt->Actual_typespec())
+                                        if (auto at = mt->Actual_typespec()) {
                                             field_w = get_width_from_typespec(at, inst);
+                                            field_member_ts = at;
+                                        }
                                     break;
                                 }
                         }
@@ -6255,7 +6263,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         if (auto mt = m->Typespec())
                             if (auto at = mt->Actual_typespec()) {
                                 int w = get_width_from_typespec(at, inst);
-                                if (w > 0) field_w = w;
+                                if (w > 0) { field_w = w; field_member_ts = at; }
                             }
                     }
                 }
@@ -6263,7 +6271,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (!field_expr) continue;
                 int saved_ctx = expression_context_width;
                 if (field_w > 0) expression_context_width = field_w;
+                // A NESTED pattern (`rev: '{de: 1'b1, d: x}`) sizes and orders
+                // its own fields by THIS member's struct type — thread it as
+                // the context typespec (the inner op carries none).
+                const UHDM::typespec* saved_ctx_ts = expression_context_typespec;
+                if (field_member_ts && (field_member_ts->UhdmType() == uhdmstruct_typespec ||
+                                        field_member_ts->UhdmType() == uhdmunion_typespec))
+                    expression_context_typespec = field_member_ts;
                 RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
+                expression_context_typespec = saved_ctx_ts;
                 expression_context_width = saved_ctx;
                 if (field_w > 0) {
                     if (val.size() > field_w) val = val.extract(0, field_w);
@@ -11215,6 +11231,53 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
 // from the module wire's UHDM object, else BY NAME in the enclosing module's
 // ports / array_nets / array_vars / nets / variables.  nullptr when the
 // element is not a struct.
+// The struct member a hier_path addresses (`hw2reg.tpm_cap`,
+// `cfg.sub.field`): the base ref's declared struct/union typespec walked by
+// the remaining path.  `assign hw2reg.tpm_cap = '{ rev: '{de: 1'b1, d: …},
+// locality: …, max_wr_size: …, max_rd_size: … }` (OpenTitan spi_device) had
+// no target typespec at all — the op carries none and the LHS is not a
+// ref_obj — so the NAMED fields were packed in SOURCE order at both nesting
+// levels (rev.d landed in max_rd_size, every `de` bit misplaced); the
+// reg_top read the TPM_CAP register as garbage.
+const UHDM::typespec* UhdmImporter::hier_path_member_typespec(const UHDM::hier_path* hp) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return nullptr;
+    auto& pe = *hp->Path_elems();
+    auto base_ref = dynamic_cast<const UHDM::ref_obj*>(pe[0]);
+    if (!base_ref) return nullptr;
+    const UHDM::ref_typespec* rts = nullptr;
+    if (auto a = base_ref->Actual_group()) {
+        if (auto v = dynamic_cast<const UHDM::variables*>(a)) rts = v->Typespec();
+        else if (auto n = dynamic_cast<const UHDM::net*>(a)) rts = n->Typespec();
+    }
+    if (!rts) rts = base_ref->Typespec();
+    if (!rts || !rts->Actual_typespec()) return nullptr;
+    const UHDM::typespec* ats = rts->Actual_typespec();
+    if (ats->UhdmType() != uhdmstruct_typespec && ats->UhdmType() != uhdmunion_typespec)
+        return nullptr;
+    std::string mpath;
+    for (size_t i = 1; i < pe.size(); i++) {
+        std::string n = std::string(pe[i]->VpiName());
+        if (n.empty()) return nullptr;
+        if (auto dot = n.rfind('.'); dot != std::string::npos) n = n.substr(dot + 1);
+        mpath += (mpath.empty() ? "" : ".") + n;
+    }
+    int off = 0, w = 0;
+    const UHDM::typespec* mts = nullptr;
+    if (!calculate_struct_member_offset(ats, mpath, current_instance, off, w, &mts)) return nullptr;
+    return mts;
+}
+
+const UHDM::typespec* UhdmImporter::assignment_lhs_hier_path_typespec(const UHDM::operation* op) {
+    if (!op || !op->VpiParent()) return nullptr;
+    const UHDM::any* lhs = nullptr;
+    if (op->VpiParent()->UhdmType() == uhdmassignment)
+        lhs = any_cast<const UHDM::assignment*>(op->VpiParent())->Lhs();
+    else if (op->VpiParent()->UhdmType() == uhdmcont_assign)
+        lhs = any_cast<const UHDM::cont_assign*>(op->VpiParent())->Lhs();
+    if (!lhs || lhs->UhdmType() != uhdmhier_path) return nullptr;
+    return hier_path_member_typespec(any_cast<const UHDM::hier_path*>(lhs));
+}
+
 const UHDM::typespec* UhdmImporter::unpacked_array_elem_struct_ts(
     const std::string& base, const UHDM::any* actual, const UHDM::scope* inst,
     RTLIL::Wire* elem0) {

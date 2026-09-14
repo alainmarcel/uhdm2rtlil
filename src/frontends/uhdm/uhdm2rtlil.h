@@ -1074,6 +1074,10 @@ struct UhdmImporter {
     RTLIL::SigSpec compound_lhs_current(const UHDM::any* lhs_expr, const RTLIL::SigSpec& lhs);
     // Element struct typespec of an unpacked array of packed structs (see
     // expression.cpp) — nullptr when the element is not a struct.
+    // Typespec of the struct MEMBER a hier_path LHS (`hw2reg.tpm_cap`)
+    // addresses: base ref's struct typespec walked by the member path.
+    const UHDM::typespec* hier_path_member_typespec(const UHDM::hier_path* hp);
+    const UHDM::typespec* assignment_lhs_hier_path_typespec(const UHDM::operation* op);
     const UHDM::typespec* unpacked_array_elem_struct_ts(const std::string& base,
                                                         const UHDM::any* actual,
                                                         const UHDM::scope* inst,

@@ -18,7 +18,7 @@ usbdev_linkstate                      4  300  proven    # usbdev
 usbdev_reg_top                        4  300  proven    # usbdev
 usbdev_usbif                          4  300  proven    # usbdev
 spi_cmdparse                          4  300  proven    # spi_device
-spi_device                            4  1800 nosat     # spi_device: contains spid_dpram's dual-clock RAM (see above); adjudicated by the co-sim
+spi_device                            8  1800 proven    # spi_device: dual-clock RAM (spid_dpram) — global-clock flow (wrappers/clk_excl_spi_device.txt: clk2fflogic + memory_map -formal, RAM bounded to 64 words, two-phase clock schedule); seq = GLOBAL steps (4 sys / 2 SPI cycles)
 spi_device_reg_top                    4  300  proven    # spi_device: flat wrapper — tl_win_o/i [2] unpacked struct ports flattened elem0@LSB
 spi_p2s                               4  300  proven    # spi_device
 spi_passthrough                       4  300  proven    # spi_device
@@ -27,7 +27,7 @@ spi_s2p                               4  300  proven    # spi_device
 spi_tpm                               4  300  proven    # spi_device
 spid_addr_4b                          4  300  proven    # spi_device
 spid_csb_sync                         4  300  proven    # spi_device
-spid_dpram                            4  300  nosat     # spi_device: dual-clock 2-port RAM (sys + SPI write clocks) — memory_map refuses it on both sides, no SAT model; adjudicated by the co-sim
+spid_dpram                            8  1800 proven    # spi_device: sys/SPI dual-clock 2-port RAM — global-clock flow (wrappers/clk_excl_spid_dpram.txt), see spi_device; the clocked flow's memory_map refuses the RAM (`nosat`)
 spid_fifo2sram_adapter                4  300  proven    # spi_device
 spid_jedec                            4  300  proven    # spi_device
 spid_readbuffer                       4  300  proven    # spi_device
