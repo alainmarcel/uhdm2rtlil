@@ -3148,6 +3148,21 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                                              : current_instance)
                                     : nullptr;
                             if (bound && bound != cur) { cur = bound; continue; }
+                            // Packed array of an ENUM / STRUCT element
+                            // (`sp2v_e [NumRegsKey-1:0] key_init_we_o
+                            // [NumSharesKey]`, aes_control): the element
+                            // carries no Ranges, so the chain ended with only
+                            // the outer dim and `we_o[s][i]` was folded as bit
+                            // i of the element (3-bit sp2v_e wrote 1 bit;
+                            // key_init_we_o read 0).  Push the element width
+                            // as the innermost dim.
+                            if (!pdims.empty() &&
+                                (cur->UhdmType() == uhdmenum_typespec ||
+                                 cur->UhdmType() == uhdmstruct_typespec)) {
+                                int ew = get_width_from_typespec(
+                                    cur, current_scope ? current_scope : current_instance);
+                                if (ew > 1) pdims.push_back({ew, 0});
+                            }
                             break;
                         }
                     }
@@ -3713,11 +3728,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 std::vector<ElemDim> elem_dims;   // outer -> inner packed ranges
                 if (auto ag2 = vs->Actual_group()) {
                     const UHDM::ref_typespec* ert = nullptr;
+                    // Inner packed_array_var of the unpacked element (its own
+                    // Ranges() = the packed dims, Elements()[0] = the element).
+                    const UHDM::packed_array_var* pav0 = nullptr;
                     if (auto av2 = dynamic_cast<const UHDM::array_var*>(ag2)) {
-                        if (av2->Variables() && !av2->Variables()->empty())
+                        if (av2->Variables() && !av2->Variables()->empty()) {
                             if (auto v0 = dynamic_cast<const UHDM::variables*>(
                                     (*av2->Variables())[0]))
                                 ert = v0->Typespec();
+                            pav0 = dynamic_cast<const UHDM::packed_array_var*>(
+                                (*av2->Variables())[0]);
+                        }
                     } else if (auto an2 = dynamic_cast<const UHDM::array_net*>(ag2)) {
                         if (an2->Nets() && !an2->Nets()->empty())
                             if (auto n0 = dynamic_cast<const UHDM::net*>((*an2->Nets())[0]))
@@ -3748,6 +3769,50 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 elem_dims.clear();
                             }
                         }
+                    // Packed array of an ENUM / STRUCT element as the unpacked
+                    // element type (`sp2v_e [NumRegsKey-1:0] key_init_we_o
+                    // [NumSharesKey]`, aes_control): a packed_array_typespec
+                    // whose outer dims are its Ranges() and whose innermost
+                    // "dim" is the element's own width — without it the
+                    // second index fell to the bit-select path below and
+                    // `key_init_we_o[s][i] = sp2v_e'(...)` wrote ONE bit.
+                    const UHDM::VectorOfrange* pk_rgs = nullptr;
+                    int ew2 = 0;
+                    if (auto pat2 = dynamic_cast<const UHDM::packed_array_typespec*>(ets2)) {
+                        const UHDM::typespec* e2 =
+                            (pat2->Elem_typespec() && pat2->Elem_typespec()->Actual_typespec())
+                                ? pat2->Elem_typespec()->Actual_typespec() : nullptr;
+                        ew2 = e2 ? get_width_from_typespec(e2, current_instance) : 0;
+                        pk_rgs = pat2->Ranges();
+                    } else if (pav0 && pav0->Ranges() && !pav0->Ranges()->empty() &&
+                               pav0->Elements() && !pav0->Elements()->empty()) {
+                        // Surelog's elaborated form: the inner packed_array_var
+                        // carries the packed dims itself and an enum_var /
+                        // struct_var element (no packed_array_typespec).
+                        ew2 = get_width((*pav0->Elements())[0], current_instance);
+                        pk_rgs = pav0->Ranges();
+                    }
+                    if (pk_rgs) {
+                        if (ew2 > 1 && !pk_rgs->empty()) {
+                            bool ok = true;
+                            for (auto rr : *pk_rgs) {
+                                RTLIL::SigSpec dl = import_expression(rr->Left_expr(), input_mapping);
+                                RTLIL::SigSpec dr = import_expression(rr->Right_expr(), input_mapping);
+                                if (!dl.is_fully_const() || !dr.is_fully_const()) { ok = false; break; }
+                                int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
+                                elem_dims.push_back({std::min(dli, dri), std::max(dli, dri), dli >= dri});
+                            }
+                            if (ok) {
+                                elem_dims.push_back({0, ew2 - 1, true});
+                                long long total = 1;
+                                for (auto& d : elem_dims) total *= (d.hi - d.lo + 1);
+                                if (total == element_sig.size()) elem_row_w = 1;
+                                else elem_dims.clear();
+                            } else {
+                                elem_dims.clear();
+                            }
+                        }
+                    }
                     if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(ets2))
                         if (!lt2->Elem_typespec() && lt2->Ranges() &&
                             lt2->Ranges()->size() == 1) {

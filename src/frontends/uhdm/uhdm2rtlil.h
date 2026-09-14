@@ -518,6 +518,12 @@ struct UhdmImporter {
     // must materialize as per-element wires.  Filled per module alongside
     // comb_only_arrays.
     std::set<std::string> inst_elem_written_arrays;
+    // Base names of every element select (`a[i]`, `a[i][j]`) inside an
+    // expression, looking THROUGH concatenations: an instance actual
+    // `{state_done_buf[1], state_done_buf[0]}` (aes_core's prim_buf on the
+    // masked state) writes the array's elements just like a bare `a[i]`.
+    static void collect_elem_select_bases(const UHDM::any* e,
+                                          std::set<std::string>& out);
 
     // Arrays an always_ff with an ASYNCHRONOUS reset clears wholesale in its
     // reset branch (`if (!rst_n) for (i) mem[i] <= '0;`).  An RTLIL $memwr port

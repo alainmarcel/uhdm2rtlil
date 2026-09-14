@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1431 (886 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1386/1431 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1436 (891 internal SystemVerilog + 545 upstream Yosys)
+- **Success Rate**: 97% (1391/1436 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 922 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 463 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Passing**: 923 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 467 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray` and `packed_array_elem_select` (both
   cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
@@ -131,6 +131,7 @@ to the run's step summary.
 | **Pavona OpenTitan HMAC** | HMAC-SHA2 core + prim_sha2 / prim_packer primitives incl. MultimodeEn=1 (`test/pavona_hmac_equiv/`) | **10** modules | **10 / 10 formally proven**, **10 / 10 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan EDN** | entropy distribution network (`test/pavona_edn_equiv/`) | **6** modules | **6 / 6 formally proven**, **6 / 6 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan CSRNG** | CTR-DRBG incl. the AES cipher core it instantiates (`test/pavona_csrng_equiv/`) | **19** modules (10 csrng + 9 AES sub-blocks incl. the masked DOM S-box) | **19 / 19 formally proven**, **19 / 19 co-sim `NO_DIVERGENCE`** (local run; first nightly pending) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Pavona OpenTitan AES** | AES-128/192/256 accelerator, two-share DOM masking, incl. the full `aes` top and the self-driving `aes_wrap` encrypt test (`test/pavona_aes_equiv/`) | **36** rows (all 33 RTL modules + SecMasking=1 key-expand, prim_lfsr NonLinearOut, aes_wrap_dut) | **34 / 36 formally proven** (masked Canright S-box + masking PRNG SAT-hard, co-sim adjudicated), **35 / 36 co-sim `NO_DIVERGENCE`** (the 36th: read_slang diverges from RTL on aes_prng_masking; read_uhdm clean) — local run; first nightly pending | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 
 Highlights:
 
