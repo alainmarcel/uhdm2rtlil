@@ -1638,6 +1638,12 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         }
         if (!lrts) lrts = lhs_expr->Typespec();
         if (lrts) expression_context_typespec = lrts->Actual_typespec();
+        // A struct MEMBER target (`assign hw2reg.tpm_cap = '{…}`): the
+        // member's own struct type, so a named / nested pattern packs by
+        // member order and per-member width.
+        if (!expression_context_typespec && lhs_expr->UhdmType() == uhdmhier_path)
+            expression_context_typespec =
+                hier_path_member_typespec(any_cast<const hier_path*>(lhs_expr));
     }
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
     expression_context_typespec = saved_ctx_ts;
