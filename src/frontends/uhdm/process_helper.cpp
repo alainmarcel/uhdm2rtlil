@@ -858,6 +858,37 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         else
                             base = full_name;
                         bool hp_expanded = false;
+                        // Field write on a CONSTANT-indexed ELEMENT of a
+                        // per-element unpacked array (`tl_h2d_int[0].a_valid =
+                        // 1'b0`, tlul_lc_gate): the `[` strip above reduced the
+                        // name to the ARRAY base, so the field write was booked
+                        // against the flat base / a neighbouring element and
+                        // got its own ranged temp — the process's whole-element
+                        // write `tl_h2d_int[0] = tl_h2d_i` owned `$0\tl_h2d_int[0]`,
+                        // the orphaned ranged temp became a latch and, through
+                        // the whole-write alias, drove the INPUT port's a_valid
+                        // (sram_ctrl: conflicting driver on ram_tl_i[108]).
+                        // Name the element itself (a part of it is written).
+                        bool hp_elem_named = false;
+                        if (hp->Path_elems() && !hp->Path_elems()->empty() &&
+                            (*hp->Path_elems())[0]->UhdmType() == uhdmbit_select) {
+                            auto bs0 = any_cast<const bit_select*>((*hp->Path_elems())[0]);
+                            if (bs0->VpiIndex()) {
+                                RTLIL::SigSpec is0 = import_expression(
+                                    dynamic_cast<const UHDM::expr*>(bs0->VpiIndex()));
+                                if (is0.size() > 0 && is0.is_fully_const()) {
+                                    std::string en = base + "[" +
+                                        std::to_string(is0.as_const().as_int()) + "]";
+                                    if (module->wire(RTLIL::escape_id(en))) {
+                                        sig.name = en;
+                                        sig.is_part_select = true;
+                                        hp_elem_named = true;
+                                        log("extract_assigned_signals: hier_path element "
+                                            "field write -> '%s' (partial)\n", en.c_str());
+                                    }
+                                }
+                            }
+                        }
 
                         // Interface ports have a 1-bit `\<port>`
                         // placeholder wire (set in `import_port` with
@@ -893,7 +924,9 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 }
                             }
                         }
-                        if (full_is_wire && !base_is_wire) {
+                        if (hp_elem_named) {
+                            // element name already chosen above
+                        } else if (full_is_wire && !base_is_wire) {
                             sig.name = full_name;
                         } else if (base_is_wire) {
                             sig.name = base;

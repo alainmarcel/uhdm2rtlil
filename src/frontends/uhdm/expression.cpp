@@ -2367,6 +2367,70 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                     base_name.c_str());
                         }
                     }
+                    // PACKAGE table with an element select and an optional
+                    // trailing part/bit select — `prim_cipher_pkg::
+                    // PRINCE_ROUND_CONST[k][DataWidth-1:0]` (prim_prince, every
+                    // round): the elaborated var_select has no Actual_group and
+                    // the parameter lives in the package, so `par` stays null,
+                    // the wire paths found nothing and the whole XOR term was
+                    // DROPPED (rom_ctrl / sram_ctrl scramblers, ibex ICache
+                    // PRINCE).  Mirror the bit_select path: the table was folded
+                    // into package_parameter_map with its outer element count.
+                    if (!par && exprs->size() >= 1 && exprs->size() <= 2) {
+                        auto vit = package_parameter_map.find(base_name);
+                        auto cit = package_parameter_elem_count.find(base_name);
+                        if (vit != package_parameter_map.end() &&
+                            cit != package_parameter_elem_count.end() && cit->second > 0 &&
+                            vit->second.size() % cit->second == 0) {
+                            RTLIL::Const pv = vit->second;
+                            int elem_w = pv.size() / cit->second;
+                            RTLIL::SigSpec index = import_expression((*exprs)[0], input_mapping);
+                            if (index.is_fully_const()) {
+                                int off = index.as_const().as_int() * elem_w;
+                                if (off >= 0 && off + elem_w <= pv.size()) {
+                                    RTLIL::SigSpec elem = RTLIL::SigSpec(pv).extract(off, elem_w);
+                                    if (exprs->size() == 2) {
+                                        const expr* trail = (*exprs)[1];
+                                        if (trail->VpiType() == vpiPartSelect) {
+                                            auto ps2 = any_cast<const part_select*>(trail);
+                                            RTLIL::SigSpec l2 = import_expression(ps2->Left_range(), input_mapping);
+                                            RTLIL::SigSpec r2 = import_expression(ps2->Right_range(), input_mapping);
+                                            if (l2.is_fully_const() && r2.is_fully_const()) {
+                                                int o = std::min(l2.as_int(), r2.as_int());
+                                                int w = std::abs(l2.as_int() - r2.as_int()) + 1;
+                                                elem = (o >= 0 && o + w <= elem.size())
+                                                           ? elem.extract(o, w) : RTLIL::SigSpec();
+                                            } else elem = RTLIL::SigSpec();
+                                        } else if (trail->VpiType() == vpiIndexedPartSelect) {
+                                            auto ips2 = any_cast<const indexed_part_select*>(trail);
+                                            RTLIL::SigSpec b2 = import_expression(ips2->Base_expr(), input_mapping);
+                                            RTLIL::SigSpec w2 = import_expression(ips2->Width_expr(), input_mapping);
+                                            if (b2.is_fully_const() && w2.is_fully_const()) {
+                                                int w = w2.as_const().as_int(), b = b2.as_const().as_int();
+                                                int o = (ips2->VpiIndexedPartSelectType() == vpiPosIndexed) ? b : b - w + 1;
+                                                elem = (o >= 0 && w > 0 && o + w <= elem.size())
+                                                           ? elem.extract(o, w) : RTLIL::SigSpec();
+                                            } else elem = RTLIL::SigSpec();
+                                        } else {
+                                            const expr* be = unwrap_index_bit_select(trail, base_name);
+                                            RTLIL::SigSpec b2 = import_expression(be, input_mapping);
+                                            if (b2.is_fully_const()) {
+                                                int bi = b2.as_const().as_int();
+                                                elem = (bi >= 0 && bi < elem.size())
+                                                           ? elem.extract(bi, 1) : RTLIL::SigSpec();
+                                            } else elem = RTLIL::SigSpec();
+                                        }
+                                    }
+                                    if (!elem.empty()) {
+                                        if (mode_debug)
+                                            log("  vpiVarSelect: package table %s[...] -> %d bits\n",
+                                                base_name.c_str(), elem.size());
+                                        return elem;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (par && exprs->size() >= 1 && exprs->size() <= 4) {
                         RTLIL::SigSpec pval;
                         RTLIL::IdString pid = RTLIL::escape_id(base_name);
@@ -6057,8 +6121,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // typespec (on the op, or on the op's param_assign parent's
             // parameter) — the latter bootstraps a packed-array PARAMETER init at
             // module-import time, where no context is set (ParameterPackedArray).
+            // The pattern's OWN declared type wins over the surrounding context:
+            // a package table parameter (`logic [15:0][3:0] SH = '{…}`) read as
+            // a function-call ACTUAL inside a 32-bit assignment was re-folded at
+            // 32/16 = 2 bits per entry (prim_cipher_pkg PRINCE_SHIFT_ROWS64 in
+            // prince_shiftrows_32bit: every shift index truncated, the 32-bit
+            // PRINCE datapath wrong).  Only a pattern with no typespec of its
+            // own (an anonymous `'{…}` in an assignment) is sized by context.
             int ctx_w = expression_context_width;
-            if (ctx_w == 0) {
+            {
                 const UHDM::typespec* myts = nullptr;
                 if (uhdm_op->Typespec()) myts = uhdm_op->Typespec()->Actual_typespec();
                 if (!myts && uhdm_op->VpiParent() &&
@@ -6539,9 +6610,40 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         has_param_replication_count = refs_param_rep(uhdm_op);
     }
 
+    // A GENVAR / generate-scope parameter operand (`10-NumRoundsHalf+k` in
+    // prim_prince's gen_bwd_pass[k]) must be resolved by the reader against
+    // the ref_obj's own binding, not by ExprEval's name walk from `inst`: the
+    // walk starts at the MODULE instance, misses the generate scope and finds
+    // a same-named genvar on an ANCESTOR (prim_ram_1p_scr's gen_par_scr[k],
+    // k=0) — every backward-pass round constant folded to RC[7] and the
+    // sram_ctrl keystream was wrong (invisible to a write-then-read co-sim).
+    bool has_gen_scope_param_operand = false;
+    if (uhdm_op->Operands() && !gen_scope_stack.empty()) {
+        std::function<bool(const UHDM::any*)> refs_gsp =
+            [&](const UHDM::any* e) -> bool {
+                if (!e) return false;
+                if (e->VpiType() == vpiRefObj) {
+                    auto ro = any_cast<const ref_obj*>(e);
+                    const UHDM::any* ag = ro->Actual_group();
+                    if (ag && ag->UhdmType() == uhdmparameter && ag->VpiParent() &&
+                        ag->VpiParent()->UhdmType() == uhdmgen_scope)
+                        return true;
+                    return false;
+                }
+                if (e->VpiType() == vpiOperation) {
+                    auto op2 = any_cast<const operation*>(e);
+                    if (op2->Operands())
+                        for (auto o2 : *op2->Operands())
+                            if (refs_gsp(o2)) return true;
+                }
+                return false;
+            };
+        has_gen_scope_param_operand = refs_gsp(uhdm_op);
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
         !has_struct_param_hier_operand && !has_loop_value_operand &&
-        !has_param_replication_count) {
+        !has_param_replication_count && !has_gen_scope_param_operand) {
         ExprEval eval;
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
@@ -9054,6 +9156,20 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
             base = RTLIL::SigSpec(wire);
+            // Same-cycle in-flight value of a GENERATE-PARENT local: the comb
+            // read map is keyed by the resolved wire name
+            // (`gen_round[0].data_state_sbox`) while the select carries the
+            // bare name — the in-place S-box rewrite `data_state_sbox[k*4 +: 4]
+            // = SBOX[data_state_sbox[k*4 +: 4]]` (prim_subst_perm) otherwise read
+            // the WIRE the process drives: a logic loop in every rom_ctrl /
+            // sram_ctrl scrambler.  Never for a write target (comb_lhs_keep_base).
+            if (input_mapping && !comb_lhs_keep_base) {
+                std::string wn = wire->name.str();
+                if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                auto im = input_mapping->find(wn);
+                if (im != input_mapping->end() && im->second.size() == base.size())
+                    base = im->second;
+            }
         } else {
             // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
             RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
@@ -9434,6 +9550,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 if (auto ag = uhdm_bit->Actual_group())
                     bitselect_outer_dim(ag, (int)cur.size(), elem_w, outer_lo);
                 int off = (idx - outer_lo) * elem_w;
+                if (mode_debug)
+                    log("    const formal bit-select %s[%d]: total=%d elem_w=%d outer_lo=%d off=%d\n",
+                        signal_name.c_str(), idx, (int)cur.size(), elem_w, outer_lo, off);
                 if (off >= 0 && off + elem_w <= (int)cur.size()) {
                     std::vector<RTLIL::State> bits(cur.begin() + off,
                                                    cur.begin() + off + elem_w);
@@ -9937,9 +10056,34 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         return it->second.extract(off, elem_w);
                     }
                 }
-                // For non-constant index, we'd need to create a mux tree
-                // For now, just return the mapped signal
-                return it->second;
+                // DYNAMIC index into a function formal: the whole mapped
+                // value used to be returned and the caller truncated it to
+                // the LOW element, so prim_cipher_pkg's `sbox4[state_in[k*4
+                // +: 4]]` (`logic [15:0][3:0] sbox4`) folded every nibble to
+                // sbox4[0] — the PRINCE S-box was a constant and rom_ctrl /
+                // sram_ctrl scrambling was wrong.  Extract the element with
+                // a $shiftx sized by the formal's outer dimension.
+                {
+                    int elem_w = 1, outer_lo = 0;
+                    if (auto ag = uhdm_bit->Actual_group())
+                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
+                    if (elem_w <= 0 || elem_w > it->second.size()) elem_w = 1;
+                    int iw = std::max(GetSize(index), 32);
+                    RTLIL::SigSpec idx_ext = index;
+                    idx_ext.extend_u0(iw, false);
+                    RTLIL::SigSpec slot = idx_ext;
+                    if (outer_lo != 0)
+                        slot = module->Sub(NEW_ID, idx_ext,
+                                           RTLIL::SigSpec(RTLIL::Const(outer_lo, iw)));
+                    RTLIL::SigSpec off = elem_w == 1 ? slot
+                        : module->Mul(NEW_ID, slot, RTLIL::SigSpec(RTLIL::Const(elem_w, iw)));
+                    RTLIL::Wire* out = module->addWire(NEW_ID, elem_w);
+                    module->addShiftx(NEW_ID, it->second, off, out);
+                    if (mode_debug)
+                        log("    Dynamic bit-select on function formal %s: $shiftx elem_w=%d\n",
+                            signal_name.c_str(), elem_w);
+                    return RTLIL::SigSpec(out);
+                }
             }
         }
         log_error("Could not find wire '%s' for bit select\n", signal_name.c_str());
@@ -10557,6 +10701,20 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
             if (wire) {
                 base = RTLIL::SigSpec(wire);
+                // Same-cycle in-flight value of a GENERATE-PARENT local: the comb
+                // read map is keyed by the resolved wire name
+                // (`gen_round[0].data_state_sbox`) while the select carries the
+                // bare name — the in-place S-box rewrite `data_state_sbox[k*4 +: 4]
+                // = SBOX[data_state_sbox[k*4 +: 4]]` (prim_subst_perm) otherwise read
+                // the WIRE the process drives: a logic loop in every rom_ctrl /
+                // sram_ctrl scrambler.  Never for a write target (comb_lhs_keep_base).
+                if (input_mapping && !comb_lhs_keep_base) {
+                    std::string wn = wire->name.str();
+                    if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                    auto im = input_mapping->find(wn);
+                    if (im != input_mapping->end() && im->second.size() == base.size())
+                        base = im->second;
+                }
             } else {
                 // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
                 RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
@@ -13113,10 +13271,55 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (uhdm_hier->Path_elems()) {
         log("    hier_path has %d path elements\n", (int)uhdm_hier->Path_elems()->size());
         
+        // A path whose BASE is a struct/union-typed signal: every later
+        // element is a MEMBER name.  Surelog can still bind such an element to
+        // a same-named module-scope signal (pattgen_chan: `assign enable =
+        // ctrl_i.enable;` — the `enable` element carried VpiFullName
+        // work@pattgen_chan.enable), and following that binding produced
+        // `assign enable = enable` (a self-loop folded to 0: both pattgen
+        // channels never enabled).  Skip those elements here; the member
+        // handlers below resolve them by offset.
+        bool hp_base_struct = false;
+        const any* hp_first = uhdm_hier->Path_elems()->empty() ? nullptr
+                              : (*uhdm_hier->Path_elems())[0];
+        if (hp_first && hp_first->UhdmType() == uhdmref_obj) {
+            const any* ag0 = any_cast<const ref_obj*>(hp_first)->Actual_group();
+            const UHDM::ref_typespec* rt0 = nullptr;
+            if (auto e0 = dynamic_cast<const UHDM::expr*>(ag0)) rt0 = e0->Typespec();
+            else if (auto io0 = dynamic_cast<const UHDM::io_decl*>(ag0)) rt0 = io0->Typespec();
+            // The base ref often carries NO Actual_group (a struct PORT read
+            // inside the module — pattgen_chan's ctrl_i): look the name up on
+            // the elaborated instance's ports / nets / variables instead.
+            if (!rt0) {
+                std::string bn0 = std::string(any_cast<const ref_obj*>(hp_first)->VpiName());
+                if (auto mi0 = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                    if (mi0->Ports())
+                        for (auto po : *mi0->Ports())
+                            if (!rt0 && std::string(po->VpiName()) == bn0) rt0 = po->Typespec();
+                    if (!rt0 && mi0->Nets())
+                        for (auto nn : *mi0->Nets())
+                            if (!rt0 && std::string(nn->VpiName()) == bn0) rt0 = nn->Typespec();
+                    if (!rt0 && mi0->Variables())
+                        for (auto vv : *mi0->Variables())
+                            if (!rt0 && std::string(vv->VpiName()) == bn0) rt0 = vv->Typespec();
+                }
+            }
+            if (rt0 && rt0->Actual_typespec()) {
+                const UHDM::typespec* t0 =
+                    resolve_type_param_typespec(rt0->Actual_typespec(), current_instance);
+                if (t0 && (t0->UhdmType() == uhdmstruct_typespec ||
+                           t0->UhdmType() == uhdmunion_typespec))
+                    hp_base_struct = true;
+            }
+        }
         // Look through all path elements to find one with a resolved full name
         // Sometimes the resolution is in the Actual() of the ref_obj
         for (auto elem : *uhdm_hier->Path_elems()) {
             log("      Path elem type: %s\n", UHDM::UhdmName(elem->UhdmType()).c_str());
+            if (hp_base_struct && elem != hp_first && elem->UhdmType() == uhdmref_obj) {
+                log("      member element of a struct base — not bound by name\n");
+                continue;
+            }
             
             if (elem->UhdmType() == uhdmref_obj) {
                 const ref_obj* ref = any_cast<const ref_obj*>(elem);
