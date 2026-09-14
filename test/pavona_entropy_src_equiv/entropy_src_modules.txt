@@ -1,0 +1,21 @@
+# entropy_src (Pavona OpenTitan entropy source) per-module equivalence.
+# read_uhdm vs read_slang SAT miter (scripts/entropy_src_srcs.py closure;
+# hw/ip/entropy_src/rtl vendored whole under rtl/entropy_src; prim/tlul/base-pkgs
+# from ../pavona_tlul_equiv, edn/csrng/… pkgs from ../pavona_acc_equiv).
+#   ./run_entropy_src_equiv.sh            # all      ./run_entropy_src_equiv.sh <module>
+#   module                            seq  timeout  want
+entropy_src_cntr_reg                  4  150  proven
+entropy_src_watermark_reg             4  150  proven
+entropy_src_field_en                  4  150  proven
+entropy_src_enable_delay              4  150  proven
+entropy_src_ack_sm                    4  300  proven
+entropy_src_main_sm                   4  300  proven
+entropy_src_repcnt_ht                 4  300  proven
+entropy_src_repcnts_ht                4  300  proven
+entropy_src_adaptp_ht                 4  300  proven
+entropy_src_bucket_ht                 4  300  proven
+entropy_src_markov_ht                 4  300  proven
+entropy_src_reg_top                   4  600  proven
+entropy_src_core                      4  1800 proven
+entropy_src                           4  1800 proven
+entropy_src_drv                       4  1800 proven    # wrapper-only top: self-driving TL-UL FSM (bypass, route-to-sw) reading entropy words — the deep test

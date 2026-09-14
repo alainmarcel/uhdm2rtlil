@@ -103,3 +103,13 @@ jobs:
       core: aes
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # entropy_src (OpenTitan entropy source: health tests, conditioning, FIFOs;
+  # hw/ip/entropy_src/rtl vendored whole): same layout/checks.
+  sweep-entropy-src:
+    name: pavona - entropy_src
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: entropy_src
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

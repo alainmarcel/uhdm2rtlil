@@ -61,3 +61,4 @@ test/cva6_equiv/cva6_modules.generated.txt
 test/pavona_kmac_equiv/work/
 test/pavona_csrng_equiv/work/
 test/pavona_aes_equiv/work/
+test/pavona_entropy_src_equiv/work/
