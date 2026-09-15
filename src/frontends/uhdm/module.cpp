@@ -4186,9 +4186,10 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 // scoped flat wire the element wires alias (elem0@LSB).
                 bool an_whole = false;
                 {
+                    // EXACT ref_obj only (a bit_select is a ref_obj subclass).
                     auto ref_named = [&](const UHDM::any* a) -> bool {
-                        auto r = a ? dynamic_cast<const UHDM::ref_obj*>(a) : nullptr;
-                        return r && std::string(r->VpiName()) == an_name;
+                        if (!a || a->UhdmType() != uhdmref_obj) return false;
+                        return std::string(any_cast<const UHDM::ref_obj*>(a)->VpiName()) == an_name;
                     };
                     if (uhdm_scope->Cont_assigns())
                         for (auto ca : *uhdm_scope->Cont_assigns())
@@ -4353,11 +4354,12 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                     // SCOPE-qualified flat wire (elem0@LSB) plus scoped element
                     // aliases, like the module-level whole-accessed array.
                     {
+                        // EXACT ref_obj only: bit_select / part_select derive
+                        // from ref_obj, and an element access (`mem[a]`) is
+                        // not a whole-array use (gpr_genscope_repro).
                         auto ref_named = [&](const UHDM::any* a) -> bool {
-                            if (!a) return false;
-                            if (auto r = dynamic_cast<const UHDM::ref_obj*>(a))
-                                return std::string(r->VpiName()) == var_name;
-                            return false;
+                            if (!a || a->UhdmType() != uhdmref_obj) return false;
+                            return std::string(any_cast<const UHDM::ref_obj*>(a)->VpiName()) == var_name;
                         };
                         bool scope_whole = false;
                         if (uhdm_scope->Cont_assigns())
