@@ -9462,7 +9462,7 @@ bool UhdmImporter::varselect_const_bitslice(
 }
 
 bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
-                                       int& elem_w, int& outer_lo) {
+                                       int& elem_w, int& outer_lo, int* outer_hi) {
     if (!ag || total_width <= 0) return false;
     UHDM::VectorOfrange* rngs = nullptr;
     if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
@@ -9498,7 +9498,39 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
     if (osz <= 0 || total_width % osz != 0) return false;
     elem_w = total_width / osz;
     outer_lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
+    // Ascending outer range: report it through outer_hi = -1 sentinel-free
+    // form (callers that care get the left bound; lo/hi otherwise).
+    if (outer_hi) *outer_hi = l.as_const().as_int() < rr.as_const().as_int() ? -1 :
+                              std::max(l.as_const().as_int(), rr.as_const().as_int());
     return true;
+}
+
+// The declaration (formal io_decl or local variable) named `name` of the
+// function / task enclosing `node`.  A select on a formal inside a PACKAGE
+// function carries no Actual_group, so element geometry was lost.
+const UHDM::any* UhdmImporter::find_enclosing_tf_decl(const UHDM::any* node,
+                                                      const std::string& name) {
+    for (const UHDM::any* p = node; p; p = p->VpiParent()) {
+        auto scan_vars = [&](const UHDM::VectorOfvariables* vars) -> const UHDM::any* {
+            if (vars)
+                for (auto v : *vars)
+                    if (v->VpiName() == name) return v;
+            return nullptr;
+        };
+        if (p->UhdmType() == uhdmbegin) {
+            if (auto v = scan_vars(any_cast<const UHDM::begin*>(p)->Variables())) return v;
+        } else if (p->UhdmType() == uhdmnamed_begin) {
+            if (auto v = scan_vars(any_cast<const UHDM::named_begin*>(p)->Variables())) return v;
+        } else if (auto tf = dynamic_cast<const UHDM::task_func*>(p)) {
+            if (tf->Io_decls())
+                for (auto io : *tf->Io_decls())
+                    if (io->VpiName() == name) return io;
+            return scan_vars(tf->Variables());
+        } else if (dynamic_cast<const UHDM::instance*>(p)) {
+            return nullptr;
+        }
+    }
+    return nullptr;
 }
 
 RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::Process* proc) {
@@ -10011,6 +10043,27 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                             "write to '%s' (dynamic or out-of-range select)\n",
                             base.c_str());
                     }
+                    break;
+                }
+            }
+
+            // `acc[k].field = …` on a function-local packed struct array:
+            // splice the member slice into the in-flight value (was dropped).
+            if (!rhs.empty() && assign->Lhs() &&
+                assign->Lhs()->UhdmType() == uhdmhier_path) {
+                std::string em_base;
+                int em_off = 0, em_w = 0;
+                if (resolve_struct_array_elem_member_lhs(
+                        assign, any_cast<const hier_path*>(assign->Lhs()),
+                        func_mapping, em_base, em_off, em_w)) {
+                    RTLIL::SigSpec cur = func_mapping[em_base];
+                    RTLIL::SigSpec r2 = rhs;
+                    if (r2.size() < em_w) r2.extend_u0(em_w);
+                    else if (r2.size() > em_w) r2 = r2.extract(0, em_w);
+                    cur.replace(em_off, r2);
+                    func_mapping[em_base] = mask_write(em_base, cur);
+                    log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
+                        em_base.c_str(), em_off, em_w, log_signal(r2).c_str());
                     break;
                 }
             }
@@ -12913,12 +12966,17 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
 
     // RHS sized to write_w (detect the '1 fill literal so it replicates).
     auto rhs_e = dynamic_cast<const UHDM::expr*>(rhs_any);
-    if (!rhs_e) return false;
-    int prev_ctx = expression_context_width;
-    expression_context_width = write_w;
-    RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
-    expression_context_width = prev_ctx;
-    if (rhs.size() == 1 && write_w > 1 && rhs_e->VpiType() == vpiConstant) {
+    RTLIL::SigSpec rhs;
+    if (dyn_write_rhs_override) {
+        rhs = *dyn_write_rhs_override;
+    } else {
+        if (!rhs_e) return false;
+        int prev_ctx = expression_context_width;
+        expression_context_width = write_w;
+        rhs = import_expression(rhs_e, comb_read_map());
+        expression_context_width = prev_ctx;
+    }
+    if (!dyn_write_rhs_override && rhs.size() == 1 && write_w > 1 && rhs_e->VpiType() == vpiConstant) {
         auto c = any_cast<const constant*>(rhs_e);
         if (c->VpiSize() == -1) {
             // Unbased unsized fill: replicate the single bit.
@@ -12927,7 +12985,7 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             rhs = fill;
         }
     }
-    if (rhs.size() < write_w) rhs.extend_u0(write_w, is_expr_signed(rhs_e));
+    if (rhs.size() < write_w) rhs.extend_u0(write_w, !dyn_write_rhs_override && is_expr_signed(rhs_e));
     else if (rhs.size() > write_w) rhs = rhs.extract(0, write_w);
 
     // Inner mask/value at elem_w width (truncates element-boundary overrun).
@@ -12992,6 +13050,72 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     return true;
 }
 
+// `{a[idx], b[idx]} = rhs` — a concatenation LHS whose operands are all
+// dynamic element / bit selects into packed arrays (OpenTitan
+// otp_ctrl_ecc_reg p_write: `{ecc_d[addr_i], data_d[addr_i]} = ecc_enc`).
+// The generic LHS import READ each select through a $shiftx and assigned the
+// aux wires, so the write was dropped and the ECC register never stored a
+// word.  Import the RHS once (before any write updates the in-flight
+// values), then route each operand's slice through
+// emit_dynamic_packed_select_write.
+bool UhdmImporter::emit_dynamic_concat_lhs_write(
+        const UHDM::assignment* assign, RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!assign || !assign->Lhs() || assign->Lhs()->VpiType() != vpiOperation)
+        return false;
+    if (assign->VpiOpType() != vpiAssignmentOp && assign->VpiOpType() != 0)
+        return false;
+    auto cop = any_cast<const operation*>(assign->Lhs());
+    if (cop->VpiOpType() != vpiConcatOp || !cop->Operands() || cop->Operands()->empty())
+        return false;
+    std::vector<const UHDM::any*> ops(cop->Operands()->begin(), cop->Operands()->end());
+    std::vector<int> widths;
+    int total = 0;
+    for (auto o : ops) {
+        const UHDM::any* idx = nullptr;
+        if (o->VpiType() == vpiBitSelect)
+            idx = any_cast<const bit_select*>(o)->VpiIndex();
+        else if (o->VpiType() == vpiVarSelect) {
+            auto vs = any_cast<const var_select*>(o);
+            if (vs->Exprs() && !vs->Exprs()->empty()) idx = (*vs->Exprs())[0];
+        } else
+            return false;
+        auto idx_e = dynamic_cast<const UHDM::expr*>(idx);
+        if (!idx_e) return false;
+        if (import_expression(idx_e, comb_read_map()).is_fully_const()) return false;
+        int w = import_expression(any_cast<const expr*>(o), comb_read_map()).size();
+        if (w <= 0) return false;
+        widths.push_back(w);
+        total += w;
+    }
+    auto rhs_e = dynamic_cast<const UHDM::expr*>(assign->Rhs());
+    if (!rhs_e) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = total;
+    RTLIL::SigSpec rhs = import_expression(rhs_e, comb_read_map());
+    expression_context_width = prev_ctx;
+    if (rhs.size() < total) rhs.extend_u0(total, is_expr_signed(rhs_e));
+    else if (rhs.size() > total) rhs = rhs.extract(0, total);
+    // Operands are MSB-first: the last one takes the RHS LSBs.
+    int off = 0, done = 0;
+    for (int i = (int)ops.size() - 1; i >= 0; i--) {
+        RTLIL::SigSpec part = rhs.extract(off, widths[i]);
+        off += widths[i];
+        const RTLIL::SigSpec* saved = dyn_write_rhs_override;
+        dyn_write_rhs_override = &part;
+        bool ok = emit_dynamic_packed_select_write(ops[i], assign->Rhs(), proc, case_rule);
+        dyn_write_rhs_override = saved;
+        if (!ok) {
+            if (done)
+                log_warning("dynamic concat LHS write: operand %d not handled "
+                            "(partial write)\n", i);
+            return done > 0;
+        }
+        done++;
+    }
+    return true;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
@@ -13049,6 +13173,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 return;
         }
     }
+    if (emit_dynamic_concat_lhs_write(uhdm_assign, proc, nullptr))
+        return;
 
     // Memory write via bit-select LHS — route to the EN/ADDR/DATA temp wires
     // set up by `import_always_comb`. Without this, import_expression() on
@@ -13874,6 +14000,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 return;
         }
     }
+    if (emit_dynamic_concat_lhs_write(uhdm_assign, nullptr, case_rule))
+        return;
 
     // `arr[idx] = rhs` with dynamic `idx` on an unpacked array flattened to
     // per-element wires — emit a per-element conditional write (subbytes'
@@ -15229,6 +15357,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         return;
                 }
             }
+            if (emit_dynamic_concat_lhs_write(assign, nullptr, case_rule))
+                return;
 
             // `s.field[idx] = rhs` / `arr[idx].field = rhs` hier_path LHS —
             // same routing as import_assignment_comb; without it the write

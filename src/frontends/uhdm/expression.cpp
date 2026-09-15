@@ -174,6 +174,98 @@ void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
     }
 }
 
+// `acc[k].field = …` inside a function body, `acc` a function-local packed
+// array of structs.  The hier_path's bit_select base carries no Actual_group /
+// typespec, so the generic struct-field lookup failed and the write was
+// dropped (otp_ctrl_part_pkg::named_part_access_pre left every
+// read_lock/write_lock at its MuBi8False default).  Resolve the element
+// struct and the array range from the local's declaration.  Returns the
+// mapped base name and the member's [off +: w] slice of the flat value.
+bool UhdmImporter::resolve_struct_array_elem_member_lhs(
+    const UHDM::assignment* assign, const UHDM::hier_path* hp,
+    std::map<std::string, RTLIL::SigSpec>& mapping,
+    std::string& base_name, int& off, int& width)
+{
+    auto pe = hp ? hp->Path_elems() : nullptr;
+    if (!pe || pe->size() != 2 || (*pe)[0]->UhdmType() != uhdmbit_select)
+        return false;
+    auto bs = any_cast<const UHDM::bit_select*>((*pe)[0]);
+    base_name = std::string(bs->VpiName());
+    std::string field_name = std::string((*pe)[1]->VpiName());
+    auto bit = mapping.find(base_name);
+    if (bit == mapping.end() || !bs->VpiIndex()) return false;
+    const UHDM::packed_array_var* pav = nullptr;
+    auto scan_vars = [&](const VectorOfvariables* vars) {
+        if (!vars || pav) return;
+        for (auto v : *vars)
+            if (v->UhdmType() == uhdmpacked_array_var &&
+                std::string(v->VpiName()) == base_name) {
+                pav = any_cast<const UHDM::packed_array_var*>(v);
+                return;
+            }
+    };
+    for (const any* p = assign->VpiParent(); p && !pav; p = p->VpiParent()) {
+        if (p->UhdmType() == uhdmbegin)
+            scan_vars(any_cast<const UHDM::begin*>(p)->Variables());
+        else if (p->UhdmType() == uhdmnamed_begin)
+            scan_vars(any_cast<const UHDM::named_begin*>(p)->Variables());
+        else if (p->UhdmType() == uhdmfunction) {
+            scan_vars(any_cast<const UHDM::function*>(p)->Variables());
+            break;
+        }
+    }
+    if (!pav)
+        if (FunctionCallContext* fc = getCurrentFunctionContext())
+            if (fc->func_def)
+                scan_vars(fc->func_def->Variables());
+    if (!pav || !pav->Elements() || pav->Elements()->empty() ||
+        !pav->Ranges() || pav->Ranges()->size() != 1)
+        return false;
+    const UHDM::struct_typespec* est = nullptr;
+    if (auto ev = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+        if (auto ets = ev->Typespec())
+            if (auto a = ets->Actual_typespec())
+                if (a->UhdmType() == uhdmstruct_typespec)
+                    est = any_cast<const UHDM::struct_typespec*>(a);
+    if (!est || !est->Members()) return false;
+    auto rg = (*pav->Ranges())[0];
+    RTLIL::SigSpec ls = import_expression(rg->Left_expr(), &mapping);
+    RTLIL::SigSpec rs = import_expression(rg->Right_expr(), &mapping);
+    RTLIL::SigSpec is = import_expression(bs->VpiIndex(), &mapping);
+    if (!ls.is_fully_const() || !ls.is_fully_def() || !rs.is_fully_const() ||
+        !rs.is_fully_def() || !is.is_fully_const() || !is.is_fully_def())
+        return false;
+    // LSB-first: the struct's last member is the LSB.
+    int elem_w = 0, field_off = 0, field_w = 0;
+    bool found = false;
+    for (int i = (int)est->Members()->size() - 1; i >= 0; i--) {
+        auto m = (*est->Members())[i];
+        int mw = 0;
+        if (auto mts = m->Typespec())
+            if (auto a = mts->Actual_typespec())
+                mw = get_width_from_typespec(a, current_instance);
+        if (!found && std::string(m->VpiName()) == field_name) {
+            field_w = mw;
+            field_off = elem_w;
+            found = true;
+        }
+        elem_w += mw;
+    }
+    if (!found || field_w <= 0) return false;
+    int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+    int idx = is.as_const().as_int();
+    int lo = std::min(l, r), hi = std::max(l, r);
+    if (idx < lo || idx > hi) return false;
+    int k = (l >= r) ? (idx - lo) : (hi - idx);
+    off = k * elem_w + field_off;
+    width = field_w;
+    if (off + width > bit->second.size()) return false;
+    if (mode_debug)
+        log("UHDM: struct-array elem member %s[%d].%s -> [%d+:%d]\n",
+            base_name.c_str(), idx, field_name.c_str(), off, width);
+    return true;
+}
+
 void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
                                         RTLIL::Wire* result_wire,
                                         std::map<std::string, RTLIL::SigSpec>& input_mapping,
@@ -1438,7 +1530,25 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // struct-returning function (rp32 dec32) otherwise stays 0.
                 const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
                 auto pe = hp ? hp->Path_elems() : nullptr;
-                if (pe && pe->size() == 2) {
+                // `acc[k].field = …` on a function-local packed array of
+                // structs: the bit_select base carries no Actual_group /
+                // typespec, so the struct lookup below failed and the write
+                // was dropped (otp_ctrl_part_pkg::named_part_access_pre left
+                // every read_lock/write_lock at its MuBi8False default).
+                // Resolve the element struct and the array range from the
+                // local's declaration, then SSA-write the member slice.
+                bool elem_member_done = false;
+                {
+                    std::string em_base;
+                    int em_off = 0, em_w = 0;
+                    if (resolve_struct_array_elem_member_lhs(assign, hp, input_mapping,
+                                                             em_base, em_off, em_w)) {
+                        if (!ssa_slice_write(em_base, em_off, em_w))
+                            lhs_sig = input_mapping[em_base].extract(em_off, em_w);
+                        elem_member_done = true;
+                    }
+                }
+                if (!elem_member_done && pe && pe->size() == 2) {
                     std::string base_name = std::string((*pe)[0]->VpiName());
                     std::string field_name = std::string((*pe)[1]->VpiName());
                     // Base signal: a mapped local/param, or the return wire.
@@ -6003,6 +6113,38 @@ RTLIL::SigSpec UhdmImporter::remap_inflight_read(const RTLIL::SigSpec& res) {
     return remap_sig_inflight(res, current_comb_values);
 }
 
+// Declared typespec of the parameter `name` visible from `scope` (the
+// instance's own parameters, then package parameters).  Returns nullptr when
+// no unique declaration is found.
+UHDM::any* UhdmImporter::find_param_decl_typespec(std::string_view name, const UHDM::any* scope)
+{
+    auto ts_of = [&](const UHDM::any* p) -> const UHDM::typespec* {
+        if (auto pp = dynamic_cast<const UHDM::parameter*>(p))
+            if (pp->Typespec()) return pp->Typespec()->Actual_typespec();
+        return nullptr;
+    };
+    for (const UHDM::any* sc = scope; sc; sc = sc->VpiParent()) {
+        if (auto inst = dynamic_cast<const UHDM::instance*>(sc)) {
+            if (inst->Parameters())
+                for (auto p : *inst->Parameters())
+                    if (p->VpiName() == name)
+                        if (auto t = ts_of(p)) return (UHDM::any*)t;
+            break;
+        }
+    }
+    const UHDM::typespec* found = nullptr;
+    if (uhdm_design && uhdm_design->AllPackages())
+        for (auto pk : *uhdm_design->AllPackages())
+            if (pk->Parameters())
+                for (auto p : *pk->Parameters())
+                    if (p->VpiName() == name)
+                        if (auto t = ts_of(p)) {
+                            if (found && found != t) return nullptr;
+                            found = t;
+                        }
+    return (UHDM::any*)found;
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -6817,6 +6959,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         !has_param_replication_count && !has_gen_scope_param_operand &&
         !has_missized_enum_operand) {
         ExprEval eval;
+        // Element select on a multi-dimensional packed PARAMETER
+        // (`localparam logic [1:0][31:0] ADDR_MASK_PERI`): ExprEval reads the
+        // parameter's folded value constant, which has lost the packed
+        // dimensions, and without the declared typespec it degrades `P[0]` to
+        // BIT 0 — `~(ADDR_MASK_PERI[0])` folded to 1'b0 and the Egret
+        // xbar_main peripheral window decoded every request to the error
+        // responder.  Hand ExprEval the declared typespec by name.
+        eval.setGetTypespecFunctor([this](std::string_view name, const any* ein,
+                                          const any*) -> any* {
+            return find_param_decl_typespec(name, ein);
+        });
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
         // invalidValue MUST gate the result: a partially-failed reduction
@@ -10285,7 +10438,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     // typespec, so bitselect_outer_dim covers both; without the
                     // typespec fallback c[x] kept elem_w=1 and only the LSB read.
                     int elem_w = 1, outer_lo = 0;
-                    if (auto ag = uhdm_bit->Actual_group())
+                    const UHDM::any* ag = uhdm_bit->Actual_group();
+                    if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
+                    if (ag)
                         bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     int off = (idx - outer_lo) * elem_w;
                     if (off >= 0 && off + elem_w <= it->second.size()) {
@@ -10301,7 +10456,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // a $shiftx sized by the formal's outer dimension.
                 {
                     int elem_w = 1, outer_lo = 0;
-                    if (auto ag = uhdm_bit->Actual_group())
+                    const UHDM::any* ag = uhdm_bit->Actual_group();
+                    if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
+                    if (ag)
                         bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     if (elem_w <= 0 || elem_w > it->second.size()) elem_w = 1;
                     int iw = std::max(GetSize(index), 32);
@@ -11006,6 +11163,19 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     // +: LcStateSize] = lc_otp_program_i.state` drove 88 of 704 bits in the
     // Egret top).  Scale by the element width and map through the outer range.
     int pk_ew = 1, pk_ol = 0, pk_or = 0;
+    // Function formal / local base (from input_mapping, no module wire): the
+    // geometry comes from its declaration (otp_ctrl_part_pkg's
+    // named_broadcast_assign reads `part_buf_data[HwCfg0Offset +: …]` from a
+    // `logic [2047:0][7:0]` formal — the slice was taken in BITS).
+    if (!geom_wire && input_mapping && !base_signal_name.empty() &&
+        input_mapping->count(base_signal_name)) {
+        if (auto decl = find_enclosing_tf_decl(uhdm_indexed, base_signal_name)) {
+            int ew = 1, lo = 0, hi = 0;
+            if (bitselect_outer_dim(decl, base.size(), ew, lo, &hi) && ew > 1 && hi >= 0) {
+                pk_ew = ew; pk_ol = hi; pk_or = lo;
+            }
+        }
+    }
     if (geom_wire && geom_wire->width == base.size()) {
         auto& ga = geom_wire->attributes;
         auto ew_id = RTLIL::escape_id("packed_elem_width");

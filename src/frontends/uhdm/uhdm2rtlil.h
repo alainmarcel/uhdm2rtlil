@@ -970,7 +970,8 @@ struct UhdmImporter {
     // Returns false if the outer dim isn't a resolvable constant range.
     RTLIL::Const vpi_value_to_const(const std::string& val_str, int width);
     bool bitselect_outer_dim(const UHDM::any* ag, int total_width,
-                             int& elem_w, int& outer_lo);
+                             int& elem_w, int& outer_lo, int* outer_hi = nullptr);
+    const UHDM::any* find_enclosing_tf_decl(const UHDM::any* node, const std::string& name);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
     // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
     bool emit_dynamic_packed_select_write(
@@ -978,6 +979,11 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    bool emit_dynamic_concat_lhs_write(const UHDM::assignment* assign,
+        RTLIL::Process* proc, RTLIL::CaseRule* case_rule);
+    // When set, emit_dynamic_packed_select_write writes this value instead of
+    // importing its RHS expression (concat-LHS operand slices).
+    const RTLIL::SigSpec* dyn_write_rhs_override = nullptr;
     bool emit_dynamic_unpacked_array_write(
         const UHDM::bit_select* bs,
         const UHDM::any* rhs_any,
@@ -1182,6 +1188,10 @@ struct UhdmImporter {
         const std::string& func_name, int& temp_counter,
         const std::string& func_call_context,
         const std::map<std::string, int>& local_var_widths);
+    UHDM::any* find_param_decl_typespec(std::string_view name, const UHDM::any* scope);
+    bool resolve_struct_array_elem_member_lhs(const UHDM::assignment* assign,
+        const UHDM::hier_path* hp, std::map<std::string, RTLIL::SigSpec>& mapping,
+        std::string& base_name, int& off, int& width);
     void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
                               RTLIL::Wire* result_wire,
                               std::map<std::string, RTLIL::SigSpec>& input_mapping,
