@@ -799,6 +799,30 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             sig.is_part_select = true;
                             signals.push_back(sig);
                             log("extract_assigned_signals: Found assignment to var select of '%s'\n", nm.c_str());
+                        } else if (!nm.empty() && vsel->Exprs() && !vsel->Exprs()->empty() &&
+                                   expanded_array_low(nm) >= 0) {
+                            // ...except a CONSTANT first index on a per-element-wire
+                            // array (`q[0][i*39+:39] <= ...`, OpenTitan
+                            // acc_alu_bignum's `kmac_msg_intg_q [Share]` word
+                            // registers): the target is the element wire \q[0].
+                            // Reporting nothing left the write with no temp and
+                            // no sync update — the assignment drove the element
+                            // wire directly from the always_ff body, so the
+                            // register was lost (and the element aliasing broke).
+                            const any* i0 = (*vsel->Exprs())[0];
+                            RTLIL::SigSpec is0;
+                            if (auto ie = dynamic_cast<const expr*>(i0))
+                                is0 = import_expression(ie);
+                            if (is0.is_fully_const() && is0.size() > 0) {
+                                std::string en = nm + "[" + std::to_string(is0.as_const().as_int()) + "]";
+                                if (module->wire(RTLIL::escape_id(en)) || find_wire_in_scope(en)) {
+                                    sig.name = en;
+                                    sig.is_part_select = true;
+                                    signals.push_back(sig);
+                                    log("extract_assigned_signals: Found assignment to var select of element '%s'\n",
+                                        en.c_str());
+                                }
+                            }
                         }
                     } else if (lhs_expr->VpiType() == vpiHierPath) {
                         // Two distinct shapes share this VPI type:

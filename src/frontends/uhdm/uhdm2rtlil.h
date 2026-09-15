@@ -366,6 +366,10 @@ struct UhdmImporter {
     // size each field to its actual (possibly UNEQUAL) member width instead of
     // assuming ctx_width/field_count.  Null when unknown.
     const UHDM::typespec* expression_context_typespec = nullptr;
+    // reeval_stamped_param_assign: every param_assign of a definition,
+    // collected once per definition (the collection is a subtree walk).
+    std::map<const UHDM::any*, std::vector<const UHDM::param_assign*>>
+        stamped_pa_def_index_;
 
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated
@@ -1072,6 +1076,7 @@ struct UhdmImporter {
     // a select-shaped LHS (`acc[7:0]`, `key[0][7:0]`, `s.f`) is re-imported as
     // a READ through the comb map so the RMW chains on the threaded value.
     RTLIL::SigSpec compound_lhs_current(const UHDM::any* lhs_expr, const RTLIL::SigSpec& lhs);
+    RTLIL::SigSpec remap_inflight_read(const RTLIL::SigSpec& res);
     // Element struct typespec of an unpacked array of packed structs (see
     // expression.cpp) — nullptr when the element is not a struct.
     // Typespec of the struct MEMBER a hier_path LHS (`hw2reg.tpm_cap`)

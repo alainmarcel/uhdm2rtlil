@@ -3648,6 +3648,38 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         value_spec = reeval_stamped_param_assign(param_assign);
                     if (value_spec.empty())
                         value_spec = import_expression(rhs_expr);
+                    // An OVERRIDE expression Surelog left unfolded is written
+                    // in the PARENT's scope: OpenTitan otp_ctrl's
+                    // `.DataDefault(RndCnstPartInvDefault[PartInfo[k].offset*8
+                    // +: PartInfo[k].size*8])` names the parent's parameter
+                    // (whose Egret value is built from `704'({...})` size casts
+                    // Surelog cannot fold).  Evaluated in the child it was "not
+                    // found" and every partition's DataDefault became all X.
+                    // Retry in the parent RTLIL module / instance.
+                    if (rhs_expr && param_assign->VpiOverriden() &&
+                        !(value_spec.is_fully_const() && value_spec.is_fully_def()) &&
+                        rhs_expr->UhdmType() != uhdmconstant) {
+                        const module_inst* pmi = nullptr;
+                        for (const any* pp = uhdm_module->VpiParent(); pp; pp = pp->VpiParent())
+                            if ((pmi = dynamic_cast<const module_inst*>(pp))) break;
+                        auto pit = pmi ? inst_to_modname_.find(pmi) : inst_to_modname_.end();
+                        RTLIL::Module* pmod = (pit != inst_to_modname_.end())
+                            ? design->module(RTLIL::escape_id(pit->second)) : nullptr;
+                        if (pmod && pmod != this->module) {
+                            RTLIL::Module* saved_m2 = this->module;
+                            const module_inst* saved_ci2 = current_instance;
+                            this->module = pmod;
+                            current_instance = pmi;
+                            RTLIL::SigSpec pv = import_expression(rhs_expr);
+                            this->module = saved_m2;
+                            current_instance = saved_ci2;
+                            if (pv.is_fully_const() && pv.is_fully_def() && pv.size() > 0) {
+                                log("UHDM: parameter '%s' override evaluated in parent %s\n",
+                                    param_name.c_str(), pmod->name.c_str());
+                                value_spec = pv;
+                            }
+                        }
+                    }
                     // NOTE: forcing const-fold here (to collapse operation
                     // RHS like fpnew's `maximum($clog2(..),..)+1`) regressed
                     // perf_counters — the fold machinery mis-values some

@@ -2457,12 +2457,45 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
 
+                // The LHS re-import above cannot always name the written bits:
+                // a var_select LHS (`rf[i][0+:W/2] <= …`, OpenTitan
+                // acc_rf_bignum_ff) imports as a READ — a fresh $shiftx output —
+                // so nothing was recorded and every such process updated the
+                // WHOLE flat array: two processes per element, 9984
+                // conflicting drivers in the Egret acc_core register file.
+                // Fall back to the process body: every action on the temp other
+                // than the full-width hold default (`$0\x = \x`) is a write.
+                auto body_written_bits = [&](RTLIL::Wire* tw, RTLIL::Wire* ow,
+                                             std::set<int>& bits) {
+                    std::function<void(const RTLIL::CaseRule*)> walk =
+                        [&](const RTLIL::CaseRule* cr) {
+                        for (const auto& act : cr->actions) {
+                            if (act.first == RTLIL::SigSpec(tw) &&
+                                act.second == RTLIL::SigSpec(ow))
+                                continue;   // hold default
+                            for (const auto& ch : act.first.chunks())
+                                if (ch.wire == tw)
+                                    for (int b = 0; b < ch.width; b++)
+                                        bits.insert(ch.offset + b);
+                        }
+                        for (auto sw : cr->switches)
+                            for (auto c : sw->cases) walk(c);
+                    };
+                    walk(&yosys_proc->root_case);
+                };
+
                 // Add single update for each signal.  temp_wires is keyed by
                 // the RESOLVED wire name (gen-scope prefix included), so the
                 // escaped lookup is exact.
                 for (const auto& [sig_name, temp_wire] : temp_wires) {
                     RTLIL::Wire* orig_wire = module->wire("\\" + sig_name);
                     if (!orig_wire) continue;
+                    if (!if_written_bits.count(sig_name) &&
+                        temp_wire->width == orig_wire->width) {
+                        std::set<int> bb;
+                        body_written_bits(temp_wire, orig_wire, bb);
+                        if (!bb.empty()) if_written_bits[sig_name] = bb;
+                    }
                     auto wb = if_written_bits.find(sig_name);
                     if (wb != if_written_bits.end() &&
                         (int)wb->second.size() < orig_wire->width &&
@@ -10693,6 +10726,13 @@ RTLIL::SigSpec UhdmImporter::compound_lhs_current(const UHDM::any* lhs_expr,
         if (auto e = dynamic_cast<const UHDM::expr*>(lhs_expr))
             cur = import_expression(e, comb_read_map());
         comb_lhs_keep_base = saved;
+        // A multi-index var_select read (`key_state_d[i][0] ^= share0`,
+        // OpenTitan keymgr_ctrl with KmacEnMasking=1) slices the RAW base
+        // wire when the in-flight value is no longer a whole wire (after the
+        // default and earlier element writes it is a composite): the XOR then
+        // read the block's own output — 512 combinational loops in the Egret
+        // keymgr.  Rewrite such raw-wire bits onto the in-flight value.
+        cur = remap_inflight_read(cur);
         if (cur.size() == lhs.size()) return cur;
     }
     return lhs;
@@ -12005,6 +12045,12 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         if (pe_low < 0) return false;
         RTLIL::Wire* fw0 = module->wire(RTLIL::escape_id(
             base_name + "[" + std::to_string(pe_low) + "]"));
+        // expanded_array_low can report element wires this bare lookup does
+        // not see (ibex_cs_registers with PMPEnable=1, as in the OpenTitan
+        // Egret top: `pmp_cfg_wdata[i].mode = PMP_MODE_TOR;` inside a genvar
+        // loop's always_comb case) — the unchecked dereference segfaulted
+        // read_uhdm.  Decline and let the generic write paths handle it.
+        if (!fw0) return false;
         pe_w = fw0->width;
         while (module->wire(RTLIL::escape_id(
                    base_name + "[" + std::to_string(pe_low + pe_n) + "]")))
