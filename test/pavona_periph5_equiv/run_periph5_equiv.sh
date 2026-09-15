@@ -54,18 +54,24 @@ run_one() {
   # ORDER — which differs between frontends (false cex) — so the miter assumes
   # the two clocks never rise in the same step (scripts/add_clk_excl.py) and
   # the SAT runs with -set-assumes.  seq counts GLOBAL steps (2 per clock).
-  # The 1024x36 RAM as FFs is SAT-hard at any depth (no verdict in 1800 s
-  # even at seq=4), so the same file may carry a second line
-  # `memsize <cell glob> <words>`: the $mem_v2 matching the glob is shrunk to
-  # that many words on BOTH sides before mapping (setparam SIZE) — a
-  # bounded-address abstraction of the RAM identical for the two frontends
-  # (words beyond it read as constants); the co-sim keeps the full depth.
+  # A big RAM mapped to FFs is SAT-hard at any depth (spid_dpram's 1024x36:
+  # no verdict in 1800 s even at seq=4; usbdev's 512x32 packet buffer: the
+  # same), so `wrappers/memsize_<m>.txt` — or a `memsize` line in the
+  # clk_excl file — holds `memsize <cell glob> <words>`: the $mem_v2 matching
+  # the glob is shrunk to that many words on BOTH sides before mapping
+  # (setparam SIZE) — a bounded-address abstraction of the RAM identical for
+  # the two frontends (addresses beyond it alias no stored word); the co-sim
+  # keeps the full depth.
+  local MEMS='' ms=''
+  for f in "$HERE/wrappers/memsize_$m.txt" "$HERE/wrappers/clk_excl_$m.txt"; do
+    [ -z "$ms" ] && [ -f "$f" ] && ms=$(grep '^memsize' "$f" | head -1)
+  done
+  [ -n "$ms" ] && MEMS="setparam -set SIZE $(echo "$ms" | awk '{print $3}') c:$(echo "$ms" | awk '{print $2}') t:\$mem_v2 %i; "
   local FLOW='flatten; proc; opt; memory; async2sync; delete t:$check t:$assert t:$assume t:$print'
+  [ -n "$MEMS" ] && FLOW="flatten; proc; opt; memory -nomap; ${MEMS}memory_map; opt; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print"
   local CSTR='' SATX=''
   if [ -f "$HERE/wrappers/clk_excl_$m.txt" ]; then
     local clks; clks=$(grep -v '^memsize' "$HERE/wrappers/clk_excl_$m.txt" | head -1)
-    local MEMS=''; local ms; ms=$(grep '^memsize' "$HERE/wrappers/clk_excl_$m.txt" | head -1)
-    [ -n "$ms" ] && MEMS="setparam -set SIZE $(echo "$ms" | awk '{print $3}') c:$(echo "$ms" | awk '{print $2}'); "
     FLOW="flatten; proc; opt; memory -nordff -nomap; ${MEMS}clk2fflogic; memory_map -formal; opt_clean; delete t:\$check t:\$assert t:\$assume t:\$print"
     CSTR="write_rtlil miter.il
 !python3 $HERE/scripts/add_clk_excl.py miter.il $(for c in $clks; do printf 'in_%s ' "$c"; done)

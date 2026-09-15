@@ -27,6 +27,11 @@ import re, sys, os, subprocess
 
 mod    = sys.argv[1]
 CYCLES = int(sys.argv[2]) if len(sys.argv) > 2 else 400
+# Self-driving tops run a fixed program that needs a minimum length to reach
+# its end (usbdev_selftest: done after ~2750 cycles) — a shorter sweep
+# default would stop the compare half-way through the USB transactions.
+MIN_CYCLES = {"usbdev_selftest": 3200}
+CYCLES = max(CYCLES, MIN_CYCLES.get(sys.argv[1], 0))
 SEED   = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 HERE   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # pavona_periph5_equiv
 _ROOT  = os.environ.get("UHDM2RTLIL_ROOT", os.path.abspath(
@@ -205,6 +210,12 @@ allck = ", ".join(f".{c}({c})" for c in clks) + \
 conn      = ", ".join(f".{n}({n})" for n, _ in ins)                 # gold/gate (flat)
 conn_rtl  = ", ".join(f".{n}({n + '__ra' if n in arr else n})" for n, _ in ins)
 head  = (allck + ", ") if allck else ""
+# Port list from the non-empty groups: a self-driving top (usbdev_selftest)
+# has only clock/reset inputs, and the old `{head}{conn}, {outs}` template
+# left an empty positional connection (`.rst_ni(rst_ni), , .rdata_o(...)`)
+# that Verilator rejects.
+def _ports(*groups):
+    return ", ".join(g for g in groups if g)
 # Output binding: gold/gate flat (g_/s_); the rtl instance's array outputs bind
 # to the array intermediate r_<name>__ra (whose concat drives flat r_<name>).
 def bind(p):
@@ -251,9 +262,9 @@ module tb;
   integer i, seed_r, g_err = 0, s_err = 0;
 {seen}
 {actdecl}
-  {TOP} rtl ({head}{conn_rtl}, {bind('r')});
-  gold_{TOP} gold({head}{conn}, {bind('g')});
-  gate_{TOP} gate({head}{conn}, {bind('s')});
+  {TOP} rtl ({_ports(allck, conn_rtl, bind('r'))});
+  gold_{TOP} gold({_ports(allck, conn, bind('g'))});
+  gate_{TOP} gate({_ports(allck, conn, bind('s'))});
 {clkgen}
   initial begin
     seed_r = {SEED}; i = $random(seed_r);
