@@ -1,0 +1,1 @@
+memsize *u_memory_1p*u_mem.mem 64

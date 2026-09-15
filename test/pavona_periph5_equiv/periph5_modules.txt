@@ -10,7 +10,8 @@ usb_fs_nb_pe                          4  300  proven    # usbdev
 usb_fs_rx                             4  300  proven    # usbdev
 usb_fs_tx                             4  300  proven    # usbdev
 usb_fs_tx_mux                         4  300  proven    # usbdev
-usbdev                                4  1800 timeout   # usbdev: the full device top (packet buffer, 12 endpoints, link state) is SAT-hard at seq=4 (no verdict in 1800 s) — adjudicated by the co-sim
+usbdev                                4  900  proven    # usbdev: the full device top — packet-buffer RAM bounded to 64 words (wrappers/memsize_usbdev.txt; 512 words: no verdict in 1800 s, 256: 873 s, 64: 135 s)
+usbdev_selftest                       4  900  proven    # usbdev: self-driving top (wrappers/flat_usbdev_selftest.sv, scripts/gen_usbdev_selftest.py) — TL-UL master + USB FS host: SETUP/IN/OUT transactions; the co-sim is the deep check (3200 cycles), the miter bounds the RAM like usbdev
 usbdev_aon_wake                       4  300  proven    # usbdev
 usbdev_counter                        4  300  proven    # usbdev
 usbdev_iomux                          4  300  proven    # usbdev
