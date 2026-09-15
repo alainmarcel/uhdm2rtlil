@@ -1981,43 +1981,67 @@ genscope_path:;
     std::string sbase = (br == std::string::npos) ? sname : sname.substr(0, br);
     if (sbase.empty()) return RTLIL::SigSpec();
 
+    // Definition by name: one AllModules index for the whole import (this
+    // runs once per stamped parameter of every generate-scope instance).
+    if (all_modules_by_defname_.empty())
+        for (auto m : *uhdm_design->AllModules())
+            all_modules_by_defname_.emplace(std::string(m->VpiDefName()), m);
     const UHDM::module_inst* def = nullptr;
-    std::string dn = std::string(parent_mi->VpiDefName());
-    for (auto m : *uhdm_design->AllModules())
-        if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+    {
+        auto dmi = all_modules_by_defname_.find(std::string(parent_mi->VpiDefName()));
+        if (dmi != all_modules_by_defname_.end()) def = dmi->second;
+    }
     if (!def || def == parent_mi) return RTLIL::SigSpec();
 
     // Every param_assign of the definition, collected ONCE per definition
     // (Egret's otp_ctrl asks for dozens of distinct stamped parameters of the
     // same definition); the suffix match then scans that list.
-    struct PACollector : public UHDM::UhdmListener {
-        std::vector<const UHDM::param_assign*>* out;
-        void enterParam_assign(const UHDM::param_assign* const o) override {
-            if (o->Lhs()) out->push_back(o);
-        }
-    };
+    // Indexed by the last two segments of the parameter's full name
+    // (`<scope>.<param>`), keeping the FIRST occurrence in listener order —
+    // the same answer the former linear suffix scan returned, which copied
+    // every parameter's full name on every call (quadratic on large tops).
     auto dit = stamped_pa_def_index_.find(def);
     if (dit == stamped_pa_def_index_.end()) {
         std::vector<const UHDM::param_assign*> all;
-        PACollector pc;
-        pc.out = &all;
-        confine_listener_to_def(pc, uhdm_design, def);
-        pc.listenAny(def);
-        dit = stamped_pa_def_index_.emplace(def, std::move(all)).first;
+        // Direct structural walk of the definition: its own param_assigns and
+        // those of its (nested) generate scopes.  A UhdmListener walk here
+        // followed references out of the definition and visited the WHOLE
+        // design (~790k param_assigns on Dragonfly, 8 s per definition).
+        std::function<void(const UHDM::VectorOfparam_assign*)> take =
+            [&](const UHDM::VectorOfparam_assign* v) {
+                if (v) for (auto o : *v) if (o->Lhs()) all.push_back(o);
+            };
+        std::function<void(const UHDM::VectorOfgen_scope_array*)> walk_gsa =
+            [&](const UHDM::VectorOfgen_scope_array* v) {
+                if (!v) return;
+                for (auto ga : *v) {
+                    if (!ga->Gen_scopes()) continue;
+                    for (auto gsc : *ga->Gen_scopes()) {
+                        take(gsc->Param_assigns());
+                        walk_gsa(gsc->Gen_scope_arrays());
+                    }
+                }
+            };
+        take(def->Param_assigns());
+        walk_gsa(def->Gen_scope_arrays());
+        std::unordered_map<std::string, const UHDM::param_assign*> idx;
+        for (auto o : all) {
+            auto lp = dynamic_cast<const UHDM::parameter*>(o->Lhs());
+            if (!lp) continue;
+            std::string_view fn = lp->VpiFullName();
+            size_t d1 = fn.rfind('.');
+            if (d1 == std::string_view::npos || d1 == 0) continue;
+            size_t d2 = fn.rfind('.', d1 - 1);
+            // The suffix match required a '.' before <scope>.
+            if (d2 == std::string_view::npos) continue;
+            idx.emplace(std::string(fn.substr(d2 + 1)), o);
+        }
+        dit = stamped_pa_def_index_.emplace(def, std::move(idx)).first;
     }
     struct { const UHDM::param_assign* found = nullptr; } pf;
     {
-        const std::string suffix = "." + sbase + "." + pname;
-        for (auto o : dit->second) {
-            auto lp = dynamic_cast<const UHDM::parameter*>(o->Lhs());
-            if (!lp) continue;
-            std::string fn = std::string(lp->VpiFullName());
-            if (fn.size() >= suffix.size() &&
-                fn.compare(fn.size() - suffix.size(), suffix.size(), suffix) == 0) {
-                pf.found = o;
-                break;
-            }
-        }
+        auto hit = dit->second.find(sbase + "." + pname);
+        if (hit != dit->second.end()) pf.found = hit->second;
     }
     if (!pf.found || !pf.found->Rhs()) return RTLIL::SigSpec();
     auto rut = pf.found->Rhs()->UhdmType();
