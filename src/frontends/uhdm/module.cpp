@@ -1794,6 +1794,41 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
 }
 
 // Import a parameter
+// A UhdmListener started on ONE module definition follows parent and
+// reference links (VpiParent, Actual_group, Instance, ...) up to the design
+// root and from there walks EVERY module, package and include record: each
+// lookup below became a whole-design traversal.  reeval_stamped_param_assign
+// runs one per stamped parameter of every instance, so the OpenTitan Egret
+// top sat in otp_ctrl's param_assigns for over 20 minutes (slang elaborates
+// the whole top in 27 s).  Pre-mark everything outside the definition as
+// visited so the walk stays inside it.
+static void confine_listener_to_def(UHDM::UhdmListener& l, const UHDM::design* d,
+                                    const UHDM::any* def) {
+    if (!d) return;
+    auto& v = l.getVisited();
+    v.insert(d);
+    if (d->AllModules())
+        for (auto m : *d->AllModules()) if (m != def) v.insert(m);
+    if (d->TopModules())
+        for (auto m : *d->TopModules()) if (m != def) v.insert(m);
+    if (d->AllPackages())
+        for (auto pk : *d->AllPackages()) if (pk != def) v.insert(pk);
+    // The ELABORATED package copies (reached through enum / struct typespec
+    // parents) and the include records are separate objects.
+    if (d->TopPackages())
+        for (auto pk : *d->TopPackages()) if (pk != def) v.insert(pk);
+    if (d->Include_file_infos())
+        for (auto inc : *d->Include_file_infos()) v.insert(inc);
+    if (d->AllClasses())
+        for (auto c : *d->AllClasses()) if (c != def) v.insert(c);
+    if (d->AllInterfaces())
+        for (auto i : *d->AllInterfaces()) if (i != def) v.insert(i);
+    if (d->AllPrograms())
+        for (auto pg : *d->AllPrograms()) if (pg != def) v.insert(pg);
+    if (d->AllUdps())
+        for (auto u : *d->AllUdps()) if (u != def) v.insert(u);
+}
+
 RTLIL::SigSpec UhdmImporter::reeval_stamped_param_assign(const UHDM::param_assign* pa) {
     // The elaborated Rhs is a value-carrying var STAMP whose element values
     // Surelog clones as garbage (fpnew_top: 4 of the 5 FmtUnitTypes stamps
@@ -1952,22 +1987,38 @@ genscope_path:;
         if (std::string(m->VpiDefName()) == dn) { def = m; break; }
     if (!def || def == parent_mi) return RTLIL::SigSpec();
 
-    struct PAFinder : public UHDM::UhdmListener {
-        std::string suffix;
-        const UHDM::param_assign* found = nullptr;
+    // Every param_assign of the definition, collected ONCE per definition
+    // (Egret's otp_ctrl asks for dozens of distinct stamped parameters of the
+    // same definition); the suffix match then scans that list.
+    struct PACollector : public UHDM::UhdmListener {
+        std::vector<const UHDM::param_assign*>* out;
         void enterParam_assign(const UHDM::param_assign* const o) override {
-            if (found || !o->Lhs()) return;
-            auto lp = dynamic_cast<const UHDM::parameter*>(o->Lhs());
-            if (!lp) return;
-            std::string fn = std::string(lp->VpiFullName());
-            if (fn.size() >= suffix.size() &&
-                fn.compare(fn.size() - suffix.size(), suffix.size(), suffix) == 0)
-                found = o;
+            if (o->Lhs()) out->push_back(o);
         }
     };
-    PAFinder pf;
-    pf.suffix = "." + sbase + "." + pname;
-    pf.listenAny(def);
+    auto dit = stamped_pa_def_index_.find(def);
+    if (dit == stamped_pa_def_index_.end()) {
+        std::vector<const UHDM::param_assign*> all;
+        PACollector pc;
+        pc.out = &all;
+        confine_listener_to_def(pc, uhdm_design, def);
+        pc.listenAny(def);
+        dit = stamped_pa_def_index_.emplace(def, std::move(all)).first;
+    }
+    struct { const UHDM::param_assign* found = nullptr; } pf;
+    {
+        const std::string suffix = "." + sbase + "." + pname;
+        for (auto o : dit->second) {
+            auto lp = dynamic_cast<const UHDM::parameter*>(o->Lhs());
+            if (!lp) continue;
+            std::string fn = std::string(lp->VpiFullName());
+            if (fn.size() >= suffix.size() &&
+                fn.compare(fn.size() - suffix.size(), suffix.size(), suffix) == 0) {
+                pf.found = o;
+                break;
+            }
+        }
+    }
     if (!pf.found || !pf.found->Rhs()) return RTLIL::SigSpec();
     auto rut = pf.found->Rhs()->UhdmType();
     if (rut == uhdmpacked_array_var || rut == uhdmstruct_var)
@@ -2470,7 +2521,42 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     
     // Check if the module definition exists
     RTLIL::IdString module_id = RTLIL::escape_id(module_name);
-    if (!design->module(module_id)) {
+    // A module under the name computed HERE can exist while this instance's
+    // real module is a different one: import_instance builds the name from
+    // the instance's Param_assigns only, import_module from the full
+    // parameter set.  OpenTitan alert_handler's four `gen_classes[k].u_accu`
+    // (no overrides) computed plain `alert_handler_accu`; the first import
+    // registered `$paramod\alert_handler_accu\...` AND imported the bare
+    // definition under the plain name, so classes 1..3 found that plain
+    // DEFINITION module and bound to it — its prim_count cell was left
+    // unspecialized and `hierarchy` rejected the Egret top.  Run import_module
+    // whenever this instance has no recorded module name; for an existing
+    // module it only records the name and returns.
+    bool need_import = !design->module(module_id) ||
+                       !inst_to_modname_.count(uhdm_inst);
+    if (design->module(module_id) && need_import) {
+        RTLIL::Module* saved_module = module;
+        const module_inst* saved_instance = current_instance;
+        auto saved_wire_map = wire_map;
+        auto saved_name_map = name_map;
+        auto saved_net_map = net_map;
+        auto saved_gen_scope_stack = gen_scope_stack;
+        auto saved_initial_signal_assignments = initial_signal_assignments;
+        wire_map.clear();
+        name_map.clear();
+        net_map.clear();
+        gen_scope_stack.clear();
+        import_module(uhdm_inst);
+        module = saved_module;
+        current_instance = saved_instance;
+        wire_map = saved_wire_map;
+        name_map = saved_name_map;
+        net_map = saved_net_map;
+        gen_scope_stack = saved_gen_scope_stack;
+        initial_signal_assignments = saved_initial_signal_assignments;
+        need_import = false;
+    }
+    if (need_import) {
         // Module doesn't exist - import it using the elaborated UHDM instance
         // which has parameter-resolved port widths and fully elaborated generate scopes
         log("UHDM: Module %s doesn't exist, importing from elaborated instance\n", module_name.c_str());
@@ -4331,6 +4417,7 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                     if (def) {
                         TypeNameFinder tf;
                         tf.target = var_name;
+                        confine_listener_to_def(tf, uhdm_design, def);
                         tf.listenAny(def);
                         tname = tf.found;
                     }

@@ -822,6 +822,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // named-LHS branch SSA-renames it — the compound-assignment
             // combine below must read this, not the freshly-allocated wire.
             RTLIL::SigSpec ssa_prev_value;
+            // Set when a SLICE write already folded a compound operator into
+            // the merged value (the generic compound combine below would
+            // otherwise apply it to the whole merged word).
+            bool compound_applied = false;
             // Size the RHS to the LHS *field* width for a struct-field write
             // (`decode.gpr = '{...}`).  Otherwise the surrounding function-call
             // context (the WHOLE return struct — e.g. rp32's 306-bit dec_t)
@@ -926,6 +930,69 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                  lhs_utype_named == uhdmbyte_var ||
                                  lhs_utype_named == uhdmenum_var ||
                                  lhs_utype_named == uhdmstruct_var);
+            // SLICE write (`key_out[15 -: 4] = SBOX4[key_out[15 -: 4]]`,
+            // `key_out[19:15] ^= round_idx`, `box[x][y] = …`) on a mapped
+            // function local: writing the slice of the mapped wire in place
+            // made the RHS — which reads that same wire — see the process's
+            // FINAL value, a combinational loop (prim_cipher_pkg's PRESENT key
+            // schedules: 264 `check` loops in the OpenTitan Egret otp_ctrl,
+            // Verilator DIDNOTCONVERGE; the SAT miter still proved it).  Build
+            // the whole updated value (old value with the slice replaced) on a
+            // fresh SSA wire and remap the local, as the constant bit-select
+            // write already does.  Returns false when the base is not an
+            // SSA-able local (return value, output formal, loop accumulator).
+            auto ssa_slice_write = [&](const std::string& base_name, int offset, int width) -> bool {
+                if (base_name == func_name) return false;
+                if (loop_accumulators.count(base_name)) return false;
+                auto mit = input_mapping.find(base_name);
+                if (mit == input_mapping.end()) return false;
+                RTLIL::SigSpec old_val = mit->second;
+                if (old_val.is_wire() &&
+                    old_val.as_wire()->name.str().find(".$result") != std::string::npos)
+                    return false;
+                if (old_val.is_wire() && old_val.as_wire() == result_wire) return false;
+                FunctionCallContext* fctx3 = getCurrentFunctionContext();
+                if (fctx3 && fctx3->func_def && fctx3->func_def->Io_decls())
+                    for (auto iod : *fctx3->func_def->Io_decls())
+                        if (std::string(iod->VpiName()) == base_name &&
+                            iod->VpiDirection() != vpiInput)
+                            return false;
+                if (offset < 0 || width <= 0 || offset + width > old_val.size()) return false;
+                RTLIL::SigSpec data = rhs_sig;
+                if (data.size() > width) data = data.extract(0, width);
+                else if (data.size() < width) data.extend_u0(width, false);
+                // Compound operator on the SLICE's value-so-far.
+                RTLIL::SigSpec cur = old_val.extract(offset, width);
+                bool did = true;
+                switch (assign->VpiOpType()) {
+                case vpiBitOrOp:  data = module->Or (NEW_ID, cur, data); break;
+                case vpiBitAndOp: data = module->And(NEW_ID, cur, data); break;
+                case vpiBitXorOp: data = module->Xor(NEW_ID, cur, data); break;
+                case vpiAddOp:    data = module->Add(NEW_ID, cur, data); break;
+                case vpiSubOp:    data = module->Sub(NEW_ID, cur, data); break;
+                case vpiMultOp:   data = module->Mul(NEW_ID, cur, data); break;
+                case vpiDivOp:    data = module->Div(NEW_ID, cur, data); break;
+                case vpiModOp:    data = module->Mod(NEW_ID, cur, data); break;
+                case vpiLShiftOp: data = module->Shl(NEW_ID, cur, data); break;
+                case vpiRShiftOp: data = module->Shr(NEW_ID, cur, data); break;
+                default: did = false;
+                }
+                if (did) {
+                    if (data.size() > width) data = data.extract(0, width);
+                    compound_applied = true;
+                }
+                RTLIL::SigSpec merged = old_val;
+                merged.replace(offset, data);
+                RTLIL::Wire* ssa_w = module->addWire(NEW_ID, old_val.size());
+                add_src_attribute(ssa_w->attributes, assign);
+                lhs_sig = RTLIL::SigSpec(ssa_w);
+                rhs_sig = merged;
+                input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
+                if (mode_debug)
+                    log("UHDM: slice write %s[%d +: %d] -> SSA rename\n",
+                        base_name.c_str(), offset, width);
+                return true;
+            };
             if (lhs_is_named) {
                 {
                     std::string lhs_name = std::string(assign->Lhs()->VpiName());
@@ -1072,7 +1139,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
 
                     if (base_spec.size() > 0 && offset + width <= base_spec.size()) {
-                        lhs_sig = base_spec.extract(offset, width);
+                        if (!ssa_slice_write(base_name, offset, width))
+                            lhs_sig = base_spec.extract(offset, width);
                         if (mode_debug)
                             log("  process_stmt_to_case: part-select LHS %s[%d:%d] → offset=%d width=%d\n",
                                 base_name.c_str(), left_val, right_val, offset, width);
@@ -1119,7 +1187,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                     if (offset >= 0 && base_spec.size() > 0 &&
                         offset + width_val <= base_spec.size()) {
-                        lhs_sig = base_spec.extract(offset, width_val);
+                        if (!ssa_slice_write(base_name, offset, width_val))
+                            lhs_sig = base_spec.extract(offset, width_val);
                         if (mode_debug)
                             log("  process_stmt_to_case: indexed part-select LHS "
                                 "%s[%d +: %d]\n", base_name.c_str(), offset, width_val);
@@ -1153,7 +1222,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                     if (off >= 0 && w > 0 && base_spec.size() > 0 &&
                         off + w <= base_spec.size()) {
-                        lhs_sig = base_spec.extract(off, w);
+                        if (!ssa_slice_write(base_name, off, w))
+                            lhs_sig = base_spec.extract(off, w);
                         if (mode_debug)
                             log("  process_stmt_to_case: var-select LHS %s → "
                                 "[%d +: %d]\n", base_name.c_str(), off, w);
@@ -1472,7 +1542,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // LHS's current value so that unrolled-loop accumulation
             // (`encode |= v[i] ? ... : '0`) chains across iterations instead of
             // each iteration overwriting the previous one.
-            if (lhs_sig.size() > 0 && !skip_assignment) {
+            if (lhs_sig.size() > 0 && !skip_assignment && !compound_applied) {
                 // The accumulator's current value: with SSA renaming it is
                 // the mapping value from BEFORE this assignment (the fresh
                 // LHS wire has no value yet — reading it would recreate the
@@ -9725,22 +9795,29 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // `generic_counter_q[MHPMCounterNum:1]`) starts at 1 — probe for the first
     // declared element instead of requiring `[0]`.
     if (!module->memories.count(mem_id)) {
+        // Element wires of an array declared inside a GENERATE block are
+        // scoped (`\gen_regs.val_q[0]`): the bare-name probe missed them, so a
+        // DYNAMIC read fell through to the plain wire lookup and aborted
+        // ("Could not find wire 'tmatch_value_q' for bit select" — lowRISC
+        // ibex_cs_registers' debug triggers in the OpenTitan Egret top).  The
+        // constant-index path already resolved them through the scope.
+        auto elem_wire = [&](int k) -> RTLIL::Wire* {
+            std::string en = signal_name + "[" + std::to_string(k) + "]";
+            if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(en))) return w;
+            return find_wire_in_scope(en);
+        };
         int arr_low = -1;
         for (int probe = 0; probe <= 64; probe++)
-            if (module->wire(RTLIL::escape_id(
-                    signal_name + "[" + std::to_string(probe) + "]"))) {
+            if (elem_wire(probe)) {
                 arr_low = probe;
                 break;
             }
-        RTLIL::Wire* first_elem = arr_low < 0 ? nullptr
-            : module->wire(RTLIL::escape_id(
-                  signal_name + "[" + std::to_string(arr_low) + "]"));
+        RTLIL::Wire* first_elem = arr_low < 0 ? nullptr : elem_wire(arr_low);
         if (first_elem) {
             int elem_w = first_elem->width;
             // Count elements from the low bound up
             int num_elems = 0;
-            while (module->wire(RTLIL::escape_id(
-                       signal_name + "[" + std::to_string(arr_low + num_elems) + "]")))
+            while (elem_wire(arr_low + num_elems))
                 num_elems++;
 
             RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
@@ -9792,7 +9869,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     if (current_comb_values.count(last_name))
                         result = current_comb_values.at(last_name);
                     else {
-                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(last_name));
+                        RTLIL::Wire* w = elem_wire(last);
                         result = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
                     }
                     start = last - 1;
@@ -9804,7 +9881,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     if (current_comb_values.count(ename))
                         elem_val = current_comb_values.at(ename);
                     else {
-                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(ename));
+                        RTLIL::Wire* w = elem_wire(i);
                         elem_val = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
                     }
                     // sel = (idx == i)
@@ -9959,6 +10036,13 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             // at package import.  signal_name is the `pkg::NAME` key.
             if (!got) {
                 auto pit = package_parameter_map.find(signal_name);
+                // An UNQUALIFIED reference from inside the package itself
+                // (`PRESENT_SBOX4[key_out[127 -: 4]]` in prim_cipher_pkg's
+                // present_update_key*, reached when an Egret top inlines
+                // prim_present) names the bare parameter, but the table is
+                // keyed by `pkg::NAME` — the parameter's full name.
+                if (pit == package_parameter_map.end())
+                    pit = package_parameter_map.find(std::string(param->VpiFullName()));
                 if (pit != package_parameter_map.end() && pit->second.size() > 1) {
                     param_value = pit->second;
                     got = true;

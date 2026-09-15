@@ -366,6 +366,10 @@ struct UhdmImporter {
     // size each field to its actual (possibly UNEQUAL) member width instead of
     // assuming ctx_width/field_count.  Null when unknown.
     const UHDM::typespec* expression_context_typespec = nullptr;
+    // reeval_stamped_param_assign: every param_assign of a definition,
+    // collected once per definition (the collection is a subtree walk).
+    std::map<const UHDM::any*, std::vector<const UHDM::param_assign*>>
+        stamped_pa_def_index_;
 
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated
