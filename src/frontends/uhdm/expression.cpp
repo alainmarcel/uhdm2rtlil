@@ -6113,6 +6113,38 @@ RTLIL::SigSpec UhdmImporter::remap_inflight_read(const RTLIL::SigSpec& res) {
     return remap_sig_inflight(res, current_comb_values);
 }
 
+// Declared typespec of the parameter `name` visible from `scope` (the
+// instance's own parameters, then package parameters).  Returns nullptr when
+// no unique declaration is found.
+UHDM::any* UhdmImporter::find_param_decl_typespec(std::string_view name, const UHDM::any* scope)
+{
+    auto ts_of = [&](const UHDM::any* p) -> const UHDM::typespec* {
+        if (auto pp = dynamic_cast<const UHDM::parameter*>(p))
+            if (pp->Typespec()) return pp->Typespec()->Actual_typespec();
+        return nullptr;
+    };
+    for (const UHDM::any* sc = scope; sc; sc = sc->VpiParent()) {
+        if (auto inst = dynamic_cast<const UHDM::instance*>(sc)) {
+            if (inst->Parameters())
+                for (auto p : *inst->Parameters())
+                    if (p->VpiName() == name)
+                        if (auto t = ts_of(p)) return (UHDM::any*)t;
+            break;
+        }
+    }
+    const UHDM::typespec* found = nullptr;
+    if (uhdm_design && uhdm_design->AllPackages())
+        for (auto pk : *uhdm_design->AllPackages())
+            if (pk->Parameters())
+                for (auto p : *pk->Parameters())
+                    if (p->VpiName() == name)
+                        if (auto t = ts_of(p)) {
+                            if (found && found != t) return nullptr;
+                            found = t;
+                        }
+    return (UHDM::any*)found;
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -6927,6 +6959,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         !has_param_replication_count && !has_gen_scope_param_operand &&
         !has_missized_enum_operand) {
         ExprEval eval;
+        // Element select on a multi-dimensional packed PARAMETER
+        // (`localparam logic [1:0][31:0] ADDR_MASK_PERI`): ExprEval reads the
+        // parameter's folded value constant, which has lost the packed
+        // dimensions, and without the declared typespec it degrades `P[0]` to
+        // BIT 0 — `~(ADDR_MASK_PERI[0])` folded to 1'b0 and the Egret
+        // xbar_main peripheral window decoded every request to the error
+        // responder.  Hand ExprEval the declared typespec by name.
+        eval.setGetTypespecFunctor([this](std::string_view name, const any* ein,
+                                          const any*) -> any* {
+            return find_param_decl_typespec(name, ein);
+        });
         bool invalidValue = false;
         expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
         // invalidValue MUST gate the result: a partially-failed reduction
@@ -10395,7 +10438,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     // typespec, so bitselect_outer_dim covers both; without the
                     // typespec fallback c[x] kept elem_w=1 and only the LSB read.
                     int elem_w = 1, outer_lo = 0;
-                    if (auto ag = uhdm_bit->Actual_group())
+                    const UHDM::any* ag = uhdm_bit->Actual_group();
+                    if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
+                    if (ag)
                         bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     int off = (idx - outer_lo) * elem_w;
                     if (off >= 0 && off + elem_w <= it->second.size()) {
@@ -10411,7 +10456,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // a $shiftx sized by the formal's outer dimension.
                 {
                     int elem_w = 1, outer_lo = 0;
-                    if (auto ag = uhdm_bit->Actual_group())
+                    const UHDM::any* ag = uhdm_bit->Actual_group();
+                    if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
+                    if (ag)
                         bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     if (elem_w <= 0 || elem_w > it->second.size()) elem_w = 1;
                     int iw = std::max(GetSize(index), 32);
@@ -11116,6 +11163,19 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     // +: LcStateSize] = lc_otp_program_i.state` drove 88 of 704 bits in the
     // Egret top).  Scale by the element width and map through the outer range.
     int pk_ew = 1, pk_ol = 0, pk_or = 0;
+    // Function formal / local base (from input_mapping, no module wire): the
+    // geometry comes from its declaration (otp_ctrl_part_pkg's
+    // named_broadcast_assign reads `part_buf_data[HwCfg0Offset +: …]` from a
+    // `logic [2047:0][7:0]` formal — the slice was taken in BITS).
+    if (!geom_wire && input_mapping && !base_signal_name.empty() &&
+        input_mapping->count(base_signal_name)) {
+        if (auto decl = find_enclosing_tf_decl(uhdm_indexed, base_signal_name)) {
+            int ew = 1, lo = 0, hi = 0;
+            if (bitselect_outer_dim(decl, base.size(), ew, lo, &hi) && ew > 1 && hi >= 0) {
+                pk_ew = ew; pk_ol = hi; pk_or = lo;
+            }
+        }
+    }
     if (geom_wire && geom_wire->width == base.size()) {
         auto& ga = geom_wire->attributes;
         auto ew_id = RTLIL::escape_id("packed_elem_width");
