@@ -174,6 +174,98 @@ void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
     }
 }
 
+// `acc[k].field = …` inside a function body, `acc` a function-local packed
+// array of structs.  The hier_path's bit_select base carries no Actual_group /
+// typespec, so the generic struct-field lookup failed and the write was
+// dropped (otp_ctrl_part_pkg::named_part_access_pre left every
+// read_lock/write_lock at its MuBi8False default).  Resolve the element
+// struct and the array range from the local's declaration.  Returns the
+// mapped base name and the member's [off +: w] slice of the flat value.
+bool UhdmImporter::resolve_struct_array_elem_member_lhs(
+    const UHDM::assignment* assign, const UHDM::hier_path* hp,
+    std::map<std::string, RTLIL::SigSpec>& mapping,
+    std::string& base_name, int& off, int& width)
+{
+    auto pe = hp ? hp->Path_elems() : nullptr;
+    if (!pe || pe->size() != 2 || (*pe)[0]->UhdmType() != uhdmbit_select)
+        return false;
+    auto bs = any_cast<const UHDM::bit_select*>((*pe)[0]);
+    base_name = std::string(bs->VpiName());
+    std::string field_name = std::string((*pe)[1]->VpiName());
+    auto bit = mapping.find(base_name);
+    if (bit == mapping.end() || !bs->VpiIndex()) return false;
+    const UHDM::packed_array_var* pav = nullptr;
+    auto scan_vars = [&](const VectorOfvariables* vars) {
+        if (!vars || pav) return;
+        for (auto v : *vars)
+            if (v->UhdmType() == uhdmpacked_array_var &&
+                std::string(v->VpiName()) == base_name) {
+                pav = any_cast<const UHDM::packed_array_var*>(v);
+                return;
+            }
+    };
+    for (const any* p = assign->VpiParent(); p && !pav; p = p->VpiParent()) {
+        if (p->UhdmType() == uhdmbegin)
+            scan_vars(any_cast<const UHDM::begin*>(p)->Variables());
+        else if (p->UhdmType() == uhdmnamed_begin)
+            scan_vars(any_cast<const UHDM::named_begin*>(p)->Variables());
+        else if (p->UhdmType() == uhdmfunction) {
+            scan_vars(any_cast<const UHDM::function*>(p)->Variables());
+            break;
+        }
+    }
+    if (!pav)
+        if (FunctionCallContext* fc = getCurrentFunctionContext())
+            if (fc->func_def)
+                scan_vars(fc->func_def->Variables());
+    if (!pav || !pav->Elements() || pav->Elements()->empty() ||
+        !pav->Ranges() || pav->Ranges()->size() != 1)
+        return false;
+    const UHDM::struct_typespec* est = nullptr;
+    if (auto ev = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+        if (auto ets = ev->Typespec())
+            if (auto a = ets->Actual_typespec())
+                if (a->UhdmType() == uhdmstruct_typespec)
+                    est = any_cast<const UHDM::struct_typespec*>(a);
+    if (!est || !est->Members()) return false;
+    auto rg = (*pav->Ranges())[0];
+    RTLIL::SigSpec ls = import_expression(rg->Left_expr(), &mapping);
+    RTLIL::SigSpec rs = import_expression(rg->Right_expr(), &mapping);
+    RTLIL::SigSpec is = import_expression(bs->VpiIndex(), &mapping);
+    if (!ls.is_fully_const() || !ls.is_fully_def() || !rs.is_fully_const() ||
+        !rs.is_fully_def() || !is.is_fully_const() || !is.is_fully_def())
+        return false;
+    // LSB-first: the struct's last member is the LSB.
+    int elem_w = 0, field_off = 0, field_w = 0;
+    bool found = false;
+    for (int i = (int)est->Members()->size() - 1; i >= 0; i--) {
+        auto m = (*est->Members())[i];
+        int mw = 0;
+        if (auto mts = m->Typespec())
+            if (auto a = mts->Actual_typespec())
+                mw = get_width_from_typespec(a, current_instance);
+        if (!found && std::string(m->VpiName()) == field_name) {
+            field_w = mw;
+            field_off = elem_w;
+            found = true;
+        }
+        elem_w += mw;
+    }
+    if (!found || field_w <= 0) return false;
+    int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+    int idx = is.as_const().as_int();
+    int lo = std::min(l, r), hi = std::max(l, r);
+    if (idx < lo || idx > hi) return false;
+    int k = (l >= r) ? (idx - lo) : (hi - idx);
+    off = k * elem_w + field_off;
+    width = field_w;
+    if (off + width > bit->second.size()) return false;
+    if (mode_debug)
+        log("UHDM: struct-array elem member %s[%d].%s -> [%d+:%d]\n",
+            base_name.c_str(), idx, field_name.c_str(), off, width);
+    return true;
+}
+
 void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
                                         RTLIL::Wire* result_wire,
                                         std::map<std::string, RTLIL::SigSpec>& input_mapping,
@@ -1438,7 +1530,25 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // struct-returning function (rp32 dec32) otherwise stays 0.
                 const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
                 auto pe = hp ? hp->Path_elems() : nullptr;
-                if (pe && pe->size() == 2) {
+                // `acc[k].field = …` on a function-local packed array of
+                // structs: the bit_select base carries no Actual_group /
+                // typespec, so the struct lookup below failed and the write
+                // was dropped (otp_ctrl_part_pkg::named_part_access_pre left
+                // every read_lock/write_lock at its MuBi8False default).
+                // Resolve the element struct and the array range from the
+                // local's declaration, then SSA-write the member slice.
+                bool elem_member_done = false;
+                {
+                    std::string em_base;
+                    int em_off = 0, em_w = 0;
+                    if (resolve_struct_array_elem_member_lhs(assign, hp, input_mapping,
+                                                             em_base, em_off, em_w)) {
+                        if (!ssa_slice_write(em_base, em_off, em_w))
+                            lhs_sig = input_mapping[em_base].extract(em_off, em_w);
+                        elem_member_done = true;
+                    }
+                }
+                if (!elem_member_done && pe && pe->size() == 2) {
                     std::string base_name = std::string((*pe)[0]->VpiName());
                     std::string field_name = std::string((*pe)[1]->VpiName());
                     // Base signal: a mapped local/param, or the return wire.

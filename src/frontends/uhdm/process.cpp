@@ -10015,6 +10015,27 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                 }
             }
 
+            // `acc[k].field = …` on a function-local packed struct array:
+            // splice the member slice into the in-flight value (was dropped).
+            if (!rhs.empty() && assign->Lhs() &&
+                assign->Lhs()->UhdmType() == uhdmhier_path) {
+                std::string em_base;
+                int em_off = 0, em_w = 0;
+                if (resolve_struct_array_elem_member_lhs(
+                        assign, any_cast<const hier_path*>(assign->Lhs()),
+                        func_mapping, em_base, em_off, em_w)) {
+                    RTLIL::SigSpec cur = func_mapping[em_base];
+                    RTLIL::SigSpec r2 = rhs;
+                    if (r2.size() < em_w) r2.extend_u0(em_w);
+                    else if (r2.size() > em_w) r2 = r2.extract(0, em_w);
+                    cur.replace(em_off, r2);
+                    func_mapping[em_base] = mask_write(em_base, cur);
+                    log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
+                        em_base.c_str(), em_off, em_w, log_signal(r2).c_str());
+                    break;
+                }
+            }
+
             if (rhs.empty()) break;
 
             // Width matching

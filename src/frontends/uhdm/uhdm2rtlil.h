@@ -1182,6 +1182,9 @@ struct UhdmImporter {
         const std::string& func_name, int& temp_counter,
         const std::string& func_call_context,
         const std::map<std::string, int>& local_var_widths);
+    bool resolve_struct_array_elem_member_lhs(const UHDM::assignment* assign,
+        const UHDM::hier_path* hp, std::map<std::string, RTLIL::SigSpec>& mapping,
+        std::string& base_name, int& off, int& width);
     void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
                               RTLIL::Wire* result_wire,
                               std::map<std::string, RTLIL::SigSpec>& input_mapping,
