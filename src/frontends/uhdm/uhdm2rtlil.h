@@ -1076,6 +1076,7 @@ struct UhdmImporter {
     // a select-shaped LHS (`acc[7:0]`, `key[0][7:0]`, `s.f`) is re-imported as
     // a READ through the comb map so the RMW chains on the threaded value.
     RTLIL::SigSpec compound_lhs_current(const UHDM::any* lhs_expr, const RTLIL::SigSpec& lhs);
+    RTLIL::SigSpec remap_inflight_read(const RTLIL::SigSpec& res);
     // Element struct typespec of an unpacked array of packed structs (see
     // expression.cpp) — nullptr when the element is not a struct.
     // Typespec of the struct MEMBER a hier_path LHS (`hw2reg.tpm_cap`)

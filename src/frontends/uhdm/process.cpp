@@ -10726,6 +10726,13 @@ RTLIL::SigSpec UhdmImporter::compound_lhs_current(const UHDM::any* lhs_expr,
         if (auto e = dynamic_cast<const UHDM::expr*>(lhs_expr))
             cur = import_expression(e, comb_read_map());
         comb_lhs_keep_base = saved;
+        // A multi-index var_select read (`key_state_d[i][0] ^= share0`,
+        // OpenTitan keymgr_ctrl with KmacEnMasking=1) slices the RAW base
+        // wire when the in-flight value is no longer a whole wire (after the
+        // default and earlier element writes it is a composite): the XOR then
+        // read the block's own output — 512 combinational loops in the Egret
+        // keymgr.  Rewrite such raw-wire bits onto the in-flight value.
+        cur = remap_inflight_read(cur);
         if (cur.size() == lhs.size()) return cur;
     }
     return lhs;

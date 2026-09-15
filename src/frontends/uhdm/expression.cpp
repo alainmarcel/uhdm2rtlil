@@ -5996,6 +5996,13 @@ static RTLIL::SigSpec remap_sig_inflight(const RTLIL::SigSpec& res,
     return changed ? out : res;
 }
 
+// Member wrapper so the comb statement importer can apply the same rewrite to a
+// compound assignment's current-value read.
+RTLIL::SigSpec UhdmImporter::remap_inflight_read(const RTLIL::SigSpec& res) {
+    if (in_always_ff_body_mode) return res;
+    return remap_sig_inflight(res, current_comb_values);
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -9549,6 +9556,40 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                     }
                 }
             }
+            // The NET form (`prim_alert_pkg::alert_tx_t [NAlerts-1:0]
+            // alert_tx;` in OpenTitan top_egret, sliced per IP as
+            // `.alert_tx_o(alert_tx[1:1])`): a packed_array_net carries its
+            // outer Ranges() and the element nets but no Typespec, so neither
+            // the Actual_group branch above nor the by-name typespec lookup
+            // fired and the slice selected BITS — uart1's alert flop drove a
+            // bit of uart0's slice and the alert handler's receiver inputs
+            // were left undriven.  Found by Actual_group or by name.
+            if (!pranges) {
+                const UHDM::packed_array_net* pan =
+                    dynamic_cast<const UHDM::packed_array_net*>(uhdm_part->Actual_group());
+                if (!pan && !base_signal_name.empty())
+                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(
+                            current_instance ? current_instance
+                                             : dynamic_cast<const UHDM::module_inst*>(inst)))
+                        if (mi->Nets())
+                            for (auto n0 : *mi->Nets())
+                                if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(n0))
+                                    if (std::string(pn->VpiName()) == base_signal_name) {
+                                        pan = pn;
+                                        break;
+                                    }
+                if (pan && pan->Ranges() && !pan->Ranges()->empty() &&
+                    pan->Elements() && !pan->Elements()->empty()) {
+                    const UHDM::any* e0 = (*pan->Elements())[0];
+                    const UHDM::ref_typespec* ets = nullptr;
+                    if (auto en = dynamic_cast<const UHDM::net*>(e0)) ets = en->Typespec();
+                    else if (auto ex = dynamic_cast<const UHDM::expr*>(e0)) ets = ex->Typespec();
+                    if (ets) {
+                        pranges = pan->Ranges();
+                        elem_rts = ets;
+                    }
+                }
+            }
             if (pranges && !pranges->empty() && elem_rts &&
                 elem_rts->Actual_typespec()) {
                 int elem_w = get_width_from_typespec(elem_rts->Actual_typespec(), inst);
@@ -10873,6 +10914,8 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
 
     // Look up the wire in the current module
     RTLIL::SigSpec base;
+    // The module wire the base resolved to (geometry attributes live there).
+    RTLIL::Wire* geom_wire = nullptr;
     if (!base_signal_name.empty()) {
         // A function argument (`repData64(input logic [..] data, ...)` used as
         // `data[offset*8+:16]`): the base is passed via input_mapping, not a
@@ -10896,6 +10939,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
             if (wire) {
                 base = RTLIL::SigSpec(wire);
+                geom_wire = wire;
                 // Same-cycle in-flight value of a GENERATE-PARENT local: the comb
                 // read map is keyed by the resolved wire name
                 // (`gen_round[0].data_state_sbox`) while the select carries the
@@ -10955,10 +10999,45 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr(), input_mapping);
     expression_context_width = saved_ctx_width;
     
+    // A 2-D PACKED base (`logic [N-1:0][7:0] lc_otp_program_data`, tagged by
+    // import_net/import_port with packed_elem_width / packed_outer_left /
+    // packed_outer_right): `[off +: size]` selects ELEMENTS, not bits
+    // (OpenTitan otp_ctrl's `lc_otp_program_data[LcStateOffset-LifeCycleOffset
+    // +: LcStateSize] = lc_otp_program_i.state` drove 88 of 704 bits in the
+    // Egret top).  Scale by the element width and map through the outer range.
+    int pk_ew = 1, pk_ol = 0, pk_or = 0;
+    if (geom_wire && geom_wire->width == base.size()) {
+        auto& ga = geom_wire->attributes;
+        auto ew_id = RTLIL::escape_id("packed_elem_width");
+        auto ol_id = RTLIL::escape_id("packed_outer_left");
+        auto or_id = RTLIL::escape_id("packed_outer_right");
+        if (ga.count(ew_id) && ga.count(ol_id) && ga.count(or_id)) {
+            int ew = ga.at(ew_id).as_int();
+            int ol = ga.at(ol_id).as_int(), orr = ga.at(or_id).as_int();
+            int nelem = std::abs(ol - orr) + 1;
+            if (ew > 1 && ew * nelem == base.size()) {
+                pk_ew = ew; pk_ol = ol; pk_or = orr;
+            }
+        }
+    }
+
     // Both base_index and width must be constant for RTLIL
     if (base_index.is_fully_const() && width_expr.is_fully_const()) {
         int offset = base_index.as_const().as_int();
         int width = width_expr.as_const().as_int();
+        if (pk_ew > 1) {
+            bool pos2 = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
+            int ilo = pos2 ? offset : offset - width + 1;
+            int ihi = ilo + width - 1;
+            int dlo = std::min(pk_ol, pk_or), dhi = std::max(pk_ol, pk_or);
+            if (width > 0 && ilo >= dlo && ihi <= dhi) {
+                int boff = (pk_ol < pk_or) ? (dhi - ihi) * pk_ew : (ilo - dlo) * pk_ew;
+                if (mode_debug)
+                    log("    indexed part-select: packed elements [%d..%d] (elem_w=%d) -> bits [%d+:%d]\n",
+                        ilo, ihi, pk_ew, boff, width * pk_ew);
+                return base.extract(boff, width * pk_ew);
+            }
+        }
 
         // The LOW bit of the slice depends on the direction:
         //   `+:` -> [offset +: width]  = [offset+width-1 : offset], low = offset
@@ -10987,6 +11066,22 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     if (width <= 0) {
         log_warning("Indexed part select with invalid width %d\n", width);
         return RTLIL::SigSpec();
+    }
+    // Dynamic element select on a DESCENDING 2-D packed base: shift by
+    // (index - low) * elem_w and take width * elem_w bits.
+    if (pk_ew > 1 && pk_ol >= pk_or) {
+        int iw = std::max(GetSize(base_index), 32);
+        RTLIL::SigSpec ix = base_index;
+        ix.extend_u0(iw, false);
+        if (uhdm_indexed->VpiIndexedPartSelectType() != vpiPosIndexed)
+            ix = module->Sub(NEW_ID, ix, RTLIL::SigSpec(RTLIL::Const(width - 1, iw)));
+        if (pk_or != 0)
+            ix = module->Sub(NEW_ID, ix, RTLIL::SigSpec(RTLIL::Const(pk_or, iw)));
+        RTLIL::SigSpec sh = module->Mul(NEW_ID, ix, RTLIL::SigSpec(RTLIL::Const(pk_ew, iw)));
+        RTLIL::Wire* ow = module->addWire(NEW_ID, width * pk_ew);
+        RTLIL::Cell* sx = module->addShiftx(NEW_ID, base, sh, ow);
+        add_src_attribute(sx->attributes, uhdm_indexed);
+        return RTLIL::SigSpec(ow);
     }
 
     // Compute LSB shift amount
