@@ -28,12 +28,22 @@ run_one() {
     (cd "$w" && timeout 400 "$S" -parse -d uhdm -DSYNTHESIS "${INCS[@]}" -top "$top" $SR > surelog.log 2>&1)
   fi
   [ -f "$w/slpp_all/surelog.uhdm" ] || { printf "  ‼  %-30s elabfail (surelog)\n" "$m"; echo "$m elabfail"; return; }
+  # read_slang-only source patch (wrappers/slang_patch_<m>.sed, applied to
+  # <m>.sv): acc_alu_bignum indexes arrays with hierarchical references to
+  # generate-block localparams, which slang rejects as non-constant (Verilator
+  # and read_uhdm accept); the patch substitutes the literal values so the
+  # miter has a gate netlist.  read_uhdm always reads the original RTL.
+  local SSR="$SR"
+  if [ -f "$HERE/wrappers/slang_patch_$m.sed" ]; then
+    sed -f "$HERE/wrappers/slang_patch_$m.sed" "$HERE/rtl/acc/$m.sv" > "$w/${m}_slang.sv"
+    SSR=$(echo "$SR" | sed "s#$HERE/rtl/acc/$m.sv#$w/${m}_slang.sv#")
+  fi
   cat > "$w/miter.ys" <<EOF
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $top
 flatten; proc; opt; memory; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gold; design -stash gold
-read_slang --ignore-assertions -DSYNTHESIS ${SINCS[@]} $SR --top $top
+read_slang --ignore-assertions -DSYNTHESIS ${SINCS[@]} $SSR --top $top
 hierarchy -check -top $top
 flatten; proc; opt; memory; async2sync; delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gate; design -stash gate
@@ -43,7 +53,7 @@ miter -equiv -flatten -make_assert gold gate miter
 hierarchy -top miter
 sat -verify -prove-asserts -seq $seq -set-init-zero miter
 EOF
-  local out; out=$( (cd "$w" && timeout "$tmo" "$Y" -m "$P" miter.ys 2>&1) )
+  local out; out=$( (cd "$w" && timeout "$tmo" "$Y" -m "${PLUGIN:-$P}" miter.ys 2>&1) )
   local got
   if echo "$out"|grep -q "no model found: SUCCESS"; then got=proven
   elif echo "$out"|grep -q "model found: FAIL"; then got=cex

@@ -8,8 +8,12 @@
 import re, glob, os, sys
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TLUL = os.path.normpath(os.path.join(HERE, '..', 'pavona_tlul_equiv'))
+KMAC = os.path.normpath(os.path.join(HERE, '..', 'pavona_kmac_equiv'))
+# KMAC root last: acc_alu_bignum's PQC WSRs reference sha3_pkg (via kmac_pkg),
+# vendored for the KMAC campaign.
 ROOTS = [f'{HERE}/rtl/acc', f'{HERE}/rtl/pkg',
-         f'{TLUL}/rtl/prim', f'{TLUL}/rtl/tlul', f'{TLUL}/rtl/pkg']
+         f'{TLUL}/rtl/prim', f'{TLUL}/rtl/tlul', f'{TLUL}/rtl/pkg',
+         f'{KMAC}/rtl/kmac']
 defs = {}
 files = {}
 macro_bodies = {}   # `define NAME ... (with \-continuations)  ->  full body text

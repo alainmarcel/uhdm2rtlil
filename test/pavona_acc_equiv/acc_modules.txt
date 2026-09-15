@@ -15,3 +15,4 @@ acc_loop_controller       4  200  proven
 # --- SAT-hard / needs cosim adjudication (bignum datapath / control) ---
 acc_start_stop_control    4  200  proven
 unified_mul               4  200  timeout   # big multiplier — SAT-hard, cosim later
+acc_alu_bignum            2  3000 timeout   # PQC WSRs — SAT-hard (seq 1 no verdict in 70 min); read_slang needs slang_patch + flat wrapper

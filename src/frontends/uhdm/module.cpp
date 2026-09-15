@@ -4297,7 +4297,14 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                         bool multi2 = av->Ranges() && av->Ranges()->size() > 1;
                         bool inst_written2 =
                             inst_elem_written_arrays.count(var_name) > 0;
-                        if ((inner_struct || inst_written2) && !whole2 && !multi2 &&
+                        // Also SCALAR-element arrays (`logic stall [Share]` in
+                        // acc_alu_bignum's gen_pqc_wsr): not a memory, so no
+                        // branch below claimed them and the whole array became
+                        // ONE 1-bit wire — `stall[1]` read garbage and the
+                        // share-1 KMAC message register never took a write.
+                        bool scalar_elems = inner && !inner_struct &&
+                            !is_memory_array(av);
+                        if ((inner_struct || inst_written2 || scalar_elems) && !whole2 && !multi2 &&
                             (inst_written2 || !is_memory_array(av)) &&
                             !async_reset_filled_arrays.count(var_name)) {
                             int asize = 0, alow = 0, ew = 0;
@@ -4426,7 +4433,7 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                             }
                         }
                     }
-                    if (is_memory_array(av) && !async_reset_filled_arrays.count(var_name)) {
+                    if (is_memory_array(av)) {
                         // Element-written by cont_assigns, or comb-only
                         // (accessed only from combinational always blocks):
                         // per-element wires under the BARE element names
@@ -4436,7 +4443,11 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                         // to carry a $memwr, and comb read-after-write
                         // in-block semantics need element wires (ibex_alu
                         // bitcnt_partial's Brent-Kung tree).
+                        // Cleared by an async reset (a $memory cannot carry
+                        // it): per-element registers, like the module-level
+                        // path (acc_alu_bignum gen_pqc_wsr's per-share regs).
                         if (cont_elem_written.count(var_name) ||
+                            async_reset_filled_arrays.count(var_name) ||
                             comb_only_arrays.count(var_name) ||
                             scope_inst_elem_written.count(var_name) ||
                             inst_elem_written_arrays.count(var_name)) {
