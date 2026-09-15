@@ -11724,6 +11724,58 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (!module)
         return RTLIL::SigSpec();
 
+    // `gen_blk.Param` — a localparam declared in another NAMED generate block
+    // of this module, used as a value (acc_alu_bignum indexes its ISPR read
+    // mux with `ispr_rdata_intg_mux_in[gen_ispr_ids_pqc.IsprKmacMsg0Intg]`).
+    // Surelog leaves both path elements unbound, so the index imported as
+    // garbage: every such assign aliased one element (conflicting drivers)
+    // and the others stayed undriven.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 && current_instance) {
+        std::string gname((*uhdm_hier->Path_elems())[0]->VpiName());
+        std::string pname((*uhdm_hier->Path_elems())[1]->VpiName());
+        const UHDM::parameter* found = nullptr;
+        int nfound = 0;
+        std::function<void(const UHDM::VectorOfgen_scope_array*)> scan =
+            [&](const UHDM::VectorOfgen_scope_array* gsas) {
+                if (!gsas) return;
+                for (auto gsa : *gsas) {
+                    if (!gsa->Gen_scopes()) continue;
+                    bool match = std::string(gsa->VpiName()) == gname &&
+                                 gsa->Gen_scopes()->size() == 1;
+                    for (auto gs : *gsa->Gen_scopes()) {
+                        if (match && gs->Parameters())
+                            for (auto pa : *gs->Parameters())
+                                if (std::string(pa->VpiName()) == pname)
+                                    if (auto pp = dynamic_cast<const UHDM::parameter*>(pa)) {
+                                        found = pp;
+                                        nfound++;
+                                    }
+                        scan(gs->Gen_scope_arrays());
+                    }
+                }
+            };
+        scan(current_instance->Gen_scope_arrays());
+        if (found && nfound == 1 && !name_map.count(gname) &&
+            !module->wire(RTLIL::escape_id(gname))) {
+            std::string v(found->VpiValue());
+            int w = 32;
+            if (auto rt = found->Typespec())
+                if (auto ats = rt->Actual_typespec()) {
+                    int tw = get_width_from_typespec(ats, current_instance);
+                    if (tw > 0) w = tw;
+                }
+            if (!v.empty()) {
+                RTLIL::Const c = vpi_value_to_const(v, w);
+                if (c.size() > 0) {
+                    if (mode_debug)
+                        log("    hier_path %s.%s -> generate-block localparam %s\n",
+                            gname.c_str(), pname.c_str(), log_signal(RTLIL::SigSpec(c)));
+                    return RTLIL::SigSpec(c);
+                }
+            }
+        }
+    }
+
     // Gen-scope-aware base-wire resolution for hier_path bases.  A struct/array
     // base signal declared inside a generate scope (e.g. ibex_cs_registers'
     // `pmp_mseccfg_q` in the `g_pmp_registers` if-generate, member-accessed as

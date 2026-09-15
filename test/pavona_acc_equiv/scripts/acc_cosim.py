@@ -33,7 +33,7 @@ _ROOT  = os.environ.get("UHDM2RTLIL_ROOT", os.path.abspath(
     os.path.join(HERE, "..", "..")))
 TLUL   = os.path.normpath(os.path.join(HERE, "..", "pavona_tlul_equiv"))
 YOSYS  = os.path.join(_ROOT, "out", "current", "bin", "yosys")
-PLUGIN = os.path.join(_ROOT, "build", "uhdm2rtlil.so")
+PLUGIN = os.environ.get("PLUGIN", os.path.join(_ROOT, "build", "uhdm2rtlil.so"))
 # ACC shares the prim library + base pkgs with the TL-UL campaign.
 INCS   = [f"{HERE}/rtl/acc", f"{HERE}/rtl/pkg",
           f"{TLUL}/rtl/prim", f"{TLUL}/rtl/tlul", f"{TLUL}/rtl/pkg"]
@@ -50,6 +50,19 @@ def sh(cmd, **kw):
 
 # ---------------------------------------------------------------- source list
 SR = sh([sys.executable, f"{HERE}/scripts/acc_srcs.py", mod]).stdout.split()
+# Same wrapper / slang-patch conventions as run_acc_equiv.sh: a flat wrapper
+# (multi-element unpacked ports) becomes the top, and read_slang reads the
+# patched copy of <mod>.sv when wrappers/slang_patch_<mod>.sed exists.
+if os.path.exists(f"{HERE}/wrappers/flat_{mod}.sv"):
+    TOP = f"{mod}_flat"
+    SR = SR + [f"{HERE}/wrappers/flat_{mod}.sv"]
+SSR = list(SR)
+if os.path.exists(f"{HERE}/wrappers/slang_patch_{mod}.sed"):
+    patched = f"{WORK}/{mod}_slang.sv"
+    with open(patched, "w") as fh:
+        fh.write(sh(["sed", "-f", f"{HERE}/wrappers/slang_patch_{mod}.sed",
+                     f"{HERE}/rtl/acc/{mod}.sv"]).stdout)
+    SSR = [patched if f == f"{HERE}/rtl/acc/{mod}.sv" else f for f in SR]
 incdir = "\n".join(f"+incdir+{d}" for d in INCS)
 inc_ys = " ".join(f"-I {d}" for d in INCS)
 FLIST = f"{WORK}/cosim.f"
@@ -78,7 +91,7 @@ simplemap t:$bwmux
 rename {TOP} gold_{TOP}
 write_verilog -noattr cs_gold.v
 design -reset
-read_slang --ignore-assertions -DSYNTHESIS {inc_ys} {' '.join(SR)} --top {TOP}
+read_slang --ignore-assertions -DSYNTHESIS {inc_ys} {' '.join(SSR)} --top {TOP}
 hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print

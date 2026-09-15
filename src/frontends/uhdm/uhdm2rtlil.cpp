@@ -3306,6 +3306,28 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
 }
 
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
+    // Per-module array classification sets are recomputed below for THIS
+    // module; restore the caller's on exit.  A child imported from inside the
+    // parent's import (an instance in a generate scope) otherwise wiped the
+    // parent's sets, and the parent's later gen-scope arrays lost their
+    // comb-written / async-reset verdicts (acc_alu_bignum's kmac_msg_intg_d
+    // became a $memory whose comb partial write overran the data wire).
+    struct ClassificationGuard {
+        UhdmImporter* self;
+        std::set<std::string> comb_only, inst_elem, whole, async_filled, proc_elem;
+        ClassificationGuard(UhdmImporter* s) : self(s),
+            comb_only(s->comb_only_arrays), inst_elem(s->inst_elem_written_arrays),
+            whole(s->whole_array_accessed_names), async_filled(s->async_reset_filled_arrays),
+            proc_elem(s->proc_elem_written) {}
+        ~ClassificationGuard() {
+            self->comb_only_arrays = std::move(comb_only);
+            self->inst_elem_written_arrays = std::move(inst_elem);
+            self->whole_array_accessed_names = std::move(whole);
+            self->async_reset_filled_arrays = std::move(async_filled);
+            self->proc_elem_written = std::move(proc_elem);
+        }
+    } classification_guard(this);
+
     // Null check
     if (!uhdm_module) {
         log_error("UHDM: import_module called with null module\n");
@@ -3893,6 +3915,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         // Collect which array names are touched by clocked vs combinational always blocks.
         std::set<std::string> clocked_access;
         std::set<std::string> any_access;
+        std::set<std::string> comb_written;
 
         // Helper: recursively collect bit_select names (= array element accesses)
         std::function<void(const any*, std::set<std::string>&)> collect_array_accesses;
@@ -4051,6 +4074,67 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             for (const auto& name : accessed) {
                 any_access.insert(name);
                 if (is_clocked) clocked_access.insert(name);
+            }
+            // Arrays WRITTEN from a combinational block: a $memory write port
+            // is clocked, so such an array can never be a $memory even when a
+            // clocked block also reads it.  acc_alu_bignum's
+            // `kmac_msg_intg_d[0][i_word*39+:39] = …` (always_comb in a
+            // generate loop, registered by an always_ff) became a 2-word
+            // $memory and the comb partial write overran its data wire
+            // (SigSpec::extract assertion).
+            if (!is_clocked) {
+                std::function<void(const any*)> lhs_writes = [&](const any* n) {
+                    if (!n) return;
+                    switch (n->VpiType()) {
+                    case vpiBegin: {
+                        auto b = any_cast<const begin*>(n);
+                        if (b->Stmts()) for (auto st : *b->Stmts()) lhs_writes(st);
+                        break;
+                    }
+                    case vpiNamedBegin: {
+                        auto b = any_cast<const named_begin*>(n);
+                        if (b->Stmts()) for (auto st : *b->Stmts()) lhs_writes(st);
+                        break;
+                    }
+                    case vpiCase: {
+                        auto cs = any_cast<const case_stmt*>(n);
+                        if (cs->Case_items())
+                            for (auto it : *cs->Case_items()) lhs_writes(it->Stmt());
+                        break;
+                    }
+                    case vpiIf:
+                        lhs_writes(any_cast<const if_stmt*>(n)->VpiStmt());
+                        break;
+                    case vpiIfElse: {
+                        auto ie = any_cast<const if_else*>(n);
+                        lhs_writes(ie->VpiStmt());
+                        lhs_writes(ie->VpiElseStmt());
+                        break;
+                    }
+                    case vpiEventControl:
+                        lhs_writes(any_cast<const event_control*>(n)->Stmt());
+                        break;
+                    case vpiFor:
+                        lhs_writes(any_cast<const for_stmt*>(n)->VpiStmt());
+                        break;
+                    case vpiAssignment: case vpiAssignStmt: {
+                        auto a = any_cast<const assignment*>(n);
+                        const any* l = a->Lhs();
+                        if (l && (l->VpiType() == vpiBitSelect || l->VpiType() == vpiVarSelect) &&
+                            !l->VpiName().empty())
+                            comb_written.insert(std::string(l->VpiName()));
+                        break;
+                    }
+                    default: break;
+                    }
+                };
+                lhs_writes(stmt);
+            }
+        }
+        for (const auto& name : comb_written) {
+            if (clocked_access.count(name) && !comb_only_arrays.count(name)) {
+                comb_only_arrays.insert(name);
+                log("UHDM: Array '%s' written in a combinational always block -> expand to wires\n", name.c_str());
             }
         }
 
@@ -4269,6 +4353,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (auto al = any_cast<const always*>(proc))
                     if (const any* arm = reset_arm_of(async_ff_body(al->Stmt())))
                         loop_fills(arm, async_reset_filled_arrays);
+        // Inside a GENERATE loop the loop itself is the fill: every iteration's
+        // `if (!rst_ni) q[s] <= '0` clears one element, so all of them are
+        // cleared (acc_alu_bignum's per-share / per-word registers).  A
+        // $memory cannot carry that async reset.
+        std::function<void(const gen_scope*)> gs_fills = [&](const gen_scope* gs) {
+            if (!gs) return;
+            if (gs->Process())
+                for (auto proc : *gs->Process())
+                    if (auto al = any_cast<const always*>(proc))
+                        if (const any* arm = reset_arm_of(async_ff_body(al->Stmt())))
+                            elem_writes(arm, async_reset_filled_arrays);
+            if (gs->Gen_scope_arrays())
+                for (auto gsa : *gs->Gen_scope_arrays())
+                    if (gsa->Gen_scopes())
+                        for (auto inner : *gsa->Gen_scopes()) gs_fills(inner);
+        };
+        if (uhdm_module->Gen_scope_arrays())
+            for (auto gsa : *uhdm_module->Gen_scope_arrays())
+                if (gsa->Gen_scopes())
+                    for (auto gs : *gsa->Gen_scopes()) gs_fills(gs);
         for (const auto& n : async_reset_filled_arrays)
             log("UHDM: array '%s' is cleared by an async reset — importing as "
                 "registers instead of a memory\n", n.c_str());
