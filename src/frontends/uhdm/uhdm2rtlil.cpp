@@ -1045,30 +1045,40 @@ bool UhdmImporter::resolve_iface_param(const hier_path* hp,
             for (auto p : *child_inst->Ports())
                 if (std::string(p->VpiName()) == base) { has_hc = p->High_conn() != nullptr; break; }
         if (!has_hc && uhdm_design && uhdm_design->TopModules()) {
-            std::string def = std::string(child_inst->VpiDefName());
-            std::function<const module_inst*(const any*)> find_elab =
-                [&](const any* s) -> const module_inst* {
-                if (!s) return nullptr;
-                const std::vector<module_inst*>* mods = nullptr;
-                const std::vector<gen_scope_array*>* gsa = nullptr;
-                if (s->UhdmType() == uhdmmodule_inst) {
-                    auto m = any_cast<const module_inst*>(s);
-                    if (std::string(m->VpiDefName()) == def && m != child_inst && m->Ports())
-                        for (auto p : *m->Ports())
-                            if (std::string(p->VpiName()) == base && p->High_conn())
-                                return m;
-                    mods = m->Modules(); gsa = m->Gen_scope_arrays();
-                } else if (s->UhdmType() == uhdmgen_scope) {
-                    auto g = any_cast<const gen_scope*>(s);
-                    mods = g->Modules(); gsa = g->Gen_scope_arrays();
+            // Elaborated instances by definition name, indexed ONCE per import
+            // (in the same depth-first order the former per-call walk used).
+            // That walk visited the whole elaborated hierarchy for every
+            // hier_path expression — O(expressions x instances), a third of
+            // the Dragonfly import.
+            if (!elab_insts_by_def_built_) {
+                elab_insts_by_def_built_ = true;
+                std::function<void(const any*)> index_elab = [&](const any* sc) {
+                    if (!sc) return;
+                    const std::vector<module_inst*>* mods = nullptr;
+                    const std::vector<gen_scope_array*>* gsa = nullptr;
+                    if (sc->UhdmType() == uhdmmodule_inst) {
+                        auto m = any_cast<const module_inst*>(sc);
+                        elab_insts_by_def_[std::string(m->VpiDefName())].push_back(m);
+                        mods = m->Modules(); gsa = m->Gen_scope_arrays();
+                    } else if (sc->UhdmType() == uhdmgen_scope) {
+                        auto g = any_cast<const gen_scope*>(sc);
+                        mods = g->Modules(); gsa = g->Gen_scope_arrays();
+                    }
+                    if (mods) for (auto c : *mods) index_elab(c);
+                    if (gsa) for (auto ga : *gsa) if (ga->Gen_scopes())
+                        for (auto gs : *ga->Gen_scopes()) index_elab(gs);
+                };
+                for (auto t : *uhdm_design->TopModules()) index_elab(t);
+            }
+            auto eit = elab_insts_by_def_.find(std::string(child_inst->VpiDefName()));
+            if (eit != elab_insts_by_def_.end())
+                for (auto m : eit->second) {
+                    if (m == child_inst || !m->Ports()) continue;
+                    bool hit = false;
+                    for (auto p : *m->Ports())
+                        if (std::string(p->VpiName()) == base) { hit = p->High_conn() != nullptr; break; }
+                    if (hit) { eff_inst = m; break; }
                 }
-                if (mods) for (auto c : *mods) if (auto r = find_elab(c)) return r;
-                if (gsa) for (auto ga : *gsa) if (ga->Gen_scopes())
-                    for (auto gs : *ga->Gen_scopes()) if (auto r = find_elab(gs)) return r;
-                return nullptr;
-            };
-            for (auto t : *uhdm_design->TopModules())
-                if (auto r = find_elab(t)) { eff_inst = r; break; }
         }
     }
     if (eff_inst->Ports())

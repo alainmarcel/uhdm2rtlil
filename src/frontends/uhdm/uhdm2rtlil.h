@@ -366,10 +366,17 @@ struct UhdmImporter {
     // size each field to its actual (possibly UNEQUAL) member width instead of
     // assuming ctx_width/field_count.  Null when unknown.
     const UHDM::typespec* expression_context_typespec = nullptr;
-    // reeval_stamped_param_assign: every param_assign of a definition,
-    // collected once per definition (the collection is a subtree walk).
-    std::map<const UHDM::any*, std::vector<const UHDM::param_assign*>>
+    // reeval_stamped_param_assign: every param_assign of a definition, indexed
+    // by `<scope>.<param>` (last two full-name segments), built once per
+    // definition (the collection is a subtree walk).
+    std::map<const UHDM::any*, std::unordered_map<std::string, const UHDM::param_assign*>>
         stamped_pa_def_index_;
+    // AllModules definitions by VpiDefName (first occurrence), built lazily.
+    std::unordered_map<std::string, const UHDM::module_inst*> all_modules_by_defname_;
+    // resolve_iface_param: elaborated module instances by definition name
+    // (TopModules depth-first order), built once per import.
+    std::unordered_map<std::string, std::vector<const UHDM::module_inst*>> elab_insts_by_def_;
+    bool elab_insts_by_def_built_ = false;
 
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated
