@@ -4181,16 +4181,60 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 log("UHDM: Gen-scope array_net '%s' — per-element wires "
                     "(n=%d, w=%d)\n", an_name.c_str(), asize, ew);
                 std::string gs_path = get_current_gen_scope();
+                // Used WHOLE in this scope (a whole assignment pattern, or the
+                // array as an unpacked-array port actual)?  Then also build a
+                // scoped flat wire the element wires alias (elem0@LSB).
+                bool an_whole = false;
+                {
+                    auto ref_named = [&](const UHDM::any* a) -> bool {
+                        auto r = a ? dynamic_cast<const UHDM::ref_obj*>(a) : nullptr;
+                        return r && std::string(r->VpiName()) == an_name;
+                    };
+                    if (uhdm_scope->Cont_assigns())
+                        for (auto ca : *uhdm_scope->Cont_assigns())
+                            if (ref_named(ca->Lhs()) || ref_named(ca->Rhs())) { an_whole = true; break; }
+                    if (!an_whole && uhdm_scope->Modules())
+                        for (auto mi2 : *uhdm_scope->Modules()) {
+                            if (mi2->Ports())
+                                for (auto pt : *mi2->Ports())
+                                    if (ref_named(pt->High_conn())) { an_whole = true; break; }
+                            if (an_whole) break;
+                        }
+                }
+                RTLIL::Wire* flat = nullptr;
+                if (an_whole && an->Ranges() && an->Ranges()->size() == 1) {
+                    std::string fname = gs_path.empty() ? an_name : gs_path + "." + an_name;
+                    RTLIL::IdString fid = RTLIL::escape_id(fname);
+                    flat = module->wire(fid);
+                    if (!flat) {
+                        flat = module->addWire(fid, asize * ew);
+                        add_src_attribute(flat->attributes, an);
+                    }
+                    name_map[an_name] = flat;
+                    if (!gs_path.empty()) name_map[fname] = flat;
+                }
                 for (int i = 0; i < asize; i++) {
                     std::string ename = an_name + "[" + std::to_string(alow + i) + "]";
-                    RTLIL::IdString eid = RTLIL::escape_id(ename);
-                    if (!module->wire(eid)) {
-                        RTLIL::Wire* ewire = module->addWire(eid, ew);
+                    // SCOPE-QUALIFIED id: in a generate FOR loop (OpenTitan
+                    // acc_alu_bignum's `g_flag_groups[i]` with `flags_t
+                    // flags_d_mux_in [NFlagsSrcs]`) the bare `\arr[k]` wire was
+                    // created by the first iteration and silently REUSED by the
+                    // next (the name_map alias was only set on creation), so
+                    // every iteration's assign drove iteration 0's elements —
+                    // conflicting drivers — and the later iterations' element
+                    // reads saw iteration 0.
+                    std::string wname = gs_path.empty() ? ename : gs_path + "." + ename;
+                    RTLIL::IdString eid = RTLIL::escape_id(wname);
+                    RTLIL::Wire* ewire = module->wire(eid);
+                    if (!ewire) {
+                        ewire = module->addWire(eid, ew);
                         add_src_attribute(ewire->attributes, an);
-                        name_map[ename] = ewire;
-                        if (!gs_path.empty())
-                            name_map[gs_path + "." + ename] = ewire;
+                        if (flat)
+                            module->connect(RTLIL::SigSpec(ewire),
+                                            RTLIL::SigSpec(flat).extract(i * ew, ew));
                     }
+                    name_map[ename] = ewire;
+                    if (!gs_path.empty()) name_map[wname] = ewire;
                 }
             } else {
                 log_warning("UHDM: Gen-scope array_net '%s' with unresolved "
@@ -4292,6 +4336,90 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                             name_map[gs_path + "." + ename] = ewire;
                                     }
                                 }
+                                continue;
+                            }
+                        }
+                    }
+                    // WHOLE-array use inside THIS generate scope — a whole
+                    // assignment-pattern assign and/or the array passed as an
+                    // unpacked-array port actual (OpenTitan acc_alu_bignum's
+                    // `g_flag_groups[i]`: `flags_t flags_d_mux_in [NFlagsSrcs];
+                    // assign flags_d_mux_in = '{...}; prim_onehot_mux ...
+                    // .in_i(flags_d_mux_in)`).  The module-level whole-access
+                    // scan never sees gen-scope assigns/instances, so the
+                    // array became a bare-named $memory, the pattern assign and
+                    // the port connection found no wire and auto-created 1-bit
+                    // wires (or collided across iterations).  Build a
+                    // SCOPE-qualified flat wire (elem0@LSB) plus scoped element
+                    // aliases, like the module-level whole-accessed array.
+                    {
+                        auto ref_named = [&](const UHDM::any* a) -> bool {
+                            if (!a) return false;
+                            if (auto r = dynamic_cast<const UHDM::ref_obj*>(a))
+                                return std::string(r->VpiName()) == var_name;
+                            return false;
+                        };
+                        bool scope_whole = false;
+                        if (uhdm_scope->Cont_assigns())
+                            for (auto ca : *uhdm_scope->Cont_assigns())
+                                if (ref_named(ca->Lhs()) || ref_named(ca->Rhs())) {
+                                    scope_whole = true;
+                                    break;
+                                }
+                        if (!scope_whole && uhdm_scope->Modules())
+                            for (auto mi2 : *uhdm_scope->Modules()) {
+                                if (!mi2->Ports()) continue;
+                                for (auto pt : *mi2->Ports())
+                                    if (ref_named(pt->High_conn())) { scope_whole = true; break; }
+                                if (scope_whole) break;
+                            }
+                        const UHDM::any* inner3 =
+                            (av->Variables() && !av->Variables()->empty())
+                                ? (*av->Variables())[0] : nullptr;
+                        bool one_dim = av->Ranges() && av->Ranges()->size() == 1;
+                        if (scope_whole && one_dim && inner3 &&
+                            !async_reset_filled_arrays.count(var_name)) {
+                            int asize = 0, alow = 0;
+                            auto r0 = (*av->Ranges())[0];
+                            RTLIL::SigSpec l = import_expression(
+                                any_cast<const expr*>(r0->Left_expr()));
+                            RTLIL::SigSpec r = import_expression(
+                                any_cast<const expr*>(r0->Right_expr()));
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int lv = l.as_const().as_int();
+                                int rv = r.as_const().as_int();
+                                asize = std::abs(lv - rv) + 1;
+                                alow = std::min(lv, rv);
+                            }
+                            int ew = get_width(inner3, current_instance);
+                            if (asize > 0 && ew > 0) {
+                                std::string gs3 = get_current_gen_scope();
+                                std::string fname = gs3.empty() ? var_name : gs3 + "." + var_name;
+                                RTLIL::IdString fid = RTLIL::escape_id(fname);
+                                RTLIL::Wire* flat = module->wire(fid);
+                                if (!flat) {
+                                    flat = module->addWire(fid, asize * ew);
+                                    add_src_attribute(flat->attributes, av);
+                                }
+                                name_map[var_name] = flat;
+                                if (!gs3.empty()) name_map[fname] = flat;
+                                for (int i = 0; i < asize; i++) {
+                                    std::string ename = var_name + "[" + std::to_string(alow + i) + "]";
+                                    std::string wname = gs3.empty() ? ename : gs3 + "." + ename;
+                                    RTLIL::IdString eid = RTLIL::escape_id(wname);
+                                    RTLIL::Wire* ewire = module->wire(eid);
+                                    if (!ewire) {
+                                        ewire = module->addWire(eid, ew);
+                                        add_src_attribute(ewire->attributes, av);
+                                        module->connect(RTLIL::SigSpec(ewire),
+                                                        RTLIL::SigSpec(flat).extract(i * ew, ew));
+                                    }
+                                    name_map[ename] = ewire;
+                                    if (!gs3.empty()) name_map[wname] = ewire;
+                                }
+                                log("UHDM: Gen-scope array_var '%s' used whole in its scope — "
+                                    "flat %s (n=%d, w=%d) + element aliases\n",
+                                    var_name.c_str(), fname.c_str(), asize, ew);
                                 continue;
                             }
                         }
