@@ -1,0 +1,28 @@
+name: Sweep caliptra
+
+# Per-instance report for chipsalliance/caliptra-rtl: every DIRECT instance of
+# caliptra_top is SAT-mitered read_uhdm vs read_slang from reset.  Table lands
+# in the run's step summary.  Nightly + manual dispatch, so the heavy chip
+# elaboration doesn't run on every push (the sharded regression already gates
+# correctness).
+#
+# There is no co-sim column yet: the chip has no testbench in this harness, so
+# the sweep leaves it blank rather than reporting a pass that was never run.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *"   # nightly 05:17 UTC, clear of the pavona sweep
+
+concurrency:
+  group: sweep-caliptra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep-caliptra:
+    name: caliptra - caliptra_top (full chip)
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: caliptra
+      cycles: "0"        # unused: no co-sim in this family
+      timeout: 350
