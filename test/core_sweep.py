@@ -16,6 +16,7 @@ The table is printed as GitHub-flavoured markdown; with $GITHUB_STEP_SUMMARY
 set it is appended there too, so the Action run page shows it directly.
 """
 import argparse
+import shlex
 import concurrent.futures as cf
 import glob
 import json
@@ -116,14 +117,28 @@ def _undriven_check(work_dir, top):
         return "— (no run)"
     yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
     plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    # `proc` BEFORE `flatten`: flattening a design that still holds processes
+    # keeps every process temp as a wire of the full signal width, which on the
+    # masked KMAC modules explodes (kmac_reduced: 12.7M wire bits, 25.6 GB peak
+    # — enough to get the 16 GB nightly runner killed; 2.1 GB with proc first).
+    # It also removes FALSE undriven reports: a wire driven only inside a
+    # process has no driver until proc converts it (kmac / kmac_app each showed
+    # 1 such phantom).  A genuinely undriven net is still reported.
     (work_dir / "check_undriven.ys").write_text(
         f"read_uhdm slpp_all/surelog.uhdm\n"
         f"hierarchy -check -top {top}\n"
+        f"proc\n"
         f"flatten; opt_clean\n"
         f"stat\n"
         f"check\n")
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "check_undriven.ys"],
-                 cwd=work_dir, timeout=1800)
+    # Belt and braces on a 16 GB CI runner: cap the address space so a blowup
+    # fails this row instead of taking the whole job down with it.
+    mem = os.environ.get("MEM_LIMIT_KB")
+    cmd = [str(yosys), "-q", "-m", str(plugin), "check_undriven.ys"]
+    if mem:
+        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " +
+               " ".join(shlex.quote(c) for c in cmd)]
+    rc, out = sh(cmd, cwd=work_dir, timeout=1800)
     out = out or ""
     # Cache the flattened cell count (from `stat`) so the auto-miter gate can
     # skip SoC-scale designs without a second flatten.
