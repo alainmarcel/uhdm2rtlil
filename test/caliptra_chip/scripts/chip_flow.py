@@ -112,12 +112,18 @@ def elaborate():
 
 
 def cells_of(il, top):
-    """{instance name: cell type} for the direct cells of `top` in `il`."""
+    """{instance name: cell type} for the direct cells of `top` in `il`.
+
+    `top` is the module name exactly as it appears after "module " in the
+    RTLIL -- i.e. WITH its leading "\\" for a public name, and WITHOUT one for
+    an auto-generated "$paramod..." name, which is how a cell line spells its
+    type too.  (Prefixing a "$paramod" name with a backslash finds nothing.)
+    """
     cells, inmod = {}, False
     with open(il, errors="replace") as fh:
         for line in fh:
             if line.startswith("module "):
-                inmod = line.strip() == f"module \\{top}"
+                inmod = line.strip() == f"module {top}"
             elif inmod:
                 m = re.match(r"  cell (\S+) \\(\S+)$", line)
                 if m and (not m.group(1).startswith("$")
@@ -129,11 +135,21 @@ def cells_of(il, top):
 
 
 def chip_type(il):
-    """The (possibly $paramod'd) type the wrapper instantiates caliptra_top as."""
-    for name, typ in cells_of(il, TOP).items():
-        if typ.lstrip("\\").startswith(("caliptra_top", "$paramod\\caliptra_top")):
-            return typ.lstrip("\\")
-    return INNER
+    """The type the wrapper instantiates caliptra_top as, as RTLIL spells it.
+
+    read_uhdm stamps the parameters into the name ("$paramod\\caliptra_top\\pt=...")
+    while read_slang --keep-hierarchy appends the instance path
+    ("\\caliptra_top$caliptra_top_flat.chip"), so neither side can be predicted
+    -- look it up from the wrapper's own cell list instead.
+    """
+    for name, typ in cells_of(il, f"\\{TOP}").items():
+        # "$paramod\\caliptra_top\\pt=s32'..." -> "caliptra_top";
+        # "\\caliptra_top$caliptra_top_flat.chip" -> "caliptra_top$...".
+        bare = typ[len("$paramod\\"):] if typ.startswith("$paramod\\") else typ.lstrip("\\")
+        bare = bare.split("\\", 1)[0]
+        if bare.startswith(INNER):
+            return typ
+    return f"\\{INNER}"
 
 
 def split():
