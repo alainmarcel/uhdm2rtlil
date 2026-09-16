@@ -12498,9 +12498,15 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(base_wire).extract(off, field_width);
         if (proc) emit_comb_assign(lhs_slice, rhs, proc);
         else if (case_rule) {
-            std::string temp_name = "$0\\" + base_name;
-            RTLIL::Wire* tw = module->wire(temp_name);
-            RTLIL::SigSpec tgt = tw
+            // THIS process's temp, not `$0\` — a generate loop gives each
+            // iteration its own ($0\x, $1\x, ...), and hard-coding `$0\`
+            // sent every iteration's field write into the FIRST one.  The
+            // writes of iterations 1..N-1 were then lost (their own sync
+            // update reads their own temp) while all N drove `$0\x`, so
+            // `flatten` reported conflicting drivers — VeeR's decoder CAM,
+            // `cam_in[i].valid` inside `for (genvar i …) begin : cam_array`.
+            RTLIL::Wire* tw = find_own_temp_wire(base_name);
+            RTLIL::SigSpec tgt = (tw && tw->width >= off + field_width)
                 ? RTLIL::SigSpec(tw).extract(off, field_width)
                 : lhs_slice;
             remove_target_from_switches(case_rule, tgt);
@@ -14053,6 +14059,7 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
 
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
+
 
 
     // Dynamic indexed_part_select LHS — synthesise mask/shift/or write
