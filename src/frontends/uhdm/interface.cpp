@@ -266,11 +266,38 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
 
+            // An interface instance that is really a MODPORT-TYPED PORT of
+            // this module exposes only the signals its modport names — the
+            // rest of the interface is not visible through it.  import_port()
+            // has already created a wire per modport io_decl and recorded each
+            // one in modport_field_dir_ (keyed "<module>:<port>:<field>"), so
+            // that map says exactly which fields this port may have.  Mirroring
+            // the WHOLE interface here on top of that added ports the design
+            // does not have: caliptra's ahb_lite_bus takes
+            // `CALIPTRA_AHB_LITE_BUS_INF.Initiator_Interface_Ports`, which
+            // declares 8 signals, and read_uhdm emitted 10 — the extra `hsel`
+            // and `hready` belong to the *Responder* modport.  read_slang emits
+            // the 8, so the two netlists could not be paired for a miter.
+            //
+            // The set is empty for a plain interface INSTANCE (`bus_if bif()`),
+            // where every signal legitimately exists, so that case is unchanged.
+            std::set<std::string> modport_fields;
+            {
+                const std::string pfx = module->name.str() + ":" + interface_name + ":";
+                for (const auto& kv : modport_field_dir_)
+                    if (kv.first.compare(0, pfx.size(), pfx) == 0)
+                        modport_fields.insert(kv.first.substr(pfx.size()));
+            }
+            auto hidden_by_modport = [&](const std::string& sig) {
+                return !modport_fields.empty() && !modport_fields.count(sig);
+            };
+
             // Create interface signals in the module
             // First try Variables
             if (interface->Variables()) {
                 for (auto var : *interface->Variables()) {
                     std::string var_name = std::string(var->VpiName());
+                    if (hidden_by_modport(var_name)) continue;
                     std::string full_name = interface_name + "." + var_name;
 
                     // Prefer the per-signal width sampled from the
@@ -352,6 +379,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             if (interface->Nets()) {
                 for (auto net : *interface->Nets()) {
                     std::string net_name = std::string(net->VpiName());
+                    if (hidden_by_modport(net_name)) continue;
                     std::string full_name = interface_name + "." + net_name;
                     if (name_map.count(full_name)) continue;
 
@@ -412,6 +440,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             if (interface->Array_nets()) {
                 for (auto an : *interface->Array_nets()) {
                     std::string an_name = std::string(an->VpiName());
+                    if (hidden_by_modport(an_name)) continue;
                     std::string full_name = interface_name + "." + an_name;
                     if (an_name.empty() || name_map.count(full_name)) continue;
                     if (module->wire(RTLIL::escape_id(full_name))) {
