@@ -12616,6 +12616,123 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // `connect \rd \rd`.
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 3) {
         auto& pe3 = *uhdm_hier->Path_elems();
+        // `arr[idx].field[hi:lo]` — Path_elems
+        // [bit_select(arr[idx]), ref_obj(field), part_select(hi:lo)] where
+        // `arr` is a packed array of a packed struct.  VeeR's decoder writes
+        // its non-blocking-load CAM this way:
+        //     cam_in[i].tag[NBLOAD_TAG_MSB:0] = cam_write_tag[...];
+        // Nothing resolved this shape, so the LHS imported as 1'x: the write
+        // was DROPPED, and because the bits it touches became unknown the
+        // whole comb process fell back to a FULL-WIDTH update of `cam_in`.
+        // With one such process per generate iteration, all four drove all 40
+        // bits and flatten reported conflicting drivers on
+        // `cam_array[3].cam_ff.din`.
+        if (pe3[0]->UhdmType() == uhdmbit_select &&
+            pe3[1]->UhdmType() == uhdmref_obj &&
+            pe3[2]->UhdmType() == uhdmpart_select) {
+            const bit_select* esel = any_cast<const bit_select*>(pe3[0]);
+            const part_select* ps = any_cast<const part_select*>(pe3[2]);
+            std::string base_name = std::string(esel->VpiName());
+            std::string field_name =
+                std::string(any_cast<const ref_obj*>(pe3[1])->VpiName());
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                                         ? name_map[base_name]
+                                         : module->wire(RTLIL::escape_id(base_name));
+            // Element struct typespec: the base is a packed array whose
+            // Elem_typespec is the struct.
+            const UHDM::struct_typespec* est = nullptr;
+            if (base_wire) {
+                const UHDM::ref_typespec* rts = nullptr;
+                if (auto ag = esel->Actual_group()) {
+                    if (auto v = dynamic_cast<const UHDM::variables*>(ag))
+                        rts = v->Typespec();
+                    else if (auto n = dynamic_cast<const UHDM::net*>(ag))
+                        rts = n->Typespec();
+                }
+                // A `packed_array_var` actual carries Ranges/Elements but NO
+                // typespec of its own; its ELEMENTS do, and they are exactly
+                // the per-index struct we need.
+                if (!rts) {
+                    if (auto ag = esel->Actual_group()) {
+                        if (ag->UhdmType() == uhdmpacked_array_var) {
+                            auto pav = any_cast<const UHDM::packed_array_var*>(ag);
+                            if (pav->Elements() && !pav->Elements()->empty()) {
+                                auto e0 = (*pav->Elements())[0];
+                                if (auto ev = dynamic_cast<const UHDM::variables*>(e0))
+                                    rts = ev->Typespec();
+                                else if (auto en = dynamic_cast<const UHDM::net*>(e0))
+                                    rts = en->Typespec();
+                            }
+                        }
+                    }
+                }
+                // Surelog spells `cam_t [N-1:0] cam_in` in several ways
+                // (packed_array_typespec, or a logic_typespec carrying an
+                // Elem_typespec), so descend the element chain until a struct
+                // turns up rather than matching one shape.
+                const UHDM::typespec* at = rts ? rts->Actual_typespec() : nullptr;
+                for (int guard = 0; at && guard < 4; guard++) {
+                    if (at->UhdmType() == uhdmstruct_typespec) {
+                        est = any_cast<const UHDM::struct_typespec*>(at);
+                        break;
+                    }
+                    const UHDM::ref_typespec* ert = nullptr;
+                    if (at->UhdmType() == uhdmpacked_array_typespec)
+                        ert = any_cast<const UHDM::packed_array_typespec*>(at)->Elem_typespec();
+                    else if (at->UhdmType() == uhdmarray_typespec)
+                        ert = any_cast<const UHDM::array_typespec*>(at)->Elem_typespec();
+                    else if (at->UhdmType() == uhdmlogic_typespec)
+                        ert = any_cast<const UHDM::logic_typespec*>(at)->Elem_typespec();
+                    at = ert ? ert->Actual_typespec() : nullptr;
+                }
+            }
+            int idx = -1;
+            if (esel->VpiIndex()) {
+                RTLIL::SigSpec is = import_expression(esel->VpiIndex());
+                if (is.is_fully_const()) idx = is.as_const().as_int();
+            }
+            log("XPROBE base=%s wire=%p est=%p idx=%d lr=%p rr=%p ag=%p\n",
+                base_name.c_str(), (void*)base_wire, (void*)est, idx,
+                (void*)ps->Left_range(), (void*)ps->Right_range(),
+                (void*)esel->Actual_group());
+            if (base_wire && est && est->Members() && idx >= 0 &&
+                ps->Left_range() && ps->Right_range()) {
+                // Member offset within the element (packed: last member at LSB).
+                int mem_off = 0;
+                bool found = false;
+                const VectorOftypespec_member* mems = est->Members();
+                for (int mi = (int)mems->size() - 1; mi >= 0; mi--) {
+                    auto ms = (*mems)[mi];
+                    int w = 1;
+                    if (auto mts = ms->Typespec()) {
+                        if (auto ats = mts->Actual_typespec())
+                            w = get_width_from_typespec(ats, inst);
+                    } else {
+                        w = get_width(ms, inst);
+                    }
+                    if (std::string(ms->VpiName()) == field_name) {
+                        found = true; break;
+                    }
+                    mem_off += w;
+                }
+                RTLIL::SigSpec ls = import_expression(ps->Left_range());
+                RTLIL::SigSpec rs = import_expression(ps->Right_range());
+                int elem_w = get_width_from_typespec(est, inst);
+                if (found && elem_w > 0 && ls.is_fully_const() && rs.is_fully_const()) {
+                    int hi = ls.as_const().as_int(), lo = rs.as_const().as_int();
+                    if (hi < lo) std::swap(hi, lo);
+                    int off = idx * elem_w + mem_off + lo;
+                    int w = hi - lo + 1;
+                    if (off >= 0 && w > 0 && off + w <= base_wire->width) {
+                        if (mode_debug)
+                            log("    hier_path %s[%d].%s[%d:%d] -> %s[%d +: %d]\n",
+                                base_name.c_str(), idx, field_name.c_str(), hi, lo,
+                                base_wire->name.c_str(), off, w);
+                        return RTLIL::SigSpec(base_wire, off, w);
+                    }
+                }
+            }
+        }
         if (pe3[0]->UhdmType() == uhdmref_obj &&
             pe3[1]->UhdmType() == uhdmref_obj &&
             pe3[2]->UhdmType() == uhdmref_obj) {
