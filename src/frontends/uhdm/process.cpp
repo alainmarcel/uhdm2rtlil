@@ -1837,6 +1837,33 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                 // Check if temp wire already exists (e.g., from another generate block)
                 RTLIL::Wire* temp_wire = module->wire(temp_name);
+                // ...but an existing temp that ANOTHER process already holds
+                // must not be shared: two always_ff blocks writing disjoint
+                // fields of one signal (`field_storage.f0` / `.f1`, the shape
+                // every PeakRDL-generated *_reg in caliptra-rtl has) would then
+                // drive the same temp, and proc_arst could no longer see a
+                // constant reset value for either slice:
+                //   ERROR: Async reset \rst_n yields non-constant value
+                //   8'mmmmmmmm for signal \field_storage [7:0].
+                // Give this process its own temp instead, exactly as the
+                // part-select branch above already does ($0\x, $1\x, ...).
+                // A generate block re-entering the SAME process still reuses.
+                auto held_by_other_process = [&](RTLIL::Wire* w) {
+                    for (const auto& pr : module->processes) {
+                        if (pr.second == yosys_proc) continue;
+                        for (const auto& act : pr.second->root_case.actions)
+                            for (const auto& ch : act.first.chunks())
+                                if (ch.wire == w) return true;
+                    }
+                    return false;
+                };
+                if (temp_wire && held_by_other_process(temp_wire)) {
+                    int dup = 0;
+                    do {
+                        temp_name = "$" + std::to_string(++dup) + "\\" + sig.name;
+                        temp_wire = module->wire(temp_name);
+                    } while (temp_wire && held_by_other_process(temp_wire));
+                }
                 if (!temp_wire) {
                     // Create temp wire only if it doesn't exist
                     temp_wire = module->addWire(temp_name, signal_spec.size());
@@ -2020,6 +2047,39 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 sync_rst->type = reset_posedge ? RTLIL::STp : RTLIL::STn;
                 sync_rst->signal = reset_sig;
                 
+                // Which bits of the temp does this process actually write?
+                // Every action on the temp except the full-width hold default
+                // (`$0\x = \x`) is a write.  A STRUCT-MEMBER LHS
+                // (`field_storage.f0 <= …`) is a hier_path, not a part_select,
+                // so `part_slice` below never records it and the sync updated
+                // the WHOLE struct — on the async-reset edge proc_arst then saw
+                // a reset value that is constant only in the written field and
+                // 'x elsewhere, and bailed out:
+                //   ERROR: Async reset \hwif_in [8] yields non-constant value
+                //   16'mmmmmmmmmmmmmmmm for signal \field_storage.
+                // Every PeakRDL-generated *_reg in caliptra-rtl is written this
+                // way (one always_ff per field, all resetting off
+                // `hwif_in.reset_b`), so `proc` failed on 12 of the chip's 21
+                // top-level instances.
+                auto body_written_bits = [&](RTLIL::Wire* tw, RTLIL::Wire* ow,
+                                             std::set<int>& bits) {
+                    std::function<void(const RTLIL::CaseRule*)> walk =
+                        [&](const RTLIL::CaseRule* cr) {
+                        for (const auto& act : cr->actions) {
+                            if (act.first == RTLIL::SigSpec(tw) &&
+                                act.second == RTLIL::SigSpec(ow))
+                                continue;   // hold default
+                            for (const auto& ch : act.first.chunks())
+                                if (ch.wire == tw)
+                                    for (int b = 0; b < ch.width; b++)
+                                        bits.insert(ch.offset + b);
+                        }
+                        for (auto sw : cr->switches)
+                            for (auto c : sw->cases) walk(c);
+                    };
+                    walk(&yosys_proc->root_case);
+                };
+
                 // Add updates for all temp wires (one per signal)
                 for (const auto& [sig_name, temp_wire] : temp_wires) {
                     RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
@@ -2034,6 +2094,32 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (ps != part_slice.end()) {
                             lhs = lhs.extract(ps->second.first, ps->second.second);
                             rhs = rhs.extract(ps->second.first, ps->second.second);
+                            sync_clk->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                            sync_rst->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                            log("      Added sync update for %s\n", sig_name.c_str());
+                            continue;
+                        }
+                        std::set<int> wb;
+                        if (lhs.is_wire() &&
+                            (int)temp_wire->width == lhs.size())
+                            body_written_bits(temp_wire, lhs.as_wire(), wb);
+                        if (!wb.empty() && (int)wb.size() < lhs.size()) {
+                            // Emit one action per run of written bits.
+                            RTLIL::SigSpec l, r;
+                            int n = lhs.size(), i = 0;
+                            while (i < n) {
+                                if (!wb.count(i)) { i++; continue; }
+                                int j = i;
+                                while (j < n && wb.count(j)) j++;
+                                l.append(lhs.extract(i, j - i));
+                                r.append(rhs.extract(i, j - i));
+                                i = j;
+                            }
+                            sync_clk->actions.push_back(RTLIL::SigSig(l, r));
+                            sync_rst->actions.push_back(RTLIL::SigSig(l, r));
+                            log("      Added sync update (written bits only) for %s: %s\n",
+                                sig_name.c_str(), log_signal(l));
+                            continue;
                         }
                         sync_clk->actions.push_back(RTLIL::SigSig(lhs, rhs));
                         sync_rst->actions.push_back(RTLIL::SigSig(lhs, rhs));

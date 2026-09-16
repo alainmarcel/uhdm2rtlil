@@ -2784,6 +2784,48 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                     }
                 }
 
+                // Interface MODPORT connection: `.p(iface.mp)`.  Surelog
+                // encodes the actual as a hier_path <iface>.<modport>, which
+                // import_expression below resolves to 1'x — the child's
+                // flattened `<port>.<field>` ports are then never driven and
+                // `hierarchy` rejects the cell for having a port the target
+                // module does not declare.  The top-level instance path
+                // (uhdm2rtlil.cpp) already pairs the fields; a gen-scope
+                // instance took this path instead and lost them (caliptra's
+                // el2_mem `.iccm_mem_export(mem_export_local.veer_iccm)` inside
+                // `if (pt.ICCM_ENABLE)`).  Gate on the port's own typespec being
+                // an interface_typespec so a PLAIN port fed an interface struct
+                // MEMBER (`.sys_wdt(sub.req.wdt)`) still falls through to the
+                // expression import.
+                if (high_conn->UhdmType() == uhdmhier_path) {
+                    bool port_is_iface = false;
+                    if (auto prt = port->Typespec())
+                        if (auto pts = prt->Actual_typespec())
+                            port_is_iface = pts->UhdmType() == uhdminterface_typespec;
+                    const hier_path* hp = any_cast<const hier_path*>(high_conn);
+                    std::string src_name;
+                    if (port_is_iface && hp && hp->Path_elems() && !hp->Path_elems()->empty())
+                        src_name = std::string((*hp->Path_elems())[0]->VpiName());
+                    auto it = src_name.empty() ? iface_inst_vars_.end()
+                                               : iface_inst_vars_.find(src_name);
+                    if (it != iface_inst_vars_.end()) {
+                        log("    Port %s connected to modport of interface %s\n",
+                            port_name.c_str(), src_name.c_str());
+                        bool any_field = false;
+                        for (auto &var_name : it->second) {
+                            std::string full_signal_name = src_name + "." + var_name;
+                            std::string port_signal_name = port_name + "." + var_name;
+                            RTLIL::Wire* src_w = name_map.count(full_signal_name)
+                                ? name_map[full_signal_name]
+                                : module->wire(RTLIL::escape_id(full_signal_name));
+                            if (!src_w) continue;
+                            cell->setPort(RTLIL::escape_id(port_signal_name), src_w);
+                            any_field = true;
+                        }
+                        if (any_field) continue;
+                    }
+                }
+
                 // Try to handle as expression directly
                 RTLIL::SigSpec actual_sig;
                 try {
