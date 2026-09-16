@@ -2803,16 +2803,42 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         if (auto pts = prt->Actual_typespec())
                             port_is_iface = pts->UhdmType() == uhdminterface_typespec;
                     const hier_path* hp = any_cast<const hier_path*>(high_conn);
-                    std::string src_name;
-                    if (port_is_iface && hp && hp->Path_elems() && !hp->Path_elems()->empty())
+                    std::string src_name, mp_name;
+                    if (port_is_iface && hp && hp->Path_elems() && !hp->Path_elems()->empty()) {
                         src_name = std::string((*hp->Path_elems())[0]->VpiName());
+                        if (hp->Path_elems()->size() > 1)
+                            mp_name = std::string((*hp->Path_elems())[1]->VpiName());
+                    }
                     auto it = src_name.empty() ? iface_inst_vars_.end()
                                                : iface_inst_vars_.find(src_name);
                     if (it != iface_inst_vars_.end()) {
-                        log("    Port %s connected to modport of interface %s\n",
-                            port_name.c_str(), src_name.c_str());
+                        // Connect only the fields the NAMED MODPORT exposes.
+                        // iface_inst_vars_ lists every signal of the interface
+                        // instance, but the child declares only the modport's
+                        // — since import_port() stopped mirroring the whole
+                        // interface onto a modport-typed port, connecting the
+                        // full list makes `hierarchy` reject the cell:
+                        //   ...does not have a port named
+                        //   'iccm_mem_export.ic_tag_data_raw_pre'.
+                        std::set<std::string> mp_fields;
+                        if (!mp_name.empty() && uhdm_design &&
+                            uhdm_design->AllInterfaces())
+                            for (auto ii : *uhdm_design->AllInterfaces()) {
+                                if (!ii->Modports()) continue;
+                                for (auto m : *ii->Modports()) {
+                                    if (std::string(m->VpiName()) != mp_name ||
+                                        !m->Io_decls()) continue;
+                                    for (auto io : *m->Io_decls())
+                                        mp_fields.insert(std::string(io->VpiName()));
+                                }
+                                if (!mp_fields.empty()) break;
+                            }
+                        log("    Port %s connected to modport %s of interface %s\n",
+                            port_name.c_str(), mp_name.c_str(), src_name.c_str());
                         bool any_field = false;
                         for (auto &var_name : it->second) {
+                            if (!mp_fields.empty() && !mp_fields.count(var_name))
+                                continue;
                             std::string full_signal_name = src_name + "." + var_name;
                             std::string port_signal_name = port_name + "." + var_name;
                             RTLIL::Wire* src_w = name_map.count(full_signal_name)
