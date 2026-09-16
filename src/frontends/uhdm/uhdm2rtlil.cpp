@@ -3349,6 +3349,28 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         ScopeGuard(const UHDM::scope*& r) : ref(r), saved(r) { ref = nullptr; }
         ~ScopeGuard() { ref = saved; }
     } scope_guard(current_scope);
+    // The blocking-value maps are per-PROCESS state, but a process's import can
+    // pull in a child module (an instance inside a generate scope), and the
+    // child's processes then inherited — and appended to — the parent's live
+    // maps.  A value threaded that way names a wire owned by the OTHER module,
+    // which write_rtlil rejects (caliptra_tlul_err_resp's error-response mux
+    // leaked from the $paramod copy into the base definition).  Start each
+    // module with empty maps and hand the caller's back on the way out.
+    struct CombValueGuard {
+        UhdmImporter* self;
+        std::map<std::string, RTLIL::SigSpec> values;
+        std::map<std::string, std::string> aliases;
+        CombValueGuard(UhdmImporter* s) : self(s),
+            values(std::move(s->current_comb_values)),
+            aliases(std::move(s->comb_value_aliases)) {
+            self->current_comb_values.clear();
+            self->comb_value_aliases.clear();
+        }
+        ~CombValueGuard() {
+            self->current_comb_values = std::move(values);
+            self->comb_value_aliases = std::move(aliases);
+        }
+    } comb_value_guard(this);
 
     // Null check
     if (!uhdm_module) {
