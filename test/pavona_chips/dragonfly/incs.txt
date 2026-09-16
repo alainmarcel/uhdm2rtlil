@@ -1,0 +1,2 @@
+${PAVONA}/hw/dv/sv/dv_utils
+${PAVONA}/hw/ip/prim/rtl

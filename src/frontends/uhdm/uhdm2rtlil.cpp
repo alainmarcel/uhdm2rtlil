@@ -3337,6 +3337,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             self->proc_elem_written = std::move(proc_elem);
         }
     } classification_guard(this);
+    // A child imported from inside the parent's generate scope must not
+    // evaluate its own expressions against the PARENT's gen_scope:
+    // import_gen_scope leaves current_scope set while its instances import,
+    // and ExprEval then failed to resolve the child's parameters
+    // (rstmgr_por's `rst_filter_n[0 +: FilterStages-1]` became an empty
+    // slice, so the Egret chip's power-on-reset filter never filled).
+    struct ScopeGuard {
+        const UHDM::scope*& ref;
+        const UHDM::scope* saved;
+        ScopeGuard(const UHDM::scope*& r) : ref(r), saved(r) { ref = nullptr; }
+        ~ScopeGuard() { ref = saved; }
+    } scope_guard(current_scope);
 
     // Null check
     if (!uhdm_module) {

@@ -169,3 +169,24 @@ jobs:
       core: periph5
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+
+  # Pavona full chips (test/pavona_chips): Surelog + read_uhdm + read_slang of
+  # the whole top_egret / top_dragonfly (Pavona hw/ fetched at the commit pinned
+  # in pavona_chips/pavona.commit), a read_uhdm-vs-read_slang SAT miter per
+  # direct instance, and a full-chip Verilator co-sim of the read_uhdm netlist
+  # vs the behavioural RTL.  One job per chip (each import peaks ~12-15 GB).
+  sweep-egret:
+    name: pavona - egret (full chip)
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: egret
+      cycles: ${{ github.event.inputs.cycles || '2000' }}
+      timeout: 350
+
+  sweep-dragonfly:
+    name: pavona - dragonfly (full chip)
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: dragonfly
+      cycles: ${{ github.event.inputs.cycles || '2000' }}
+      timeout: 350

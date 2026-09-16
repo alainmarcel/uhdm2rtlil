@@ -6256,6 +6256,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                            lt->UhdmType() == uhdmunion_typespec))
                     ats = lt;
             }
+            // An ELEMENT-selected LHS (`q[i] <= '{pull_en: 1'b1, default: '0}`
+            // on `pad_attr_t [N-1:0] q`): assignment_lhs_typespec gives the
+            // whole packed array, so the caller passes the element struct as
+            // the expression context (OpenTitan pinmux's power-on pad
+            // attributes were filled with the default and lost pull_en).
+            if (!ats && expression_context_typespec &&
+                (expression_context_typespec->UhdmType() == uhdmstruct_typespec ||
+                 expression_context_typespec->UhdmType() == uhdmunion_typespec))
+                ats = expression_context_typespec;
             const VectorOftypespec_member* members = nullptr;
             if (ats && ats->UhdmType() == uhdmstruct_typespec)
                 members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
@@ -10635,13 +10644,29 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
+    // The declaration this select reads.  An always_ff LHS in the module body
+    // (`q[kk] <= …`) carries NO binding, and in the AllModules definition view
+    // the array is a plain logic_net whose typespec holds the geometry — look
+    // it up by name so the branches below can size the element (OpenTitan
+    // pinmux's `pad_attr_t [NMioPads-1:0] mio_pad_attr_q`, whose reset value
+    // `'{pull_en: 1'b1, default: '0}` was written as a single BIT).
+    const UHDM::any* bsel_obj = uhdm_bit->Actual_group();
+    if (!bsel_obj && current_instance && !signal_name.empty()) {
+        if (current_instance->Nets())
+            for (auto n0 : *current_instance->Nets())
+                if (std::string(n0->VpiName()) == signal_name) { bsel_obj = n0; break; }
+        if (!bsel_obj && current_instance->Variables())
+            for (auto v0 : *current_instance->Variables())
+                if (std::string(v0->VpiName()) == signal_name) { bsel_obj = v0; break; }
+    }
+
     // Plain `wire [N-1:0][W-1:0]` (a logic_net, not a packed_array_var, with no
     // packed_elem_width attribute): derive the element width from the
     // bit_select's logic_typespec so `t[i]` extracts a W-bit slot, not a single
     // bit (StreamOpImplicitSliceSize: `wire [3:0][7:0] t; t[0]`).
-    if (packed_elem_w <= 1 && wire && uhdm_bit->Actual_group()) {
+    if (packed_elem_w <= 1 && wire && bsel_obj) {
         const UHDM::ref_typespec* rt = nullptr;
-        if (auto e = dynamic_cast<const UHDM::expr*>(uhdm_bit->Actual_group()))
+        if (auto e = dynamic_cast<const UHDM::expr*>(bsel_obj))
             rt = e->Typespec();
         if (rt && rt->Actual_typespec() &&
             rt->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
@@ -10684,6 +10709,46 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // paths rather than mis-scaling them here.
                 if (ls.is_fully_const() && rs.is_fully_const() &&
                     ls.as_int() >= rs.as_int() && base.size() % ew == 0) {
+                    packed_elem_w = ew;
+                    packed_outer_l = ls.as_int();
+                    packed_outer_r = rs.as_int();
+                }
+            }
+        }
+    }
+
+    // A packed_array_net / packed_array_var carries its OWN Ranges() and an
+    // Elements()[0] whose typespec is the element type; the object itself has
+    // no typespec, so every branch above missed it and `q[i]` degraded to a
+    // single BIT.  OpenTitan pinmux declares `pad_attr_t [NMioPads-1:0]
+    // mio_pad_attr_q` this way (the type comes from another package), and its
+    // power-on reset value `'{pull_en: 1'b1, default: '0}` was written as one
+    // bit — the Egret chip then sampled its TAP strap with the pull-down off.
+    if (packed_elem_w <= 1 && wire) {
+        const UHDM::VectorOfrange* orgs = nullptr;
+        const UHDM::any* elem0 = nullptr;
+        const UHDM::any* aobj = bsel_obj;
+        if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(aobj)) {
+            orgs = pn->Ranges();
+            if (pn->Elements() && !pn->Elements()->empty()) elem0 = (*pn->Elements())[0];
+        } else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(aobj)) {
+            orgs = pv->Ranges();
+            if (pv->Elements() && !pv->Elements()->empty()) elem0 = (*pv->Elements())[0];
+        }
+        if (orgs && !orgs->empty()) {
+            int ew = 0;
+            if (auto ee = dynamic_cast<const UHDM::expr*>(elem0))
+                if (auto ets = ee->Typespec())
+                    if (auto a = ets->Actual_typespec())
+                        ew = get_width_from_typespec(a, inst);
+            auto r0 = (*orgs)[0];
+            RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+            RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+            if (ls.is_fully_const() && rs.is_fully_const()) {
+                int outer = std::abs(ls.as_int() - rs.as_int()) + 1;
+                if (ew <= 1 && outer > 0 && base.size() % outer == 0)
+                    ew = base.size() / outer;   // fall back to the flat width
+                if (ew > 1 && base.size() % ew == 0) {
                     packed_elem_w = ew;
                     packed_outer_l = ls.as_int();
                     packed_outer_r = rs.as_int();
@@ -11709,6 +11774,46 @@ const UHDM::typespec* UhdmImporter::unpacked_array_elem_struct_ts(
         }
     }
     return ets;
+}
+
+// Element typespec of a packed-array bit_select (`q[i]` on
+// `pad_attr_t [N-1:0] q`).  Resolves the declaration through the select's
+// binding or, when it has none (an always_ff LHS, or the AllModules
+// definition view), by name in the current instance.  Used to give an
+// assignment pattern RHS (`'{pull_en: 1'b1, default: '0}`) the struct it
+// must be laid out against.
+const UHDM::typespec* UhdmImporter::bitselect_elem_typespec(const UHDM::bit_select* bs) {
+    if (!bs) return nullptr;
+    std::string name(bs->VpiName());
+    const UHDM::any* obj = bs->Actual_group();
+    if (!obj && current_instance && !name.empty()) {
+        if (current_instance->Nets())
+            for (auto n0 : *current_instance->Nets())
+                if (std::string(n0->VpiName()) == name) { obj = n0; break; }
+        if (!obj && current_instance->Variables())
+            for (auto v0 : *current_instance->Variables())
+                if (std::string(v0->VpiName()) == name) { obj = v0; break; }
+    }
+    if (!obj) return nullptr;
+    // packed_array_net / packed_array_var: the element carries the typespec.
+    const UHDM::any* elem0 = nullptr;
+    if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
+        if (pn->Elements() && !pn->Elements()->empty()) elem0 = (*pn->Elements())[0];
+    } else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
+        if (pv->Elements() && !pv->Elements()->empty()) elem0 = (*pv->Elements())[0];
+    }
+    if (auto ee = dynamic_cast<const UHDM::expr*>(elem0))
+        if (auto ets = ee->Typespec())
+            if (auto a = ets->Actual_typespec())
+                return a;
+    // Plain net/var whose typespec is the packed array.
+    if (auto e = dynamic_cast<const UHDM::expr*>(obj))
+        if (auto rt = e->Typespec())
+            if (auto a = rt->Actual_typespec())
+                if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(a))
+                    if (pat->Elem_typespec())
+                        return pat->Elem_typespec()->Actual_typespec();
+    return nullptr;
 }
 
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
