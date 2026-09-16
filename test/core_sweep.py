@@ -62,6 +62,7 @@ PERIPH3_DIR = TEST_DIR / "pavona_periph3_equiv"
 PERIPH4_DIR = TEST_DIR / "pavona_periph4_equiv"
 PERIPH5_DIR = TEST_DIR / "pavona_periph5_equiv"
 CHIPS_DIR = TEST_DIR / "pavona_chips"
+CALIPTRA_DIR = TEST_DIR / "caliptra_chip"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -950,6 +951,55 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
     return rows
 
 
+
+def _fetch_caliptra():
+    """caliptra-rtl checkout: $CALIPTRA if set, else a shallow clone at the
+    pinned commit (caliptra_chip/caliptra.commit)."""
+    if os.environ.get("CALIPTRA"):
+        return os.environ["CALIPTRA"]
+    dest = CALIPTRA_DIR / "caliptra-rtl"
+    if not (dest / "src").exists():
+        # The script clones into $CALIPTRA, defaulting to exactly `dest`.
+        sh(["bash", str(CALIPTRA_DIR / "scripts" / "fetch_caliptra.sh")],
+           timeout=1800)
+    return str(dest)
+
+
+def sweep_caliptra(jobs, flt=None):
+    """chipsalliance/caliptra-rtl full chip: Surelog + read_uhdm + read_slang
+    of caliptra_top (through the generated flat-port wrapper, since read_slang
+    refuses a top with unconnected interface ports), then a read_uhdm-vs-
+    read_slang SAT miter per direct instance of the chip -- one row each.
+
+    No co-sim column yet: the chip has no testbench in this harness, so the
+    column is left as "—" rather than reporting a pass that was never run."""
+    env = dict(os.environ, CALIPTRA=_fetch_caliptra(), JOBS=str(max(1, jobs)))
+    cmd = [sys.executable, "scripts/chip_flow.py"]
+    try:
+        p = subprocess.run(cmd, cwd=CALIPTRA_DIR, text=True, timeout=4 * 3600,
+                           env=env, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    print(out)
+    label = {"proven": "✅ equivalent", "cex": "❌ differs",
+             "timeout": "❓ SAT timeout", "error": "error"}
+    rows = []
+    # Caliptra instance names are not u_-prefixed (abr_inst, rvtop, sha256 ...).
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅❌]\s*(\S+)\s+(proven|cex|timeout|error)\b", line)
+        if m and (not flt or re.search(flt, m.group(1))):
+            rows.append({"module": m.group(1), "formal": label[m.group(2)],
+                         "cosim": "—"})
+    rows.sort(key=lambda r: r["module"])
+    nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
+    rows.insert(0, {"module": "caliptra_top (full chip)",
+                    "formal": f"{nproven}/{len(rows)} instances equivalent",
+                    "cosim": "—"})
+    return rows
+
+
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
     # The pavona sweep adds a structural opt-level "check" column (undriven-net
@@ -1006,7 +1056,7 @@ def main():
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
-                                     "egret", "dragonfly"])
+                                     "egret", "dragonfly", "caliptra"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -1067,6 +1117,8 @@ def main():
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip=args.core)
     elif args.core in ("egret", "dragonfly"):
         rows = sweep_chip(args.core, args.jobs, args.cycles, args.filter)
+    elif args.core == "caliptra":
+        rows = sweep_caliptra(args.jobs, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
