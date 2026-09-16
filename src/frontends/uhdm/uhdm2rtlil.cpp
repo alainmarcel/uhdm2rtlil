@@ -2789,8 +2789,73 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // resolve, match it to that interface-signal wire by
                             // leaf name so the child's clk/rst get driven (degu
                             // SoC tcb_dev_gpio / cdc).
+                            // An INTERFACE FIELD as the actual
+                            // (`.haddr_i(ahb_lite_initiator.haddr)`) does not
+                            // survive elaboration usably: Surelog rewrites the
+                            // High_conn to a logic_var named after the CHILD's
+                            // port, which names nothing here, so the import
+                            // above yields an empty SigSpec and the port is
+                            // wired to nothing.  caliptra's ahb_lite_bus fed
+                            // its address decoder `connect \haddr_i { }`, so
+                            // every responder's haddr read 0 and the bus
+                            // selected no one.
+                            //
+                            // The DEFINITION view still holds the real actual
+                            // as a hier_path, under AllModules -> the parent's
+                            // def -> Ref_modules() -> this instance -> this
+                            // port.  Prefer it: the leaf-name match below
+                            // cannot disambiguate `ahb_lite_initiator.haddr`
+                            // from the many `ahb_lite_responders[i].haddr`.
+                            if (conn.empty() && uhdm_design &&
+                                uhdm_design->AllModules()) {
+                                std::string inst_nm =
+                                    std::string(uhdm_module->VpiName());
+                                std::string par_def;
+                                if (auto par = uhdm_module->VpiParent())
+                                    par_def = std::string(par->VpiDefName());
+                                const UHDM::any* def_conn = nullptr;
+                                for (auto m : *uhdm_design->AllModules()) {
+                                    if (!par_def.empty() &&
+                                        std::string(m->VpiDefName()) != par_def)
+                                        continue;
+                                    if (!m->Ref_modules()) continue;
+                                    for (auto rm : *m->Ref_modules()) {
+                                        if (std::string(rm->VpiName()) != inst_nm ||
+                                            !rm->Ports()) continue;
+                                        for (auto dp : *rm->Ports())
+                                            if (std::string(dp->VpiName()) == port_name &&
+                                                dp->High_conn())
+                                                def_conn = dp->High_conn();
+                                    }
+                                    if (def_conn) break;
+                                }
+                                if (def_conn &&
+                                    def_conn->UhdmType() == uhdmhier_path) {
+                                    RTLIL::SigSpec dc =
+                                        import_expression(any_cast<const expr*>(def_conn));
+                                    if (!dc.empty()) {
+                                        conn = dc;
+                                        log("UHDM: port %s actual taken from the "
+                                            "definition view (%s)\n",
+                                            port_name.c_str(),
+                                            std::string(def_conn->VpiName()).c_str());
+                                    }
+                                }
+                            }
+
+                            // Same shape for an interface VARIABLE actual
+                            // (`.haddr_i(ahb_lite_initiator.haddr)`): elaboration
+                            // rewrites the High_conn to a logic_var named after the
+                            // CHILD's port (`...u.a_i.addr`), which names nothing
+                            // here, so the import yields an empty SigSpec and the
+                            // port is wired to nothing.  caliptra's ahb_lite_bus fed
+                            // its address decoder `connect \haddr_i { }`, so every
+                            // responder's haddr read 0 and the bus selected no one.
+                            // The leaf name is still the interface FIELD, so the
+                            // same unique-suffix match finds `\<iface>.<field>`.
                             if (conn.empty() &&
-                                high_conn->UhdmType() == uhdmlogic_net) {
+                                (high_conn->UhdmType() == uhdmlogic_net ||
+                                 high_conn->UhdmType() == uhdmlogic_var)) {
                                 std::string suffix =
                                     "." + std::string(high_conn->VpiName());
                                 RTLIL::Wire* found = nullptr;
