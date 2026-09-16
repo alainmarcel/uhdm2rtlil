@@ -1195,6 +1195,7 @@ struct UhdmImporter {
         const std::string& func_name, int& temp_counter,
         const std::string& func_call_context,
         const std::map<std::string, int>& local_var_widths);
+    const UHDM::typespec* bitselect_elem_typespec(const UHDM::bit_select* bs);
     UHDM::any* find_param_decl_typespec(std::string_view name, const UHDM::any* scope);
     bool resolve_struct_array_elem_member_lhs(const UHDM::assignment* assign,
         const UHDM::hier_path* hp, std::map<std::string, RTLIL::SigSpec>& mapping,

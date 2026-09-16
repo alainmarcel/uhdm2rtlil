@@ -15572,6 +15572,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // widen to it (SV context-determined sizing).
                             int prev_ctx = expression_context_width;
                             expression_context_width = lhs_sig.size();
+                            // `q[i] <= '{field: v, default: '0}`: the pattern
+                            // needs the ELEMENT struct to place its named
+                            // fields (pinmux's power-on pad attributes).
+                            const UHDM::typespec* saved_lhs_ts =
+                                expression_context_typespec;
+                            if (lhs && lhs->VpiType() == vpiBitSelect)
+                                if (auto ets = bitselect_elem_typespec(
+                                        any_cast<const bit_select*>(lhs)))
+                                    expression_context_typespec = ets;
                             // In always_ff body mode, resolve reads of blocking
                             // temps to their in-flight $0\ value (registers stay
                             // original).  always_comb behaviour is unchanged
@@ -15595,6 +15604,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     ? &ff_blocking_temps
                                     : (current_comb_process ? &current_comb_values
                                                             : nullptr));
+                            expression_context_typespec = saved_lhs_ts;
                             expression_context_width = prev_ctx;
 
                             // Compound assignment (`x -= 1`, `x += y`, …):

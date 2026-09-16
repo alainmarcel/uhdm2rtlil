@@ -60,6 +60,7 @@ PERIPH2_DIR = TEST_DIR / "pavona_periph2_equiv"
 PERIPH3_DIR = TEST_DIR / "pavona_periph3_equiv"
 PERIPH4_DIR = TEST_DIR / "pavona_periph4_equiv"
 PERIPH5_DIR = TEST_DIR / "pavona_periph5_equiv"
+CHIPS_DIR = TEST_DIR / "pavona_chips"
 
 
 def sh(cmd, cwd=None, timeout=None):
@@ -870,6 +871,70 @@ def sweep_kmac(jobs, cycles=300, flt=None, ip="kmac"):
     return rows
 
 
+def _fetch_pavona():
+    """Pavona checkout for the full-chip families: $PAVONA if set, else a
+    sparse clone of hw/ at the pinned commit (pavona_chips/pavona.commit)."""
+    if os.environ.get("PAVONA"):
+        return os.environ["PAVONA"]
+    dest = CHIPS_DIR / "pavona"
+    commit = (CHIPS_DIR / "pavona.commit").read_text().strip()
+    if not (dest / "hw").exists():
+        sh(["bash", str(CHIPS_DIR / "scripts" / "fetch_pavona.sh"), str(dest), commit],
+           timeout=1800)
+    return str(dest)
+
+
+def sweep_chip(chip, jobs, cycles=300, flt=None):
+    """Pavona full chip (top_egret / top_dragonfly): Surelog + read_uhdm +
+    read_slang of the WHOLE top, a read_uhdm-vs-read_slang SAT miter per
+    direct instance (one row each), and a full-chip Verilator co-sim of the
+    read_uhdm netlist vs the behavioural RTL (the `top_<chip>` row)."""
+    env = dict(os.environ, PAVONA=_fetch_pavona(), JOBS=str(max(1, jobs)))
+    cmd = [sys.executable, "scripts/chip_flow.py", chip]
+    try:
+        p = subprocess.run(cmd, cwd=CHIPS_DIR, text=True, timeout=4 * 3600, env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    print(out)
+    label = {"proven": "✅ equivalent", "cex": "❌ differs",
+             "timeout": "❓ SAT timeout", "error": "error"}
+    rows = []
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅❌]\s*(u_\S+)\s+(proven|cex|timeout|error)\b", line)
+        if m and (not flt or re.search(flt, m.group(1))):
+            rows.append({"module": m.group(1), "formal": label[m.group(2)],
+                         "cosim": "—"})
+    rows.sort(key=lambda r: r["module"])
+    # Full-chip co-sim row.
+    try:
+        rc = subprocess.run([sys.executable, "scripts/chip_cosim.py", chip, str(cycles), "1"],
+                            cwd=CHIPS_DIR, text=True, timeout=4 * 3600, env=env,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        cout = rc.stdout
+    except subprocess.TimeoutExpired as e:
+        cout = e.stdout or "timeout"
+    print(cout)
+    m = re.search(r"ADJUDICATION (\d+) cycles: uhdm_vs_rtl=(\d+)", cout or "")
+    act = re.search(r"ACTIVITY (\d+)", cout or "")
+    if m:
+        u = int(m.group(2))
+        cs = (f"✅ PASS ({m.group(1)} cycles, {act.group(1) if act else '?'} active)"
+              if u == 0 else f"❌ {u} div")
+    elif "NO_RUN" in (cout or ""):
+        cs = "skip (no run)"
+    elif "build FAILED" in (cout or ""):
+        cs = "skip (sim build)"
+    else:
+        cs = "error"
+    nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
+    rows.insert(0, {"module": f"top_{chip} (full chip)",
+                    "formal": f"{nproven}/{len(rows)} instances equivalent",
+                    "cosim": cs})
+    return rows
+
+
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
     # The pavona sweep adds a structural opt-level "check" column (undriven-net
@@ -925,7 +990,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
-                                     "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5"])
+                                     "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
+                                     "egret", "dragonfly"])
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -984,6 +1050,8 @@ def main():
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip="hmac")
     elif args.core in ("edn", "csrng", "aes", "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5"):
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip=args.core)
+    elif args.core in ("egret", "dragonfly"):
+        rows = sweep_chip(args.core, args.jobs, args.cycles, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
