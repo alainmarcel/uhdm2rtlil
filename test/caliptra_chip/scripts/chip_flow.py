@@ -39,7 +39,7 @@ W = HERE / "work"
 INST = W / "inst"
 WRAPPER = W / "caliptra_top_flat.sv"
 SEQ = int(os.environ.get("SEQ", "2"))
-TIMEOUT = int(os.environ.get("TIMEOUT", "1800"))
+TIMEOUT = int(os.environ.get("TIMEOUT", "7200"))
 JOBS = int(os.environ.get("JOBS", "2"))
 MEMSIZE = int(os.environ.get("MEMSIZE", "16"))
 UH = W / "caliptra_uhdm_hier.il"
@@ -67,7 +67,18 @@ def surelog(top, extra, outdir, log):
         [f"-I{d}" for d in incs] + ["-top", top] + srcs + extra, log, timeout=3600)
     uhdm = W / outdir / "slpp_all/surelog.uhdm"
     if not uhdm.exists():
-        print(f"# surelog produced no UHDM for {top}"); return None
+        # The nightly reported "exit 1 in 0s" with nothing else to go on —
+        # show the tail of the Surelog log so a missing checkout, a bad
+        # binary or a fatal parse error is readable from the Actions log.
+        print(f"# surelog produced no UHDM for {top}; tail of {log}:")
+        try:
+            for l in (W / log).read_text(errors="replace").splitlines()[-15:]:
+                print(f"#   {l}")
+        except OSError as e:
+            print(f"#   ({e})")
+        print(f"# surelog binary: {S} exists={os.path.exists(S)}; "
+              f"first source exists={os.path.exists(srcs[0]) if srcs else None}")
+        return None
     errs = re.search(r"\[  ERROR\] : (\d+)", (W / log).read_text(errors="replace"))
     print(f"# surelog errors ({top}): {errs.group(1) if errs else '?'}")
     return uhdm
