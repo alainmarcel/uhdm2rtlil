@@ -13210,6 +13210,27 @@ bool UhdmImporter::emit_dynamic_concat_lhs_write(
 
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
+    // A COMPOUND assignment (`x[i] |= t`, `x[i] ^= t`, ...) must fold the
+    // target's CURRENT value into the RHS.  The generic path below does that
+    // just before emitting (see "Handle compound assignment operators"), but
+    // several fast paths for select LHS shapes emit and RETURN before reaching
+    // it, silently turning `|=` into `=`.  VeeR/caliptra's key vault ORs five
+    // clients' write-enables into `key_entry_ctrl_we[entry]` inside an
+    // unrolled loop; only the LAST client survived, so four of five key writes
+    // were never enabled.  Every early emit below goes through this.
+    auto fold_compound = [&](const RTLIL::SigSpec& lhs_s, RTLIL::SigSpec rhs_s,
+                             const RTLIL::SigSpec* cur_override = nullptr) -> RTLIL::SigSpec {
+        int ot = uhdm_assign->VpiOpType();
+        if (ot == vpiAssignmentOp || ot == 0 || rhs_s.empty()) return rhs_s;
+        RTLIL::SigSpec cur = cur_override ? *cur_override
+                                          : compound_lhs_current(uhdm_assign->Lhs(), lhs_s);
+        if (cur.size() < lhs_s.size()) cur.extend_u0(lhs_s.size(), false);
+        else if (cur.size() > lhs_s.size()) cur = cur.extract(0, lhs_s.size());
+        if (rhs_s.size() < lhs_s.size()) rhs_s.extend_u0(lhs_s.size(), false);
+        else if (rhs_s.size() > lhs_s.size()) rhs_s = rhs_s.extract(0, lhs_s.size());
+        return create_compound_op_cell(ot, cur, rhs_s, uhdm_assign);
+    };
+
     // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
     // captures a runtime-indexed slice, so synthesise the mask/shift/or write
     // (matches Yosys's Verilog frontend; covers simple/sign_part_assign.v).
@@ -13449,6 +13470,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     RTLIL::SigSpec rhs_sized = dyn_rhs;
                     if (rhs_sized.size() < elem_w) rhs_sized.extend_u0(elem_w);
                     else if (rhs_sized.size() > elem_w) rhs_sized = rhs_sized.extract(0, elem_w);
+                    rhs_sized = fold_compound(RTLIL::SigSpec(elem_wire), rhs_sized, &cur_val);
 
                     RTLIL::Wire* new_val = module->addWire(NEW_ID, elem_w);
                     module->addMux(NEW_ID, cur_val, rhs_sized, RTLIL::SigSpec(sel), new_val);
@@ -13497,6 +13519,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             if (auto re = dynamic_cast<const expr*>(rhs_any))
                                 rhs_e = import_expression(re, comb_read_map());
                         if (rhs_e.size() > 0) {
+                            rhs_e = fold_compound(RTLIL::SigSpec(ew), rhs_e);
                             emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
                             return;
                         }
@@ -13566,6 +13589,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             if (auto rhs_any = uhdm_assign->Rhs())
                                 if (auto re = dynamic_cast<const expr*>(rhs_any))
                                     rhs_e = import_expression(re, comb_read_map());
+                            rhs_e = fold_compound(RTLIL::SigSpec(ew), rhs_e);
                             emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
                             return;
                         }
@@ -13619,6 +13643,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
                                 rhs_bit = import_expression(rhs_e, comb_read_map());
                         // emit_comb_assign sizes the RHS to the elem_w-bit LHS.
+                        rhs_bit = fold_compound(lhs_bit, rhs_bit);
                         emit_comb_assign(lhs_bit, rhs_bit, proc);
                         return;
                     }
