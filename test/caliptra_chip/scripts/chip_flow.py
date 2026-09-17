@@ -32,6 +32,12 @@ CALIPTRA = os.environ.get("CALIPTRA", str(HERE / "caliptra-rtl"))
 GEN_WRAPPER = HERE / "scripts/gen_wrapper.py"
 
 only = sys.argv[1:]
+# SHARD=i/n (set by core_sweep.py): with n > 1 the last shard miters nothing
+# (it runs the full-chip co-sim) and the others take the instances
+# round-robin — the same plan as core_sweep._chip_shard_plan.
+_shard = os.environ.get("SHARD", "1/1").split("/")
+SHARD_IDX, SHARD_CNT = int(_shard[0]) - 1, int(_shard[1])
+MEM_LIMIT_KB = int(os.environ.get("MEM_LIMIT_KB", "0"))
 CHIP = "caliptra"
 TOP = "caliptra_top_flat"
 INNER = "caliptra_top"
@@ -214,8 +220,13 @@ sat -verify -prove-asserts -seq {SEQ} -set-init-zero miter
 """
     (d / "miter.ys").write_text(ys)
     try:
-        r = subprocess.run(["timeout", str(TIMEOUT), Y, "-m", P, str(d / "miter.ys")],
-                           capture_output=True, text=True, errors="replace")
+        # Cap each miter's address space (MEM_LIMIT_KB shared by the JOBS
+        # concurrent SATs): an over-budget proof then dies as "error" instead
+        # of taking the 16 GB runner down with it.
+        cmd = ["timeout", str(TIMEOUT), Y, "-m", P, str(d / "miter.ys")]
+        if MEM_LIMIT_KB > 0:
+            cmd = ["bash", "-c", f"ulimit -v {MEM_LIMIT_KB // max(1, JOBS)}; exec \"$@\"", "--"] + cmd
+        r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
         out, rc = r.stdout + r.stderr, r.returncode
     except Exception as e:
         out, rc = str(e), -1
@@ -233,6 +244,9 @@ def main():
             return 1
     common = split()
     names = [n for n in common if not only or n in only]
+    if SHARD_CNT > 1:
+        names = [] if SHARD_IDX == SHARD_CNT - 1 else sorted(names)[SHARD_IDX::SHARD_CNT - 1]
+        print(f"# shard {SHARD_IDX + 1}/{SHARD_CNT}: {len(names)} instance(s) to miter")
     ok = 0
     with cf.ThreadPoolExecutor(JOBS) as ex:
         for n, v in ex.map(miter, names):

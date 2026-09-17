@@ -41,6 +41,23 @@ def _apply_shard(items):
         return items
     return items[idx::cnt]
 
+
+def _chip_shard_plan(names):
+    """Chip families (egret / dragonfly / caliptra) fan out differently from
+    the per-module sweeps: with N > 1 shards the LAST shard runs only the
+    full-chip co-sim (three whole-chip Verilator builds) and the instance
+    miters + per-instance co-sims are split round-robin over the other N-1.
+    Every shard still elaborates the chip (it needs the netlists).  Returns
+    (this shard's instance names, run the chip co-sim?).  One shard = all.
+    A single 16 GB runner died mid-sweep once the vault miters became real
+    proofs (two multi-million-variable SATs) with the chip co-sim still ahead."""
+    idx, cnt = _SHARD
+    if cnt <= 1:
+        return list(names), True
+    if idx == cnt - 1:
+        return [], True
+    return sorted(names)[idx::cnt - 1], False
+
 TEST_DIR = Path(__file__).resolve().parent
 # Flattened read_uhdm cell counts, populated by _undriven_check and read by the
 # auto-miter size gate (keyed by resolved work-dir path).
@@ -1029,6 +1046,10 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
     direct instance (one row each), and a full-chip Verilator co-sim of the
     read_uhdm netlist vs the behavioural RTL (the `top_<chip>` row)."""
     env = dict(os.environ, PAVONA=_fetch_pavona(), JOBS=str(max(1, jobs)))
+    inst_dir = CHIPS_DIR / "work" / chip / "inst"
+    # chip_flow.py applies the same shard plan itself (SHARD=i/n): it is the
+    # one that knows the instance list, after its split().
+    env["SHARD"] = f"{_SHARD[0] + 1}/{_SHARD[1]}"
     cmd = [sys.executable, "scripts/chip_flow.py", chip]
     try:
         p = subprocess.run(cmd, cwd=CHIPS_DIR, text=True, timeout=4 * 3600, env=env,
@@ -1046,26 +1067,35 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
-    # Full-chip co-sim row.
-    try:
-        rc = subprocess.run([sys.executable, "scripts/chip_cosim.py", chip, str(cycles), "1"],
-                            cwd=CHIPS_DIR, text=True, timeout=4 * 3600, env=env,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        cout = rc.stdout
-    except subprocess.TimeoutExpired as e:
-        cout = e.stdout or "timeout"
-    print(cout)
-    # chip_cosim.py also simulates the read_slang netlist of the top: that is
-    # the slang-baseline column (it used to be parsed for the verdict only).
-    cs, scs = _cosim_cells(cout, 0, cycles)
+    all_names = []
+    if (inst_dir / "instances.json").exists():
+        all_names = sorted(json.loads((inst_dir / "instances.json").read_text()))
+    my_names, do_chip_cosim = _chip_shard_plan(all_names)
+    # Full-chip co-sim row (its own shard when sharded).
+    cs, scs = "—", "—"
+    if do_chip_cosim:
+        try:
+            rc = subprocess.run([sys.executable, "scripts/chip_cosim.py", chip, str(cycles), "1"],
+                                cwd=CHIPS_DIR, text=True, timeout=4 * 3600, env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            cout = rc.stdout
+        except subprocess.TimeoutExpired as e:
+            cout = e.stdout or "timeout"
+        print(cout)
+        # chip_cosim.py also simulates the read_slang netlist of the top: that is
+        # the slang-baseline column (it used to be parsed for the verdict only).
+        cs, scs = _cosim_cells(cout, 0, cycles)
     # Every direct instance: its read_uhdm / read_slang netlists vs the RTL
     # module rebuilt with the instance's parameters.
+    if _SHARD[1] > 1:
+        rows = [r for r in rows if r["module"] in set(my_names)]
     _inst_cosims(rows, CHIPS_DIR / "work" / chip / "inst",
                  CHIPS_DIR / chip / "srcs.txt", CHIPS_DIR / chip / "incs.txt",
                  [f"PAVONA={env['PAVONA']}"],
                  [Path(env["PAVONA"]) / "hw/ip/prim/rtl/prim_assert.sv"],
                  _PAVONA_TIES, cycles, jobs)
     nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
+    # The merge job adds the shards' top rows together (see --merge).
     rows.insert(0, {"module": f"top_{chip} (full chip)",
                     "formal": f"{nproven}/{len(rows)} instances equivalent",
                     "cosim": cs, "slang_cosim": scs})
@@ -1096,6 +1126,8 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
     netlists vs the RTL) and of every instance's netlists vs the RTL module
     rebuilt with the instance's parameters (netlist_cosim.py)."""
     env = dict(os.environ, CALIPTRA=_fetch_caliptra(), JOBS=str(max(1, jobs)))
+    inst_dir = CALIPTRA_DIR / "work" / "inst"
+    env["SHARD"] = f"{_SHARD[0] + 1}/{_SHARD[1]}"
     cmd = [sys.executable, "scripts/chip_flow.py"]
     try:
         p = subprocess.run(cmd, cwd=CALIPTRA_DIR, text=True, timeout=4 * 3600,
@@ -1115,9 +1147,15 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
+    all_names = []
+    if (inst_dir / "instances.json").exists():
+        all_names = sorted(json.loads((inst_dir / "instances.json").read_text()))
+    my_names, do_chip_cosim = _chip_shard_plan(all_names)
+    if _SHARD[1] > 1:
+        rows = [r for r in rows if r["module"] in set(my_names)]
     work = CALIPTRA_DIR / "work"
     cs, scs = "—", "—"
-    if cycles > 0 and (work / "caliptra_uhdm_hier.il").exists():
+    if do_chip_cosim and cycles > 0 and (work / "caliptra_uhdm_hier.il").exists():
         cw = work / "cosim"
         cw.mkdir(parents=True, exist_ok=True)
         (cw / "ties.json").write_text(json.dumps(_CALIPTRA_TIES))
@@ -1224,12 +1262,27 @@ def main():
             rows.extend(data.get("rows", []))
             cycles = data.get("cycles", cycles)
         # De-dup by module (a module should appear in one shard only) and sort.
-        seen, uniq = set(), []
+        # A chip family's "(full chip)" row appears in EVERY shard: add the
+        # instance tallies together and take the co-sim cells from the shard
+        # that ran the chip co-sim.
+        seen, uniq, tops = set(), [], {}
         for r in sorted(rows, key=lambda r: r["module"]):
+            if r["module"].endswith("(full chip)"):
+                t = tops.setdefault(r["module"], dict(r, _n=0, _d=0))
+                m = re.match(r"(\d+)/(\d+) instances", r.get("formal", ""))
+                if m:
+                    t["_n"] += int(m.group(1)); t["_d"] += int(m.group(2))
+                for k in ("cosim", "slang_cosim"):
+                    if r.get(k, "—") != "—":
+                        t[k] = r[k]
+                continue
             if r["module"] in seen:
                 continue
             seen.add(r["module"])
             uniq.append(r)
+        for name, t in tops.items():
+            t["formal"] = f"{t.pop('_n')}/{t.pop('_d')} instances equivalent"
+            uniq.insert(0, t)
         report = render(args.core, uniq, cycles)
         print(report)
         if args.out:
