@@ -24,5 +24,5 @@ jobs:
     uses: ./.github/workflows/core-sweep.yml
     with:
       core: caliptra
-      cycles: "0"        # unused: no co-sim in this family
+      cycles: "300"
       timeout: 350

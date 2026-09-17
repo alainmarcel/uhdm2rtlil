@@ -16,6 +16,16 @@ Two independent checks per chip:
    every cycle (`scripts/chip_cosim.py`).  read_slang is the baseline: a
    divergence both netlists share is a netlist-simulation artefact, one only
    read_uhdm shows is a frontend bug.
+3. **Per-instance co-sim.** Every direct instance is also co-simulated on its
+   own (`test/netlist_cosim.py`, run by `core_sweep.py egret|dragonfly`): its
+   `read_uhdm` and `read_slang` netlists (from the split in step 1) vs the RTL
+   module rebuilt with the instance's parameters (from the RTLIL paramod name
+   `chip_flow.py` records in `work/<chip>/inst/instances.json`), so the
+   report's co-sim and slang-baseline columns are filled for the instances as
+   well as the top.  A `0 active` pass is vacuous; enum-typed parameters are
+   cast, localparams stamped into the paramod name are dropped, and type
+   parameters or interface-member ports make a row say `skip` rather than
+   report a pass that never ran.
 
 ## Sources
 

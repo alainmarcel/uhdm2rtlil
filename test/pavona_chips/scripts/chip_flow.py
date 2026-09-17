@@ -19,7 +19,7 @@ memory_map (identical bounded-address abstraction).  Instances whose RAM has
 write ports on different clocks (spi_device) use the global-clock flow:
 clk2fflogic + memory_map -formal + a no-simultaneous-clock-edge assumption.
 """
-import os, re, subprocess, sys, time, concurrent.futures as cf
+import json, os, re, subprocess, sys, time, concurrent.futures as cf
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
@@ -108,6 +108,10 @@ def split():
     for n in sorted(set(u) ^ set(s)):
         print(f"# only in {'uhdm' if n in u else 'slang'}: {n}")
     INST.mkdir(parents=True, exist_ok=True)
+    # The RTLIL type of every common instance ("$paramod\\mod\\P=s32'..." or
+    # "\\mod"): core_sweep's per-instance co-sim rebuilds the RTL module with
+    # the instance's parameters from it.
+    (INST / "instances.json").write_text(json.dumps({n: u[n] for n in common}, indent=1))
     for tag, il, cells in (("uhdm", UH, u), ("slang", SL, s)):
         ys = [f"read_rtlil {il}", "design -save full"]
         for n in common:

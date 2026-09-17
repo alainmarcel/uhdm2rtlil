@@ -11,6 +11,16 @@ reset (`scripts/chip_flow.py`).  read_slang is the adjudication baseline: a
 difference both frontends share is not a UHDM bug, one only `read_uhdm` shows
 is.
 
+**Co-sim.** The nightly (`core_sweep.py caliptra --cycles N`) also runs
+Verilator co-sim with `test/netlist_cosim.py`: the flat wrapper's `read_uhdm`
+and `read_slang` netlists vs the behavioural RTL under identical pseudo-random
+pad stimulus (the `caliptra_top` row), and every direct instance's netlists vs
+the RTL module rebuilt with the instance's parameters (taken from the RTLIL
+paramod name that `chip_flow.py` records in `work/inst/instances.json`).  The
+cell shows how many cycles saw an output change — a `0 active` pass is
+vacuous, not a proof.  Instances whose flattened ports carry interface members
+(rvtop's `el2_mem_if`) or type parameters are skipped and say so.
+
 ## The flat wrapper
 
 `caliptra_top` exposes six SystemVerilog **interface** ports — four `axi_if`
