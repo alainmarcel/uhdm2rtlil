@@ -47,6 +47,11 @@ WRAPPER = W / "caliptra_top_flat.sv"
 SEQ = int(os.environ.get("SEQ", "2"))
 TIMEOUT = int(os.environ.get("TIMEOUT", "7200"))
 JOBS = int(os.environ.get("JOBS", "2"))
+if SHARD_CNT > 1:
+    # Sharded (CI): one miter at a time so each proof gets the whole
+    # MEM_LIMIT_KB — two capped at half of it turned abr_inst / ecc_top1 /
+    # key_vault1 / pcr_vault1 from proofs into "error".
+    JOBS = 1
 MEMSIZE = int(os.environ.get("MEMSIZE", "16"))
 UH = W / "caliptra_uhdm_hier.il"
 SL = W / "caliptra_slang_keephier.il"
@@ -60,6 +65,11 @@ def paths(fname):
 
 def run(cmd, log, timeout=None):
     t0 = time.time()
+    # Cap the elaboration / read steps at 15 GB of address space when a
+    # memory limit is configured (16 GB runners): an over-budget read then
+    # reports "elaboration failed" instead of the runner being shut down.
+    if MEM_LIMIT_KB > 0:
+        cmd = ["bash", "-c", "ulimit -v 15000000; exec \"$@\"", "--"] + list(cmd)
     with open(W / log, "w") as fh:
         r = subprocess.run(cmd, cwd=W, stdout=fh, stderr=subprocess.STDOUT,
                            timeout=timeout)
@@ -234,6 +244,8 @@ sat -verify -prove-asserts -seq {SEQ} -set-init-zero miter
     if "no model found: SUCCESS" in out: return n, "proven"
     if "model found: FAIL" in out: return n, "cex"
     if rc == 124: return n, "timeout"
+    if rc in (134, 137) or "bad_alloc" in out or "Out of memory" in out or "Killed" in out:
+        return n, "memlimit"
     return n, "error"
 
 
