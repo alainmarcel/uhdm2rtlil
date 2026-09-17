@@ -17,7 +17,6 @@ ibex_register_file_ff
 ibex_top
 ibex_top_tracing
 iface_array_elem_cfg_param
-iface_array_modport_drive
 isacode_fold
 # listed here so the suite gates only on NEW divergences.
 mem_init_for_param
@@ -26,7 +25,6 @@ NestedPatternPassedAsPort
 NestedStructArrayParameterInitializedByPatternPassedAsPort
 #  - NEVER add an entry to silence a new warning — triage it instead
 OneClass
-OneNetModport
 packed_array_struct
 ParameterWithUnderscoreValueDividedPassedFromCommandLine
 param_x_default
