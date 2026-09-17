@@ -9864,6 +9864,27 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             }
         }
 
+        // The typespec route above needs the net's declared range, which the
+        // ELABORATED child instance's net does not carry (port-vs-net
+        // typespec inconsistency) — VeeR's rvbradder `pc[31:13]` on
+        // `input [31:1] pc` kept the raw HDL indexes against a wire created
+        // with start_offset 1 and read the wrong bits (+1'x) in every
+        // non-top instance (caliptra rvtop: branch/return-stack adders).
+        // Fall back to the RTLIL wire's own geometry.
+        RTLIL::Wire* bwire = base.is_wire() ? base.as_wire() : nullptr;
+        if (width == std::abs(left - right) + 1 &&
+            offset == std::min(left, right) && bwire &&
+            (bwire->start_offset != 0 || bwire->upto)) {
+            int lo_r = bwire->from_hdl_index(std::min(left, right));
+            int hi_r = bwire->from_hdl_index(std::max(left, right));
+            if (lo_r != INT_MIN && hi_r != INT_MIN) {
+                offset = std::min(lo_r, hi_r);
+                log("    part_select: wire geometry (offset=%d upto=%d), "
+                    "select [%d:%d] -> bits [%d+:%d]\n",
+                    bwire->start_offset, bwire->upto ? 1 : 0, left, right, offset, width);
+            }
+        }
+
         // Bounds check to prevent out-of-bounds access
         int base_width = base.size();
         if (offset >= base_width) {
