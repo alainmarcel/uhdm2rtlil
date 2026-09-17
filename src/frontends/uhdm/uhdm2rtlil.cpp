@@ -2628,6 +2628,17 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                             std::string src_full = elem + "." + f;
                                             std::string dst_port = port_name + "[" +
                                                 std::to_string(i) + "]." + f;
+                                            // iface_inst_vars_ lists EVERY signal of
+                                            // the interface, but an array of MODPORT
+                                            // ports (`myif.man man [N]`) declares only
+                                            // the modport's — and `clk` here is an
+                                            // interface PORT, in no modport at all.
+                                            // Connecting what the target does not
+                                            // declare makes `hierarchy` reject the
+                                            // cell ("does not have a port named
+                                            // 'man[1].clk'").
+                                            if (!tgt_mod->wire(RTLIL::escape_id(dst_port)))
+                                                continue;
                                             RTLIL::Wire* src_w = name_map.count(src_full)
                                                 ? name_map[src_full]
                                                 : parent_rtlil_module->wire(
