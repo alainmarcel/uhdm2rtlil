@@ -20,7 +20,7 @@ pointed at the generated flat-port wrapper `caliptra_top_flat` instead (see
 scripts/gen_wrapper.py); the instances that get mitered are the direct
 children of caliptra_top either way, since the wrapper adds exactly one level.
 """
-import os, re, subprocess, sys, time, concurrent.futures as cf
+import json, os, re, subprocess, sys, time, concurrent.futures as cf
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
@@ -170,6 +170,10 @@ def split():
     for n in sorted(set(u) ^ set(s)):
         print(f"# only in {'uhdm' if n in u else 'slang'}: {n}")
     INST.mkdir(parents=True, exist_ok=True)
+    # The RTLIL type of every common instance ("$paramod\\mod\\P=s32'..." or
+    # "\\mod"): core_sweep's per-instance co-sim rebuilds the RTL module with
+    # the instance's parameters from it.
+    (INST / "instances.json").write_text(json.dumps({n: u[n] for n in common}, indent=1))
     for tag, il, cells in (("uhdm", UH, u), ("slang", SL, s)):
         ys = [f"read_rtlil {il}", "design -save full"]
         for n in common:

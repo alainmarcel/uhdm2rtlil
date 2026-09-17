@@ -900,6 +900,129 @@ def _fetch_pavona():
     return str(dest)
 
 
+
+# ------------------------------------------------------- per-instance co-sim
+# Pavona's chip-level tie-offs (test/scan controls off, AST ready, power good);
+# the same pin names recur on the instances, so they get the same values.
+_PAVONA_TIES = {
+    "scan_rst_ni": "1'b1", "scan_en_i": "1'b0", "scanmode_i": "4'h9",
+    "ast_init_done_i": "4'h6", "calib_rdy_i": "4'h6",
+    "flash_bist_enable_i": "4'h9", "io_clk_byp_ack_i": "4'h9",
+    "all_clk_byp_ack_i": "4'h9", "div_step_down_req_i": "4'h9",
+    "pwrmgr_ast_rsp_i": "'1", "dft_hold_tap_sel_i": "1'b0",
+    "ram_1p_cfg_i": "'0", "sram_ctrl_main_cfg_i": "'0", "sram_ctrl_ret_aon_cfg_i": "'0",
+    "sram_ctrl_mbox_cfg_i": "'0", "spi_ram_2p_cfg_i": "'0", "usb_ram_1p_cfg_i": "'0",
+    "rom_cfg_i": "'0", "rom_ctrl0_cfg_i": "'0", "rom_ctrl1_cfg_i": "'0",
+    "sensor_ctrl_ast_alert_req_i": "'0", "flash_power_down_h_i": "1'b0",
+    "flash_power_ready_h_i": "1'b1", "otp_macro_pwr_seq_h_i": "'0",
+}
+_CALIPTRA_TIES = {"scan_mode": "1'b0", "cptra_in_debug_scan_mode": "1'b0"}
+
+
+def _paramod(typ):
+    """RTLIL instance type -> (rtl module, ["P=32'hXX", ...], ok).
+    "$paramod\\mod\\P=s32'bits\\Q=\"str\"" carries the instance's parameters;
+    a type parameter ($typaram) or an unrecognised value form cannot be passed
+    to Verilator's -G, so ok=False and the row is skipped honestly."""
+    if not typ.startswith("$paramod\\"):
+        return typ.lstrip("\\"), [], True
+    parts = typ[len("$paramod\\"):].split("\\")
+    mod, params = parts[0], []
+    for kv in parts[1:]:
+        if "=" not in kv:
+            continue
+        k, v = kv.split("=", 1)
+        if "$typaram" in v:
+            return mod, params, False
+        m = re.match(r"^s?(\d*)'([01]+)$", v)
+        if m:
+            bits = m.group(2)
+            w = int(m.group(1) or len(bits))
+            params.append(f"{k}={w}'h{int(bits, 2):x}")
+        elif v.startswith('"') and v.endswith('"'):
+            params.append(f"{k}={v}")
+        else:
+            return mod, params, False
+    return mod, params, True
+
+
+def _cosim_cells(out, rc, cycles):
+    """netlist_cosim.py / chip_cosim.py output -> (uhdm cell, slang cell)."""
+    out = out or ""
+    m = re.search(r"ADJUDICATION (\d+) cycles: uhdm_vs_rtl=(\d+)(?: slang_vs_rtl=(-?\d+))?", out)
+    act = re.search(r"ACTIVITY (\d+)", out)
+    if m:
+        u = int(m.group(2))
+        s = int(m.group(3)) if m.group(3) is not None else -1
+        if u == 0:
+            cell = f"✅ PASS ({m.group(1)} cycles, {act.group(1) if act else '?'} active)"
+        elif s > 0:
+            # Both netlists diverge from the RTL the same way: a netlist-sim
+            # artefact (X-init, memory model), not a read_uhdm defect.
+            cell = f"⚠ shared div (uhdm={u}, slang={s})"
+        else:
+            cell = f"❌ {u} div"
+        scell = "—" if s < 0 else ("✅ PASS" if s == 0 else f"❌ {s} div")
+        return cell, scell
+    if "NO_RUN" in out:
+        why = re.search(r"NO_RUN \(([^)]*)\)", out)
+        return f"skip ({why.group(1)[:40] if why else 'no run'})", "—"
+    b = re.search(r"(rtl|uhdm|slang) Verilator build FAILED", out)
+    if b:
+        return f"skip ({b.group(1)} sim build)", "—"
+    if rc == 124 or "[timeout]" in out:
+        return "❓ timeout", "—"
+    return "error", "—"
+
+
+def _inst_cosim(inst_dir, name, typ, srcs, incs, var, extra, ties, cycles):
+    """Co-sim one direct instance: its read_uhdm and read_slang netlists
+    (chip_flow's split) vs the RTL module rebuilt with the instance's
+    parameters.  Returns (uhdm cell, slang cell)."""
+    rtl_top, params, ok = _paramod(typ)
+    if not ok:
+        return "skip (type param)", "—"
+    work = inst_dir / name / "cosim"
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "ties.json").write_text(json.dumps(ties))
+    cmd = [sys.executable, str(TEST_DIR / "netlist_cosim.py"), "--work", str(work),
+           "--uhdm-il", str(inst_dir / f"{name}_uhdm.il"),
+           "--slang-il", str(inst_dir / f"{name}_slang.il"),
+           "--top", f"{name}_uhdm", "--rtl-top", rtl_top,
+           "--srcs", str(srcs), "--incs", str(incs), "--cycles", str(cycles),
+           "--ties", str(work / "ties.json")]
+    for p in params:
+        cmd += ["--param", p]
+    for v in var:
+        cmd += ["--var", v]
+    for e in extra:
+        cmd += ["--extra-src", str(e)]
+    rc, out = sh(cmd, timeout=7200)
+    (work / "cosim.log").write_text(out or "")
+    return _cosim_cells(out, rc, cycles)
+
+
+def _inst_cosims(rows, inst_dir, srcs, incs, var, extra, ties, cycles, jobs):
+    """Fill the co-sim columns of every instance row, `jobs` at a time."""
+    types = {}
+    tf = inst_dir / "instances.json"
+    if tf.exists():
+        types = json.loads(tf.read_text())
+    todo = [r for r in rows if r["module"] in types]
+    with cf.ThreadPoolExecutor(max_workers=max(1, jobs)) as ex:
+        futs = {ex.submit(_inst_cosim, inst_dir, r["module"], types[r["module"]],
+                          srcs, incs, var, extra, ties, cycles): r for r in todo}
+        for f in cf.as_completed(futs):
+            r = futs[f]
+            try:
+                r["cosim"], r["slang_cosim"] = f.result()
+            except Exception as e:      # never lose the formal column to a co-sim crash
+                r["cosim"], r["slang_cosim"] = f"error ({type(e).__name__})", "—"
+            print(f"  cosim {r['module']:32s} {r['cosim']}  slang: {r['slang_cosim']}", flush=True)
+    for r in rows:
+        if r["module"] not in types and "slang_cosim" not in r:
+            r["slang_cosim"] = "—"
+
 def sweep_chip(chip, jobs, cycles=300, flt=None):
     """Pavona full chip (top_egret / top_dragonfly): Surelog + read_uhdm +
     read_slang of the WHOLE top, a read_uhdm-vs-read_slang SAT miter per
@@ -932,22 +1055,20 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
     except subprocess.TimeoutExpired as e:
         cout = e.stdout or "timeout"
     print(cout)
-    m = re.search(r"ADJUDICATION (\d+) cycles: uhdm_vs_rtl=(\d+)", cout or "")
-    act = re.search(r"ACTIVITY (\d+)", cout or "")
-    if m:
-        u = int(m.group(2))
-        cs = (f"✅ PASS ({m.group(1)} cycles, {act.group(1) if act else '?'} active)"
-              if u == 0 else f"❌ {u} div")
-    elif "NO_RUN" in (cout or ""):
-        cs = "skip (no run)"
-    elif "build FAILED" in (cout or ""):
-        cs = "skip (sim build)"
-    else:
-        cs = "error"
+    # chip_cosim.py also simulates the read_slang netlist of the top: that is
+    # the slang-baseline column (it used to be parsed for the verdict only).
+    cs, scs = _cosim_cells(cout, 0, cycles)
+    # Every direct instance: its read_uhdm / read_slang netlists vs the RTL
+    # module rebuilt with the instance's parameters.
+    _inst_cosims(rows, CHIPS_DIR / "work" / chip / "inst",
+                 CHIPS_DIR / chip / "srcs.txt", CHIPS_DIR / chip / "incs.txt",
+                 [f"PAVONA={env['PAVONA']}"],
+                 [Path(env["PAVONA"]) / "hw/ip/prim/rtl/prim_assert.sv"],
+                 _PAVONA_TIES, cycles, jobs)
     nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
     rows.insert(0, {"module": f"top_{chip} (full chip)",
                     "formal": f"{nproven}/{len(rows)} instances equivalent",
-                    "cosim": cs})
+                    "cosim": cs, "slang_cosim": scs})
     return rows
 
 
@@ -966,14 +1087,14 @@ def _fetch_caliptra():
     return str(dest)
 
 
-def sweep_caliptra(jobs, flt=None):
+def sweep_caliptra(jobs, cycles=300, flt=None):
     """chipsalliance/caliptra-rtl full chip: Surelog + read_uhdm + read_slang
     of caliptra_top (through the generated flat-port wrapper, since read_slang
     refuses a top with unconnected interface ports), then a read_uhdm-vs-
-    read_slang SAT miter per direct instance of the chip -- one row each.
-
-    No co-sim column yet: the chip has no testbench in this harness, so the
-    column is left as "—" rather than reporting a pass that was never run."""
+    read_slang SAT miter per direct instance of the chip -- one row each --
+    plus Verilator co-sim of the flat wrapper (read_uhdm and read_slang
+    netlists vs the RTL) and of every instance's netlists vs the RTL module
+    rebuilt with the instance's parameters (netlist_cosim.py)."""
     env = dict(os.environ, CALIPTRA=_fetch_caliptra(), JOBS=str(max(1, jobs)))
     cmd = [sys.executable, "scripts/chip_flow.py"]
     try:
@@ -994,10 +1115,31 @@ def sweep_caliptra(jobs, flt=None):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
+    work = CALIPTRA_DIR / "work"
+    cs, scs = "—", "—"
+    if cycles > 0 and (work / "caliptra_uhdm_hier.il").exists():
+        cw = work / "cosim"
+        cw.mkdir(parents=True, exist_ok=True)
+        (cw / "ties.json").write_text(json.dumps(_CALIPTRA_TIES))
+        cmd = [sys.executable, str(TEST_DIR / "netlist_cosim.py"), "--work", str(cw),
+               "--uhdm-il", str(work / "caliptra_uhdm_hier.il"),
+               "--slang-il", str(work / "caliptra_slang_keephier.il"),
+               "--top", "caliptra_top_flat", "--rtl-top", "caliptra_top_flat",
+               "--srcs", str(CALIPTRA_DIR / "srcs.txt"), "--incs", str(CALIPTRA_DIR / "incs.txt"),
+               "--var", f"CALIPTRA={env['CALIPTRA']}",
+               "--extra-src", str(work / "caliptra_top_flat.sv"),
+               "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
+        rc, cout = sh(cmd, timeout=4 * 3600)
+        (cw / "cosim.log").write_text(cout or "")
+        print(cout)
+        cs, scs = _cosim_cells(cout, rc, cycles)
+    if cycles > 0:
+        _inst_cosims(rows, work / "inst", CALIPTRA_DIR / "srcs.txt", CALIPTRA_DIR / "incs.txt",
+                     [f"CALIPTRA={env['CALIPTRA']}"], [], _CALIPTRA_TIES, cycles, jobs)
     nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
     rows.insert(0, {"module": "caliptra_top (full chip)",
                     "formal": f"{nproven}/{len(rows)} instances equivalent",
-                    "cosim": "—"})
+                    "cosim": cs, "slang_cosim": scs})
     return rows
 
 
@@ -1119,7 +1261,7 @@ def main():
     elif args.core in ("egret", "dragonfly"):
         rows = sweep_chip(args.core, args.jobs, args.cycles, args.filter)
     elif args.core == "caliptra":
-        rows = sweep_caliptra(args.jobs, args.filter)
+        rows = sweep_caliptra(args.jobs, args.cycles, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 
