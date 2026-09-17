@@ -182,6 +182,7 @@ jobs:
       core: egret
       cycles: ${{ github.event.inputs.cycles || '2000' }}
       timeout: 350
+      shards: 3
 
   sweep-dragonfly:
     name: pavona - dragonfly (full chip)
@@ -190,3 +191,4 @@ jobs:
       core: dragonfly
       cycles: ${{ github.event.inputs.cycles || '2000' }}
       timeout: 350
+      shards: 3

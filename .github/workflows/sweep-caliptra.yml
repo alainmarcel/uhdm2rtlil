@@ -26,3 +26,7 @@ jobs:
       core: caliptra
       cycles: "300"
       timeout: 350
+      # 3 instance shards + 1 shard for the full-chip co-sim: the vault
+      # miters are multi-million-variable proofs now and the chip co-sim is
+      # three whole-chip Verilator builds — one 16 GB runner died mid-sweep.
+      shards: 4
