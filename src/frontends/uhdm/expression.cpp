@@ -17072,13 +17072,104 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // read as X and left rs1_is_not_csr wrong).
             if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3) {
                 auto& peA = *uhdm_hier->Path_elems();
+                // `s.arr[i][j].sub.f`: a MULTI-dimensional array field arrives
+                // as a var_select carrying one index per dimension (Caliptra
+                // kv/pv/dv `hwif_in.KEY_ENTRY[entry][dword].data.we` — 1536
+                // dropped writes per vault, every KEY_ENTRY .we/.next/.hwclr
+                // undriven); the single-index form is a bit_select.
+                // A READ of the same 2-D element arrives instead as
+                // CONSECUTIVE bit_selects — `[bit_select(ENTRY,e),
+                // bit_select(<unnamed>,d)]` — so the index list also absorbs
+                // every following nameless bit_select; the member tail
+                // starts after the last one.
+                std::string fname;
+                std::vector<const UHDM::expr*> idx_exprs;
+                size_t tail0 = 2;
                 bool tail_ref = peA[0]->UhdmType() == uhdmref_obj &&
-                                peA[1]->UhdmType() == uhdmbit_select;
-                for (size_t t = 2; tail_ref && t < peA.size(); t++)
-                    if (peA[t]->UhdmType() != uhdmref_obj) tail_ref = false;
+                                (peA[1]->UhdmType() == uhdmbit_select ||
+                                 peA[1]->UhdmType() == uhdmvar_select);
+                if (tail_ref) {
+                    if (peA[1]->UhdmType() == uhdmbit_select) {
+                        auto abs = any_cast<const bit_select*>(peA[1]);
+                        fname = std::string(abs->VpiName());
+                        if (abs->VpiIndex()) idx_exprs.push_back(abs->VpiIndex());
+                        while (tail0 < peA.size() &&
+                               peA[tail0]->UhdmType() == uhdmbit_select &&
+                               std::string(peA[tail0]->VpiName()).empty()) {
+                            auto nbs = any_cast<const bit_select*>(peA[tail0]);
+                            if (nbs->VpiIndex()) idx_exprs.push_back(nbs->VpiIndex());
+                            tail0++;
+                        }
+                    } else {
+                        auto avs = any_cast<const var_select*>(peA[1]);
+                        fname = std::string(avs->VpiName());
+                        if (avs->Exprs())
+                            for (auto e : *avs->Exprs()) idx_exprs.push_back(e);
+                    }
+                }
+                if (tail0 >= peA.size()) tail_ref = false;
+                // The LAST member may itself carry a bit/part-select — kv's
+                // read mux `KEY_CTRL[entry].dest_valid.value[client]` ends in
+                // a NAMED bit_select(value, client) — applied to the member
+                // slice below.
+                const UHDM::any* tail_sel = nullptr;
+                for (size_t t = tail0; tail_ref && t < peA.size(); t++) {
+                    auto ut = peA[t]->UhdmType();
+                    if (ut == uhdmref_obj) continue;
+                    if (t + 1 == peA.size() &&
+                        (ut == uhdmbit_select || ut == uhdmpart_select) &&
+                        !std::string(peA[t]->VpiName()).empty()) {
+                        tail_sel = peA[t];
+                        continue;
+                    }
+                    tail_ref = false;
+                }
+                // Member names of the tail.  Surelog's gen-scope copy of an
+                // `if (hwif_in.ENTRY[i0][i1].data.we)` condition DROPS the
+                // final member from Path_elems (4 elems for a 5-part name,
+                // the `we` bound as a scope variable), which read the whole
+                // `data` sub-struct as the condition.  When the path NAME has
+                // more plain members than the elements do, trust the name.
+                std::vector<std::string> tail_names;
+                if (tail_ref) {
+                    for (size_t t = tail0; t < peA.size(); t++)
+                        tail_names.push_back(std::string(peA[t]->VpiName()));
+                    std::vector<std::string> comps;
+                    {
+                        std::string cur_c; int depth = 0;
+                        for (char ch : path_name) {
+                            if (ch == '[') depth++;
+                            else if (ch == ']') depth--;
+                            if (ch == '.' && depth == 0) { comps.push_back(cur_c); cur_c.clear(); }
+                            else cur_c += ch;
+                        }
+                        comps.push_back(cur_c);
+                    }
+                    size_t fi = 0;
+                    for (; fi < comps.size(); fi++)
+                        if (comps[fi].substr(0, comps[fi].find('[')) == fname) break;
+                    if (fi < comps.size() && comps.size() - fi - 1 > tail_names.size()) {
+                        std::vector<std::string> nt;
+                        bool plain = true;
+                        for (size_t k = fi + 1; k < comps.size(); k++) {
+                            size_t br = comps[k].find('[');
+                            // Only the LAST component may carry a select (and
+                            // only when the elems carry it too).
+                            if (br != std::string::npos &&
+                                !(k + 1 == comps.size() && tail_sel)) plain = false;
+                            nt.push_back(comps[k].substr(0, br));
+                        }
+                        bool prefix = plain;
+                        for (size_t k = 0; prefix && k < tail_names.size(); k++)
+                            if (tail_sel && k + 1 == tail_names.size())
+                                prefix = nt.back() == tail_names[k];
+                            else
+                                prefix = nt[k] == tail_names[k];
+                        if (prefix) tail_names = nt;
+                    }
+                }
                 if (tail_ref) {
                     auto bref = any_cast<const ref_obj*>(peA[0]);
-                    auto abs  = any_cast<const bit_select*>(peA[1]);
                     std::string bname = std::string(bref->VpiName());
                     RTLIL::Wire* bw = name_map.count(bname)
                                           ? name_map[bname]
@@ -17091,14 +17182,25 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 if (auto rt2 = e->Typespec())
                                     bts = rt2->Actual_typespec();
                     if (bts) bts = resolve_type_param_typespec(bts, inst);
-                    RTLIL::SigSpec idx_s;
-                    if (abs->VpiIndex())
-                        idx_s = import_expression(abs->VpiIndex(), input_mapping);
-                    if (bw && bts && bts->UhdmType() == uhdmstruct_typespec &&
-                        !idx_s.empty()) {
+                    std::vector<RTLIL::SigSpec> idx_s;
+                    bool idx_ok = !idx_exprs.empty();
+                    for (auto e : idx_exprs) {
+                        idx_s.push_back(import_expression(e, input_mapping));
+                        if (idx_s.back().empty()) idx_ok = false;
+                    }
+                    if (mode_debug) {
+                        log("    nested-tail '%s': bw=%d bts=%s idx=%zu ok=%d elems=%zu tail0=%zu\n",
+                            path_name.c_str(), bw ? 1 : 0,
+                            bts ? UHDM::UhdmName(bts->UhdmType()).c_str() : "null",
+                            idx_s.size(), idx_ok ? 1 : 0, peA.size(), tail0);
+                        for (size_t t = 0; t < peA.size(); t++)
+                            log("      elem[%zu] %s '%s'\n", t,
+                                UHDM::UhdmName(peA[t]->UhdmType()).c_str(),
+                                std::string(peA[t]->VpiName()).c_str());
+                    }
+                    if (bw && bts && bts->UhdmType() == uhdmstruct_typespec && idx_ok) {
                         // Offset of the ARRAY field within the base struct.
                         auto st = any_cast<const UHDM::struct_typespec*>(bts);
-                        std::string fname = std::string(abs->VpiName());
                         int off = 0, fw = 0;
                         const UHDM::typespec* fts = nullptr;
                         bool ok = false;
@@ -17117,55 +17219,101 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 }
                                 off += mw;
                             }
-                        // Element geometry of that array field.
-                        const UHDM::typespec* ets = nullptr;
-                        int nelem = 0, decl_l = 0, decl_r = 0;
-                        if (ok && fts) {
+                        // Dimension list of that array field: the ranges of
+                        // the field typespec, then — only while more indexes
+                        // remain — of nested element-array typespecs, down to
+                        // the (struct) leaf element.  A single index never
+                        // descends, so the typedef-alias redundant-range shape
+                        // keeps its previous behaviour.
+                        std::vector<std::pair<int, int>> dims;
+                        const UHDM::typespec* ets = ok ? fts : nullptr;
+                        bool dims_ok = ok;
+                        while (dims_ok && ets && dims.size() < idx_s.size()) {
                             const UHDM::VectorOfrange* rg = nullptr;
-                            if (fts->UhdmType() == uhdmpacked_array_typespec) {
-                                auto pa = any_cast<const UHDM::packed_array_typespec*>(fts);
+                            const UHDM::typespec* nxt = nullptr;
+                            if (ets->UhdmType() == uhdmpacked_array_typespec) {
+                                auto pa = any_cast<const UHDM::packed_array_typespec*>(ets);
                                 rg = pa->Ranges();
                                 if (pa->Elem_typespec())
-                                    ets = pa->Elem_typespec()->Actual_typespec();
-                            } else if (fts->UhdmType() == uhdmlogic_typespec) {
-                                auto lt = any_cast<const UHDM::logic_typespec*>(fts);
+                                    nxt = pa->Elem_typespec()->Actual_typespec();
+                            } else if (ets->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = any_cast<const UHDM::logic_typespec*>(ets);
                                 rg = lt->Ranges();
                                 if (lt->Elem_typespec())
-                                    ets = lt->Elem_typespec()->Actual_typespec();
+                                    nxt = lt->Elem_typespec()->Actual_typespec();
                             }
-                            if (rg && !rg->empty()) {
-                                auto r0 = (*rg)[0];
+                            if (!rg || rg->empty() || !nxt) break;
+                            for (auto r0 : *rg) {
                                 RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
                                 RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
-                                if (l.is_fully_const() && r.is_fully_const()) {
-                                    decl_l = l.as_const().as_int();
-                                    decl_r = r.as_const().as_int();
-                                    nelem = std::abs(decl_l - decl_r) + 1;
+                                if (!l.is_fully_const() || !r.is_fully_const()) {
+                                    dims_ok = false;
+                                    break;
                                 }
+                                dims.push_back({l.as_const().as_int(), r.as_const().as_int()});
                             }
+                            ets = resolve_type_param_typespec(nxt, inst);
                         }
-                        if (ok && ets) ets = resolve_type_param_typespec(ets, inst);
-                        if (ok && nelem > 0 && fw % nelem == 0 && ets) {
+                        int nelem = 1;
+                        for (auto& d : dims) nelem *= std::abs(d.first - d.second) + 1;
+                        if (mode_debug)
+                            log("    nested-tail '%s': field ok=%d fw=%d dims=%zu dims_ok=%d "
+                                "ets=%s nelem=%d\n", path_name.c_str(), ok ? 1 : 0, fw,
+                                dims.size(), dims_ok ? 1 : 0,
+                                ets ? UHDM::UhdmName(ets->UhdmType()).c_str() : "null", nelem);
+                        if (ok && dims_ok && ets && dims.size() == idx_s.size() &&
+                            nelem > 0 && fw % nelem == 0) {
                             int elem_w = fw / nelem;
-                            int lo = std::min(decl_l, decl_r);
-                            int hi = std::max(decl_l, decl_r);
-                            int idx = idx_s.is_fully_const()
-                                          ? idx_s.as_const().as_int() : lo;
-                            if (idx >= lo && idx <= hi) {
-                                // Elements are laid out MSB-first for a
-                                // descending declaration, as elsewhere.
-                                int eoff = (decl_l < decl_r) ? (hi - idx) * elem_w
-                                                             : (idx - lo) * elem_w;
-                                int total = off + eoff;
-                                // Descend the remaining field names.
+                            // Element offset, row-major with the last index
+                            // varying fastest; each dimension follows the
+                            // MSB-first layout of a descending declaration
+                            // (ascending puts element lo at the top), as
+                            // elsewhere.  Constant indexes fold into
+                            // `eoff_c`, dynamic ones accumulate in `eoff_d`.
+                            int eoff_c = 0;
+                            RTLIL::SigSpec eoff_d;
+                            bool in_range = true, all_const = true;
+                            int stride = elem_w;
+                            for (int k = (int)dims.size() - 1; k >= 0 && in_range; k--) {
+                                int dl = dims[k].first, dr = dims[k].second;
+                                int lo = std::min(dl, dr), hi = std::max(dl, dr);
+                                const RTLIL::SigSpec& s = idx_s[k];
+                                if (s.is_fully_const()) {
+                                    int idx = s.as_const().as_int();
+                                    if (idx < lo || idx > hi) { in_range = false; break; }
+                                    eoff_c += ((dl < dr) ? (hi - idx) : (idx - lo)) * stride;
+                                } else {
+                                    all_const = false;
+                                    RTLIL::SigSpec sh = s;
+                                    sh.extend_u0(32, false);
+                                    if (lo != 0)
+                                        sh = module->Sub(NEW_ID, sh,
+                                                         RTLIL::Const(lo, 32), false);
+                                    if (dl < dr)
+                                        sh = module->Sub(NEW_ID,
+                                                RTLIL::SigSpec(RTLIL::Const(hi - lo, 32)),
+                                                sh, false);
+                                    if (stride > 1)
+                                        sh = module->Mul(NEW_ID, sh,
+                                                RTLIL::Const(stride, 32), false);
+                                    eoff_d = eoff_d.empty()
+                                                 ? sh
+                                                 : module->Add(NEW_ID, eoff_d, sh, false);
+                                }
+                                stride *= (hi - lo + 1);
+                            }
+                            if (in_range) {
+                                // Descend the remaining field names from the
+                                // element struct.
+                                int total = off;
                                 const UHDM::struct_typespec* cur =
                                     ets->UhdmType() == uhdmstruct_typespec
                                         ? any_cast<const UHDM::struct_typespec*>(ets)
                                         : nullptr;
                                 int lw = elem_w;
                                 bool good = true;
-                                for (size_t t = 2; t < peA.size() && good; t++) {
-                                    std::string nm = std::string(peA[t]->VpiName());
+                                for (size_t t = 0; t < tail_names.size() && good; t++) {
+                                    const std::string& nm = tail_names[t];
                                     good = false;
                                     if (!cur || !cur->Members()) break;
                                     int loff = 0;
@@ -17189,45 +17337,69 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         loff += mw;
                                     }
                                 }
-                                if (good && lw > 0 && idx_s.is_fully_const() &&
-                                    total + lw <= bw->width) {
+                                // Trailing bit/part-select on the final
+                                // member (0-based within the member slice).
+                                int sel_off = 0, sel_w = lw;
+                                RTLIL::SigSpec sel_dyn;
+                                bool sel_ok = true;
+                                if (good && tail_sel) {
+                                    if (tail_sel->UhdmType() == uhdmbit_select) {
+                                        auto tbs = any_cast<const bit_select*>(tail_sel);
+                                        RTLIL::SigSpec ix;
+                                        if (tbs->VpiIndex())
+                                            ix = import_expression(tbs->VpiIndex(), input_mapping);
+                                        if (ix.empty()) sel_ok = false;
+                                        else if (ix.is_fully_const()) {
+                                            int i = ix.as_const().as_int();
+                                            if (i >= 0 && i < lw) { sel_off = i; sel_w = 1; }
+                                            else sel_ok = false;
+                                        } else { sel_dyn = ix; sel_w = 1; }
+                                    } else {
+                                        auto tps = any_cast<const part_select*>(tail_sel);
+                                        RTLIL::SigSpec l = import_expression(tps->Left_range(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(tps->Right_range(), input_mapping);
+                                        if (l.is_fully_const() && r.is_fully_const()) {
+                                            int hi = l.as_const().as_int();
+                                            int lo2 = r.as_const().as_int();
+                                            int lsb = std::min(hi, lo2), w2 = std::abs(hi - lo2) + 1;
+                                            if (lsb >= 0 && lsb + w2 <= lw) { sel_off = lsb; sel_w = w2; }
+                                            else sel_ok = false;
+                                        } else sel_ok = false;
+                                    }
+                                }
+                                if (good && lw > 0 && sel_ok && all_const && sel_dyn.empty() &&
+                                    total + eoff_c + sel_off + sel_w <= bw->width) {
                                     log("    hier_path '%s' -> \\%s [%d +: %d] "
                                         "(struct array field, nested tail)\n",
-                                        path_name.c_str(), bname.c_str(), total, lw);
-                                    return RTLIL::SigSpec(bw).extract(total, lw);
+                                        path_name.c_str(), bname.c_str(),
+                                        total + eoff_c + sel_off, sel_w);
+                                    return RTLIL::SigSpec(bw).extract(total + eoff_c + sel_off, sel_w);
                                 }
-                                // DYNAMIC element index: the field offset is
-                                // fixed, the element offset is not — shift the
-                                // whole base by idx*elem_w and take the slice.
+                                // DYNAMIC element index (or dynamic trailing
+                                // bit index): the field offset is fixed, the
+                                // element offset is not — shift the whole base
+                                // by the index product and take the slice.
                                 // CVA6 issue_read_operands reads
                                 // `fwd_i.sbe[idx_hzd_rs1[i]].fu` this way.
-                                if (good && lw > 0 && !idx_s.is_fully_const()) {
-                                    RTLIL::SigSpec sh = idx_s;
-                                    sh.extend_u0(32, false);
-                                    if (lo != 0)
-                                        sh = module->Sub(NEW_ID, sh,
-                                                         RTLIL::Const(lo, 32), false);
-                                    if (decl_l < decl_r) {
-                                        // Ascending declaration: element k sits
-                                        // (hi-k) slots from the base.
-                                        sh = module->Sub(NEW_ID,
-                                                RTLIL::SigSpec(RTLIL::Const(hi - lo, 32)),
-                                                sh, false);
+                                if (good && lw > 0 && sel_ok && (!all_const || !sel_dyn.empty())) {
+                                    RTLIL::SigSpec sh = eoff_d;
+                                    if (!sel_dyn.empty()) {
+                                        RTLIL::SigSpec sd = sel_dyn;
+                                        sd.extend_u0(32, false);
+                                        sh = sh.empty() ? sd : module->Add(NEW_ID, sh, sd, false);
                                     }
-                                    if (elem_w > 1)
-                                        sh = module->Mul(NEW_ID, sh,
-                                                RTLIL::Const(elem_w, 32), false);
-                                    int fixed = total - ((decl_l < decl_r)
-                                                    ? (hi - idx) : (idx - lo)) * elem_w;
-                                    if (fixed > 0)
+                                    int fixed = total + eoff_c + sel_off;
+                                    if (sh.empty())
+                                        sh = RTLIL::SigSpec(RTLIL::Const(fixed, 32));
+                                    else if (fixed > 0)
                                         sh = module->Add(NEW_ID, sh,
                                                 RTLIL::Const(fixed, 32), false);
-                                    RTLIL::Wire* ow = module->addWire(NEW_ID, lw);
+                                    RTLIL::Wire* ow = module->addWire(NEW_ID, sel_w);
                                     module->addShiftx(NEW_ID, RTLIL::SigSpec(bw), sh, ow);
                                     log("    hier_path '%s' -> \\%s dynamic elem "
                                         "(elem_w=%d, field_off=%d, w=%d)\n",
                                         path_name.c_str(), bname.c_str(), elem_w,
-                                        fixed, lw);
+                                        fixed, sel_w);
                                     return RTLIL::SigSpec(ow);
                                 }
                             }
@@ -17312,6 +17484,13 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
             log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
+            if (mode_debug && uhdm_hier->Path_elems())
+                for (size_t t = 0; t < uhdm_hier->Path_elems()->size(); t++) {
+                    auto pe_t = (*uhdm_hier->Path_elems())[t];
+                    log("      unresolved elem[%zu] %s '%s'\n", t,
+                        UHDM::UhdmName(pe_t->UhdmType()).c_str(),
+                        std::string(pe_t->VpiName()).c_str());
+                }
         }
         return RTLIL::SigSpec(RTLIL::State::Sx, width);
     }

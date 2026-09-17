@@ -960,8 +960,9 @@ def _fetch_caliptra():
     dest = CALIPTRA_DIR / "caliptra-rtl"
     if not (dest / "src").exists():
         # The script clones into $CALIPTRA, defaulting to exactly `dest`.
-        sh(["bash", str(CALIPTRA_DIR / "scripts" / "fetch_caliptra.sh")],
-           timeout=1800)
+        rc, out = sh(["bash", str(CALIPTRA_DIR / "scripts" / "fetch_caliptra.sh")],
+                     timeout=1800)
+        print(f"# fetch_caliptra.sh: exit {rc}\n{out}", flush=True)
     return str(dest)
 
 
