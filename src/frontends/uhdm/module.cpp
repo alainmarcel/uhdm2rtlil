@@ -2916,7 +2916,41 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 // Try to handle as expression directly
                 RTLIL::SigSpec actual_sig;
                 try {
-                    actual_sig = import_expression(any_cast<const expr*>(high_conn));
+                    // A bare interface-member VARIABLE as the actual
+                    // (`.i_valid(s_axi_if.wvalid)` inside axi_sub_wr): Surelog
+                    // names it `<inst path>.<this port>.<member>` — no
+                    // interface port in the name — so pick the module's
+                    // `<ifport>.<member>` wire when exactly one interface
+                    // port carries that member.  (Ambiguous cases, e.g.
+                    // `.psel(s_axi_w_if.awvalid | s_axi_r_if.arvalid)` under
+                    // two AXI ports, still fall through.)
+                    if (auto hv = dynamic_cast<const UHDM::variables*>(high_conn)) {
+                        std::string full = std::string(hv->VpiFullName());
+                        std::string vn = std::string(hv->VpiName());
+                        std::string tail = "." + port_name + "." + vn;
+                        if (!vn.empty() && full.size() > tail.size() &&
+                            full.compare(full.size() - tail.size(), tail.size(), tail) == 0) {
+                            RTLIL::Wire* only = nullptr;
+                            int nfound = 0;
+                            std::string suffix = "." + vn;
+                            for (auto w : module->wires()) {
+                                std::string wn = w->name.str();
+                                if (wn.size() > suffix.size() + 1 && wn[0] == '\\' &&
+                                    wn.compare(wn.size() - suffix.size(), suffix.size(), suffix) == 0 &&
+                                    wn.find('.') == wn.size() - suffix.size()) {
+                                    only = w;
+                                    nfound++;
+                                }
+                            }
+                            if (nfound == 1) {
+                                actual_sig = RTLIL::SigSpec(only);
+                                log("    Port %s: interface member '%s' resolved to %s\n",
+                                    port_name.c_str(), vn.c_str(), only->name.c_str());
+                            }
+                        }
+                    }
+                    if (actual_sig.empty())
+                        actual_sig = import_expression(any_cast<const expr*>(high_conn));
                 } catch (...) {
                     log_warning("Failed to import port connection for %s\n", port_name.c_str());
                     actual_sig = RTLIL::SigSpec();

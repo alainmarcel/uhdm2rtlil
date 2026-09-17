@@ -4381,6 +4381,50 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 log_warning("Port '%s' not found as wire in module\n", port_name.c_str());
                 return RTLIL::SigSpec();
             }
+        case vpiLogicVar:
+        case vpiBitVar:
+            {
+                // A bare VARIABLE object as an expression: Surelog hands a
+                // child instance's port actual over as the logic_var itself
+                // (not a ref_obj) when the parent module has an interface port
+                // (Caliptra axi_sub_wr's `i_dp_skd(.i_data({s_axi_if.wdata,
+                // s_axi_if.wstrb, s_axi_if.wlast}))` and even a plain
+                // `.i_data(cat)`), so the write data path was left
+                // UNCONNECTED (`connect \i_data { }`).  Resolve it by name
+                // exactly like a logic_net.
+                auto var = dynamic_cast<const UHDM::variables*>(uhdm_expr);
+                std::string vname = var ? std::string(var->VpiName()) : std::string();
+                if (!vname.empty()) {
+                    // An INTERFACE member: the module holds it as the
+                    // `<interface port>.<member>` wire, and that must win over
+                    // a same-named module signal (axi_sub_wr has OUTPUT ports
+                    // `wdata`/`wstrb` next to `s_axi_if.wdata`/`.wstrb`).
+                    // The var's full name is `<inst path>.<port>.<member>`
+                    // when it came through the port (`s_if.wlast` in a
+                    // concat).  A bare port actual (`.i_valid(s_if.wvalid)`)
+                    // is named `<inst path>.<child port>.<member>` instead and
+                    // is resolved by import_instance's port loop, which knows
+                    // the child port name.
+                    if (module) {
+                        std::string full = var ? std::string(var->VpiFullName()) : std::string();
+                        size_t d1 = full.rfind('.');
+                        if (d1 != std::string::npos) {
+                            size_t d0 = full.rfind('.', d1 - 1);
+                            std::string cand = full.substr(d0 == std::string::npos ? 0 : d0 + 1);
+                            if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(cand)))
+                                return RTLIL::SigSpec(w);
+                        }
+                    }
+                    // No plain-name lookup here: a bare `haddr` var would hit
+                    // the module's own 608-bit `haddr` array instead of the
+                    // interface member `ahb_lite_initiator.haddr` that the
+                    // port loop's empty-actual fallback resolves correctly.
+                }
+                log_warning("Unsupported expression type: %s ('%s')\n",
+                            UhdmName(uhdm_expr->UhdmType()).c_str(),
+                            var ? std::string(var->VpiFullName()).c_str() : "");
+                return RTLIL::SigSpec();
+            }
         case vpiNet:  // Handle logic_net
             {
                 const logic_net* net = any_cast<const logic_net*>(uhdm_expr);
@@ -4646,30 +4690,68 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         // `$bits` in a parameter default is exactly that
                         // case), so fall back to walking the call's parent
                         // chain to whatever scope encloses it.
+                        const UHDM::module_inst* bound_scope = current_instance;
                         if (!bound_ts) {
-                            const UHDM::module_inst* mi =
-                                dynamic_cast<const UHDM::module_inst*>(
-                                    (const UHDM::any*)current_instance);
-                            if (!mi) {
-                                for (const UHDM::any* up = func_call->VpiParent();
-                                     up; up = up->VpiParent()) {
-                                    if ((mi = dynamic_cast<const UHDM::module_inst*>(up)))
+                            // Every enclosing instance, innermost first: the
+                            // call may sit in a CHILD instance's parameter
+                            // actual (`skidbuffer #(.DW($bits(axi_ctx_t)))`
+                            // inside axi_sub_wr) whose name is a module-LOCAL
+                            // TYPEDEF of the parent, left unreduced by Surelog
+                            // in the Caliptra chip elaboration; importing the
+                            // bare ref gave 1 bit and the AXI write context
+                            // skid buffer became 1 bit wide (the SoC AXI
+                            // responses diverged from cycle 30).  Type
+                            // parameters and typedefs are both searched at
+                            // each level, and the width is measured in the
+                            // scope that declares the type.
+                            std::vector<const UHDM::module_inst*> chain;
+                            if (auto mi0 = dynamic_cast<const UHDM::module_inst*>(
+                                    (const UHDM::any*)current_instance))
+                                chain.push_back(mi0);
+                            for (const UHDM::any* up = func_call->VpiParent();
+                                 up; up = up->VpiParent())
+                                if (auto mi = dynamic_cast<const UHDM::module_inst*>(up))
+                                    if (chain.empty() || chain.back() != mi)
+                                        chain.push_back(mi);
+                            if (!chain.empty())
+                                for (const UHDM::any* up = chain.back()->VpiParent();
+                                     up; up = up->VpiParent())
+                                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(up))
+                                        chain.push_back(mi);
+                            std::string want = std::string(ro->VpiName());
+                            for (auto mi : chain) {
+                                if (mi->Parameters())
+                                    for (auto p : *mi->Parameters()) {
+                                        if (p->UhdmType() != uhdmtype_parameter) continue;
+                                        if (p->VpiName() != want) continue;
+                                        if (auto tp = any_cast<const UHDM::type_parameter*>(p))
+                                            if (tp->Typespec())
+                                                bound_ts = tp->Typespec()->Actual_typespec();
                                         break;
-                                }
-                            }
-                            if (mi && mi->Parameters()) {
-                                for (auto p : *mi->Parameters()) {
-                                    if (p->UhdmType() != uhdmtype_parameter) continue;
-                                    if (p->VpiName() != ro->VpiName()) continue;
-                                    if (auto tp = any_cast<const UHDM::type_parameter*>(p))
-                                        if (tp->Typespec())
-                                            bound_ts = tp->Typespec()->Actual_typespec();
-                                    break;
-                                }
+                                    }
+                                if (!bound_ts && mi->Typespecs())
+                                    for (auto ts : *mi->Typespecs()) {
+                                        std::string tn = std::string(ts->VpiName());
+                                        size_t cc = tn.rfind("::");
+                                        if (cc != std::string::npos) tn = tn.substr(cc + 2);
+                                        if (tn == want) { bound_ts = ts; break; }
+                                    }
+                                if (bound_ts) { bound_scope = mi; break; }
                             }
                         }
                         if (bound_ts) {
-                            int w = get_width_from_typespec(bound_ts, current_instance);
+                            // Measure in the DECLARING instance: the typedef's
+                            // `[AW-1:0]` members must see that instance's
+                            // parameters (axi_sub_wr AW=19, not the default 32).
+                            auto saved_ci = current_instance;
+                            bool saved_meas = measuring_in_declaring_scope_;
+                            if (bound_scope) {
+                                current_instance = bound_scope;
+                                measuring_in_declaring_scope_ = true;
+                            }
+                            int w = get_width_from_typespec(bound_ts, bound_scope ? (const UHDM::scope*)bound_scope : current_instance);
+                            current_instance = saved_ci;
+                            measuring_in_declaring_scope_ = saved_meas;
                             if (w > 0) {
                                 total_bits = w;
                                 if (func_name == "$bits") {
@@ -8915,7 +8997,41 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // width-0 constant, and consuming it zero-extends the whole struct
             // to 0.  Fall through to the VpiValue / Expr / param_assign paths,
             // which at least have a chance of resolving it.
-            if (module && module->parameter_default_values.count(p_id) &&
+            // The ELABORATED instance's override when the RTLIL module being
+            // built is not the instance's own (measuring a parent's typedef
+            // while naming a child paramod: axi_sub_wr's `$bits(axi_ctx_t)`
+            // read AW's definition default 32 for the chip's 19).  A
+            // pass-through actual (`.AW(AW)`) is evaluated in the parent.
+            bool inst_got = false;
+            if (measuring_in_declaring_scope_ &&
+                !(module && module->parameter_default_values.count(p_id) &&
+                  module->parameter_default_values.at(p_id).size() > 0)) {
+                if (auto ci = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                    if (ci->Param_assigns())
+                        for (auto pa : *ci->Param_assigns()) {
+                            if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != param_name)
+                                continue;
+                            auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+                            if (!re) break;
+                            auto saved_pi = current_instance;
+                            if (re->UhdmType() != uhdmconstant)
+                                if (auto pp = dynamic_cast<const UHDM::module_inst*>(ci->VpiParent()))
+                                    current_instance = pp;
+                            RTLIL::SigSpec rs = import_expression(re);
+                            current_instance = saved_pi;
+                            if (rs.is_fully_const() && rs.size() > 0) {
+                                param_value = rs.as_const();
+                                inst_got = true;
+                            }
+                            break;
+                        }
+                }
+            }
+            if (inst_got) {
+                if (mode_debug)
+                    log("UHDM: Using instance parameter %s value %s (elaborated override)\n",
+                        param_name.c_str(), param_value.as_string().c_str());
+            } else if (module && module->parameter_default_values.count(p_id) &&
                 module->parameter_default_values.at(p_id).size() > 0) {
                 param_value = module->parameter_default_values.at(p_id);
                 if (mode_debug)
@@ -10245,7 +10361,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != signal_name)
                         continue;
                     if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
+                        // A pass-through actual (`.AW(AW)` from axi_sub into
+                        // axi_sub_wr) is an expression of the PARENT's
+                        // parameters: evaluate it in the parent instance, or
+                        // the same-named ref resolves to this module's own
+                        // default (axi_sub_wr's `$bits(axi_ctx_t)` measured
+                        // AW=32 instead of the chip's 19).
+                        auto saved_pi = current_instance;
+                        if (re->UhdmType() != uhdmconstant)
+                            if (auto pp = dynamic_cast<const UHDM::module_inst*>(pmod->VpiParent()))
+                                current_instance = pp;
                         RTLIL::SigSpec rs = import_expression(re);
+                        current_instance = saved_pi;
                         if (rs.is_fully_const()) {
                             param_value = rs.as_const();
                             got = true;
