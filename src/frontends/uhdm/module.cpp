@@ -1516,6 +1516,67 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     
     const expr* lhs_expr = uhdm_assign->Lhs();
     const expr* rhs_expr = uhdm_assign->Rhs();
+
+    // `child_inst.sig = <expr>` — a cross-module WRITE into a child instance.
+    // Importing the LHS normally would take the XMR *read* path, which exposes
+    // the child signal as an OUTPUT; the parent would then drive a cell output
+    // and yosys rejects it ("Cell port ... is driving constant bits").
+    // caliptra's caliptra_prim_assert_sec_cm.svh does this in every sparse-FSM
+    // check: `assign HIER_.unused_assert_connected = 1'b1;`.
+    if (lhs_expr && lhs_expr->UhdmType() == uhdmhier_path && module) {
+        const hier_path* whp = any_cast<const hier_path*>(lhs_expr);
+        if (whp->Path_elems() && whp->Path_elems()->size() >= 2) {
+            auto& wpe = *whp->Path_elems();
+            bool all_ref = true;
+            for (auto* e : wpe)
+                if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+            if (all_ref) {
+                std::string winst =
+                    std::string(any_cast<const ref_obj*>(wpe[0])->VpiName());
+                std::string wsig;
+                for (size_t k = 1; k < wpe.size(); k++) {
+                    if (k > 1) wsig += ".";
+                    wsig += std::string(any_cast<const ref_obj*>(wpe[k])->VpiName());
+                }
+                // The child CELL does not exist yet — continuous assigns are
+                // imported before instances — so defer, exactly as the XMR
+                // read path does, and resolve once every cell is in place.
+                //
+                // An INTERFACE instance looks identical here (`iface.field =`
+                // is also a hier_path of ref_objs), but it is NOT an XMR: the
+                // importer flattens interface signals to `<iface>.<field>`
+                // wires and the normal LHS path drives them.  Treating those
+                // as XMR writes swallowed the assignment entirely — 15 iface
+                // tests started diverging in co-sim.  Skip anything that names
+                // a known interface instance.
+                // Only a genuine child INSTANCE is an XMR.  If the leading
+                // name resolves to a signal, this is a struct/interface member
+                // write (`q.hi = …`, possibly with `q` declared in an outer
+                // generate scope so the flat-name lookup below misses it) and
+                // the normal LHS path must handle it — deferring such a write
+                // and then failing to resolve it DROPPED the assignment
+                // (nested_gen_struct_member).
+                bool base_is_signal = false;
+                if (auto bag = any_cast<const ref_obj*>(wpe[0])->Actual_group())
+                    base_is_signal =
+                        dynamic_cast<const UHDM::variables*>(bag) != nullptr ||
+                        dynamic_cast<const UHDM::net*>(bag) != nullptr;
+                if (!winst.empty() && !wsig.empty() && !base_is_signal &&
+                    !iface_inst_vars_.count(winst) &&
+                    !find_wire_in_scope(winst) &&
+                    !module->wire(RTLIL::escape_id(winst)) &&
+                    !module->wire(RTLIL::escape_id(winst + "." + wsig))) {
+                    RTLIL::SigSpec wrhs = import_expression(rhs_expr);
+                    if (wrhs.size() > 0) {
+                        pending_xmr_writes_.push_back({module, winst, wsig, wrhs});
+                        log("    XMR write %s.%s deferred\n",
+                            winst.c_str(), wsig.c_str());
+                        return;
+                    }
+                }
+            }
+        }
+    }
     
     if (mode_debug && lhs_expr) {
         log("  LHS type: %s, VpiType: %d, NetDeclAssign: %d\n", 

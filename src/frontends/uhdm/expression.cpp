@@ -2460,7 +2460,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
             log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
             return RTLIL::SigSpec();
         case vpiHierPath:
-            return import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
+            {
+                RTLIL::SigSpec hpv_ = import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
+                std::string hpn_(uhdm_expr->VpiName());
+                if (hpn_.find("cam_in") != std::string::npos)
+                    log("HPROBE %s => %s\n", hpn_.c_str(), log_signal(hpv_));
+                return hpv_;
+            }
         case vpiIndexedPartSelect:
             return import_indexed_part_select(any_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiVarSelect:
@@ -11425,6 +11431,50 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
     } else {
         cell->setPort(RTLIL::escape_id(sig), pw);
     }
+}
+
+// Cross-module reference (XMR) WRITE: `child_inst.sig = <expr>` assigns INTO a
+// child instance from outside it.  The read variant above exposes the child
+// signal as an OUTPUT; a write needs the opposite — the child must take it as
+// an INPUT, driven from this module — or the parent ends up driving a cell
+// OUTPUT and yosys rejects the design:
+//   Cell port ...u_state_regs.unused_assert_connected is driving constant bits
+// caliptra's caliptra_prim_assert_sec_cm.svh does exactly this:
+//   assign HIER_.unused_assert_connected = 1'b1;
+// Returns the parent-side wire to drive, or null when the path is not an XMR.
+RTLIL::Wire* UhdmImporter::resolve_xmr_write(RTLIL::Module* mod, RTLIL::Cell* cell,
+                                             const std::string& sig) {
+    if (!mod || !cell || sig.empty()) return nullptr;
+    RTLIL::Module* child = design->module(cell->type);
+    if (!child) return nullptr;
+    RTLIL::Wire* cw = child->wire(RTLIL::escape_id(sig));
+    if (!cw) {
+        // Multi-level: `subinst.rest` — promote through the intermediate level
+        // first, then expose that wire up through this one.
+        auto dot = sig.find('.');
+        if (dot != std::string::npos) {
+            std::string subinst = sig.substr(0, dot), rest = sig.substr(dot + 1);
+            if (RTLIL::Cell* subcell = child->cell(RTLIL::escape_id(subinst)))
+                if (RTLIL::Wire* inner = resolve_xmr_write(child, subcell, rest))
+                    cw = inner;
+        }
+        if (!cw) return nullptr;
+    }
+    // Only promote a signal nothing inside the child already drives; if it is
+    // already a port, leave the direction alone.
+    if (!cw->port_input && !cw->port_output) {
+        cw->port_input = true;
+        child->fixup_ports();
+    }
+    if (!cw->port_input) return nullptr;
+    std::string inst = cell->name.str();
+    if (!inst.empty() && inst[0] == '\\') inst = inst.substr(1);
+    std::string pn = inst + "." + sig;
+    RTLIL::Wire* pw = mod->wire(RTLIL::escape_id(pn));
+    if (!pw) pw = mod->addWire(RTLIL::escape_id(pn), cw->width);
+    if (!cell->hasPort(RTLIL::escape_id(sig)))
+        cell->setPort(RTLIL::escape_id(sig), pw);
+    return pw;
 }
 
 // Import hierarchical path (e.g., bus.a, interface.signal)
