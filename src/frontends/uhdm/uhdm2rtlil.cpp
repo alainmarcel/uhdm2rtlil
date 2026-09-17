@@ -687,6 +687,28 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     }
     pending_xmr_reads_.clear();
 
+    // ... and the deferred cross-module WRITES (`child.sig = <expr>`), which
+    // need the child signal exposed as an INPUT and driven from here.
+    for (auto& xw : pending_xmr_writes_) {
+        RTLIL::Module* mod = std::get<0>(xw);
+        const std::string& inst = std::get<1>(xw);
+        const std::string& sig = std::get<2>(xw);
+        RTLIL::SigSpec val = std::get<3>(xw);
+        RTLIL::Cell* cell = mod->cell(RTLIL::escape_id(inst));
+        if (!cell) continue;
+        // Never promote through an INTERFACE instance (see module.cpp): its
+        // fields are ordinary flattened wires, not a cross-module reference.
+        if (RTLIL::Module* cm = design->module(cell->type))
+            if (cm->attributes.count(RTLIL::escape_id("is_interface"))) continue;
+        RTLIL::Wire* pw = resolve_xmr_write(mod, cell, sig);
+        if (!pw) continue;
+        if (val.size() < pw->width) val.extend_u0(pw->width, false);
+        else if (val.size() > pw->width) val = val.extract(0, pw->width);
+        mod->connect(RTLIL::SigSpec(pw), val);
+        log("UHDM: resolved deferred XMR write %s.%s\n", inst.c_str(), sig.c_str());
+    }
+    pending_xmr_writes_.clear();
+
     // Final safety pass: every process action's RHS must be exactly as wide as
     // its LHS, or yosys `proc_prune` dereferences rhs[i] out of range and
     // aborts.  An unresolved sub-expression can leave a short/empty RHS, and
