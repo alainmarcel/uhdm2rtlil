@@ -1059,10 +1059,11 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
         out = e.stdout or ""
     print(out)
     label = {"proven": "✅ equivalent", "cex": "❌ differs",
-             "timeout": "❓ SAT timeout", "error": "error"}
+             "timeout": "❓ SAT timeout", "memlimit": "❓ SAT over memory cap",
+             "error": "error"}
     rows = []
     for line in out.splitlines():
-        m = re.match(r"\s*[✅❌]\s*(u_\S+)\s+(proven|cex|timeout|error)\b", line)
+        m = re.match(r"\s*[✅❌]\s*(u_\S+)\s+(proven|cex|timeout|memlimit|error)\b", line)
         if m and (not flt or re.search(flt, m.group(1))):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
@@ -1138,11 +1139,12 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
         out = e.stdout or ""
     print(out)
     label = {"proven": "✅ equivalent", "cex": "❌ differs",
-             "timeout": "❓ SAT timeout", "error": "error"}
+             "timeout": "❓ SAT timeout", "memlimit": "❓ SAT over memory cap",
+             "error": "error"}
     rows = []
     # Caliptra instance names are not u_-prefixed (abr_inst, rvtop, sha256 ...).
     for line in out.splitlines():
-        m = re.match(r"\s*[✅❌]\s*(\S+)\s+(proven|cex|timeout|error)\b", line)
+        m = re.match(r"\s*[✅❌]\s*(\S+)\s+(proven|cex|timeout|memlimit|error)\b", line)
         if m and (not flt or re.search(flt, m.group(1))):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
