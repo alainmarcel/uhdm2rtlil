@@ -270,6 +270,11 @@ struct UhdmImporter {
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
     std::set<std::string> imported_module_signatures;
+    // True while a `$bits(<typedef>)` is measured in the DECLARING instance
+    // (current_instance temporarily moved there): only then may a parameter
+    // reference take that instance's Param_assigns override over the RTLIL
+    // module's own parameter table.
+    bool measuring_in_declaring_scope_ = false;
     // Maps each imported instance (module_inst) to the RTLIL module name it was
     // imported as — including the `$paramod\...` specialization.  Used when
     // creating a child cell so it lands in the PARENT's specialized module, not
