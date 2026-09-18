@@ -1,0 +1,35 @@
+{
+ "title": "Alex Forencich verilog-pcie",
+ "url": "https://github.com/alexforencich/verilog-pcie",
+ "repos": [
+  {
+   "url": "https://github.com/alexforencich/verilog-pcie",
+   "commit": "25156a9",
+   "dir": "verilog-pcie"
+  },
+  {
+   "url": "https://github.com/alexforencich/verilog-axis",
+   "commit": "48ff7a7",
+   "dir": "verilog-axis"
+  }
+ ],
+ "roots": [
+  "verilog-pcie/rtl/*.v",
+  "verilog-axis/rtl/*.v"
+ ],
+ "incdirs": [
+  "verilog-pcie/rtl"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^test_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}

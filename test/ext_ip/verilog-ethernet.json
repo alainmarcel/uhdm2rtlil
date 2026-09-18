@@ -1,0 +1,30 @@
+{
+ "title": "Alex Forencich verilog-ethernet",
+ "url": "https://github.com/alexforencich/verilog-ethernet",
+ "repos": [
+  {
+   "url": "https://github.com/alexforencich/verilog-ethernet",
+   "commit": "77320a9",
+   "dir": "verilog-ethernet"
+  }
+ ],
+ "roots": [
+  "verilog-ethernet/rtl/*.v",
+  "verilog-ethernet/lib/axis/rtl/*.v"
+ ],
+ "incdirs": [
+  "verilog-ethernet/rtl"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^test_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}

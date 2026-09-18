@@ -1,0 +1,32 @@
+{
+ "title": "OpenHW CORE-V Wally",
+ "url": "https://github.com/openhwgroup/cvw",
+ "repos": [
+  {
+   "url": "https://github.com/openhwgroup/cvw",
+   "commit": "bc7012a",
+   "dir": "cvw"
+  }
+ ],
+ "roots": [
+  "cvw/src/**/*.sv",
+  "cvw/config/rv64gc/*.sv",
+  "cvw/config/shared/*.sv"
+ ],
+ "incdirs": [
+  "cvw/config/rv64gc",
+  "cvw/config/shared"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^test"
+ ],
+ "seq": 3,
+ "timeout": 300,
+ "want": "proven"
+}

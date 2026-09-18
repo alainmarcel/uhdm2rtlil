@@ -1,0 +1,34 @@
+{
+ "title": "OpenHW CVE2",
+ "url": "https://github.com/openhwgroup/cve2",
+ "repos": [
+  {
+   "url": "https://github.com/openhwgroup/cve2",
+   "commit": "d079e8c",
+   "dir": "cve2"
+  }
+ ],
+ "roots": [
+  "cve2/rtl/*.sv",
+  "cve2/vendor/lowrisc_ip/ip/prim/rtl/*.sv",
+  "cve2/vendor/lowrisc_ip/ip/prim_generic/rtl/*.sv"
+ ],
+ "incdirs": [
+  "cve2/vendor/lowrisc_ip/ip/prim/rtl",
+  "cve2/vendor/lowrisc_ip/dv/sv/dv_utils"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^prim_",
+  "^cve2_tracer",
+  "_bind$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}

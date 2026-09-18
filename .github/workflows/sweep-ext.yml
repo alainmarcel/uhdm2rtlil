@@ -1,0 +1,32 @@
+name: Sweep external IP
+
+# Per-module report for the external IP families under test/ext_ip/ (PULP
+# common_cells / AXI, OpenHW CVE2 / CORE-V Wally, Alex Forencich's
+# verilog-ethernet / verilog-pcie, hdl-util hdmi ...): every module of a
+# family is read by read_uhdm and read_slang from a shallow clone at the
+# manifest's pinned commit, SAT-mitered from reset, opt-checked and Verilator
+# co-simulated against the RTL (test/ext_ip/ext_flow.py via core_sweep.py).
+# Nightly + manual dispatch; one reusable sweep job per family.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 3 * * *"   # nightly 03:47 UTC, clear of the pavona / caliptra sweeps
+
+concurrency:
+  group: sweep-ext-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [common_cells, axi, cve2, cvw, verilog-ethernet, verilog-pcie, hdmi]
+    name: ext - ${{ matrix.family }}
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: ${{ matrix.family }}
+      cycles: "300"
+      timeout: 300
+      shards: 1
