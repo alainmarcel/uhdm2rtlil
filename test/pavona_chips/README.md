@@ -54,6 +54,12 @@ python3 scripts/chip_cosim.py egret 2000   # full-chip co-sim, 2000 cycles
   released its power-on reset.
 - pinmux's power-on pad attributes `'{pull_en: 1'b1, default: '0}` were written
   as a single bit, so the TAP strap sampled without its pull-down.
+- pinmux_strap_sampling's `attr_padring_o[k] = jtag_en ? '{schmitt_en: 1'b1,
+  default: '0} : attr_core_i[k]` folded the pattern to all-zeros: a pattern
+  that is an arm of a conditional operator has the `?:` as its parent, and the
+  element-selected port net carries its packed-struct-array typespec on the
+  port, not the net (found by the per-instance co-sim of `u_pinmux_aon`,
+  `mio_attr_o` bit 5 from cycle 26).
 
 Both were invisible to the per-instance miters (bounded at 2 steps from reset)
 and to the smaller per-IP campaigns; the full-chip co-sim caught them.

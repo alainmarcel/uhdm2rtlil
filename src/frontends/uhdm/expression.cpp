@@ -6120,20 +6120,36 @@ static void xz_value_extend_pair(RTLIL::SigSpec &a, RTLIL::SigSpec &b) {
 // real struct.  Returns null when the LHS carries no typespec.
 static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm_op) {
     if (!uhdm_op || !uhdm_op->VpiParent()) return nullptr;
+    // A pattern that is an ARM of a conditional operator
+    // (`assign attr_padring_o[k] = jtag_en ? '{schmitt_en: 1'b1, default: '0}
+    // : attr_core_i[k]`, OpenTitan pinmux_strap_sampling) has the `?:` as its
+    // parent, not the assignment: both arms take the assignment target's type,
+    // so walk up through enclosing conditional operators.
+    const UHDM::any* parent = uhdm_op->VpiParent();
+    while (parent && parent->UhdmType() == uhdmoperation) {
+        auto po = any_cast<const UHDM::operation*>(parent);
+        if (po->VpiOpType() != vpiConditionOp) return nullptr;
+        parent = po->VpiParent();
+    }
+    if (!parent) return nullptr;
     const UHDM::any* lhs = nullptr;
-    if (uhdm_op->VpiParent()->UhdmType() == uhdmassignment)
-        lhs = any_cast<const UHDM::assignment*>(uhdm_op->VpiParent())->Lhs();
-    else if (uhdm_op->VpiParent()->UhdmType() == uhdmcont_assign)
-        lhs = any_cast<const UHDM::cont_assign*>(uhdm_op->VpiParent())->Lhs();
+    if (parent->UhdmType() == uhdmassignment)
+        lhs = any_cast<const UHDM::assignment*>(parent)->Lhs();
+    else if (parent->UhdmType() == uhdmcont_assign)
+        lhs = any_cast<const UHDM::cont_assign*>(parent)->Lhs();
     // A PARAMETER initialiser (`localparam cfg_t LIT = '{n: 3, base: ...}`) is a
     // param_assign.  The `'{default:}` handler has its own param_assign case,
     // but the named-field handler had none.
-    else if (uhdm_op->VpiParent()->UhdmType() == uhdmparam_assign)
-        lhs = any_cast<const UHDM::param_assign*>(uhdm_op->VpiParent())->Lhs();
+    else if (parent->UhdmType() == uhdmparam_assign)
+        lhs = any_cast<const UHDM::param_assign*>(parent)->Lhs();
     if (!lhs) return nullptr;
     // A ref_obj LHS points at the declaration that carries the typespec.
     if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
         if (auto ag = r->Actual_group()) lhs = ag;
+    // `arr[k] = '{...}` on a PACKED array of structs: the target is one
+    // ELEMENT, so a packed_array/array typespec found on the whole net must be
+    // descended to its element type below.
+    const bool elem_sel = dynamic_cast<const UHDM::bit_select*>(lhs) != nullptr;
     // An ELEMENT write into an unpacked array (`resp_o[1] <= '{err:..,..}`
     // on a type-param'd struct array — the pattern-write sibling of
     // typaram_struct_array_elem_read): the element struct lives on the
@@ -6162,7 +6178,39 @@ static const UHDM::typespec* assignment_lhs_typespec(const UHDM::operation* uhdm
             if (auto e0 = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
                 rt = e0->Typespec();
     }
-    return rt ? rt->Actual_typespec() : nullptr;
+    else if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(lhs)) {
+        if (pan->Elements() && !pan->Elements()->empty())
+            if (auto e0 = dynamic_cast<const UHDM::expr*>((*pan->Elements())[0]))
+                rt = e0->Typespec();
+    }
+    // A PORT net (`output pad_attr_t [N-1:0] attr_padring_o`) carries no
+    // typespec of its own in the elaborated model — the port does (CLAUDE.md
+    // "Port vs Net Typespec Inconsistency").  Look the port up by name.
+    if (!rt) {
+        if (auto n = dynamic_cast<const UHDM::nets*>(lhs)) {
+            if (auto mi = dynamic_cast<const UHDM::module_inst*>(n->VpiParent()))
+                if (mi->Ports())
+                    for (auto po : *mi->Ports())
+                        if (po->VpiName() == n->VpiName() && po->Typespec()) {
+                            rt = po->Typespec();
+                            break;
+                        }
+        }
+    }
+    const UHDM::typespec* ts = rt ? rt->Actual_typespec() : nullptr;
+    if (ts && elem_sel) {
+        if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ts)) {
+            if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec())
+                ts = pt->Elem_typespec()->Actual_typespec();
+        } else if (auto at = dynamic_cast<const UHDM::array_typespec*>(ts)) {
+            if (at->Elem_typespec() && at->Elem_typespec()->Actual_typespec())
+                ts = at->Elem_typespec()->Actual_typespec();
+        } else if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
+            if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                ts = lt->Elem_typespec()->Actual_typespec();
+        }
+    }
+    return ts;
 }
 
 // Rewrite chunks of `res` that reference a wire carrying an in-flight (blocking)
