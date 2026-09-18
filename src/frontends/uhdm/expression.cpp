@@ -4540,6 +4540,18 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 
                 // Get the arguments
                 std::vector<RTLIL::SigSpec> args;
+                // `$clog2`, `$bits` and friends need a CONSTANT argument; an
+                // argument built from constants (`$clog2((MASK >> 32) & '1)`,
+                // Caliptra's CALIPTRA_SLAVE_ADDR_WIDTH) only folds with
+                // force_const_fold, and without it the call was reported
+                // "unhandled", the parameter came out non-constant, and every
+                // width derived from it collapsed to one bit.
+                bool const_args = (func_name == "$clog2" || func_name == "$ln" ||
+                                   func_name == "$log10" || func_name == "$pow" ||
+                                   func_name == "$sqrt" || func_name == "$floor" ||
+                                   func_name == "$ceil");
+                bool saved_fcf_args = force_const_fold;
+                if (const_args) force_const_fold = true;
                 if (func_call->Tf_call_args()) {
                     for (auto arg : *func_call->Tf_call_args()) {
                         // Pass input_mapping so args resolve function params/locals
@@ -4552,7 +4564,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         args.push_back(arg_sig);
                     }
                 }
-                
+                force_const_fold = saved_fcf_args;
+
                 // Handle specific system functions
                 // Formal-verification sampling functions: `$past(e)`,
                 // `$stable(e)`, `$rose(e)`, `$fell(e)`, `$changed(e)`.
@@ -7525,6 +7538,35 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             case vpiNotOp:
                 if (operands.size() == 1) {
                     result = RTLIL::const_logic_not(operands[0].as_const(), RTLIL::Const(), false, false, 1);
+                }
+                break;
+            case vpiConditionOp:
+                // A fully-constant `c ? a : b` never folded — it always became
+                // a $mux, so a localparam defined by one ("IN_AW = (AW >= 12) ?
+                // 12 : AW", axi_addr) was reported non-constant and defaulted
+                // to 0.  Every `reg [IN_AW-1:0]` then collapsed to one bit and
+                // Caliptra's AXI read address never incremented.  Surelog
+                // usually pre-folds such a localparam; it does not when the
+                // parameter it depends on arrives as an expression
+                // (`.AXI_ADDR_WIDTH($clog2(...))`).
+                if (operands.size() == 3) {
+                    RTLIL::Const cc = operands[0].as_const();
+                    bool has_x = false, is_true = false;
+                    for (int bi = 0; bi < cc.size(); bi++) {
+                        RTLIL::State b = cc[bi];
+                        if (b == RTLIL::State::S1) is_true = true;
+                        else if (b != RTLIL::State::S0) has_x = true;
+                    }
+                    if (has_x) {
+                        can_evaluate = false;
+                    } else {
+                        RTLIL::SigSpec pick = is_true ? operands[1] : operands[2];
+                        int w = std::max(operands[1].size(), operands[2].size());
+                        if (pick.size() < w) pick.extend_u0(w, false);
+                        result = pick.as_const();
+                    }
+                } else {
+                    can_evaluate = false;
                 }
                 break;
             case vpiMultiConcatOp:
