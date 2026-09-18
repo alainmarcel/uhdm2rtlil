@@ -13032,30 +13032,24 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::SigSpec is = import_expression(esel->VpiIndex());
                 if (is.is_fully_const()) idx = is.as_const().as_int();
             }
-            log("XPROBE base=%s wire=%p est=%p idx=%d lr=%p rr=%p ag=%p\n",
-                base_name.c_str(), (void*)base_wire, (void*)est, idx,
-                (void*)ps->Left_range(), (void*)ps->Right_range(),
-                (void*)esel->Actual_group());
+            if (mode_debug)
+                log("    hier_path elem-field part-select probe: base=%s est=%s idx=%d\n",
+                    base_name.c_str(), est ? "yes" : "no", idx);
             if (base_wire && est && est->Members() && idx >= 0 &&
                 ps->Left_range() && ps->Right_range()) {
-                // Member offset within the element (packed: last member at LSB).
-                int mem_off = 0;
-                bool found = false;
-                const VectorOftypespec_member* mems = est->Members();
-                for (int mi = (int)mems->size() - 1; mi >= 0; mi--) {
-                    auto ms = (*mems)[mi];
-                    int w = 1;
-                    if (auto mts = ms->Typespec()) {
-                        if (auto ats = mts->Actual_typespec())
-                            w = get_width_from_typespec(ats, inst);
-                    } else {
-                        w = get_width(ms, inst);
-                    }
-                    if (std::string(ms->VpiName()) == field_name) {
-                        found = true; break;
-                    }
-                    mem_off += w;
-                }
+                // The part-select's OWN name is the member it slices; when it
+                // differs from the ref_obj's, the path is NESTED
+                // (`commit_instr_i[0].ex.cause[4:0]` — CVA6 commit_stage) and
+                // the inner member's offset must be added too.  Taking only
+                // the outer member's offset read `ex`'s low bits instead of
+                // `cause`'s, 65 bits away, and csr_wdata_o[4:0] was wrong.
+                std::string mp = field_name;
+                std::string sel_name = std::string(ps->VpiName());
+                if (!sel_name.empty() && sel_name != field_name)
+                    mp += "." + sel_name;
+                int mem_off = 0, mem_w = 0;
+                bool found = calculate_struct_member_offset(
+                    est, mp, dynamic_cast<const UHDM::scope*>(inst), mem_off, mem_w);
                 RTLIL::SigSpec ls = import_expression(ps->Left_range());
                 RTLIL::SigSpec rs = import_expression(ps->Right_range());
                 int elem_w = get_width_from_typespec(est, inst);
