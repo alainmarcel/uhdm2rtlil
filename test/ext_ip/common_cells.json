@@ -1,0 +1,39 @@
+{
+ "title": "PULP common_cells",
+ "url": "https://github.com/pulp-platform/common_cells",
+ "repos": [
+  {
+   "url": "https://github.com/pulp-platform/common_cells",
+   "commit": "121182e",
+   "dir": "common_cells"
+  },
+  {
+   "url": "https://github.com/pulp-platform/tech_cells_generic",
+   "commit": "55cb545",
+   "dir": "tech_cells_generic"
+  }
+ ],
+ "roots": [
+  "common_cells/src/*.sv",
+  "tech_cells_generic/src/rtl/*.sv",
+  "tech_cells_generic/src/*.sv"
+ ],
+ "incdirs": [
+  "common_cells/include",
+  "tech_cells_generic/include"
+ ],
+ "defines": [
+  "SYNTHESIS",
+  "TARGET_SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^cc_addr_decode$",
+  "^tc_sram_impl$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}

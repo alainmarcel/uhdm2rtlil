@@ -1130,6 +1130,83 @@ def _fetch_caliptra():
     return str(dest)
 
 
+EXT_DIR = TEST_DIR / "ext_ip"
+
+
+def _ext_families():
+    """External-IP families: one JSON manifest each under test/ext_ip/."""
+    return sorted(p.stem for p in EXT_DIR.glob("*.json"))
+
+
+def _ext_root():
+    """Where the external repositories live: $EXT_IP_ROOT, else ~/ext when it
+    exists (developer machines), else test/ext_ip/repos (CI)."""
+    if os.environ.get("EXT_IP_ROOT"):
+        return Path(os.environ["EXT_IP_ROOT"])
+    home = Path(os.path.expanduser("~/ext"))
+    return home if home.is_dir() else EXT_DIR / "repos"
+
+
+def _fetch_ext(family):
+    """Shallow-clone every repository of the family's manifest at its pinned
+    commit (skipped when the directory already exists)."""
+    man = json.loads((EXT_DIR / f"{family}.json").read_text())
+    root = _ext_root()
+    root.mkdir(parents=True, exist_ok=True)
+    for r in man.get("repos", []):
+        dest = root / r["dir"]
+        if dest.is_dir() and any(dest.iterdir()):
+            continue
+        dest.mkdir(parents=True, exist_ok=True)
+        cmds = [["git", "init", "-q"], ["git", "remote", "add", "origin", r["url"]],
+                ["git", "fetch", "-q", "--depth", "1", "origin", r["commit"]],
+                ["git", "checkout", "-q", "FETCH_HEAD"]]
+        if r.get("submodules"):
+            cmds.append(["git", "submodule", "update", "-q", "--init", "--depth", "1"])
+        for c in cmds:
+            rc, out = sh(c, cwd=dest, timeout=1800)
+            if rc:
+                print(f"# fetch {r['dir']}: {' '.join(c)} -> exit {rc}\n{out}", flush=True)
+                break
+        print(f"# fetched {r['dir']} @ {r['commit']}", flush=True)
+    return root
+
+
+def sweep_ext(family, jobs, cycles=300, flt=None):
+    """One external-IP family (test/ext_ip/<family>.json): per-module read_uhdm
+    vs read_slang SAT miter, opt-check and Verilator co-sim through
+    ext_ip/ext_flow.py; rows come back in the common schema.  Sharded runs
+    take every N-th module of the manifest's list."""
+    root = _fetch_ext(family)
+    env = dict(os.environ, EXT_IP_ROOT=str(root))
+    flow = EXT_DIR / "ext_flow.py"
+    mods = []
+    if _SHARD[1] > 1:
+        rc, out = sh([sys.executable, str(flow), family, "--list"] +
+                     (["--filter", flt] if flt else []), env=env, timeout=600)
+        names = [l.strip() for l in (out or "").splitlines() if l.strip() and not l.startswith("#")]
+        mods = sorted(names)[_SHARD[0]::_SHARD[1]]
+        if not mods:
+            return []
+    work = EXT_DIR / "work" / family
+    work.mkdir(parents=True, exist_ok=True)
+    out_json = work / (f"rows_shard{_SHARD[0] + 1}.json" if _SHARD[1] > 1 else "rows.json")
+    cmd = [sys.executable, str(flow), family, "--jobs", str(max(1, jobs)),
+           "--cycles", str(cycles), "--out", str(out_json)] + mods
+    if flt and not mods:
+        cmd += ["--filter", flt]
+    rc, out = sh(cmd, env=env, timeout=6 * 3600)
+    print(out or "", flush=True)
+    rows = json.loads(out_json.read_text()) if out_json.exists() else []
+    for r in rows:
+        r.pop("formal_raw", None)
+        r.pop("want", None)
+        if r.get("note"):
+            r["formal"] = f"{r['formal']} ({r.pop('note')})" if r["formal"] in ("elab-fail", "read-fail (uhdm)", "no reference (read_slang fails)", "error") else r["formal"]
+            r.pop("note", None)
+    return rows
+
+
 def sweep_caliptra(jobs, cycles=300, flt=None):
     """chipsalliance/caliptra-rtl full chip: Surelog + read_uhdm + read_slang
     of caliptra_top (through the generated flat-port wrapper, since read_slang
@@ -1251,7 +1328,7 @@ def main():
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
-                                     "egret", "dragonfly", "caliptra"])
+                                     "egret", "dragonfly", "caliptra"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -1329,6 +1406,8 @@ def main():
         rows = sweep_chip(args.core, args.jobs, args.cycles, args.filter)
     elif args.core == "caliptra":
         rows = sweep_caliptra(args.jobs, args.cycles, args.filter)
+    elif args.core in _ext_families():
+        rows = sweep_ext(args.core, args.jobs, args.cycles, args.filter)
     else:
         rows = sweep_testdirs(args.core, args.cycles, args.jobs, args.filter)
 

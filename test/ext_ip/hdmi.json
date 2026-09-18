@@ -1,0 +1,28 @@
+{
+ "title": "hdl-util hdmi",
+ "url": "https://github.com/hdl-util/hdmi",
+ "repos": [
+  {
+   "url": "https://github.com/hdl-util/hdmi",
+   "commit": "83b1c95",
+   "dir": "hdmi"
+  }
+ ],
+ "roots": [
+  "hdmi/src/*.sv"
+ ],
+ "incdirs": [
+  "hdmi/src"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}
