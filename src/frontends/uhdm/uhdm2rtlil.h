@@ -501,6 +501,15 @@ struct UhdmImporter {
     // packed dims (`slot_t [N-1:0] slots;` inside an always_comb — the
     // element clear was applied at the whole-array width).
     std::map<std::string, const UHDM::any*> block_local_var_objs;
+    // Which PROCESS promoted each block-local name.  Two always_comb blocks
+    // that each declare `automatic logic next_c` are separate variables: a
+    // shared `\next_c` wire is driven by every one of them (PeakRDL register
+    // files have dozens), and one unconditional block then collapses the wire
+    // onto its own source — in Caliptra's sha3_reg that made 20 field latches
+    // drive the module's `hwif_in` INPUT port (26 driver-driver conflicts).
+    // A later process promoting the same name gets its own `name$N` wire.
+    std::map<std::string, int> block_local_wire_epoch;
+    int block_local_epoch = 0;
 
     // Initial (pre-assignment) wires of function block-local variables.  A
     // local read on a control path where it was never assigned would leave

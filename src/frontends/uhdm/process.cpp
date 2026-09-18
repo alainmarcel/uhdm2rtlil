@@ -1526,6 +1526,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // does the same — block-locals in always_ff retain their value).
             if (stmt) {
                 block_local_promoted.clear();
+                block_local_epoch++;   // one promotion scope per process
                 create_block_local_wires(stmt);
             }
 
@@ -3476,6 +3477,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // tripping the RTLIL chunk-width assert (CVA6 csr_regfile).  The
         // always_ff path already does this.
         block_local_promoted.clear();
+        block_local_epoch++;   // one promotion scope per process
         create_block_local_wires(actual_stmt);
         extract_assigned_signals(actual_stmt, assigned_signals);
 
@@ -3519,6 +3521,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     std::map<const expr*, RTLIL::Wire*> temp_wires;
     std::map<const expr*, RTLIL::SigSpec> lhs_specs;
     std::map<std::string, RTLIL::Wire*> signal_temp_wires; // Map signal name to temp wire
+    std::map<std::string, RTLIL::Wire*> local_name_temp_alias; // bare name -> temp
     std::map<std::string, RTLIL::SigSpec> signal_specs;    // Map signal name to signal spec
     
     // Detect whether this process writes the same base wire via
@@ -3796,6 +3799,14 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
 
         // Map this expression to the temp wire
         temp_wires[sig.lhs_expr] = temp_wire;
+        // A block-local promoted under a per-process name (`next_c$13`) is
+        // still written by its BARE UHDM name in the body — alias the temp so
+        // the write lands in this process's temp instead of a stray `$0\next_c`.
+        // ONLY for promoted block-locals: aliasing any signal whose dedup key
+        // differs would redirect element writes of a mixed unpacked array onto
+        // the flat temp (test/comb_mixed_array_default_chunks).
+        if (sig.name != dedup_key && block_local_promoted.count(sig.name))
+            local_name_temp_alias[sig.name] = temp_wire;
     }
 
     // Store temp wires in module context for use in statement import
@@ -3804,6 +3815,8 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     comb_signal_temp_map.clear();
     for (const auto& [sig_name, tw] : signal_temp_wires)
         comb_signal_temp_map[sig_name] = tw;
+    for (const auto& [alias, tw] : local_name_temp_alias)
+        comb_signal_temp_map.emplace(alias, tw);
 
     // Initialize temp wires with current signal values
     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
@@ -4503,9 +4516,26 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
             // (Caliptra kv_reg: every SW register write yielded load_next=1
             // with the OLD value — masked by hwset except KEY_CTRL[10]).
             std::string scope = get_current_gen_scope();
-            std::string wire_name = scope.empty() ? vname : scope + "." + vname;
+            std::string base_key = scope.empty() ? vname : scope + "." + vname;
+            std::string wire_name = base_key;
             RTLIL::IdString wname = RTLIL::escape_id(wire_name);
-            if (module->wire(wname)) continue;
+            if (module->wire(wname)) {
+                auto ep = block_local_wire_epoch.find(base_key);
+                // Not a promoted local at all (a real module signal of the
+                // same name): leave it alone, as before.
+                if (ep == block_local_wire_epoch.end()) continue;
+                // Already promoted by THIS process (the recursion visits
+                // nested blocks): nothing to do.
+                if (ep->second == block_local_epoch) continue;
+                // Another process's local of the same name — give this one
+                // its own wire, or every such block drives the shared one.
+                int n = 1;
+                do {
+                    wire_name = base_key + "$" + std::to_string(++n);
+                    wname = RTLIL::escape_id(wire_name);
+                } while (module->wire(wname));
+            }
+            block_local_wire_epoch[base_key] = block_local_epoch;
             int w = get_width(v, current_instance);
             if (w <= 0) w = 1;
             RTLIL::Wire* wire = module->addWire(wname, w);
@@ -4522,10 +4552,11 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
             name_map[vname] = wire;
             block_local_promoted.insert(vname);
             block_local_var_objs[vname] = v;
-            if (wire_name != vname) {
-                name_map[wire_name] = wire;
-                block_local_promoted.insert(wire_name);
-                block_local_var_objs[wire_name] = v;
+            for (const std::string& alias : {base_key, wire_name}) {
+                if (alias == vname) continue;
+                name_map[alias] = wire;
+                block_local_promoted.insert(alias);
+                block_local_var_objs[alias] = v;
             }
             if (mode_debug)
                 log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
