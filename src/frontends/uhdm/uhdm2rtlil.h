@@ -254,6 +254,14 @@ struct UhdmImporter {
     // recorded when the interface port's field wires are created so a struct
     // field access (`s.req.adr`) in import_hier_path can slice the member.
     std::map<std::string, const UHDM::typespec*> iface_signal_struct_ts_;
+    // Every interface signal wire's own typespec (`\<port>.<sig>` -> typespec),
+    // recorded when the wire is created, so an element/part select on a PACKED
+    // multi-dimensional or non-zero-LSB interface member (`iccm_mem_export.
+    // iccm_addr_bank[i]` on `logic [N-1:0][17:4]`, VeeR el2_ifu_iccm_mem) can
+    // be mapped to the element slice instead of a raw bit.
+    std::map<std::string, const UHDM::typespec*> iface_signal_ts_;
+    bool iface_signal_packed_geometry(const std::string& full, int wire_width,
+                                      int& n_outer, int& o_left, int& o_right, int& elem_w);
     // Flattened interface unpacked-ARRAY signal wire name ("intf.req_dly") ->
     // per-element width, recorded when the array wire is materialized so an
     // element bit-select `req_dly[i]` extracts elem_w bits (not 1).

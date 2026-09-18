@@ -27,6 +27,11 @@ on:
         required: false
         type: number
         default: 1
+      mem_limit_kb:
+        description: "ulimit -v budget (KB) shared by a shard's concurrent miters. 12 GB fits two cva6 SATs on a 16 GB runner; the caliptra vault/abr proofs need ~11 GB RSS each, so its sharded (one-at-a-time) miters run with 14.5 GB."
+        required: false
+        type: string
+        default: "12000000"
 
 jobs:
   build:
@@ -186,7 +191,7 @@ jobs:
         # modules that interactive sweeps skip for productivity.
         # --shard runs only this shard's ~1/N of the modules; each shard writes
         # its rows as JSON, merged into the final table by the `merge` job.
-        MEM_LIMIT_KB=12000000 \
+        MEM_LIMIT_KB=${{ inputs.mem_limit_kb }} \
         JOBS=2 FULL_SWEEP=1 python3 core_sweep.py ${{ inputs.core }} \
           --cycles ${{ inputs.cycles }} --jobs 2 \
           --shard ${{ matrix.shard }}/${{ inputs.shards }} \

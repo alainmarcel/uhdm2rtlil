@@ -1014,6 +1014,13 @@ def _inst_cosim(inst_dir, name, typ, srcs, incs, var, extra, ties, cycles):
         cmd += ["--var", v]
     for e in extra:
         cmd += ["--extra-src", str(e)]
+    # Same address-space cap as the miters: a Verilator build that blows up
+    # (rv_core_ibex-class instances on a 16 GB runner) then fails its own row
+    # as "skip (sim build)" instead of taking the runner down mid-shard.
+    mem = os.environ.get("MEM_LIMIT_KB")
+    if mem:
+        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " +
+               " ".join(shlex.quote(c) for c in cmd)]
     rc, out = sh(cmd, timeout=7200)
     (work / "cosim.log").write_text(out or "")
     return _cosim_cells(out, rc, cycles)
@@ -1026,6 +1033,11 @@ def _inst_cosims(rows, inst_dir, srcs, incs, var, extra, ties, cycles, jobs):
     if tf.exists():
         types = json.loads(tf.read_text())
     todo = [r for r in rows if r["module"] in types]
+    # Sharded (CI) runs co-simulate one instance at a time: two concurrent
+    # whole-chip-source Verilator builds killed the egret shard-1 runner
+    # (memory) right after its miters had all proven.
+    if _SHARD[1] > 1:
+        jobs = 1
     with cf.ThreadPoolExecutor(max_workers=max(1, jobs)) as ex:
         futs = {ex.submit(_inst_cosim, inst_dir, r["module"], types[r["module"]],
                           srcs, incs, var, extra, ties, cycles): r for r in todo}

@@ -100,6 +100,10 @@ def netlist(tag, il, nl):
     ys = f"""read_rtlil {il}
 hierarchy -top {mod}
 proc
+# opt_clean BEFORE flatten: the proc'd hierarchy carries every module's dead
+# wires, which flatten replicates per instance -- caliptra_top peaked at 20 GB
+# (killed the 16 GB CI runner); cleaning first peaks at 8.5 GB.
+opt_clean
 flatten
 opt_clean
 hierarchy -top {mod}
