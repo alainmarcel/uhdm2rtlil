@@ -7972,13 +7972,24 @@ bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
     const any* arr = fe->Variable();
     if (!arr) return false;
     const UHDM::ref_typespec* rts = nullptr;
+    const UHDM::typespec* ats = nullptr;
     if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) rts = rv->Typespec();
     else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) rts = ro->Typespec();
     else if (auto lvv = dynamic_cast<const UHDM::logic_var*>(arr)) rts = lvv->Typespec();
-    if (!rts || !rts->Actual_typespec()) return false;
+    else if (auto hp = dynamic_cast<const UHDM::hier_path*>(arr)) {
+        // `foreach (hwif_in.fuse_hek_seed[i])` — the iterated array is a
+        // STRUCT MEMBER (Caliptra soc_ifc_top's fuse swwel loops): its
+        // dimension lives on the member's typespec, resolved through the
+        // base struct.  Unhandled, the loop was not unrolled and 24 fuse
+        // `swwel` bits stayed undriven in the chip.
+        ats = hier_path_member_typespec(hp);
+    }
+    if (!ats) {
+        if (!rts || !rts->Actual_typespec()) return false;
+        ats = rts->Actual_typespec();
+    }
 
     const UHDM::VectorOfrange* ranges = nullptr;
-    auto ats = rts->Actual_typespec();
     if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) ranges = arrts->Ranges();
     else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pkts->Ranges();
     else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lts->Ranges();
