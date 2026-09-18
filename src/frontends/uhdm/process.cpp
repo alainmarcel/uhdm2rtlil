@@ -8660,9 +8660,18 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             // block_local_promoted so a block-local merely SHADOWING a module
             // signal still gets its own scoped wire.
             if (block_local_promoted.count(var_name)) {
+                // Prefer THIS process's promoted wire (name_map already points
+                // at it): the bare-name lookup finds the wire an EARLIER
+                // process promoted under the same name, and those are
+                // different variables — soc_ifc_reg declares `automatic logic
+                // next_c` in its 1-bit fields and `automatic logic [31:0]
+                // next_c` in its 32-bit ones, so the wide ones were truncated
+                // to one bit and 20 registers never latched their value.
                 RTLIL::Wire* pre = nullptr;
+                if (name_map.count(var_name) && name_map[var_name]->width == width)
+                    pre = name_map[var_name];
                 std::string sc = get_current_gen_scope();
-                if (!sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
+                if (!pre && !sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
                 if (!pre) pre = module->wire(RTLIL::escape_id(var_name));
                 if (pre) {
                     if (name_map.count(var_name) && name_map[var_name] != pre)
@@ -16332,9 +16341,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     // SHADOWING a module signal (whose wire pre-exists but was
                     // NOT promoted) still gets its own scoped wire.
                     if (block_local_promoted.count(var_name)) {
+                        // Same rule as the sync path above: THIS process's
+                        // promoted wire first (name_map), because the bare name
+                        // may belong to another process's same-named local of a
+                        // DIFFERENT width.
                         RTLIL::Wire* pre = nullptr;
+                        if (name_map.count(var_name) && name_map[var_name]->width == width)
+                            pre = name_map[var_name];
                         std::string sc = get_current_gen_scope();
-                        if (!sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
+                        if (!pre && !sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
                         if (!pre) pre = module->wire(RTLIL::escape_id(var_name));
                         if (pre) {
                             if (name_map.count(var_name) && name_map[var_name] != pre)
