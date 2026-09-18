@@ -4482,7 +4482,19 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
         for (auto v : *vars) {
             std::string vname = std::string(v->VpiName());
             if (vname.empty()) continue;
-            RTLIL::IdString wname = RTLIL::escape_id(vname);
+            // Inside a GENERATE scope the promoted wire carries the scope
+            // prefix (`gen_f[1].next_c`): every iteration's always block has
+            // its own `automatic logic next_c`, and the ref_obj importer
+            // resolves the name hierarchically first.  With a bare `\next_c`
+            // only iteration 0 was consistent — later iterations skipped the
+            // promotion (bare wire already there), the branch writes went to
+            // a fresh `gen_f[k].next_c` and the block's init assignment to an
+            // `$unnamed_block$N.next_c`, so `next_c` read back stale
+            // (Caliptra kv_reg: every SW register write yielded load_next=1
+            // with the OLD value — masked by hwset except KEY_CTRL[10]).
+            std::string scope = get_current_gen_scope();
+            std::string wire_name = scope.empty() ? vname : scope + "." + vname;
+            RTLIL::IdString wname = RTLIL::escape_id(wire_name);
             if (module->wire(wname)) continue;
             int w = get_width(v, current_instance);
             if (w <= 0) w = 1;
@@ -4500,9 +4512,14 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
             name_map[vname] = wire;
             block_local_promoted.insert(vname);
             block_local_var_objs[vname] = v;
+            if (wire_name != vname) {
+                name_map[wire_name] = wire;
+                block_local_promoted.insert(wire_name);
+                block_local_var_objs[wire_name] = v;
+            }
             if (mode_debug)
                 log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
-                    vname.c_str(), w, wire->is_signed);
+                    wire_name.c_str(), w, wire->is_signed);
         }
     }
     if (stmts) {
@@ -8590,13 +8607,18 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             // read_pointer/write_pointer; slang infers none).  Gate on
             // block_local_promoted so a block-local merely SHADOWING a module
             // signal still gets its own scoped wire.
-            if (block_local_promoted.count(var_name))
-            if (RTLIL::Wire* pre = module->wire(RTLIL::escape_id(var_name))) {
-                if (name_map.count(var_name) && name_map[var_name] != pre)
-                    saved_name_map[var_name] = name_map[var_name];
-                name_map[var_name] = pre;
-                block_local_vars.insert(var_name);
-                continue;
+            if (block_local_promoted.count(var_name)) {
+                RTLIL::Wire* pre = nullptr;
+                std::string sc = get_current_gen_scope();
+                if (!sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
+                if (!pre) pre = module->wire(RTLIL::escape_id(var_name));
+                if (pre) {
+                    if (name_map.count(var_name) && name_map[var_name] != pre)
+                        saved_name_map[var_name] = name_map[var_name];
+                    name_map[var_name] = pre;
+                    block_local_vars.insert(var_name);
+                    continue;
+                }
             }
 
             // Create hierarchical wire: \blockname.varname
@@ -16257,13 +16279,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     // Gate on block_local_promoted so a block-local merely
                     // SHADOWING a module signal (whose wire pre-exists but was
                     // NOT promoted) still gets its own scoped wire.
-                    if (block_local_promoted.count(var_name))
-                    if (RTLIL::Wire* pre = module->wire(RTLIL::escape_id(var_name))) {
-                        if (name_map.count(var_name) && name_map[var_name] != pre)
-                            saved_name_map[var_name] = name_map[var_name];
-                        name_map[var_name] = pre;
-                        block_local_vars.insert(var_name);
-                        continue;
+                    if (block_local_promoted.count(var_name)) {
+                        RTLIL::Wire* pre = nullptr;
+                        std::string sc = get_current_gen_scope();
+                        if (!sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
+                        if (!pre) pre = module->wire(RTLIL::escape_id(var_name));
+                        if (pre) {
+                            if (name_map.count(var_name) && name_map[var_name] != pre)
+                                saved_name_map[var_name] = name_map[var_name];
+                            name_map[var_name] = pre;
+                            block_local_vars.insert(var_name);
+                            continue;
+                        }
                     }
 
                     std::string hier_name = block_name + "." + var_name;
