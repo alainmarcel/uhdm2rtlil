@@ -12062,6 +12062,52 @@ const UHDM::typespec* UhdmImporter::bitselect_elem_typespec(const UHDM::bit_sele
     return nullptr;
 }
 
+// Packed geometry of an interface signal wire from its recorded typespec:
+// number of OUTER elements, the outer dimension's declared bounds and the
+// element width (product of the inner packed dims / the element typespec).
+// Returns false when the typespec is not a packed vector/array or its size
+// disagrees with the wire.
+bool UhdmImporter::iface_signal_packed_geometry(const std::string& full, int wire_width,
+                                                int& n_outer, int& o_left, int& o_right, int& elem_w) {
+    auto it = iface_signal_ts_.find(full);
+    if (it == iface_signal_ts_.end() || !it->second) return false;
+    const UHDM::typespec* ts = it->second;
+    const UHDM::VectorOfrange* ranges = nullptr;
+    const UHDM::typespec* elem_ts = nullptr;
+    if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
+        ranges = lt->Ranges();
+        if (lt->Elem_typespec()) elem_ts = lt->Elem_typespec()->Actual_typespec();
+    } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ts)) {
+        ranges = pt->Ranges();
+        if (pt->Elem_typespec()) elem_ts = pt->Elem_typespec()->Actual_typespec();
+    } else {
+        return false;
+    }
+    if (!ranges || ranges->empty()) return false;
+    std::vector<std::pair<int, int>> dims;
+    for (auto rr : *ranges) {
+        if (!rr->Left_expr() || !rr->Right_expr()) return false;
+        RTLIL::SigSpec dl = import_expression(rr->Left_expr());
+        RTLIL::SigSpec dr = import_expression(rr->Right_expr());
+        if (!dl.is_fully_const() || !dr.is_fully_const()) return false;
+        dims.push_back({dl.as_const().as_int(), dr.as_const().as_int()});
+    }
+    o_left = dims[0].first;
+    o_right = dims[0].second;
+    n_outer = std::abs(o_left - o_right) + 1;
+    long long ew = 1;
+    for (size_t i = 1; i < dims.size(); i++)
+        ew *= std::abs(dims[i].first - dims[i].second) + 1;
+    if (elem_ts) {
+        int w = get_width_from_typespec(elem_ts, current_instance);
+        if (w <= 0) return false;
+        ew *= w;
+    }
+    if (ew <= 0 || (long long)n_outer * ew != wire_width) return false;
+    elem_w = (int)ew;
+    return true;
+}
+
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing hier_path\n");
@@ -13515,10 +13561,51 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             auto it = name_map.find(full);
             if (it != name_map.end() && it->second) {
                 RTLIL::Wire* sig_wire = it->second;
+                // Packed multi-dimensional / non-zero-LSB member: `[i]` picks an
+                // ELEMENT (or a bit at a declared, not 0-based, index).  VeeR's
+                // `iccm_mem_export.iccm_addr_bank[i] = addr_bank[i]` on
+                // `logic [NUM_BANKS-1:0][ICCM_BITS-1:4]` wrote one BIT per
+                // bank (the element's LSB into bit i), so the ICCM bank
+                // addresses reached the SRAMs as garbage (caliptra rvtop cex).
+                int g_n = 0, g_l = 0, g_r = 0, g_ew = 1;
+                bool geom = iface_signal_packed_geometry(full, sig_wire->width, g_n, g_l, g_r, g_ew);
+                auto elem_pos = [&](int hdl_idx, int& pos) -> bool {
+                    int lo = std::min(g_l, g_r), hi = std::max(g_l, g_r);
+                    if (hdl_idx < lo || hdl_idx > hi) return false;
+                    pos = (g_l >= g_r) ? (hdl_idx - lo) : (hi - hdl_idx);
+                    return true;
+                };
                 if (pe_bp[1]->UhdmType() == uhdmbit_select) {
                     const bit_select* bs = any_cast<const bit_select*>(pe_bp[1]);
                     RTLIL::SigSpec idx_sig = import_expression(
                         bs->VpiIndex(), input_mapping);
+                    if (idx_sig.is_fully_const() && geom && (g_ew > 1 || std::min(g_l, g_r) != 0 || g_l < g_r)) {
+                        int idx = idx_sig.as_const().as_int(), pos = 0;
+                        if (elem_pos(idx, pos)) {
+                            log("    hier_path: %s[%d] → \\%s[%d+:%d] (packed element)\n",
+                                full.c_str(), idx, full.c_str(), pos * g_ew, g_ew);
+                            return RTLIL::SigSpec(sig_wire).extract(pos * g_ew, g_ew);
+                        }
+                    } else if (!idx_sig.is_fully_const() && geom && g_ew > 1) {
+                        // Dynamic element index: shift the flat wire by idx*elem_w.
+                        int lo = std::min(g_l, g_r);
+                        RTLIL::SigSpec pos = idx_sig;
+                        if (lo != 0 || g_l < g_r) {
+                            RTLIL::Wire* pw = module->addWire(NEW_ID, std::max(idx_sig.size(), 32));
+                            if (g_l >= g_r)
+                                module->addSub(NEW_ID, idx_sig, RTLIL::Const(lo, 32), pw);
+                            else
+                                module->addSub(NEW_ID, RTLIL::Const(std::max(g_l, g_r), 32), idx_sig, pw);
+                            pos = pw;
+                        }
+                        RTLIL::Wire* sw = module->addWire(NEW_ID, std::max(pos.size(), 32));
+                        module->addMul(NEW_ID, pos, RTLIL::Const(g_ew, 32), sw);
+                        RTLIL::Wire* ow = module->addWire(NEW_ID, g_ew);
+                        module->addShiftx(NEW_ID, RTLIL::SigSpec(sig_wire), RTLIL::SigSpec(sw), ow);
+                        log("    hier_path: %s[dyn] → $shiftx(\\%s, idx*%d) (packed element)\n",
+                            full.c_str(), full.c_str(), g_ew);
+                        return RTLIL::SigSpec(ow);
+                    }
                     if (idx_sig.is_fully_const()) {
                         int idx = idx_sig.as_const().as_int();
                         if (idx >= 0 && idx < sig_wire->width) {
@@ -13533,6 +13620,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         ps->Left_range(), input_mapping);
                     RTLIL::SigSpec rs = import_expression(
                         ps->Right_range(), input_mapping);
+                    if (ls.is_fully_const() && rs.is_fully_const() && geom &&
+                        (g_ew > 1 || std::min(g_l, g_r) != 0 || g_l < g_r)) {
+                        // Declared-range part-select over packed elements.
+                        int l = ls.as_int(), r = rs.as_int(), pl = 0, pr = 0;
+                        if (elem_pos(l, pl) && elem_pos(r, pr)) {
+                            int plo = std::min(pl, pr), n = std::abs(pl - pr) + 1;
+                            log("    hier_path: %s[%d:%d] → \\%s[%d+:%d] (declared range, elem %d)\n",
+                                full.c_str(), l, r, full.c_str(), plo * g_ew, n * g_ew, g_ew);
+                            return RTLIL::SigSpec(sig_wire).extract(plo * g_ew, n * g_ew);
+                        }
+                    }
                     if (ls.is_fully_const() && rs.is_fully_const()) {
                         int l = ls.as_int();
                         int r = rs.as_int();

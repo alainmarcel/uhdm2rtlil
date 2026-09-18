@@ -343,6 +343,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
+                    if (var->Typespec() && var->Typespec()->Actual_typespec())
+                        iface_signal_ts_[full_name] = var->Typespec()->Actual_typespec();
                     iface_inst_vars_[interface_name].push_back(var_name);
                     record_struct_ts(full_name, var_name);
 
@@ -425,6 +427,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, net);
                     name_map[full_name] = wire;
+                    if (net->Typespec() && net->Typespec()->Actual_typespec())
+                        iface_signal_ts_[full_name] = net->Typespec()->Actual_typespec();
                     iface_inst_vars_[interface_name].push_back(net_name);
                 }
             }
