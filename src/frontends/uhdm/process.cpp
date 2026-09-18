@@ -3558,9 +3558,19 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // sibling ELEMENT writes (`sys_req_d.metadata_vec[SysCmdWrite] =
         // …`) — their bits never entered the written-bits scan and the
         // OpenTitan dma sys_req_d update carried only [39:0] of 184.
+        // A merged FOR-LOOP entry (`loop_lhs_exprs` non-empty) is not a whole
+        // write either: extract_assigned_signals folds the loop's element
+        // writes onto the base name and, when an earlier field write of the
+        // same base was already registered, ABSORBS it (clearing lhs_expr /
+        // is_part_select).  Caliptra hmac writes `hwif_in.error_reset_b`, then
+        // `hwif_in.HMAC512_NAME[k].NAME.next` (constant element index), then
+        // the TAG/BLOCK/KEY loops — the absorbed error_reset_b entry looked
+        // whole, so the four constant-index element writes were pruned here,
+        // their bits never entered the written-bits scan, and the partial STa
+        // update dropped them: 128 undriven `NAME`/`VERSION` bits in the chip.
         std::set<std::string> whole;
         for (const auto& a : assigned_signals)
-            if (!a.is_part_select &&
+            if (!a.is_part_select && a.loop_lhs_exprs.empty() &&
                 (!a.lhs_expr || a.lhs_expr->VpiType() != vpiHierPath))
                 whole.insert(a.name);
         if (!whole.empty())
