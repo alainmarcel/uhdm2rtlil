@@ -1219,6 +1219,52 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        case vpiForeachStmt: {
+            // `foreach (s.member[i]) s.member[i].f = ...` — the body's writes
+            // are indexed by the loop var exactly like a vpiFor body, and the
+            // caller's written-bits scan needs them: unscanned, the unrolled
+            // writes land in the shared `$0\<base>` temp but their bits are
+            // absent from the partial STa update, so they never leave the
+            // process (Caliptra soc_ifc_top: 24 fuse `swwel` bits undriven,
+            // `fuse_hek_seed` and `fuse_manuf_dbg_unlock_token`).
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            if (fe && fe->VpiStmt()) {
+                std::vector<AssignedSignal> body_signals;
+                extract_assigned_signals(fe->VpiStmt(), body_signals);
+                for (auto& sig : body_signals) {
+                    // Same normalisation the for-loop path applies: a
+                    // loop-var-indexed LHS cannot be resolved here, so it is
+                    // recorded as a bounded loop write of the base.
+                    if (sig.is_part_select ||
+                        (sig.lhs_expr &&
+                         (sig.lhs_expr->VpiType() == vpiBitSelect ||
+                          sig.lhs_expr->VpiType() == vpiVarSelect ||
+                          sig.lhs_expr->VpiType() == vpiIndexedPartSelect ||
+                          sig.lhs_expr->VpiType() == vpiPartSelect ||
+                          sig.lhs_expr->VpiType() == vpiHierPath))) {
+                        if (sig.lhs_expr) sig.loop_lhs_exprs.push_back(sig.lhs_expr);
+                        sig.is_part_select = false;
+                        sig.lhs_expr = nullptr;
+                    }
+                    bool merged = false;
+                    for (auto& existing : signals)
+                        if (existing.name == sig.name) {
+                            existing.loop_lhs_exprs.insert(existing.loop_lhs_exprs.end(),
+                                                           sig.loop_lhs_exprs.begin(),
+                                                           sig.loop_lhs_exprs.end());
+                            if (!sig.lhs_expr && existing.lhs_expr) {
+                                existing.loop_lhs_exprs.push_back(existing.lhs_expr);
+                                existing.is_part_select = false;
+                                existing.lhs_expr = nullptr;
+                            }
+                            merged = true;
+                            break;
+                        }
+                    if (!merged) signals.push_back(sig);
+                }
+            }
+            break;
+        }
     }
 }
 
