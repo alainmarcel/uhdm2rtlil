@@ -1,6 +1,6 @@
 # UHDM to RTLIL Frontend
 
-![CI](https://github.com/username/uhdm2rtlil/workflows/CI/badge.svg)
+[![CI](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/ci.yml/badge.svg)](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/ci.yml) [![Regression (sharded)](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml/badge.svg)](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml) [![Frontend matrix](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/frontend-matrix.yml/badge.svg)](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/frontend-matrix.yml)
 
 A Yosys frontend that enables SystemVerilog synthesis through UHDM (Universal Hardware Data Model) by converting UHDM representations to Yosys RTLIL (Register Transfer Level Intermediate Language).
 
@@ -49,62 +49,61 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 ### Test Suite Status
 
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
-upstream Yosys test suite under `third_party/yosys/tests/`):
+upstream Yosys test suite under `third_party/yosys/tests/`); the same run is
+the sharded [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
+workflow (every PR + nightly).  Figures from the 2026-09-17 run:
 
-- **Total Tests**: 1479 (934 internal SystemVerilog + 545 upstream Yosys)
-- **Success Rate**: 97% (1434/1479 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1559 (1012 internal SystemVerilog + 547 upstream Yosys)
+- **Success Rate**: 97% (1513/1559 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 932 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 501 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal
-  escapes): internal `CastStructArray` and `packed_array_elem_select` (both
-  cases where the *Verilog-frontend reference* is wrong — a SAT miter / slang
-  proves UHDM correct), `rp32_r5p_mouse` (reset/X-dependent, not cleanly
-  equiv-able); plus 7 from the upstream Yosys suite
-  (`arch/nanoxplore/meminit`, `check_mem/sub_addr`, `simple/module_scope_case`,
-  `sva/extnets`, `svtypes/array_assign`, `verific/ext_ramnet_err`,
-  `verilog/mem_bounds`).
-- **True failures** (no output generated): 12 — **all** from the upstream Yosys
-  suite (`arch/fabulous/{arith,custom,ff,io,regfile}_map`,
-  `functional/picorv32_tb`, `hana/test_simulation_vlib`, `opt/opt_rmdff`,
-  `rpc/design`, `svinterfaces/{load_and_derive,resolve_types}`,
-  `verific/mixed_flist`).  Every internal test —
-  including the full Ibex core (`ibex_core`, `ibex_cs_registers`, `ibex_icache`,
-  `ibex_top`) — now reads and produces output.
-- **Crashes**: 1 (`memories/wide_all` — upstream Yosys)
-- **Verilator sim-equiv warnings**: 32 known-but-untriaged divergences, baselined
-  in `test/sim_equiv_warn_baseline.txt` (a ratchet: the suite fails on any warning
-  NOT in the baseline, and the baseline may only shrink — it started at 117 and
-  the triage campaign has fixed or adjudicated the rest); plus **53 analyzed**
-  known non-bug divergences, all classified — either a SAT miter proves
-  UHDM == Verilog (sim/synth artefact) or the read_slang miter proves the UHDM
-  netlist while the divergence is a stimulus/X artefact (e.g. `rp32_r5p_alu`,
-  whose `unique case` preconditions random stimulus violates)
+- **Passing**: 961 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 552 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Slang miter**: 94 / 95 SV-only designs also proven equivalent to the
+  `read_slang` netlist (1 known non-equivalence, tracked)
+- **Equivalence failures**: 13 — all caught by `equiv_induct` (0 Miter-Formal
+  escapes): 5 internal (`CastStructArray` and `packed_array_elem_select`, where
+  the *Verilog-frontend reference* is wrong — a SAT miter / slang proves UHDM
+  correct; `rp32_r5p_mouse`, reset/X-dependent, not cleanly equiv-able; and two
+  induction gaps the SAT miter proves equivalent) plus 8 from the upstream Yosys
+  suite, every one listed with its verdict in `test/failing_tests.txt`.
+- **True failures** (no output generated): 11 — **all** from the upstream Yosys
+  suite (non-synthesizable / techmap-only files such as
+  `arch/fabulous/*_map`, `functional/picorv32_tb`, `rpc/design`,
+  `svinterfaces/{load_and_derive,resolve_types}`, `verific/mixed_flist`).
+  Every internal test — including the full Ibex core, the rp32 SoCs and the
+  Pavona / Caliptra extractions — reads and produces output.
+- **Crashes**: 1 (`memories/wide_all` — upstream Yosys, every frontend)
+- **Verilator sim-equiv warnings**: a ratchet baselined in
+  `test/sim_equiv_warn_baseline.txt` (the suite fails on any warning NOT in the
+  baseline, and the baseline may only shrink): 27 internal divergences remain
+  (100 counting the upstream suite), each adjudicated as it is reached; plus
+  **74 analyzed** non-bug divergences — 56 where a SAT miter proves
+  UHDM == Verilog (sim/synth artefacts) and 18 upstream cases where the miter
+  is inconclusive (stimulus / X artefacts such as `unique case` preconditions
+  random stimulus violates).
 
-> The **internal** SystemVerilog suite alone is **880 tests, 0 crashes, 0 true
-> failures** — every internal design reads and produces output, including the
-> complete Ibex core (all modules + `ibex_top`) and the rp32 cores/SoCs. The only
-> internal equivalence failures are `CastStructArray` and
-> `packed_array_elem_select` (Yosys-Verilog-frontend reference bugs, not UHDM —
-> verified vs slang/iverilog) and `rp32_r5p_mouse` (reset/X-dependent, not
-> cleanly equiv-able). The figures above are the combined `--all` run; all 12
-> true failures and the single crash come from the imported upstream Yosys
-> suite (feature gaps / non-synthesizable constructs), tracked in
-> `test/failing_tests.txt` and `test/imported_tests_status.txt` and fixed
-> incrementally. No pre-existing internal test regressed.
+> The **internal** SystemVerilog suite alone is **1012 tests, 0 crashes, 0 true
+> failures** — every internal design reads and produces output.  All 11 true
+> failures and the single crash come from the imported upstream Yosys suite
+> (feature gaps / non-synthesizable constructs), tracked in
+> `test/failing_tests.txt` and fixed incrementally.  The local developer run
+> is `cd test && ./run_parallel.sh 6 --no-cva6` (1022 tests in ~40 min); a PR
+> lands only on a clean run.
 >
 > **CVA6 latch parity**: the full [CVA6](https://github.com/openhwgroup/cva6)
-> core (`cv64a6_imafdc_sv39`) now lowers through `read_uhdm; hierarchy; proc`
+> core (`cv64a6_imafdc_sv39`) lowers through `read_uhdm; hierarchy; proc`
 > with **0 inferred latches** — matching the `read_slang` reference exactly.
 >
 > **CVA6 per-module equivalence** (`test/cva6_equiv/`): every CVA6 module is
 > compiled standalone with its real-hierarchy parameters and mitered against
-> the `read_slang` reference — **94 of 142 instantiable modules formally
-> PROVEN (66%)**, the rest tracked with expected verdicts in
+> the `read_slang` reference — **94 of 147 modules formally PROVEN** in the
+> sharded regression (12 counterexamples under triage, 26 SAT timeouts, 3
+> errors, 5 elaboration failures), the rest tracked with expected verdicts in
 > `cva6_modules.txt` (a ratchet: any module regressing from its recorded
-> verdict fails the suite), and every non-proven module adjudicated with a
-> Verilator co-simulation against the behavioural RTL
-> (`scripts/adjudicate.py` — zero modules show a one-sided UHDM divergence).
+> verdict fails the suite, and a module that starts proving must be promoted),
+> and every non-proven module adjudicated with a Verilator co-simulation
+> against the behavioural RTL (`scripts/adjudicate.py` — zero modules show a
+> one-sided UHDM divergence).
 
 ### Supported Core IP (rp32, Ibex, OpenTitan-hardened Ibex & Ariane CVA6)
 
@@ -124,7 +123,7 @@ to the run's step summary.
 | **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **19 / 28 formally proven** vs `read_slang` (rest SAT-capacity-bound), **20 / 20 co-sim PASS (100%)**, **26 / 28 opt-check clean** — 2026-09-13 nightly | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **[rp32 (R5P)](https://github.com/jeras/rp32)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **6 / 13 formally proven**, **3 / 3 co-sim PASS (100%)**, **9 / 13 opt-check clean** (the `needs submodules` rows are upstream-WIP RTL, not frontend bugs) — 2026-09-13 nightly | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
 | **[Pavona](https://github.com/pavona/pavona) — OpenTitan family** (hardened Ibex, TL-UL fabric, 27 peripheral / crypto IPs, 2 full chips) | OpenTitan-derived SoC family imported verbatim: the hardened Ibex core, the TileLink-UL fabric, every peripheral and crypto block (AES, KMAC, HMAC, CSRNG, EDN, entropy_src, keymgr, keymgr_dpe, lc_ctrl, rom_ctrl, sram_ctrl, spi_device, usbdev, …) and the complete `top_egret` / `top_dragonfly` chips — see **[docs/pavona_sweep.md](docs/pavona_sweep.md)** for the per-IP table | **29** IP families, **299** module rows (`test/pavona_*_equiv/`) + **2** full chips (**98** direct instances, `test/pavona_chips/`) | **284 / 297 formally proven** vs `read_slang` (rest SAT-capacity-bound, co-sim-adjudicated), **291 / 292 co-sim PASS**; full chips: **47 / 47 + 51 / 51 instances proven**, full-chip Verilator co-sim **PASS** on both | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
-| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **83 / 118 formally proven (70%)** in the nightly sweep, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences — 2026-09-13 nightly | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 147 modules formally proven** (sharded regression, 2026-09-17; 12 cex under triage, 26 SAT timeouts), the full core lowers with **0 inferred latches**, **0 one-sided co-sim divergences** (8 / 8 co-sim PASS on the modules with a testbench). The nightly sweep's own table has been losing rows to runner limits (142 → 96 over the last three runs) — under investigation | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **[Caliptra](https://github.com/chipsalliance/caliptra-rtl)** | Caliptra root-of-trust SoC: VeeR EL2 core, AXI sub / manager, mailbox, SHA-256/384/512, HMAC, ECC, Ascon, the ML-DSA / ML-KEM post-quantum block and the caliptra_tlul fabric (`test/caliptra_chip/`) | **867** modules / **172** direct instances of `caliptra_top` | **20 / 21 instances formally proven** vs `read_slang` (key_vault1 SAT-hard; its 300-cycle co-sim differs on 2 cycles, under triage). Per-instance co-sim **16 / 17 PASS**; full-chip co-sim: `read_slang` tracks the RTL, `read_uhdm` differs on 2 of 301 cycles (one AXI write response). Needed 3 Surelog fixes ([#4179](https://github.com/chipsalliance/Surelog/pull/4179), [#4180](https://github.com/chipsalliance/Surelog/pull/4180), [#4181](https://github.com/chipsalliance/Surelog/pull/4181)) and 14 frontend fixes — details in [`test/caliptra_chip/README.md`](test/caliptra_chip/README.md) | [Sweep caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 
 Highlights (current status of each IP row, refreshed from the nightly sweeps):
@@ -151,10 +150,10 @@ Highlights (current status of each IP row, refreshed from the nightly sweeps):
   miters could not reach (a generate-scope part-select that never released the
   power-on reset, the pinmux pad-attribute reset pattern, a `?:`-arm assignment
   pattern) — every one fixed. Per-IP table: [docs/pavona_sweep.md](docs/pavona_sweep.md).
-- **CVA6** — the full core lowers with **0 inferred latches**; **83 / 118
-  modules formally proven** in the nightly sweep and **0 one-sided co-sim
-  divergences** (every remaining non-proof is SAT capacity, adjudicated by
-  co-sim).
+- **CVA6** — the full core lowers with **0 inferred latches**; **94 / 147
+  modules formally proven** per module in the sharded regression (12
+  counterexamples under triage, the rest SAT capacity) and **0 one-sided co-sim
+  divergences** (every non-proof is adjudicated by co-sim).
 - **Caliptra** — `caliptra_top` (867 modules, VeeR EL2 + crypto + fabric)
   reads clean with `hierarchy -check`; **20 / 21 direct instances formally
   proven** vs `read_slang` (key_vault1 SAT-hard, 2-cycle co-sim difference
@@ -180,20 +179,20 @@ only when one of those checks proves it equivalent; *SV-only* means the frontend
 synthesized SystemVerilog that the native Verilog frontend cannot even read (no
 golden to compare against, so it is verified against the RTL by co-simulation).
 
-Ranked by total tests handled correctly (1456-test matrix, nightly run of 2026-09-13):
+Ranked by total tests handled correctly (1521-test matrix, nightly run of 2026-09-17):
 
 | Rank | Frontend | Verified correct | SV-only (no golden) | **Total correct** | Incorrect | Failed to read |
 |-----:|----------|-----------------:|--------------------:|------------------:|----------:|---------------:|
-| 🥇 1 | **`uhdm`** (this project) | 904 | 434 | **1338 (92%)** | 24 | 33 |
-| 🥈 2 | `sv2v` | 843 | 350 | 1193 (82%) | 0 | 203 |
-| 🥉 3 | `slang` (Yosys sv-elab) | 714 | 358 | 1072 (74%) | 0 | 268 |
-| 4 | `verilog` (Yosys native, the golden) | 931 | — | 931 (64%) | 9 | 516 |
+| 🥇 1 | **`uhdm`** (this project) | 921 | 481 | **1402 (92%)** | 24 | 33 |
+| 🥈 2 | `sv2v` | 858 | 396 | 1254 (82%) | 0 | 205 |
+| 🥉 3 | `slang` (Yosys sv-elab) | 728 | 406 | 1134 (75%) | 0 | 270 |
+| 4 | `verilog` (Yosys native, the golden) | 948 | — | 948 (62%) | 9 | 564 |
 
-On this corpus the UHDM frontend converts the most SystemVerilog — **1338 of
-1456** tests verified correct, including **434 designs the native Verilog frontend
-cannot read at all**.  (*Failed to read* = failed + crashed; the remaining tests
-per frontend are *Unknown* — a formal non-equivalence the co-sim could not
-adjudicate: 60 for `uhdm` and `sv2v`, 115 for `slang`.)
+On this corpus the UHDM frontend converts the most SystemVerilog — **1402 of
+1521** tests verified correct, including **481 designs the native Verilog frontend
+cannot read at all**.  (*Failed to read* = failed + crashed + out-of-memory; the
+remaining tests per frontend are *Unknown* — a formal non-equivalence the co-sim
+could not adjudicate: 62 for `uhdm` and `sv2v`, 117 for `slang`.)
 
 **How to read this table honestly:**
 
@@ -222,12 +221,13 @@ the SV subset it can parse. Numbers are from one nightly run and drift between r
 (seq-equiv induction is inductively incomplete on some designs) — treat any single
 figure as approximate.
 
-> **Note (2026-06-14):** 349 DUTs from
+> **Note:** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
-> were imported as `test/<Name>/dut.sv` (harnesses excluded). Of the 316 observable ones,
-> 89 pass as-is; the remainder expose feature gaps clustered by area (Parameter, Function,
-> Array, Pattern, Struct, Enum). See `test/imported_tests_status.txt` for the per-test
-> breakdown.
+> were imported as `test/<Name>/dut.sv` (harnesses excluded) on 2026-06-14, when only
+> 89 of the 316 observable ones passed; `test/imported_tests_status.txt` keeps that
+> initial assessment.  Most of the gaps it lists (parameters, functions, arrays,
+> patterns, structs, enums) have since been closed — the 24 `uhdm` *Incorrect* tests
+> above are what remains of that backlog and are tracked in `test/failing_tests.txt`.
 
 The detailed per-test coverage that used to follow — the **UHDM-only verified
 test list**, **Recent Additions**, and the **Recent Fixes** changelog — has moved
@@ -307,17 +307,24 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Packages**: Import statements, package parameters (including localparam/parameter from enum constants), package-scoped typedefs and enum types, struct types, functions
 - **Net Types**: `wand` and `wor` (wire-AND and wire-OR) with proper multi-driver resolution
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
+- **Types & Casts**: enums (incl. ranged members and enum arrays), typedef chains, unpacked
+  arrays and unpacked-array ports, unions, type parameters, size / type casts, `$bits`,
+  `$clog2`, assignment patterns (`'{a: .., default: ..}`) on structs and packed arrays
+- **Statements**: `unique` / `priority` case, `case inside`, tasks and void functions,
+  `break` / `return` in unrolled loops, cross-module (XMR) reads and writes
 - **Advanced Features**: 
-  - Interfaces with automatic expansion to individual signals
+  - Interfaces with modports, interface arrays and interface-typed ports
+    (flattened to individual signals)
   - Interface port connections and signal mapping
-  - Assertions
+  - Assertions (`assert property` lowered to `$check` cells)
 
 ## Quick Start
 
 ### Prerequisites
-- GCC/Clang compiler with C++17 support
-- CMake 3.16+
-- Python 3.6+
+- GCC ≥ 11 (C++20; the bundled Yosys v0.68 and its built-in `read_slang` frontend require it)
+- CMake **3.28 – 3.31** (≥ 3.28 for the bundled slang library; CMake 4.x is rejected by
+  Surelog/UHDM's capnproto — `pip install 'cmake==3.31.6'` on ubuntu-22.04)
+- Python 3.8+
 - Standard development tools (make, bison, flex)
 - Verilator (used by `test/test_sim_equivalence.py` to co-simulate
   the original SV against the UHDM-derived netlist for tests where
@@ -350,7 +357,7 @@ verilator --version  # confirm: "Verilator 5.048 ..."
 ### Build
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/username/uhdm2rtlil.git
+git clone --recursive https://github.com/alainmarcel/uhdm2rtlil.git
 cd uhdm2rtlil
 
 # Configure git hooks (prevents committing files >10MB)
@@ -443,6 +450,13 @@ make test-cores
 
 # Run Yosys tests only
 make test-yosys
+
+# The developer regression (what every PR runs locally): 6-way parallel,
+# internal suite + slang miters + Verilator sim-equiv, CVA6 excluded
+cd test && ./run_parallel.sh 6 --no-cva6
+
+# Per-IP nightly sweeps (formal vs read_slang + opt-check + Verilator co-sim):
+cd test && python3 core_sweep.py ibex        # ibex | rp32 | cva6 | pavona | tlul | aes | ... | egret | dragonfly | caliptra
 
 # Run specific test from test directory
 cd test
@@ -587,15 +601,25 @@ uhdm2rtlil/
 │   ├── interface.cpp           # Interface declarations and modports
 │   └── uhdm2rtlil.h           # Header with class definitions
 ├── test/                        # Test framework
-│   ├── run_all_tests.sh        # Test runner script
+│   ├── run_all_tests.sh        # Test runner (internal / --all / --yosys / --cores / --cva6)
+│   ├── run_parallel.sh         # Sharded developer regression (the PR gate)
 │   ├── test_uhdm_workflow.sh   # Individual test workflow
 │   ├── test_equivalence.sh     # Formal equivalence checking script
-│   ├── failing_tests.txt       # Known failing tests list
+│   ├── test_sim_equivalence.py # Verilator co-sim of RTL vs UHDM netlist
+│   ├── netlist_cosim.py        # Per-instance / per-module co-sim harness used by the sweeps
+│   ├── core_sweep.py           # Nightly IP sweeps (formal vs read_slang + opt-check + co-sim)
+│   ├── run_frontend_matrix.py  # 4-frontend comparison matrix
+│   ├── failing_tests.txt       # Known failing tests list (with verdicts)
+│   ├── sim_equiv_warn_baseline.txt  # Sim-equiv ratchet baseline
+│   ├── ibex/, rp32/, cva6_equiv/     # Imported cores (verbatim RTL + manifests)
+│   ├── pavona_*_equiv/, pavona_chips/  # Pavona IP families and full chips
+│   ├── caliptra_chip/          # Caliptra full-chip harness
 │   └── */                      # Individual test cases
+├── docs/                        # Sub-tables and changelogs (pavona_sweep.md, test-cases.md, ...)
 ├── third_party/                # External dependencies
 │   ├── Surelog/               # SystemVerilog parser (includes UHDM)
-│   └── yosys/                 # Synthesis framework (pinned at v0.64)
-├── .github/workflows/         # CI/CD configuration
+│   └── yosys/                 # Synthesis framework (v0.68 + one fork patch, built with read_slang)
+├── .github/workflows/         # ci.yml (PR gate), regression-sharded.yml, frontend-matrix.yml, sweep-*.yml
 ├── build/                     # Build artifacts
 ├── CMakeLists.txt            # CMake build configuration
 └── Makefile                   # Top-level build orchestration
@@ -701,13 +725,19 @@ This "vibe coding" approach has proven highly effective, enabling the implementa
 
 ## Continuous Integration
 
-GitHub Actions automatically:
-- Builds all components (Surelog, Yosys, UHDM Frontend)
-- Runs comprehensive test suite
-- Uploads test results and build artifacts
-- Provides clear pass/fail status
+GitHub Actions run four kinds of jobs (all on 16 GB GitHub-hosted runners, the
+build cached by commit):
 
-See `.github/workflows/ci.yml` for configuration details.
+- **`ci.yml`** — the PR gate: builds Surelog, Yosys (+ `read_slang`) and the
+  plugin, then runs the internal suite.
+- **`regression-sharded.yml`** — the full `make test-all --all` suite plus the
+  CVA6 per-module ratchet, split into 12 shards and merged into one report
+  (every PR and nightly); the numbers under *Test Suite Status* come from it.
+- **`frontend-matrix.yml`** — the nightly 4-frontend comparison behind the
+  leaderboard above.
+- **`sweep-{ibex,rp32,cva6,pavona,caliptra}.yml`** — the nightly per-IP sweeps
+  (formal vs `read_slang`, opt-check, Verilator co-sim; sharded, memory-capped)
+  whose tables feed the *Supported Core IP* rows and `docs/pavona_sweep.md`.
 
 ## Contributing
 
@@ -734,3 +764,7 @@ See `LICENSE` file for details.
 - [Yosys](https://github.com/YosysHQ/yosys) - Open source synthesis suite
 - [Surelog](https://github.com/chipsalliance/Surelog) - SystemVerilog parser
 - [UHDM](https://github.com/chipsalliance/UHDM) - Universal Hardware Data Model
+- [sv-elab / yosys-slang](https://github.com/povik/yosys-slang) and [slang](https://github.com/MikePopoloski/slang) - the `read_slang` frontend used as the formal reference for SV-only designs
+- [sv2v](https://github.com/zachjs/sv2v) - SystemVerilog-to-Verilog converter, the third column of the frontend matrix
+- [Verilator](https://github.com/verilator/verilator) - the co-simulation engine behind every co-sim result
+- Verified IP: [Ibex](https://github.com/lowRISC/ibex), [rp32](https://github.com/jeras/rp32), [CVA6](https://github.com/openhwgroup/cva6), [Pavona](https://github.com/pavona/pavona), [Caliptra](https://github.com/chipsalliance/caliptra-rtl)
