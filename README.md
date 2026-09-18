@@ -122,36 +122,51 @@ to the run's step summary.
 | IP | What it is | Tests | Result | Nightly |
 |----|------------|-------|--------|---------|
 | **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **19 / 28 formally proven** vs `read_slang` (rest SAT-capacity-bound), **20 / 20 co-sim PASS (100%)**, **26 / 28 opt-check clean** — 2026-09-13 nightly | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
-| **rp32 (R5P)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **6 / 13 formally proven**, **3 / 3 co-sim PASS (100%)**, **9 / 13 opt-check clean** (the `needs submodules` rows are upstream-WIP RTL, not frontend bugs) — 2026-09-13 nightly | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| **Pavona — OpenTitan family** (hardened [Ibex](https://github.com/lowRISC/ibex), TL-UL fabric, 27 peripheral / crypto IPs, 2 full chips) | OpenTitan-derived SoC family imported verbatim: the hardened Ibex core, the TileLink-UL fabric, every peripheral and crypto block (AES, KMAC, HMAC, CSRNG, EDN, entropy_src, keymgr, keymgr_dpe, lc_ctrl, rom_ctrl, sram_ctrl, spi_device, usbdev, …) and the complete `top_egret` / `top_dragonfly` chips — see **[docs/pavona_sweep.md](docs/pavona_sweep.md)** for the per-IP table | **29** IP families, **299** module rows (`test/pavona_*_equiv/`) + **2** full chips (**98** direct instances, `test/pavona_chips/`) | **284 / 297 formally proven** vs `read_slang` (rest SAT-capacity-bound, co-sim-adjudicated), **291 / 292 co-sim PASS**; full chips: **47 / 47 + 51 / 51 instances proven**, full-chip Verilator co-sim **PASS** on both | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
+| **[rp32 (R5P)](https://github.com/jeras/rp32)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **6 / 13 formally proven**, **3 / 3 co-sim PASS (100%)**, **9 / 13 opt-check clean** (the `needs submodules` rows are upstream-WIP RTL, not frontend bugs) — 2026-09-13 nightly | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
+| **[Pavona](https://github.com/pavona/pavona) — OpenTitan family** (hardened Ibex, TL-UL fabric, 27 peripheral / crypto IPs, 2 full chips) | OpenTitan-derived SoC family imported verbatim: the hardened Ibex core, the TileLink-UL fabric, every peripheral and crypto block (AES, KMAC, HMAC, CSRNG, EDN, entropy_src, keymgr, keymgr_dpe, lc_ctrl, rom_ctrl, sram_ctrl, spi_device, usbdev, …) and the complete `top_egret` / `top_dragonfly` chips — see **[docs/pavona_sweep.md](docs/pavona_sweep.md)** for the per-IP table | **29** IP families, **299** module rows (`test/pavona_*_equiv/`) + **2** full chips (**98** direct instances, `test/pavona_chips/`) | **284 / 297 formally proven** vs `read_slang` (rest SAT-capacity-bound, co-sim-adjudicated), **291 / 292 co-sim PASS**; full chips: **47 / 47 + 51 / 51 instances proven**, full-chip Verilator co-sim **PASS** on both | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
 | **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **83 / 118 formally proven (70%)** in the nightly sweep, full core lowers with 0 inferred latches, 0 one-sided co-sim divergences — 2026-09-13 nightly | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **[Caliptra](https://github.com/chipsalliance/caliptra-rtl)** | Caliptra root-of-trust SoC: VeeR EL2 core, AXI sub / manager, mailbox, SHA-256/384/512, HMAC, ECC, Ascon, the ML-DSA / ML-KEM post-quantum block and the caliptra_tlul fabric (`test/caliptra_chip/`) | **867** modules / **172** direct instances of `caliptra_top` | **20 / 21 instances formally proven** vs `read_slang` (key_vault1 SAT-hard; its 300-cycle co-sim differs on 2 cycles, under triage). Per-instance co-sim **16 / 17 PASS**; full-chip co-sim: `read_slang` tracks the RTL, `read_uhdm` differs on 2 of 301 cycles (one AXI write response). Needed 3 Surelog fixes ([#4179](https://github.com/chipsalliance/Surelog/pull/4179), [#4180](https://github.com/chipsalliance/Surelog/pull/4180), [#4181](https://github.com/chipsalliance/Surelog/pull/4181)) and 14 frontend fixes — details in [`test/caliptra_chip/README.md`](test/caliptra_chip/README.md) | [Sweep caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 
-Highlights:
+Highlights (current status of each IP row, refreshed from the nightly sweeps):
 
-- The **entire Ibex hierarchy** (all 30 RTL files + prim leaves, top `ibex_top`)
-  reads, `flatten`s, and passes Yosys `check` with **0 logic loops and 0
-  undriven nets** — a campaign that fixed a series of real frontend bugs
-  (comb-only array inference, `initial for` `$meminit`, genvar async-reset flops,
-  comb write-then-read threading, struct-field in-flight reads) that took the
-  loop count from **389 → 0**.
-- `ibex_register_file_fpga` is verified by **formal equivalence** (its
-  power-up `$meminit` now matches the Verilog frontend); the other advanced-SV
-  Ibex modules are UHDM-only (the native Verilog frontend cannot parse them) and
-  verified against **Verilator** co-simulation.
-- The **OpenTitan-hardened Ibex** ("Pavona", `test/pavona_equiv/`) is imported
-  **verbatim** — `read_slang` and Verilator accept the RTL as-is, no source
-  edits. Its per-module sweep pairs three checks — formal (UHDM vs `read_slang`),
-  a fast structural **opt-check** (dropped-driver detection), and Verilator
-  co-sim — and drove a run of real frontend fixes: struct-pattern paramod dedup,
-  one-hot `case` read-after-case, package table element-select, gen-scope enum
-  arrays / enum constants, and a nested-loop / genvar loop-variable collision in
-  the PRINCE SRAM-scramble S-boxes. **All 26 modules now opt-check clean.**
-- Both interface-based rp32 SoCs (`degu`, `mouse`) boot and run a program
-  end-to-end in a Yosys functional simulation of the UHDM-synthesised netlist.
-- The single non-pass, `rp32_r5p_mouse`, is a known `equiv_induct` incompleteness
-  (a reset/X-dependent design where seq-equiv induction can't close), **not** a
-  UHDM≠Verilog difference — 0 Miter-Formal escapes.
+- **Ibex** — the **entire hierarchy** (all 30 RTL files + prim leaves, top
+  `ibex_top`) reads, `flatten`s and passes Yosys `check` with **0 logic loops
+  and 0 undriven nets**; **19 / 28 modules formally proven** vs `read_slang`
+  (the rest SAT-capacity-bound) and **20 / 20 co-sim PASS**. The campaign fixed
+  a series of real frontend bugs (comb-only array inference, `initial for`
+  `$meminit`, genvar async-reset flops, comb write-then-read threading,
+  struct-field in-flight reads) that took the loop count from **389 → 0**.
+- **rp32** — **6 / 13 modules formally proven**, 3 / 3 co-sim PASS; both
+  interface-based SoCs (`degu`, `mouse`) boot and run a program end-to-end in a
+  Yosys functional simulation of the UHDM-synthesised netlist. The `needs
+  submodules` rows are upstream work-in-progress RTL (csr / hamster), not
+  frontend bugs, and `rp32_r5p_mouse` is an `equiv_induct` induction gap on a
+  reset/X-dependent design — **0 Miter-Formal escapes**.
+- **Pavona** — the whole OpenTitan family is imported **verbatim** (no source
+  edits; `read_slang` and Verilator accept the RTL as-is): **29 IP families /
+  299 module rows, 284 / 297 formally proven, 291 / 292 co-sim PASS**, and the
+  two complete chips `top_egret` / `top_dragonfly` with **47 / 47 + 51 / 51
+  direct instances proven** and **full-chip Verilator co-sim PASS**. The
+  full-chip and per-instance co-sims caught reader bugs the bounded per-module
+  miters could not reach (a generate-scope part-select that never released the
+  power-on reset, the pinmux pad-attribute reset pattern, a `?:`-arm assignment
+  pattern) — every one fixed. Per-IP table: [docs/pavona_sweep.md](docs/pavona_sweep.md).
+- **CVA6** — the full core lowers with **0 inferred latches**; **83 / 118
+  modules formally proven** in the nightly sweep and **0 one-sided co-sim
+  divergences** (every remaining non-proof is SAT capacity, adjudicated by
+  co-sim).
+- **Caliptra** — `caliptra_top` (867 modules, VeeR EL2 + crypto + fabric)
+  reads clean with `hierarchy -check`; **20 / 21 direct instances formally
+  proven** vs `read_slang` (key_vault1 SAT-hard, 2-cycle co-sim difference
+  under triage), **16 / 17 per-instance co-sims PASS**, full-chip co-sim
+  differs on 2 of 301 cycles. Needed 3 Surelog fixes and 14 frontend fixes
+  (the last: a packed 2-D interface member selected through a modport, which
+  had scrambled VeeR's ICCM bank addresses).
+- **Method** — every row is a nightly sweep with the same four checks: the
+  `read_slang` netlist's own co-sim as the baseline, formal equivalence
+  read_uhdm vs `read_slang` (SAT miter from reset), the structural opt-check
+  (dropped-driver detection), and the read_uhdm Verilator co-sim; a SAT miter
+  adjudicates every divergence, so a proof gap is never mistaken for a bug.
 
 ### SystemVerilog Frontend Comparison
 

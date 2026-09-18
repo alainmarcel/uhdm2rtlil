@@ -1,6 +1,6 @@
 # Pavona (OpenTitan-family) sweep — per-IP results
 
-Pavona is the OpenTitan-derived SoC family (OpenTitan-hardened Ibex core, the
+[Pavona](https://github.com/pavona/pavona) is the OpenTitan-derived SoC family (OpenTitan-hardened Ibex core, the
 TL-UL fabric and every peripheral / crypto IP, and the two full chips
 `top_egret` and `top_dragonfly`).  Each IP family below is imported **verbatim**
 from the Pavona RTL into its own `test/pavona_*_equiv/` directory and swept by
@@ -16,7 +16,7 @@ co-sim pass / divergence count.  Every divergence is adjudicated by the SAT mite
 
 | IP | What it is | Tests | Result | Nightly |
 |----|------------|-------|--------|---------|
-| **Pavona — OpenTitan-hardened [Ibex](https://github.com/lowRISC/ibex)** | Ibex at the OpenTitan security config: SecureIbex, ICache **scrambling** (PRINCE) + ECC, ePMP (16 NAPOT regions), RV32IMCB (`OTEarlGrey` bitmanip), dual-core **lockstep** | **26** modules (`test/pavona_equiv/`), each UHDM-vs-`read_slang` mitered, plus a structural opt-check (`flatten; opt_clean; check`) and Verilator co-sim | **21 / 26 formally proven** (rest SAT-capacity-bound, co-sim-equivalent); **26 / 26 opt-check clean (0 undriven)**; **23 / 23 co-sim PASS (100%)**; full core (`ibex_core` / `ibex_top` / `ibex_lockstep`) proven **and** co-sim `NO_DIVERGENCE` — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **[Pavona](https://github.com/pavona/pavona) — OpenTitan-hardened [Ibex](https://github.com/lowRISC/ibex)** | Ibex at the OpenTitan security config: SecureIbex, ICache **scrambling** (PRINCE) + ECC, ePMP (16 NAPOT regions), RV32IMCB (`OTEarlGrey` bitmanip), dual-core **lockstep** | **26** modules (`test/pavona_equiv/`), each UHDM-vs-`read_slang` mitered, plus a structural opt-check (`flatten; opt_clean; check`) and Verilator co-sim | **21 / 26 formally proven** (rest SAT-capacity-bound, co-sim-equivalent); **26 / 26 opt-check clean (0 undriven)**; **23 / 23 co-sim PASS (100%)**; full core (`ibex_core` / `ibex_top` / `ibex_lockstep`) proven **and** co-sim `NO_DIVERGENCE` — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan TL-UL fabric** | TileLink-UL adapters, sockets, FIFOs, integrity checkers (`test/pavona_tlul_equiv/`) | **21** modules | **20 / 21 formally proven**, **19 / 19 co-sim PASS**, **21 / 21 opt-check clean** — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan ACC** | accelerator block (`test/pavona_acc_equiv/`) | **11** modules | **10 / 11 formally proven** (unified_mul SAT-hard, co-sim clean), **11 / 11 co-sim PASS**, **11 / 11 opt-check clean** — 2026-09-13 nightly | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
 | **Pavona OpenTitan KMAC** | Keccak-MAC / SHA3 core incl. the EnMasking=1 (2-share DOM) variants (`test/pavona_kmac_equiv/`) | **15** modules | **13 / 15 formally proven** (keccak_2share_m + kmac_msgfifo SAT-hard, directed co-sim clean), **15 / 15 co-sim `NO_DIVERGENCE`** (local run after #758; the 2026-09-13 nightly, taken before it, shows 9 / 10) | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
