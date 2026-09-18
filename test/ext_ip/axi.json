@@ -4,17 +4,17 @@
  "repos": [
   {
    "url": "https://github.com/pulp-platform/axi",
-   "commit": "70b8e54",
+   "commit": "70b8e54fd460e3308e58be596ceb3566a6e3576e",
    "dir": "axi"
   },
   {
    "url": "https://github.com/pulp-platform/common_cells",
-   "commit": "121182e",
+   "commit": "121182eaa0fa1f67b74eaa97c73b8a7133adda6a",
    "dir": "common_cells"
   },
   {
    "url": "https://github.com/pulp-platform/tech_cells_generic",
-   "commit": "55cb545",
+   "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
    "dir": "tech_cells_generic"
   }
  ],

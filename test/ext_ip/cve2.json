@@ -4,7 +4,7 @@
  "repos": [
   {
    "url": "https://github.com/openhwgroup/cve2",
-   "commit": "d079e8c",
+   "commit": "d079e8c8e6a08b330940ae123876ba0612bec18d",
    "dir": "cve2"
   }
  ],

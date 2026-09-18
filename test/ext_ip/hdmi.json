@@ -4,7 +4,7 @@
  "repos": [
   {
    "url": "https://github.com/hdl-util/hdmi",
-   "commit": "83b1c95",
+   "commit": "83b1c9543a91b776671a44e68e130f81cae437b7",
    "dir": "hdmi"
   }
  ],

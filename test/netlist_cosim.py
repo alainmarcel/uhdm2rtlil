@@ -43,6 +43,9 @@ ap.add_argument("--param", action="append", default=[], help="NAME=INT for the R
 ap.add_argument("--srcs", required=True)
 ap.add_argument("--incs", required=True)
 ap.add_argument("--var", action="append", default=[], help="NAME=PATH substituted for ${NAME}")
+ap.add_argument("--iface-flat", action="store_true",
+                help="rename the netlists' escaped interface-member ports (`\\bus.sig `) to "
+                     "`bus_sig`, matching a flat-port RTL wrapper (gen_inst_wrapper.py)")
 ap.add_argument("--extra-src", action="append", default=[])
 ap.add_argument("--cycles", type=int, default=300)
 ap.add_argument("--seed", type=int, default=1)
@@ -140,11 +143,23 @@ write_verilog -noattr -norename {nl}
         return "{" + ", ".join(f"{len(p)}'b{p}" for p in parts) + "}"
 
     wide = re.compile(r"\b(\d{5,})'([hbo])([0-9a-fA-F_]+)")
+    # --iface-flat: an interface-typed port of the RTL module reaches the
+    # netlist as one escaped identifier per member (`\s_axi_w_if.awvalid `);
+    # the flat-port wrapper the RTL side is driven through names the same
+    # member `s_axi_w_if_awvalid`.  Rewrite every escaped dotted identifier
+    # (they only ever come from interface / struct flattening) so the two
+    # sides share a port list.
+    dotted = re.compile(r"\\([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+(?:\[\d+\])?) ")
+
+    def flat_id(m):
+        return m.group(1).replace(".", "_").replace("[", "_").replace("]", "")
     tmp = nl.with_suffix(".split.v")
     with open(nl, errors="replace") as fi, open(tmp, "w") as fo:
         for line in fi:
             if line.startswith(f"module {mod}(") or line.startswith(f"module \\{mod} ("):
                 line = f"module {TOP}(" + line.split("(", 1)[1]
+            if args.iface_flat and "\\" in line:
+                line = dotted.sub(flat_id, line)
             if "'" in line:
                 line = wide.sub(shrink, line)
             if len(line) > 8000:
