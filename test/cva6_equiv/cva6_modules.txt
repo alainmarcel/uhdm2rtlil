@@ -58,7 +58,7 @@ csr_buffer                             4   900   proven
 csr_regfile                            4   180   cex
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
-cva6_hpdcache_if_adapter               4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+cva6_hpdcache_if_adapter               4   400   proven   # proven since 2026-09-16 (3 consecutive sharded runs)
 cva6_hpdcache_subsystem                4   180   dead     # instantiates hpdcache -> same config $fatal
 cva6_hpdcache_subsystem_axi_arbiter    4   180   proven      # cex now measurable (was crash: null-module segfault) - TRIAGE
 cva6_hpdcache_wrapper                  4   180   dead     # instantiates hpdcache -> same config $fatal
