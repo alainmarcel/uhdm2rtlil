@@ -1561,7 +1561,26 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                     base_is_signal =
                         dynamic_cast<const UHDM::variables*>(bag) != nullptr ||
                         dynamic_cast<const UHDM::net*>(bag) != nullptr;
-                if (!winst.empty() && !wsig.empty() && !base_is_signal &&
+                // A GENERATE-SCOPE-relative path (`assign B.x = 0` inside
+                // `Z.A.B.C`, yosys tests/simple/genblk_dive): the leading name
+                // is a sibling/ancestor generate block, not a child instance.
+                // Surelog binds the trailing ref_obj to the elaborated net,
+                // whose full name lands in THIS module's flat wire namespace
+                // (`\Z.A.B.x`); deferring it as an XMR write dropped the
+                // assign (no such child cell ever appears).
+                bool tail_is_local_wire = false;
+                if (auto tag = any_cast<const ref_obj*>(wpe.back())->Actual_group()) {
+                    std::string tfull;
+                    if (auto tn = dynamic_cast<const UHDM::nets*>(tag)) tfull = std::string(tn->VpiFullName());
+                    else if (auto tv = dynamic_cast<const UHDM::variables*>(tag)) tfull = std::string(tv->VpiFullName());
+                    std::string mpfx = current_instance ? std::string(current_instance->VpiFullName()) + "." : "";
+                    if (!tfull.empty() && !mpfx.empty() && tfull.compare(0, mpfx.size(), mpfx) == 0) {
+                        std::string rel = tfull.substr(mpfx.size());
+                        tail_is_local_wire = name_map.count(rel) ||
+                                             module->wire(RTLIL::escape_id(rel)) != nullptr;
+                    }
+                }
+                if (!winst.empty() && !wsig.empty() && !base_is_signal && !tail_is_local_wire &&
                     !iface_inst_vars_.count(winst) &&
                     !find_wire_in_scope(winst) &&
                     !module->wire(RTLIL::escape_id(winst)) &&
