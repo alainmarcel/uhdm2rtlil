@@ -53,8 +53,8 @@ upstream Yosys test suite under `third_party/yosys/tests/`); the same run is
 the sharded [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Figures from the 2026-09-17 run:
 
-- **Total Tests**: 1564 (1017 internal SystemVerilog + 547 upstream Yosys)
-- **Success Rate**: 97% (1518/1564 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1565 (1018 internal SystemVerilog + 547 upstream Yosys)
+- **Success Rate**: 97% (1519/1565 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 961 tests with formal equivalence verified between the UHDM and Verilog frontends
 - **UHDM-Only Success**: 552 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
@@ -82,12 +82,12 @@ workflow (every PR + nightly).  Figures from the 2026-09-17 run:
   is inconclusive (stimulus / X artefacts such as `unique case` preconditions
   random stimulus violates).
 
-> The **internal** SystemVerilog suite alone is **1017 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **1018 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output.  All 11 true
 > failures and the single crash come from the imported upstream Yosys suite
 > (feature gaps / non-synthesizable constructs), tracked in
 > `test/failing_tests.txt` and fixed incrementally.  The local developer run
-> is `cd test && ./run_parallel.sh 6 --no-cva6` (1028 tests in ~40 min); a PR
+> is `cd test && ./run_parallel.sh 6 --no-cva6` (1029 tests in ~40 min); a PR
 > lands only on a clean run.
 >
 > **CVA6 latch parity**: the full [CVA6](https://github.com/openhwgroup/cva6)
