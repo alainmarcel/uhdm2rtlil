@@ -4,8 +4,9 @@
  "repos": [
   {
    "url": "https://github.com/alexforencich/verilog-ethernet",
-   "commit": "77320a9",
-   "dir": "verilog-ethernet"
+   "commit": "77320a9471d19c7dd383914bc049e02d9f4f1ffb",
+   "dir": "verilog-ethernet",
+   "submodules": true
   }
  ],
  "roots": [

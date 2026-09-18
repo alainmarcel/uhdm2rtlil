@@ -992,6 +992,59 @@ def _cosim_cells(out, rc, cycles):
     return "error", "—"
 
 
+def _iface_wrapper(inst_dir, name, rtl_top, params, srcs, var):
+    """Flat-port wrapper for an instance with interface ports (see
+    caliptra_chip/scripts/gen_inst_wrapper.py); None when the instance's
+    netlist has no escaped `\\a.b` port."""
+    il = inst_dir / f"{name}_uhdm.il"
+    try:
+        dotted = False
+        with open(il, errors="replace") as fh:
+            inmod = False
+            for line in fh:
+                if line.startswith("module "):
+                    inmod = line.strip() == f"module \\{name}_uhdm"
+                    continue
+                if not inmod:
+                    continue
+                if line.startswith("end"):
+                    break
+                if re.match(r"\s+wire .*(input|output|inout) \d+ \\\S+\.\S+$", line.rstrip()):
+                    dotted = True
+                    break
+    except OSError:
+        return None
+    if not dotted:
+        return None
+    gen = CALIPTRA_DIR / "scripts" / "gen_inst_wrapper.py"
+    if not gen.exists():
+        return None
+    # the RTL file declaring the module, for the overridable-parameter filter
+    rtl_src = None
+    subst = dict(v.split("=", 1) for v in var if "=" in v)
+    for l in Path(srcs).read_text().splitlines():
+        l = l.strip()
+        if not l or l.startswith("#"):
+            continue
+        for k, v in subst.items():
+            l = l.replace("${" + k + "}", v)
+        try:
+            if re.search(r"^\s*module\s+" + re.escape(rtl_top) + r"\b", Path(l).read_text(errors="replace"), re.M):
+                rtl_src = l
+                break
+        except OSError:
+            continue
+    out = inst_dir / name / "cosim" / f"{rtl_top}_flat.sv"
+    cmd = [sys.executable, str(gen), str(il), f"{name}_uhdm", rtl_top, str(out)]
+    for p in params:
+        cmd += ["--param", p]
+    if rtl_src:
+        cmd += ["--rtl-src", rtl_src]
+    rc, o = sh(cmd, timeout=300)
+    print(f"# iface wrapper {name}: rc={rc} {(o or '').strip()[:200]}", flush=True)
+    return out if rc == 0 and out.exists() else None
+
+
 def _inst_cosim(inst_dir, name, typ, srcs, incs, var, extra, ties, cycles):
     """Co-sim one direct instance: its read_uhdm and read_slang netlists
     (chip_flow's split) vs the RTL module rebuilt with the instance's
@@ -1005,11 +1058,22 @@ def _inst_cosim(inst_dir, name, typ, srcs, incs, var, extra, ties, cycles):
     cmd = [sys.executable, str(TEST_DIR / "netlist_cosim.py"), "--work", str(work),
            "--uhdm-il", str(inst_dir / f"{name}_uhdm.il"),
            "--slang-il", str(inst_dir / f"{name}_slang.il"),
-           "--top", f"{name}_uhdm", "--rtl-top", rtl_top,
+           "--top", f"{name}_uhdm",
            "--srcs", str(srcs), "--incs", str(incs), "--cycles", str(cycles),
            "--ties", str(work / "ties.json")]
-    for p in params:
-        cmd += ["--param", p]
+    # An instance whose RTL module has INTERFACE ports (soc_ifc_top's four
+    # axi_if modports, VeeR's el2_mem_if exports, ABR's memory export) has
+    # them flattened to escaped `\<port>.<member>` netlist ports, which no
+    # port-by-port testbench can drive.  Generate a flat-port wrapper around
+    # the RTL module (the instance's parameters baked in, so no --param) and
+    # co-simulate through it with the netlist ports renamed to match.
+    wrapper = _iface_wrapper(inst_dir, name, rtl_top, params, srcs, var)
+    if wrapper:
+        cmd += ["--extra-src", str(wrapper), "--rtl-top", f"{rtl_top}_flat", "--iface-flat"]
+    else:
+        cmd += ["--rtl-top", rtl_top]
+        for p in params:
+            cmd += ["--param", p]
     for v in var:
         cmd += ["--var", v]
     for e in extra:
@@ -1158,17 +1222,29 @@ def _fetch_ext(family):
         if dest.is_dir() and any(dest.iterdir()):
             continue
         dest.mkdir(parents=True, exist_ok=True)
+        # Shallow-fetch the pinned FULL commit (GitHub refuses abbreviated
+        # SHAs); if the server will not serve the object directly, fall back
+        # to a shallow clone of the default branch and say which commit ran.
+        ok = True
         cmds = [["git", "init", "-q"], ["git", "remote", "add", "origin", r["url"]],
                 ["git", "fetch", "-q", "--depth", "1", "origin", r["commit"]],
                 ["git", "checkout", "-q", "FETCH_HEAD"]]
-        if r.get("submodules"):
-            cmds.append(["git", "submodule", "update", "-q", "--init", "--depth", "1"])
         for c in cmds:
             rc, out = sh(c, cwd=dest, timeout=1800)
             if rc:
                 print(f"# fetch {r['dir']}: {' '.join(c)} -> exit {rc}\n{out}", flush=True)
+                ok = False
                 break
-        print(f"# fetched {r['dir']} @ {r['commit']}", flush=True)
+        if not ok:
+            sh(["rm", "-rf", str(dest)], timeout=300)
+            rc, out = sh(["git", "clone", "-q", "--depth", "1", r["url"], str(dest)], timeout=1800)
+            if rc:
+                print(f"# clone {r['dir']} FAILED: {out}", flush=True)
+                continue
+        if r.get("submodules"):
+            sh(["git", "submodule", "update", "-q", "--init", "--depth", "1"], cwd=dest, timeout=1800)
+        rc, head = sh(["git", "rev-parse", "--short", "HEAD"], cwd=dest, timeout=60)
+        print(f"# fetched {r['dir']} @ {(head or '').strip()} (pinned {r['commit'][:9]})", flush=True)
     return root
 
 
@@ -1178,12 +1254,12 @@ def sweep_ext(family, jobs, cycles=300, flt=None):
     ext_ip/ext_flow.py; rows come back in the common schema.  Sharded runs
     take every N-th module of the manifest's list."""
     root = _fetch_ext(family)
-    env = dict(os.environ, EXT_IP_ROOT=str(root))
+    os.environ["EXT_IP_ROOT"] = str(root)   # ext_flow.py reads it
     flow = EXT_DIR / "ext_flow.py"
     mods = []
     if _SHARD[1] > 1:
         rc, out = sh([sys.executable, str(flow), family, "--list"] +
-                     (["--filter", flt] if flt else []), env=env, timeout=600)
+                     (["--filter", flt] if flt else []), timeout=600)
         names = [l.strip() for l in (out or "").splitlines() if l.strip() and not l.startswith("#")]
         mods = sorted(names)[_SHARD[0]::_SHARD[1]]
         if not mods:
@@ -1195,7 +1271,7 @@ def sweep_ext(family, jobs, cycles=300, flt=None):
            "--cycles", str(cycles), "--out", str(out_json)] + mods
     if flt and not mods:
         cmd += ["--filter", flt]
-    rc, out = sh(cmd, env=env, timeout=6 * 3600)
+    rc, out = sh(cmd, timeout=6 * 3600)
     print(out or "", flush=True)
     rows = json.loads(out_json.read_text()) if out_json.exists() else []
     for r in rows:

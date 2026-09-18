@@ -4,7 +4,7 @@
  "repos": [
   {
    "url": "https://github.com/openhwgroup/cvw",
-   "commit": "bc7012a",
+   "commit": "bc7012a92273bf7cc5eb487f720be41e9d9e8447",
    "dir": "cvw"
   }
  ],
