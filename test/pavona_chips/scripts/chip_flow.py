@@ -196,7 +196,10 @@ hierarchy -top miter
     if "no model found: SUCCESS" in out: return n, "proven"
     if "model found: FAIL" in out: return n, "cex"
     if rc == 124: return n, "timeout"
-    if rc in (134, 137) or "bad_alloc" in out or "Out of memory" in out or "Killed" in out:
+    # `timeout` re-raises the child's fatal signal on itself, so Python sees
+    # -6 / -9 (not 134 / 137); minisat throws Minisat::OutOfMemoryException.
+    if rc in (134, 137, -6, -9) or "bad_alloc" in out or "Out of memory" in out \
+            or "OutOfMemory" in out or "Killed" in out:
         return n, "memlimit"
     return n, "error"
 

@@ -6,8 +6,9 @@ name: Sweep caliptra
 # elaboration doesn't run on every push (the sharded regression already gates
 # correctness).
 #
-# There is no co-sim column yet: the chip has no testbench in this harness, so
-# the sweep leaves it blank rather than reporting a pass that was never run.
+# Co-sim: every instance is Verilator co-simulated against its RTL
+# (test/netlist_cosim.py) and the last shard co-simulates the whole chip
+# through the caliptra_top_flat wrapper.
 
 on:
   workflow_dispatch:
@@ -30,3 +31,7 @@ jobs:
       # miters are multi-million-variable proofs now and the chip co-sim is
       # three whole-chip Verilator builds — one 16 GB runner died mid-sweep.
       shards: 4
+      # abr_inst / ecc_top1 peak at 10-11 GB RSS (minisat throws
+      # OutOfMemoryException under a 12 GB address-space cap); sharded miters
+      # run one at a time, so give them most of the runner.
+      mem_limit_kb: "14500000"
