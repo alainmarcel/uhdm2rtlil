@@ -4118,6 +4118,55 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             }
                         }
                 }
+                // MULTIPLE UNPACKED dims (`logic [W-1:0] datapath [R:0][0:0]`,
+                // the Adams-Bridge keccak round pipeline): the array
+                // materialises as one wire per OUTER index whose width is
+                // (inner dims x element), so the second index selects an inner
+                // ROW of the element wire — not a bit.  Taken as a bit select,
+                // `datapath[0][0] = storage[0]` drove ONE bit and every
+                // consumer of the row (the keccak stage instances' `s_i`) went
+                // undriven (1599 undriven nets in the Caliptra chip).  Feed the
+                // inner unpacked dims to the dim walk below; unpacked element 0
+                // always sits at the LSB, so each is descending.
+                if (elem_dims.empty()) {
+                    const UHDM::VectorOfrange* args = nullptr;
+                    if (auto ag3 = vs->Actual_group()) {
+                        if (auto av3 = dynamic_cast<const UHDM::array_var*>(ag3))
+                            args = av3->Ranges();
+                        else if (auto an3 = dynamic_cast<const UHDM::array_net*>(ag3))
+                            args = an3->Ranges();
+                    }
+                    if (args && args->size() >= 2) {
+                        std::vector<ElemDim> dims;
+                        bool ok = true;
+                        for (size_t ri = 1; ri < args->size(); ri++) {
+                            auto rr = (*args)[ri];
+                            RTLIL::SigSpec dl = import_expression(rr->Left_expr(), input_mapping);
+                            RTLIL::SigSpec dr = import_expression(rr->Right_expr(), input_mapping);
+                            if (!dl.is_fully_const() || !dr.is_fully_const()) { ok = false; break; }
+                            int a = dl.as_const().as_int(), b = dr.as_const().as_int();
+                            dims.push_back({std::min(a, b), std::max(a, b), true});
+                        }
+                        long long inner = 1;
+                        for (auto& d : dims) inner *= (d.hi - d.lo + 1);
+                        // Only when the per-index wire REALLY holds the inner
+                        // dims: its width must be (inner x the element's own
+                        // DECLARED width).  Some arrays materialise one wire
+                        // per outer index at the bare element width (the inner
+                        // dimension dropped) — there the second index is not a
+                        // row of this wire and splitting it would corrupt an
+                        // ordinary element read.
+                        int decl_ew = (elem_dhi >= elem_dlo) ? (elem_dhi - elem_dlo + 1)
+                                                             : 0;
+                        if (ok && !dims.empty() && inner > 0 && decl_ew > 0 &&
+                            (long long)element_sig.size() == inner * decl_ew) {
+                            dims.push_back({elem_dlo, elem_dhi, elem_ddesc});
+                            elem_dims = dims;
+                            elem_row_w = 1;
+                        }
+                    }
+                }
+
                 // Map a DECLARED bit position within the element to a 0-based
                 // extract offset; -1 when out of the declared range.
                 auto map_elem_bit = [&](int di) -> int {
