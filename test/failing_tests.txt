@@ -260,9 +260,7 @@ rp32_r5p_mouse
 # are tracked for triage, not caused by any interface/frontend change here.
 #   simple/module_scope_case — module-scope `case`; UHDM synthesises and the
 #     Verilator co-sim differs only as a sim-equiv warning (no miter failure).
-#   sva/extnets — external-net SVA harness; equiv_induct-only Induct-Formal.
 simple/module_scope_case.v
-sva/extnets.sv
 
 # --- def-context struct-param staleness reproducer (CVA6 branch_unit) ---
 # Native read_verilog cannot parse the CVA6-realistic shapes (cfg_t'(0) cast
