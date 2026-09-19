@@ -1,0 +1,8 @@
+# Yosys' own read_verilog mis-elaborates an INTERFACE ARRAY: it connects only
+# bit 0 of an array-element member (`connect \resp[0].haddr \a0 [0]`), so its
+# netlist is not a valid reference for this construct and the Verilog-vs-UHDM
+# formal check compares against a broken gold.  The real gates for this test
+# are the Slang miter (read_uhdm == read_slang, test_slang_equiv.ys) and the
+# Verilator co-sim against the original RTL.
+SKIP_FORMAL=1
+SIM_CYCLES=200
