@@ -3810,8 +3810,22 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     }
                     if (suspicious_stamp)
                         value_spec = reeval_stamped_param_assign(param_assign);
-                    if (value_spec.empty())
+                    if (value_spec.empty()) {
+                        // A parameter's value is compile-time constant by
+                        // definition, so fold arithmetic here the way
+                        // import_parameter does.  Without it a width passed as
+                        // an EXPRESSION stayed a cell: Caliptra's
+                        // `.AXI_ADDR_WIDTH($clog2((MASK >> 32) & '1))` left
+                        // `$clog2` "unhandled" (its argument was not yet a
+                        // constant), the parameter came out non-constant, and
+                        // every localparam derived from it defaulted to 0 —
+                        // axi_addr's `reg [IN_AW-1:0]` collapsed to ONE BIT and
+                        // the AXI read address never incremented.
+                        bool saved_fcf = force_const_fold;
+                        force_const_fold = true;
                         value_spec = import_expression(rhs_expr);
+                        force_const_fold = saved_fcf;
+                    }
                     // An OVERRIDE expression Surelog left unfolded is written
                     // in the PARENT's scope: OpenTitan otp_ctrl's
                     // `.DataDefault(RndCnstPartInvDefault[PartInfo[k].offset*8
