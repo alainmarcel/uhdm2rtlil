@@ -651,20 +651,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // Add empty action (matching Verilog frontend)
             default_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
             
-            // For functions, we need to preserve the current result value and any local variables
-            // The result wire should maintain its current value in the default case
-            default_case->actions.push_back(RTLIL::SigSig(result_wire, result_wire));
-            
-            // Also preserve any local variables (like 'i' in for loops)
-            // Find local variables by looking for wires with "local_" in their name
-            for (auto &wire_pair : module->wires_) {
-                std::string wire_name = wire_pair.second->name.str();
-                if (wire_name.find("$" + std::string(func_call_context) + "$local_") != std::string::npos) {
-                    // This is a local variable for this function, preserve its value
-                    default_case->actions.push_back(RTLIL::SigSig(wire_pair.second, wire_pair.second));
-                }
-            }
-            
+            // "Preserve the current value" in an RTLIL case means emitting NO
+            // action for that signal — the arm simply leaves it alone and the
+            // value established before the switch stands.  Emitting a
+            // self-assign (`assign \r \r`) instead does the opposite: proc
+            // builds the $pmux with the wire itself as the default input, and
+            // since that wire is only ever assigned INSIDE this process it has
+            // no driver, so an unmatched case returned X.  A function with an
+            // incomplete case (`case (m) 2'b01: …; 2'b11: …; endcase`, no
+            // default) therefore returned X for every unlisted selector value
+            // instead of the pre-case value.
             sw->cases.push_back(default_case);
             arm_maps.push_back({default_case, pre_map});
         }
@@ -1812,8 +1808,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         rhs_sig.extend_u0(lhs_sig.size());
                     }
                 }
-                // Only create the assignment if we're not skipping it
-                if (!skip_assignment) {
+                // Only create the assignment if we're not skipping it.
+                // A no-op self-assign (`\r = \r`, which `fm = result;` becomes
+                // once scan_for_return_variables has aliased the local `result`
+                // to the function's result wire) is worse than useless: it makes
+                // the wire its own last-known value before the switch, so proc
+                // builds the $pmux with the wire itself as the default input and
+                // an unmatched case yields X.
+                if (!skip_assignment && lhs_sig != rhs_sig) {
                     case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
                 }
             }
