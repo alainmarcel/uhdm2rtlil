@@ -17862,6 +17862,85 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
+            // Last chance before X: the SELECTED OBJECT names itself.  An
+            // interface ARRAY elaborates to one interface_inst per element, so
+            // its members flatten to wires named `resp_inst[0].haddr` — but the
+            // hier_path's name carries the whole select expression
+            // (`resp_inst[0].haddr[$clog2(...)-1:0]`, caliptra_top's
+            // `CALIPTRA_SLAVE_ADDR_WIDTH` AHB responder addresses), so every
+            // name-driven lookup above misses.  The trailing select is a
+            // ref_obj: its Actual_group() is the elaborated variable, whose
+            // VpiFullName is the instance path of that very wire — so let the
+            // selected object name itself.  Without this the 13 Caliptra AHB
+            // responder `haddr_i` ports (SHA512, SHA256, SHA3, DOE, ECC, HMAC,
+            // MLDSA, imem, …) were driven with a constant X, which `check`
+            // never reports because an X constant is not an undriven wire.
+            if (uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
+                const UHDM::any* tail = uhdm_hier->Path_elems()->back();
+                const UHDM::any* act = nullptr;
+                if (auto tr = dynamic_cast<const ref_obj*>(tail))
+                    act = tr->Actual_group();
+                std::string act_full;
+                if (auto v = dynamic_cast<const UHDM::variables*>(act))
+                    act_full = std::string(v->VpiFullName());
+                else if (auto n = dynamic_cast<const UHDM::net*>(act))
+                    act_full = std::string(n->VpiFullName());
+                // `work@dut.resp_inst[0].haddr` -> `resp_inst[0].haddr`: the
+                // instance prefix is not reliably available here (this runs
+                // both from the AllModules pass and from port-connection
+                // import, where `inst` and `current_instance` can both be
+                // null), so take the LONGEST dotted suffix that is an actual
+                // wire of the module being built.  Requiring the wire to exist
+                // makes the match self-validating; requiring at least two
+                // segments keeps it from grabbing an unrelated bare signal.
+                RTLIL::Wire* aw = nullptr;
+                std::string flat;
+                for (size_t d = act_full.find('.');
+                     d != std::string::npos && !aw;
+                     d = act_full.find('.', d + 1)) {
+                    std::string cand = act_full.substr(d + 1);
+                    if (cand.find('.') == std::string::npos) break;
+                    if (name_map.count(cand)) aw = name_map[cand];
+                    else aw = module->wire(RTLIL::escape_id(cand));
+                    if (aw) flat = cand;
+                }
+                if (aw) {
+                    RTLIL::SigSpec base(aw);
+                    int lsb_off = aw->start_offset;
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    RTLIL::SigSpec out;
+                    if (tail->UhdmType() == uhdmpart_select) {
+                        auto tps = any_cast<const part_select*>(tail);
+                        RTLIL::SigSpec l = import_expression(tps->Left_range(), input_mapping);
+                        RTLIL::SigSpec r = import_expression(tps->Right_range(), input_mapping);
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            int hi = l.as_const().as_int() - lsb_off;
+                            int lo = r.as_const().as_int() - lsb_off;
+                            int lo2 = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
+                            if (lo2 >= 0 && lo2 + w2 <= aw->width)
+                                out = base.extract(lo2, w2);
+                        }
+                    } else if (tail->UhdmType() == uhdmbit_select) {
+                        auto tbs = any_cast<const bit_select*>(tail);
+                        RTLIL::SigSpec ix;
+                        if (tbs->VpiIndex())
+                            ix = import_expression(tbs->VpiIndex(), input_mapping);
+                        if (ix.is_fully_const()) {
+                            int i = ix.as_const().as_int() - lsb_off;
+                            if (i >= 0 && i < aw->width) out = base.extract(i, 1);
+                        }
+                    } else if (tail->UhdmType() == uhdmref_obj) {
+                        out = base;
+                    }
+                    force_const_fold = saved_fcf;
+                    if (!out.empty()) {
+                        log("    hier_path '%s' -> \\%s (elaborated select actual, %d bits)\n",
+                            path_name.c_str(), aw->name.c_str(), out.size());
+                        return out;
+                    }
+                }
+            }
             log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
             if (mode_debug && uhdm_hier->Path_elems())
                 for (size_t t = 0; t < uhdm_hier->Path_elems()->size(); t++) {
