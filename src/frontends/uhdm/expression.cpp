@@ -83,6 +83,73 @@ std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const st
 // Helper function to process a statement into a case rule for function process generation
 // True if the statement subtree contains a `return` — used to gate everything
 // AFTER a possibly-taken return behind the per-call ret_taken flag.
+// Does `s` assign the variable `nm` (the function's result name)?
+//
+// The if/case handlers give a branch its OWN `$N\<ctx>.$result$N` wire when the
+// branch contains a nested structure, then copy that wire back into the
+// enclosing result.  A branch that only touches function LOCALS never drives
+// it, so the wire stays undriven and the copy clobbers the branch's result
+// with X:
+//
+//     2'b11: if (x > y) for (i…) result = result + (x >> i);   // `result` local
+//            …
+//     func_mixed = result;                                      // real result write
+//
+// left `assign $22\…$result$22 $25\…$result$25` with nothing driving `$25\`
+// (many_functions / function_mixed out_mixed).  Only allocate the intermediate
+// when the branch really writes the result variable.
+bool UhdmImporter::stmt_assigns_name(const UHDM::any* s, const std::string& nm, int depth) {
+    if (!s || nm.empty() || depth > 48) return false;
+    switch (s->UhdmType()) {
+    case uhdmassignment: {
+        auto as = any_cast<const assignment*>(s);
+        const any* l = as ? as->Lhs() : nullptr;
+        if (!l) return false;
+        if (auto r = dynamic_cast<const ref_obj*>(l))
+            return std::string(r->VpiName()) == nm;
+        return std::string(l->VpiName()) == nm;
+    }
+    case uhdmbegin: {
+        auto bg = any_cast<const begin*>(s);
+        if (bg && bg->Stmts())
+            for (auto c : *bg->Stmts())
+                if (stmt_assigns_name(c, nm, depth + 1)) return true;
+        return false;
+    }
+    case uhdmnamed_begin: {
+        auto nb = any_cast<const named_begin*>(s);
+        if (nb && nb->Stmts())
+            for (auto c : *nb->Stmts())
+                if (stmt_assigns_name(c, nm, depth + 1)) return true;
+        return false;
+    }
+    case uhdmif_stmt: {
+        auto is2 = any_cast<const if_stmt*>(s);
+        return is2 && stmt_assigns_name(is2->VpiStmt(), nm, depth + 1);
+    }
+    case uhdmif_else: {
+        auto ie = any_cast<const if_else*>(s);
+        return ie && (stmt_assigns_name(ie->VpiStmt(), nm, depth + 1) ||
+                      stmt_assigns_name(ie->VpiElseStmt(), nm, depth + 1));
+    }
+    case uhdmcase_stmt: {
+        auto cs = any_cast<const case_stmt*>(s);
+        if (cs && cs->Case_items())
+            for (auto ci : *cs->Case_items()) {
+                auto item = any_cast<const case_item*>(ci);
+                if (item && stmt_assigns_name(item->Stmt(), nm, depth + 1))
+                    return true;
+            }
+        return false;
+    }
+    case uhdmfor_stmt: {
+        auto fs = any_cast<const for_stmt*>(s);
+        return fs && stmt_assigns_name(fs->VpiStmt(), nm, depth + 1);
+    }
+    default: return false;
+    }
+}
+
 bool UhdmImporter::stmt_contains_return(const UHDM::any* s, int depth) {
     if (!s || depth > 48) return false;
     switch (s->UhdmType()) {
@@ -520,11 +587,12 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 bool has_nested_case = false;
                 if (ci->Stmt()) {
                     const any* inner_stmt = ci->Stmt();
-                    if (inner_stmt->UhdmType() == uhdmcase_stmt || 
-                        inner_stmt->UhdmType() == uhdmif_else ||
-                        (inner_stmt->UhdmType() == uhdmbegin && 
-                         static_cast<const begin*>(inner_stmt)->Stmts() &&
-                         !static_cast<const begin*>(inner_stmt)->Stmts()->empty())) {
+                    if ((inner_stmt->UhdmType() == uhdmcase_stmt ||
+                         inner_stmt->UhdmType() == uhdmif_else ||
+                         (inner_stmt->UhdmType() == uhdmbegin &&
+                          static_cast<const begin*>(inner_stmt)->Stmts() &&
+                          !static_cast<const begin*>(inner_stmt)->Stmts()->empty())) &&
+                        stmt_assigns_name(inner_stmt, func_name)) {
                         has_nested_case = true;
                     }
                 }
@@ -613,20 +681,36 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
             if (!changed) continue;
-            if (pm.second.is_wire() && pm.second.as_wire() == result_wire)
-                continue;
-            RTLIL::Wire* join = module->addWire(
-                RTLIL::escape_id(stringf("$%s$phi_%s_%d",
-                    func_call_context.c_str(), nm.c_str(), incr_autoidx())),
-                pm.second.size());
-            add_src_attribute(join->attributes, cs);
+            // A local that is ALSO the function's return variable (`f = result;`
+            // makes scan_for_return_variables bind `result` to the result wire)
+            // is excluded from SSA renaming, so its pre-case mapping IS the
+            // result wire.  Skipping the merge then throws the arm's value
+            // away: an arm that only does bit-select writes
+            // (`result[2*i] = x[i];`) builds its value in SSA temps and nothing
+            // ever writes it back, so the arm returned the pre-case value
+            // (many_functions / function_mixed func_mixed mode 2'b01, which
+            // only shows up with OLD-STYLE function ports — with ANSI ports the
+            // locals become block-locals and get their own wire).  Merge into
+            // the result wire itself instead of skipping.
+            RTLIL::SigSpec join_sig;
+            if (pm.second.is_wire() && pm.second.as_wire() == result_wire) {
+                join_sig = RTLIL::SigSpec(result_wire);
+            } else {
+                RTLIL::Wire* join = module->addWire(
+                    RTLIL::escape_id(stringf("$%s$phi_%s_%d",
+                        func_call_context.c_str(), nm.c_str(), incr_autoidx())),
+                    pm.second.size());
+                add_src_attribute(join->attributes, cs);
+                join_sig = RTLIL::SigSpec(join);
+            }
             for (auto& am : arm_maps) {
                 auto ai = am.second.find(nm);
                 RTLIL::SigSpec av =
                     (ai != am.second.end()) ? ai->second : pm.second;
-                am.first->actions.push_back(RTLIL::SigSig(join, av));
+                if (av == join_sig) continue;   // no-op self assign
+                am.first->actions.push_back(RTLIL::SigSig(join_sig, av));
             }
-            input_mapping[nm] = RTLIL::SigSpec(join);
+            input_mapping[nm] = join_sig;
         }
         break;
     }
@@ -680,17 +764,18 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 
                 // Check if if branch contains nested structures
                 bool has_nested = false;
-                if (if_stmt && (if_stmt->UhdmType() == uhdmif_else || 
+                if (if_stmt && (if_stmt->UhdmType() == uhdmif_else ||
                                 if_stmt->UhdmType() == uhdmcase_stmt ||
-                                if_stmt->UhdmType() == uhdmfor_stmt)) {
+                                if_stmt->UhdmType() == uhdmfor_stmt) &&
+                    stmt_assigns_name(if_stmt, func_name)) {
                     has_nested = true;
-                    
                     // Also check for begin blocks that contain for loops
                 } else if (if_stmt && if_stmt->UhdmType() == uhdmbegin) {
                     const begin* bg = any_cast<const begin*>(if_stmt);
                     if (bg && bg->Stmts()) {
                         for (auto s : *bg->Stmts()) {
-                            if (s->UhdmType() == uhdmfor_stmt) {
+                            if (s->UhdmType() == uhdmfor_stmt &&
+                                stmt_assigns_name(s, func_name)) {
                                 has_nested = true;
                                 break;
                             }
@@ -740,8 +825,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 
                 // Check if else branch contains nested structures
                 bool has_nested = false;
-                if (else_stmt && (else_stmt->UhdmType() == uhdmif_else || 
-                                  else_stmt->UhdmType() == uhdmcase_stmt)) {
+                if (else_stmt && (else_stmt->UhdmType() == uhdmif_else ||
+                                  else_stmt->UhdmType() == uhdmcase_stmt) &&
+                    stmt_assigns_name(else_stmt, func_name)) {
                     has_nested = true;
                 }
                 
@@ -840,12 +926,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 bool has_nested = (if_body->UhdmType() == uhdmif_else ||
                                    if_body->UhdmType() == uhdmif_stmt ||
                                    if_body->UhdmType() == uhdmcase_stmt ||
-                                   if_body->UhdmType() == uhdmfor_stmt);
+                                   if_body->UhdmType() == uhdmfor_stmt) &&
+                                  stmt_assigns_name(if_body, func_name);
                 if (!has_nested && if_body->UhdmType() == uhdmbegin) {
                     const begin* bg = any_cast<const begin*>(if_body);
                     if (bg && bg->Stmts()) {
                         for (auto s : *bg->Stmts()) {
-                            if (s->UhdmType() == uhdmfor_stmt) { has_nested = true; break; }
+                            if (s->UhdmType() == uhdmfor_stmt &&
+                                stmt_assigns_name(s, func_name)) { has_nested = true; break; }
                         }
                     }
                 }
@@ -1005,7 +1093,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                 }
             }
-            
+
             // Check if LHS is the function name (return value), a parameter, or
             // a block-local variable.  A simple named LHS is either a `ref_obj`
             // OR — for a declaration initializer like `logic [2:0] data = in;`
@@ -2113,12 +2201,32 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // prim_prince SRAM-scramble S-boxes read undriven).
                     bool had_outer_lv = loop_values.count(loop_var_name) > 0;
                     int outer_lv = had_outer_lv ? loop_values[loop_var_name] : 0;
+                    // A loop variable declared at FUNCTION scope (`integer i;`
+                    // in the body's begin block, rather than inline
+                    // `for (int i = …)`) is shadowed in input_mapping by a
+                    // block-local WIRE.  Reads of `i` inside the body then
+                    // resolve through input_mapping and get that wire — which
+                    // nothing ever drives — instead of the iteration constant,
+                    // so `x >> i` shifted by X and the whole unrolled result
+                    // was X (many_functions / function_mixed func_mixed's
+                    // `result = result + (x >> i)`).  Override the mapping with
+                    // the iteration value for the duration of the unroll.
+                    bool had_lv_map = input_mapping.count(loop_var_name) > 0;
+                    RTLIL::SigSpec saved_lv_map;
+                    int lv_map_width = 32;
+                    if (had_lv_map) {
+                        saved_lv_map = input_mapping[loop_var_name];
+                        if (saved_lv_map.size() > 0) lv_map_width = saved_lv_map.size();
+                    }
                     bool unroll_guard_live = false;
                     for (int64_t i = start_value;
                          downward ? (i >= loop_end) : (i <= loop_end);
                          i += increment) {
                         // Set the loop variable value - use loop_values for substitution
                         loop_values[loop_var_name] = i;
+                        if (had_lv_map)
+                            input_mapping[loop_var_name] =
+                                RTLIL::SigSpec(RTLIL::Const((int)i, lv_map_width));
 
                         bool is_last_iteration = downward ? (i + increment < loop_end)
                                                           : (i + increment > loop_end);
@@ -2207,6 +2315,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // none) — see had_outer_lv above.
                     if (had_outer_lv) loop_values[loop_var_name] = outer_lv;
                     else loop_values.erase(loop_var_name);
+                    if (had_lv_map) input_mapping[loop_var_name] = saved_lv_map;
                     
                     // Loop has been unrolled into the case rule
                 } else {
