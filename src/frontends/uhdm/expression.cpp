@@ -12889,9 +12889,27 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // it falls through to the dedicated handlers below.
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
         auto& pec = *uhdm_hier->Path_elems();
+        // A trailing bit/part-select on the final member is still this shape:
+        // `x.masked[j]` inside a function whose `x` is a packed-struct ARG
+        // (Caliptra's sha512_masked B2A_conv/A2B_conv loop over the 64 bits of
+        // a masked_reg_t argument).  The select's own VpiName is the member
+        // name, so it takes part in the member walk; only its index is applied
+        // afterwards.  Without it `all_ref` was false, the whole access fell
+        // through to X, and the masked SHA-512 conversions -- inside HMAC and
+        // ECC's hmac_drbg -- computed on unknowns.
+        const UHDM::any* tail_sel = nullptr;
         bool all_ref = true;
-        for (auto e : pec)
-            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+        for (size_t i = 0; i < pec.size(); i++) {
+            UHDM::UHDM_OBJECT_TYPE t = pec[i]->UhdmType();
+            if (t == uhdmref_obj) continue;
+            if (i + 1 == pec.size() && i > 0 &&
+                (t == uhdmbit_select || t == uhdmpart_select)) {
+                tail_sel = pec[i];
+                continue;
+            }
+            all_ref = false;
+            break;
+        }
         bool base_in_im = all_ref && input_mapping &&
             input_mapping->count(
                 std::string(any_cast<const ref_obj*>(pec[0])->VpiName()));
@@ -12946,8 +12964,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 int off = 0, field_w = 0;
                 bool ok = true;
                 for (size_t lvl = 1; lvl < pec.size() && ok; lvl++) {
+                    // bit_select/part_select both derive from ref_obj, so the
+                    // trailing select's member name reads the same way.
                     std::string mname =
-                        std::string(any_cast<const ref_obj*>(pec[lvl])->VpiName());
+                        std::string(dynamic_cast<const ref_obj*>(pec[lvl])->VpiName());
                     const UHDM::VectorOftypespec_member* members = nullptr;
                     bool is_struct = false;
                     if (cur_ts->UhdmType() == uhdmstruct_typespec) {
@@ -12980,7 +13000,67 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     cur_ts = mts;
                 }
                 if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
-                    return base_sig.extract(off, field_w);
+                    RTLIL::SigSpec fs = base_sig.extract(off, field_w);
+                    if (!tail_sel)
+                        return fs;
+                    // The trailing select is a BIT index only when the member
+                    // is a plain vector.  On a packed-ARRAY member
+                    // (`logic [2:0][63:0] base`) the same `[k]` picks a 64-bit
+                    // ELEMENT — struct_param_func_loop's `C.base[k]` — so leave
+                    // those to the element-stride handlers further down rather
+                    // than slicing one bit out of the field.
+                    bool simple_vec = false;
+                    int decl_low = 0;
+                    if (cur_ts && cur_ts->UhdmType() == uhdmlogic_typespec) {
+                        auto lts = any_cast<const UHDM::logic_typespec*>(cur_ts);
+                        simple_vec = !lts->Elem_typespec() &&
+                                     (!lts->Ranges() || lts->Ranges()->size() <= 1);
+                        // Selector indices are in the member's DECLARED
+                        // numbering (`logic [63:32] f` starts at 32), so
+                        // rebase them.
+                        if (simple_vec && lts->Ranges() && lts->Ranges()->size() == 1) {
+                            auto r = (*lts->Ranges())[0];
+                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                            if (l.is_fully_const() && rr.is_fully_const())
+                                decl_low = std::min(l.as_const().as_int(),
+                                                    rr.as_const().as_int());
+                        }
+                    }
+                    if (!simple_vec) {
+                        // fall through to the dedicated handlers below
+                    } else if (tail_sel->UhdmType() == uhdmbit_select) {
+                        auto tbs = any_cast<const bit_select*>(tail_sel);
+                        RTLIL::SigSpec ix;
+                        if (tbs->VpiIndex())
+                            ix = import_expression(tbs->VpiIndex(), input_mapping);
+                        if (ix.is_fully_const()) {
+                            int i = ix.as_const().as_int() - decl_low;
+                            if (i >= 0 && i < field_w)
+                                return fs.extract(i, 1);
+                        } else if (!ix.empty()) {
+                            // Dynamic bit index within the field slice.
+                            RTLIL::SigSpec sh = ix;
+                            sh.extend_u0(32, false);
+                            if (decl_low != 0)
+                                sh = module->Sub(NEW_ID, sh,
+                                        RTLIL::Const(decl_low, 32), false);
+                            RTLIL::Wire* ow = module->addWire(NEW_ID, 1);
+                            module->addShiftx(NEW_ID, fs, sh, ow);
+                            return RTLIL::SigSpec(ow);
+                        }
+                    } else {
+                        auto tps = any_cast<const part_select*>(tail_sel);
+                        RTLIL::SigSpec l = import_expression(tps->Left_range(), input_mapping);
+                        RTLIL::SigSpec r = import_expression(tps->Right_range(), input_mapping);
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            int hi = l.as_const().as_int() - decl_low;
+                            int lo = r.as_const().as_int() - decl_low;
+                            int lsb = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
+                            if (lsb >= 0 && lsb + w2 <= field_w)
+                                return fs.extract(lsb, w2);
+                        }
+                    }
                 }
             }
         }
