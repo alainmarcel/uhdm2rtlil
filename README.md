@@ -58,7 +58,7 @@ workflow (every PR + nightly).  Figures from the 2026-09-17 run:
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 961 tests with formal equivalence verified between the UHDM and Verilog frontends
 - **UHDM-Only Success**: 552 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Slang miter**: 94 / 95 SV-only designs also proven equivalent to the
+- **Slang miter**: 100 / 101 SV-only designs also proven equivalent to the
   `read_slang` netlist (1 known non-equivalence, tracked)
 - **Equivalence failures**: 13 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): 5 internal (`CastStructArray` and `packed_array_elem_select`, where
@@ -77,10 +77,10 @@ workflow (every PR + nightly).  Figures from the 2026-09-17 run:
   `test/sim_equiv_warn_baseline.txt` (the suite fails on any warning NOT in the
   baseline, and the baseline may only shrink): 27 internal divergences remain
   (100 counting the upstream suite), each adjudicated as it is reached; plus
-  **74 analyzed** non-bug divergences — 56 where a SAT miter proves
-  UHDM == Verilog (sim/synth artefacts) and 18 upstream cases where the miter
-  is inconclusive (stimulus / X artefacts such as `unique case` preconditions
-  random stimulus violates).
+  **54 analyzed** non-bug divergences in the internal suite, every one of them
+  a sim/synth artefact a SAT miter proves UHDM == Verilog (**0 inconclusive**);
+  the upstream-suite cases add further miter-inconclusive rows (stimulus / X
+  artefacts such as `unique case` preconditions random stimulus violates).
 
 > The **internal** SystemVerilog suite alone is **1026 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output.  All 11 true
@@ -105,7 +105,7 @@ workflow (every PR + nightly).  Figures from the 2026-09-17 run:
 > against the behavioural RTL (`scripts/adjudicate.py` — zero modules show a
 > one-sided UHDM divergence).
 
-### Supported Core IP (rp32, Ibex, OpenTitan-hardened Ibex & Ariane CVA6)
+### Supported Core IP (rp32, Ibex, OpenTitan, Pavona, Ariane CVA6, Caliptra)
 
 Three real-world RISC-V IP families are imported from their upstream RTL
 (kept verbatim under `test/ibex/`, `test/rp32/` and `test/cva6_equiv/rtl/`)
@@ -123,8 +123,9 @@ to the run's step summary.
 | **lowRISC [Ibex](https://github.com/lowRISC/ibex)** | 2-stage 32-bit RISC-V core (RV32IMC + PMP, ICache, dummy-instr/lockstep security) | **28** — every RTL module plus the full `ibex_top` / `ibex_top_tracing` integration | **19 / 28 formally proven** vs `read_slang` (rest SAT-capacity-bound), **20 / 20 co-sim PASS (100%)**, **26 / 28 opt-check clean** — 2026-09-13 nightly | [Sweep ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **[rp32 (R5P)](https://github.com/jeras/rp32)** | 32-bit RISC-V cores + TCB-interface SoCs (degu, mouse, v-friendly) | **13** — ALU, BRU, CSR, GPR, MDU, WBU, the `degu`/`hamster`/`mouse` cores and their SoC tops | **6 / 13 formally proven**, **3 / 3 co-sim PASS (100%)**, **9 / 13 opt-check clean** (the `needs submodules` rows are upstream-WIP RTL, not frontend bugs) — 2026-09-13 nightly | [Sweep rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
 | **[Pavona](https://github.com/pavona/pavona) — OpenTitan family** (hardened Ibex, TL-UL fabric, 27 peripheral / crypto IPs, 2 full chips) | OpenTitan-derived SoC family imported verbatim: the hardened Ibex core, the TileLink-UL fabric, every peripheral and crypto block (AES, KMAC, HMAC, CSRNG, EDN, entropy_src, keymgr, keymgr_dpe, lc_ctrl, rom_ctrl, sram_ctrl, spi_device, usbdev, …) and the complete `top_egret` / `top_dragonfly` chips — see **[docs/pavona_sweep.md](docs/pavona_sweep.md)** for the per-IP table | **29** IP families, **299** module rows (`test/pavona_*_equiv/`) + **2** full chips (**98** direct instances, `test/pavona_chips/`) | **284 / 297 formally proven** vs `read_slang` (rest SAT-capacity-bound, co-sim-adjudicated), **291 / 292 co-sim PASS**; full chips: **47 / 47 + 51 / 51 instances proven**, full-chip Verilator co-sim **PASS** on both | [Sweep pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
-| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 147 modules formally proven** (sharded regression, 2026-09-17; 12 cex under triage, 26 SAT timeouts), the full core lowers with **0 inferred latches**, **0 one-sided co-sim divergences** (8 / 8 co-sim PASS on the modules with a testbench). The nightly sweep's own table has been losing rows to runner limits (142 → 96 over the last three runs) — under investigation | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
-| **[Caliptra](https://github.com/chipsalliance/caliptra-rtl)** | Caliptra root-of-trust SoC: VeeR EL2 core, AXI sub / manager, mailbox, SHA-256/384/512, HMAC, ECC, Ascon, the ML-DSA / ML-KEM post-quantum block and the caliptra_tlul fabric (`test/caliptra_chip/`) | **867** modules / **172** direct instances of `caliptra_top` | **20 / 21 instances formally proven** vs `read_slang` (key_vault1 SAT-hard, co-sim clean). Per-instance co-sim **17 / 17 PASS**; full-chip co-sim: `read_slang` tracks the RTL, `read_uhdm` differs on 2 of 301 cycles (one AXI write response). Needed 3 Surelog fixes ([#4179](https://github.com/chipsalliance/Surelog/pull/4179), [#4180](https://github.com/chipsalliance/Surelog/pull/4180), [#4181](https://github.com/chipsalliance/Surelog/pull/4181)) and 15 frontend fixes — details in [`test/caliptra_chip/README.md`](test/caliptra_chip/README.md) | [Sweep caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
+| **lowRISC [OpenTitan](https://github.com/lowRISC/opentitan)** — upstream, pinned at [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | Upstream OpenTitan RTL swept directly, **independently of the Pavona row below** — pavona is a hard *fork* whose RTL has diverged (of the 120 files the two trees share across aes/kmac/hmac/csrng/edn/keymgr/entropy_src/lc_ctrl only **66 are byte-identical**; `kmac_app.sv` differs by 1531 lines), so a pavona verdict is not an upstream verdict. First IP: **[OTBN](https://github.com/lowRISC/otbn)** ([RTL](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl)), OpenTitan's 256-bit bignum crypto accelerator — bignum ALU/MAC, base + bignum register files, loop controller, predecoder, scramble control and the KMAC interface. OTBN does **not exist in the pavona tree at all**, so every row is new coverage. Own vendored sources, manifest, runner and co-sim harness (`test/opentitan_equiv/`) | **32** modules (122 vendored files) | **23 / 32 formally proven** vs `read_slang`; 3 SAT timeouts (256-bit datapaths: `otbn_alu_bignum`, `otbn_vec_multiplier`, `otbn_vec_shifter`), **5 counterexamples under triage** (`otbn_instruction_fetch`, `otbn_mac_bignum`, `otbn_mac_bignum_fsm`, `otbn_mai`, `otbn_reg_top`) and 1 error — all recorded as measured baselines in `opentitan_modules.txt` under a shrink-only ratchet. Per-module Verilator co-sim (RTL vs both frontends) via `scripts/adjudicate.py` | [Sweep opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
+| **OpenHW [Ariane CVA6](https://github.com/openhwgroup/cva6)** | 6-stage application-class 64-bit RISC-V core (`cv64a6_imafdc_sv39`), incl. the HPDcache subsystem and FPnew FPU | **142** instantiable modules, each compiled standalone with its real-hierarchy parameters (`test/cva6_equiv/`) | **94 / 147 modules formally proven** *as of the 2026-09-17 sharded regression* (12 cex under triage, 26 SAT timeouts); the full core lowers with **0 inferred latches** and **0 one-sided co-sim divergences** (8 / 8 co-sim PASS on the modules with a testbench). These figures have not been re-measured since that date — the CVA6 row is the one family excluded from the local `--no-cva6` developer run, so treat it as a dated snapshot and read the nightly for current numbers. The sweep table was also losing rows to runner limits (142 → 96) around that run | [Sweep cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **[Caliptra](https://github.com/chipsalliance/caliptra-rtl)** | Caliptra root-of-trust SoC: VeeR EL2 core, AXI sub / manager, mailbox, SHA-256/384/512, HMAC, ECC, Ascon, the ML-DSA / ML-KEM post-quantum block and the caliptra_tlul fabric (`test/caliptra_chip/`) | **867** modules / **172** direct instances of `caliptra_top` | **19 / 21 instances formally proven** vs `read_slang` — the two exceptions (`key_vault1`, `pcr_vault1`) are SAT **timeouts** on 32x12x32-bit flop register files, not mismatches. **0 undriven nets, 0 driver conflicts**; full-chip Verilator co-sim **NO_DIVERGENCE** over 401 cycles (`uhdm_vs_rtl=0 slang_vs_rtl=0`) — the earlier 2-cycle AXI write-response divergence was fixed by the wide-constant bitop / XOR fold in [UHDM#1158](https://github.com/chipsalliance/UHDM/pull/1158) + [Surelog#4182](https://github.com/chipsalliance/Surelog/pull/4182). Needed 4 Surelog/UHDM fixes ([#4179](https://github.com/chipsalliance/Surelog/pull/4179), [#4180](https://github.com/chipsalliance/Surelog/pull/4180), [#4181](https://github.com/chipsalliance/Surelog/pull/4181), [#4182](https://github.com/chipsalliance/Surelog/pull/4182)) and 20 frontend fixes — details in [`test/caliptra_chip/README.md`](test/caliptra_chip/README.md) | [Sweep caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 
 Highlights (current status of each IP row, refreshed from the nightly sweeps):
 
@@ -151,16 +152,18 @@ Highlights (current status of each IP row, refreshed from the nightly sweeps):
   power-on reset, the pinmux pad-attribute reset pattern, a `?:`-arm assignment
   pattern) — every one fixed. Per-IP table: [docs/pavona_sweep.md](docs/pavona_sweep.md).
 - **CVA6** — the full core lowers with **0 inferred latches**; **94 / 147
-  modules formally proven** per module in the sharded regression (12
-  counterexamples under triage, the rest SAT capacity) and **0 one-sided co-sim
-  divergences** (every non-proof is adjudicated by co-sim).
+  modules formally proven** per module in the sharded regression *as of
+  2026-09-17* (12 counterexamples under triage, the rest SAT capacity) and
+  **0 one-sided co-sim divergences** (every non-proof is adjudicated by
+  co-sim).  Dated snapshot — see the nightly for current figures.
 - **Caliptra** — `caliptra_top` (867 modules, VeeR EL2 + crypto + fabric)
-  reads clean with `hierarchy -check`; **20 / 21 direct instances formally
-  proven** vs `read_slang` (key_vault1 SAT-hard, co-sim clean), **17 / 17
-  per-instance co-sims PASS**, full-chip co-sim differs on 2 of 301 cycles.
-  Needed 3 Surelog fixes and 15 frontend fixes (the last: an `automatic`
-  local in a generated always_comb — kv_reg's register writes loaded the old
-  value — masked on every entry but one by the hardware-set path).
+  reads clean with `hierarchy -check`; **19 / 21 direct instances formally
+  proven** vs `read_slang` (the two exceptions are SAT timeouts on the vault
+  register files, not mismatches), **0 undriven nets / 0 driver conflicts**,
+  and the full-chip co-sim is **NO_DIVERGENCE** over 401 cycles.  Needed 4
+  Surelog/UHDM fixes and 20 frontend fixes — five of the last six were
+  *silent*: wrong values or X with no warning at all, found by mitering
+  against `read_slang` rather than by any diagnostic.
 - **Method** — every row is a nightly sweep with the same four checks: the
   `read_slang` netlist's own co-sim as the baseline, formal equivalence
   read_uhdm vs `read_slang` (SAT miter from reset), the structural opt-check

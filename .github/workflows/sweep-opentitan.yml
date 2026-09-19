@@ -1,0 +1,37 @@
+name: Sweep opentitan
+
+# Per-module report for UPSTREAM lowRISC/opentitan (pinned in
+# test/opentitan_equiv/opentitan.commit): every manifest module is SAT-mitered
+# read_uhdm vs read_slang.  Table lands in the run's step summary.
+#
+# This is deliberately NOT the pavona sweep.  Pavona is a hard FORK of
+# OpenTitan and its RTL has diverged -- across the IP the two trees share only
+# 66 of 120 files are byte-identical (kmac_app.sv differs by 1531 lines,
+# csrng_core.sv by 757) -- so a pavona result says nothing about upstream.
+# Separate vendored sources, separate manifest, separate sweep.
+#
+# First IP: OTBN, OpenTitan's 256-bit bignum crypto accelerator, which does not
+# exist in the pavona tree at all.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "37 6 * * *"   # nightly 06:37 UTC, clear of the pavona and caliptra sweeps
+
+concurrency:
+  group: sweep-opentitan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep-opentitan:
+    name: opentitan - otbn
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: opentitan
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180

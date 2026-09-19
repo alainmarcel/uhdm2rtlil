@@ -1,0 +1,12 @@
+tlul_adapter_reg.sv
+tlul_adapter_sram.sv
+tlul_cmd_intg_chk.sv
+tlul_data_integ_dec.sv
+tlul_data_integ_enc.sv
+tlul_err_resp.sv
+tlul_err.sv
+tlul_fifo_sync.sv
+tlul_pkg.sv
+tlul_rsp_intg_gen.sv
+tlul_socket_1n.sv
+tlul_sram_byte.sv

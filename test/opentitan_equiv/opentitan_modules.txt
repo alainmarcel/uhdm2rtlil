@@ -1,0 +1,59 @@
+# Upstream lowRISC OpenTitan per-module equivalence manifest (read_uhdm vs
+# read_slang).  Pinned commit: see opentitan.commit.
+#
+#   <module>  <seq>  <timeout_s>  <expected>
+#
+# expected: proven | cex | timeout | error | elabfail | dead
+# Shrink-only ratchet (same semantics as pavona_modules.txt / cva6_modules.txt):
+# a module regressing from its recorded verdict fails the sweep; proving one
+# recorded as anything else is progress and the manifest should be tightened.
+#
+# SCOPE NOTE.  This family is deliberately independent of test/pavona_equiv.
+# Pavona is a hard FORK of OpenTitan: across the IP the two trees share
+# (aes/kmac/hmac/csrng/edn/keymgr/entropy_src/lc_ctrl) only 66 of 120 files are
+# byte-identical -- 51 differ, kmac_app.sv by 1531 lines.  A pavona result is
+# not an upstream result, so upstream gets its own vendored sources, manifest
+# and sweep.
+#
+# First IP: OTBN, OpenTitan's 256-bit bignum crypto accelerator.  It does not
+# exist in pavona at all, so every row here is new coverage.
+#
+# BASELINES BELOW ARE MEASURED, not aspirational (first full sweep, 32 modules):
+#   23 proven | 5 cex | 3 timeout | 1 error
+# The 5 `cex` rows are genuine read_uhdm != read_slang counterexamples on RTL no
+# other family exercises -- real frontend bugs to work, recorded honestly rather
+# than hidden.  The 3 `timeout` rows are SAT capacity on 256-bit datapaths, not
+# mismatches.  The ratchet is shrink-only: any of these starting to prove must
+# be promoted to `proven` here.
+otbn_alu_base                2   600   proven
+otbn_alu_bignum              2   600   timeout
+otbn_controller              2   600   proven
+otbn_core                    2   600   proven
+otbn_decoder                 2   600   proven
+otbn_instruction_fetch       2   600   cex
+otbn_kmac_if                 2   600   proven
+otbn_loop_controller         2   600   proven
+otbn_lsu                     2   600   proven
+otbn_mac_bignum              2   600   cex
+otbn_mac_bignum_fsm          2   600   cex
+otbn_mai                     2   600   cex
+otbn_mask_accelerator        2   600   proven
+otbn_mod_result_selector     2   600   proven
+otbn_predecode               2   600   proven
+otbn_reg_top                 2   600   cex
+otbn_rf_base                 2   600   proven
+otbn_rf_base_ff              2   600   proven
+otbn_rf_base_fpga            2   600   proven
+otbn_rf_bignum               2   600   proven
+otbn_rf_bignum_ff            2   600   proven
+otbn_rf_bignum_fpga          2   600   error
+otbn_rnd                     2   600   proven
+otbn_scramble_ctrl           2   600   proven
+otbn_sec_add                 2   600   proven
+otbn_sec_add_mod             2   600   proven
+otbn_stack                   2   600   proven
+otbn_start_stop_control      2   600   proven
+otbn_vec_adder               2   600   proven
+otbn_vec_multiplier          2   600   timeout
+otbn_vec_shifter             2   600   timeout
+otbn_vec_transposer          2   600   proven

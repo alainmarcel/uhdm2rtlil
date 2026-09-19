@@ -72,6 +72,12 @@ _CELLS: dict = {}
 _CONFLICTS: dict = {}
 CVA6_DIR = TEST_DIR / "cva6_equiv"
 PAVONA_DIR = TEST_DIR / "pavona_equiv"
+# Upstream lowRISC OpenTitan.  DELIBERATELY SEPARATE from PAVONA_DIR: pavona is
+# a hard FORK whose RTL has diverged (of the 120 files the trees share across
+# aes/kmac/hmac/csrng/edn/keymgr/entropy_src/lc_ctrl only 66 are byte-identical;
+# kmac_app.sv differs by 1531 lines), so a pavona verdict is not an upstream
+# verdict.  Own vendored sources, own manifest, own sweep.
+OPENTITAN_DIR = TEST_DIR / "opentitan_equiv"
 TLUL_DIR = TEST_DIR / "pavona_tlul_equiv"
 ACC_DIR = TEST_DIR / "pavona_acc_equiv"
 KMAC_DIR = TEST_DIR / "pavona_kmac_equiv"
@@ -684,6 +690,93 @@ def sweep_pavona(jobs, cycles=300, flt=None):
             r["check"] = _pavona_check(r["module"])
             r["conflicts"] = _conflict_cell(PAVONA_DIR / "work" / r["module"])
             r["cosim"] = _pavona_cosim(r["module"], cycles)
+            r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
+        return r
+    with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
+        rows = list(ex.map(one, rows))
+    for r in rows:
+        r.pop("formal_raw", None)
+    return rows
+
+
+# ----------------------------------------------------------------- opentitan
+def _opentitan_cosim(mod, cycles):
+    """Verilator co-sim of one upstream OpenTitan module (RTL vs read_uhdm vs
+    read_slang), reusing the work/<mod> elaboration the runner produced.
+    Same three-way adjudication as the pavona family, but its own harness --
+    the two families share no sources and no scripts."""
+    rc, out = sh([sys.executable, "scripts/adjudicate.py", mod, str(cycles), "1"],
+                 cwd=OPENTITAN_DIR, timeout=2400)
+    _record_slang(mod, out)
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)",
+                  out or "")
+    if m:
+        u, sl = int(m.group(1)), int(m.group(2))
+        if u == 0:
+            return "✅ PASS"
+        if sl > 0:
+            return f"⚠ shared div (uhdm={u}, slang={sl})"
+        return f"❌ {u} div (slang clean)"
+    if "no outputs to compare" in (out or ""):
+        return "skip (no outputs)"
+    if "netlist generation FAILED" in (out or "") or "NO_RUN" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or ""):
+        return "skip (sim build)"
+    return "error" if rc else "skip"
+
+
+def _opentitan_check(mod):
+    """Structural opt-level undriven-net check on one upstream OpenTitan
+    module, reusing the work/<mod> elaboration the runner produced."""
+    return _undriven_check(OPENTITAN_DIR / "work" / mod, mod)
+
+
+def sweep_opentitan(jobs, cycles=300, flt=None):
+    """Upstream lowRISC OpenTitan (pinned in opentitan_equiv/opentitan.commit):
+    per-module read_uhdm vs read_slang SAT miter from one
+    run_opentitan_equiv.sh pass, plus the structural columns."""
+    cmd = ["./run_opentitan_equiv.sh"]
+    if flt:
+        for line in (OPENTITAN_DIR / "opentitan_modules.txt").read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                name = line.split()[0]
+                if re.search(flt, name):
+                    cmd.append(name)
+    env = dict(os.environ, JOBS=str(jobs))
+    try:
+        p = subprocess.run(cmd, cwd=OPENTITAN_DIR, text=True, timeout=10800,
+                           env=env, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    print(out)
+    label = {
+        "proven": "✅ equivalent", "cex": "❌ differs",
+        "timeout": "❓ SAT timeout", "error": "error",
+        "elabfail": "elab-fail",
+    }
+    rows = []
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅⚠❓💥❌🎉⏭]*\s*(\S+)\s+(proven|cex|timeout|error|"
+                     r"elabfail)", line)
+        if m:
+            rows.append({"module": m.group(1),
+                         "formal": label.get(m.group(2), m.group(2)),
+                         "formal_raw": m.group(2), "cosim": "—"})
+    rows.sort(key=lambda r: r["module"])
+
+    def one(r):
+        if r["formal_raw"] in ("error", "elabfail"):
+            r["check"] = "— (no elaboration)"
+            r["conflicts"] = "—"
+            r["cosim"] = "— (no elaboration)"
+        else:
+            r["check"] = _opentitan_check(r["module"])
+            r["conflicts"] = _conflict_cell(OPENTITAN_DIR / "work" / r["module"])
+            r["cosim"] = _opentitan_cosim(r["module"], cycles)
             r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
     with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
@@ -1507,7 +1600,8 @@ def main():
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
-                                     "egret", "dragonfly", "caliptra"] + _ext_families())
+                                     "egret", "dragonfly", "caliptra",
+                                     "opentitan"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
@@ -1571,6 +1665,8 @@ def main():
         rows = sweep_cva6(args.cycles, args.jobs, args.filter)
     elif args.core == "pavona":
         rows = sweep_pavona(args.jobs, args.cycles, args.filter)
+    elif args.core == "opentitan":
+        rows = sweep_opentitan(args.jobs, args.cycles, args.filter)
     elif args.core == "tlul":
         rows = sweep_tlul(args.jobs, args.cycles, args.filter)
     elif args.core == "acc":
