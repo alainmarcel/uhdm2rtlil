@@ -1094,6 +1094,32 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
 
+            // Generalisation of the above: ANY variable the unrolled-loop
+            // machinery is currently THREADING (loop_accumulators) already gets
+            // its value written once, after the loop, as
+            // `case_rule->actions.push_back(input_mapping[var], current_accumulator)`.
+            // Emitting a per-iteration action as well writes to whatever the
+            // accumulator is TEMPORARILY remapped to — the initial constant on
+            // iteration 0, then a cell OUTPUT wire — producing
+            // `assign 8'00000000 <xor>` (a write to a constant, which `check`
+            // reports as "Drivers conflicting with a constant") and
+            // `assign $xor$13 $xor$15` (a combinational self-loop).  `opt` then
+            // collapses the whole chain to the FIRST iteration's value: the
+            // textbook `acc = '0; for (k) acc = acc ^ a[k];` returned `a[0]`.
+            // The narrow check above only caught an ADD into the RETURN
+            // variable, so every other operator and every function-LOCAL
+            // accumulator silently lost all but one iteration.
+            if (!skip_assignment && assign->Lhs()->UhdmType() == uhdmref_obj) {
+                std::string acc_name =
+                    std::string(any_cast<const ref_obj*>(assign->Lhs())->VpiName());
+                if (loop_accumulators.count(acc_name)) {
+                    skip_assignment = true;
+                    if (mode_debug)
+                        log("UHDM: Skipping per-iteration assignment to threaded "
+                            "loop accumulator '%s'\n", acc_name.c_str());
+                }
+            }
+
             // Check if LHS is the function name (return value), a parameter, or
             // a block-local variable.  A simple named LHS is either a `ref_obj`
             // OR — for a declaration initializer like `logic [2:0] data = in;`
@@ -2156,7 +2182,19 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                     }
 
-                    // Track the current accumulated value for chaining
+                    // Track the current accumulated value for chaining.
+                    // `loop_accumulators` must mean exactly "this variable is
+                    // being threaded by the loop RIGHT NOW": the per-iteration
+                    // assignment skip above keys off it, so a leaked entry
+                    // silently drops later writes to any same-named variable.
+                    // The old cleanup only ran when `current_accumulator` came
+                    // out non-empty, which leaks whenever the chain never
+                    // started (many_functions / function_mixed lost the
+                    // bit-interleave and case-arm writes of a LATER function's
+                    // `result`).  Remember what was there and always restore.
+                    bool acc_entry_added = false;
+                    bool acc_had_prev = false;
+                    RTLIL::SigSpec acc_prev_entry;
                     RTLIL::SigSpec current_accumulator;
                     if (is_accumulative) {
                         // Initialise the chain with the LATEST value already
@@ -2187,6 +2225,12 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             else
                                 current_accumulator =
                                     RTLIL::SigSpec(RTLIL::State::S0, target.size());
+                            auto prev = loop_accumulators.find(accumulator_var);
+                            if (prev != loop_accumulators.end()) {
+                                acc_had_prev = true;
+                                acc_prev_entry = prev->second;
+                            }
+                            acc_entry_added = true;
                             loop_accumulators[accumulator_var] = current_accumulator;
                         }
                     }
@@ -2307,8 +2351,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             case_rule->actions.push_back(RTLIL::SigSig(it->second, current_accumulator));
                             log("UHDM: Created final accumulator assignment for '%s'\n", accumulator_var.c_str());
                         }
-                        // Clear the accumulator tracking
-                        loop_accumulators.erase(accumulator_var);
+                    }
+                    // Stop treating the variable as threaded — unconditionally,
+                    // and restoring an enclosing loop's entry when this one
+                    // shadowed it.
+                    if (acc_entry_added) {
+                        if (acc_had_prev) loop_accumulators[accumulator_var] = acc_prev_entry;
+                        else loop_accumulators.erase(accumulator_var);
                     }
                     
                     // Restore the outer loop-var value (or clear if there was
