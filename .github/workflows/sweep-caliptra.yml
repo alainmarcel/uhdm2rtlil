@@ -12,6 +12,11 @@ name: Sweep caliptra
 
 on:
   workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles (instances + full chip)"
+        required: false
+        default: "2000"
   schedule:
     - cron: "17 5 * * *"   # nightly 05:17 UTC, clear of the pavona sweep
 
@@ -25,7 +30,11 @@ jobs:
     uses: ./.github/workflows/core-sweep.yml
     with:
       core: caliptra
-      cycles: "300"
+      # 2000 cycles, matching the egret / dragonfly full-chip sweeps: at 300
+      # the chip co-sim only reaches the tail of the boot sequence, so most of
+      # the design never toggles and a divergence deeper than reset cannot be
+      # observed.  The instance co-sims get the same budget.
+      cycles: ${{ github.event.inputs.cycles || '2000' }}
       timeout: 350
       # 3 instance shards + 1 shard for the full-chip co-sim: the vault
       # miters are multi-million-variable proofs now and the chip co-sim is
