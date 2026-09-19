@@ -62,6 +62,14 @@ TEST_DIR = Path(__file__).resolve().parent
 # Flattened read_uhdm cell counts, populated by _undriven_check and read by the
 # auto-miter size gate (keyed by resolved work-dir path).
 _CELLS: dict = {}
+# Driver-CONFLICT counts from the same `check` run (keyed the same way).  A
+# conflict means two drivers on one net, or -- the case that motivated this
+# column -- an assignment whose TARGET is a constant or an input port, which
+# `check` reports as "Drivers conflicting with a constant" plus
+# `action <const> <= <sig>`.  Such a netlist is not merely wrong: the bogus
+# feedback CONSTRAINS a SAT miter to the inputs where gold and gate agree, so
+# the miter passes VACUOUSLY.  Never read the formal column without this one.
+_CONFLICTS: dict = {}
 CVA6_DIR = TEST_DIR / "cva6_equiv"
 PAVONA_DIR = TEST_DIR / "pavona_equiv"
 TLUL_DIR = TEST_DIR / "pavona_tlul_equiv"
@@ -163,6 +171,13 @@ def _undriven_check(work_dir, top):
     mcell = re.search(r"Number of cells:\s*(\d+)", out)
     if mcell:
         _CELLS[str(Path(work_dir).resolve())] = int(mcell.group(1))
+    # Driver conflicts from the same run (see _CONFLICTS).  Counted per
+    # reported signal, plus every `action <const> <= …` line, which is a write
+    # whose target is a literal -- the write goes nowhere.
+    _CONFLICTS[str(Path(work_dir).resolve())] = (
+        len(re.findall(r"conflicting drivers for", out)) +
+        len(re.findall(r"Drivers conflicting with", out)) +
+        len(re.findall(r"^\s+action \d+'[01xz]+ <= ", out, re.M)))
     # A leaf extraction whose child-module sources are not in the source list
     # leaves those instances as BLACKBOXES: yosys resizes the unknown cell ports
     # to 1 bit and every wider fanout net reads as undriven.  That is not a
@@ -183,6 +198,44 @@ def _undriven_check(work_dir, top):
     if undriven:
         return f"❌ {undriven} undriven"
     return "error" if rc else "✅ 0 undriven"
+
+
+def _il_check(il, top):
+    """Structural check of an ALREADY-WRITTEN netlist (`work/inst/<n>_uhdm.il`),
+    for the chip families whose rows come from the miter log rather than a
+    per-module elaboration.  Returns (undriven cell, conflicts cell); costs one
+    read_rtlil + proc + flatten + opt_clean, no Surelog re-run."""
+    il = Path(il)
+    if not il.exists():
+        return "— (no netlist)", "—"
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    ys = il.parent / f"chk_{il.stem}.ys"
+    ys.write_text(f"read_rtlil {il.name}\n"
+                  f"hierarchy -top {top}\n"
+                  f"proc\nflatten; opt_clean\n"
+                  f"delete t:$check t:$assert t:$assume t:$print t:$scopeinfo\n"
+                  f"opt_clean\ncheck\n")
+    rc, out = sh([str(yosys), "-q", "-m", str(plugin), ys.name],
+                 cwd=il.parent, timeout=1800)
+    out = out or ""
+    if rc and "found and reported" not in out.lower():
+        return "error", "—"
+    undriven = len(re.findall(r"used but has no driver", out))
+    conf = (len(re.findall(r"conflicting drivers for", out)) +
+            len(re.findall(r"Drivers conflicting with", out)) +
+            len(re.findall(r"^\s+action \d+'[01xz]+ <= ", out, re.M)))
+    ucell = f"❌ {undriven} undriven" if undriven else "✅ 0 undriven"
+    ccell = f"❌ {conf} conflict{'s' if conf != 1 else ''}" if conf else "✅ 0"
+    return ucell, ccell
+
+
+def _conflict_cell(work_dir):
+    """Render the driver-conflict count gathered by _undriven_check."""
+    n = _CONFLICTS.get(str(Path(work_dir).resolve()))
+    if n is None:
+        return "—"
+    return "✅ 0" if n == 0 else f"❌ {n} conflict{'s' if n != 1 else ''}"
 
 
 def _project_top(d):
@@ -326,7 +379,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
     def one(d):
         name = d.name
         row = {"module": name, "formal": "— (no miter)", "cosim": "—",
-               "check": "—"}
+               "check": "—", "conflicts": "—"}
         # Elaborate (surelog + read check) if the UHDM is missing.
         if not (d / "slpp_all" / "surelog.uhdm").exists():
             rc, _ = sh(["./test_uhdm_workflow.sh", name],
@@ -338,6 +391,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             return row
         # Structural undriven-net probe (fast dropped-driver check, every dir).
         row["check"] = _undriven_check(d, _project_top(d))
+        row["conflicts"] = _conflict_cell(d)
         # 1. slang miter.  A committed test_slang_equiv.ys takes precedence
         # (hand-tuned lowering for the tricky modules); otherwise auto-generate
         # the standard boilerplate miter from project.f so a self-contained
@@ -469,7 +523,7 @@ def sweep_cva6(cycles, jobs, flt=None):
 
     def one(mod):
         row = {"module": mod, "formal": label.get(formal[mod], formal[mod]),
-               "cosim": "—", "check": "—"}
+               "cosim": "—", "check": "—", "conflicts": "—"}
         st = formal[mod]
         work = CVA6_DIR / "work" / mod
         # A module that elaborated (proven / cex / SAT-timeout) has a read_uhdm
@@ -478,6 +532,7 @@ def sweep_cva6(cycles, jobs, flt=None):
         # Structural undriven-net probe on every elaborated module.
         row["check"] = (_undriven_check(work, f"{mod}_equiv")
                         if elaborated else "— (no elaboration)")
+        row["conflicts"] = _conflict_cell(work) if elaborated else "—"
         # Co-sim EVERY elaborated module, not just cex: a module PROVEN under the
         # SAT miter (which runs -set-init-zero) can still diverge in co-sim from
         # an X-init / undriven net the miter hides (the tlul_fifo_sync class), so
@@ -627,6 +682,7 @@ def sweep_pavona(jobs, cycles=300, flt=None):
             r["check"] = "— (no elaboration)"
         else:
             r["check"] = _pavona_check(r["module"])
+            r["conflicts"] = _conflict_cell(PAVONA_DIR / "work" / r["module"])
             r["cosim"] = _pavona_cosim(r["module"], cycles)
             r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
@@ -708,6 +764,7 @@ def sweep_tlul(jobs, cycles=300, flt=None):
             r["check"] = "— (no elaboration)"
         else:
             r["check"] = _tlul_check(r["module"])
+            r["conflicts"] = _conflict_cell(TLUL_DIR / "work" / r["module"])
             r["cosim"] = _tlul_cosim(r["module"], cycles)
             r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
@@ -789,6 +846,7 @@ def sweep_acc(jobs, cycles=300, flt=None):
             r["cosim"] = "— (no elaboration)"
         else:
             r["check"] = _acc_check(r["module"])
+            r["conflicts"] = _conflict_cell(ACC_DIR / "work" / r["module"])
             # Co-sim EVERY module (not just cex/timeout): a formal SAT proof runs
             # under -set-init-zero and can miss a real reset/init divergence that
             # only shows in from-X simulation (e.g. tlul_fifo_sync proves yet the
@@ -891,6 +949,7 @@ def sweep_kmac(jobs, cycles=300, flt=None, ip="kmac"):
             r["cosim"] = "— (no elaboration)"
         else:
             r["check"] = _kmac_check(r["module"], ip)
+            r["conflicts"] = _conflict_cell(_IP_DIRS[ip] / "work" / r["module"])
             # Co-sim EVERY elaborated module (not just cex/timeout): a from-X sim
             # can catch a reset/init divergence the -set-init-zero SAT proof
             # misses, and it adjudicates the SAT-hard keccak_round.
@@ -986,6 +1045,13 @@ def _cosim_cells(out, rc, cycles):
         return f"skip ({why.group(1)[:40] if why else 'no run'})", "—"
     b = re.search(r"(rtl|uhdm|slang) Verilator build FAILED", out)
     if b:
+        # A build failure on the UHDM (or slang) NETLIST is not a skip: Verilator
+        # rejects a netlist that assigns to an input port, which is exactly what
+        # a malformed lowering produces (`assign a[0] = a[3] ^ a[0];`).  Such a
+        # row silently counted as "not comparable" while the netlist went
+        # unexamined -- and the SAT miter passes vacuously on it.  Flag it.
+        if b.group(1) in ("uhdm", "slang"):
+            return f"❌ netlist unbuildable ({b.group(1)})", "—"
         return f"skip ({b.group(1)} sim build)", "—"
     if rc == 124 or "[timeout]" in out:
         return "❓ timeout", "—"
@@ -1144,6 +1210,12 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
+    # Structural columns from the per-instance netlists the split already
+    # wrote — cheap (no re-elaboration) and it is what tells you whether to
+    # believe the `formal` column on this row.
+    for r in rows:
+        r["check"], r["conflicts"] = _il_check(
+            inst_dir / f"{r['module']}_uhdm.il", f"{r['module']}_uhdm")
     all_names = []
     if (inst_dir / "instances.json").exists():
         all_names = sorted(json.loads((inst_dir / "instances.json").read_text()))
@@ -1314,6 +1386,12 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
             rows.append({"module": m.group(1), "formal": label[m.group(2)],
                          "cosim": "—"})
     rows.sort(key=lambda r: r["module"])
+    # Structural columns from the per-instance netlists the split already
+    # wrote — cheap (no re-elaboration) and it is what tells you whether to
+    # believe the `formal` column on this row.
+    for r in rows:
+        r["check"], r["conflicts"] = _il_check(
+            inst_dir / f"{r['module']}_uhdm.il", f"{r['module']}_uhdm")
     all_names = []
     if (inst_dir / "instances.json").exists():
         all_names = sorted(json.loads((inst_dir / "instances.json").read_text()))
@@ -1354,23 +1432,31 @@ def render(core, rows, cycles):
     # detection on the flattened+opt'd read_uhdm netlist) — a fast dropped-driver
     # probe that runs on every module without needing a deep co-sim.
     has_check = any("check" in r for r in rows)
+    # The driver-CONFLICT column (see _CONFLICTS): reported next to `formal`
+    # because it is what tells you whether to BELIEVE the formal column.
+    has_conf = any(r.get("conflicts", "—") != "—" for r in rows)
     lines = [f"## {core} sweep — formal (vs read_slang) + Verilator co-sim "
              f"({cycles} cycles)", ""]
     # Left-most column: the read_slang netlist's own co-sim vs the behavioural
     # RTL — the correctness baseline of the reference frontend that the
     # "formal vs slang" column compares read_uhdm against.
     sc = lambda r: r.get("slang_cosim", "—")
+    hdr = ["slang co-sim vs RTL", "module", "formal vs slang"]
+    if has_conf:
+        hdr.append("driver conflicts")
     if has_check:
-        lines += ["| slang co-sim vs RTL | module | formal vs slang | opt check (undriven) | co-sim vs RTL |",
-                  "|---|---|---|---|---|"]
-        for r in rows:
-            lines.append(f"| {sc(r)} | {r['module']} | {r['formal']} | "
-                         f"{r.get('check', '—')} | {r['cosim']} |")
-    else:
-        lines += ["| slang co-sim vs RTL | module | formal vs slang | co-sim vs RTL |",
-                  "|---|---|---|---|"]
-        for r in rows:
-            lines.append(f"| {sc(r)} | {r['module']} | {r['formal']} | {r['cosim']} |")
+        hdr.append("opt check (undriven)")
+    hdr.append("co-sim vs RTL")
+    lines += ["| " + " | ".join(hdr) + " |",
+              "|" + "---|" * len(hdr)]
+    for r in rows:
+        cells = [sc(r), r["module"], r["formal"]]
+        if has_conf:
+            cells.append(r.get("conflicts", "—"))
+        if has_check:
+            cells.append(r.get("check", "—"))
+        cells.append(r["cosim"])
+        lines.append("| " + " | ".join(cells) + " |")
     spass = sum(1 for r in rows if sc(r).startswith("✅"))
     sfail = sum(1 for r in rows if sc(r).startswith("❌"))
     npass = sum(1 for r in rows if r["cosim"].startswith("✅"))
@@ -1395,6 +1481,23 @@ def render(core, rows, cycles):
         ndirty = sum(1 for r in rows if r.get("check", "").startswith("❌"))
         lines.append(f"**Opt check:** {nclean}/{nclean + ndirty} modules with "
                      f"zero undriven nets ({ndirty} with dropped drivers).")
+    if has_conf:
+        cclean = sum(1 for r in rows if r.get("conflicts", "").startswith("✅"))
+        cdirty = sum(1 for r in rows if r.get("conflicts", "").startswith("❌"))
+        lines.append(
+            f"**Driver conflicts:** {cclean}/{cclean + cdirty} modules with "
+            f"none ({cdirty} with a net driven twice, or an assignment whose "
+            f"target is a constant / input port). A row with conflicts makes "
+            f"the formal column UNRELIABLE — the bogus feedback constrains the "
+            f"miter to the inputs where gold and gate agree, so it can pass "
+            f"vacuously.")
+    nunbuild = sum(1 for r in rows if "netlist unbuildable" in r.get("cosim", ""))
+    if nunbuild:
+        lines.append(
+            f"**Unbuildable netlists:** {nunbuild} — Verilator refused the "
+            f"generated netlist (it rejects an assignment to an input port). "
+            f"These used to count as a co-sim skip; they are a malformed "
+            f"lowering, not a missing run.")
     return "\n".join(lines) + "\n"
 
 
