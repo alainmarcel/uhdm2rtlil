@@ -287,3 +287,21 @@ simple/module_scope_case.v
 # Miter-Formal stays 0 and only equiv_induct flags it.
 simple/mem2reg_bounds_tern.v
 genscope_packed_be
+
+# --- read_verilog collapses a packed-array TYPEDEF element select (NOT a UHDM bug) ---
+# Same reference limitation as packed_array_elem_select above, in its
+# typedef-alias form: for `typedef ele_t [1:0] sh_t; sh_t s;` the Yosys
+# read_verilog reference lowers `s[k]` to a single BIT select rather than a
+# 32-bit element.  `eval` on the reference netlist shows it plainly --
+# o_quad comes back 32'xxxxxxxxxxxxxxxxxxxxxxxxxxxx1010, i.e. the four
+# element selects collapsed to the four LSBs of their elements, the rest
+# undriven -- so the reference netlist is wrong and the SAT equiv reports
+# spurious unproven cells (172 of them, essentially every output bit).
+# The UHDM output is VERIFIED correct two independent ways:
+#   - sound from-reset SAT miter vs read_slang (test_slang_equiv.ys): SUCCESS,
+#     and `eval` agrees bit-for-bit with slang on every output;
+#   - Verilator co-sim against the behavioural RTL: PASS, 200 cycles,
+#     0 mismatches.
+# This is the reproducer for the OTBN `ma_sharing_t` element-select fix
+# (otbn_mask_accelerator 186 undriven -> 0, otbn_mai 372 -> 0 and cex -> proven).
+packed_typedef_elem_select

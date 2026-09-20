@@ -5270,6 +5270,57 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(wiretype_name);
                                     log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", wiretype_name.c_str(), wire->name.c_str());
                                 }
+
+                                // Packed-array ELEMENT metadata for a module
+                                // variable declared through a packed-array
+                                // typedef (`typedef ele_t [1:0] sh_t; sh_t s;`).
+                                // import_port tags PORTS this way, but nothing
+                                // tagged plain variables, so import_bit_select
+                                // had no element width and fell back to a 1-BIT
+                                // select: `assign dst[1] = src[1];` emitted
+                                // `connect \dst [1] \src [1]` -- one bit instead
+                                // of the whole element, on BOTH sides.  That is
+                                // what left OTBN's otbn_mask_accelerator with
+                                // 186 undriven nets and otbn_mai, which
+                                // instantiates it, with 372.
+                                if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
+                                    if (lts->Elem_typespec() &&
+                                        lts->Elem_typespec()->Actual_typespec() &&
+                                        lts->Ranges() && lts->Ranges()->size() == 1 &&
+                                        !wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+                                        int ew = get_width_from_typespec(
+                                            lts->Elem_typespec()->Actual_typespec(), current_instance);
+                                        auto r0 = (*lts->Ranges())[0];
+                                        int ol = -1, orr = -1;
+                                        if (r0->Left_expr() && r0->Right_expr()) {
+                                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                                            if (l.is_fully_const() && r.is_fully_const()) {
+                                                ol = l.as_const().as_int();
+                                                orr = r.as_const().as_int();
+                                            }
+                                        }
+                                        int ne = (ol >= 0 && orr >= 0) ? std::abs(ol - orr) + 1 : 0;
+                                        // TYPEDEF-ALIAS form (`typedef ele_t [N-1:0] sh_t;`
+                                        // as OTBN's ma_sharing_t): the Elem_typespec
+                                        // resolves to the WHOLE array -- its own Range
+                                        // duplicates the outer one -- so the width comes
+                                        // back as the full 64 rather than the 32-bit
+                                        // element.  Derive the element width from the wire.
+                                        if (ne > 1 && ew == wire->width && wire->width % ne == 0)
+                                            ew = wire->width / ne;
+                                        // Only when the geometry matches the wire
+                                        // we actually built: a mismatched tag
+                                        // would mis-index every select on it.
+                                        if (ew > 1 && ne > 1 && ew * ne == wire->width) {
+                                            wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
+                                            wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
+                                            wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
+                                            log("UHDM: tagged var '%s' packed_elem_width=%d outer=[%d:%d]\n",
+                                                wire->name.c_str(), ew, ol, orr);
+                                        }
+                                    }
+                                }
                                 
                                 // Check for signed attribute
                                 bool is_signed = false;
