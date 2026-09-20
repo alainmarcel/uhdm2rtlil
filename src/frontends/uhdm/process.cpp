@@ -12077,6 +12077,20 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                     if (idx_ok) {
                         RTLIL::SigSpec acc =
                             RTLIL::SigSpec(RTLIL::Const(field_offset, shamt_w));
+                        // `acc` is built from Mul/Add CELLS, so it is never
+                        // fully-const even when every index folded to a
+                        // literal.  Track the constant bit offset alongside it
+                        // so a wholly-static write can take the direct path
+                        // below instead of the masked dynamic one.
+                        bool idx_all_const = true;
+                        long long off_const = field_offset;
+                        for (size_t k = 0; k < nsel; k++) {
+                            if (idxs[k].is_fully_const())
+                                off_const += (long long)(idxs[k].as_const().as_int() -
+                                                         dims[k].second) * strides[k];
+                            else
+                                idx_all_const = false;
+                        }
                         for (size_t k = 0; k < nsel; k++) {
                             RTLIL::SigSpec ix = idxs[k];
                             ix.extend_u0(shamt_w, false);
@@ -12146,6 +12160,44 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         int base_w2 = base_wire->width;
                         auto rhs_e2 = dynamic_cast<const UHDM::expr*>(rhs_any);
                         if (!rhs_e2) return false;
+                        // STATIC write into a PER-ROW temp.  A 2-D unpacked
+                        // array whose ROWS are written whole (`multi[0] =
+                        // '{default: D};`) is represented by per-row temps
+                        // `$0\<base>[row]`, not by one flat wire -- so the
+                        // masked dynamic path below, which reads and rewrites
+                        // the FLAT wire, targets a different object and the
+                        // row assignment silently overwrites every element
+                        // write that followed it (OTBN otbn_mac_bignum_fsm lost
+                        // all of `predec_multi[0][cycle] = predec_vec[cycle]`).
+                        // When every index folded to a constant the write is a
+                        // plain slice, so address the row temp directly.
+                        if (idx_all_const && !has_field_idx && !tail_dyn &&
+                            nsel >= 2 && !idxs.empty() && strides[0] > 0) {
+                            int row = idxs[0].as_const().as_int() - dims[0].second;
+                            int off = (int)(off_const - (long long)row * strides[0]);
+                            std::string rtn = "$0\\" + base_name + "[" +
+                                              std::to_string(idxs[0].as_const().as_int()) + "]";
+                            RTLIL::Wire* rtw = module->wire(rtn);
+                            if (rtw && off >= 0 && off + write_w <= rtw->width) {
+                                int pc = expression_context_width;
+                                expression_context_width = write_w;
+                                RTLIL::SigSpec rv = import_expression(rhs_e2, comb_read_map());
+                                expression_context_width = pc;
+                                if (rv.size() < write_w)
+                                    rv.extend_u0(write_w, is_expr_signed(rhs_e2));
+                                else if (rv.size() > write_w)
+                                    rv = rv.extract(0, write_w);
+                                rv = compound_fold(rv, write_w);
+                                RTLIL::SigSpec tgt = RTLIL::SigSpec(rtw).extract(off, write_w);
+                                if (proc)
+                                    emit_comb_assign(tgt, rv, proc);
+                                else if (case_rule)
+                                    case_rule->actions.push_back(RTLIL::SigSig(tgt, rv));
+                                log("    elem_field_write: static row temp %s[%d +: %d]\n",
+                                    rtn.c_str(), off, write_w);
+                                return true;
+                            }
+                        }
                         int prev_ctx2 = expression_context_width;
                         expression_context_width = write_w;
                         RTLIL::SigSpec rhs2 = import_expression(rhs_e2, comb_read_map());
