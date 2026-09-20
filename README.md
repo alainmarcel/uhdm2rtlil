@@ -52,13 +52,13 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (1041 tests, ~40 min).  A PR lands
+`cd test && ./run_parallel.sh 6 --no-cva6` (1042 tests, ~40 min).  A PR lands
 only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1578 | 1031 | 547 |
-| Functional | 1532 (97%) | **1031 (100%)** | 501 |
+| Tests | 1579 | 1032 | 547 |
+| Functional | 1533 (97%) | **1032 (100%)** | 501 |
 | True failures | 11 | **0** | 11 |
 | Crashes | 1 | **0** | 1 |
 
