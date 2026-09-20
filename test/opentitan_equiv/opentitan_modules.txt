@@ -36,7 +36,7 @@ otbn_loop_controller         2   600   proven
 otbn_lsu                     2   600   proven
 otbn_mac_bignum              2   600   cex
 otbn_mac_bignum_fsm          2   600   cex
-otbn_mai                     2   600   cex
+otbn_mai                     2   600   proven
 otbn_mask_accelerator        2   600   proven
 otbn_mod_result_selector     2   600   proven
 otbn_predecode               2   600   proven
