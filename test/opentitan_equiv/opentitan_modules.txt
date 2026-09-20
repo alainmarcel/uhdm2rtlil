@@ -30,12 +30,18 @@ otbn_alu_bignum              2   600   timeout
 otbn_controller              2   600   proven
 otbn_core                    2   600   proven
 otbn_decoder                 2   600   proven
-otbn_instruction_fetch       2   600   cex
+otbn_instruction_fetch       2   600   proven
 otbn_kmac_if                 2   600   proven
 otbn_loop_controller         2   600   proven
 otbn_lsu                     2   600   proven
-otbn_mac_bignum              2   600   cex
-otbn_mac_bignum_fsm          2   600   cex
+# otbn_mac_bignum: was `cex`.  The counterexample is GONE (Verilator co-sim
+# against the behavioural RTL: NO_DIVERGENCE, 300 cycles, uhdm_vs_rtl=0), but
+# with the easy counterexample removed the miter now has to actually PROVE a
+# 256-bit MAC datapath and does not finish -- still timeout at a 2400s budget,
+# so the budget is left at 600s rather than burning CI time for the same
+# verdict.  Recorded as measured; not claimed as proven.
+otbn_mac_bignum              2   600   timeout
+otbn_mac_bignum_fsm          2   600   proven
 otbn_mai                     2   600   proven
 otbn_mask_accelerator        2   600   proven
 otbn_mod_result_selector     2   600   proven

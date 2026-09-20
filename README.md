@@ -52,13 +52,13 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (1042 tests, ~40 min).  A PR lands
+`cd test && ./run_parallel.sh 6 --no-cva6` (1043 tests, ~40 min).  A PR lands
 only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1579 | 1032 | 547 |
-| Functional | 1533 (97%) | **1032 (100%)** | 501 |
+| Tests | 1580 | 1033 | 547 |
+| Functional | 1534 (97%) | **1033 (100%)** | 501 |
 | True failures | 11 | **0** | 11 |
 | Crashes | 1 | **0** | 1 |
 
@@ -95,7 +95,7 @@ proof gap is never mistaken for a bug.
 |----|--------|-------|--------|-------|
 | **Ibex** | [lowRISC/ibex](https://github.com/lowRISC/ibex) | 2-stage RV32IMC core (+PMP, ICache, lockstep); 28 modules incl. `ibex_top` | **19 / 28 proven**, 20 / 20 co-sim, 26 / 28 opt-clean; whole hierarchy **0 loops, 0 undriven** | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **rp32 (R5P)** | [jeras/rp32](https://github.com/jeras/rp32) | 32-bit cores + TCB SoCs; 13 modules | **6 / 13 proven**, 3 / 3 co-sim, 9 / 13 opt-clean; both SoCs boot and run a program in functional sim | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **24 / 32 proven**, 3 SAT timeouts (256-bit datapaths), 4 cex under triage, 1 elaboration error; **every elaborating module opt-clean (0 undriven)** | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
+| **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **26 / 32 proven**, 4 SAT timeouts (256-bit datapaths), 1 cex (a read_slang reference issue), 1 elaboration error; **every elaborating module opt-clean (0 undriven)** | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
 | **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 299 module rows + 98 chip instances | **284 / 297 proven**, 291 / 292 co-sim; chips **47 / 47 + 51 / 51** instances proven, full-chip co-sim **PASS** | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules | **94 / 147 proven**, 12 cex, 26 SAT timeouts; full core lowers with **0 inferred latches**, 0 one-sided co-sim divergences | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **19 / 21 instances proven** (the 2 are SAT timeouts on vault register files, not mismatches); **0 undriven, 0 driver conflicts**; full-chip co-sim **NO_DIVERGENCE** over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
