@@ -4685,7 +4685,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     "non-constant dims — left unmaterialized\n",
                                     array_name.c_str());
                     }
-                } else if (array_var->Ranges() && array_var->Ranges()->size() > 1 &&
+                } else if (array_var->Ranges() && !array_var->Ranges()->empty() &&
+                           (array_var->Ranges()->size() > 1 ||
+                            whole_array_accessed_names.count(array_name)) &&
                            array_var->Variables() && !array_var->Variables()->empty() &&
                            (*array_var->Variables())[0]->UhdmType() == uhdmstruct_var &&
                            materialize_flat_struct_array(
@@ -4715,6 +4717,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // the helper returns null (and we fall through to the
                     // previous behaviour) unless every dimension is constant
                     // and the element width is known.
+                    //
+                    // The 1-D case is included only when the array is also
+                    // accessed AS A WHOLE.  `d_t v[4]` written both by
+                    // `v = '{default: D}` and by `v[c].field = ...` took the
+                    // flat-only fallback below (the per-element branch further
+                    // down is gated `is_1d && !whole_accessed`), and the
+                    // element-field writes then all resolved to element 0's
+                    // offsets and were dropped -- every field the loop computed
+                    // read back as the default.  A 1-D array that is NOT
+                    // whole-accessed still goes to that per-element branch,
+                    // which handles it correctly.
                     log("UHDM: Array_var '%s' multi-dim — flat representation\n",
                         array_name.c_str());
                 } else if (is_memory_array(array_var)) {
