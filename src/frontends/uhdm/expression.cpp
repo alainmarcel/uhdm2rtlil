@@ -6628,6 +6628,25 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
             else if (ats && ats->UhdmType() == uhdmunion_typespec)
                 members = any_cast<const UHDM::union_typespec*>(ats)->Members();
+            // `'{default: V}` on an ARRAY OF STRUCTS fills array ELEMENTS, not
+            // the struct's own members.  assignment_lhs_typespec hands back the
+            // ELEMENT struct for an unpacked-array target -- Surelog gives the
+            // array's net a struct typespec as soon as one member is an ENUM --
+            // so `members` was populated and each MEMBER got V truncated to the
+            // member width: `d_t ae[4]` with `'{default: Def}` produced
+            // {10,10} = 4'1010 (instead of Def's 4'0110), once, zero-extended
+            // to the array, so all four elements read 0.  When the target is a
+            // whole multiple of the struct it IS an array of it -- clear both
+            // so the element-fill branch below handles it (that branch sizes
+            // itself from expression_context_width when ats is null).
+            if (members && ats && expression_context_width > 0) {
+                int sw = get_width_from_typespec(ats, inst);
+                if (sw > 0 && expression_context_width > sw &&
+                    expression_context_width % sw == 0) {
+                    members = nullptr;
+                    ats = nullptr;
+                }
+            }
             if (deftp && members && deftp->Pattern()) {
                 RTLIL::SigSpec defval =
                     import_expression(any_cast<const expr*>(deftp->Pattern()), input_mapping);
