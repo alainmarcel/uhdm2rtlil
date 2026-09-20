@@ -6718,6 +6718,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (ew == 1 && !defval.is_fully_const() && defval.size() > 1 &&
                     tw > defval.size() && tw % defval.size() == 0)
                     ew = defval.size();
+                // A STRUCT-TYPED default replicates as a whole element even
+                // when it is constant.  `'{default: PredecDynDefault}` on
+                // `mac_bignum_predec_dyn_t vec[N]` (OTBN's
+                // otbn_mac_bignum_fsm) is an unpacked array of a packed
+                // struct: `members` is null (the TARGET is not a struct) so it
+                // lands here, `ew` stays 1, and the bitwise path replicated the
+                // value's truthiness -- every element bit came out 1 instead of
+                // the struct's own bit pattern.  A default whose PATTERN
+                // carries a struct/union/packed-array typespec is element-typed
+                // by construction, so take its width; a bare integer literal
+                // (`'{default: 0}` / `'{default: 1}`) has no such typespec and
+                // keeps the bitwise semantics it needs.
+                if (ew == 1 && defval.size() > 1 && tw > defval.size() &&
+                    tw % defval.size() == 0) {
+                    const UHDM::typespec* pts = nullptr;
+                    if (auto pe = dynamic_cast<const expr*>(deftp->Pattern()))
+                        if (auto rt = pe->Typespec())
+                            pts = rt->Actual_typespec();
+                    if (pts && (pts->UhdmType() == uhdmstruct_typespec ||
+                                pts->UhdmType() == uhdmunion_typespec ||
+                                pts->UhdmType() == uhdmpacked_array_typespec))
+                        ew = defval.size();
+                }
                 if (tw > 0 && ew > 0 && tw % ew == 0) {
                     if (defval.size() < ew) defval.extend_u0(ew);
                     else if (defval.size() > ew) defval = defval.extract(0, ew);
