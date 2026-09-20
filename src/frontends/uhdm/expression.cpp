@@ -609,7 +609,22 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     
                     // Add source attribute to the intermediate wire
                     add_src_attribute(intermediate_wire->attributes, ci);
-                    
+
+                    // The intermediate wire is the value this arm FALLS BACK
+                    // TO when the nested case matches none of its arms.  With
+                    // no default arm nothing ever drove it, so those paths read
+                    // a wire with no driver at all -- rp32_r5p_csr's `cause_f`
+                    // (a `unique casez` arm holding a nested `unique case` with
+                    // no default) left its 32-bit $result undriven at each of
+                    // three call sites: 96 nets, that module's whole opt-check
+                    // column.  A function's return variable starts at X per the
+                    // LRM, so drive it with X; a nested arm that does assign
+                    // overrides this, and the VALUES are unchanged (read_uhdm
+                    // already agreed with read_slang on every path).
+                    item_case->actions.push_back(RTLIL::SigSig(
+                        intermediate_wire,
+                        RTLIL::SigSpec(RTLIL::State::Sx, result_wire->width)));
+
                     // Add assignment from intermediate wire to result
                     item_case->actions.push_back(RTLIL::SigSig(result_wire, intermediate_wire));
                     
