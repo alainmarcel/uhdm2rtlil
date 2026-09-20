@@ -53,8 +53,8 @@ upstream Yosys test suite under `third_party/yosys/tests/`); the same run is
 the sharded [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Figures from the 2026-09-17 run:
 
-- **Total Tests**: 1577 (1030 internal SystemVerilog + 547 upstream Yosys)
-- **Success Rate**: 97% (1531/1577 tests functional), 1 crash, **0 Miter-Formal
+- **Total Tests**: 1578 (1031 internal SystemVerilog + 547 upstream Yosys)
+- **Success Rate**: 97% (1532/1578 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
 - **Passing**: 961 tests with formal equivalence verified between the UHDM and Verilog frontends
 - **UHDM-Only Success**: 552 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
@@ -82,7 +82,7 @@ workflow (every PR + nightly).  Figures from the 2026-09-17 run:
   the upstream-suite cases add further miter-inconclusive rows (stimulus / X
   artefacts such as `unique case` preconditions random stimulus violates).
 
-> The **internal** SystemVerilog suite alone is **1030 tests, 0 crashes, 0 true
+> The **internal** SystemVerilog suite alone is **1031 tests, 0 crashes, 0 true
 > failures** — every internal design reads and produces output.  All 11 true
 > failures and the single crash come from the imported upstream Yosys suite
 > (feature gaps / non-synthesizable constructs), tracked in
