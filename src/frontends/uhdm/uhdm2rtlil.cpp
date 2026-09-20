@@ -4685,6 +4685,38 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     "non-constant dims — left unmaterialized\n",
                                     array_name.c_str());
                     }
+                } else if (array_var->Ranges() && array_var->Ranges()->size() > 1 &&
+                           array_var->Variables() && !array_var->Variables()->empty() &&
+                           (*array_var->Variables())[0]->UhdmType() == uhdmstruct_var &&
+                           materialize_flat_struct_array(
+                               array_name, array_var->Ranges(),
+                               (*array_var->Variables())[0], array_var)) {
+                    // MULTI-dim unpacked array of STRUCT elements (the
+                    // uhdmstruct_var gate is load-bearing: without it this
+                    // also claims 2-D arrays of SCALARS such as
+                    // `logic a[1:0][2:0]`, whose per-element wires the branch
+                    // below builds correctly -- 2DUnpackedArray, ArrayInit,
+                    // array-copy, array_assign and array_init_2d all lost
+                    // Induct-Formal equivalence when it did) that
+                    // is_memory_array() does not claim -- it does not recognize
+                    // struct elements, which is why the array_net path above
+                    // calls materialize_flat_struct_array unconditionally for
+                    // multi-dim.  Surelog hands the SAME declaration over as an
+                    // array_NET or an array_VAR depending on the element type:
+                    // `d_t m[2][12]` arrives as an array_net when d_t is plain
+                    // logic, but as an array_var as soon as one member is an
+                    // ENUM.  Only the net side materialized the per-ROW alias
+                    // wires, so on the var side a whole-ROW assignment
+                    // (`m[0] = '{default: D}`) had no row wire to target and
+                    // was emitted at ELEMENT width -- OTBN's
+                    // otbn_mac_bignum_fsm `predec_multi[0] = '{default:
+                    // PredecDynDefault}` wrote 4 bits instead of 48 and left
+                    // 184 nets undriven.  Materialize flat + per-row here too;
+                    // the helper returns null (and we fall through to the
+                    // previous behaviour) unless every dimension is constant
+                    // and the element width is known.
+                    log("UHDM: Array_var '%s' multi-dim — flat representation\n",
+                        array_name.c_str());
                 } else if (is_memory_array(array_var)) {
                     // Has both packed and unpacked dimensions but only constant accesses,
                     // OR is a comb-only array with dynamic access — create individual element wires.
