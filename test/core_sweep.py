@@ -70,6 +70,16 @@ _CELLS: dict = {}
 # feedback CONSTRAINS a SAT miter to the inputs where gold and gate agree, so
 # the miter passes VACUOUSLY.  Never read the formal column without this one.
 _CONFLICTS: dict = {}
+# UNRESOLVED-READ counts from the same `check` run.  read_uhdm warns
+# "Could not resolve struct member access '<path>'" and then yields a CONSTANT X
+# for that read.  A constant HAS a driver, so `check` never flags it and the
+# undriven column stays green -- this is the failure mode
+# feedback_check_zero_problems_not_clean.md describes, and until now nothing in
+# the sweep surfaced it.  CVA6's acc_dispatcher emits 79 of these (its vendored
+# RTL reads members that do not exist in the type the design passes it), and
+# the row's only visible symptom was a yosys error much later at
+# `hierarchy -check`.
+_UNRESOLVED: dict = {}
 CVA6_DIR = TEST_DIR / "cva6_equiv"
 PAVONA_DIR = TEST_DIR / "pavona_equiv"
 # Upstream lowRISC OpenTitan.  DELIBERATELY SEPARATE from PAVONA_DIR: pavona is
@@ -180,6 +190,9 @@ def _undriven_check(work_dir, top):
     # Driver conflicts from the same run (see _CONFLICTS).  Counted per
     # reported signal, plus every `action <const> <= …` line, which is a write
     # whose target is a literal -- the write goes nowhere.
+    # Unresolved struct-member reads: each one silently became a constant X.
+    _UNRESOLVED[str(Path(work_dir).resolve())] = \
+        len(re.findall(r"Could not resolve struct member access", out))
     _CONFLICTS[str(Path(work_dir).resolve())] = (
         len(re.findall(r"conflicting drivers for", out)) +
         len(re.findall(r"Drivers conflicting with", out)) +
@@ -242,6 +255,19 @@ def _conflict_cell(work_dir):
     if n is None:
         return "—"
     return "✅ 0" if n == 0 else f"❌ {n} conflict{'s' if n != 1 else ''}"
+
+
+def _unresolved_cell(work_dir):
+    """Render the unresolved struct-member-read count from _undriven_check.
+
+    These do NOT show up in the undriven column: an unresolved read becomes a
+    constant X, and a constant has a driver, so `check` stays silent.  The
+    reader warns for every one of them, which is the signal this surfaces.
+    """
+    n = _UNRESOLVED.get(str(Path(work_dir).resolve()))
+    if n is None:
+        return "—"
+    return "✅ 0" if n == 0 else f"❌ {n} unresolved"
 
 
 def _project_top(d):
@@ -398,6 +424,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         # Structural undriven-net probe (fast dropped-driver check, every dir).
         row["check"] = _undriven_check(d, _project_top(d))
         row["conflicts"] = _conflict_cell(d)
+        row["unresolved"] = _unresolved_cell(d)
         # 1. slang miter.  A committed test_slang_equiv.ys takes precedence
         # (hand-tuned lowering for the tricky modules); otherwise auto-generate
         # the standard boilerplate miter from project.f so a self-contained
@@ -554,6 +581,7 @@ def sweep_cva6(cycles, jobs, flt=None):
         row["check"] = (_undriven_check(work, f"{mod}_equiv")
                         if elaborated else "— (no elaboration)")
         row["conflicts"] = _conflict_cell(work) if elaborated else "—"
+        row["unresolved"] = _unresolved_cell(work) if elaborated else "—"
         # Co-sim EVERY elaborated module, not just cex: a module PROVEN under the
         # SAT miter (which runs -set-init-zero) can still diverge in co-sim from
         # an X-init / undriven net the miter hides (the tlul_fifo_sync class), so
@@ -704,6 +732,7 @@ def sweep_pavona(jobs, cycles=300, flt=None):
         else:
             r["check"] = _pavona_check(r["module"])
             r["conflicts"] = _conflict_cell(PAVONA_DIR / "work" / r["module"])
+            r["unresolved"] = _unresolved_cell(PAVONA_DIR / "work" / r["module"])
             r["cosim"] = _pavona_cosim(r["module"], cycles)
             r["slang_cosim"] = _SLANG_COSIM.get(r["module"], "—")
         return r
@@ -1543,6 +1572,7 @@ def render(core, rows, cycles):
     # The driver-CONFLICT column (see _CONFLICTS): reported next to `formal`
     # because it is what tells you whether to BELIEVE the formal column.
     has_conf = any(r.get("conflicts", "—") != "—" for r in rows)
+    has_unres = any(r.get("unresolved", "—") != "—" for r in rows)
     lines = [f"## {core} sweep — formal (vs read_slang) + Verilator co-sim "
              f"({cycles} cycles)", ""]
     # Left-most column: the read_slang netlist's own co-sim vs the behavioural
@@ -1554,6 +1584,8 @@ def render(core, rows, cycles):
         hdr.append("driver conflicts")
     if has_check:
         hdr.append("opt check (undriven)")
+    if has_unres:
+        hdr.append("unresolved reads")
     hdr.append("co-sim vs RTL")
     lines += ["| " + " | ".join(hdr) + " |",
               "|" + "---|" * len(hdr)]
@@ -1563,6 +1595,8 @@ def render(core, rows, cycles):
             cells.append(r.get("conflicts", "—"))
         if has_check:
             cells.append(r.get("check", "—"))
+        if has_unres:
+            cells.append(r.get("unresolved", "—"))
         cells.append(r["cosim"])
         lines.append("| " + " | ".join(cells) + " |")
     spass = sum(1 for r in rows if sc(r).startswith("✅"))
@@ -1599,6 +1633,16 @@ def render(core, rows, cycles):
             f"the formal column UNRELIABLE — the bogus feedback constrains the "
             f"miter to the inputs where gold and gate agree, so it can pass "
             f"vacuously.")
+    if has_unres:
+        uclean = sum(1 for r in rows if r.get("unresolved", "").startswith("✅"))
+        udirty = sum(1 for r in rows if r.get("unresolved", "").startswith("❌"))
+        lines.append(
+            f"**Unresolved reads:** {uclean}/{uclean + udirty} modules with "
+            f"none ({udirty} with at least one). read_uhdm warns \"Could not "
+            f"resolve struct member access\" and then yields a CONSTANT X for "
+            f"that read. A constant HAS a driver, so `check` never flags it and "
+            f"the undriven column stays green — this column is the only place "
+            f"an unresolved read shows up.")
     nunbuild = sum(1 for r in rows if "netlist unbuildable" in r.get("cosim", ""))
     if nunbuild:
         lines.append(
