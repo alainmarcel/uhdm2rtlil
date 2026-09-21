@@ -35,7 +35,12 @@
 # seq/timeout differ from the 300s default sweep.
 
 acc_dispatcher                         4   180   error
-aes                                    4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+aes                                    4   180   timeout
 alu                                    4   900   proven
 alu_wrapper                            4   900   proven
 amo_alu                                4   180   error
@@ -75,22 +80,50 @@ cvxif_fu                               4   900   proven
 cvxif_issue_register_commit_if_driver  4   900   proven
 decoder                                4   900   proven
 div_sqrt_top_mvp                       4   180   timeout
-ex_stage                               4   180   cex
+# ex_stage: was `cex`.  The counterexample was the duplicated always_ff pair
+# Surelog produced for its two sibling `if (CVA6Cfg.RVH) ... else ...`
+# constructs (chipsalliance/Surelog#4183, bumped in #838) -- 81 driver
+# conflicts on vaddr_to_be_flushed / asid_to_be_flushed /
+# current_instruction_is_sfence_vma.  With that fixed the miter has to prove
+# the whole execute stage and does NOT finish: still timeout at a 1800s budget,
+# so the budget stays at 180 rather than burning CI for the same verdict.
+# Verilator co-sim against the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+ex_stage                               4   180   timeout
 fpnew_cast_multi                       4   600   proven   # re-proven after bit-select-index self-determination + CPK_FORMATS typespec fix (was briefly cex when the corrected special_results import exposed the then-mirrored CPK geometry)
 fpnew_classifier                       4   180   proven
 fpnew_divsqrt_multi                    4   400   elabfail  # harness: fpnew Implementation chain unresolved -> NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
 fpnew_divsqrt_th_32                    4   180   proven
 fpnew_divsqrt_th_64_multi              4   900   proven
-fpnew_fma                              4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpnew_fma                              4   180   timeout
 fpnew_fma_multi                        4   180   error    # count_id assert FIXED; remaining error = missing module (fmalza not vendored), like amo_alu
 fpnew_noncomp                          4   180   proven
 fpnew_opgroup_block                    4   180   cex
-fpnew_opgroup_fmt_slice                4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpnew_opgroup_fmt_slice                4   180   timeout
 fpnew_opgroup_multifmt_slice           4   180   timeout  # co-sim CLEAN (was 97 divergences pre-fillgen/CPK rounds); miter exceeds SAT budget at full CPK lane widths (>15min)
 fpnew_rounding                         4   900   proven
 fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
-fpu_wrap                               4   180   cex
-frontend                               4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpu_wrap                               4   180   timeout
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+frontend                               4   180   timeout
 hpdcache                               4   180   dead     # CVA6Cfg.DCacheType == config_pkg::WT selects the wt_dcache, so hpdcacheSetConfig leaves wtEn AND wbEn 0 and hpdcache.sv:1327 $fatal's
 hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
@@ -138,7 +171,8 @@ hpdcache_victim_sel                    4   180   proven   # PROVEN after part-se
 hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
 hwpf_stride                            4   400   proven
 hwpf_stride_arb                        4   400   proven
-hwpf_stride_wrapper                    4   400   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
+# Was `cex`; PROVEN after the Surelog sibling-generate fix (#838).
+hwpf_stride_wrapper                    4   400   proven
 id_stage                               4   180   proven
 instr_decoder                          4   400   proven
 instr_queue                            4   900   proven
@@ -147,11 +181,22 @@ instr_scan                             4   900   proven
 issue_read_operands                    4   180   timeout  # co-sim CLEAN (0/2000 vs RTL, slang 0) after the dyn-index/element-field/supersede fixes; SAT capacity only
 issue_stage                            4   180   timeout
 iteration_div_sqrt_mvp                 4   900   proven
-load_store_unit                        4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+load_store_unit                        4   180   timeout
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
 macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
-miss_handler                           4   180   cex      # co-sim 1v1 BOTH_DIFFER (same cycle/signal both sides) after the get_victim_cl early-return fix; was asymmetric 5v1
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 1/1 -- uhdm and slang diverge IDENTICALLY,
+# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+
+miss_handler                           4   180   timeout
 mult                                   4   180   timeout
 multiplier                             4   180   timeout
 norm_div_sqrt_mvp                      4   900   proven
@@ -167,17 +212,40 @@ raw_checker                            4   900   proven
 scoreboard                             4   180   timeout  # co-sim CLEAN (0/2000 vs RTL) since the type-param write walk + packed element-range fixes; SAT capacity only, still times out at 1800s
 serdiv                                 4   180   timeout
 std_cache_subsystem                    4   180   timeout  # was crash (segfault); now timeout
-std_nbdcache                           4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+std_nbdcache                           4   180   timeout
 store_buffer                           4   900   proven
 store_unit                             4   900   proven
-tag_cmp                                4   400   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+tag_cmp                                4   400   timeout
 trigger_module                         4   900   proven
 wt_axi_adapter                         4   400   proven      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
 wt_cache_subsystem                     4   180   timeout
 wt_dcache                              4   180   timeout
-wt_dcache_ctrl                         4   180   cex      # cex now measurable (was crash: null-module segfault) - TRIAGE
-wt_dcache_mem                          4   180   cex      # UHDM WRONG (adjudicated): wr_ack_o rtl=0 uhdm=1 slang=0, seeds 1/2/3
+# Was `cex`; PROVEN after the Surelog sibling-generate fix (#838).
+wt_dcache_ctrl                         4   180   proven
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 63/63 -- uhdm and slang diverge IDENTICALLY,
+# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+
+wt_dcache_mem                          4   180   timeout
 wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
-wt_dcache_wbuffer                      4   180   cex      # UHDM WRONG (adjudicated): c1 every output slang==rtl, uhdm=0
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 216/216 -- uhdm and slang diverge IDENTICALLY,
+# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+
+wt_dcache_wbuffer                      4   180   timeout
 zcmt_decoder                           4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
 rr_arb_tree                            4   400   proven
