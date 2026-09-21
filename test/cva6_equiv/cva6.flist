@@ -132,6 +132,8 @@ __CVA6_RTL__/vendor/pulp-platform/common_cells/src/popcount.sv
 __CVA6_RTL__/vendor/pulp-platform/common_cells/src/exp_backoff.sv
 __CVA6_RTL__/vendor/pulp-platform/common_cells/src/counter.sv
 __CVA6_RTL__/vendor/pulp-platform/common_cells/src/delta_counter.sv
+__CVA6_RTL__/vendor/pulp-platform/common_cells/src/spill_register_flushable.sv
+__CVA6_RTL__/vendor/pulp-platform/common_cells/src/spill_register.sv
 __CVA6_RTL__/core/cva6.sv
 __CVA6_RTL__/core/cva6_rvfi_probes.sv
 __CVA6_RTL__/core/alu.sv
