@@ -25,8 +25,16 @@ jobs:
     with:
       core: cva6
       cycles: ${{ github.event.inputs.cycles || '300' }}
-      # 6-way shard: the full cva6 sweep (SAT miters + per-module co-sim) ran
-      # ~3h48m in one job and hit the timeout, so split it round-robin across
-      # 6 parallel jobs (~1/6 each) with a generous per-shard timeout.
-      shards: 6
-      timeout: 180
+      # Round-robin shard: the full cva6 sweep (SAT miters + per-module co-sim)
+      # ran ~3h48m in one job and hit the timeout.
+      #
+      # Raised 6 -> 8 shards and 180 -> 240 min together with the double-shard
+      # fix in core_sweep.py.  Until that fix each shard reported a DIFFERENT
+      # slice than it ran, so most of its rows had no work dir and their
+      # opt-check and co-sim silently no-op'd as "— (no run)" -- 85 of 95 rows
+      # in the 2026-09-20 nightly.  Now every reported module is one the shard
+      # actually elaborated, so each shard really runs ~18 miters and ~18
+      # co-sims instead of ~2.  The extra budget is for the work that was being
+      # skipped, not for new work.
+      shards: 8
+      timeout: 240
