@@ -523,9 +523,24 @@ def sweep_cva6(cycles, jobs, flt=None):
             parts = line.split()
             if len(parts) >= 4 and parts[0] not in formal:
                 formal[parts[0]] = parts[3] if parts[3] in label else "skipped"
-    mods = sorted(m for m, st in formal.items()
-                  if st != "dead" and (flt is None or re.search(flt, m)))
-    mods = _apply_shard(mods)
+    # Report exactly the modules THIS SHARD RAN -- `target_mods`, the slice
+    # already taken above.  Do NOT slice again here: the second slice was
+    # applied to a DIFFERENT list (the manifest-merged `formal` keys, a
+    # different length and order than `all_mods`), so round-robin picked a
+    # different subset the second time.  Each shard then dropped rows for
+    # modules it had actually run and emitted rows for modules it had not,
+    # which is both wasted SAT time and cross-shard duplication: the
+    # 2026-09-20 nightly produced 119 row entries for only 95 distinct
+    # modules, 24 of them reported by two shards each, and the merge job's
+    # de-dup silently collapsed 114 shard rows into 94.
+    if _SHARD[1] > 1:
+        tgt = set(target_mods)
+        mods = sorted(m for m in tgt
+                      if formal.get(m) != "dead"
+                      and (flt is None or re.search(flt, m)))
+    else:
+        mods = sorted(m for m, st in formal.items()
+                      if st != "dead" and (flt is None or re.search(flt, m)))
 
     def one(mod):
         row = {"module": mod, "formal": label.get(formal[mod], formal[mod]),
