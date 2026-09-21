@@ -153,7 +153,12 @@ hpdcache_mshr                          4   400   proven   # async-reset RAM clea
 hpdcache_mux                           4   180   proven
 hpdcache_prio_1hot_encoder             4   180   proven
 hpdcache_prio_bin_encoder              4   180   proven
-hpdcache_regbank_wbyteenable_1rw       4   180   elabfail  # was crash (segfault); now elabfail
+# Was `elabfail`: the wrapper left DATA_SIZE at the module default 0, so wdata
+# was `logic[-1:0]` and read_slang rejected the byte selects.  Bound from
+# HPDcacheCfg like ADDR_SIZE/DEPTH already were; the module now elaborates and
+# miters.  Still SAT-hard (timeout at 180s and at 1200s), budget kept at 180.
+# Verilator co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+hpdcache_regbank_wbyteenable_1rw       4   180   timeout
 hpdcache_regbank_wmask_1rw             4   180   cex      # co-sim N/A: wrapper exposes no outputs to compare
 hpdcache_rrarb                         4   180   proven
 hpdcache_rtab                          4   180   proven   # promoted: proves since the fev rounds (co-sim NO_DIVERGENCE)

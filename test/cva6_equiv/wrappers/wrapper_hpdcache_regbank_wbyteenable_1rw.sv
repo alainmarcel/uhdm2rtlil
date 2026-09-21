@@ -310,8 +310,38 @@ module hpdcache_regbank_wbyteenable_1rw_equiv
     `CVXIF_RESP_T(CVA6Cfg, x_compressed_resp_t, x_issue_resp_t, x_result_t)
 ,
 
-  parameter int unsigned DATA_SIZE = 0,
   parameter hpdcache_cfg_t HPDcacheCfg = hpdcache_equiv_pkg::HPDcacheCfg,
+  // DATA_SIZE was left at the module's own default of 0, which makes `wdata`
+  // a `logic[-1:0]` and read_slang rightly rejects the module:
+  //   "cannot select range of 8 elements from 'logic[-1:0]'"
+  // so the row scored `elabfail` and was never measured at all.  ADDR_SIZE and
+  // DEPTH were already bound from HPDcacheCfg; only DATA_SIZE was missed.
+  //
+  // The real instantiation (hpdcache_mshr.sv gen_mshr_regbank) passes
+  //   .DATA_SIZE (HPDcacheCfg.u.mshrWays * HPDCACHE_MSHR_RAM_ENTRY_BITS)
+  // where HPDCACHE_MSHR_RAM_ENTRY_BITS is $bits(mshr_entry_t) rounded up to a
+  // byte when mshrRamByteEnable is set.  mshr_entry_t is local to
+  // hpdcache_mshr, so reconstruct it here from the same hpdcache_equiv_pkg
+  // types the rest of this wrapper uses -- keeping the wrapper's contract that
+  // the parameter environment matches the real hierarchy.
+  localparam type cbuf_id_t = logic [HPDcacheCfg.cbufEntryWidth-1:0],
+  localparam type mshr_entry_t = struct packed {
+      hpdcache_equiv_pkg::hpdcache_tag_t     tag;
+      hpdcache_equiv_pkg::hpdcache_req_tid_t req_id;
+      hpdcache_equiv_pkg::hpdcache_req_sid_t src_id;
+      hpdcache_equiv_pkg::hpdcache_word_t    word_idx;
+      hpdcache_equiv_pkg::hpdcache_way_t     victim_way_idx;
+      logic                                  wback;
+      logic                                  dirty;
+      logic                                  need_rsp;
+      logic                                  is_prefetch;
+      cbuf_id_t                              cbuf_id;
+  },
+  localparam int unsigned MSHR_ENTRY_BITS = $bits(mshr_entry_t),
+  localparam int unsigned MSHR_RAM_ENTRY_BITS =
+      HPDcacheCfg.u.mshrRamByteEnable ? ((MSHR_ENTRY_BITS + 7) / 8) * 8
+                                      : MSHR_ENTRY_BITS,
+  parameter int unsigned DATA_SIZE = HPDcacheCfg.u.mshrWays * MSHR_RAM_ENTRY_BITS,
   parameter int unsigned ADDR_SIZE = HPDcacheCfg.mshrSetWidth,
   parameter int unsigned DEPTH = HPDcacheCfg.u.mshrSets
 ) (
