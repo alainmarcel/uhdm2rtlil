@@ -34,6 +34,19 @@
 # the vendored RTL (vendor_cva6.sh), then re-apply the entries below whose
 # seq/timeout differ from the 300s default sweep.
 
+# acc_dispatcher references members that DO NOT EXIST in the type the design
+# passes it.  cva6.sv binds .acc_req_t(cvxif_req_t), and CVXIF_REQ_T has no
+# `acc_req` member (it has compressed_valid/compressed_req/issue_valid/...),
+# yet acc_dispatcher.sv reads acc_req_o.acc_req.req_valid.  read_slang says so
+# plainly: "no member named 'acc_req' in 'acc_req_t'" (5 sites).  The vendored
+# acc_dispatcher.sv is out of sync with cvxif_types.svh in this snapshot, so the
+# module is not elaborable as written by ANY tool; this config also disables the
+# accelerator, so the chip never instantiates it.
+#
+# NOTE a real frontend gap this exposed: read_uhdm accepts the invalid member
+# access and emits a netlist whose spill_register output port is tied to a
+# constant, which yosys only rejects later at `hierarchy -check`.  We should
+# diagnose it at read time the way slang does.
 acc_dispatcher                         4   180   error
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of
 # sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
