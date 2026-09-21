@@ -300,6 +300,11 @@ struct UhdmImporter {
 
     // Track top-level modules (those with vpiTop:1 property)
     std::set<std::string> top_level_modules;
+    // True while importing a definition from AllModules, where parameters sit
+    // at their DEFAULTS.  Diagnostics that depend on a resolved parameter
+    // binding (an unresolved struct-member read on a `parameter type T = logic`
+    // port) are meaningless in that pass and must not reach the warning stream.
+    bool in_allmodules_pass_ = false;
 
     // Track modules reachable from any top via Modules() — i.e. modules whose
     // ref_module child cells will be created by import_module_hierarchy().

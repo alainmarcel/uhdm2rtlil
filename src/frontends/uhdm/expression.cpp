@@ -18238,7 +18238,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
-            log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
+            // Not in the AllModules definition pass: there every `parameter
+            // type T = logic` port makes `port.member` unresolvable by
+            // construction, and the elaborated instance resolves it correctly.
+            if (in_allmodules_pass_)
+                log("UHDM: (definition pass) unresolved struct member access '%s'\n",
+                    path_name.c_str());
+            else
+                log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
             if (mode_debug && uhdm_hier->Path_elems())
                 for (size_t t = 0; t < uhdm_hier->Path_elems()->size(); t++) {
                     auto pe_t = (*uhdm_hier->Path_elems())[t];
