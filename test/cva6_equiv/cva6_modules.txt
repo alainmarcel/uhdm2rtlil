@@ -91,7 +91,13 @@ div_sqrt_top_mvp                       4   180   timeout
 ex_stage                               4   180   timeout
 fpnew_cast_multi                       4   600   proven   # re-proven after bit-select-index self-determination + CPK_FORMATS typespec fix (was briefly cex when the corrected special_results import exposed the then-mirrored CPK geometry)
 fpnew_classifier                       4   180   proven
-fpnew_divsqrt_multi                    4   400   elabfail  # harness: fpnew Implementation chain unresolved -> NUM_INP_REGS=0 -> OOB select (Verilator agrees, same line)
+# Was `elabfail`: the wrapper left NumPipeRegs at the module default 0, so
+# ExtRegEnaWidth was 1 and reg_ena_i[NUM_INP_REGS-1] indexed -1; read_slang
+# rejected it and the row was never measured.  CVA6 builds the DIVSQRT lane
+# with LAT_DIVSQRT regs and the DISTRIBUTED pipe config (fpu_wrap.sv
+# FPU_IMPLEMENTATION), passed down through fpnew_top -> fpnew_opgroup_block
+# -> fpnew_opgroup_multifmt_slice.  With those bound it PROVES.
+fpnew_divsqrt_multi                    4   400   proven
 fpnew_divsqrt_th_32                    4   180   proven
 fpnew_divsqrt_th_64_multi              4   900   proven
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of

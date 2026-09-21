@@ -308,9 +308,21 @@ module fpnew_divsqrt_multi_equiv
 ,
 
   parameter fpnew_pkg::fmt_logic_t   FpFmtConfig  = '1,
-  // FPU configuration
-    parameter int unsigned             NumPipeRegs = 0,
-  parameter fpnew_pkg::pipe_config_t PipeConfig  = fpnew_pkg::AFTER,
+  // FPU configuration.
+  //
+  // NumPipeRegs was left at the module's own default of 0, which makes
+  // ExtRegEnaWidth 1 and `reg_ena_i[NUM_INP_REGS-1]` index -1; read_slang
+  // rejects the module ("cannot refer to element 32'd4294967295 of
+  // 'logic[0:0]'") and the row scored `elabfail`, so it was never measured.
+  //
+  // CVA6 builds the DIVSQRT lane with LAT_DIVSQRT pipeline registers and the
+  // DISTRIBUTED pipe config (fpu_wrap.sv FPU_IMPLEMENTATION: the DIVSQRT row
+  // of PipeRegs is '{default: LAT_DIVSQRT} and PipeConfig is DISTRIBUTED),
+  // which fpnew_top -> fpnew_opgroup_block -> fpnew_opgroup_multifmt_slice
+  // passes straight through to this module.  Bind the same values so the
+  // parameter environment matches the real hierarchy.
+    parameter int unsigned             NumPipeRegs = ariane_pkg::LAT_DIVSQRT,
+  parameter fpnew_pkg::pipe_config_t PipeConfig  = fpnew_pkg::DISTRIBUTED,
   parameter type                     TagType = logic [CVA6Cfg.TRANS_ID_BITS-1:0],
   parameter type                     AuxType     = logic,
   // Do not change
