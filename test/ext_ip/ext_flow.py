@@ -139,6 +139,46 @@ class Closure:
 
 
 # ----------------------------------------------------------------- one module
+# Errors that mean "this module cannot be elaborated standalone with its DEFAULT
+# parameters", as opposed to "read_slang cannot handle this construct".  The
+# distinction matters: the first is a property of the sweep (we picked a
+# meaningless parameterisation), the second may be hiding a real frontend gap,
+# so only the first is allowed to become a skip.
+_DEFAULT_ELAB_ERRORS = (
+    "invalid member access for type",   # struct port typed by `parameter type X = logic`
+    "value must be positive",           # a width computed from a default parameter
+    "cannot index into",                # array port degraded to a scalar
+    "is not a class, package, or type", # type parameter used as a scope
+)
+
+
+def _defaults_unelaboratable(files, mod, slang_out):
+    """True when read_slang's rejection is caused by the module's own DEFAULT
+    parameters rather than by a construct read_slang does not support.
+
+    Requires BOTH signals, so a slang limitation is never silently skipped:
+      * the error text is one of the default-parameterisation failures above, and
+      * the module actually declares a `parameter type`, i.e. it is meant to be
+        instantiated with real types bound by a parent.
+    """
+    if not any(e in (slang_out or "") for e in _DEFAULT_ELAB_ERRORS):
+        return False
+    pat = re.compile(r"\bmodule\s+" + re.escape(mod) + r"\b")
+    for f in files:
+        try:
+            src = open(f, "r", errors="replace").read()
+        except OSError:
+            continue
+        mm = pat.search(src)
+        if not mm:
+            continue
+        # header = everything up to the end of the port list
+        head = src[mm.start():mm.start() + 8000]
+        if re.search(r"parameter\s+type\s+\w+", head):
+            return True
+    return False
+
+
 def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
     w = work_root / m
     w.mkdir(parents=True, exist_ok=True)
@@ -173,6 +213,44 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     slang_incs = " ".join(f"-I {shlex.quote(str(EXT / d))}" for d in incs)
     slang_defs = " ".join(f"-D{d}" for d in defines)
     srcs_q = " ".join(shlex.quote(f) for f in files)
+
+    # --- reference FIRST.  Whether a valid reference exists decides how to read
+    # everything after it.  These repos are swept module-by-module with each
+    # module's DEFAULT parameters, and PULP-style RTL declares its struct ports
+    # through type parameters:
+    #
+    #     parameter type axi_resp_t = logic,
+    #     output axi_resp_t slv_resp_o,
+    #     .req_o ( slv_resp_o.b_valid )
+    #
+    # With the default binding that is a member access on a 1-BIT LOGIC -- not
+    # valid SystemVerilog.  read_slang says so ("invalid member access for type
+    # 'axi_resp_t' (aka 'logic')"); read_uhdm folds the actual to a constant and
+    # yosys only objects later at flatten ("driving constant bits").  Judging our
+    # netlist against an elaboration that is not legal in the first place tells
+    # us nothing, so such a module is SKIPPED, not failed: 17 of 108 axi rows
+    # were being reported as read-failures purely for this reason.
+    (w / "slang.ys").write_text(
+        f"read_slang --ignore-assertions {slang_defs} {slang_incs} {srcs_q} --top {top}\n"
+        f"hierarchy -check -top {top}\nwrite_rtlil slang_hier.il\n")
+    # NOT -q: the per-line slang diagnostics are what tell a default-parameter
+    # elaboration failure apart from a slang limitation, and -q collapses them
+    # to a bare "Design elaboration failed".
+    rc2, out2 = sh([str(Y), "slang.ys"], cwd=w, timeout=600)
+    (w / "slang.log").write_text(out2 or "")
+    slang_ok = rc2 == 0 and (w / "slang_hier.il").exists()
+    if not slang_ok:
+        serr = re.search(r"(ERROR|error)[^\n]*", out2 or "")
+        serr_txt = serr.group(0) if serr else ""
+        if _defaults_unelaboratable(files, m, out2 or ""):
+            return {"module": m, "formal": "skip (defaults don't elaborate)",
+                    "formal_raw": "skip", "check": "— (not comparable)",
+                    "cosim": "—", "slang_cosim": "—",
+                    "note": serr_txt[:140]}
+        return {"module": m, "formal": "no reference (read_slang fails)",
+                "formal_raw": "noref", "check": "— (not comparable)",
+                "cosim": "—", "slang_cosim": "—", "note": serr_txt[:140]}
+
     # --- survey / opt-check: read_uhdm, hierarchy -check, flatten, check
     (w / "check.ys").write_text(
         f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -check -top {top}\n"
@@ -187,21 +265,10 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     undriven = len(re.findall(r"is used but has no driver", out or ""))
     cells = re.search(r"Number of cells:\s*(\d+)", out or "")
     check = "✅ 0 undriven" if undriven == 0 else f"❌ {undriven} undriven"
-    (w / "slang.ys").write_text(
-        f"read_slang --ignore-assertions {slang_defs} {slang_incs} {srcs_q} --top {top}\n"
-        f"hierarchy -check -top {top}\nwrite_rtlil slang_hier.il\n")
-    rc2, out2 = sh([str(Y), "-q", "slang.ys"], cwd=w, timeout=600)
-    (w / "slang.log").write_text(out2 or "")
-    slang_ok = rc2 == 0 and (w / "slang_hier.il").exists()
     if survey:
-        return {"module": m, "formal": "read OK" if slang_ok else "read OK (slang fails)",
-                "formal_raw": "read", "check": check, "cosim": "—", "slang_cosim": "—",
-                "note": f"{cells.group(1)} cells" if cells else ""}
-    if not slang_ok:
-        err = re.search(r"(ERROR|error)[^\n]*", out2 or "")
-        return {"module": m, "formal": "no reference (read_slang fails)", "formal_raw": "error",
+        return {"module": m, "formal": "read OK", "formal_raw": "read",
                 "check": check, "cosim": "—", "slang_cosim": "—",
-                "note": (err.group(0)[:140] if err else "")}
+                "note": f"{cells.group(1)} cells" if cells else ""}
     # --- miter
     (w / "miter.ys").write_text(f"""read_rtlil uhdm_hier.il
 hierarchy -top {top}
@@ -316,7 +383,12 @@ def main():
                        x.get("want", want0), man.get("incdirs", []), man.get("defines", ["SYNTHESIS"]),
                        args.cycles, not args.no_cosim, args.survey, work_root, ties)
         want = x.get("want", want0)
-        ico = "✅" if r.get("formal_raw") in ("proven", "read") else ("‼" if r.get("formal_raw") == "elabfail" else "❌")
+        # skip / noref are "not comparable", not failures: mark them ⏭ so the
+        # eye does not read a harness limitation as a frontend defect.
+        if r.get("formal_raw") in ("skip", "noref"):
+            ico = "⏭"
+        else:
+            ico = "✅" if r.get("formal_raw") in ("proven", "read") else ("‼" if r.get("formal_raw") == "elabfail" else "❌")
         if r.get("formal_raw") == want:
             ico = "✅"
         print(f"  {ico} {r['module']:<34} {r['formal']:<28} {r['check']:<16} {r['cosim']:<32} "
@@ -326,11 +398,24 @@ def main():
         rows = list(ex.map(one, mods))
     rows.sort(key=lambda r: r["module"])
     n = len(rows)
-    prov = sum(1 for r in rows if r.get("formal_raw") == "proven")
-    read = sum(1 for r in rows if r.get("formal_raw") in ("proven", "cex", "timeout", "memlimit", "read"))
-    print(f"{args.family.upper()} equivalence: {prov}/{n} proven, {read}/{n} elaborate "
-          f"({sum(1 for r in rows if r.get('formal_raw') == 'elabfail')} elab-fail, "
-          f"{sum(1 for r in rows if r.get('formal_raw') == 'error')} error)")
+    # Rows with no valid reference are NOT COMPARABLE and are excluded from the
+    # denominator: `skip` is a module whose own default parameters do not give a
+    # legal elaboration (see _defaults_unelaboratable), `noref` is one read_slang
+    # cannot read for its own reasons.  Counting either as a failure made the
+    # family score a measure of the harness rather than of the frontend -- axi
+    # read as 8/108 while 99 of those rows had no reference at all.
+    skipped = sum(1 for r in rows if r.get("formal_raw") == "skip")
+    noref = sum(1 for r in rows if r.get("formal_raw") == "noref")
+    comparable = [r for r in rows if r.get("formal_raw") not in ("skip", "noref")]
+    nc = len(comparable)
+    prov = sum(1 for r in comparable if r.get("formal_raw") == "proven")
+    read = sum(1 for r in comparable
+               if r.get("formal_raw") in ("proven", "cex", "timeout", "memlimit", "read"))
+    den = nc if nc else 1
+    print(f"{args.family.upper()} equivalence: {prov}/{nc} proven, {read}/{nc} elaborate "
+          f"({sum(1 for r in comparable if r.get('formal_raw') == 'elabfail')} elab-fail, "
+          f"{sum(1 for r in comparable if r.get('formal_raw') == 'error')} error"
+          f"{f'; {skipped} skipped (default params), {noref} no reference — excluded of {n}' if (skipped or noref) else ''})")
     out = args.out or (work_root / "rows.json")
     out.write_text(json.dumps(rows, indent=1))
 
