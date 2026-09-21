@@ -267,7 +267,15 @@ def _unresolved_cell(work_dir):
     n = _UNRESOLVED.get(str(Path(work_dir).resolve()))
     if n is None:
         return "—"
-    return "✅ 0" if n == 0 else f"❌ {n} unresolved"
+    # ADVISORY, not a verdict.  The warning marks a resolution ATTEMPT that
+    # failed; another path often resolves the same read correctly afterwards,
+    # so a non-zero count does not mean the netlist is wrong.  Measured on
+    # CVA6 frontend: `bht_update_i.pc[PREDICTION_BITS-1:ROW_ADDR_BITS+OFFSET]`
+    # and `stack_d[DEPTH-1].ra` both warn, yet the netlist connects
+    # update_pc to \resolved_branch_i [76:71] and data_o to stack_q[64:0],
+    # with zero X constants on those cones.  Shown as ℹ so it reads as
+    # "worth a look", never as a failure beside the ✅/❌ columns.
+    return "✅ 0" if n == 0 else f"ℹ {n} to triage"
 
 
 def _project_top(d):
@@ -1635,14 +1643,17 @@ def render(core, rows, cycles):
             f"vacuously.")
     if has_unres:
         uclean = sum(1 for r in rows if r.get("unresolved", "").startswith("✅"))
-        udirty = sum(1 for r in rows if r.get("unresolved", "").startswith("❌"))
+        udirty = sum(1 for r in rows if r.get("unresolved", "").startswith("ℹ"))
         lines.append(
-            f"**Unresolved reads:** {uclean}/{uclean + udirty} modules with "
-            f"none ({udirty} with at least one). read_uhdm warns \"Could not "
-            f"resolve struct member access\" and then yields a CONSTANT X for "
-            f"that read. A constant HAS a driver, so `check` never flags it and "
-            f"the undriven column stays green — this column is the only place "
-            f"an unresolved read shows up.")
+            f"**Unresolved reads (advisory):** {uclean}/{uclean + udirty} "
+            f"modules with none ({udirty} with at least one). read_uhdm warns "
+            f"\"Could not resolve struct member access\" and falls back to a "
+            f"CONSTANT X for that read; a constant HAS a driver, so `check` "
+            f"never flags it. NOT a verdict: the warning marks a failed "
+            f"resolution ATTEMPT and another path frequently resolves the same "
+            f"read correctly, so verify against the elaborated netlist before "
+            f"treating a count as a defect. Confirmed real where read_slang "
+            f"independently rejects the same access (cva6 acc_dispatcher).")
     nunbuild = sum(1 for r in rows if "netlist unbuildable" in r.get("cosim", ""))
     if nunbuild:
         lines.append(
