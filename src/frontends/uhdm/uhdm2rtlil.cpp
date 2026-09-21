@@ -538,7 +538,17 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                     mod_name.c_str());
                 to_import = eit->second;
             }
+            // Mark the AllModules DEFINITION pass.  A definition is imported
+            // with its parameters at their DEFAULTS, so a `parameter type T =
+            // logic` port is a 1-bit logic here and every `port.member` read on
+            // it is unresolvable BY CONSTRUCTION -- csr_buffer's
+            // `fu_data_i.operand_a` warns in this pass and resolves perfectly
+            // in the elaborated instance (the netlist connects
+            // \dut.csr_result_o to \dut.fu_data_i [194:131]).  Warning here
+            // buries the real cases: cva6 emits 2152 of them.
+            in_allmodules_pass_ = true;
             import_module(to_import);
+            in_allmodules_pass_ = false;
         }
     }
     
