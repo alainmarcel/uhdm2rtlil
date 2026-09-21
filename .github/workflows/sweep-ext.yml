@@ -1,7 +1,8 @@
 name: Sweep external IP
 
 # Per-module report for the external IP families under test/ext_ip/ (PULP
-# common_cells / AXI, OpenHW CVE2 / CORE-V Wally, Alex Forencich's
+# common_cells / AXI, OpenHW CVE2 / CORE-V Wally, XiangShan's SystemVerilog
+# arithmetic library, Alex Forencich's
 # verilog-ethernet / verilog-pcie, hdl-util hdmi ...): every module of a
 # family is read by read_uhdm and read_slang from a shallow clone at the
 # manifest's pinned commit, SAT-mitered from reset, opt-checked and Verilator
@@ -22,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        family: [common_cells, axi, cve2, cvw, verilog-ethernet, verilog-pcie, hdmi]
+        family: [common_cells, axi, cve2, cvw, verilog-ethernet, verilog-pcie, hdmi, xiangshan]
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
