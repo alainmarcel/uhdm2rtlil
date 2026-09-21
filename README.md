@@ -99,7 +99,7 @@ proof gap is never mistaken for a bug.
 | **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 299 module rows + 98 chip instances | **284 / 297 proven**, 291 / 292 co-sim; chips **47 / 47 + 51 / 51** instances proven, full-chip co-sim **PASS** | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules | **94 / 147 proven**, 12 cex, 26 SAT timeouts; full core lowers with **0 inferred latches**, 0 one-sided co-sim divergences | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **19 / 21 instances proven** (the 2 are SAT timeouts on vault register files, not mismatches); **0 undriven, 0 driver conflicts**; full-chip co-sim **NO_DIVERGENCE** over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
-| **External IP** (7 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **250 / 489 proven**, 216 / 289 co-sim, 381 / 446 opt-clean (65 modules with dropped drivers).  Deliberately unfiltered: this is the un-curated tail and the lowest scores in the project | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **External IP** (7 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **325 / 428 comparable modules proven**.  295 of 723 are **not comparable** and excluded: 53 cannot elaborate standalone with their own default parameters, 242 `read_slang` cannot read.  Deliberately unfiltered — the un-curated tail | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 
 CVA6 is the one family excluded from the local `--no-cva6` developer run, so
 its figures are a **dated snapshot** (2026-09-17 sharded regression) rather
@@ -113,21 +113,33 @@ all, so every OpenTitan row is new coverage.
 
 #### External IP families
 
-| Family | Upstream repo | Commit | Proven | Opt-clean |
-|---|---|---|---|---|
-| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | 8 / 108 | 55 / 87 |
-| PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | 109 / 126 | 120 / 121 |
-| OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | 14 / 23 | 22 / 23 |
-| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | — | — |
-| hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | 4 / 10 | 8 / 9 |
-| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | 77 / 129 | 104 / 126 |
-| verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | 38 / 93 | 72 / 80 |
+Scores are over **comparable** modules — a module whose own default parameters
+do not give a legal elaboration, or that `read_slang` cannot read, has no
+reference to be judged against and is excluded rather than counted as a
+failure.  `undriven` likewise counts comparable rows only.
+
+| Family | Upstream repo | Commit | Proven | Not comparable | Undriven |
+|---|---|---|---|---|---|
+| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **8 / 12** | 96 of 108 | 21 |
+| PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | **109 / 119** | 7 of 126 | 4 |
+| OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | **14 / 21** | 2 of 23 | 0 |
+| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **75 / 88** | 146 of 234 | 83552 (RAM/ROM arrays) |
+| hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | **4 / 7** | 3 of 10 | 0 |
+| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **77 / 108** | 21 of 129 | 449 |
+| verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **38 / 73** | 20 of 93 | 190 |
 
 AXI additionally pulls [tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic)
 and verilog-pcie pulls [verilog-axis](https://github.com/alexforencich/verilog-axis).
-**CORE-V Wally currently sweeps 0 modules and its job is red** — the family
-elaborates nothing yet, so it has no verdicts; it is the one open item in this
-table, not a passing row.
+
+Most of AXI's exclusions are one cause: PULP declares its struct ports through
+type parameters (`parameter type axi_resp_t = logic`), so a module swept
+standalone with its defaults performs a member access on a 1-bit `logic` —
+`read_slang` rejects it outright and there is nothing to compare against.  Those
+rows are recorded with the slang diagnostic that identifies them.
+
+**CORE-V Wally sweeps 234 modules locally** (75 / 88 comparable proven), but the
+nightly job has been reporting 0 rows — a CI-side failure that still needs
+diagnosing separately from the numbers above.
 
 
 ### SystemVerilog Frontend Comparison
