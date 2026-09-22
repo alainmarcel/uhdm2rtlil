@@ -151,8 +151,32 @@ write_verilog -noattr -norename {nl}
     # sides share a port list.
     dotted = re.compile(r"\\([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+(?:\[\d+\])?) ")
 
+    # Rename ONLY the module's own dotted PORTS.  An internal wire carries
+    # dotted escaped names too -- a flattened hierarchy puts them inside a
+    # LARGER escaped identifier, e.g.
+    #   \$flatten\i_axi_dma.\i_aes_fifo.$0\gen_normal_fifo.under_rst
+    # and rewriting the tail there both renames something no port list mentions
+    # and eats the trailing space that TERMINATES the enclosing escaped
+    # identifier, producing `...$0gen_normal_fifo_under_rst;` -- a syntax error
+    # Verilator reports far from the cause.
+    port_ids = set()
+    if args.iface_flat:
+        with open(nl, errors="replace") as fh:
+            inhdr = False
+            for line in fh:
+                if line.startswith(f"module {mod}(") or line.startswith(f"module \\{mod} ("):
+                    inhdr = True
+                if inhdr:
+                    port_ids.update(dotted.findall(line))
+                    if ");" in line:
+                        break
+
     def flat_id(m):
-        return m.group(1).replace(".", "_").replace("[", "_").replace("]", "")
+        name = m.group(1)
+        if name not in port_ids:
+            return m.group(0)          # untouched, trailing space included
+        # keep the space: it terminates this escaped identifier
+        return name.replace(".", "_").replace("[", "_").replace("]", "") + " "
     tmp = nl.with_suffix(".split.v")
     with open(nl, errors="replace") as fi, open(tmp, "w") as fo:
         for line in fi:
