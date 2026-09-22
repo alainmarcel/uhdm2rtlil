@@ -196,8 +196,29 @@ When working with UHDM objects, you need to know where to find type definitions:
 4. Create test case in `test/` directory
 5. Run workflow test to validate equivalence
 
-### Known Failing Tests
-All 156 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+### Known Failing Tests — two lists, and which one to use
+
+A bug that cannot be fixed immediately is still worth a LOCAL TEST: the repro
+stops being re-derived from scratch, and the suite stays green while tracking
+it.  There are two lists, and they are not interchangeable.
+
+* **`test/failing_tests.txt`** — the whole test is expected to fail.  Internal
+  tests match by bare directory name; upstream yosys tests keep their
+  yosys-relative source path WITH the extension (`arch/nanoxplore/meminit.v`),
+  because they are recorded as `run/arch/nanoxplore/meminit`.
+* **`test/slang_miter_expected_fail.txt`** — the test reads fine but its
+  `test_slang_equiv.ys` miter (read_uhdm vs read_slang) finds a counterexample.
+
+Prefer the SLANG MITER list for anything involving **type parameters or packed
+struct parameters**: `read_verilog` cannot parse those at all, so the ordinary
+verilog-vs-uhdm comparison is vacuous — it reports "No logic gates - comparing
+constant wire values" and passes on nothing.  The miter is then the only real
+gate.  `test/typeparam_struct_member_width` is exactly this case.
+
+Both lists are RATCHETS: a test listed in either that starts passing is
+reported as an UNEXPECTED SUCCESS, so the entry must be removed in the same
+commit that fixes the bug.  Every entry states why it fails and what was
+already ruled out.
 
 ### Signedness Handling
 

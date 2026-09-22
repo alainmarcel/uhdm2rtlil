@@ -1,0 +1,10 @@
+# This test REPRODUCES a bug: the type-parameter'd struct member measures 4 bits
+# instead of 36, so addr's 32 bits are undriven by construction and the co-sim
+# compares X against the behavioural RTL.  That divergence is the bug itself,
+# not a finding, so the co-sim has nothing to add and would otherwise register
+# as a NEW sim-equiv warning on every run.
+#
+# The real gate is the slang miter (read_uhdm vs read_slang), which fails with
+# a counterexample and is tracked in slang_miter_expected_fail.txt.  Remove
+# BOTH this file and that entry when the width bug is fixed.
+SKIP_SIM_EQUIV=1

@@ -12,3 +12,19 @@
 # on the cex shows the two 34-bit halves exactly swapped and every other
 # output identical.
 ibex_ex_block
+
+# typeparam_struct_member_width: a struct reached through a TYPE PARAMETER
+# measures its parameter-sized members as ZERO.  Surelog emits exactly one
+# struct_typespec for the struct, owned by the module DEFINITION where every
+# parameter sits at its DEFAULT (ADDR_WIDTH = 0); there is no elaborated copy,
+# and the callee has no ADDR_WIDTH of its own to resolve `logic
+# [ADDR_WIDTH-1:0] addr` with.  So `aw_t` measures `id` alone -- 4 bits instead
+# of 36 -- the member select on the type-parameter'd port comes out short, and
+# the narrow-output widening leaves addr's 32 bits undriven.
+# In the wild: PULP axi_cut's `.data_o(mst_req_o.aw)` measures 41 bits instead
+# of 72, and axi_cut_intf reports 125 undriven nets against read_slang's 2.
+# A reader-side fallback in get_width_from_typespec was tried and reverted --
+# it never fires, so the short width does not come from there.  The candidate
+# sites are the member walks in expression.cpp (~12934 / ~13191),
+# calculate_struct_member_offset, and the iface_signal_struct_ts_ path.
+typeparam_struct_member_width
