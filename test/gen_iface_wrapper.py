@@ -52,6 +52,71 @@ WIRE = re.compile(r"^\s+wire\s+(?:width\s+(\d+)\s+)?(?:offset\s+(-?\d+)\s+)?"
 IFACE_PORT = re.compile(r"^\s*([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*,?\s*(?://.*)?$")
 
 
+
+# ---------------------------------------------------------------- decl mode
+# When a module's interface ports are DEGENERATE standalone -- PULP's AXI_BUS
+# has `parameter AXI_ADDR_WIDTH = 0`, so every member comes out 1 bit and the
+# netlist carries no usable geometry -- the wrapper cannot take widths from the
+# netlist the way the caliptra flow does.  Nothing needs evaluating, though:
+# the member declarations can be COPIED VERBATIM out of the interface, and the
+# wrapper given the interface's own parameter names, so the widths follow from
+# elaborating the wrapper itself.
+
+# A member may be declared with a bare type (`logic [X-1:0] aw_addr;`) OR with
+# a TYPEDEF the interface declares itself (`addr_t aw_addr;` -- what PULP's
+# AXI_BUS actually does).  Accept any leading identifier that is not a keyword,
+# and copy the typedefs into the wrapper alongside the members.
+_NOT_A_TYPE = {"typedef", "modport", "localparam", "parameter", "endinterface",
+               "import", "export", "function", "task", "assign", "always",
+               "initial", "generate", "endgenerate", "if", "else", "for"}
+# The type may be package-qualified (`axi_pkg::len_t aw_len;`), which the
+# wrapper can name verbatim as long as it reads the same package.
+MEMBER = re.compile(r"^\s*((?:[A-Za-z_]\w*::)?[A-Za-z_]\w*)\s*(\[[^;]*?\])?\s*([A-Za-z_]\w*)\s*;")
+TYPEDEF = re.compile(r"^\s*(typedef\s[^;]+;)\s*$", re.M)
+IFPARAM = re.compile(r"parameter\s+(?:type\s+)?(?:[\w:]+\s+)*?(\w+)\s*=\s*([^,)]+)")
+LOCALP = re.compile(r"^\s*(localparam\s[^;]+;)\s*$", re.M)
+
+
+def iface_body(txt, iface):
+    """(header, body) text of `interface <iface> ... endinterface`."""
+    for src in txt.values():
+        m = re.search(r"^\s*interface\s+" + re.escape(iface) + r"\b", src, re.M)
+        if not m:
+            continue
+        end = re.search(r"^\s*endinterface\b", src[m.end():], re.M)
+        stop = m.end() + (end.start() if end else len(src) - m.end())
+        semi = src.find(";", m.end())
+        return src[m.end():semi], src[semi + 1:stop]
+    return None, None
+
+
+def iface_members(body):
+    """[(type, range_text_or_None, name)] in declaration order."""
+    out = []
+    for line in body.splitlines():
+        line = re.sub(r"//.*", "", line)
+        mm = MEMBER.match(line)
+        if mm and mm.group(1) not in _NOT_A_TYPE:
+            out.append((mm.group(1), mm.group(2), mm.group(3)))
+    return out
+
+
+def iface_modports(body):
+    """{modport: {member: 'input'|'output'}} -- a direction keyword applies to
+    every name after it until the next one."""
+    res = {}
+    for mm in re.finditer(r"modport\s+(\w+)\s*\((.*?)\)\s*;", body, re.S):
+        name, inner = mm.group(1), re.sub(r"//.*", "", mm.group(2))
+        cur, d = None, {}
+        for tok in re.split(r"[,\s]+", inner):
+            if tok in ("input", "output", "inout"):
+                cur = tok
+            elif tok and cur:
+                d[tok] = cur
+        res[name] = d
+    return res
+
+
 def netlist_ports(il_path, top):
     """[(width, dir, name)] for `top`, in declaration order."""
     out, inmod = [], False
@@ -165,6 +230,89 @@ def iface_decl(txt, iface):
     return [], [], {}
 
 
+def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
+    """Wrapper built from the INTERFACE DECLARATION rather than the netlist."""
+    decls, insts, conns, dut, plines = [], [], [], [], []
+    seen_param = set()
+    locals_ = []
+    for base, (iface, modport) in sorted(ifaces.items()):
+        hdr, body = iface_body(txt, iface)
+        if hdr is None:
+            sys.exit(f"# gen_iface_wrapper: no declaration for interface {iface}")
+        # the interface's own parameters become the WRAPPER's parameters, so the
+        # member declarations below can be copied verbatim
+        for pm in IFPARAM.finditer(hdr):
+            nm, dflt = pm.group(1), pm.group(2).strip()
+            if nm in seen_param:
+                continue
+            seen_param.add(nm)
+            val = iface_params.get(nm, dflt)
+            plines.append(f"  parameter int unsigned {nm} = {val}")
+        # Localparams and typedefs must reach the PORT LIST, which the ports
+        # below are declared with -- so they go into the ANSI parameter list as
+        # `localparam` / `localparam type` entries, not into the body (a
+        # typedef declared after the port list is "used before its
+        # declaration").
+        for lp in LOCALP.findall(body):
+            e = lp.rstrip(";").strip()
+            if e not in locals_:
+                locals_.append(e)
+        for td in TYPEDEF.findall(body):
+            # `typedef logic [AXI_ID_WIDTH-1:0] id_t;` -> `localparam type id_t = logic [AXI_ID_WIDTH-1:0]`
+            mm = re.match(r"typedef\s+(.*?)\s+(\w+)\s*;\s*$", td.strip(), re.S)
+            if not mm:
+                continue
+            e = f"localparam type {mm.group(2)} = {mm.group(1).strip()}"
+            if e not in locals_:
+                locals_.append(e)
+        mports = iface_modports(body)
+        dirs = mports.get(modport, {})
+        pv = ", ".join(f".{n}({n})" for n in seen_param)
+        insts.append(f"  {iface} #({pv}) {base}_i ();" if pv else f"  {iface} {base}_i ();")
+        dut.append(f"    .{base}({base}_i.{modport})")
+        for ty, rng, mem in iface_members(body):
+            d = dirs.get(mem)
+            if not d:                      # not in this modport
+                continue
+            flat = f"{base}__{mem}"
+            decls.append(f"  {d} {ty} {rng + ' ' if rng else ''}{flat}")
+            if d == "input":
+                conns.append(f"  assign {base}_i.{mem} = {flat};")
+            else:
+                conns.append(f"  assign {flat} = {base}_i.{mem};")
+    # the DUT's own width parameters, matched by ROLE: this codebase spells them
+    # ADDR_WIDTH / AXI_ADDR_WIDTH / ... interchangeably
+    dparams = []
+    for dn, dv in sorted(dut_params.items()):
+        dparams.append(f".{dn}({dv})")
+    # plain (non-interface) ports of the DUT
+    hdr = module_header(txt, rtl_top)
+    if hdr:
+        for line in hdr.splitlines():
+            line = re.sub(r"//.*", "", line).strip().rstrip(",")
+            mm = re.match(r"^(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\[[^\]]*\]\s*)?(\w+)$", line)
+            if mm:
+                d, rng, nm = mm.group(1), mm.group(2) or "", mm.group(3)
+                decls.append(f"  {d} logic {rng}{nm}")
+                dut.append(f"    .{nm}({nm})")
+    with open(out, "w") as fh:
+        fh.write(f"// GENERATED by test/gen_iface_wrapper.py (--from-decl).\n"
+                 f"// Flat-port wrapper around {rtl_top}.  Its interface ports are\n"
+                 f"// DEGENERATE standalone (the interface's width parameters default to 0),\n"
+                 f"// so the ports below are the interface's own member declarations copied\n"
+                 f"// verbatim and the wrapper carries the interface's parameter names --\n"
+                 f"// no width has to be evaluated here.\n"
+                 f"module {rtl_top}_flat #(\n")
+        fh.write(",\n".join(plines + ["  " + l for l in locals_]) + "\n) (\n")
+        fh.write(",\n".join(decls) + "\n);\n\n")
+        fh.write("\n".join(insts) + "\n\n")
+        pv = (" #(" + ", ".join(dparams) + ")") if dparams else ""
+        fh.write(f"  {rtl_top}{pv} dut (\n" + ",\n".join(dut) + "\n  );\n\n")
+        fh.write("\n".join(conns) + "\nendmodule\n")
+    print(f"# wrote {out}: {len(decls)} ports, {len(insts)} interface instance(s) "
+          f"from the interface declaration")
+
+
 def main():
     argv = sys.argv[1:]
     rtl_top = None
@@ -172,9 +320,29 @@ def main():
         i = argv.index("--rtl-top")
         rtl_top = argv[i + 1]
         del argv[i:i + 2]
+    from_decl = "--from-decl" in argv
+    if from_decl:
+        argv.remove("--from-decl")
+    iface_params, dut_params = {}, {}
+    while "--iface-param" in argv:
+        i = argv.index("--iface-param")
+        k, _, v = argv[i + 1].partition("=")
+        iface_params[k] = v
+        del argv[i:i + 2]
+    while "--dut-param" in argv:
+        i = argv.index("--dut-param")
+        k, _, v = argv[i + 1].partition("=")
+        dut_params[k] = v
+        del argv[i:i + 2]
     il, top, out = argv[0], argv[1], argv[2]
     rtl_top = rtl_top or top
     txt = read_all(argv[3:])
+    if from_decl:
+        ifaces = iface_ports_of(txt, rtl_top)
+        if not ifaces:
+            sys.exit(f"# gen_iface_wrapper: {rtl_top} declares no interface ports")
+        emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params)
+        return
     ports = netlist_ports(il, top)
     if not ports:
         sys.exit(f"# gen_iface_wrapper: no ports for {top} in {il}")
