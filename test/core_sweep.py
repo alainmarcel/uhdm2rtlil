@@ -24,6 +24,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 # Round-robin shard selection, set from --shard "i/N" (1-based i).  A shard runs
@@ -1459,10 +1460,56 @@ def _fetch_ext(family):
                 print(f"# clone {r['dir']} FAILED: {out}", flush=True)
                 continue
         if r.get("submodules"):
-            sh(["git", "submodule", "update", "-q", "--init", "--depth", "1"], cwd=dest, timeout=1800)
+            # "recursive" for repos whose submodules have submodules of their
+            # own (XiangShan -> rocket-chip -> cde/hardfloat/...).
+            rec = ["--recursive"] if r["submodules"] == "recursive" else []
+            sh(["git", "submodule", "update", "-q", "--init", "--depth", "1"] + rec,
+               cwd=dest, timeout=3600)
         rc, head = sh(["git", "rev-parse", "--short", "HEAD"], cwd=dest, timeout=60)
         print(f"# fetched {r['dir']} @ {(head or '').strip()} (pinned {r['commit'][:9]})", flush=True)
+    _generate_ext(family, man, root)
     return root
+
+
+def _generate_ext(family, man, root):
+    """Optional RTL-GENERATION step, for families whose RTL is not checked in.
+
+    XiangShan's core is Chisel/Scala: there is no Verilog in the repository
+    until the generator has been run.  A manifest may therefore carry
+
+        "generate": {"cwd": <dir under $EXT_IP_ROOT>,
+                     "marker": <file, relative to $EXT_IP_ROOT, that the
+                                generator produces>,
+                     "cmds": [[argv], ...],
+                     "env": {...}, "timeout": <s>}
+
+    The commands run once: when the marker exists the step is skipped, so a
+    developer machine generates only on the first sweep and CI generates on
+    every cold runner.  A failure is reported and the sweep continues with
+    whatever sources exist (which yields an honest empty/short module list
+    rather than a silent pass)."""
+    g = man.get("generate")
+    if not g:
+        return
+    marker = root / g["marker"]
+    if marker.exists():
+        print(f"# generate {family}: {g['marker']} present, skipping generation", flush=True)
+        return
+    cwd = root / g["cwd"]
+    env = dict(os.environ, **g.get("env", {}))
+    t0 = time.time()
+    for c in g["cmds"]:
+        print(f"# generate {family}: {' '.join(c)}  (cwd {cwd})", flush=True)
+        rc, out = sh(c, cwd=str(cwd), timeout=g.get("timeout", 4 * 3600), env=env)
+        if rc:
+            print(f"# generate {family} FAILED (exit {rc}) after {time.time() - t0:.0f}s:\n"
+                  + (out or "")[-4000:], flush=True)
+            return
+    if not marker.exists():
+        print(f"# generate {family}: commands succeeded but {g['marker']} is missing", flush=True)
+        return
+    n = len(list(marker.parent.glob("*.sv"))) + len(list(marker.parent.glob("*.v")))
+    print(f"# generate {family}: OK in {time.time() - t0:.0f}s, {n} RTL file(s) in {marker.parent}", flush=True)
 
 
 def sweep_ext(family, jobs, cycles=300, flt=None):

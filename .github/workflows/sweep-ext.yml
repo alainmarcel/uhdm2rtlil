@@ -8,6 +8,16 @@ name: Sweep external IP
 # manifest's pinned commit, SAT-mitered from reset, opt-checked and Verilator
 # co-simulated against the RTL (test/ext_ip/ext_flow.py via core_sweep.py).
 # Nightly + manual dispatch; one reusable sweep job per family.
+#
+# The XiangShan CORE families (xiangshan-core / xiangshan-core-full) are
+# deliberately NOT in this matrix.  The core is Chisel, so they GENERATE their
+# RTL first (mill + firtool) through the manifest's "generate" step, and that
+# does not fit a hosted runner: ubuntu-24.04 gives 16 GB of RAM and 14 GB of
+# free disk, while the cheaper MinimalConfig still peaks at 13.5 GB RSS to
+# generate 1894 files / 2.2 M lines (DefaultConfig: 40 GB JVM heap, 3.2 M
+# lines), and Surelog on XSTop wants ~36 GB.  Run them from a workstation with
+# `make xiangshan-core` / `make xiangshan-core-full`.  The `xiangshan` family
+# in the matrix is the hand-written XS-Verilog-Library and does run here.
 
 on:
   workflow_dispatch:
