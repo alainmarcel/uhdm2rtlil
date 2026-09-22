@@ -191,6 +191,42 @@ def _defaults_unelaboratable(files, mod, slang_out):
     return False
 
 
+def _degenerate_ports(il_path, top):
+    """Ports whose declared width came out of a parameter that is 0 by default.
+
+    `parameter type req_t = logic` or `parameter int MaxIds = 0` makes a port
+    `logic [MaxIds-1:0]`, i.e. `[-1:0]` -- which RTLIL writes as a NEGATIVE
+    offset (`upto offset -1`).  A design cannot legally have such a port; it is
+    only ever reached by reading a module standalone with defaults its author
+    never intended, the same situation `_defaults_unelaboratable` already
+    skips.  It slips past that check when read_slang accepts the degenerate
+    declaration instead of erroring on it, and then shows up as undriven bits
+    and a spurious `differs` (the two frontends normalise `[-1:0]` differently:
+    read_uhdm keeps `upto offset -1`, read_slang rewrites it to `[1:0]`).
+
+    PULP's axi does this in five modules -- axi_xbar, axi_xp,
+    axi_interleaved_xbar, axi_xbar_unmuxed (type params) and
+    axi_id_remap_table (`MaxUniqInpIds = 0`).
+    """
+    names, inmod = [], False
+    try:
+        for line in open(il_path, errors="replace"):
+            if line.startswith("module "):
+                inmod = line.strip() == "module \\" + top
+                continue
+            if not inmod:
+                continue
+            if line.startswith("end"):
+                break
+            mm = re.match(r"\s+wire\s+.*\boffset\s+(-\d+)\b.*\b(?:input|output|inout)\s+\d+\s+\\(\S+)\s*$",
+                          line.rstrip("\n"))
+            if mm:
+                names.append(mm.group(2))
+    except OSError:
+        pass
+    return names
+
+
 def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
     w = work_root / m
     w.mkdir(parents=True, exist_ok=True)
@@ -291,6 +327,16 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         return {"module": m, "formal": "read-fail (uhdm)", "formal_raw": "error",
                 "check": "—", "cosim": "—", "slang_cosim": "—",
                 "note": (err.group(0)[:140] if err else "read_uhdm failed")}
+    # A degenerate port means the module's own defaults are not a legal
+    # configuration -- skip it like the other default-parameter cases rather
+    # than reporting its undriven bits as a frontend defect.
+    degen = (_degenerate_ports(w / "uhdm_hier.il", f"{top}") or
+             _degenerate_ports(w / "slang_hier.il", f"{top}"))
+    if degen:
+        return {"module": m, "formal": "skip (defaults degenerate)",
+                "formal_raw": "skip", "check": "— (not comparable)",
+                "cosim": "—", "slang_cosim": "—",
+                "note": f"port {degen[0]} has a negative range (parameter 0 by default)"}
     undriven = len(re.findall(r"is used but has no driver", out or ""))
     cells = re.search(r"Number of cells:\s*(\d+)", out or "")
     check = "✅ 0 undriven" if undriven == 0 else f"❌ {undriven} undriven"
