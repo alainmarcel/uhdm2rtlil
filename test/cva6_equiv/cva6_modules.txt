@@ -258,11 +258,24 @@ wt_dcache                              4   180   timeout
 wt_dcache_ctrl                         4   180   proven
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of
 # sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
-# #838).  With that fixed the miter must prove the module outright and does
-# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 63/63 -- uhdm and slang diverge IDENTICALLY,
-# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+# #838).  Co-sim vs the behavioural RTL: BOTH_DIFFER 63/63 -- uhdm and slang
+# diverge IDENTICALLY, the shared sim-artefact class (X-init / stimulus), not a
+# reader bug.
+#
+# It is nevertheless `cex`, NOT `timeout`.  `timeout` was recorded on the
+# assumption that the miter would prove it given budget; it does not.  At the
+# 180 s budget here SAT does not finish, but at 2400 s it reports
+# "model found: FAIL" on a miter of 8.8 M variables / 23.8 M clauses -- a
+# genuine read_uhdm vs read_slang difference that the short budget was hiding.
+# The nightly CI runner gets far enough to find it, which is why main's own
+# sharded regression was failing on `got=cex want=timeout` while a slower
+# machine saw `timeout` and called the suite green.
+#
+# `cex` is the honest and the STABLE expectation: a machine that still times
+# out reports SOFT (inconclusive, tolerated), whereas an unexpected `cex` is a
+# hard failure by policy.  OPEN: the counterexample itself is unfixed.
 
-wt_dcache_mem                          4   180   timeout
+wt_dcache_mem                          4   180   cex
 wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of
 # sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
