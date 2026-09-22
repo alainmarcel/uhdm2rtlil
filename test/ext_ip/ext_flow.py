@@ -38,6 +38,18 @@ P = ROOT / "build/uhdm2rtlil.so"
 S = ROOT / "build/third_party/Surelog/bin/surelog"
 EXT = Path(os.environ.get("EXT_IP_ROOT", os.path.expanduser("~/ext")))
 
+# Source-closure size above which the textual UHDM dump is suppressed (2 MB),
+# and the Surelog wall-clock budget, which scales with the closure: the flat
+# 900 s was written for hand-sized modules and is not enough for a generated
+# whole-core top.
+DUMP_LIMIT = 2 << 20
+# Closure size above which the design is checked hierarchically instead of flat.
+FLATTEN_LIMIT = 8 << 20
+
+
+def _sl_timeout(src_bytes):
+    return max(900, min(4 * 3600, int(src_bytes / (1 << 20)) * 20))
+
 
 def sh(cmd, cwd=None, timeout=None, env=None):
     try:
@@ -194,11 +206,20 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     def_flags = [f"-D{d}" for d in defines]
     uhdm = w / "slpp_all" / "surelog.uhdm"
     stale = (not uhdm.exists()) or S.stat().st_mtime > uhdm.stat().st_mtime
+    # Closure size drives three budgets below, and is needed whether or not the
+    # UHDM has to be rebuilt.
+    src_bytes = sum(os.path.getsize(f) for f in files if os.path.exists(f))
     if stale:
         for old in ("slpp_all",):
             subprocess.run(["rm", "-rf", str(w / old)])
-        rc, out = sh([str(S), "-parse", "-d", "uhdm", *def_flags, *inc_flags, "-top", top, *files],
-                     cwd=w, timeout=900)
+        # `-d uhdm` only adds the TEXTUAL UHDM dump on stdout (the binary
+        # slpp_all/surelog.uhdm comes from `-parse` alone).  That dump is the
+        # debugging aid we want on a small module and a disk hazard on a big
+        # one: XiangShan's XSTop (3.2 M lines) dumps 8.5 GB of text.  Keep it
+        # only while the closure is small.
+        dump = ["-d", "uhdm"] if src_bytes <= DUMP_LIMIT else []
+        rc, out = sh([str(S), "-parse", *dump, *def_flags, *inc_flags, "-top", top, *files],
+                     cwd=w, timeout=_sl_timeout(src_bytes))
         (w / "surelog.log").write_text(out or "")
     if not uhdm.exists():
         err = ""
@@ -252,10 +273,18 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                 "cosim": "—", "slang_cosim": "—", "note": serr_txt[:140]}
 
     # --- survey / opt-check: read_uhdm, hierarchy -check, flatten, check
+    # `flatten` is what makes `check` see the whole cone at once, but a
+    # generated whole-core top (XiangShan's XSTop: 1980 modules, 6.5 M cells)
+    # cannot be flattened in any sane amount of memory.  Above the limit run
+    # `check` HIERARCHICALLY: it then reports per module, where an input port
+    # counts as a driver -- still exactly the granularity an undriven net is
+    # found at, since `hierarchy -top` has already pruned unreachable modules.
+    flat = "flatten\n" if src_bytes <= FLATTEN_LIMIT else ""
     (w / "check.ys").write_text(
         f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -check -top {top}\n"
-        f"write_rtlil uhdm_hier.il\nproc\nflatten\nopt_clean\nstat\ncheck\n")
-    rc, out = sh([str(Y), "-q", "-m", str(P), "check.ys"], cwd=w, timeout=900)
+        f"write_rtlil uhdm_hier.il\nproc\n{flat}opt_clean\nstat\ncheck\n")
+    rc, out = sh([str(Y), "-q", "-m", str(P), "check.ys"], cwd=w,
+                 timeout=_sl_timeout(src_bytes))
     (w / "check.log").write_text(out or "")
     if rc != 0 or not (w / "uhdm_hier.il").exists():
         err = re.search(r"ERROR:[^\n]*", out or "")
@@ -265,7 +294,11 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     undriven = len(re.findall(r"is used but has no driver", out or ""))
     cells = re.search(r"Number of cells:\s*(\d+)", out or "")
     check = "✅ 0 undriven" if undriven == 0 else f"❌ {undriven} undriven"
-    if survey:
+    # A module whose manifest entry asks only for "read" stops here, as does a
+    # --survey run: that is how a whole-core top is swept, where the question
+    # is "does it elaborate and is every net driven", not "is a 6.5 M-cell SAT
+    # miter satisfiable".
+    if survey or want == "read":
         return {"module": m, "formal": "read OK", "formal_raw": "read",
                 "check": check, "cosim": "—", "slang_cosim": "—",
                 "note": f"{cells.group(1)} cells" if cells else ""}

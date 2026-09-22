@@ -1,0 +1,218 @@
+{
+ "title": "XiangShan Kunminghu core, CONFIG=MinimalConfig (generated from Chisel)",
+ "url": "https://github.com/OpenXiangShan/XiangShan",
+ "_note": [
+  "XiangShan (香山) is the open-source high-performance RISC-V processor from",
+  "the Institute of Computing Technology (Chinese Academy of Sciences) and the",
+  "Beijing Institute of Open Source Chip.  The core is written in Chisel/Scala:",
+  "the repository contains NO Verilog, so this family runs the Chisel generator",
+  "first (see \"generate\") and sweeps the SystemVerilog it emits.  firtool runs",
+  "with --split-verilog, so the generator emits one file per module and the",
+  "per-module sweep works exactly as it does for a hand-written repository.",
+  "",
+  "CONFIG=MinimalConfig is XiangShan's own cut-down configuration (RobSize 48,",
+  "32 KB L1D, 128 KB L2, 4 MB LLC).  Generated: 1894 .sv + 22 .v, 2.2 M lines",
+  "-- smaller, but NOT small: it still generates in ~7 min with an 8 GB JVM",
+  "heap at 13.5 GB peak RSS, on top of a cold Scala compile, and a hosted",
+  "ubuntu-24.04 runner has 16 GB of RAM and 14 GB of free disk.  This is the",
+  "cheaper of the two, not a CI-sized one.",
+  "",
+  "NOT in the nightly matrix: see .github/workflows/sweep-ext.yml.  Run it with",
+  "`make xiangshan-core` from the repository root.",
+  "",
+  "The hand-written SystemVerilog arithmetic library the same project ships",
+  "separately is swept as the \"xiangshan\" family (XS-Verilog-Library)."
+ ],
+ "repos": [
+  {
+   "url": "https://github.com/OpenXiangShan/XiangShan",
+   "commit": "e4566c29e251c60159c6796db60a2569dd7700f2",
+   "dir": "XiangShan-core",
+   "submodules": "recursive"
+  }
+ ],
+ "generate": {
+  "cwd": "XiangShan-core",
+  "marker": "XiangShan-core/build-min/rtl/XSTop.sv",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "command -v mill >/dev/null || { mkdir -p \"$HOME/bin\" && curl -sSL https://raw.githubusercontent.com/com-lihaoyi/mill/main/mill -o \"$HOME/bin/mill\" && chmod +x \"$HOME/bin/mill\"; }"
+   ],
+   [
+    "bash",
+    "-c",
+    "PATH=\"$HOME/bin:$PATH\" NOOP_HOME=\"$PWD\" make verilog CONFIG=MinimalConfig BUILD_DIR=./build-min"
+   ]
+  ],
+  "env": {
+   "JVM_XMX": "8G"
+  },
+  "timeout": 14400
+ },
+ "roots": [
+  "XiangShan-core/build-min/rtl/*.sv",
+  "XiangShan-core/build-min/rtl/*.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": [
+  {
+   "name": "XSTop",
+   "want": "read"
+  },
+  {
+   "name": "XSTile",
+   "want": "read"
+  },
+  {
+   "name": "Backend",
+   "want": "read"
+  },
+  {
+   "name": "MemBlock",
+   "want": "read"
+  },
+  {
+   "name": "CtrlBlock",
+   "want": "read"
+  },
+  {
+   "name": "Frontend",
+   "want": "read"
+  },
+  {
+   "name": "Rob",
+   "want": "read"
+  },
+  {
+   "name": "Ftq",
+   "want": "read"
+  },
+  {
+   "name": "Dispatch",
+   "want": "read"
+  },
+  {
+   "name": "DCache",
+   "want": "read"
+  },
+  {
+   "name": "L2TLB",
+   "want": "read"
+  },
+  {
+   "name": "PtwCache",
+   "want": "read"
+  },
+  {
+   "name": "L2Top",
+   "want": "read"
+  },
+  {
+   "name": "OpenLLC",
+   "want": "read"
+  },
+  {
+   "name": "Bpu",
+   "want": "read"
+  },
+  {
+   "name": "Sbuffer",
+   "want": "read"
+  },
+  {
+   "name": "SbufferData",
+   "want": "read"
+  },
+  {
+   "name": "BusyTable",
+   "want": "read"
+  },
+  {
+   "name": "Decoder"
+  },
+  {
+   "name": "DecodeStage"
+  },
+  {
+   "name": "StoreQueue"
+  },
+  {
+   "name": "TLB"
+  },
+  {
+   "name": "ICache"
+  },
+  {
+   "name": "Rename"
+  },
+  {
+   "name": "FusionDecoder"
+  },
+  {
+   "name": "PredChecker"
+  },
+  {
+   "name": "MainBtb"
+  },
+  {
+   "name": "BlockCipherModule"
+  },
+  {
+   "name": "RequestArb"
+  },
+  {
+   "name": "RequestBuffer"
+  },
+  {
+   "name": "Directory"
+  },
+  {
+   "name": "Bitmap"
+  },
+  {
+   "name": "VpnTable"
+  },
+  {
+   "name": "FreeList_2"
+  },
+  {
+   "name": "StdFreeList_2"
+  },
+  {
+   "name": "RegCacheTagModule"
+  },
+  {
+   "name": "NewLoadUnit"
+  },
+  {
+   "name": "fpsqrt_r16_block"
+  },
+  {
+   "name": "ram_65540x21"
+  },
+  {
+   "name": "ram_2x2"
+  },
+  {
+   "name": "array_128x86"
+  }
+ ],
+ "_modules_note": [
+  "A representative slice, not all ~1900 generated modules.  The whole-core top",
+  "and the big blocks carry \"want\": \"read\" -- for them the question is whether",
+  "read_uhdm elaborates the design and drives every net, not whether a",
+  "multi-million-cell SAT miter closes.  The leaves are mitered against",
+  "read_slang and Verilator co-simulated like every other family.  The SRAM",
+  "macros are deliberate: a byte-enabled write to a dynamically indexed memory",
+  "is where read_uhdm used to expand one $mem into ~278000 cells."
+ ],
+ "exclude": [],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}

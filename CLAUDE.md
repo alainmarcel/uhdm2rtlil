@@ -437,6 +437,45 @@ step 1–2 name it (e.g. `tcb_ifu.req_dly[DLY]` undriven), read just that subtre
 even emitted the driver, then build a minimal DUT reproducing it before fixing
 the importer. `uhdm_path.log` in the test dir is the textual UHDM tree for that.
 
+## Undriven Nets: what they mean, and why read_uhdm does NOT X-fill them
+
+An undriven net in the read_uhdm netlist is either a DROPPED DRIVER (our bug)
+or a net the SOURCE never assigns (not our bug).  Decide which before chasing
+one: grep the RTL for an assignment to that net.
+
+`read_slang` shows 0 undriven for the second kind because it materialises a
+CONSTANT X for a net the source never assigns -- a constant has a driver, so
+`check` stays silent.  We leave it dangling.  Same X, different bookkeeping.
+
+Source-level cases found so far (NOT frontend bugs):
+
+| design | net | why |
+|---|---|---|
+| cva6 `wt_axi_adapter` | `axi_wr_data[1]` | declared `[AxiNumWords-1:0][AxiDataWidth-1:0]`, only `[0]` ever assigned (64 bits) |
+| pavona `acc_alu_bignum` | `ispr_rdata_no_intg_mux_in[15]` | 17 entries, 16 assigns; `IsprKmacPartialW` has none (256 bits, 2048 per chip) |
+| ibex `ibex_tracer` | `file_name`, `trace_log_enable` | `string` + `$value$plusargs` -- simulation constructs |
+| hdl-util `packet_picker` | `subs[255:0][3:0]` | sparse table, a handful of the 256 packet types implemented |
+| caliptra | `unused_assert_connected` etc. | assertion hooks / SVA property names -- they vanish once `delete t:$check t:$assert` runs, which the sweeps DO.  Measuring without that step reports ~69 phantom undriven nets on caliptra_top_flat |
+
+DO NOT try to X-fill undriven nets inside read_uhdm.  It was attempted and
+reverted: a correct driver analysis is not available at read time, because
+`hierarchy` has not resolved cell port directions or paramods and `proc` has
+not turned processes into drivers.  Three approximations were measured, each
+broken in a different way:
+
+  * `SigMap`-based driven set -- canonicalises aliased wires, so an undriven
+    per-element wire assembled into a driven flat array (`connect \arr
+    {e2 e1 e0}`) looks driven.  Filled nothing on the motivating pavona case.
+  * `cell->output()` for direction -- always false before `hierarchy` for a
+    user module, so instance-driven nets (multiplier's `S[i]`, driven by a
+    `FullAdder` instance output) looked undriven and were X'd over.
+    **69 tests failed.**
+  * skip AllModules-definition-only modules -- the generate content of
+    `\RippleCarryAdder` lives in its `$paramod` copies, so the plain module is
+    undriven at read time yet still used by `hierarchy`.  Still broken.
+
+If slang parity is wanted, do it AFTER `hierarchy` (yosys's
+`setundef -undriven -undef` already does exactly this), never in the frontend.
 ### Net-Declaration Initialisers Live Only on the ELABORATED Instance
 
 `wire t = a & b;` is a continuous assignment, but Surelog does not put it in

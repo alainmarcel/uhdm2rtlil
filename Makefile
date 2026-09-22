@@ -73,6 +73,27 @@ test-matrix: all frontends
 	@echo "Running 4-frontend regression matrix..."
 	@cd test && python3 run_frontend_matrix.py
 
+# XiangShan (香山) core.  The core is written in Chisel, so the sweep GENERATES
+# its SystemVerilog with mill + firtool before reading it; the generation step
+# lives in the manifest (test/ext_ip/xiangshan-core*.json) and is skipped once
+# the RTL is there.  Both targets clone OpenXiangShan/XiangShan at the pinned
+# commit under $EXT_IP_ROOT (default ~/ext) on first use.
+#
+# Needs a JDK (17+); mill is downloaded by the generate step if not on PATH.
+xiangshan-core: all
+	@echo "XiangShan MinimalConfig: generating RTL (first run only) and sweeping..."
+	@cd test && python3 core_sweep.py xiangshan-core
+
+# The COMPLETE Kunminghu core (CONFIG=DefaultConfig): the full out-of-order
+# core with L2 and L3, ~1980 SystemVerilog files / 3.2 M lines / 2002 modules.
+# This is deliberately NOT in the nightly matrix -- it needs ~40 GB of JVM heap
+# to generate (~45 min cold, ~6 min warm) and ~36 GB of RAM for Surelog on
+# XSTop, which no hosted CI runner has.  Run it on a workstation.
+xiangshan-core-full: all
+	@echo "XiangShan DefaultConfig (complete Kunminghu core): generating RTL and sweeping..."
+	@echo "  NOTE: needs ~40 GB JVM heap to generate and ~36 GB RAM for Surelog on XSTop."
+	@cd test && python3 core_sweep.py xiangshan-core-full
+
 # Preprocess Yosys test files to fix incompatible constructs
 preprocess-yosys-tests:
 	@echo "Preprocessing Yosys test files..."
@@ -138,6 +159,9 @@ help:
 	@echo "  test-yosys - Run Yosys tests only"
 	@echo "  frontends  - Build sv2v for the 4-frontend matrix (slang is built into yosys)"
 	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
+	@echo "  xiangshan-core      - Generate (Chisel) + sweep the XiangShan core, MinimalConfig"
+	@echo "  xiangshan-core-full - ... the COMPLETE Kunminghu core (DefaultConfig);"
+	@echo "                        needs ~40 GB JVM heap + ~36 GB RAM, not CI-sized"
 	@echo "  clean      - Remove ALL build artifacts (build dirs, out/, in-tree Yosys/abc objects)"
 	@echo "  install    - Install the plugin"
 	@echo "  help       - Show this help message"

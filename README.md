@@ -100,6 +100,7 @@ proof gap is never mistaken for a bug.
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules | **94 / 147 proven**, 12 cex, 26 SAT timeouts; full core lowers with **0 inferred latches**, 0 one-sided co-sim divergences | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **19 / 21 instances proven** (the 2 are SAT timeouts on vault register files, not mismatches); **0 undriven, 0 driver conflicts**; full-chip co-sim **NO_DIVERGENCE** over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | The XiangShan project's **hand-written SystemVerilog** arithmetic library — SRT integer dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**: XiangShan itself is Chisel/Scala and emits no Verilog without running its generator | **15 / 19 proven**, 19 / 19 elaborate, **0 undriven on 18 of 19**; 1 cex (`r4_qds_v1`), 3 SAT timeouts (64-bit divide datapaths), 2 not comparable — `read_slang` rejects them for a port mismatch in the library's own RTL (`port 'quot_o' does not exist in 'radix_4_sign_coder'`) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig` (frontend + backend + vector + MMU, L2 + L3) — **there is no Verilog to read**: the sweep runs the Chisel generator itself (mill + firtool → **1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules**), then sweeps 42 of them | Whole core **elaborates clean**: Surelog 0 errors, `read_uhdm` + `hierarchy -check -top XSTop` exit 0, 1981 modules / 6.52 M cells, **1 warning**.  Per-module: **24 / 24 zero undriven, 23 / 24 co-sim PASS**, 11 proven — the rest are SAT budget (timeout / memory cap), 2 cex | `make xiangshan-core-full` (not CI-sized — see below) |
 | **External IP** (8 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **325 / 428 comparable modules proven**.  295 of 723 are **not comparable** and excluded: 53 cannot elaborate standalone with their own default parameters, 242 `read_slang` cannot read.  Deliberately unfiltered — the un-curated tail | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 
 CVA6 is the one family excluded from the local `--no-cva6` developer run, so
@@ -129,6 +130,44 @@ failure.  `undriven` likewise counts comparable rows only.
 | verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **77 / 108** | 21 of 129 | 449 |
 | verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **38 / 73** | 20 of 93 | 190 |
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **15 / 19** | 2 of 21 | 1 |
+
+#### Generated IP: the XiangShan core
+
+XiangShan's core is **Chisel/Scala** — the repository contains no Verilog at
+all, so unlike every other family there is nothing to read until the generator
+has been run.  Generation is therefore a step of the sweep itself
+(`"generate"` in `test/ext_ip/xiangshan-core*.json`), skipped once the RTL is
+present, and driven from the repository root:
+
+```bash
+make xiangshan-core          # CONFIG=MinimalConfig  — the cheaper configuration
+make xiangshan-core-full     # CONFIG=DefaultConfig  — the COMPLETE Kunminghu core
+```
+
+Each clones `OpenXiangShan/XiangShan` at the pinned commit under `$EXT_IP_ROOT`
+(default `~/ext`) with its submodules, downloads `mill` if it is not on `PATH`,
+runs `make verilog`, and sweeps the result.  A JDK (17+) is the only
+prerequisite.  `NOOP_HOME` is set by the generate step — without it the build
+dies in difftest's file collection *after* firtool has already written the RTL,
+so the output looks complete while the build failed.
+
+**Neither runs in CI, and that is a measurement, not an assumption:**
+
+| | `MinimalConfig` | `DefaultConfig` | hosted `ubuntu-24.04` |
+|---|---|---|---|
+| generated RTL | 1894 `.sv` + 22 `.v`, 2.2 M lines | 1980 `.sv` + 22 `.v`, 3.2 M lines | — |
+| JVM heap to generate | 8 GB | 40 GB | — |
+| peak RSS to generate | 13.5 GB | — | **16 GB total RAM** |
+| generation time (warm / cold) | 7 min / ~45 min | 6 min / ~45 min | — |
+| RTL on disk | 1.1 GB | 1.5 GB | **14 GB free disk** |
+| Surelog on `XSTop` | — | 6 m 40 s, **35.5 GB peak** | — |
+| `read_uhdm` on `XSTop` | — | 5 m 09 s, 11 GB peak | — |
+
+`MinimalConfig` is XiangShan's own cut-down configuration (RobSize 48, 32 KB
+L1D, 128 KB L2, 4 MB LLC) and is genuinely smaller, but the binding constraint
+is the Chisel build rather than the RTL size, so it does not become CI-sized
+either.  The hand-written **XS-Verilog-Library** (the `xiangshan` family above)
+is the part of the project that *is* swept nightly.
 
 AXI additionally pulls [tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic)
 and verilog-pcie pulls [verilog-axis](https://github.com/alexforencich/verilog-axis).
