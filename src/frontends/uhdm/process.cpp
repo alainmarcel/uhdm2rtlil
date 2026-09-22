@@ -5496,6 +5496,35 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
     // Save current substitutions and set new ones
     auto saved_substitutions = current_loop_substitutions;
     current_loop_substitutions = var_substitutions;
+
+    // Make the unrolled loop variable visible to import_expression too.
+    // `current_loop_substitutions` is consulted only by the hand-written
+    // substitution paths below (indexed part-select LHS and a few RHS forms);
+    // every other expression goes through plain import_expression(), which
+    // reads `loop_values`.  Without this a bit-select LHS `mv[i]` is imported
+    // with `i` still DYNAMIC, so it lowers to a shift/extract temp wire --
+    // the write lands on that dead temp instead of `\mv [0]` and the loop
+    // counter gets materialised as a 32-bit undriven wire.  verilog-axis's
+    // axis_crosspoint shows both symptoms at once (32 undriven `\i` bits plus
+    // an undriven `m_axis_tvalid_reg`), and the second statement of the loop
+    // body is the one that loses its driver.
+    struct LoopValsGuard {
+        std::map<std::string, int>& lv;
+        std::map<std::string, int> saved;
+        std::vector<std::string> added;
+        ~LoopValsGuard() {
+            for (const auto& n : added) lv.erase(n);
+            for (const auto& kv : saved) lv[kv.first] = kv.second;
+        }
+    } guard{loop_values, {}, {}};
+    for (const auto& kv : var_substitutions) {
+        auto it = loop_values.find(kv.first);
+        if (it != loop_values.end())
+            guard.saved[kv.first] = it->second;
+        else
+            guard.added.push_back(kv.first);
+        loop_values[kv.first] = (int)kv.second;
+    }
     
     int stmt_type = uhdm_stmt->VpiType();
     

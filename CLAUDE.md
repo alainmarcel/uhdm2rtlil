@@ -455,6 +455,7 @@ Source-level cases found so far (NOT frontend bugs):
 | pavona `acc_alu_bignum` | `ispr_rdata_no_intg_mux_in[15]` | 17 entries, 16 assigns; `IsprKmacPartialW` has none (256 bits, 2048 per chip) |
 | ibex `ibex_tracer` | `file_name`, `trace_log_enable` | `string` + `$value$plusargs` -- simulation constructs |
 | hdl-util `packet_picker` | `subs[255:0][3:0]` | sparse table, a handful of the 256 packet types implemented |
+| verilog-ethernet `xgmii_interleave` | `output_xgmii_dc[72]` | declared `[72:0]` = 73 bits, but the RTL drives only `[71:0]` (8 lanes x 9 bits); the 73rd bit has no assignment anywhere |
 | caliptra | `unused_assert_connected` etc. | assertion hooks / SVA property names -- they vanish once `delete t:$check t:$assert` runs, which the sweeps DO.  Measuring without that step reports ~69 phantom undriven nets on caliptra_top_flat |
 
 DO NOT try to X-fill undriven nets inside read_uhdm.  It was attempted and

@@ -1,0 +1,8 @@
+# Nothing may be left undriven: not the loop counter `i` (it is unrolled away,
+# so it must never be materialised), and not `mv`, whose write must reach the
+# real register rather than a shift/extract temp.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert
