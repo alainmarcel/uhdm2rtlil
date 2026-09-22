@@ -508,6 +508,71 @@ without also filtering `VpiNetDeclAssign` out of
 initialiser twice and the net would be double-driven.
 
 
+### Interface Ports: wrap them away, never skip the module
+
+A SystemVerilog **interface port** is flattened by EVERY RTLIL frontend into one
+escaped identifier per member -- `\m_axi_r_if.rready`.  Verilator cannot take
+such a name as a port, so a port-by-port co-sim testbench cannot be built and
+the module reports `NO_RUN (escaped port names: ...)` or, in the sweep table,
+`❌ netlist unbuildable`.
+
+**That is NOT a frontend defect.**  `read_uhdm` and `read_slang` produce the
+IDENTICAL flattening (caliptra soc_ifc_top: 88 dotted ports on both sides), so
+the formal miter is unaffected and sound.  It is a testbench limitation, and
+the fix is to give the tools a module whose top level has no interface ports:
+
+```systemverilog
+module <M>_flat (ordinary ports, one per interface member);
+  <iface> #(params) <inst> (.clk(clk), .rst_n(<dut reset>));   // iface INSIDE
+  <M> dut (.<iface_port>(<inst>.<modport>), .<plain>(<plain>), ...);
+  assign <inst>.<member> = <flat>;      // wrapper input  -> member
+  assign <flat> = <inst>.<member>;      // member -> wrapper output
+endmodule
+```
+
+Then run the co-sim with `--iface-flat`, which renames the NETLIST's dotted
+ports to the same `bus_sig` spelling so both sides share a port list.
+
+Everything the wrapper needs is discoverable, so this generalises:
+
+* the interface ports, from the module's own declaration (`axi_if.w_sub s_axi_w_if,`)
+* the interface's parameters, from `interface axi_if #(parameter integer AW = 32, ...)`
+* each parameter's VALUE from the netlist: a member declared `logic [AW-1:0]
+  araddr;` pins `AW` to the width of `<port>.araddr`, already elaborated by the
+  importer.  Collect ALL members bound to a parameter, not the first -- a
+  modport carries only some of them, so axi_if's read half pins `DW` from
+  `rdata` while the write half needs `wdata`
+* the interface's own `clk`/`rst_n`, matched to the DUT's ports by name and
+  then by ROLE (a DUT rarely calls its reset `rst_n`; caliptra's soc_ifc_top
+  calls it `cptra_rst_b`).  Prefer a real `rst`/`reset` over a `pwrgood` strap
+  -- both match a reset regex, and picking the strap holds the interface in
+  reset forever
+
+Two generators exist: `test/caliptra_chip/scripts/gen_inst_wrapper.py` (used
+automatically by `_iface_wrapper` in core_sweep.py for chip instances) and
+`test/gen_iface_wrapper.py` (standalone, discovers everything above from the
+sources, `--rtl-top` when the netlist renames the module).
+
+**TRAP in `--iface-flat`:** rename ONLY the module's own dotted PORTS.  A
+flattened hierarchy puts dotted escaped names inside a LARGER escaped
+identifier --
+`\$flatten\i_axi_dma.\i_aes_fifo.$0\gen_normal_fifo.under_rst` -- and a blanket
+regex rewrite both renames something no port list mentions and EATS THE
+TRAILING SPACE that terminates the enclosing escaped identifier, yielding
+`...$0gen_normal_fifo_under_rst;`.  Verilator then reports a syntax error
+hundreds of lines from the cause.
+
+Results on caliptra instances that had never co-simulated at all:
+
+| instance | before | after |
+|---|---|---|
+| `abr_inst` | NO_RUN (escaped ports) | **NO_DIVERGENCE** |
+| `rvtop` | NO_RUN (escaped ports) | **NO_DIVERGENCE** |
+| `soc_ifc_top1` | NO_RUN (escaped ports) | SHARED_DIVERGENCE (uhdm and slang diverge IDENTICALLY -- not a reader bug) |
+
+Still open: an interface ARRAY port (`ahb_lite_responders[0..18]`) needs an
+array instantiation in the wrapper; `ahb_lite_bus_i` remains skipped.
+
 ### Memory Inference: what makes an array a `$mem` (and what silently un-makes it)
 
 `has_only_constant_array_accesses` (process_helper.cpp) is the gate: an array
