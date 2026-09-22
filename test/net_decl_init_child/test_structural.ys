@@ -1,0 +1,11 @@
+# The child modules must carry their net-declaration initialisers, so nothing
+# in the hierarchy is left undriven.  Without the fix `leaf`'s t1/t2/t3 have no
+# driver and every output below the top reads X -- yet the netlist still
+# "matches" formally in the sense that both sides are X, so `check -assert` is
+# the gate that actually fails.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt_clean
+check -assert

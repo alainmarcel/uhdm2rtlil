@@ -476,6 +476,70 @@ broken in a different way:
 
 If slang parity is wanted, do it AFTER `hierarchy` (yosys's
 `setundef -undriven -undef` already does exactly this), never in the frontend.
+### Net-Declaration Initialisers Live Only on the ELABORATED Instance
+
+`wire t = a & b;` is a continuous assignment, but Surelog does not put it in
+the module DEFINITION: `NetlistElaboration::elabSignal` turns the initialiser
+into a `cont_assign` (with `VpiNetDeclAssign` set) on the elaborated INSTANCE
+only.  The AllModules definition of that module has the net and no driver for
+it at all -- not even a `vpiExpr` on the net to fall back on.
+
+Module BODIES are imported from the definition (the elaborated pass only
+creates cells), so a top module kept its initialisers and every CHILD module
+silently lost them.  Hand-written RTL barely notices because it drives with
+`assign`; generated RTL is destroyed, because firtool emits nearly all of its
+combinational logic as net-declaration initialisers.  XiangShan's `TLBFA` kept
+**19 of its 507** connects as a child of `TLB` and reported 2038 undriven nets;
+every XiangShan module with undriven nets also failed its miter AND its co-sim,
+and fixing this alone turned `TLB` and `PatternHistoryTable` from "differs"
+into proven with 0 undriven.
+
+`import_module` therefore recovers them: `find_elab_instance()` (over the
+`elab_insts_by_def_` index) finds an elaborated instance of the same
+definition, and any `cont_assign` there with `VpiNetDeclAssign()` that was not
+already imported is imported too.  Pointer identity is the dedup key, which
+works because NetlistElaboration pushes the definition's own cont_assigns into
+the instance list by the SAME pointer -- so this is also a no-op if Surelog is
+ever changed to emit them on the definition.
+
+Do NOT "fix" this by adding the cont_assign to the definition in Surelog
+without also filtering `VpiNetDeclAssign` out of
+`NetlistElaboration.cpp`'s definition-copy loop: the instance would get the
+initialiser twice and the net would be double-driven.
+
+
+### Memory Inference: what makes an array a `$mem` (and what silently un-makes it)
+
+`has_only_constant_array_accesses` (process_helper.cpp) is the gate: an array
+every access of which uses a CONSTANT index becomes per-element registers, and
+anything else becomes a `$mem`.  It scans **processes only** (never continuous
+assignments -- see the comment there) and it must recognise both halves of the
+question, or the array is misclassified in a way NO formal check will catch:
+
+* **A byte-enabled write is a `var_select`, not a `bit_select`.**
+  `Memory[addr][lo +: w] <= d` -- the shape every firtool-generated SRAM model
+  uses -- arrives as ONE `var_select` (VpiName = the array, `Exprs()` =
+  [address, selector]).  A scan that looks only at `bit_select` never sees the
+  dynamic address and calls the array constant-indexed.  XiangShan's
+  `array_8192x432` then expanded into **278558 `$eq`/`$mux` cells instead of
+  one `$mem`** (`read_slang` 85 cells, `read_verilog` 33).  In a `var_select`
+  only the leading ARRAY indices decide this: a `part_select` /
+  `indexed_part_select` tail selects within the word and must be skipped.
+
+* **A genvar index IS constant** and is NOT in `parameter_default_values`;
+  Surelog elaborates it into a per-generate-instance `parameter` carrying the
+  iteration value, reachable via `ref->Actual_group()`.  Miss that and an array
+  written once per generate instance (`ibex_icache`'s `fill_data_d[fb]`, whose
+  elements each have their own continuous assign) is turned into a `$mem`.
+
+**The trap: neither direction shows up as a formal failure.**  Both netlists
+compute the same function, so `equiv_induct` and the SAT miter pass either way
+-- the per-element expansion is merely thousands of times bigger, and the
+wrongly-inferred `$mem` diverges only in simulation (ibex_icache: `rdata_o`
+wrong at cycle 164 of 200, caught by the Verilator co-sim, not by SAT).  A test
+for this class must therefore assert the netlist SHAPE: drop a
+`test_structural.ys` in the test directory and `run_all_tests.sh` runs it as a
+gate (`select -assert-count 1 t:$mem_v2`).  See `test/mem_dyn_idx_byte_write`.
 
 
 ## Code Style

@@ -1082,26 +1082,7 @@ bool UhdmImporter::resolve_iface_param(const hier_path* hp,
             // That walk visited the whole elaborated hierarchy for every
             // hier_path expression — O(expressions x instances), a third of
             // the Dragonfly import.
-            if (!elab_insts_by_def_built_) {
-                elab_insts_by_def_built_ = true;
-                std::function<void(const any*)> index_elab = [&](const any* sc) {
-                    if (!sc) return;
-                    const std::vector<module_inst*>* mods = nullptr;
-                    const std::vector<gen_scope_array*>* gsa = nullptr;
-                    if (sc->UhdmType() == uhdmmodule_inst) {
-                        auto m = any_cast<const module_inst*>(sc);
-                        elab_insts_by_def_[std::string(m->VpiDefName())].push_back(m);
-                        mods = m->Modules(); gsa = m->Gen_scope_arrays();
-                    } else if (sc->UhdmType() == uhdmgen_scope) {
-                        auto g = any_cast<const gen_scope*>(sc);
-                        mods = g->Modules(); gsa = g->Gen_scope_arrays();
-                    }
-                    if (mods) for (auto c : *mods) index_elab(c);
-                    if (gsa) for (auto ga : *gsa) if (ga->Gen_scopes())
-                        for (auto gs : *ga->Gen_scopes()) index_elab(gs);
-                };
-                for (auto t : *uhdm_design->TopModules()) index_elab(t);
-            }
+            build_elab_index();
             auto eit = elab_insts_by_def_.find(std::string(child_inst->VpiDefName()));
             if (eit != elab_insts_by_def_.end())
                 for (auto m : eit->second) {
@@ -3421,6 +3402,44 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     for (const auto& n : proc_elem_written)
         log("UHDM: array '%s' has per-element writes — flat alias assembled "
             "from elements\n", n.c_str());
+}
+
+// Index every ELABORATED instance by its definition name, once per import.
+// The former per-call walk visited the whole elaborated hierarchy for every
+// hier_path expression -- O(expressions x instances), a third of the Dragonfly
+// import.
+void UhdmImporter::build_elab_index() {
+    if (elab_insts_by_def_built_) return;
+    if (!uhdm_design || !uhdm_design->TopModules()) return;
+    elab_insts_by_def_built_ = true;
+    std::function<void(const any*)> index_elab = [&](const any* sc) {
+        if (!sc) return;
+        const std::vector<module_inst*>* mods = nullptr;
+        const std::vector<gen_scope_array*>* gsa = nullptr;
+        if (sc->UhdmType() == uhdmmodule_inst) {
+            auto m = any_cast<const module_inst*>(sc);
+            elab_insts_by_def_[std::string(m->VpiDefName())].push_back(m);
+            mods = m->Modules(); gsa = m->Gen_scope_arrays();
+        } else if (sc->UhdmType() == uhdmgen_scope) {
+            auto g = any_cast<const gen_scope*>(sc);
+            mods = g->Modules(); gsa = g->Gen_scope_arrays();
+        }
+        if (mods) for (auto c : *mods) index_elab(c);
+        if (gsa) for (auto ga : *gsa) if (ga->Gen_scopes())
+            for (auto gs : *ga->Gen_scopes()) index_elab(gs);
+    };
+    for (auto top : *uhdm_design->TopModules()) index_elab(top);
+}
+
+// An elaborated instance of the same definition as `def`, for the data the
+// AllModules definition view does not carry.  Returns nullptr when the
+// definition is not instantiated anywhere under TopModules.
+const module_inst* UhdmImporter::find_elab_instance(const module_inst* def) {
+    if (!def) return nullptr;
+    build_elab_index();
+    auto it = elab_insts_by_def_.find(std::string(def->VpiDefName()));
+    if (it == elab_insts_by_def_.end() || it->second.empty()) return nullptr;
+    return it->second.front();
 }
 
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
@@ -6282,6 +6301,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     }
     
         // Import continuous assignments
+    std::set<const UHDM::cont_assign*> imported_cont_assigns;
     if (uhdm_module->Cont_assigns()) {
         log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
         int assign_idx = 0;
@@ -6308,12 +6328,52 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
             try {
                 import_continuous_assign(cont_assign);
+                imported_cont_assigns.insert(cont_assign);
                 log("UHDM: Successfully imported continuous assignment\n");
             } catch (const std::exception& e) {
                 log_error("UHDM: Exception in continuous assignment import: %s\n", e.what());
             } catch (...) {
                 log_error("UHDM: Unknown exception in continuous assignment import\n");
             }
+        }
+    }
+
+    // NET-DECLARATION INITIALISERS (`wire t = a & b;`) are MISSING from
+    // Surelog's AllModules definition view.  Surelog turns such an initialiser
+    // into a cont_assign (VpiNetDeclAssign) only in NetlistElaboration, so it
+    // exists on the elaborated INSTANCE and not on the module DEFINITION -- and
+    // module bodies are imported from the definition, the elaborated pass only
+    // creating cells.  A top module therefore gets its initialisers and every
+    // CHILD module silently loses them.
+    //
+    // That is invisible in hand-written RTL, which drives with `assign`, and
+    // fatal for generated RTL: firtool emits nearly all combinational logic as
+    // net-declaration initialisers.  XiangShan's TLBFA kept 19 of its 507
+    // connects as a child of TLB and reported 2038 undriven nets, and every
+    // XiangShan module with undriven nets also failed its miter and co-sim.
+    //
+    // Take those, and only those, from an elaborated instance of the same
+    // definition.  The definition's own cont_assigns are pushed into the
+    // instance's list by the SAME pointer, so pointer identity both skips what
+    // was just imported and keeps this a no-op if Surelog starts emitting them
+    // on the definition.
+    if (const module_inst* elab = find_elab_instance(uhdm_module)) {
+        if (elab != uhdm_module && elab->Cont_assigns()) {
+            int n = 0;
+            for (auto ca : *elab->Cont_assigns()) {
+                if (!ca->VpiNetDeclAssign()) continue;
+                if (imported_cont_assigns.count(ca)) continue;
+                try {
+                    import_continuous_assign(ca);
+                    imported_cont_assigns.insert(ca);
+                    n++;
+                } catch (...) {
+                    log_warning("UHDM: failed to import net-declaration initialiser at line %d\n",
+                                ca->VpiLineNo());
+                }
+            }
+            if (n)
+                log("UHDM: recovered %d net-declaration initialiser(s) from the elaborated instance\n", n);
         }
     }
 
