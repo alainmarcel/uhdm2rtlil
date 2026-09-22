@@ -1,0 +1,37 @@
+{
+ "title": "XiangShan XS-Verilog-Library",
+ "url": "https://github.com/OpenXiangShan/XS-Verilog-Library",
+ "_note": [
+  "XiangShan (香山) is the high-performance open-source RISC-V processor from",
+  "the Chinese Academy of Sciences (ICT) and the Beijing Institute of Open",
+  "Source Chip.  The CORE itself is written in Chisel/Scala, so there is no",
+  "Verilog to read without running the Chisel generator; what is swept here is",
+  "XS-Verilog-Library, the project's HAND-WRITTEN SystemVerilog arithmetic",
+  "units (SRT integer dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS).",
+  "Arithmetic-heavy and self-contained, which makes it good miter material --",
+  "but it is a component library, NOT the XiangShan core."
+ ],
+ "repos": [
+  {
+   "url": "https://github.com/OpenXiangShan/XS-Verilog-Library",
+   "commit": "ffc9cee4387c3c795335f5fadc94029d0fd9d3b5",
+   "dir": "xiangshan"
+  }
+ ],
+ "roots": [
+  "xiangshan/*/rtl/*.sv",
+  "xiangshan/*/rtl/*.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}
