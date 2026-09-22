@@ -1,0 +1,12 @@
+# The point of this test is STRUCTURAL, not functional: the per-element
+# expansion of a byte-written memory is perfectly equivalent to the Verilog
+# netlist (the formal check passes either way) and merely thousands of times
+# larger.  Assert that read_uhdm really inferred the memory.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+memory_collect
+opt_clean
+# exactly one memory, and no per-element address decoder left behind
+select -assert-count 1 t:$mem_v2
+select -assert-max 8 t:$eq

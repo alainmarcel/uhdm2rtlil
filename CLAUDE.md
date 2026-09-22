@@ -437,6 +437,40 @@ step 1–2 name it (e.g. `tcb_ifu.req_dly[DLY]` undriven), read just that subtre
 even emitted the driver, then build a minimal DUT reproducing it before fixing
 the importer. `uhdm_path.log` in the test dir is the textual UHDM tree for that.
 
+### Memory Inference: what makes an array a `$mem` (and what silently un-makes it)
+
+`has_only_constant_array_accesses` (process_helper.cpp) is the gate: an array
+every access of which uses a CONSTANT index becomes per-element registers, and
+anything else becomes a `$mem`.  It scans **processes only** (never continuous
+assignments -- see the comment there) and it must recognise both halves of the
+question, or the array is misclassified in a way NO formal check will catch:
+
+* **A byte-enabled write is a `var_select`, not a `bit_select`.**
+  `Memory[addr][lo +: w] <= d` -- the shape every firtool-generated SRAM model
+  uses -- arrives as ONE `var_select` (VpiName = the array, `Exprs()` =
+  [address, selector]).  A scan that looks only at `bit_select` never sees the
+  dynamic address and calls the array constant-indexed.  XiangShan's
+  `array_8192x432` then expanded into **278558 `$eq`/`$mux` cells instead of
+  one `$mem`** (`read_slang` 85 cells, `read_verilog` 33).  In a `var_select`
+  only the leading ARRAY indices decide this: a `part_select` /
+  `indexed_part_select` tail selects within the word and must be skipped.
+
+* **A genvar index IS constant** and is NOT in `parameter_default_values`;
+  Surelog elaborates it into a per-generate-instance `parameter` carrying the
+  iteration value, reachable via `ref->Actual_group()`.  Miss that and an array
+  written once per generate instance (`ibex_icache`'s `fill_data_d[fb]`, whose
+  elements each have their own continuous assign) is turned into a `$mem`.
+
+**The trap: neither direction shows up as a formal failure.**  Both netlists
+compute the same function, so `equiv_induct` and the SAT miter pass either way
+-- the per-element expansion is merely thousands of times bigger, and the
+wrongly-inferred `$mem` diverges only in simulation (ibex_icache: `rdata_o`
+wrong at cycle 164 of 200, caught by the Verilator co-sim, not by SAT).  A test
+for this class must therefore assert the netlist SHAPE: drop a
+`test_structural.ys` in the test directory and `run_all_tests.sh` runs it as a
+gate (`select -assert-count 1 t:$mem_v2`).  See `test/mem_dyn_idx_byte_write`.
+
+
 ## Code Style
 
 - Use RTLIL types consistently (`RTLIL::SigSpec`, `RTLIL::Wire`, etc.)
