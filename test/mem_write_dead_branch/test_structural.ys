@@ -1,0 +1,9 @@
+# Every $memwr control wire must have a driver, including the ones belonging to
+# write sites whose branch folded away.  `check` counts undriven bits; formal
+# equivalence does NOT see this (the dead write never fires either way), so the
+# structural assertion is the only gate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert

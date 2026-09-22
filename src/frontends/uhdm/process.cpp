@@ -1737,6 +1737,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
                         yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(data_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
+                        // ... and the ADDRESS too.  EN defaults to 0 so the
+                        // address value cannot matter, but the wire still needs
+                        // a DRIVER: a write sitting in a branch that folds away
+                        // (verilog-axis axis_fifo guards two of its four writes
+                        // with `MARK_WHEN_FULL`, 0 by default) otherwise leaves
+                        // the $memwr cell's ADDR input dangling -- 24 undriven
+                        // bits per FIFO, and every axis_* FIFO in
+                        // verilog-ethernet / verilog-pcie has them.
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(addr_wire), RTLIL::SigSpec(RTLIL::State::S0, addr_wire->width)));
                     }
                 }
             }
@@ -2328,9 +2338,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         mem_data_wires[mem_name] = data_wire;
                         mem_en_wires[mem_name] = en_wire;
                         
-                        // Initialize enable to 0 (no write by default)
+                        // Initialize enable to 0 (no write by default), and
+                        // give the address and data a driver too -- see the
+                        // note at the other memwr site: a write in a branch
+                        // that folds away leaves them dangling otherwise.
                         yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(data_wire), RTLIL::SigSpec(RTLIL::State::S0, data_wire->width)));
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(addr_wire), RTLIL::SigSpec(RTLIL::State::S0, addr_wire->width)));
                         
                         log("      Created memory write control wires for %s\n", mem_name.c_str());
                     }
@@ -2963,6 +2980,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
                             yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(data_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
+                            // ... and the ADDRESS too.  EN defaults to 0 so the
+                            // address value cannot matter, but the wire still
+                            // needs a DRIVER: a write sitting in a branch that
+                            // folds away (verilog-axis axis_fifo guards two of
+                            // its four writes with `MARK_WHEN_FULL`, 0 by
+                            // default) otherwise leaves the $memwr cell's ADDR
+                            // input dangling -- 24 undriven bits per FIFO, and
+                            // every axis_* FIFO in verilog-ethernet /
+                            // verilog-pcie has them.
+                            yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(addr_wire), RTLIL::SigSpec(RTLIL::State::S0, addr_wire->width)));
 
                             log("      Created memory control wires for %s[port %d]: addr=%s, data=%s, en=%s\n",
                                 mem_name.c_str(), w, addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
