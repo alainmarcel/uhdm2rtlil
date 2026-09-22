@@ -437,6 +437,38 @@ step 1–2 name it (e.g. `tcb_ifu.req_dly[DLY]` undriven), read just that subtre
 even emitted the driver, then build a minimal DUT reproducing it before fixing
 the importer. `uhdm_path.log` in the test dir is the textual UHDM tree for that.
 
+### Net-Declaration Initialisers Live Only on the ELABORATED Instance
+
+`wire t = a & b;` is a continuous assignment, but Surelog does not put it in
+the module DEFINITION: `NetlistElaboration::elabSignal` turns the initialiser
+into a `cont_assign` (with `VpiNetDeclAssign` set) on the elaborated INSTANCE
+only.  The AllModules definition of that module has the net and no driver for
+it at all -- not even a `vpiExpr` on the net to fall back on.
+
+Module BODIES are imported from the definition (the elaborated pass only
+creates cells), so a top module kept its initialisers and every CHILD module
+silently lost them.  Hand-written RTL barely notices because it drives with
+`assign`; generated RTL is destroyed, because firtool emits nearly all of its
+combinational logic as net-declaration initialisers.  XiangShan's `TLBFA` kept
+**19 of its 507** connects as a child of `TLB` and reported 2038 undriven nets;
+every XiangShan module with undriven nets also failed its miter AND its co-sim,
+and fixing this alone turned `TLB` and `PatternHistoryTable` from "differs"
+into proven with 0 undriven.
+
+`import_module` therefore recovers them: `find_elab_instance()` (over the
+`elab_insts_by_def_` index) finds an elaborated instance of the same
+definition, and any `cont_assign` there with `VpiNetDeclAssign()` that was not
+already imported is imported too.  Pointer identity is the dedup key, which
+works because NetlistElaboration pushes the definition's own cont_assigns into
+the instance list by the SAME pointer -- so this is also a no-op if Surelog is
+ever changed to emit them on the definition.
+
+Do NOT "fix" this by adding the cont_assign to the definition in Surelog
+without also filtering `VpiNetDeclAssign` out of
+`NetlistElaboration.cpp`'s definition-copy loop: the instance would get the
+initialiser twice and the net would be double-driven.
+
+
 ### Memory Inference: what makes an array a `$mem` (and what silently un-makes it)
 
 `has_only_constant_array_accesses` (process_helper.cpp) is the gate: an array

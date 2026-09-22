@@ -398,6 +398,8 @@ struct UhdmImporter {
     // (TopModules depth-first order), built once per import.
     std::unordered_map<std::string, std::vector<const UHDM::module_inst*>> elab_insts_by_def_;
     bool elab_insts_by_def_built_ = false;
+    void build_elab_index();
+    const UHDM::module_inst* find_elab_instance(const UHDM::module_inst* def);
 
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated
