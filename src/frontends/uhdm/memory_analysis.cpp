@@ -139,15 +139,20 @@ bool UhdmMemoryAnalyzer::is_memory_declaration(const net* uhdm_net) {
         return true;
     }
     
-    // Check for register arrays (reg [width-1:0] mem [size-1:0])
-    if (vpi_type == vpiReg || vpi_type == vpiLogicNet) {
-        // For now, use a simple heuristic - look for "memory" in the name
-        std::string net_name = std::string(uhdm_net->VpiName());
-        if (net_name.find("memory") != std::string::npos) {
-            return true;
-        }
-    }
-    
+    // NO NAME HEURISTIC HERE.  This used to return true for any vpiReg /
+    // vpiLogicNet whose name merely CONTAINED the substring "memory", and
+    // extract_memory_info() then invented width=8 size=16 ("default values
+    // based on simple_memory test").  Those numbers happen to match
+    // test/simple_memory's `reg [7:0] memory [0:15]` and are wrong for
+    // everything else: XiangShan's DeqModule has a 3-bit INPUT PORT called
+    // `io_rdataDataEntries_0_memoryType`, which became a phantom 8x16 memory
+    // whose bit-selects were lowered to $memrd of garbage -- the whole
+    // StoreQueue co-sim diverged from cycle 0 on
+    // `io_toUncacheBuffer_req_bits_memBackTypeMM = ~(...memoryType[2])`.
+    //
+    // A genuine unpacked memory is an `array_net` (handled by
+    // is_memory_array() / create_memory_from_array()), not a plain net, so
+    // this scan over Nets() has nothing legitimate to claim.
     return false;
 }
 

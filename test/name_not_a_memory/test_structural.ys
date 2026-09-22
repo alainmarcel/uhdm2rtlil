@@ -1,0 +1,12 @@
+# Exactly ONE memory in this module -- the real `reg [7:0] memory [0:15]`.
+# Before the fix there were two: the real one and a phantom 8x16 invented for
+# the packed input port `memoryType`, whose bit-selects became $memrd cells.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+memory_collect
+opt_clean
+select -assert-count 1 t:$mem_v2
+# and no read port on anything but that memory: the port `memoryType` must be
+# read as plain bits, so only the real memory's single read port survives
+select -assert-max 1 t:$memrd_v2 t:$memrd %u
