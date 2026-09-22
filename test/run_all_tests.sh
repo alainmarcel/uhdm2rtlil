@@ -249,6 +249,35 @@ run_slang_miter() {
     fi
 }
 
+STRUCT_CHECK_RUN=0
+STRUCT_CHECK_FAILED_TESTS=0
+STRUCT_CHECK_FAILED_TEST_NAMES=()
+
+# Structural check: an OPTIONAL per-test `test_structural.ys` asserting a
+# property of the read_uhdm netlist that formal equivalence cannot see --
+# above all, that an inferred construct really was inferred.  A memory that
+# degrades into a per-element $eq/$mux decoder stays perfectly EQUIVALENT to
+# the Verilog netlist; it is just thousands of times bigger (XiangShan's
+# 8192x432 SRAM: 278558 cells instead of 34).  Only a `select -assert-*` on
+# the netlist catches that, so such a test ships one.
+run_structural_check() {
+    local test_dir="$1"
+    [ "${STRUCT_CHECK_DONE:-}" = "$test_dir" ] && return 0
+    local d="$SCRIPT_DIR/$test_dir"
+    [ -f "$d/test_structural.ys" ] && [ -f "$d/slpp_all/surelog.uhdm" ] || return 0
+    STRUCT_CHECK_DONE="$test_dir"
+    STRUCT_CHECK_RUN=$((STRUCT_CHECK_RUN + 1))
+    if (cd "$d" && timeout 300 "$YOSYS_BIN" -m "$UHDM_PLUGIN" ./test_structural.ys \
+            > structural.log 2>&1); then
+        echo "    ✅ Structural: read_uhdm netlist matches the expected shape"
+    else
+        echo "    ❌ Structural FAILED - see structural.log"
+        STRUCT_CHECK_FAILED_TESTS=$((STRUCT_CHECK_FAILED_TESTS + 1))
+        STRUCT_CHECK_FAILED_TEST_NAMES+=("$test_dir")
+        UNEXPECTED_FAILURES+=("$test_dir (structural)")
+    fi
+}
+
 SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
 SIM_EQUIV_ANALYZED_TESTS=0
@@ -883,6 +912,7 @@ analyze_test_result() {
         # Both paths failed at hierarchy but produced nohier ILs - compare those
         echo "✅ Test $test_dir PASSED - comparing nohier ILs (both paths fail at hierarchy)"
         run_slang_miter "$test_dir"
+        run_structural_check "$test_dir"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     fi
@@ -894,6 +924,7 @@ analyze_test_result() {
             echo "✅ Test $test_dir PASSED - UHDM succeeds where Verilog fails!"
             echo "    Demonstrates UHDM's superior SystemVerilog support"
             run_slang_miter "$test_dir"
+            run_structural_check "$test_dir"
             run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
@@ -957,6 +988,7 @@ analyze_test_result() {
     fi
 
     run_slang_miter "$test_dir"
+    run_structural_check "$test_dir"
 
     # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
@@ -1204,12 +1236,13 @@ dump_results_file() {
                  YOSYS_FAILED YOSYS_SKIPPED YOSYS_UHDM_ONLY \
                  EQUIV_FAILED_TESTS MITER_FAILED_TESTS \
                  SLANG_MITER_RUN SLANG_MITER_FAILED_TESTS SLANG_MITER_KNOWN_FAIL \
+                 STRUCT_CHECK_RUN STRUCT_CHECK_FAILED_TESTS \
                  SIM_EQUIV_WARN_TESTS \
                  SIM_EQUIV_KNOWN_WARN_TESTS SIM_EQUIV_ANALYZED_TESTS \
                  SIM_EQUIV_ARTEFACT_TESTS SIM_EQUIV_UNCLASS_TESTS; do
             eval "printf 'count %s %s\n' \"\$v\" \"\${$v:-0}\""
         done
-        for arr in SLANG_MITER_FAILED_TEST_NAMES \
+        for arr in SLANG_MITER_FAILED_TEST_NAMES STRUCT_CHECK_FAILED_TEST_NAMES \
                    FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
                    UHDM_ONLY_TEST_NAMES EQUIV_FAILED_TEST_NAMES \
                    MITER_FAILED_TEST_NAMES SIM_EQUIV_WARN_NAMES \
@@ -1340,6 +1373,12 @@ fi
 if [ "${SLANG_MITER_RUN:-0}" -gt 0 ]; then
     echo "  🔷 Slang-Miter (read_uhdm == read_slang): $((SLANG_MITER_RUN - SLANG_MITER_FAILED_TESTS - SLANG_MITER_KNOWN_FAIL))/$SLANG_MITER_RUN passed, $SLANG_MITER_KNOWN_FAIL known-fail, $SLANG_MITER_FAILED_TESTS unexpected"
     for t_ in "${SLANG_MITER_FAILED_TEST_NAMES[@]}"; do
+        echo "      - $t_"
+    done
+fi
+if [ "${STRUCT_CHECK_RUN:-0}" -gt 0 ]; then
+    echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_FAILED_TESTS unexpected"
+    for t_ in "${STRUCT_CHECK_FAILED_TEST_NAMES[@]}"; do
         echo "      - $t_"
     done
 fi

@@ -2196,6 +2196,23 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                     if (rtlil_module->parameter_default_values.count(RTLIL::escape_id(ref_name))) {
                         return true;  // Parameters are constant
                     }
+                    // A GENVAR is constant too, and is not in
+                    // parameter_default_values: Surelog elaborates it into a
+                    // per-generate-instance `parameter` carrying the iteration
+                    // value.  ibex_icache's `fill_data_d[fb]` (fb = genvar) is
+                    // read inside an always_ff, and without this the array
+                    // looks dynamically indexed and is turned into a $mem even
+                    // though every element is driven by its own continuous
+                    // assignment.
+                    if (auto act = ref->Actual_group()) {
+                        if (act->UhdmType() == uhdmconstant)
+                            return true;
+                        if (act->UhdmType() == uhdmparameter) {
+                            auto par = any_cast<const UHDM::parameter*>(act);
+                            if (par && !std::string(par->VpiValue()).empty())
+                                return true;
+                        }
+                    }
                 }
                 return false;
             }
@@ -2271,7 +2288,39 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 // Don't recursively check parent - we'll visit it through normal traversal
                 break;
             }
-            
+
+            case vpiVarSelect: {
+                // A BYTE-ENABLE memory write -- `Memory[addr][lo +: w] <= d`,
+                // the shape every firtool-generated SRAM model uses -- arrives
+                // as ONE var_select (VpiName = the array, Exprs() = [address,
+                // selector]), not as a bit_select.  Without this case the scan
+                // never sees the dynamic address, calls the array constant-
+                // indexed and degrades it to per-element registers: XiangShan's
+                // array_8192x432 expanded to 278558 $eq/$mux cells instead of
+                // one $mem (read_slang and read_verilog both infer the memory).
+                auto vs = any_cast<const var_select*>(stmt);
+                if (vs && std::string(vs->VpiName()) == array_name && vs->Exprs()) {
+                    for (auto idx : *vs->Exprs()) {
+                        if (!idx) continue;
+                        // A part-select / indexed part-select tail selects
+                        // WITHIN the word; only the array indices in front of
+                        // it decide whether this array can be unrolled into
+                        // per-element registers.
+                        if (idx->VpiType() == vpiPartSelect ||
+                            idx->VpiType() == vpiIndexedPartSelect)
+                            continue;
+                        if (!is_constant_expr(idx)) {
+                            if (mode_debug) {
+                                log("      Array %s has non-constant var_select index!\n",
+                                    array_name.c_str());
+                            }
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+
             case vpiAssignment: {
                 auto assign = any_cast<const assignment*>(stmt);
                 if (assign) {

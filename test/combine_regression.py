@@ -117,6 +117,11 @@ def main():
               f"{counts['SLANG_MITER_FAILED_TESTS']} unexpected")
         for t_ in names(lists, "SLANG_MITER_FAILED_TEST_NAMES"):
             print(f"      - {t_}")
+    if counts.get("STRUCT_CHECK_RUN"):
+        sr, sf = counts["STRUCT_CHECK_RUN"], counts["STRUCT_CHECK_FAILED_TESTS"]
+        print(f"  🧱 Structural (netlist shape): {sr - sf}/{sr} passed, {sf} unexpected")
+        for t_ in names(lists, "STRUCT_CHECK_FAILED_TEST_NAMES"):
+            print(f"      - {t_}")
     print(f"  ❌ True failures: {failed}")
     print(f"  💥 Crashes: {crashed}")
     if total:
