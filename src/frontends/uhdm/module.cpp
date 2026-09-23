@@ -3651,6 +3651,69 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
     return ts_c;
 }
 
+// A typespec whose parent chain reaches a `type_parameter` before it reaches
+// its own module is a CLONE that Surelog copied into the RECEIVING instance.
+// Its parameter references are unbound there.  Return the ancestor instance
+// that DECLARED the type -- the one whose typedef list holds a typespec with
+// the same name and source location -- or nullptr when this is not a clone.
+const UHDM::module_inst*
+UhdmImporter::declaring_instance_of_cloned_typespec(const UHDM::any* typespec) {
+    const UHDM::any* p = typespec->VpiParent();
+    const UHDM::type_parameter* tp = nullptr;
+    for (int hops = 0; p && hops < 16; p = p->VpiParent(), hops++) {
+        if (p->UhdmType() == uhdmmodule_inst)
+            return nullptr;                 // declared right here, not a clone
+        if (p->UhdmType() == uhdmtype_parameter) {
+            tp = any_cast<const UHDM::type_parameter*>(p);
+            break;
+        }
+    }
+    std::string name(typespec->VpiName());
+    std::string file(typespec->VpiFile());
+    int line = typespec->VpiLineNo();
+
+    if (!tp) {
+        // A relayed type parameter (mid -> inner -> leaf) arrives with NO
+        // parent at all and with its member names stripped of any instance
+        // prefix (`aw_t.addr.ADDR_WIDTH`).  Its source location is then the
+        // only link back to the declaring scope: take the elaborated instance
+        // that declares a typedef at that exact location, preferring one on
+        // the path above the instance being imported.
+        if (typespec->VpiParent() != nullptr || file.empty())
+            return nullptr;
+        build_elab_index();
+        auto it = elab_typedef_owners_.find(file + ":" + std::to_string(line) +
+                                            ":" + name);
+        if (it == elab_typedef_owners_.end() || it->second.empty())
+            return nullptr;
+        for (const UHDM::any* a = current_instance; a; a = a->VpiParent())
+            for (auto cand : it->second)
+                if (cand == a)
+                    return cand;
+        return it->second.front();
+    }
+
+    // Start above the instance the type parameter belongs to: the binding was
+    // written by its parent, and for a relayed parameter (mid -> inner -> leaf)
+    // the declaration may be several levels up.
+    for (const UHDM::any* a = tp->VpiParent(); a; a = a->VpiParent()) {
+        if (a->UhdmType() != uhdmmodule_inst)
+            continue;
+        auto mi = any_cast<const UHDM::module_inst*>(a);
+        if (!mi->Typespecs())
+            continue;
+        for (auto ts : *mi->Typespecs()) {
+            if (!ts || ts == typespec)
+                continue;
+            if (std::string(ts->VpiName()) == name &&
+                ts->VpiLineNo() == line &&
+                std::string(ts->VpiFile()) == file)
+                return mi;
+        }
+    }
+    return nullptr;
+}
+
 // Helper function to get width from typespec
 int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst) {
     if (!typespec) return 1;
@@ -3659,6 +3722,55 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         const UHDM::typespec* bound = resolve_type_param_typespec(ts_c, inst);
         if (bound != ts_c)
             return get_width_from_typespec(bound, inst);
+    }
+
+    // A typespec reached through a TYPE PARAMETER is a CLONE.  Surelog copies
+    // the typedef into the RECEIVING instance, and the copy's parameter
+    // references lose their binding: under `inner #(.aw_t(aw_t))` the cloned
+    // `aw_t` carries
+    //
+    //     ref_obj (work@dut.u_m.u_i.aw_t.aw_t.addr.ADDR_WIDTH)   <- no vpiActual
+    //
+    // for `logic [ADDR_WIDTH-1:0] addr`.  The receiving module has no
+    // ADDR_WIDTH of its own, so the reference resolves to nothing, the range
+    // collapses to the degenerate `[-1:0]` and the member measures 2 bits
+    // instead of 32.  PULP's axi_cut is the same shape (`output axi_req_t
+    // mst_req_o` with `.data_o(mst_req_o.aw)`): `mst_req_o.aw` came out 41
+    // bits instead of 72 and axi_cut_intf reported 125 undriven nets against
+    // read_slang's 2.
+    //
+    // The values live in the instance that DECLARED the type.  Find it by
+    // walking the instance ancestors of the type parameter until one lists a
+    // typedef with this typespec's name and source location, then measure
+    // there -- with `current_instance` moved along, because that (not the
+    // `inst` argument) is what import_ref_obj resolves names against.
+    if (!in_typespec_width_retry_) {
+        if (const UHDM::module_inst* decl = declaring_instance_of_cloned_typespec(typespec)) {
+            if (decl != current_instance) {
+                struct DeclScope {
+                    UhdmImporter& i_;
+                    const UHDM::module_inst* saved_inst_;
+                    const UHDM::scope* saved_scope_;
+                    DeclScope(UhdmImporter& i, const UHDM::module_inst* decl)
+                        : i_(i), saved_inst_(i.current_instance),
+                          saved_scope_(i.current_scope) {
+                        i_.in_typespec_width_retry_ = true;
+                        i_.current_instance = decl;
+                        i_.current_scope = nullptr;
+                    }
+                    ~DeclScope() {
+                        i_.current_scope = saved_scope_;
+                        i_.current_instance = saved_inst_;
+                        i_.in_typespec_width_retry_ = false;
+                    }
+                } _decl_scope(*this, decl);
+                int w = get_width_from_typespec(typespec, decl);
+                if (mode_debug)
+                    log("    type-parameter typespec measured %d in its declaring "
+                        "instance %s\n", w, std::string(decl->VpiFullName()).c_str());
+                return w;
+            }
+        }
     }
 
     try {

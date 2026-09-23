@@ -3419,6 +3419,12 @@ void UhdmImporter::build_elab_index() {
         if (sc->UhdmType() == uhdmmodule_inst) {
             auto m = any_cast<const module_inst*>(sc);
             elab_insts_by_def_[std::string(m->VpiDefName())].push_back(m);
+            if (m->Typespecs())
+                for (auto ts : *m->Typespecs())
+                    if (ts)
+                        elab_typedef_owners_[std::string(ts->VpiFile()) + ":" +
+                                             std::to_string(ts->VpiLineNo()) + ":" +
+                                             std::string(ts->VpiName())].push_back(m);
             mods = m->Modules(); gsa = m->Gen_scope_arrays();
         } else if (sc->UhdmType() == uhdmgen_scope) {
             auto g = any_cast<const gen_scope*>(sc);

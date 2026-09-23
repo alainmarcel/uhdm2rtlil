@@ -213,7 +213,9 @@ Prefer the SLANG MITER list for anything involving **type parameters or packed
 struct parameters**: `read_verilog` cannot parse those at all, so the ordinary
 verilog-vs-uhdm comparison is vacuous — it reports "No logic gates - comparing
 constant wire values" and passes on nothing.  The miter is then the only real
-gate.  `test/typeparam_struct_member_width` is exactly this case.
+gate.  `test/typeparam_struct_member_width` was tracked there until its width
+bug was fixed, and its `test_slang_equiv.ys` is still the only real check it
+has.
 
 Both lists are RATCHETS: a test listed in either that starts passing is
 reported as an UNEXPECTED SUCCESS, so the entry must be removed in the same
@@ -627,6 +629,50 @@ wrong at cycle 164 of 200, caught by the Verilator co-sim, not by SAT).  A test
 for this class must therefore assert the netlist SHAPE: drop a
 `test_structural.ys` in the test directory and `run_all_tests.sh` runs it as a
 gate (`select -assert-count 1 t:$mem_v2`).  See `test/mem_dyn_idx_byte_write`.
+
+
+## A type-parameter typespec is a CLONE with unbound parameters
+
+Surelog does not hand a `parameter type` binding over by reference: it COPIES
+the typedef into the receiving instance.  The copy keeps the source location
+but loses every parameter binding, and the receiving module has no parameter of
+that name, so a member declared over one measures nothing:
+
+```systemverilog
+module mid #(parameter int ADDR_WIDTH = 0, ID_WIDTH = 0);
+  typedef struct packed { logic [ADDR_WIDTH-1:0] addr;
+                          logic [ID_WIDTH-1:0]   id; } aw_t;
+  inner #(.aw_t(aw_t)) u_i (...);      // mid instantiated with 32 / 4
+```
+
+Inside `u_i` the clone carries `ref_obj (work@dut.u_m.u_i.aw_t.aw_t.addr.ADDR_WIDTH)`
+with **no `vpiActual`**.  `ADDR_WIDTH` resolves to nothing, `[ADDR_WIDTH-1:0]`
+becomes the degenerate `[-1:0]` (two bits, per the LRM's `|msb-lsb|+1`), and
+`aw_t` measures 4 bits instead of 36.  Relayed one level further
+(`leaf #(.d_t(aw_t))`) the clone arrives with **no `VpiParent` at all** and its
+names stripped to `aw_t.addr.ADDR_WIDTH`.
+
+Two consequences worth remembering:
+
+* **`get_width_from_typespec(ts, inst)` does not measure against `inst`.**  The
+  range bounds go through `import_expression`, which resolves names against the
+  importer's `current_scope ? current_scope : current_instance` — the `inst`
+  argument only steers `resolve_type_param_typespec`.  The same typespec
+  therefore measured 2 bits or 32 depending on which module was being imported
+  at the time.  To measure a typespec in a chosen scope you must MOVE
+  `current_instance` (see `declaring_instance_of_cloned_typespec` in
+  `module.cpp`), not just pass a different `inst`.
+* **The declaring scope is findable.**  Walk the instance ancestors of the
+  clone's `type_parameter` until one lists a typedef with the same name and
+  source location; for a detached clone, look the location up in
+  `elab_typedef_owners_` (built alongside the elaborated-instance index) and
+  prefer a candidate on the path above `current_instance`.
+
+Symptom in the wild: PULP `axi_cut`'s `output axi_req_t mst_req_o` with
+`.data_o(mst_req_o.aw)` measured 41 bits instead of 72, the narrow-output
+widening connected only those bits back, and `axi_cut_intf` reported 125
+undriven nets against `read_slang`'s 2.  Test:
+`test/typeparam_struct_member_width`.
 
 
 ## Code Style
