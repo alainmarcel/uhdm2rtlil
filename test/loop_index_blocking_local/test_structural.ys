@@ -1,0 +1,8 @@
+# The two halves of this design are semantically identical, so the netlist must
+# not be quadratic in the array length for one of them.  Gate on the RAW
+# netlist: `proc; opt_clean` collapses the redundant compare/mux chains, so a
+# post-opt count hides the bug entirely (508 either way).  Raw, the difference
+# is 508 cells with the fix against 33276 without.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top loop_index_blocking_local
+select -assert-max 2000 t:*

@@ -10548,7 +10548,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             while (elem_wire(arr_low + num_elems))
                 num_elems++;
 
-            RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
+            // The INDEX of an element select must see the in-flight blocking
+            // values too, not just the element data.  `i = a*16+w; tab[i]`
+            // inside an unrolled loop is a CONSTANT index per iteration, but
+            // only if `i` is looked up; imported blind it stays a variable and
+            // every access builds an N-way compare/mux chain over the whole
+            // array -- N of them, so the cost is quadratic in the array
+            // length.  (A blocking assignment is visible immediately, so
+            // consulting the map here is what the semantics call for anyway.)
+            const std::map<std::string, RTLIL::SigSpec>* idx_map = input_mapping;
+            if (!idx_map && !in_always_ff_body_mode && current_comb_process)
+                idx_map = &current_comb_values;
+            RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), idx_map);
 
             if (idx.is_fully_const()) {
                 // Constant index — return current tracked value or raw wire.

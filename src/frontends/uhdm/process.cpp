@@ -11369,7 +11369,23 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
     if (!idx_expr) return false;
     auto idx_expr_obj = dynamic_cast<const UHDM::expr*>(idx_expr);
     if (!idx_expr_obj) return false;
-    RTLIL::SigSpec idx = import_expression(idx_expr_obj);
+    // Resolve the index against the in-flight BLOCKING values first.  Inside
+    // an unrolled loop `i = a*16+w; tab[i] = ...` has a constant index per
+    // iteration -- but only if we look `i` up.  Imported blind it stays a
+    // variable, so every write takes the dynamic per-element path below and
+    // the cost goes QUADRATIC in the array length: one write emits a compare
+    // and a mux for each of N elements, N times over.
+    //
+    // cvw's fdivsqrtuslc4 is 113 lines that fill a 1024-entry table from a
+    // nested loop exactly this way.  read_uhdm built 164096 cells for a
+    // 128-entry cut-down of it (read_slang: 5) and peaked at 10.5 GB on the
+    // real thing -- enough to take a 16 GB CI runner down.  Writing
+    // `tab[a*16+w]` inline was always cheap; only the intermediate variable
+    // hit this.
+    const std::map<std::string, RTLIL::SigSpec>* idx_map =
+        (!in_always_ff_body_mode && current_comb_process) ? &current_comb_values
+                                                         : nullptr;
+    RTLIL::SigSpec idx = import_expression(idx_expr_obj, idx_map);
     if (idx.size() == 0 || idx.is_fully_const()) return false;  // static path
 
     // Width actually written per element: the whole element, or just the slice.
