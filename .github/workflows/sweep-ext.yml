@@ -33,7 +33,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        family: [common_cells, axi, cve2, cvw, verilog-ethernet, verilog-pcie, hdmi, xiangshan]
+        include:
+          - family: common_cells
+          - family: axi
+          - family: cve2
+          # cvw's fdivsqrtuslc4 is 113 lines that declare a 1024-entry unpacked
+          # array and fill it from a nested loop inside always_comb.  Unrolled,
+          # read_uhdm peaks at 10.5 GB on it.  The sweep runs --jobs 2, so at
+          # the default 12 GB cap two concurrent modules exhaust a 16 GB runner
+          # BEFORE either trips its own ulimit, and the runner is killed --
+          # "The runner has received a shutdown signal ... exit code 143",
+          # which had this workflow red every night.  Capped so that jobs x cap
+          # fits, the heavy module fails its own row with a bad_alloc and the
+          # other 233 still report.
+          - family: cvw
+            mem_limit_kb: "7000000"
+          - family: verilog-ethernet
+          - family: verilog-pcie
+          - family: hdmi
+          - family: xiangshan
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
@@ -41,3 +59,4 @@ jobs:
       cycles: "300"
       timeout: 300
       shards: 1
+      mem_limit_kb: ${{ matrix.mem_limit_kb || '12000000' }}

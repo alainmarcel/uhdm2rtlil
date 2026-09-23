@@ -60,6 +60,24 @@ def sh(cmd, cwd=None, timeout=None, env=None):
         return 124, (e.stdout or "") + "\nTIMEOUT"
 
 
+
+def _capped(cmd):
+    """Cap the address space when MEM_LIMIT_KB is set.
+
+    The miter and the co-sim already do this; Surelog and the two elaborations
+    did not, and for an ext family those run FIRST.  A blowup there does not
+    fail the row, it takes the whole runner down -- "The runner has received a
+    shutdown signal ... exit code 143" -- which is how the cvw family had the
+    external-IP nightly red for six nights straight, burying every other
+    family's result behind a failed workflow.  Capped, the row fails on its own
+    and the rest of the sweep still reports.
+    """
+    mem = os.environ.get("MEM_LIMIT_KB")
+    if not mem:
+        return cmd
+    return ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in cmd]
+
+
 # ----------------------------------------------------------------- closure
 class Closure:
     """Identifier-scan dependency closure over the manifest's source roots."""
@@ -307,7 +325,8 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         # one: XiangShan's XSTop (3.2 M lines) dumps 8.5 GB of text.  Keep it
         # only while the closure is small.
         dump = ["-d", "uhdm"] if src_bytes <= DUMP_LIMIT else []
-        rc, out = sh([str(S), "-parse", *dump, *def_flags, *inc_flags, "-top", top, *files],
+        rc, out = sh(_capped([str(S), "-parse", *dump, *def_flags, *inc_flags,
+                              "-top", top, *files]),
                      cwd=w, timeout=_sl_timeout(src_bytes))
         (w / "surelog.log").write_text(out or "")
     if not uhdm.exists():
@@ -346,7 +365,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     # NOT -q: the per-line slang diagnostics are what tell a default-parameter
     # elaboration failure apart from a slang limitation, and -q collapses them
     # to a bare "Design elaboration failed".
-    rc2, out2 = sh([str(Y), "slang.ys"], cwd=w, timeout=600)
+    rc2, out2 = sh(_capped([str(Y), "slang.ys"]), cwd=w, timeout=600)
     (w / "slang.log").write_text(out2 or "")
     slang_ok = rc2 == 0 and (w / "slang_hier.il").exists()
     if not slang_ok:
@@ -372,7 +391,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     (w / "check.ys").write_text(
         f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -check -top {top}\n"
         f"write_rtlil uhdm_hier.il\nproc\n{flat}opt_clean\nstat\ncheck\n")
-    rc, out = sh([str(Y), "-q", "-m", str(P), "check.ys"], cwd=w,
+    rc, out = sh(_capped([str(Y), "-q", "-m", str(P), "check.ys"]), cwd=w,
                  timeout=_sl_timeout(src_bytes))
     (w / "check.log").write_text(out or "")
     if rc != 0 or not (w / "uhdm_hier.il").exists():
