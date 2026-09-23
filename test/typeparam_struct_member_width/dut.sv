@@ -1,24 +1,25 @@
-// KNOWN FAILING — see test/failing_tests.txt.
+// A struct reached through a TYPE PARAMETER used to measure its
+// parameter-sized members as the degenerate `[-1:0]`, two bits each.
 //
-// A struct reached through a TYPE PARAMETER measures its parameter-sized
-// members as ZERO, so a member select on a type-parameter-typed port comes out
-// too narrow and the missing bits are left undriven.
+// Surelog CLONES the typedef into the receiving instance, and the clone's
+// parameter references lose their binding: under `inner #(.aw_t(aw_t))` the
+// cloned `aw_t` carries `ref_obj (work@dut.u_m.u_i.aw_t.aw_t.addr.ADDR_WIDTH)`
+// with no vpiActual, and `inner` has no ADDR_WIDTH of its own.  Relayed one
+// level further (`leaf #(.d_t(aw_t))`) the clone arrives with no VpiParent at
+// all and with its names stripped to `aw_t.addr.ADDR_WIDTH`.
 //
-// Surelog emits exactly ONE `struct_typespec` for `aw_t`, and its owner is the
-// module DEFINITION (`work@mid`), where every parameter sits at its DEFAULT
-// (ADDR_WIDTH = 0).  There is no elaborated copy.  `inner` has no ADDR_WIDTH of
-// its own to resolve `logic [ADDR_WIDTH-1:0] addr` with, so that member
-// measures 0 and `aw_t` measures `id` alone: 4 bits instead of 36.
+// So `aw_t` measured 4 bits instead of 36, the member select on the
+// type-parameter'd port came out short, and the narrow-output widening left
+// addr's 32 bits undriven.  In the wild: PULP axi_cut's `.data_o(mst_req_o.aw)`
+// measured 41 bits instead of 72, and axi_cut_intf reported 125 undriven nets
+// against read_slang's 2.
 //
-// The narrow-output widening in uhdm2rtlil.cpp then hands the cell a fresh wide
-// wire and connects only the 4 bits back, leaving addr's 32 bits dangling.
-//
-// In the wild: PULP axi_cut's `output axi_req_t mst_req_o` with
-// `.data_o(mst_req_o.aw)` -- `mst_req_o.aw` measures 41 bits instead of 72, and
-// axi_cut_intf reports 125 undriven nets against read_slang's 2.
+// The fix measures such a clone in the instance that DECLARED the type --
+// found through the type parameter's instance ancestors, or, for a detached
+// clone, by the typedef's source location.
 //
 // The trigger is specifically the TYPE PARAMETER: the same design with `inner`
-// declaring the typedefs locally reads clean.
+// declaring the typedefs locally has always read clean.
 
 module leaf #(
   parameter type d_t = logic

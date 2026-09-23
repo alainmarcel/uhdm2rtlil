@@ -398,6 +398,13 @@ struct UhdmImporter {
     // (TopModules depth-first order), built once per import.
     std::unordered_map<std::string, std::vector<const UHDM::module_inst*>> elab_insts_by_def_;
     bool elab_insts_by_def_built_ = false;
+    // Elaborated instances that DECLARE a typedef, keyed "file:line:name".
+    // A typespec cloned through a type parameter can arrive completely
+    // detached (no VpiParent at all); its source location is then the only
+    // link back to the scope whose parameters give its members a width.
+    std::unordered_map<std::string, std::vector<const UHDM::module_inst*>>
+        elab_typedef_owners_;
+    bool in_typespec_width_retry_ = false;
     void build_elab_index();
     const UHDM::module_inst* find_elab_instance(const UHDM::module_inst* def);
 
@@ -1303,6 +1310,7 @@ struct UhdmImporter {
 
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
+    const UHDM::module_inst* declaring_instance_of_cloned_typespec(const UHDM::any* typespec);
     // Substitute a `parameter type` DECLARATION-DEFAULT typespec with the
     // instance-bound type (returns input unchanged when no binding applies).
     const UHDM::typespec* resolve_type_param_typespec(const UHDM::typespec* ts,
