@@ -52,29 +52,31 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (1044 tests, ~40 min).  A PR lands
+`cd test && ./run_parallel.sh 6 --no-cva6` (~1055 tests, ~25 min).  A PR lands
 only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1581 | 1034 | 547 |
-| Functional | 1535 (97%) | **1034 (100%)** | 501 |
+| Tests | 1595 | 1047 | 548 |
+| Functional | 1549 (97%) | **1047 (100%)** | 502 |
 | True failures | 11 | **0** | 11 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **961** tests formally equivalent UHDM vs Verilog; **552** UHDM-only
+- **978** tests formally equivalent UHDM vs Verilog; **571** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **100 / 101** SV-only designs also proven against `read_slang`.
+  **108 / 109** SV-only designs also proven against `read_slang`.
 - **13 equivalence failures**, each with a recorded verdict in
   `test/failing_tests.txt`.  In several the *reference* is the wrong side
   (`read_verilog` mis-lowers the construct) — a SAT miter against `read_slang`
   proves UHDM correct.
-- **Sim-equiv ratchet** (`test/sim_equiv_warn_baseline.txt`, shrink-only): 27
-  internal divergences outstanding; 54 analyzed, every one a sim/synth artefact
-  a miter proves UHDM == Verilog (**0 inconclusive**).
+- **Sim-equiv ratchet** (`test/sim_equiv_warn_baseline.txt`, shrink-only): 105
+  divergences outstanding across the full corpus; 74 analyzed, 57 shown to be
+  sim/synth artefacts a miter proves UHDM == Verilog, 17 still inconclusive.
+  Restricted to the internal SV suite the backlog is 27, all 54 analyzed ones
+  artefacts, 0 inconclusive.
 
 
 ### Supported Core IP
@@ -133,41 +135,26 @@ failure.  `undriven` likewise counts comparable rows only.
 
 #### Generated IP: the XiangShan core
 
-XiangShan's core is **Chisel/Scala** — the repository contains no Verilog at
-all, so unlike every other family there is nothing to read until the generator
-has been run.  Generation is therefore a step of the sweep itself
-(`"generate"` in `test/ext_ip/xiangshan-core*.json`), skipped once the RTL is
-present, and driven from the repository root:
+XiangShan's core is **Chisel/Scala** — the repository contains no Verilog, so
+unlike every other family there is nothing to read until the generator has run.
+Generation is a step of the sweep itself, driven from the repository root:
 
 ```bash
-make xiangshan-core          # CONFIG=MinimalConfig  — the cheaper configuration
-make xiangshan-core-full     # CONFIG=DefaultConfig  — the COMPLETE Kunminghu core
+make xiangshan-core          # CONFIG=MinimalConfig
+make xiangshan-core-full     # CONFIG=DefaultConfig — the complete Kunminghu core
 ```
 
 Each clones `OpenXiangShan/XiangShan` at the pinned commit under `$EXT_IP_ROOT`
-(default `~/ext`) with its submodules, downloads `mill` if it is not on `PATH`,
-runs `make verilog`, and sweeps the result.  A JDK (17+) is the only
-prerequisite.  `NOOP_HOME` is set by the generate step — without it the build
-dies in difftest's file collection *after* firtool has already written the RTL,
-so the output looks complete while the build failed.
+(default `~/ext`), downloads `mill` if needed, runs `make verilog`, and sweeps
+the result.  A JDK 17+ is the only prerequisite.
 
-**Neither runs in CI, and that is a measurement, not an assumption:**
-
-| | `MinimalConfig` | `DefaultConfig` | hosted `ubuntu-24.04` |
-|---|---|---|---|
-| generated RTL | 1894 `.sv` + 22 `.v`, 2.2 M lines | 1980 `.sv` + 22 `.v`, 3.2 M lines | — |
-| JVM heap to generate | 8 GB | 40 GB | — |
-| peak RSS to generate | 13.5 GB | — | **16 GB total RAM** |
-| generation time (warm / cold) | 7 min / ~45 min | 6 min / ~45 min | — |
-| RTL on disk | 1.1 GB | 1.5 GB | **14 GB free disk** |
-| Surelog on `XSTop` | — | 6 m 40 s, **35.5 GB peak** | — |
-| `read_uhdm` on `XSTop` | — | 5 m 09 s, 11 GB peak | — |
-
-`MinimalConfig` is XiangShan's own cut-down configuration (RobSize 48, 32 KB
-L1D, 128 KB L2, 4 MB LLC) and is genuinely smaller, but the binding constraint
-is the Chisel build rather than the RTL size, so it does not become CI-sized
-either.  The hand-written **XS-Verilog-Library** (the `xiangshan` family above)
-is the part of the project that *is* swept nightly.
+**Neither runs in CI, and that is measured, not assumed:** `DefaultConfig`
+generates 3.2 M lines and needs a 40 GB JVM heap; `MinimalConfig` still peaks at
+13.5 GB RSS to generate 2.2 M lines, and Surelog on `XSTop` peaks at 35.5 GB —
+against a hosted runner's 16 GB RAM and 14 GB free disk.  The binding constraint
+is the Chisel build rather than the RTL size, so the cheaper configuration does
+not become CI-sized either.  The hand-written **XS-Verilog-Library** (the
+`xiangshan` family above) is the part of the project that *is* swept nightly.
 
 AXI additionally pulls [tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic)
 and verilog-pcie pulls [verilog-axis](https://github.com/alexforencich/verilog-axis).
@@ -178,9 +165,12 @@ standalone with its defaults performs a member access on a 1-bit `logic` —
 `read_slang` rejects it outright and there is nothing to compare against.  Those
 rows are recorded with the slang diagnostic that identifies them.
 
-**CORE-V Wally sweeps 234 modules locally** (75 / 88 comparable proven), but the
-nightly job has been reporting 0 rows — a CI-side failure that still needs
-diagnosing separately from the numbers above.
+**CORE-V Wally sweeps 234 modules.**  Its nightly job used to take the whole
+runner down: one module (`fdivsqrtuslc4`, 113 lines that fill a 1024-entry table
+from a nested loop) made `read_uhdm` peak at 10.5 GB, and at `--jobs 2` on a
+16 GB runner the VM was exhausted before any per-process cap could trip.  Both
+halves are fixed — the blowup itself was a quadratic expansion in loop
+unrolling, now 0.37 GB — so the family reports real rows again.
 
 
 ### SystemVerilog Frontend Comparison
@@ -195,20 +185,27 @@ only when one of those checks proves it equivalent; *SV-only* means the frontend
 synthesized SystemVerilog that the native Verilog frontend cannot even read (no
 golden to compare against, so it is verified against the RTL by co-simulation).
 
-Ranked by total tests handled correctly (1521-test matrix, nightly run of 2026-09-17):
+The nightly run
+([Frontend Matrix](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/frontend-matrix.yml),
+1559 tests) reports two things separately: what each frontend could **read**,
+and — where a `read_verilog` golden exists to compare against — whether it was
+**right**.
 
-| Rank | Frontend | Verified correct | SV-only (no golden) | **Total correct** | Incorrect | Failed to read |
-|-----:|----------|-----------------:|--------------------:|------------------:|----------:|---------------:|
-| 🥇 1 | **`uhdm`** (this project) | 921 | 481 | **1402 (92%)** | 24 | 33 |
-| 🥈 2 | `sv2v` | 858 | 396 | 1254 (82%) | 0 | 205 |
-| 🥉 3 | `slang` (Yosys sv-elab) | 728 | 406 | 1134 (75%) | 0 | 270 |
-| 4 | `verilog` (Yosys native, the golden) | 948 | — | 948 (62%) | 9 | 564 |
+| Frontend | Read | Failed to read | Correct | Incorrect | No golden | Unknown |
+|---|---:|---:|---:|---:|---:|---:|
+| **`uhdm`** (this project) | **1527** | 33 | 936 | 24 | 501 | 65 |
+| `sv2v` | 1352 | 207 | 873 | 0 | 414 | 65 |
+| `slang` (Yosys sv-elab) | 1289 | 270 | 743 | 0 | 426 | 120 |
+| `verilog` (Yosys native, the golden) | 975 | 584 | 966 | 9 | — | 0 |
 
-On this corpus the UHDM frontend converts the most SystemVerilog — **1402 of
-1521** tests verified correct, including **481 designs the native Verilog frontend
-cannot read at all**.  (*Failed to read* = failed + crashed + out-of-memory; the
-remaining tests per frontend are *Unknown* — a formal non-equivalence the co-sim
-could not adjudicate: 62 for `uhdm` and `sv2v`, 117 for `slang`.)
+*Failed to read* = failed + crashed + out-of-memory.  *No golden* = this
+frontend synthesized but `read_verilog` could not, so there is nothing to
+compare against — a capability win, verified against the RTL by co-simulation
+rather than formally.  *Unknown* = formal non-equivalence the co-sim could not
+adjudicate.
+
+On this corpus the UHDM frontend reads the most SystemVerilog — **1527 of 1559**,
+including **501 designs the native Verilog frontend cannot read at all**.
 
 **How to read this table honestly:**
 
@@ -220,11 +217,11 @@ could not adjudicate: 62 for `uhdm` and `sv2v`, 117 for `slang`.)
   playing at home. Read "#1 by ~10 points" in that light.
 - **The benchmark rewards breadth over conservatism.** `sv2v` and `slang` report
   **0 incorrect** results here; `uhdm`'s **24** are a real (tracked) triage backlog
-  in `test/failing_tests.txt`. The README's ranking metric (total handled) favors
-  reading more SV, but "accepts less yet is never wrong on what it accepts" is a
-  legitimate — sometimes preferable — posture, and it's the one `sv2v`/`slang` show
-  on this corpus. Their higher "Failed to read" counts (203 / 268 vs 33) reflect
-  that trade-off, not a defect.
+  in `test/failing_tests.txt`. Ranking by how much is read favors breadth, but
+  "accepts less yet is never wrong on what it accepts" is a legitimate — sometimes
+  preferable — posture, and it's the one `sv2v`/`slang` show on this corpus. Their
+  higher "Failed to read" counts (207 / 270 vs 33) reflect that trade-off, not a
+  defect.
 - **Coverage ≠ ecosystem fit.** `slang`/sv-elab is the frontend that has been
   **upstreamed into Yosys itself**, ships in the OSS CAD Suite, and is used by
   OpenROAD — adoption, integration, and maintenance advantages a nightly coverage

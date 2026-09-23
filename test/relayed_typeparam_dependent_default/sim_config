@@ -1,0 +1,12 @@
+# This test REPRODUCES a bug: the relayed type parameter's dependent default is
+# measured in the receiving instance, so grandchild's idx_t ports are ONE BIT
+# instead of 4 and map_i is 66 bits instead of 72.  The co-sim therefore
+# compares a knowingly-wrong netlist against the RTL and diverges by
+# construction -- that divergence is the bug itself, not a finding, and it
+# would otherwise register as a NEW sim-equiv warning on every run and grow a
+# shrink-only baseline.
+#
+# The real gate is the slang miter (read_uhdm vs read_slang), which fails with
+# a counterexample and is tracked in slang_miter_expected_fail.txt.  Remove
+# BOTH this file and that entry when the measurement bug is fixed.
+SKIP_SIM_EQUIV=1

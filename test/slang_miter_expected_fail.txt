@@ -12,3 +12,15 @@
 # on the cex shows the two 34-bit halves exactly swapped and every other
 # output identical.
 ibex_ex_block
+
+# relayed_typeparam_dependent_default: a RELAYED type parameter whose default
+# is DEPENDENT on another parameter (`parameter type idx_t = logic
+# [IdxWidth-1:0]`) is measured in the RECEIVING instance, where IdxWidth still
+# sits at its default, instead of the declaring one.  Every idx_t port comes
+# out one bit.  Same clone-measurement problem as #861, but that fix searches
+# each ancestor's TYPEDEF list and a type parameter's own default is not a
+# typedef.  Extending the search to match by file/line/column was tried and
+# reverted: too loose, it picked the wrong parameter.  In the wild: PULP
+# axi_lite_mailbox_slave via common_cells cc_addr_decode_dync, whose idx_o
+# comes out 1 bit against read_slang's 4.
+relayed_typeparam_dependent_default
