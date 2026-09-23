@@ -190,6 +190,7 @@ def main():
         sys.exit(f"# gen_param_wrapper: {a.manifest} has no \"bind\" section")
     types = [tuple(r) for r in bind.get("types", [])]
     values = [tuple(r) for r in bind.get("values", [])]
+    default_value = bind.get("default_value", 4)
 
     txt = strip_comments("\n".join(
         Path(s).read_text(errors="replace") for s in a.srcs))
@@ -197,9 +198,22 @@ def main():
     params = parse_params(ptext)
     ports = parse_ports(porttext)
 
-    type_binds, value_binds, unbound = {}, {}, []
+    # A DEPENDENT type parameter is derived from another parameter
+    # (`parameter type mem_addr_t = logic[MemAddrWidth-1:0]`) and the sources
+    # say so in as many words -- "Dependent parameter do **not** overwrite!".
+    # Only a bare `= logic` placeholder is ours to bind; overriding a derived
+    # one decouples it from the width it is supposed to track.
+    ZERO = re.compile(r"^(\d+'d)?0+$|^'0$")
+    type_binds, value_binds, unbound, dep_types = {}, {}, [], {}
     for kind, nm, dflt in params:
         if kind == "type":
+            if dflt and dflt.strip() != "logic":
+                # Dependent: do not override it, but a port declared with it
+                # still needs a type the wrapper can see, so remember the
+                # expression and re-declare it in the package, where the
+                # widths it names are localparams with the bound values.
+                dep_types[nm] = dflt.strip()
+                continue
             b = first_match(types, nm)
             if b is None:
                 unbound.append(f"type {nm}")
@@ -207,6 +221,14 @@ def main():
                 type_binds[nm] = f"{a.pkg}::{b}"
         else:
             b = first_match(values, nm)
+            if b is None and ZERO.match(dflt.strip() or "x"):
+                # A zero default in this style of RTL is a "you must override
+                # me" marker, not a value.  Left alone it builds a degenerate
+                # design -- axi_lite_from_mem's MaxRequests=0 gives a
+                # zero-depth response FIFO, the two readers disagree about
+                # what a full-on-empty FIFO does, and the row reports a
+                # `differs` that says nothing about the frontend.
+                b = default_value
             if b is not None:
                 value_binds[nm] = str(b)
     if unbound:
@@ -239,8 +261,8 @@ def main():
         return s
 
     for dirn, tname, dims, body, name in ports:
-        if tname in type_binds:
-            b = type_binds[tname]
+        if tname in type_binds or tname in dep_types:
+            b = type_binds.get(tname) or dep_types[tname]
             tn = f"{name}_t"
             ptypes.append(f"  typedef {b} {tn} {dims};" if dims
                           else f"  typedef {b} {tn};")
