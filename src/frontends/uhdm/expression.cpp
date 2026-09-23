@@ -7612,6 +7612,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         RTLIL::Const result;
         bool can_evaluate = true;
         
+        // A relational comparison is SIGNED only when both operands are
+        // (LRM 11.8.1).  Folding it unsigned makes every compare against a
+        // negative literal false: `integer w2 = 0; w2 >= -4` becomes
+        // `0 >= 32'hFFFFFFFC`.  Inside an unrolled loop that is silent and
+        // total -- CORE-V Wally's fdivsqrtuslc4 builds its quotient-select
+        // table from `w2 >= -4` / `w2 >= -13` chains, so EVERY entry fell
+        // through to the final else and the module's only output was wrong
+        // on 120 of 301 co-sim cycles.
+        auto rel_signed = [&]() -> bool {
+            auto ops_u = uhdm_op->Operands();
+            if (!ops_u || ops_u->size() < 2) return false;
+            auto e0 = dynamic_cast<const UHDM::expr*>((*ops_u)[0]);
+            auto e1 = dynamic_cast<const UHDM::expr*>((*ops_u)[1]);
+            return e0 && e1 && is_expr_signed(e0) && is_expr_signed(e1);
+        };
         switch (op_type) {
             case vpiAddOp:
                 if (operands.size() == 2) {
@@ -7741,22 +7756,26 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 break;
             case vpiLtOp:
                 if (operands.size() == 2) {
-                    result = RTLIL::const_lt(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                    bool sgn = rel_signed();
+                    result = RTLIL::const_lt(operands[0].as_const(), operands[1].as_const(), sgn, sgn, 1);
                 }
                 break;
             case vpiLeOp:
                 if (operands.size() == 2) {
-                    result = RTLIL::const_le(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                    bool sgn = rel_signed();
+                    result = RTLIL::const_le(operands[0].as_const(), operands[1].as_const(), sgn, sgn, 1);
                 }
                 break;
             case vpiGtOp:
                 if (operands.size() == 2) {
-                    result = RTLIL::const_gt(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                    bool sgn = rel_signed();
+                    result = RTLIL::const_gt(operands[0].as_const(), operands[1].as_const(), sgn, sgn, 1);
                 }
                 break;
             case vpiGeOp:
                 if (operands.size() == 2) {
-                    result = RTLIL::const_ge(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                    bool sgn = rel_signed();
+                    result = RTLIL::const_ge(operands[0].as_const(), operands[1].as_const(), sgn, sgn, 1);
                 }
                 break;
             case vpiLogAndOp:
