@@ -227,6 +227,55 @@ def _degenerate_ports(il_path, top):
     return names
 
 
+
+def _bind_wrapper(w, fam, mod, files):
+    """Generate a type-bound wrapper for a module whose defaults cannot
+    elaborate, and return (wrapper_path, top) -- or None.
+
+    A sweep reads every module standalone, and PULP-style RTL is not written
+    for that: `parameter type axi_req_t = logic` plus `mst_req_o.aw_valid`
+    means that at its defaults the module takes a member of a 1-BIT LOGIC.
+    That is not legal SystemVerilog, so read_slang rejects it and there is no
+    reference to judge our netlist against -- 94 of the axi family's 108
+    modules were excluded for exactly that reason and only 4 were ever really
+    checked.  When the manifest carries a "bind" section, bind the type
+    parameters to concrete types instead and sweep the wrapper.
+
+    Only attempted for a module that actually declares `parameter type ... =
+    logic`, so nothing that elaborates today changes.
+    """
+    if not (HERE / f"{fam}.json").exists():
+        return None
+    man = json.loads((HERE / f"{fam}.json").read_text())
+    if not man.get("bind"):
+        return None
+    pat = re.compile(r"\bmodule\s+" + re.escape(mod) + r"\b")
+    declares_type_param = False
+    for f in files:
+        try:
+            src = open(f, "r", errors="replace").read()
+        except OSError:
+            continue
+        mm = pat.search(src)
+        if mm and re.search(r"parameter\s+type\s+\w+\s*=\s*logic\b",
+                            src[mm.start():mm.start() + 8000]):
+            declares_type_param = True
+            break
+    if not declares_type_param:
+        return None
+    # NOT `<mod>.sv`: a wrapper file whose basename matches the module's own
+    # source file shadows it, and the module then never reaches the netlist
+    # ("Module `\axi_cut' ... is not part of the design").
+    out = w / f"{mod}_bound.sv"
+    rc, log = sh([sys.executable, str(HERE / "gen_param_wrapper.py"),
+                  "--module", mod, "--manifest", str(HERE / f"{fam}.json"),
+                  "--out", str(out), *files], timeout=300)
+    (w / "bind.log").write_text(log or "")
+    if rc != 0 or not out.exists():
+        return None
+    return str(out), f"{mod}_bound"
+
+
 def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
     w = work_root / m
     w.mkdir(parents=True, exist_ok=True)
@@ -236,6 +285,10 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
                 "check": "— (no elaboration)", "cosim": "—", "slang_cosim": "—",
                 "note": "no source found"}
+    bound = _bind_wrapper(w, fam, m, files)
+    if bound:
+        files = files + [bound[0]]
+        top = bound[1]
     (w / "srcs.txt").write_text("\n".join(files) + "\n")
     (w / "incs.txt").write_text("\n".join(str(EXT / d) for d in incs) + "\n")
     inc_flags = [f"-I{EXT / d}" for d in incs]

@@ -1,54 +1,232 @@
 {
- "title": "PULP AXI",
- "url": "https://github.com/pulp-platform/axi",
- "repos": [
-  {
-   "url": "https://github.com/pulp-platform/axi",
-   "commit": "70b8e54fd460e3308e58be596ceb3566a6e3576e",
-   "dir": "axi"
-  },
-  {
-   "url": "https://github.com/pulp-platform/common_cells",
-   "commit": "121182eaa0fa1f67b74eaa97c73b8a7133adda6a",
-   "dir": "common_cells"
-  },
-  {
-   "url": "https://github.com/pulp-platform/tech_cells_generic",
-   "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
-   "dir": "tech_cells_generic"
+  "title": "PULP AXI",
+  "url": "https://github.com/pulp-platform/axi",
+  "repos": [
+    {
+      "url": "https://github.com/pulp-platform/axi",
+      "commit": "70b8e54fd460e3308e58be596ceb3566a6e3576e",
+      "dir": "axi"
+    },
+    {
+      "url": "https://github.com/pulp-platform/common_cells",
+      "commit": "121182eaa0fa1f67b74eaa97c73b8a7133adda6a",
+      "dir": "common_cells"
+    },
+    {
+      "url": "https://github.com/pulp-platform/tech_cells_generic",
+      "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
+      "dir": "tech_cells_generic"
+    }
+  ],
+  "roots": [
+    "axi/src/*.sv",
+    "common_cells/src/*.sv",
+    "tech_cells_generic/src/rtl/*.sv"
+  ],
+  "incdirs": [
+    "axi/include",
+    "common_cells/include",
+    "tech_cells_generic/include"
+  ],
+  "defines": [
+    "SYNTHESIS",
+    "TARGET_SYNTHESIS"
+  ],
+  "modules": "auto",
+  "exclude": [
+    "_tb$",
+    "^tb_",
+    "^axi_test",
+    "^axi_sim_mem",
+    "^axi_dumper",
+    "^axi_chan_compare",
+    "^axi_bus_compare",
+    "^axi_slave_compare",
+    "^axi_intf$",
+    "^axi_lite_intf$",
+    "^cc_addr_decode$",
+    "^tc_sram_impl$"
+  ],
+  "only_prefix": "axi_",
+  "seq": 4,
+  "timeout": 300,
+  "want": "proven",
+  "bind": {
+    "prelude_raw": [
+      "`include \"axi/typedef.svh\""
+    ],
+    "prelude": [
+      "typedef logic [31:0] addr_t;",
+      "typedef logic [3:0]  id_t;",
+      "typedef logic [63:0] data_t;",
+      "typedef logic [7:0]  strb_t;",
+      "typedef logic [1:0]  user_t;",
+      "`AXI_TYPEDEF_ALL(axi, addr_t, id_t, data_t, strb_t, user_t)",
+      "`AXI_LITE_TYPEDEF_ALL(axi_lite, addr_t, data_t, strb_t)",
+      "typedef logic [7:0]  byte_t;",
+      "typedef logic [1:0]  select_t;",
+      "typedef logic [3:0]  credit_t;",
+      "typedef axi_pkg::xbar_rule_32_t rule_t;"
+    ],
+    "types": [
+      [
+        "(^|_)aw_chan_t$",
+        "axi_aw_chan_t"
+      ],
+      [
+        "(^|_)w_chan_t$",
+        "axi_w_chan_t"
+      ],
+      [
+        "(^|_)b_chan_t$",
+        "axi_b_chan_t"
+      ],
+      [
+        "(^|_)ar_chan_t$",
+        "axi_ar_chan_t"
+      ],
+      [
+        "(^|_)r_chan_t$",
+        "axi_r_chan_t"
+      ],
+      [
+        "lite_req_t$",
+        "axi_lite_req_t"
+      ],
+      [
+        "lite_resp_t$",
+        "axi_lite_resp_t"
+      ],
+      [
+        "lite_rsp_t$",
+        "axi_lite_resp_t"
+      ],
+      [
+        "req_lite_t$",
+        "axi_lite_req_t"
+      ],
+      [
+        "resp_lite_t$",
+        "axi_lite_resp_t"
+      ],
+      [
+        "rsp_lite_t$",
+        "axi_lite_resp_t"
+      ],
+      [
+        "(^|_)rule_t$",
+        "rule_t"
+      ],
+      [
+        "(^|_)sel(ect)?_t$",
+        "select_t"
+      ],
+      [
+        "(^|_)byte_t$",
+        "byte_t"
+      ],
+      [
+        "credit_t$",
+        "credit_t"
+      ],
+      [
+        "usage_t$",
+        "credit_t"
+      ],
+      [
+        "atop_t$",
+        "axi_pkg::atop_t"
+      ],
+      [
+        "(^|_)req_t$",
+        "axi_req_t"
+      ],
+      [
+        "(^|_)resp_t$",
+        "axi_resp_t"
+      ],
+      [
+        "(^|_)rsp_t$",
+        "axi_resp_t"
+      ],
+      [
+        "(^|_)addr_t$",
+        "addr_t"
+      ],
+      [
+        "(^|_)id_t$",
+        "id_t"
+      ],
+      [
+        "(^|_)data_t$",
+        "data_t"
+      ],
+      [
+        "(^|_)strb_t$",
+        "strb_t"
+      ],
+      [
+        "(^|_)user_t$",
+        "user_t"
+      ],
+      [
+        "(^|_)chan_t$",
+        "axi_aw_chan_t"
+      ]
+    ],
+    "values": [
+      [
+        "(?i)addr_?width$",
+        32
+      ],
+      [
+        "(?i)data_?width$",
+        64
+      ],
+      [
+        "(?i)id_?width$",
+        4
+      ],
+      [
+        "(?i)user_?width$",
+        2
+      ],
+      [
+        "(?i)strb_?width$",
+        8
+      ],
+      [
+        "(?i)select_?width$",
+        2
+      ],
+      [
+        "(?i)look_?bits$",
+        4
+      ],
+      [
+        "(?i)(txns|trans|transactions)$",
+        4
+      ],
+      [
+        "(?i)(capacity|depth|fifodepth|buffer)$",
+        4
+      ],
+      [
+        "(?i)^(no|num)_?(slv|mst|m|s)?_?ports$",
+        2
+      ],
+      [
+        "(?i)^(no|num)_?(slv|mst)?_?ids$",
+        4
+      ],
+      [
+        "(?i)^(no|num)_?",
+        2
+      ],
+      [
+        "(?i)width$",
+        8
+      ]
+    ]
   }
- ],
- "roots": [
-  "axi/src/*.sv",
-  "common_cells/src/*.sv",
-  "tech_cells_generic/src/rtl/*.sv"
- ],
- "incdirs": [
-  "axi/include",
-  "common_cells/include",
-  "tech_cells_generic/include"
- ],
- "defines": [
-  "SYNTHESIS",
-  "TARGET_SYNTHESIS"
- ],
- "modules": "auto",
- "exclude": [
-  "_tb$",
-  "^tb_",
-  "^axi_test",
-  "^axi_sim_mem",
-  "^axi_dumper",
-  "^axi_chan_compare",
-  "^axi_bus_compare",
-  "^axi_slave_compare",
-  "^axi_intf$",
-  "^axi_lite_intf$",
-  "^cc_addr_decode$",
-  "^tc_sram_impl$"
- ],
- "only_prefix": "axi_",
- "seq": 4,
- "timeout": 300,
- "want": "proven"
 }
