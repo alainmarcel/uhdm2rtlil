@@ -572,29 +572,45 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "",
              "## Leaderboard",
              "",
-             "`Read + synth(gate)` = read OK, netlist has logic gates; "
-             "`Read + synth(const)` = read OK but folds to a constant netlist "
-             "(0 gates). Both count toward Correct/Incorrect/Unknown.",
+             "Two tables: what each frontend could **read**, and — of the tests "
+             "where a `read_verilog` golden exists to compare against — whether "
+             "it was **right**.  Splitting them keeps the one column that "
+             "matters (Incorrect) from being buried among eleven.",
              "",
-             "`Timeout` = a frontend's synth, formal-equiv, or co-sim exceeded "
-             f"the {STEP_TIMEOUT // 60}-min per-step cap.",
+             "### Read",
              "",
-             "`No-golden` = the frontend synthesized but the verilog golden did "
-             "NOT, so there is no reference to formally compare against — this is "
-             "`make test-all`'s \"UHDM-only success\" (a capability win, not a "
-             "possible bug).  `Unknown` is reserved for genuine ambiguity "
-             "(formal non-equiv vs the golden with co-sim unavailable); a "
-             "`--no-cosim` run cannot adjudicate those, so run with co-sim to "
-             "match `make test-all`'s verdict on them.",
-             "",
-             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | No-golden | Unknown | Timeout | OOM |",
-             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|----------:|--------:|--------:|----:|"]
+             "| Frontend | Read | of which gates | of which const | Failed | Crash | Timeout | OOM |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
+        read_ok = a["synth_yes"] + a["synth_empty"]
         lines.append(
-            f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
-            f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
-            f"{a['no_golden']} | {a['unknown']} | {a['timeout']} | {a['oom']} |")
+            f"| `{f}` | **{read_ok}** | {a['synth_yes']} | {a['synth_empty']} | "
+            f"{a['synth_no']} | {a['crash']} | {a['timeout']} | {a['oom']} |")
+
+    lines += ["",
+              "`gates` = the netlist has logic; `const` = it folds to a constant "
+              "netlist (0 gates).  Both count as read.",
+              "",
+              "### Verdict vs the `read_verilog` golden",
+              "",
+              "| Frontend | Correct | Incorrect | No golden | Unknown |",
+              "|---|---:|---:|---:|---:|"]
+    for f in ALL_FRONTENDS:
+        a = agg[f]
+        bad = f"**{a['incorrect']}**" if a["incorrect"] else "0"
+        lines.append(
+            f"| `{f}` | {a['correct']} | {bad} | {a['no_golden']} | {a['unknown']} |")
+
+    lines += ["",
+              "`No golden` = this frontend synthesized but `read_verilog` did "
+              "not, so there is nothing to compare against — that is "
+              "`make test-all`'s \"UHDM-only success\", a capability win rather "
+              "than a possible bug.  `Unknown` is genuine ambiguity (formal "
+              "non-equivalence with co-sim unavailable); a `--no-cosim` run "
+              "cannot adjudicate those, so run with co-sim to match "
+              "`make test-all`'s verdict on them.",
+              ""]
 
     # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
     disagree = []
