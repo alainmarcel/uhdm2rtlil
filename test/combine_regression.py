@@ -122,6 +122,15 @@ def main():
         print(f"  🧱 Structural (netlist shape): {sr - sf}/{sr} passed, {sf} unexpected")
         for t_ in names(lists, "STRUCT_CHECK_FAILED_TEST_NAMES"):
             print(f"      - {t_}")
+    if counts.get("MEMCHECK_RUN") or counts.get("MEMCHECK_SKIPPED"):
+        mr, mf = counts["MEMCHECK_RUN"], counts["MEMCHECK_FAILED_TESTS"]
+        if mr:
+            print(f"  🧪 Memcheck (valgrind): {mr - mf}/{mr} clean, {mf} unexpected")
+        if counts.get("MEMCHECK_SKIPPED"):
+            print(f"  🧪 Memcheck: {counts['MEMCHECK_SKIPPED']} skipped "
+                  f"(valgrind not installed)")
+        for t_ in names(lists, "MEMCHECK_FAILED_TEST_NAMES"):
+            print(f"      - {t_}")
     print(f"  ❌ True failures: {failed}")
     print(f"  💥 Crashes: {crashed}")
     if total:

@@ -278,6 +278,42 @@ run_structural_check() {
     fi
 }
 
+MEMCHECK_RUN=0
+MEMCHECK_SKIPPED=0
+MEMCHECK_FAILED_TESTS=0
+MEMCHECK_FAILED_TEST_NAMES=()
+
+# Memory check: an OPTIONAL per-test `test_memcheck.ys` read under valgrind.
+# Some importer bugs are use-after-free, and those cannot be gated on the
+# netlist: whether they corrupt anything depends on what the freed block
+# happens to hold, so the same script aborts under `yosys x.ys` and passes
+# under `yosys -s x.ys`.  Valgrind is the only deterministic oracle, so a test
+# for that class ships a `test_memcheck.ys` and this hook fails on any
+# "Invalid read"/"Invalid write".  Silently skipped where valgrind is absent.
+run_memcheck() {
+    local test_dir="$1"
+    [ "${MEMCHECK_DONE:-}" = "$test_dir" ] && return 0
+    local d="$SCRIPT_DIR/$test_dir"
+    [ -f "$d/test_memcheck.ys" ] && [ -f "$d/slpp_all/surelog.uhdm" ] || return 0
+    MEMCHECK_DONE="$test_dir"
+    if ! command -v valgrind > /dev/null 2>&1; then
+        MEMCHECK_SKIPPED=$((MEMCHECK_SKIPPED + 1))
+        echo "    ⏭  Memcheck skipped (valgrind not installed)"
+        return 0
+    fi
+    MEMCHECK_RUN=$((MEMCHECK_RUN + 1))
+    (cd "$d" && timeout 900 valgrind --num-callers=25 --error-exitcode=0 \
+        "$YOSYS_BIN" -q -m "$UHDM_PLUGIN" ./test_memcheck.ys > memcheck.log 2>&1)
+    if grep -qE "Invalid read|Invalid write" "$d/memcheck.log" 2>/dev/null; then
+        echo "    ❌ Memcheck FAILED - read_uhdm touches freed memory, see memcheck.log"
+        MEMCHECK_FAILED_TESTS=$((MEMCHECK_FAILED_TESTS + 1))
+        MEMCHECK_FAILED_TEST_NAMES+=("$test_dir")
+        UNEXPECTED_FAILURES+=("$test_dir (memcheck)")
+    else
+        echo "    ✅ Memcheck: no invalid accesses under valgrind"
+    fi
+}
+
 SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
 SIM_EQUIV_ANALYZED_TESTS=0
@@ -913,6 +949,7 @@ analyze_test_result() {
         echo "✅ Test $test_dir PASSED - comparing nohier ILs (both paths fail at hierarchy)"
         run_slang_miter "$test_dir"
         run_structural_check "$test_dir"
+        run_memcheck "$test_dir"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     fi
@@ -925,6 +962,7 @@ analyze_test_result() {
             echo "    Demonstrates UHDM's superior SystemVerilog support"
             run_slang_miter "$test_dir"
             run_structural_check "$test_dir"
+            run_memcheck "$test_dir"
             run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
@@ -989,6 +1027,7 @@ analyze_test_result() {
 
     run_slang_miter "$test_dir"
     run_structural_check "$test_dir"
+    run_memcheck "$test_dir"
 
     # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
@@ -1237,12 +1276,14 @@ dump_results_file() {
                  EQUIV_FAILED_TESTS MITER_FAILED_TESTS \
                  SLANG_MITER_RUN SLANG_MITER_FAILED_TESTS SLANG_MITER_KNOWN_FAIL \
                  STRUCT_CHECK_RUN STRUCT_CHECK_FAILED_TESTS \
+                 MEMCHECK_RUN MEMCHECK_SKIPPED MEMCHECK_FAILED_TESTS \
                  SIM_EQUIV_WARN_TESTS \
                  SIM_EQUIV_KNOWN_WARN_TESTS SIM_EQUIV_ANALYZED_TESTS \
                  SIM_EQUIV_ARTEFACT_TESTS SIM_EQUIV_UNCLASS_TESTS; do
             eval "printf 'count %s %s\n' \"\$v\" \"\${$v:-0}\""
         done
         for arr in SLANG_MITER_FAILED_TEST_NAMES STRUCT_CHECK_FAILED_TEST_NAMES \
+                   MEMCHECK_FAILED_TEST_NAMES \
                    FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
                    UHDM_ONLY_TEST_NAMES EQUIV_FAILED_TEST_NAMES \
                    MITER_FAILED_TEST_NAMES SIM_EQUIV_WARN_NAMES \
@@ -1379,6 +1420,15 @@ fi
 if [ "${STRUCT_CHECK_RUN:-0}" -gt 0 ]; then
     echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_FAILED_TESTS unexpected"
     for t_ in "${STRUCT_CHECK_FAILED_TEST_NAMES[@]}"; do
+        echo "      - $t_"
+    done
+fi
+if [ "${MEMCHECK_RUN:-0}" -gt 0 ] || [ "${MEMCHECK_SKIPPED:-0}" -gt 0 ]; then
+    if [ "${MEMCHECK_RUN:-0}" -gt 0 ]; then
+        echo "  🧪 Memcheck (valgrind): $((MEMCHECK_RUN - MEMCHECK_FAILED_TESTS))/$MEMCHECK_RUN clean, $MEMCHECK_FAILED_TESTS unexpected"
+    fi
+    [ "${MEMCHECK_SKIPPED:-0}" -gt 0 ] && echo "  🧪 Memcheck: $MEMCHECK_SKIPPED skipped (valgrind not installed)"
+    for t_ in "${MEMCHECK_FAILED_TEST_NAMES[@]}"; do
         echo "      - $t_"
     done
 fi
