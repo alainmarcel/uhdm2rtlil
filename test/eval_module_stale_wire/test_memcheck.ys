@@ -1,0 +1,8 @@
+# Gate for the use-after-free fixed by discard_eval_module(): the throwaway
+# module the paramod-signature builder folds `$bits(req_t)` in is deleted while
+# name_map still points at the wire it fabricated for `req_t`.  Nothing in the
+# netlist shows it -- whether the stale read corrupts anything depends on what
+# the freed block happens to hold -- so valgrind is the oracle.  run_all_tests
+# fails this test on any "Invalid read"/"Invalid write".
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut

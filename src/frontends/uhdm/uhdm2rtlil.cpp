@@ -1900,6 +1900,50 @@ bool UhdmImporter::expr_uses_resolved_param(const any* e) {
 }
 
 // Recursively import module hierarchy starting from a module instance
+// A temporary module used only to fold an expression in isolation is deleted
+// as soon as its value has been read -- but import_expression may have CACHED
+// wires it created there.  import_ref_obj's unknown-signal fallback fabricates
+// a 1-bit wire and records it in name_map, and deleting the module frees that
+// wire while the cache keeps pointing at it: a later reference to the same name
+// then builds a SigSpec over freed memory and picks up whatever width the block
+// now holds.  PULP's axi_burst_counters (`localparam type id_t =
+// logic[IdWidth-1:0]`, which arrives as a reference to an unknown signal)
+// aborted read_uhdm with `Assert 'chunk_.width >= 0' failed`, and whether it
+// aborted at all depended on the process layout -- it reproduced under
+// `yosys script.ys` but not under `yosys -s script.ys`.
+//
+// So collect the module's wires BEFORE removing it (afterwards there is nothing
+// left to compare against) and drop every cache entry that names one.
+void UhdmImporter::discard_eval_module(RTLIL::Module* tmp) {
+    if (!tmp)
+        return;
+    pool<RTLIL::Wire*> doomed;
+    for (auto w : tmp->wires())
+        doomed.insert(w);
+    if (!doomed.empty()) {
+        auto purge_val = [&](auto& m) {
+            for (auto it = m.begin(); it != m.end(); )
+                if (doomed.count(it->second)) it = m.erase(it); else ++it;
+        };
+        purge_val(wire_map);
+        purge_val(name_map);
+        purge_val(current_signal_temp_wires);
+        purge_val(sync_assignment_targets);
+        purge_val(comb_signal_temp_map);
+        purge_val(current_temp_wires);
+        for (auto it = interpreter_init_values.begin(); it != interpreter_init_values.end(); )
+            if (doomed.count(it->first)) it = interpreter_init_values.erase(it); else ++it;
+        auto purge_vec = [&](std::vector<RTLIL::Wire*>& v) {
+            v.erase(std::remove_if(v.begin(), v.end(),
+                                   [&](RTLIL::Wire* w) { return doomed.count(w) > 0; }),
+                    v.end());
+        };
+        purge_vec(current_assert_enable_wires);
+        purge_vec(pending_func_local_inits);
+    }
+    design->remove(tmp);
+}
+
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
 
@@ -2054,7 +2098,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             }
                             
                             // Remove temporary module and restore context
-                            design->remove(this->module);
+                            discard_eval_module(this->module);
                             this->module = saved_module;
                         }
                         
@@ -2121,7 +2165,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         RTLIL::SigSpec vs2 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
                         force_const_fold = saved_fcf;
-                        design->remove(this->module);
+                        discard_eval_module(this->module);
                         this->module = saved_module;
                         if (vs2.is_fully_const() && vs2.is_fully_def() &&
                             vs2.size() > 0) {
@@ -2145,7 +2189,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         this->module = design->addModule(NEW_ID);
                         RTLIL::SigSpec vs3 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
-                        design->remove(this->module);
+                        discard_eval_module(this->module);
                         this->module = saved_module;
                         if (vs3.is_fully_const() && vs3.size() > 0) {
                             param_signature += std::to_string(vs3.as_const().as_int());
@@ -3656,7 +3700,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         RTLIL::SigSpec vs2 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
                         force_const_fold = saved_fcf;
-                        design->remove(this->module);
+                        discard_eval_module(this->module);
                         this->module = saved_m;
                         if (vs2.is_fully_const() && vs2.is_fully_def() &&
                             vs2.size() > 0) {
@@ -3681,7 +3725,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         this->module = design->addModule(NEW_ID);
                         RTLIL::SigSpec vs5 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
-                        design->remove(this->module);
+                        discard_eval_module(this->module);
                         this->module = saved_m;
                         if (vs5.is_fully_const() && vs5.size() > 0) {
                             param_string += "\\" + param_name + "=s32'"
@@ -3953,7 +3997,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         RTLIL::Module* saved_m = this->module;
                         this->module = design->addModule(NEW_ID);
                         RTLIL::SigSpec vs6 = this->import_expression(rhs_expr);
-                        design->remove(this->module);
+                        discard_eval_module(this->module);
                         this->module = saved_m;
                         if (vs6.is_fully_const() && vs6.size() > 0) {
                             param_value = vs6.as_const();

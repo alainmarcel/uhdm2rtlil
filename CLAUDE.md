@@ -675,6 +675,45 @@ undriven nets against `read_slang`'s 2.  Test:
 `test/typeparam_struct_member_width`.
 
 
+## Throwaway modules: delete the caches with the module
+
+`import_module_hierarchy` folds a parameter RHS in an ISOLATED module so the
+paramod signature carries the value the instance really has, then deletes it:
+
+```cpp
+RTLIL::Module* saved = this->module;
+this->module = design->addModule(NEW_ID);
+RTLIL::SigSpec v = import_expression(param_assign->Rhs());
+discard_eval_module(this->module);        // NOT design->remove()
+this->module = saved;
+```
+
+The trap is that `import_expression` CACHES what it creates.  `import_ref_obj`'s
+unknown-signal fallback fabricates a 1-bit wire for a name it cannot resolve --
+a TYPE name reads exactly like a signal reference -- and the second reference in
+the same expression then finds it with `module->wire()` and records
+`name_map[name]`.  Plain `design->remove()` frees the wire and leaves the cache
+pointing at it, so the next reference to that name returns the dangling `Wire*`
+and `RTLIL::SigSpec(wire)` reads a garbage width out of freed memory.
+
+`discard_eval_module()` therefore collects the module's wires FIRST (afterwards
+there is nothing left to compare against) and drops every cache entry naming
+one, before removing the module.  Use it at every isolated-fold site.
+
+**This class of bug cannot be gated on the netlist.**  Whether it corrupts
+anything depends on what the freed block happens to hold: PULP's
+`axi_burst_counters` (common_cells `cc_id_queue`, whose `localparam type id_t =
+logic[IdWidth-1:0]` arrives as a reference to an unknown signal) aborted with
+`Assert 'chunk_.width >= 0' failed` under `yosys check.ys`, passed under
+`yosys -s check.ys`, and never reproduced under gdb -- which is what made an
+earlier session write it off as "-q-dependent, no minimal repro".
+
+Valgrind is the deterministic oracle, so a test for this class ships a
+`test_memcheck.ys` next to its `dut.sv`; `run_all_tests.sh` reads it under
+valgrind and fails on any `Invalid read`/`Invalid write` (skipped where
+valgrind is not installed).  See `test/eval_module_stale_wire`.
+
+
 ## Code Style
 
 - Use RTLIL types consistently (`RTLIL::SigSpec`, `RTLIL::Wire`, etc.)

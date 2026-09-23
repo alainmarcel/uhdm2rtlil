@@ -405,6 +405,9 @@ struct UhdmImporter {
     std::unordered_map<std::string, std::vector<const UHDM::module_inst*>>
         elab_typedef_owners_;
     bool in_typespec_width_retry_ = false;
+    // Delete a module that only existed to fold an expression in isolation,
+    // dropping every cached pointer to the wires it owned first.
+    void discard_eval_module(RTLIL::Module* tmp);
     void build_elab_index();
     const UHDM::module_inst* find_elab_instance(const UHDM::module_inst* def);
 
