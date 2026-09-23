@@ -5035,6 +5035,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                     resolve_type_param_typespec(vrt->Actual_typespec(), current_instance);
                                 if (vts) w2 = get_width_from_typespec(vts, current_instance);
                             }
+                            // A TYPE argument, not a signal: `$bits(pk::some_t)`.
+                            // Surelog folds the plain case to a constant before
+                            // we see it, but NOT when the name is a typedef OF
+                            // another package typedef (`typedef base_t alias_t;`)
+                            // -- that arrives as a ref_obj with no vpiActual, so
+                            // the lookups above find nothing and $bits answers 1.
+                            // The generated AXI wrappers size every flat port
+                            // with `logic [$bits(pkg::port_t)-1:0]`, so all of
+                            // them came out ONE BIT and the miter could not even
+                            // be built ("No matching port in gate module was
+                            // found for \mst_resp_i_flat").
+                            if (w2 <= 1 && !vn2.empty()) {
+                                auto pit = package_typespec_map.find(vn2);
+                                if (pit != package_typespec_map.end() && pit->second)
+                                    w2 = get_width_from_typespec(pit->second,
+                                                                 current_instance);
+                            }
                             if (w2 <= 1 && !vn2.empty()) {
                                 RTLIL::Wire* vw = name_map.count(vn2)
                                                       ? name_map[vn2]
@@ -9844,7 +9861,16 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                     ref_name.c_str(), ecit->second.as_string().c_str());
             return RTLIL::SigSpec(ecit->second);
         }
-        log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
+        // A `$bits(pk::some_t)` argument is a TYPE, not a signal.  Warning
+        // about it trains the eye to ignore this message, and the sweeps gate
+        // on the reader's own warning stream.
+        if (package_typespec_map.count(ref_name)) {
+            if (mode_debug)
+                log("    ref_obj '%s' names a package TYPE, not a signal\n",
+                    ref_name.c_str());
+        } else {
+            log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
+        }
     }
     RTLIL::SigSpec wire_sig = create_wire(wire_name, 1);
     
