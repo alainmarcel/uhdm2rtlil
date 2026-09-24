@@ -1315,6 +1315,8 @@ struct UhdmImporter {
 
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
+    const UHDM::module_inst* declaring_instance_of_typeparam_default(
+        const UHDM::any* typespec);
     const UHDM::module_inst* declaring_instance_of_cloned_typespec(const UHDM::any* typespec);
     // Substitute a `parameter type` DECLARATION-DEFAULT typespec with the
     // instance-bound type (returns input unchanged when no binding applies).
