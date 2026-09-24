@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top automatic_local_case_arm_latch
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename automatic_local_case_arm_latch gold
+design -stash gold
+read_slang dut.sv --top automatic_local_case_arm_latch
+hierarchy -check -top automatic_local_case_arm_latch
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename automatic_local_case_arm_latch gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
