@@ -4904,6 +4904,58 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                         create_memory_from_array(av);
                         continue;
                     }
+                    // PURE unpacked array (1-bit / no packed dimension), so
+                    // is_memory_array() does not claim it: `logic v_q [Share]`
+                    // written one element per always_ff.  The module-level
+                    // importer materialises `\v_q[0]`, `\v_q[1]` for exactly
+                    // this shape ("1D unpacked with bit-select-only access");
+                    // the gen-scope path had no such branch, so the array fell
+                    // through to the generic single-wire creation below and
+                    // came out as ONE 1-bit reg — element [1] aliased onto [0]
+                    // and every read of it was X (pavona acc_alu_bignum
+                    // gen_pqc_wsr.kmac_msg_valid_q: read_slang keeps 2 bits,
+                    // read_uhdm kept 1).  Wire ids are scope-qualified with a
+                    // bare-name alias, like the element branch above.
+                    if (av->Ranges() && av->Ranges()->size() == 1 &&
+                        !whole_array_accessed_names.count(var_name)) {
+                        auto r0 = (*av->Ranges())[0];
+                        int asize = 0, alow = 0, ew = 1;
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            RTLIL::SigSpec l = import_expression(
+                                any_cast<const expr*>(r0->Left_expr()));
+                            RTLIL::SigSpec r = import_expression(
+                                any_cast<const expr*>(r0->Right_expr()));
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int lv = l.as_const().as_int();
+                                int rv = r.as_const().as_int();
+                                asize = std::abs(lv - rv) + 1;
+                                alow = std::min(lv, rv);
+                            }
+                        }
+                        if (av->Variables() && !av->Variables()->empty())
+                            ew = get_width(av->Variables()->at(0), current_instance);
+                        if (asize > 0 && ew > 0) {
+                            log("UHDM: Gen-scope array_var '%s' pure 1-D unpacked — "
+                                "per-element wires (n=%d, w=%d)\n",
+                                var_name.c_str(), asize, ew);
+                            std::string gs_path3 = get_current_gen_scope();
+                            for (int i = 0; i < asize; i++) {
+                                std::string ename = var_name + "[" +
+                                    std::to_string(alow + i) + "]";
+                                std::string wname = gs_path3.empty()
+                                                        ? ename : gs_path3 + "." + ename;
+                                RTLIL::IdString eid = RTLIL::escape_id(wname);
+                                RTLIL::Wire* ewire = module->wire(eid);
+                                if (!ewire) {
+                                    ewire = module->addWire(eid, ew);
+                                    add_src_attribute(ewire->attributes, av);
+                                }
+                                name_map[ename] = ewire;
+                                if (!gs_path3.empty()) name_map[wname] = ewire;
+                            }
+                            continue;
+                        }
+                    }
                 }
             }
             std::string full_gen_path = get_current_gen_scope();
