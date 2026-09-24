@@ -1,5 +1,3 @@
-// KNOWN FAILING - see test/slang_miter_expected_fail.txt.
-//
 // A RELAYED type parameter whose default is DEPENDENT on another parameter is
 // measured in the receiving instance instead of the declaring one.
 //
@@ -8,34 +6,29 @@
 //     grandchild #(.idx_t(idx_t)) u (...);   // relays the TYPE, not NoIndices
 //
 // The binding is relayed CORRECTLY -- the grandchild's idx_t really does point
-// at child's `logic [IdxWidth-1:0]` typespec.  The error is in measuring it:
-// that typespec's IdxWidth must be read in CHILD's scope (4), but it is read in
-// the grandchild's, where IdxWidth sits at its default 1.  So every idx_t port
-// comes out ONE BIT.
-//
-// Here: grandchild's map_i is 66 bits instead of 72 and idx_o is 1 instead of
-// 4, while dut's own ports are correct -- the netlist is internally
-// inconsistent, and the miter fails.
+// at child's `logic [IdxWidth-1:0]` typespec.  The error was in measuring it:
+// that typespec's IdxWidth must be read in CHILD's scope (4), but it was read
+// in the grandchild's, where IdxWidth sits at its default 1.  So every idx_t
+// port came out ONE BIT -- here grandchild's map_i was 66 bits instead of 72
+// and idx_o 1 instead of 4, while dut's own ports were correct, leaving the
+// netlist internally inconsistent (`Resizing cell port ... from 4 bits to 1`).
 //
 // In the wild: PULP axi_lite_mailbox_slave reaches common_cells'
 // cc_addr_decode_dync through cc_addr_decode, which passes `.idx_t(idx_t)`
-// without NoIndices.  The child specialises as
-// `NoIndices=0 ... IdxWidth=1 $typaram_32_960_1_1_1_1_1_1` against the
-// parent's `NoIndices=10 ... IdxWidth=4 $typaram_32_960_4_1_1_1_4`, so the
-// parent emits `connect \idx_o \idx_o [0]` and ties `idx_o[3:1]` to zero.
+// without NoIndices, so the parent emitted `connect \idx_o \idx_o [0]` and
+// tied idx_o[3:1] to zero.
 //
 // This is the same clone-measurement problem as the type-parameter struct
 // width fix (#861), which measures such a typespec in the instance that
 // DECLARED it -- but that search only scans each ancestor's TYPEDEF list, and
-// a type parameter's own default is not a typedef, so it is never found.
+// a type parameter's own default is not a typedef, so it was never found.
+// declaring_instance_of_typeparam_default() finds it by POINTER IDENTITY
+// against the type-parameter defaults of every module definition.
 //
-// ATTEMPTED AND REVERTED: extending that search to match the typespec against
-// each ancestor's type-parameter defaults by file/line/column.  The match is
-// too loose -- several type parameters share a line -- and it picked the wrong
-// one, making map_i 4 bits instead of 66.  A correct version needs to identify
-// the declaring parameter unambiguously (pointer identity through the relay
-// chain), not by source location.
-
+// MATCHING BY SOURCE LOCATION DOES NOT WORK and was tried and reverted:
+// several type parameters share a line, so file/line/column picked the wrong
+// one and made map_i 4 bits instead of 66.
+//
 package pk;
   function automatic int unsigned idx_width (input int unsigned num_idx);
     if (num_idx > 32'd1) return unsigned'($clog2(num_idx));

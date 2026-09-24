@@ -3747,6 +3747,50 @@ UhdmImporter::declaring_instance_of_cloned_typespec(const UHDM::any* typespec) {
     return nullptr;
 }
 
+// A type parameter's own DEFAULT is not a typedef, so the typedef scan in
+// declaring_instance_of_cloned_typespec never finds it.  Relay one level down
+// WITHOUT the parameter the default depends on --
+//
+//   module child #(parameter IdxWidth = pk::idx_width(NoIndices),   // 4 here
+//                  parameter type idx_t = logic [IdxWidth-1:0]);
+//     grandchild #(.idx_t(idx_t)) u (...);     // relays the TYPE, not NoIndices
+//
+// -- and the grandchild's `idx_t` is bound to CHILD's typespec but measured in
+// the GRANDCHILD's scope, where IdxWidth sits at its own default 1.  Every
+// idx_t port then came out ONE BIT: PULP axi_lite_mailbox_slave reaches
+// common_cells' cc_addr_decode_dync this way and its `idx_o` was 1 bit against
+// read_slang's 4, so the parent tied `idx_o[3:1]` to zero.
+//
+// Match the declaring parameter by POINTER IDENTITY, never by source location:
+// an earlier attempt matched file/line/column, several type parameters share a
+// line, and it picked the wrong one (map_i became 4 bits instead of 66).
+const UHDM::module_inst*
+UhdmImporter::declaring_instance_of_typeparam_default(const UHDM::any* typespec) {
+    if (!typespec || !uhdm_design || !uhdm_design->AllModules()) return nullptr;
+    std::string decl_def;
+    for (auto m : *uhdm_design->AllModules()) {
+        if (!m->Parameters()) continue;
+        for (auto p : *m->Parameters()) {
+            if (p->UhdmType() != uhdmtype_parameter) continue;
+            auto tp = any_cast<const UHDM::type_parameter*>(p);
+            if (!tp->Typespec()) continue;
+            if (tp->Typespec()->Actual_typespec() != typespec) continue;
+            decl_def = std::string(m->VpiDefName());
+            break;
+        }
+        if (!decl_def.empty()) break;
+    }
+    if (decl_def.empty()) return nullptr;
+    // The relay runs downward, so the declaring module's elaborated instance
+    // is an ANCESTOR of the one being imported.
+    for (const UHDM::any* a = current_instance; a; a = a->VpiParent()) {
+        if (a->UhdmType() != uhdmmodule_inst) continue;
+        auto mi = any_cast<const UHDM::module_inst*>(a);
+        if (std::string(mi->VpiDefName()) == decl_def) return mi;
+    }
+    return nullptr;
+}
+
 // Helper function to get width from typespec
 int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst) {
     if (!typespec) return 1;
@@ -3778,7 +3822,9 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
     // there -- with `current_instance` moved along, because that (not the
     // `inst` argument) is what import_ref_obj resolves names against.
     if (!in_typespec_width_retry_) {
-        if (const UHDM::module_inst* decl = declaring_instance_of_cloned_typespec(typespec)) {
+        const UHDM::module_inst* decl = declaring_instance_of_cloned_typespec(typespec);
+        if (!decl) decl = declaring_instance_of_typeparam_default(typespec);
+        if (decl) {
             if (decl != current_instance) {
                 struct DeclScope {
                     UhdmImporter& i_;
