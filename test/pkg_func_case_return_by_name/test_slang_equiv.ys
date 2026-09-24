@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top pkg_func_case_return_by_name
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename pkg_func_case_return_by_name gold
+design -stash gold
+read_slang dut.sv --top pkg_func_case_return_by_name
+hierarchy -check -top pkg_func_case_return_by_name
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename pkg_func_case_return_by_name gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter

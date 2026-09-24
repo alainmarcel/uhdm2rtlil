@@ -9825,7 +9825,15 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
         return RTLIL::SigSpec();
     }
 
-    std::string func_name = std::string(fc->VpiName());
+    std::string call_name = std::string(fc->VpiName());
+    // The implicit return variable is named after the function DEFINITION, not
+    // after the call.  A package-scoped call carries the qualified spelling
+    // (`kp::compute_max_digest`) while every `compute_max_digest = ...` in the
+    // body is a plain ref_obj, so keying func_mapping off the call name left
+    // the result at its Sx seed and the whole call collapsed to X.
+    std::string func_name = call_name;
+    if (!func_def->VpiName().empty())
+        func_name = std::string(func_def->VpiName());
     int call_line = fc->VpiLineNo();
     std::string call_file;
     if (!fc->VpiFile().empty()) {
@@ -9841,9 +9849,9 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
     }
 
     int ctx_idx = incr_autoidx();
-    std::string context = stringf("%s$func$%s:%d$%d", func_name.c_str(), call_file.c_str(), call_line, ctx_idx);
+    std::string context = stringf("%s$func$%s:%d$%d", call_name.c_str(), call_file.c_str(), call_line, ctx_idx);
 
-    log("    import_func_call_comb: %s (context: %s, ret_width=%d)\n", func_name.c_str(), context.c_str(), ret_width);
+    log("    import_func_call_comb: %s (context: %s, ret_width=%d)\n", call_name.c_str(), context.c_str(), ret_width);
 
     // Import arguments using current_comb_values for correct intermediate value resolution
     std::vector<RTLIL::SigSpec> arg_values;
