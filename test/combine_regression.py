@@ -201,7 +201,15 @@ def main():
     # documented crash — memories/wide_all segfaults Yosys v0.67's own `synth`,
     # which is not a UHDM bug.  Counting raw crashes here made this gate
     # stricter than the reference and failed an otherwise clean run.
-    bad = bool(unexpected) or miter > 0 or cva6_bad
+    # A NEW sim-equiv warning (one not in sim_equiv_warn_baseline.txt) is a
+    # HARD ERROR in the single-process runner, and the baseline is documented
+    # as shrink-only -- but this combined gate did not count it, so the sharded
+    # workflow passed on exactly the regression the ratchet exists to catch.
+    # The two gates ran the same 1603 tests and disagreed: run_all_tests.sh
+    # said "TEST SUITE FAILED - Verilator co-sim mismatches detected" while
+    # this one said PASSED (mem_simple_4x1_cells, 2026-09-24).
+    sim_new = counts.get("SIM_EQUIV_WARN_TESTS", 0)
+    bad = bool(unexpected) or miter > 0 or cva6_bad or sim_new > 0
     if expected and used < expected:
         print(f"⚠️  PARTIAL: only {used} of {expected} shards reported — a shard "
               f"was likely killed; counts above are incomplete.")
@@ -211,6 +219,7 @@ def main():
         if unexpected: why.append(f"{len(unexpected)} unexpected failures")
 
         if cva6_bad:   why.append(f"{len(cva6_bad)} CVA6 regressions")
+        if sim_new:    why.append(f"{sim_new} NEW sim-equiv warnings")
         print("❌ REGRESSION SUITE FAILED — " + ", ".join(why))
         return 1
     print("✅ REGRESSION SUITE PASSED — no unexpected failures, "

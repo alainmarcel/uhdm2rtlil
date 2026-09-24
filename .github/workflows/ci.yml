@@ -138,30 +138,17 @@ jobs:
       run: |
         make test-read-sv
 
-    # CVA6 equivalence is excluded from THIS job on purpose: the internal +
-    # Yosys suites plus 146 CVA6 modules (each its own Surelog elaboration and
-    # SAT miter) overrun the runner limit in one job (exit 143, run
-    # 31935971681).  The full regression — including CVA6 — runs sharded in
-    # .github/workflows/regression-sharded.yml on the same events and produces
-    # the combined report with every category.  `make test-all` still runs
-    # everything locally in one process.
-    - name: Run tests (internal + Yosys)
-      run: |
-        cd test
-        bash run_all_tests.sh --all --no-cva6
-    
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: |
-          test/**/rtlil_diff.txt
-          test/**/*_from_uhdm.il
-          test/**/*_from_verilog.il
-          test/**/*.log
-        retention-days: 7
-    
+    # The REGRESSION GATE lives in .github/workflows/regression-sharded.yml,
+    # which triggers on the same events and runs the SAME `run_all_tests.sh
+    # --all` corpus across 12 shards — plus CVA6, which this job had to skip.
+    # This job used to re-run that corpus serially (`--all --no-cva6`, 1603
+    # tests, ~2.5 h) for no extra coverage, and the two gates did not even
+    # agree: the sharded combiner ignored NEW sim-equiv warnings while
+    # run_all_tests.sh treats them as hard errors, so `build-and-test` sat RED
+    # on main for days while the sharded workflow reported PASSED.  The
+    # combiner is now strict (test/combine_regression.py), and this job keeps
+    # only what it uniquely provides: a build and a fast entry-point smoke
+    # test.  `make test-all` still runs everything locally in one process.
     - name: Upload build artifacts
       if: success()
       uses: actions/upload-artifact@v4

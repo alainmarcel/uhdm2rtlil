@@ -751,3 +751,29 @@ Test: block_local_packed_struct_array_dyn_write
     mismatches) and the read_uhdm-vs-read_slang SAT miter PROVES the test
     (seq=3).  The block-local form is the point of the test (the writer's
     geometry for a block-local base), so it is kept as is.
+
+Test: mem_simple_4x1_cells
+    Synchronous-read memory with a same-cycle write to the same address:
+
+        always @(posedge CLK) begin
+          if (WR_EN) memory[WR_ADDR] <= WR_DATA;
+          RD_DATA <= memory[RD_ADDR];
+        end
+
+    The RTL that Verilator runs evaluates both non-blocking assignments
+    against the PRE-edge `memory`, so a read colliding with a write to the
+    same address returns the OLD bit.  After `memory_collect` the design is
+    one `$mem_v2` whose read port is a plain synchronous port, and the
+    collision behaviour of the synthesized netlist is not required to match
+    that read-old-data ordering -- 41 of 200 cycles differ on RD_DATA, always
+    by a single bit (`bits_ever_set=0x1`).
+
+    NOT a frontend bug: the read_uhdm netlist and the read_verilog netlist are
+    formally EQUIVALENT (the test's own Induct-Formal check passes), so both
+    frontends agree and the divergence is Verilator-RTL vs synthesized-memory,
+    exactly the class this file exists for.  Its sibling
+    `mem_simple_4x1_tb` is the same design and already sits in
+    sim_equiv_warn_baseline.txt.
+
+    The summary AUTO-CLASSIFIES this via the SAT miter; this entry only moves
+    it out of the un-investigated WARNING bucket.
