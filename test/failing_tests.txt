@@ -305,3 +305,15 @@ genscope_packed_be
 # This is the reproducer for the OTBN `ma_sharing_t` element-select fix
 # (otbn_mask_accelerator 186 undriven -> 0, otbn_mai 372 -> 0 and cex -> proven).
 packed_typedef_elem_select
+
+# `s_t [N-1:0] in_i` as a PORT: read_verilog mis-lowers it — it makes `in_i`
+# 3 bits (one struct) instead of N*3 and hangs the per-element reads on
+# unconnected `\in_i[k].y` wires, so equiv_make reports "Can't match gold port
+# `in_i_gold' to a gate port".  The REFERENCE is the wrong side here:
+# read_slang lowers the port correctly and `test_slang_equiv.ys` PROVES
+# read_uhdm == read_slang (and fails without the ranged-temp fix, so it is a
+# real gate, not a vacuous one).  Ruled out: the flat-vector form of the same
+# DUT (test/struct_member_cond_write_ranged_temp) passes all three checks —
+# verilog equivalence, the slang miter, and a uhdm-vs-verilog SAT miter — so
+# the frontend is not at fault, only the packed-struct-array port lowering.
+struct_array_member_cond_write

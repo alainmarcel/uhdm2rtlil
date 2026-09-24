@@ -7843,6 +7843,31 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
 // lookup is only a fallback for ancillary temps (block-local, ranged) not
 // registered there — for a signal another process also writes, the bare name
 // lookup would land on that OTHER process's temp and orphan the write.
+// The temp for a PARTIALLY-written signal is registered under a key that
+// carries the range (`out_o[1:1]` for `out_o.y`), because import_always_comb
+// dedups slice writes by it.  A lookup on the bare name therefore misses it
+// and lands on the process's full-width `$0\out_o` -- or, with no full-width
+// temp, on the real wire.  Either way the write is DROPPED, because the sync
+// rule updates the real wire from the RANGED temp:
+//     assign $0\out_o[1:1] 1'0             <- root default, ranged temp
+//     switch ... assign \out_o [1] \in_i [1]   <- conditional, somewhere else
+//     sync always update \out_o [1] $0\out_o[1:1]
+// axi_demux_simple's `slv_resp_o.w_ready` was stuck at the constant 0 that way.
+RTLIL::Wire* UhdmImporter::find_own_ranged_temp_wire(const std::string& signal_name,
+                                                     int offset, int width) {
+    if (width <= 0) return nullptr;
+    const std::string key = signal_name + "[" +
+                            std::to_string(offset + width - 1) + ":" +
+                            std::to_string(offset) + "]";
+    auto it = comb_signal_temp_map.find(key);
+    if (it != comb_signal_temp_map.end() && it->second->width == width)
+        return it->second;
+    auto it2 = current_signal_temp_wires.find(key);
+    if (it2 != current_signal_temp_wires.end() && it2->second->width == width)
+        return it2->second;
+    return nullptr;
+}
+
 RTLIL::Wire* UhdmImporter::find_own_temp_wire(const std::string& signal_name) {
     auto it = comb_signal_temp_map.find(signal_name);
     if (it != comb_signal_temp_map.end()) return it->second;
@@ -7906,6 +7931,27 @@ void UhdmImporter::splice_alias_elem_inflight(RTLIL::Wire* elem, int off, const 
 }
 
 RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
+    // A per-process RANGED temp owns exactly these bits and the sync rule
+    // updates the real wire FROM it, so it must win over both the full-width
+    // temp and the real wire (see find_own_ranged_temp_wire).
+    {
+        RTLIL::SigSpec ranged;
+        bool hit = false;
+        for (const auto& ch : sig.chunks()) {
+            if (ch.wire) {
+                std::string n = ch.wire->name.str();
+                if (!n.empty() && n[0] == '\\') n = n.substr(1);
+                if (RTLIL::Wire* tw =
+                        find_own_ranged_temp_wire(n, ch.offset, ch.width)) {
+                    ranged.append(RTLIL::SigSpec(tw));
+                    hit = true;
+                    continue;
+                }
+            }
+            ranged.append(ch);
+        }
+        if (hit) return ranged;
+    }
     if (current_temp_wires.empty()) return sig;
     // A chunk on a per-element ALIAS wire (`\arr[k]`) that has no temp of its
     // own but whose flat base does (this process also writes `arr` whole, so
