@@ -229,6 +229,16 @@ sbad = " || ".join(
 # both are counted as differing.
 seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
 seeni = "\n    ".join(f"repg_{n} = 0; reps_{n} = 0;" for n, _ in outs)
+# ACTIVITY: cycles in which any monitored RTL output CHANGED.  A co-sim that
+# never moved an output proves nothing yet reports NO_DIVERGENCE, reading
+# exactly like a real pass (keccak_round's vacuous NO_DIVERGENCE hid a
+# 24-of-25-lane-dead rho for a whole campaign).  The sweep table prints this
+# next to the cycle count; without the line it showed "? active".
+act_decl = "\n".join(f"  reg [{w-1}:0] prv_{n};" if w > 1 else f"  reg prv_{n};"
+                     for n, w in outs)
+act_init = "\n    ".join(f"prv_{n} = r_{n};" for n, _ in outs)
+act_chg  = " || ".join(f"(prv_{n} !== r_{n})" for n, _ in outs) or "1'b0"
+act_save = "\n      ".join(f"prv_{n} <= r_{n};" for n, _ in outs)
 def _report_line(n):
     sname = f"slo_{n}" if n in unpacked else f"s_{n}"
     return (
@@ -251,8 +261,9 @@ module tb;
 {decl}
 {wires}
 {arrays}
-  integer i, seed_r, g_err = 0, s_err = 0;
+  integer i, seed_r, g_err = 0, s_err = 0, activity = 0;
 {seen}
+{act_decl}
   {TOP}      rtl ({ck}{rtl_conn}, {bind_rtl()});
   gold_{TOP} gold({ck}{conn}, {bind('g')});
   gate_{TOP} gate({ck}{gate_conn}, {bind('s')});
@@ -264,6 +275,7 @@ module tb;
   initial begin
     seed_r = {SEED}; i = $random(seed_r);
     {seeni}
+    {act_init}
     rst_ni = 0;
     {drive}
     repeat (4) @(negedge clk);
@@ -275,8 +287,11 @@ module tb;
       #1;
       if ({gbad}) g_err = g_err + 1;
       if ({sbad}) s_err = s_err + 1;
+      if ({act_chg}) activity = activity + 1;
+      {act_save}
 {report}
     end
+    $display("ACTIVITY %0d cycles with an output change", activity);
     $display("ADJUDICATION %0d cycles: uhdm_vs_rtl=%0d slang_vs_rtl=%0d",
              {CYCLES}, g_err, s_err);
     if (g_err > 0 && s_err == 0) $display("VERDICT UHDM_WRONG");
@@ -342,5 +357,5 @@ if out is None or "ADJUDICATION" not in (out or ""):
     sys.exit(1)
 
 for line in out.splitlines():
-    if line.startswith(("ADJUDICATION", "VERDICT", "FIRST")):
+    if line.startswith(("ACTIVITY", "ADJUDICATION", "VERDICT", "FIRST")):
         print(f"{mod} [{tool}] {line}")

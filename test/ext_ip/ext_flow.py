@@ -57,7 +57,16 @@ def sh(cmd, cwd=None, timeout=None, env=None):
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors="replace")
         return p.returncode, p.stdout
     except subprocess.TimeoutExpired as e:
-        return 124, (e.stdout or "") + "\nTIMEOUT"
+        # TimeoutExpired.stdout is BYTES even when subprocess.run was given
+        # text=True (the child is killed mid-stream, so the decoder never
+        # runs).  Concatenating a str to it raised TypeError from inside the
+        # HANDLER, which killed the whole sweep process: the verilog-ethernet
+        # job died the moment one read_slang hit the 600 s cap and published
+        # an empty "0/0 modules" report.  core_sweep.py already decodes here.
+        out = e.stdout or ""
+        if isinstance(out, (bytes, bytearray)):
+            out = out.decode(errors="replace")
+        return 124, out + "\nTIMEOUT"
 
 
 
