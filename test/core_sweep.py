@@ -481,7 +481,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             row["slang_cosim"] = "skip" if (rc2 == 77 or "SKIPPED" in out2) else "error"
         m = re.search(r"FAIL: \d+ cycles, (\d+) mismatches", out)
         if re.search(r"PASS: \d+ cycles, 0 mismatches", out):
-            row["cosim"] = "✅ PASS"
+            row["cosim"] = _pass_cell(out)
         elif m:
             # A divergence that the local campaign already ADJUDICATED as a
             # non-bug (sim_equiv_analyzed.txt) or has baselined as known
@@ -609,7 +609,7 @@ def sweep_cva6(cycles, jobs, flt=None):
         if m:
             u, sl = int(m.group(1)), int(m.group(2))
             if u == 0:
-                row["cosim"] = "✅ PASS"
+                row["cosim"] = _pass_cell(out)
             elif sl > 0:
                 # BOTH frontends diverge from the RTL sim — the established
                 # shared-artifact class (X-init / stimulus), not a UHDM bug.
@@ -671,7 +671,7 @@ def _pavona_cosim(mod, cycles):
     if m:
         u, sl = int(m.group(1)), int(m.group(2))
         if u == 0:
-            return "✅ PASS"
+            return _pass_cell(out)
         if sl > 0:
             return f"⚠ shared div (uhdm={u}, slang={sl})"
         return f"❌ {u} div (slang clean)"
@@ -766,7 +766,7 @@ def _opentitan_cosim(mod, cycles):
     if m:
         u, sl = int(m.group(1)), int(m.group(2))
         if u == 0:
-            return "✅ PASS"
+            return _pass_cell(out)
         if sl > 0:
             return f"⚠ shared div (uhdm={u}, slang={sl})"
         return f"❌ {u} div (slang clean)"
@@ -859,7 +859,7 @@ def _tlul_cosim(mod, cycles):
     if m:
         u, sl = int(m.group(1)), int(m.group(2))
         if u == 0:
-            return "✅ PASS"
+            return _pass_cell(out)
         if sl > 0:
             return f"⚠ shared div (uhdm={u}, slang={sl})"
         return f"❌ {u} div (slang clean)"
@@ -941,7 +941,7 @@ def _acc_cosim(mod, cycles):
     if m:
         u, sl = int(m.group(1)), int(m.group(2))
         if u == 0:
-            return "✅ PASS"
+            return _pass_cell(out)
         if sl > 0:
             return f"⚠ shared div (uhdm={u}, slang={sl})"
         return f"❌ {u} div (slang clean)"
@@ -1040,7 +1040,7 @@ def _kmac_cosim(mod, cycles, ip="kmac"):
     if m:
         u, sl = int(m.group(1)), int(m.group(2))
         if u == 0:
-            return "✅ PASS"
+            return _pass_cell(out)
         if sl > 0:
             return f"⚠ shared div (uhdm={u}, slang={sl})"
         return f"❌ {u} div (slang clean)"
@@ -1168,6 +1168,45 @@ def _paramod(typ):
     return mod, params, True
 
 
+def _pass_cell(out, cycles_txt=None):
+    """The co-sim PASS cell, always with its counts: `✅ PASS (N cycles, M active)`.
+
+    Every family must render this identically.  A bare `✅ PASS` hides whether
+    the run actually EXERCISED the DUT, so a vacuous co-sim (0 active cycles)
+    reads exactly like a real one — the failure mode that made keccak_round's
+    NO_DIVERGENCE meaningless.  The ext_ip sweep and the generic
+    `_cosim_cells` already printed the counts; pavona / opentitan / tlul / acc
+    / kmac / cva6 dropped them on the floor even though their own regex had
+    just matched the cycle count.
+
+    Two harnesses, two ACTIVITY spellings: netlist_cosim.py prints
+    `ACTIVITY <n> cycles with an output change`, test_sim_equivalence.py prints
+    `ACTIVITY: out_nonzero_cycles=<n> ...`.  Accept both.
+    """
+    out = out or ""
+    # Three ACTIVITY spellings across the harnesses:
+    #   netlist_cosim.py / opentitan  ACTIVITY <n> cycles with an output change
+    #   test_sim_equivalence.py       ACTIVITY: out_nonzero_cycles=<n> ...
+    #   kmac-family cosim scripts     ACTIVITY (cycles each rtl output changed): a=1 b=2
+    # For the per-output form report the BUSIEST output: it is the single
+    # number that answers "did anything move at all".
+    act = (re.search(r"ACTIVITY:? out_nonzero_cycles=(\d+)", out)
+           or re.search(r"ACTIVITY (\d+)", out))
+    if act is None:
+        per = re.search(r"ACTIVITY \(cycles each rtl output changed\):(.*)", out)
+        if per:
+            nums = [int(x) for x in re.findall(r"=(\d+)", per.group(1))]
+            if nums:
+                act = re.match(r"(\d+)", str(max(nums)))
+    if cycles_txt is None:
+        m = (re.search(r"ADJUDICATION (\d+) cycles", out)
+             or re.search(r"PASS: (\d+) cycles", out))
+        cycles_txt = m.group(1) if m else None
+    if cycles_txt is None:
+        return "✅ PASS"
+    return f"✅ PASS ({cycles_txt} cycles, {act.group(1) if act else '?'} active)"
+
+
 def _cosim_cells(out, rc, cycles):
     """netlist_cosim.py / chip_cosim.py output -> (uhdm cell, slang cell)."""
     out = out or ""
@@ -1177,7 +1216,7 @@ def _cosim_cells(out, rc, cycles):
         u = int(m.group(2))
         s = int(m.group(3)) if m.group(3) is not None else -1
         if u == 0:
-            cell = f"✅ PASS ({m.group(1)} cycles, {act.group(1) if act else '?'} active)"
+            cell = _pass_cell(out, m.group(1))
         elif s > 0:
             # Both netlists diverge from the RTL the same way: a netlist-sim
             # artefact (X-init, memory model), not a read_uhdm defect.

@@ -154,11 +154,32 @@ allck = ", ".join(f".{c}({c})" for c in clks) + \
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
 head  = (allck + ", ") if allck else ""
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
-drive = "\n      ".join(rnd(n, w) for n, w in ins)
+# Per-module STIMULUS CONSTRAINTS, injected into the random drive block each
+# cycle: legalises `unique case (1'b1)` one-hot select groups that free random
+# stimulus otherwise violates.  Multi-hot has no defined meaning there — the
+# behavioural sim takes the FIRST matching arm while the synthesised netlist
+# does not — so BOTH frontends diverge identically and the row reads as a
+# shared divergence that is really a stimulus artefact.  Without a file the
+# stimulus is unconstrained (previous behaviour).
+constr = ""
+_cf = f"{HERE}/wrappers/cosim_constr_{mod}.sv"
+if os.path.exists(_cf):
+    constr = "\n      " + open(_cf).read().strip()
+drive = "\n      ".join(rnd(n, w) for n, w in ins) + constr
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 seen  = "\n".join(f"  reg repg_{n}, reps_{n};" for n, _ in outs)
 seeni = "\n    ".join(f"repg_{n} = 0; reps_{n} = 0;" for n, _ in outs)
+# ACTIVITY: cycles in which any monitored RTL output CHANGED.  A co-sim that
+# never moved an output proves nothing yet reports NO_DIVERGENCE, reading
+# exactly like a real pass (keccak_round's vacuous NO_DIVERGENCE hid a
+# 24-of-25-lane-dead rho for a whole campaign).  The sweep table prints this
+# next to the cycle count; without the line it showed "? active".
+act_decl = "\n".join(f"  reg [{w-1}:0] prv_{n};" if w > 1 else f"  reg prv_{n};"
+                     for n, w in outs)
+act_init = "\n    ".join(f"prv_{n} = r_{n};" for n, _ in outs)
+act_chg  = " || ".join(f"(prv_{n} !== r_{n})" for n, _ in outs) or "1'b0"
+act_save = "\n      ".join(f"prv_{n} <= r_{n};" for n, _ in outs)
 def _rep(n):
     return (
       f'      if (!repg_{n} && (r_{n}===r_{n}) && (g_{n}!==r_{n})) '
@@ -178,8 +199,9 @@ module tb;
 {rstdecl}
 {decl}
 {wires}
-  integer i, seed_r, g_err = 0, s_err = 0;
+  integer i, seed_r, g_err = 0, s_err = 0, activity = 0;
 {seen}
+{act_decl}
   {TOP} rtl ({head}{conn}, {bind('r')});
   gold_{TOP} gold({head}{conn}, {bind('g')});
   gate_{TOP} gate({head}{conn}, {bind('s')});
@@ -187,6 +209,7 @@ module tb;
   initial begin
     seed_r = {SEED}; i = $random(seed_r);
     {seeni}
+    {act_init}
     {preamble}
     for (i = 0; i < {CYCLES}; i = i + 1) begin
       @(negedge {SAMPLE});
@@ -195,8 +218,11 @@ module tb;
       #1;
       if ({gbad}) g_err = g_err + 1;
       if ({sbad}) s_err = s_err + 1;
+      if ({act_chg}) activity = activity + 1;
+      {act_save}
 {report}
     end
+    $display("ACTIVITY %0d cycles with an output change", activity);
     $display("ADJUDICATION %0d cycles: uhdm_vs_rtl=%0d slang_vs_rtl=%0d",
              {CYCLES}, g_err, s_err);
     if (g_err > 0 && s_err == 0) $display("VERDICT UHDM_WRONG");
@@ -242,5 +268,5 @@ if out is None or "ADJUDICATION" not in (out or ""):
     sys.exit(1)
 
 for line in out.splitlines():
-    if line.startswith(("ADJUDICATION", "VERDICT", "FIRST")):
+    if line.startswith(("ACTIVITY", "ADJUDICATION", "VERDICT", "FIRST")):
         print(f"{mod} [{tool}] {line}")
