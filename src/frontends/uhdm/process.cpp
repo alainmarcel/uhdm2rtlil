@@ -3850,6 +3850,19 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
         if (signal_specs.count(sig_name)) {
             RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+            // A promoted block-local (`automatic addr_t size_mask;` declared
+            // inside a case arm) has NO previous value -- it is re-created on
+            // every evaluation of the block.  Seeding its temp with a HOLD of
+            // the promoted wire (`$0\size_mask = \size_mask`) makes the wire
+            // read as "assigned only under the arm's condition", so proc infers
+            // a LATCH for it.  read_slang keeps such a variable as a pure
+            // combinational temporary and infers none: PULP axi_dw_downsizer
+            // has four sibling `automatic size_mask/conv_ratio/align_adj`
+            // declarations in one always_comb and read_uhdm emitted 10 latches
+            // against read_slang's 0.  Seed with X instead -- reading one
+            // before it is assigned is undefined in SV anyway.
+            if (block_local_promoted.count(sig_name))
+                lhs_spec = RTLIL::SigSpec(RTLIL::State::Sx, lhs_spec.size());
             // Add assignment to initialize temp wire with current value
             yosys_proc->root_case.actions.push_back(
                 RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec)

@@ -1,0 +1,10 @@
+# STRUCTURAL: the latch is functionally harmless here -- each arm assigns
+# before it reads, so the SAT miter against read_slang passes either way, and
+# the latch is DEAD so `opt_clean` deletes it.  Only the raw post-`proc`
+# netlist shows it, which is why this gate runs no opt pass.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top automatic_local_case_arm_latch
+proc
+# a promoted `automatic` block-local must not become a latch (read_slang: none)
+select -assert-count 0 t:$dlatch
+select -assert-count 0 t:$adlatch
