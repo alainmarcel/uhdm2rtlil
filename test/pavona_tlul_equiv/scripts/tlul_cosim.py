@@ -139,7 +139,18 @@ allck = ", ".join(f".{c}({c})" for c in clks) + \
 head  = (allck + ", ") if allck else ""   # empty for a comb DUT (cs_vclk is tb-only)
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
 def bind(p): return ", ".join(f".{n}({p}_{n})" for n, _ in outs)
-drive = "\n      ".join(rnd(n, w) for n, w in ins)
+# Per-module STIMULUS CONSTRAINTS, injected into the random drive block each
+# cycle: legalises `unique case (1'b1)` one-hot select groups that free random
+# stimulus otherwise violates.  Multi-hot has no defined meaning there — the
+# behavioural sim takes the FIRST matching arm while the synthesised netlist
+# does not — so BOTH frontends diverge identically and the row reads as a
+# shared divergence that is really a stimulus artefact.  Without a file the
+# stimulus is unconstrained (previous behaviour).
+constr = ""
+_cf = f"{HERE}/wrappers/cosim_constr_{mod}.sv"
+if os.path.exists(_cf):
+    constr = "\n      " + open(_cf).read().strip()
+drive = "\n      ".join(rnd(n, w) for n, w in ins) + constr
 # only compare where RTL output is fully defined (=== itself)
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
