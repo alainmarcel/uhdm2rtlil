@@ -3602,6 +3602,39 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
         const UHDM::typespec* ts_c, const UHDM::scope* inst) {
     auto mi = dynamic_cast<const UHDM::module_inst*>(
         current_instance ? (const UHDM::scope*)current_instance : inst);
+
+    // A TYPE PARAMETER named inside a GENERATE BLOCK arrives as an
+    // `unsupported_typespec` carrying only the name.  A generate block is its
+    // own scope in Surelog and does not carry the enclosing module's
+    // parameters, so the type lookup there found nothing -- while the same
+    // name one line OUTSIDE the generate block resolves normally.  Every
+    // consumer measures an unsupported typespec as ONE BIT, so PULP
+    // axi_id_prepend's `slv_b_chan_t'(mst_b_chans_i[i])` (written inside
+    // `for (genvar i..)`) kept bit 0 of the B channel and zero-filled the
+    // other four.  The binding is right here on the elaborated instance:
+    // resolve by name, walking out for a relayed parameter.
+    if (ts_c->UhdmType() == uhdmunsupported_typespec &&
+        !ts_c->VpiName().empty()) {
+        std::string want(ts_c->VpiName());
+        for (int depth = 0; mi && depth < 8; depth++,
+             mi = dynamic_cast<const UHDM::module_inst*>(mi->VpiParent())) {
+            if (!mi->Parameters()) continue;
+            for (auto p : *mi->Parameters()) {
+                if (p->UhdmType() != uhdmtype_parameter) continue;
+                if (std::string(p->VpiName()) != want) continue;
+                auto tp = any_cast<const UHDM::type_parameter*>(p);
+                if (tp->Typespec() && tp->Typespec()->Actual_typespec() &&
+                    tp->Typespec()->Actual_typespec() != ts_c) {
+                    log("UHDM: gen-scope type parameter '%s' -> instance-bound type\n",
+                        want.c_str());
+                    return tp->Typespec()->Actual_typespec();
+                }
+            }
+        }
+        return ts_c;
+    }
+    mi = dynamic_cast<const UHDM::module_inst*>(
+        current_instance ? (const UHDM::scope*)current_instance : inst);
     // The default typespec may have been declared by an ANCESTOR that RELAYS
     // its own type parameter down (CVA6 issue_stage passes scoreboard_entry_t
     // to the scoreboard: the elem default inside the scoreboard's clone of
