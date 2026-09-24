@@ -5548,7 +5548,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 if (in_initial_block && !all_const) {
                     // If not all constant, check if function returns a value
                     bool has_return = false;
-                    scan_for_direct_return_assignment(func_def->Stmt(), func_name, has_return);
+                    // Match on the DEFINITION's name: a package-scoped call
+                    // spells `pkg::f` but the body assigns plain `f`.
+                    std::string def_name = func_def->VpiName().empty()
+                                               ? func_name
+                                               : std::string(func_def->VpiName());
+                    scan_for_direct_return_assignment(func_def->Stmt(), def_name, has_return);
 
                     if (!has_return) {
                         // Function doesn't assign to its return value
