@@ -614,6 +614,14 @@ struct UhdmImporter {
     // RTLIL::Const in `local_vars` so that `state[i]` indexes element `i` and
     // `state[i][j]` indexes bit `j` of element `i`.  Cleared per-call.
     std::map<std::string, int> array_local_element_widths;
+    // Unpacked dimensions (size, low) outer->inner of a function-local
+    // array_var, so `p[r][i]` on `int unsigned p [R][W]` addresses ELEMENT
+    // (r-lo_r)*W + (i-lo_i), not bit i of element r.  Cleared per-call.
+    std::map<std::string, std::vector<std::pair<int,int>>> array_local_unpacked_dims;
+    // Flat element index of `indices` against `dims`; false when the
+    // count differs or an index is out of range.
+    static bool flat_unpacked_index(const std::vector<std::pair<int,int>>& dims,
+                                    const std::vector<int>& indices, int& flat);
     
     // Get current function context for constant propagation (top of stack)
     FunctionCallContext* getCurrentFunctionContext() {
