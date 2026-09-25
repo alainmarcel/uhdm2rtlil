@@ -2603,6 +2603,20 @@ RTLIL::Const UhdmImporter::vpi_value_to_const(const std::string& val_str, int wi
     return RTLIL::Const(parse_vpi_value_to_int(val_str), width);
 }
 
+// A TYPEDEF'd unpacked array (`typedef int unsigned perm_t [R][W]; perm_t
+// Perm;`) has no own Ranges() and no inner Variables(): both its unpacked
+// dims and its element type live on the array_typespec.
+static const UHDM::array_typespec* typedef_array_typespec(const UHDM::array_var* av) {
+    if (!av || !av->Typespec() || !av->Typespec()->Actual_typespec()) return nullptr;
+    auto t = av->Typespec()->Actual_typespec();
+    if (t->UhdmType() != uhdmarray_typespec) return nullptr;
+    return any_cast<const UHDM::array_typespec*>(t);
+}
+static const UHDM::VectorOfrange* typedef_unpacked_ranges(const UHDM::array_var* av) {
+    auto ats = typedef_array_typespec(av);
+    return ats ? ats->Ranges() : nullptr;
+}
+
 RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!uhdm_expr)
         return RTLIL::SigSpec();
@@ -4022,8 +4036,15 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // (check_mem/init,non_zero,power_of_two).
                 if (elem_w == 0 && base_wire) {
                     if (auto av = dynamic_cast<const UHDM::array_var*>(vs->Actual_group())) {
-                        if (av->Ranges() && !av->Ranges()->empty()) {
-                            auto r0 = (*av->Ranges())[0];
+                        // A TYPEDEF'd unpacked array (`typedef int unsigned
+                        // perm_t [R][W]; perm_t Perm;`) carries its dims on
+                        // the array_typespec, not the var (common_cells
+                        // cc_sub_per_hash: `Perm[r][i]` found no element).
+                        const UHDM::VectorOfrange* urgs = av->Ranges();
+                        if (!urgs || urgs->empty())
+                            urgs = typedef_unpacked_ranges(av);
+                        if (urgs && !urgs->empty()) {
+                            auto r0 = (*urgs)[0];
                             RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
                             RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
                             if (l.is_fully_const() && rr.is_fully_const()) {
@@ -4203,6 +4224,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 ert = v0->Typespec();
                             pav0 = dynamic_cast<const UHDM::packed_array_var*>(
                                 (*av2->Variables())[0]);
+                        } else if (auto tats = typedef_array_typespec(av2)) {
+                            // typedef'd unpacked array: element type on the
+                            // array_typespec
+                            ert = tats->Elem_typespec();
                         }
                     } else if (auto an2 = dynamic_cast<const UHDM::array_net*>(ag2)) {
                         if (an2->Nets() && !an2->Nets()->empty())
@@ -4278,6 +4303,14 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             }
                         }
                     }
+                    // A non-logic element (`int unsigned`): its declared
+                    // width is the leaf of the inner-dim walk below.
+                    if (ets2 && ets2->UhdmType() != uhdmlogic_typespec &&
+                        ets2->UhdmType() != uhdmpacked_array_typespec &&
+                        elem_dhi < elem_dlo) {
+                        int lw = get_width_from_typespec(ets2, current_instance);
+                        if (lw > 1) { elem_dlo = 0; elem_dhi = lw - 1; elem_ddesc = true; }
+                    }
                     if (auto lt2 = dynamic_cast<const UHDM::logic_typespec*>(ets2))
                         if (!lt2->Elem_typespec() && lt2->Ranges() &&
                             lt2->Ranges()->size() == 1) {
@@ -4306,9 +4339,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 if (elem_dims.empty()) {
                     const UHDM::VectorOfrange* args = nullptr;
                     if (auto ag3 = vs->Actual_group()) {
-                        if (auto av3 = dynamic_cast<const UHDM::array_var*>(ag3))
+                        if (auto av3 = dynamic_cast<const UHDM::array_var*>(ag3)) {
                             args = av3->Ranges();
-                        else if (auto an3 = dynamic_cast<const UHDM::array_net*>(ag3))
+                            if (!args || args->empty())
+                                args = typedef_unpacked_ranges(av3);
+                        } else if (auto an3 = dynamic_cast<const UHDM::array_net*>(ag3))
                             args = an3->Ranges();
                     }
                     if (args && args->size() >= 2) {
