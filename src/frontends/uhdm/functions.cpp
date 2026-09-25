@@ -1411,11 +1411,38 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
         operand_values.push_back(evaluate_single_operand(operand, local_vars));
     }
     
+    // Arithmetic runs at the widest operand's width, 64 bits at most.  It
+    // used to run at 32 bits (`as_int`), so a `longint unsigned` LCG —
+    //     longint unsigned A = 2147483629, C = 2147483587, M = 2**31 - 1;
+    //     rand = (A * seed + C) % M;
+    // (common_cells cc_sub_per_hash's permutation generator) wrapped the
+    // product at 32 bits, and `%` then divided a NEGATIVE int: every
+    // table entry was wrong.  A 64-bit local's value is taken unsigned
+    // (the SV expression is unsigned as soon as one operand is).
+    auto arith_width = [&]() -> int {
+        int w = 32;
+        for (auto& v : operand_values) w = std::max(w, v.size());
+        return std::min(w, 64);
+    };
+    auto as_u64 = [](const RTLIL::Const& c) -> uint64_t {
+        uint64_t v = 0;
+        for (int i = std::min(64, c.size()) - 1; i >= 0; i--)
+            v = (v << 1) | (c[i] == RTLIL::State::S1 ? 1 : 0);
+        return v;
+    };
+    auto wide_const = [](uint64_t v, int w) -> RTLIL::Const {
+        RTLIL::Const c(0, w);
+        for (int i = 0; i < w; i++) c.set(i, ((v >> i) & 1) ? RTLIL::State::S1 : RTLIL::State::S0);
+        return c;
+    };
+
     // Perform the operation
     switch (op_type) {
         case vpiAddOp:
             if (operand_values.size() >= 2) {
-                // Perform addition
+                int w = arith_width();
+                if (w > 32)
+                    return wide_const(as_u64(operand_values[0]) + as_u64(operand_values[1]), w);
                 int result = operand_values[0].as_int() + operand_values[1].as_int();
                 return RTLIL::Const(result, 32);
             }
@@ -1423,7 +1450,9 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             
         case vpiSubOp:
             if (operand_values.size() >= 2) {
-                // Perform subtraction
+                int w = arith_width();
+                if (w > 32)
+                    return wide_const(as_u64(operand_values[0]) - as_u64(operand_values[1]), w);
                 int result = operand_values[0].as_int() - operand_values[1].as_int();
                 return RTLIL::Const(result, 32);
             }
@@ -1431,7 +1460,9 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             
         case vpiMultOp:
             if (operand_values.size() >= 2) {
-                // Perform multiplication
+                int w = arith_width();
+                if (w > 32)
+                    return wide_const(as_u64(operand_values[0]) * as_u64(operand_values[1]), w);
                 int result = operand_values[0].as_int() * operand_values[1].as_int();
                 return RTLIL::Const(result, 32);
             }
@@ -1574,6 +1605,13 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
 
         case vpiDivOp:  // Division (/)
             if (operand_values.size() >= 2) {
+                int w = arith_width();
+                if (w > 32) {
+                    uint64_t d = as_u64(operand_values[1]);
+                    if (d != 0) return wide_const(as_u64(operand_values[0]) / d, w);
+                    log_warning("Division by zero in compile-time evaluation\n");
+                    return RTLIL::Const(0, w);
+                }
                 int divisor = operand_values[1].as_int();
                 if (divisor != 0) {
                     int result = operand_values[0].as_int() / divisor;
@@ -1586,6 +1624,13 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
 
         case vpiModOp:  // Modulus (%)
             if (operand_values.size() >= 2) {
+                int w = arith_width();
+                if (w > 32) {
+                    uint64_t d = as_u64(operand_values[1]);
+                    if (d != 0) return wide_const(as_u64(operand_values[0]) % d, w);
+                    log_warning("Modulus by zero in compile-time evaluation\n");
+                    return RTLIL::Const(0, w);
+                }
                 int divisor = operand_values[1].as_int();
                 if (divisor != 0) {
                     int result = operand_values[0].as_int() % divisor;
