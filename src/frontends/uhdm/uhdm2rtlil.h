@@ -691,6 +691,16 @@ struct UhdmImporter {
     // ALIASING, so the field write leaked back into the copy's SOURCE array.
     // Recorded here so import_always_comb can promote such an element to a
     // FULL-width temp that both writes share.
+    // Names the CURRENT generate scope's own processes assign.  A gen-scope
+    // net-declaration initializer (`reg [7:0] r = 8'h00;` inside `generate`)
+    // is emitted as a constant `connect` on the assumption that such a net has
+    // no FF driver.  That is false whenever the same scope has an always block
+    // driving it: the constant becomes a SECOND driver, `opt` resolves it in
+    // favour of the constant, and the flop plus everything behind it is
+    // deleted.  verilog-axis / -ethernet / -pcie declare every register that
+    // way, so `axis_register` came out with ZERO cells.
+    std::set<std::string> gen_scope_proc_written;
+
     std::set<std::string> dyn_elem_write_arrays;
 
     struct AssignedSignal {

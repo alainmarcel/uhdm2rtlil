@@ -1819,7 +1819,19 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         // driven by an always @(posedge clk) block whose initial value is set by the decl).
         bool in_gen_scope = !gen_scope_stack.empty();
 
-        if (is_constant && in_gen_scope) {
+        if (is_constant && in_gen_scope && lhs.is_wire() &&
+            gen_scope_proc_written.count(
+                RTLIL::unescape_id(lhs.as_wire()->name).substr(
+                    RTLIL::unescape_id(lhs.as_wire()->name).rfind('.') == std::string::npos
+                        ? 0 : RTLIL::unescape_id(lhs.as_wire()->name).rfind('.') + 1))) {
+            // ... UNLESS a process in the same generate scope drives it: then
+            // this is a reg's initial value, exactly like the module-scope case
+            // below, and a constant driver would delete the flop.
+            lhs.as_wire()->attributes[ID::init] = rhs.as_const();
+            if (mode_debug)
+                log("  Set \\init on gen-scope reg '%s' (a process drives it)\n",
+                    lhs.as_wire()->name.c_str());
+        } else if (is_constant && in_gen_scope) {
             // Gen-scope net decl with constant RHS — treat as a plain constant driver
             module->connect(lhs, rhs);
             if (mode_debug)
@@ -4462,6 +4474,72 @@ void UhdmImporter::import_generate_scopes(const module_inst* uhdm_module) {
 }
 
 // Import a single generate scope
+
+// Names a generate scope's own processes ASSIGN.  A gen-scope variable /
+// net declaration initializer (`reg [7:0] r = 8'h00;`) must become an `\init`
+// ATTRIBUTE when a process also drives it, exactly like the module-scope path
+// -- emitting a `connect` instead makes the constant a SECOND driver that
+// `opt` resolves in favour of the constant, deleting the flop and every cell
+// behind it.  Alex Forencich's verilog-axis / -ethernet / -pcie declare every
+// register that way inside `generate`, so `axis_register` came out with ZERO
+// cells and ~280 of 301 co-sim cycles diverged.
+// A gen-scope net that NO process writes (`integer x = -1;` used as a
+// constant) still needs the connect, or it is undriven and reads X.
+static void collect_gen_proc_written(const UHDM::any* stmt,
+                                     std::set<std::string>& out) {
+    if (!stmt) return;
+    auto name_of = [&](const UHDM::any* lhs) {
+        if (!lhs) return;
+        std::string n = std::string(lhs->VpiName());
+        if (auto br = n.find('['); br != std::string::npos) n = n.substr(0, br);
+        if (auto d = n.rfind('.'); d != std::string::npos) n = n.substr(d + 1);
+        if (!n.empty()) out.insert(n);
+    };
+    switch (stmt->VpiType()) {
+    case vpiAssignment:
+        name_of(any_cast<const UHDM::assignment*>(stmt)->Lhs());
+        break;
+    case vpiAssignStmt:
+        name_of(any_cast<const UHDM::assign_stmt*>(stmt)->Lhs());
+        break;
+    case vpiBegin:
+        if (auto bg = any_cast<const UHDM::begin*>(stmt))
+            if (auto ss = bg->Stmts())
+                for (auto x : *ss) collect_gen_proc_written(x, out);
+        break;
+    case vpiNamedBegin:
+        if (auto nb = any_cast<const UHDM::named_begin*>(stmt))
+            if (auto ss = nb->Stmts())
+                for (auto x : *ss) collect_gen_proc_written(x, out);
+        break;
+    case vpiIf:
+        collect_gen_proc_written(any_cast<const UHDM::if_stmt*>(stmt)->VpiStmt(), out);
+        break;
+    case vpiIfElse: {
+        auto ie = any_cast<const UHDM::if_else*>(stmt);
+        collect_gen_proc_written(ie->VpiStmt(), out);
+        collect_gen_proc_written(ie->VpiElseStmt(), out);
+        break;
+    }
+    case vpiCase:
+        if (auto items = any_cast<const UHDM::case_stmt*>(stmt)->Case_items())
+            for (auto it : *items)
+                collect_gen_proc_written(any_cast<const UHDM::case_item*>(it)->Stmt(), out);
+        break;
+    case vpiFor:
+        collect_gen_proc_written(any_cast<const UHDM::for_stmt*>(stmt)->VpiStmt(), out);
+        break;
+    case vpiWhile:
+        collect_gen_proc_written(any_cast<const UHDM::while_stmt*>(stmt)->VpiStmt(), out);
+        break;
+    case vpiEventControl:
+        collect_gen_proc_written(any_cast<const UHDM::event_control*>(stmt)->Stmt(), out);
+        break;
+    default:
+        break;
+    }
+}
+
 void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     if (!uhdm_scope) return;
     current_scope = uhdm_scope;
@@ -4491,6 +4569,16 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     gen_scope_stack.push_back(scope_name);
     log("UHDM: Pushed scope '%s', stack depth: %zu, full path: %s\n", 
         scope_name.c_str(), gen_scope_stack.size(), get_current_gen_scope().c_str());
+
+    // Which of this scope's own nets/variables a process in it drives -- see
+    // gen_scope_proc_written.  Saved/restored so a nested generate scope does
+    // not lose its parent's set.
+    std::set<std::string> saved_gen_written;
+    saved_gen_written.swap(gen_scope_proc_written);
+    if (uhdm_scope->Process())
+        for (auto pr : *uhdm_scope->Process())
+            if (auto ps = dynamic_cast<const UHDM::process_stmt*>(pr))
+                collect_gen_proc_written(ps->Stmt(), gen_scope_proc_written);
     
     // Import nets declared in the generate scope
     if (uhdm_scope->Nets()) {
@@ -5253,6 +5341,7 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     }
     
     // Pop this scope from the stack before returning
+    gen_scope_proc_written.swap(saved_gen_written);
     gen_scope_stack.pop_back();
     log("UHDM: Popped scope '%s', stack depth: %zu\n", 
         scope_name.c_str(), gen_scope_stack.size());
