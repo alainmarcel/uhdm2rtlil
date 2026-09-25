@@ -1736,6 +1736,13 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
                     result = 1;
                     for (int64_t i = 0; i < exp && i < 63; i++) result *= base;
                 }
+                // A result that does not fit 32 bits is a 64-bit context
+                // value: `longint unsigned M = 2**32;` (common_cells
+                // cc_sub_per_hash's xor-stage LCG) folded to 0 and the
+                // following `% M` was a "Modulus by zero" — every xor table
+                // entry came out 0.  Narrower results keep the 32-bit form.
+                if (result < INT32_MIN || result > (int64_t)UINT32_MAX)
+                    return wide_const((uint64_t)result, 64);
                 return RTLIL::Const((int)result, 32);
             }
             break;
