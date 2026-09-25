@@ -5570,8 +5570,11 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
             int addr_w = 1;
             if (mem) { while ((1 << addr_w) < mem->size) addr_w++; }
             else addr_w = 10;
-            if (!mem_write.address.empty() && mem_write.address.size() > addr_w)
-                addr_w = mem_write.address.size();
+            // Do NOT widen to the index expression's size: an imported index is
+            // typically 32 bits, which would give a 2-entry memory a 32-bit
+            // ADDR wire.  The address is truncated to the memory's own width
+            // below, which is also what the hardware does with an out-of-range
+            // index.
 
             RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), addr_w);
             memwr_addr_wires[i] = addr_wire;
