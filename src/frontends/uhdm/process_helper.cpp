@@ -764,6 +764,12 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
                                 if (!module->memories.count(mem_id) &&
                                     expanded_array_low(sig.name) >= 0) {
+                                    // Remember the array: a constant-index
+                                    // FIELD write to one of its elements must
+                                    // not get its own ranged temp, or that
+                                    // element ends up double-driven (see
+                                    // dyn_elem_write_arrays).
+                                    dyn_elem_write_arrays.insert(sig.name);
                                     log("extract_assigned_signals: Skipping dynamic write to expanded array '%s'\n",
                                         sig.name.c_str());
                                     break;
