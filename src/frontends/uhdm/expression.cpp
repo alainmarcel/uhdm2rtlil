@@ -11202,6 +11202,22 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 if (av->Variables() && !av->Variables()->empty())
                     pts_ref = (*av->Variables())[0]->Typespec();
                 if (!pts_ref) pts_ref = av->Typespec();
+                // A TYPEDEF'd unpacked array (`typedef int unsigned perm_t
+                // [W]; perm_t Perm;`) has no own Ranges() and no inner
+                // Variables(): both the unpacked dim and the element type
+                // live on its array_typespec.  With prg null the element
+                // width stayed 1 and `Perm[i]` read BIT i of the flat wire
+                // (common_cells cc_sub_per_hash's permutation tables).
+                if (!prg && av->Typespec() && av->Typespec()->Actual_typespec() &&
+                    av->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+                    auto ats = any_cast<const UHDM::array_typespec*>(
+                        av->Typespec()->Actual_typespec());
+                    if (ats && ats->Ranges() && ats->Ranges()->size() == 1) {
+                        prg = ats->Ranges();
+                        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
+                            pts_ref = ats->Elem_typespec();
+                    }
+                }
             }
         };
         take_packed(uhdm_bit->Actual_group());
