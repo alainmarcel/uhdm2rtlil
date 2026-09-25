@@ -7041,32 +7041,51 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // direction-aware param-table READERS assume (flipping it
                 // reversed every SHUFFLE_MASK_L[i] read in ibex_alu and
                 // broke genscope_param_table).
+                // A NESTED pattern (`'{'{3,0,1,2}, '{1,2,3,0}}` into
+                // `int unsigned Perm [R][W]`) is the operand of the OUTER
+                // pattern op, not of the assignment, so it found no dim and
+                // folded its row first-at-MSB while the outer dim and every
+                // element READ use elem0@LSB: each row came out reversed
+                // (common_cells cc_sub_per_hash's per-round tables).  Walk up
+                // through the enclosing pattern ops and take the unpacked
+                // dim at this nesting depth.
                 const UHDM::range* dim = nullptr;
-                if (uhdm_op->VpiParent()) {
+                size_t pat_depth = 0;
+                const UHDM::any* pat_parent = uhdm_op->VpiParent();
+                while (pat_parent && pat_parent->UhdmType() == uhdmoperation &&
+                       any_cast<const UHDM::operation*>(pat_parent)->VpiOpType() ==
+                           vpiAssignmentPatternOp) {
+                    pat_depth++;
+                    pat_parent = pat_parent->VpiParent();
+                }
+                if (pat_parent) {
                     const UHDM::any* lhs = nullptr;
-                    if (uhdm_op->VpiParent()->UhdmType() == uhdmassignment)
-                        lhs = any_cast<const UHDM::assignment*>(uhdm_op->VpiParent())->Lhs();
-                    else if (uhdm_op->VpiParent()->UhdmType() == uhdmcont_assign)
-                        lhs = any_cast<const UHDM::cont_assign*>(uhdm_op->VpiParent())->Lhs();
+                    if (pat_parent->UhdmType() == uhdmassignment)
+                        lhs = any_cast<const UHDM::assignment*>(pat_parent)->Lhs();
+                    else if (pat_parent->UhdmType() == uhdmcont_assign)
+                        lhs = any_cast<const UHDM::cont_assign*>(pat_parent)->Lhs();
                     if (lhs)
                         if (auto r = dynamic_cast<const UHDM::ref_obj*>(lhs))
                             if (auto ag = r->Actual_group()) lhs = ag;
+                    const UHDM::VectorOfrange* dims = nullptr;
                     if (lhs) {
                         if (auto av = dynamic_cast<const UHDM::array_var*>(lhs)) {
                             if (av->Ranges() && !av->Ranges()->empty())
-                                dim = (*av->Ranges())[0];
-                            if (!dim && av->Typespec())
+                                dims = av->Ranges();
+                            if (!dims && av->Typespec())
                                 if (auto t = av->Typespec()->Actual_typespec())
                                     if (t->UhdmType() == uhdmarray_typespec) {
                                         auto ats = any_cast<const UHDM::array_typespec*>(t);
                                         if (ats->Ranges() && !ats->Ranges()->empty())
-                                            dim = (*ats->Ranges())[0];
+                                            dims = ats->Ranges();
                                     }
                         } else if (auto an = dynamic_cast<const UHDM::array_net*>(lhs)) {
                             if (an->Ranges() && !an->Ranges()->empty())
-                                dim = (*an->Ranges())[0];
+                                dims = an->Ranges();
                         }
                     }
+                    if (dims && pat_depth < dims->size())
+                        dim = (*dims)[pat_depth];
                 }
                 if (dim) {
                     RTLIL::SigSpec l = import_expression(
