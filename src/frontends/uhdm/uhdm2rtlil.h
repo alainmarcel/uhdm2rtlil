@@ -732,6 +732,16 @@ struct UhdmImporter {
 
     // Track pending sync assignments to merge multiple updates to same signal
     std::map<RTLIL::SigSpec, RTLIL::SigSpec> pending_sync_assignments;
+    // Write-order stamp per pending_sync_assignments key.  The map iterates in
+    // SigSpec collation order, not source order, so overlapping keys (a whole
+    // `\v_reg` write after per-bit `\v_reg [1]`/`[0]` writes) could not be
+    // reconciled at drain time — each became its own conflicting sync update
+    // and `proc` collapsed the register.  pending_inflight() resolves every
+    // bit to the LATEST covering write.
+    std::map<RTLIL::SigSpec, uint64_t> pending_sync_seq;
+    uint64_t pending_sync_seq_ctr = 0;
+    void note_pending_sync(const RTLIL::SigSpec& lhs);
+    RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
     
     // Current loop variable substitutions for unrolling
     std::map<std::string, int64_t> current_loop_substitutions;

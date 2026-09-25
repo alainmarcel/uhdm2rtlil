@@ -1,0 +1,15 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top forloop_bitsel_wholewrite_sync
+flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+rename forloop_bitsel_wholewrite_sync gold
+design -stash gold
+read_slang dut.sv --top forloop_bitsel_wholewrite_sync
+hierarchy -check -top forloop_bitsel_wholewrite_sync
+flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+rename forloop_bitsel_wholewrite_sync gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 5 -set-init-zero miter

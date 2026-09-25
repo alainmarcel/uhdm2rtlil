@@ -1218,6 +1218,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
+    pending_sync_seq.clear();
     // Also clear the blocking-value map: a multi-async-reset / SR-FF body is
     // imported via import_statement_comb, which calls thread_comb_if — that reads
     // current_comb_values[nm] as the pre-branch value.  A stale entry left by a
@@ -2905,12 +2906,33 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->signal = clock_sig;
 
                     pending_sync_assignments.clear();
+                    pending_sync_seq.clear();
                     import_statement_sync(stmt, sync, false);
 
-                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
-                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                    // One update per BASE WIRE, every bit taken from the LATEST pending
+                    // write covering it.  Pushing each map entry as its own action produced
+                    // overlapping updates (`\v_reg [0]`, `\v_reg [1]` AND `\v_reg`), which
+                    // `proc` resolves by dropping the register.
+                    {
+                        std::set<RTLIL::Wire*> bases; std::vector<RTLIL::SigSig> misc;
+                        for (const auto& [lhs, rhs] : pending_sync_assignments) {
+                            RTLIL::Wire* w = nullptr; bool one = lhs.size() > 0;
+                            for (const auto& ch : lhs.chunks()) {
+                                if (!ch.wire) { one = false; break; }
+                                if (!w) w = ch.wire; else if (w != ch.wire) { one = false; break; }
+                            }
+                            if (one) bases.insert(w); else misc.push_back(RTLIL::SigSig(lhs, rhs));
+                        }
+                        for (RTLIL::Wire* w : bases) {
+                            RTLIL::SigSpec full(w), val = pending_inflight(full), ls, rs;
+                            for (int b = 0; b < w->width; b++)
+                                if (val[b] != full[b]) { ls.append(full[b]); rs.append(val[b]); }
+                            if (ls.size()) sync->actions.push_back(RTLIL::SigSig(ls, rs));
+                        }
+                        for (auto& a : misc) sync->actions.push_back(a);
                     }
                     pending_sync_assignments.clear();
+                    pending_sync_seq.clear();
 
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule created (memory-in-for-loop fallback)\n");
@@ -3171,12 +3193,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->signal = clock_sig;
 
                     pending_sync_assignments.clear();
+                    pending_sync_seq.clear();
                     import_statement_sync(stmt, sync, false);
 
                     for (const auto& [lhs, rhs] : pending_sync_assignments) {
                         sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
                     }
                     pending_sync_assignments.clear();
+                    pending_sync_seq.clear();
 
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule created (blocking-assignment fallback)\n");
@@ -5104,6 +5128,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
 
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
+    pending_sync_seq.clear();
 
     // Build the "sync always" and the init sync rule.  We hold off pushing
     // them onto the process until we know whether any actions survive — an
@@ -5127,6 +5152,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
     }
     pending_sync_assignments.clear();
+    pending_sync_seq.clear();
 
     // Resolve cross-process init dependencies: if RHS references a wire whose
     // init value was computed by an earlier interpreter-based initial block,
@@ -5658,6 +5684,36 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
             }
 }
 
+void UhdmImporter::note_pending_sync(const RTLIL::SigSpec& lhs) {
+    pending_sync_seq[lhs] = ++pending_sync_seq_ctr;
+}
+
+// The current in-flight value of `lhs`: for each bit, the value stored by the
+// most recently written pending entry covering that bit, else the bit itself.
+// Overlapping keys (per-bit and whole-wire) are reconciled here.
+RTLIL::SigSpec UhdmImporter::pending_inflight(const RTLIL::SigSpec& lhs) {
+    RTLIL::SigSpec out = lhs;
+    if (pending_sync_assignments.empty()) return out;
+    for (int b = 0; b < lhs.size(); b++) {
+        RTLIL::SigBit bit = lhs[b];
+        if (!bit.wire) continue;
+        uint64_t best = 0; RTLIL::SigBit val = bit; bool found = false;
+        for (const auto& [k, v] : pending_sync_assignments) {
+            if (k.size() != v.size()) continue;
+            for (int i = 0; i < k.size(); i++) {
+                if (k[i] == bit) {
+                    auto it = pending_sync_seq.find(k);
+                    uint64_t sq = it == pending_sync_seq.end() ? 0 : it->second;
+                    if (!found || sq > best) { best = sq; val = v[i]; found = true; }
+                    break;
+                }
+            }
+        }
+        if (found) out[b] = val;
+    }
+    return out;
+}
+
 void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset, 
                                                    std::map<std::string, int64_t>& var_substitutions) {
     if (!uhdm_stmt)
@@ -5964,13 +6020,16 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         rhs_spec = rhs_spec.extract(0, lhs_spec.size());
                     RTLIL::SigSpec else_val =
                         pending_sync_assignments.count(lhs_spec)
-                            ? pending_sync_assignments[lhs_spec] : lhs_spec;
+                            ? pending_sync_assignments[lhs_spec]
+                            : pending_inflight(lhs_spec);   // slice-aware
                     RTLIL::Wire* mux_w = module->addWire(NEW_ID, lhs_spec.size());
                     module->addMux(NEW_ID, else_val, rhs_spec,
                                    current_condition, mux_w);
                     pending_sync_assignments[lhs_spec] = RTLIL::SigSpec(mux_w);
+                    note_pending_sync(lhs_spec);
                 } else {
                     pending_sync_assignments[lhs_spec] = rhs_spec;
+                    note_pending_sync(lhs_spec);
                 }
                 log("        Added assignment with substitution: %s <= %s (cond=%s)\n",
                     log_signal(lhs_spec), log_signal(rhs_spec),
@@ -6084,6 +6143,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         
                         // Add assignment to the slice wire
                         pending_sync_assignments[slice_wire] = rhs_spec;
+                        note_pending_sync(slice_wire);
                         log("        Added slice assignment: %s <= %s (for %s[%d -: %d])\n",
                             slice_wire_name.c_str(), log_signal(rhs_spec), 
                             signal_name.c_str(), base_idx, width);
@@ -6556,6 +6616,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
                 if (var_wire) {
                     pending_sync_assignments[RTLIL::SigSpec(var_wire)] = var_sig;
+                    note_pending_sync(RTLIL::SigSpec(var_wire));
                     log("        Final blocking value for %s: %s\n",
                         var_name.c_str(), log_signal(var_sig));
                 }
@@ -6567,6 +6628,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 if (idx_wire) {
                     int final_index = initial_index + repeat_count;
                     pending_sync_assignments[RTLIL::SigSpec(idx_wire)] = RTLIL::Const(final_index, idx_wire->width);
+                    note_pending_sync(RTLIL::SigSpec(idx_wire));
                     log("        Final index value for %s: %d\n", index_var_name.c_str(), final_index);
                 }
             }
@@ -7188,6 +7250,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         if (loop_var_wire) {
                             pending_sync_assignments[RTLIL::SigSpec(loop_var_wire)] =
                                 RTLIL::Const((int)final_val, loop_var_wire->width);
+                            note_pending_sync(RTLIL::SigSpec(loop_var_wire));
                         }
                         log("        General for loop body unrolled successfully\n");
                     }
@@ -7490,6 +7553,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                         // (not in sync->actions because they haven't been flushed yet)
                                         RTLIL::SigSpec var_spec(var_wire);
                                         pending_sync_assignments[var_spec] = RTLIL::Const(final_value, var_wire->width);
+                                        note_pending_sync(var_spec);
                                         log("        Storing final value of %s = 0x%llx (overriding any previous assignment)\n", 
                                             var_name.c_str(), (unsigned long long)final_value);
                                     }
@@ -7765,6 +7829,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     
                                     // Add the combined assignment
                                     pending_sync_assignments[readB_wire] = readB_value;
+                                    note_pending_sync(readB_wire);
                                     log("        Added combined assignment: readB <= concatenation of slices\n");
                                 }
                             } else {
@@ -10800,6 +10865,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     final_rhs = RTLIL::SigSpec(mux_w);
                 }
                 pending_sync_assignments[full_lhs] = final_rhs;
+                note_pending_sync(full_lhs);
                 if (mode_debug)
                     log("    Dynamic indexed-part-select LHS: emitted read-modify-write on '%s'\n",
                         base_wire->name.c_str());
@@ -10993,6 +11059,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         RTLIL::Wire* mux_out = module->addWire(NEW_ID, ew->width);
                         module->addMux(NEW_ID, else_val, rhs_sized, full_cond, mux_out);
                         pending_sync_assignments[elem_lhs] = RTLIL::SigSpec(mux_out);
+                        note_pending_sync(elem_lhs);
                     }
                     return;
                 }
@@ -11028,6 +11095,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     next = new_val;
                 }
                 pending_sync_assignments[base_lhs] = next;
+                note_pending_sync(base_lhs);
                 return;
             }
         }
@@ -11102,6 +11170,14 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             // Use the previous assignment as the else value
             else_value = pending_sync_assignments[lhs];
             log("            Using previous assignment as else value\n");
+        } else if (pending_inflight(lhs) != lhs) {
+            // No exact-key entry, but OVERLAPPING pending writes exist (a
+            // whole-wire write after per-bit writes, or vice versa).  The raw
+            // wire as else-value would discard them — verilog-axis axis_fifo's
+            // `m_axis_tvalid_pipe_reg <= 0` under reset erased the per-bit
+            // pipeline shifts before it and the register lost its flops.
+            else_value = pending_inflight(lhs);
+            log("            Using in-flight overlapping writes as else value\n");
         } else {
             // Use the current value of lhs as the else value
             else_value = lhs;
@@ -11118,12 +11194,14 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         
         // Store in pending assignments (will be added to sync rule later)
         pending_sync_assignments[lhs] = mux_result;
+        note_pending_sync(lhs);
         log("            Stored conditional assignment: %s <= %s ? %s : %s\n", 
             log_signal(lhs), log_signal(current_condition), log_signal(rhs), log_signal(else_value));
         log_flush();
     } else {
         // Store unconditional assignment
         pending_sync_assignments[lhs] = rhs;
+        note_pending_sync(lhs);
         log("            Stored unconditional assignment: %s <= %s\n", 
             log_signal(lhs), log_signal(rhs).c_str());
         log_flush();
