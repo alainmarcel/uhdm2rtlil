@@ -1707,7 +1707,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 std::map<std::string, std::vector<const UHDM::any*>> mem_write_lhs;
                 collect_memory_write_lhs(stmt, mem_write_lhs, module);
                 for (const auto& mem_name : ff_memory_names) {
-                    RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                    RTLIL::IdString mem_id = resolve_mem_id(mem_name);
                     RTLIL::Memory* mem = module->memories.at(mem_id);
                     int addr_width = 1;
                     while ((1 << addr_width) < mem->size) addr_width++;
@@ -2310,7 +2310,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     std::map<std::string, RTLIL::Wire*> mem_en_wires;
                     
                     for (const auto& mem_name : memory_signals) {
-                        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                        RTLIL::IdString mem_id = resolve_mem_id(mem_name);
                         RTLIL::Memory* mem = module->memories.at(mem_id);
                         
                         // Create temp wires for memory write signals.  The
@@ -2935,7 +2935,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Write ports in source order, for the sync mem_write_actions below.
                     std::vector<MemoryWriteInfo> ordered_memwrites;
                     for (const auto& mem_name : memory_names) {
-                        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                        RTLIL::IdString mem_id = resolve_mem_id(mem_name);
                         RTLIL::Memory* mem = module->memories.at(mem_id);
 
                         // Calculate address width from memory size
@@ -3019,7 +3019,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // (rp32 r5p_soc_memory / degu soc: memory-write always_ff).
                     std::map<std::string, std::set<int>> ff_reg_written;
                     for (const auto& sig : ff_reg_signals) {
-                        if (module->memories.count(RTLIL::escape_id(sig.name)))
+                        if (module->memories.count(resolve_mem_id(sig.name)))
                             continue;  // memory write — handled above
                         if (sig.lhs_expr) {
                             RTLIL::SigSpec ls = import_expression(sig.lhs_expr);
@@ -3034,10 +3034,19 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 ff_reg_temp_map[sig.lhs_expr] = ff_reg_temps[sig.name];
                             continue;
                         }
-                        RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                        // extract_assigned_signals records the BARE name;
+                        // inside a generate scope the wire is
+                        // `<gen path>.<name>`, so a bare lookup returns null,
+                        // no `$0\` temp is made, no sync update is added, and
+                        // the register is driven combinationally — `proc` then
+                        // turns it into a mux chain and the FLOP DISAPPEARS.
+                        // Only reachable once the scope has a memory (this is
+                        // the memory-write branch), which is why it surfaced
+                        // with gen-scope memory inference.
+                        RTLIL::Wire* wire = scoped_wire(sig.name);
                         if (!wire)
                             continue;
-                        std::string temp_name = "$0\\" + sig.name;
+                        std::string temp_name = "$0\\" + RTLIL::unescape_id(wire->name);
                         int dup_idx = 0;
                         while (module->wire(temp_name)) {
                             dup_idx++;
@@ -4073,7 +4082,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     current_memory_writes.clear();
     std::vector<RTLIL::Cell*> comb_memwr_cells;
     for (const auto& mem_name : comb_mem_names) {
-        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+        RTLIL::IdString mem_id = resolve_mem_id(mem_name);
         if (!module->memories.count(mem_id)) continue;
         RTLIL::Memory* mem = module->memories.at(mem_id);
         int addr_w = 1;
@@ -4732,7 +4741,7 @@ bool UhdmImporter::emit_initial_readmem(const any* stmt) {
                 if ((*args)[1]->VpiType() == vpiRefObj)
                     memname = std::string(any_cast<const ref_obj*>((*args)[1])->VpiName());
                 if (memname.empty()) return;
-                RTLIL::IdString mid = RTLIL::escape_id(memname);
+                RTLIL::IdString mid = resolve_mem_id(memname);
                 if (!module->memories.count(mid)) return;
                 int width = module->memories.at(mid)->width;
                 int msize = module->memories.at(mid)->size;

@@ -1553,7 +1553,7 @@ bool UhdmImporter::contains_complex_constructs(const any* stmt) {
         if (a && a->Lhs() && a->Lhs()->VpiType() == vpiVarSelect) {
             auto vs = any_cast<const var_select*>(a->Lhs());
             if (vs && module &&
-                module->memories.count(RTLIL::escape_id(std::string(vs->VpiName()))))
+                module->memories.count(resolve_mem_id(std::string(vs->VpiName()))))
                 return true;
         }
     }
@@ -1704,8 +1704,8 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
         RTLIL::SigSpec m = import_expression(second);
         if (!m.is_fully_const()) return false;   // dynamic element index: not this path
         int outer = 0;
-        if (auto memp = module->memories.count(RTLIL::escape_id(std::string(vs->VpiName())))
-                            ? module->memories.at(RTLIL::escape_id(std::string(vs->VpiName())))
+        if (auto memp = module->memories.count(resolve_mem_id(std::string(vs->VpiName())))
+                            ? module->memories.at(resolve_mem_id(std::string(vs->VpiName())))
                             : nullptr) {
             auto it = memp->attributes.find(ID(packed_outer_dim));
             if (it != memp->attributes.end()) outer = it->second.as_int();
@@ -1751,14 +1751,14 @@ bool UhdmImporter::is_memory_write(const assignment* assign, RTLIL::Module* modu
         if (lhs->VpiType() == vpiBitSelect) {
             const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
             std::string signal_name = std::string(bit_sel->VpiName());
-            RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+            RTLIL::IdString mem_id = resolve_mem_id(signal_name);
             return module->memories.count(mem_id) > 0;
         }
         // Partial (byte-enable) memory write: `mem[addr][hi:lo] <= data`.
         // UHDM represents the LHS as a var_select whose VpiName is the memory.
         if (lhs->VpiType() == vpiVarSelect) {
             const var_select* vs = any_cast<const var_select*>(lhs);
-            RTLIL::IdString mem_id = RTLIL::escape_id(std::string(vs->VpiName()));
+            RTLIL::IdString mem_id = resolve_mem_id(std::string(vs->VpiName()));
             return module->memories.count(mem_id) > 0;
         }
     }
@@ -1780,10 +1780,12 @@ void UhdmImporter::collect_memory_write_lhs(const any* stmt,
                 if (auto lhs = assign->Lhs()) {
                     if (lhs->VpiType() == vpiBitSelect) {
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
-                        out[std::string(bit_sel->VpiName())].push_back(lhs);
+                        out[RTLIL::unescape_id(resolve_mem_id(
+                            std::string(bit_sel->VpiName())))].push_back(lhs);
                     } else if (lhs->VpiType() == vpiVarSelect) {
                         const var_select* vs = any_cast<const var_select*>(lhs);
-                        out[std::string(vs->VpiName())].push_back(lhs);
+                        out[RTLIL::unescape_id(resolve_mem_id(
+                            std::string(vs->VpiName())))].push_back(lhs);
                     }
                 }
             }
@@ -1841,10 +1843,13 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
                     if (lhs->VpiType() == vpiBitSelect) {
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
                         std::string signal_name = std::string(bit_sel->VpiName());
-                        memory_names.insert(signal_name);
+                        // Key by the name the MEMORY is registered under: in a
+                        // generate scope that is `<gen path>.<name>`.
+                        memory_names.insert(RTLIL::unescape_id(resolve_mem_id(signal_name)));
                     } else if (lhs->VpiType() == vpiVarSelect) {
                         const var_select* vs = any_cast<const var_select*>(lhs);
-                        memory_names.insert(std::string(vs->VpiName()));
+                        memory_names.insert(RTLIL::unescape_id(
+                            resolve_mem_id(std::string(vs->VpiName()))));
                     }
                 }
             }

@@ -3375,38 +3375,56 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     };
     // Record the base name of any per-element write LHS (`arr[i] <= …`,
     // `arr[i] = …`) found anywhere below `node`.
-    std::function<void(const any*)> elem_writes;
-    elem_writes = [&](const any* node) {
+    // `in_for`: inside a PROCEDURAL for loop the index is the loop variable,
+    // which is not yet in loop_values at scan time, so offset_is_dynamic()
+    // would call it dynamic even though unrolling makes it constant.  Keep the
+    // old unconditional behaviour there and only apply the dynamic-index test
+    // outside loops.
+    std::function<void(const any*, bool)> elem_writes;
+    elem_writes = [&](const any* node, bool in_for) {
         if (!node) return;
         switch (node->VpiType()) {
             case vpiAssignment: case vpiAssignStmt:
                 if (auto a = any_cast<const assignment*>(node))
                     if (const any* lhs = a->Lhs())
                         if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
+                            // A write at a RUNTIME index (`fifo[wr_ptr] <= d`)
+                            // is a MEMORY write, not a per-element write.
+                            // Recording it here forced the array to per-element
+                            // wires, which in a generate scope left every
+                            // element undriven and the module empty
+                            // (verilog-pcie dma_ram_demux: 4096 undriven).
+                            const UHDM::any* idx = nullptr;
+                            if (lhs->VpiType() == vpiBitSelect)
+                                idx = any_cast<const bit_select*>(lhs)->VpiIndex();
+                            else if (auto vs = any_cast<const var_select*>(lhs))
+                                if (vs->Exprs() && !vs->Exprs()->empty())
+                                    idx = (*vs->Exprs())[0];
+                            if (!in_for && idx && offset_is_dynamic(idx)) break;
                             std::string b = std::string(lhs->VpiName());
                             if (!b.empty()) proc_elem_written.insert(b);
                         }
                 break;
             case vpiBegin: case vpiNamedBegin:
                 if (auto stmts = begin_block_stmts(node))
-                    for (auto s : *stmts) elem_writes(s);
+                    for (auto s : *stmts) elem_writes(s, in_for);
                 break;
             case vpiFor:
-                if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt());
+                if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt(), true);
                 break;
             case vpiIf:
-                if (auto i = any_cast<const if_stmt*>(node)) elem_writes(i->VpiStmt());
+                if (auto i = any_cast<const if_stmt*>(node)) elem_writes(i->VpiStmt(), in_for);
                 break;
             case vpiIfElse:
                 if (auto ie = any_cast<const if_else*>(node)) {
-                    elem_writes(ie->VpiStmt());
-                    elem_writes(ie->VpiElseStmt());
+                    elem_writes(ie->VpiStmt(), in_for);
+                    elem_writes(ie->VpiElseStmt(), in_for);
                 }
                 break;
             case vpiCase:
                 if (auto cs = any_cast<const case_stmt*>(node))
                     if (cs->Case_items())
-                        for (auto it : *cs->Case_items()) elem_writes(it->Stmt());
+                        for (auto it : *cs->Case_items()) elem_writes(it->Stmt(), in_for);
                 break;
             default: break;
         }
@@ -3434,7 +3452,7 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
         if (procs)
             for (auto proc : *procs)
                 if (auto al = any_cast<const always*>(proc))
-                    elem_writes(unwrap_ec(al->Stmt()));
+                    elem_writes(unwrap_ec(al->Stmt()), false);
         if (casgns)
             for (auto ca : *casgns) cont_elem_write(ca->Lhs());
         if (gsas)

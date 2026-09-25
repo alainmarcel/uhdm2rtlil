@@ -699,6 +699,18 @@ struct UhdmImporter {
     // favour of the constant, and the flop plus everything behind it is
     // deleted.  verilog-axis / -ethernet / -pcie declare every register that
     // way, so `axis_register` came out with ZERO cells.
+    // Resolve a BARE name (as extract_assigned_signals / a select records it)
+    // to the wire that holds it, trying the enclosing generate scopes first.
+    // Inside a generate scope the wire is `<gen path>.<name>`; a bare
+    // module->wire() lookup returns null there.
+    RTLIL::Wire* scoped_wire(const std::string& bare_name);
+    // Same, for the RTLIL memory a gen-scope array was registered under.  The
+    // generate is replicated, so a memory declared in one gets a scoped name —
+    // two iterations would otherwise collide on a single bare memory.
+    RTLIL::IdString resolve_mem_id(const std::string& bare_name);
+    void create_memory_from_array(const UHDM::array_net* uhdm_array,
+                                  const std::string& name_override);
+
     std::set<std::string> gen_scope_proc_written;
 
     std::set<std::string> dyn_elem_write_arrays;
