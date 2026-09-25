@@ -680,6 +680,19 @@ struct UhdmImporter {
     };
     std::vector<ProcessMemoryWrite> pending_memory_writes;
     
+    // Base names of UNPACKED arrays whose ELEMENTS this process writes with
+    // a non-constant / loop-variable index (`for (c) arr[c] = src[c%N];`).
+    // extract_assigned_signals deliberately SKIPS those writes (they are
+    // lowered per-element later), so nothing registers a temp for them.  If
+    // the same process ALSO writes a FIELD of one concrete element
+    // (`arr[N-1].f = 1'b1`), that field write would own a standalone ranged
+    // temp + sync update while the whole-element write is emitted straight
+    // onto the wire — two drivers on one wire, which `proc` reconciles by
+    // ALIASING, so the field write leaked back into the copy's SOURCE array.
+    // Recorded here so import_always_comb can promote such an element to a
+    // FULL-width temp that both writes share.
+    std::set<std::string> dyn_elem_write_arrays;
+
     struct AssignedSignal {
         std::string name;
         const expr* lhs_expr;  // The full LHS expression (could be part select)

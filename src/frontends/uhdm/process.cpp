@@ -3507,7 +3507,34 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         block_local_promoted.clear();
         block_local_epoch++;   // one promotion scope per process
         create_block_local_wires(actual_stmt);
+        dyn_elem_write_arrays.clear();
         extract_assigned_signals(actual_stmt, assigned_signals);
+
+        // An element of an array this process ALSO writes per-element with a
+        // loop/runtime index must own a FULL-width temp, not a ranged one.
+        // `for (c) ctrl_mod[c] = ctrl_mul[c % 3];` registers nothing (the
+        // dynamic-index write is lowered per-element later and emitted
+        // straight onto `\ctrl_mod[11]`), while `ctrl_mod[11].acc_clear_en =
+        // 1'b1` registered `ctrl_mod[11]` as PARTIAL and got
+        // `$0\ctrl_mod[11][0:0]` plus a sync update of that bit.  One wire,
+        // two drivers: `proc` aliased them, and because the element wires are
+        // slice aliases of the flat array the bit leaked back into the COPY'S
+        // SOURCE (`ctrl_mul[2]` read 6'h17 instead of 6'h16 — OTBN
+        // otbn_mac_bignum_fsm's contrl_mod_mul[2]).  Nulling lhs_expr is how
+        // the vpiFor path already widens such entries.
+        if (!dyn_elem_write_arrays.empty()) {
+            for (auto& sig : assigned_signals) {
+                if (!sig.is_part_select) continue;
+                auto br = sig.name.rfind('[');
+                if (br == std::string::npos || sig.name.back() != ']') continue;
+                if (!dyn_elem_write_arrays.count(sig.name.substr(0, br))) continue;
+                if (sig.lhs_expr) sig.loop_lhs_exprs.push_back(sig.lhs_expr);
+                sig.lhs_expr = nullptr;
+                sig.is_part_select = false;
+                log("    always_comb: '%s' also written per-element by a "
+                    "dynamic index - full-width temp\n", sig.name.c_str());
+            }
+        }
 
         // Definite-assignment prescan: signals fully written before every
         // read on every path never observe their held value — recorded for
