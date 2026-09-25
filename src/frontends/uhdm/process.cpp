@@ -5537,6 +5537,124 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
 }
 
 // Import statement with loop variable substitution
+// Turn the memory writes collected by the sync for-loop unroller into
+// $memwr actions on `sync`.  This used to live INSIDE the unroller's
+// vpiBegin body branch, so an if/if-else body collected writes that
+// nothing ever emitted — verilog-axis axis_fifo's guarded output-
+// pipeline shift was collected and then dropped, leaving the $mem with
+// one write port instead of two.
+void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
+    // Process pending memory writes to generate proper structure
+    if (!pending_memory_writes.empty()) {
+        log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
+    
+        // Create temporary wires for each memory write (like Verilog frontend)
+        // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
+        std::map<int, RTLIL::Wire*> memwr_addr_wires;
+        std::map<int, RTLIL::Wire*> memwr_data_wires;
+        std::map<int, RTLIL::Wire*> memwr_en_wires;
+    
+        for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+            const auto& mem_write = pending_memory_writes[i];
+        
+            // Create wires for this memory write
+            std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
+        
+            // Widths come from the MEMORY.  They used to be hard-coded 10 /
+            // 4 / 4 ("for this test" — asym_ram_sdp_read_wider), which is why
+            // this block could only ever serve that one design: on an 8-bit x 2
+            // memory it produced a 10-bit ADDR and 4-bit DATA/EN.
+            RTLIL::Memory* mem = module->memories.count(mem_write.mem_id)
+                                     ? module->memories.at(mem_write.mem_id) : nullptr;
+            int mem_w = mem ? mem->width : 4;
+            int addr_w = 1;
+            if (mem) { while ((1 << addr_w) < mem->size) addr_w++; }
+            else addr_w = 10;
+            if (!mem_write.address.empty() && mem_write.address.size() > addr_w)
+                addr_w = mem_write.address.size();
+
+            RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), addr_w);
+            memwr_addr_wires[i] = addr_wire;
+
+            RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(base_name + "_DATA"), mem_w);
+            memwr_data_wires[i] = data_wire;
+
+            // Per-bit write enable, one bit per memory data bit.
+            RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(base_name + "_EN"), mem_w);
+            memwr_en_wires[i] = en_wire;
+        }
+            
+                // Add assignments to sync rule for each memory write
+                // These special $memwr$ wires will be recognized by proc_memwr pass
+                for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                    const auto& mem_write = pending_memory_writes[i];
+                
+                    // Add update statements for the special $memwr$ wires.
+                    // Size address and data to the wires created above — a
+                    // narrower/wider expression otherwise trips the RTLIL
+                    // width assert.
+                    RTLIL::SigSpec addr = mem_write.address;
+                    int aw = memwr_addr_wires[i]->width;
+                    if (addr.size() < aw) addr.extend_u0(aw);
+                    else if (addr.size() > aw) addr = addr.extract(0, aw);
+                    RTLIL::SigSpec data = mem_write.data;
+                    int dw = memwr_data_wires[i]->width;
+                    if (data.size() < dw) data.extend_u0(dw);
+                    else if (data.size() > dw) data = data.extract(0, dw);
+                    // Drive the control wires COMBINATIONALLY.  Assigning them
+                    // in the sync rule registers them, so the address/data
+                    // arrived a cycle late and showed up as stray $dff cells.
+                    module->connect(RTLIL::SigSpec(memwr_addr_wires[i]), addr);
+                    module->connect(RTLIL::SigSpec(memwr_data_wires[i]), data);
+                
+                    // Per-bit enable, one bit per memory data bit.
+                    RTLIL::SigSpec enable;
+                    for (int j = 0; j < dw; j++)
+                        enable.append(mem_write.condition.empty()
+                                          ? RTLIL::SigSpec(RTLIL::Const(1, 1))
+                                          : mem_write.condition);
+                    module->connect(RTLIL::SigSpec(memwr_en_wires[i]), enable);
+                
+                    log("        Generated memory write %zu: addr=%s, data=%s, en=%s\n",
+                        i, log_signal(mem_write.address), log_signal(mem_write.data),
+                        mem_write.condition.empty() ? "1111" : log_signal(mem_write.condition));
+                }
+            
+                // Now add the actual memwr statements using the temporary wires
+                for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                    const auto& mem_write = pending_memory_writes[i];
+                
+                    // Add memory write action using the temporary wires
+                    sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
+                    RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
+                    action.memid = mem_write.mem_id;
+                    action.address = memwr_addr_wires[i];
+                    action.data = memwr_data_wires[i];
+                    action.enable = memwr_en_wires[i];
+                
+                    // priority_mask: one bit per PRIOR write
+                    // port in this sync, set only for a prior
+                    // write to the SAME memory (last-wins).
+                    // An all-ones mask (or a fixed 32-bit
+                    // const holding `i`) makes proc_memwr
+                    // write past this memory's per-memid port
+                    // range and SEGFAULT when the sync mixes
+                    // several many-port memories (ibex RVFI
+                    // rvfi_ext_stage_* arrays, >32 ports).
+                    std::vector<RTLIL::State> pmask(
+                        i, RTLIL::State::S0);
+                    for (size_t j = 0; j < i; j++)
+                        if (pending_memory_writes[j].mem_id ==
+                            mem_write.mem_id)
+                            pmask[j] = RTLIL::State::S1;
+                    action.priority_mask = RTLIL::Const(pmask);
+                }
+            
+                // Clear pending memory writes
+                pending_memory_writes.clear();
+            }
+}
+
 void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset, 
                                                    std::map<std::string, int64_t>& var_substitutions) {
     if (!uhdm_stmt)
@@ -5684,14 +5802,17 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                 // This will be handled in the section after RHS processing
                             }
                         } else {
-                            // Regular index, import with possible substitution
-                            RTLIL::SigSpec idx_spec = import_operation_with_substitution(idx_op, var_substitutions);
-                            // For now, just import normally
-                            lhs_spec = import_expression(any_cast<const expr*>(lhs));
+                            // Arithmetic index on a MEMORY LHS (`mem[j-1] <= …`).
+                            // Leave lhs_spec EMPTY so the memory-write collector
+                            // below handles it — importing the LHS as an
+                            // expression made it a `$memrd` READ, so the
+                            // assignment became `memrd_DATA_1 <= memrd_DATA_2`,
+                            // a write into a read-data wire that `opt` deletes.
+                            lhs_spec = RTLIL::SigSpec();
                         }
                     } else {
-                        // Simple index, import normally
-                        lhs_spec = import_expression(any_cast<const expr*>(lhs));
+                        // Simple index on a MEMORY LHS (`mem[j] <= …`) — same.
+                        lhs_spec = RTLIL::SigSpec();
                     }
                 } else {
                     // Not a memory, just a regular bit select
@@ -6593,11 +6714,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 std::string init_name =
                     init_assign->Lhs() ? std::string(init_assign->Lhs()->VpiName())
                                        : std::string();
-                if (!init_name.empty() && init_assign->Rhs() &&
-                    init_assign->Rhs()->VpiType() == vpiConstant) {
-                    const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
-                    RTLIL::SigSpec init_spec = import_constant(const_val);
-                    if (init_spec.is_fully_const()) {
+                // The init RHS may be any expression that FOLDS to a constant,
+                // not just a literal: `for (j = RAM_PIPELINE+1-1; ...)` is an
+                // operation, and requiring vpiConstant here left can_unroll
+                // false, so the loop body was silently dropped (verilog-axis
+                // axis_fifo's output-pipeline shift).  The condition and
+                // increment parsers below already fold expressions this way.
+                if (!init_name.empty() && init_assign->Rhs()) {
+                    RTLIL::SigSpec init_spec;
+                    if (init_assign->Rhs()->VpiType() == vpiConstant)
+                        init_spec = import_constant(any_cast<const constant*>(init_assign->Rhs()));
+                    else if (auto ie = dynamic_cast<const expr*>(init_assign->Rhs()))
+                        init_spec = import_expression(ie);
+                    if (!init_spec.empty() && init_spec.is_fully_const()) {
                         loop_var_name = init_name;
                         start_value = init_spec.as_const().as_int();
                         can_unroll = true;
@@ -6606,14 +6735,30 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 }
             }
             
-            // Extract condition: i <= end_value or i < end_value or i != end_value
+            // Extract condition: i <= / < / != end_value (ascending), or
+            // i >= / > end_value (DESCENDING).  Only the ascending forms were
+            // accepted here, so `for (j = N-1; j > 0; j = j - 1)` set
+            // can_unroll = false and its whole body was SILENTLY DROPPED —
+            // verilog-axis axis_fifo's output-pipeline shift
+            // `m_axis_pipe_reg[j] <= m_axis_pipe_reg[j-1]` never reached the
+            // netlist, so the $mem came out with one write port instead of two
+            // and the module diverged on 272 of 301 co-sim cycles.  The
+            // comb-context unroller (fl_descending) already handles descending
+            // loops; this brings the sync path to parity.
             bool is_neq_condition = false;
+            bool descending = false;
             if (can_unroll && condition->VpiType() == vpiOperation) {
                 const operation* cond_op = any_cast<const operation*>(condition);
                 if (cond_op->VpiOpType() == vpiLeOp) {
                     inclusive = true;
                 } else if (cond_op->VpiOpType() == vpiLtOp) {
                     inclusive = false;
+                } else if (cond_op->VpiOpType() == vpiGeOp) {
+                    inclusive = true;
+                    descending = true;
+                } else if (cond_op->VpiOpType() == vpiGtOp) {
+                    inclusive = false;
+                    descending = true;
                 } else if (cond_op->VpiOpType() == vpiNeqOp) {
                     // != condition: loop runs while var != end_value
                     // With increment +1, this is equivalent to < end_value
@@ -6693,9 +6838,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             // Extract increment: i++ or i = i + 1
             if (can_unroll && inc_stmt->VpiType() == vpiOperation) {
                 const operation* inc_op = any_cast<const operation*>(inc_stmt);
-                if (inc_op->VpiOpType() == vpiPostIncOp) {
+                if (inc_op->VpiOpType() == vpiPostIncOp || inc_op->VpiOpType() == vpiPreIncOp) {
                     increment = 1;
                     log("        Loop increment: %s++\n", loop_var_name.c_str());
+                } else if (inc_op->VpiOpType() == vpiPostDecOp || inc_op->VpiOpType() == vpiPreDecOp) {
+                    increment = -1;
+                    descending = true;
+                    log("        Loop increment: %s--\n", loop_var_name.c_str());
                 } else {
                     can_unroll = false;
                     log("        Unsupported loop increment operation: %d\n", inc_op->VpiOpType());
@@ -6712,12 +6861,17 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         RTLIL::SigSpec s = import_expression(re);
                         if (s.is_fully_const()) {
                             increment = s.as_const().as_int();
-                            if (inc_op_type == vpiSubOp) increment = -increment;
+                            if (inc_op_type == vpiSubOp) {
+                                increment = -increment;
+                                descending = true;
+                            }
                         } else can_unroll = false;
                     } else can_unroll = false;
                 } else if (inc_assign && inc_assign->Rhs() && inc_assign->Rhs()->VpiType() == vpiOperation) {
                     const operation* rhs_op = any_cast<const operation*>(inc_assign->Rhs());
-                    if (rhs_op->VpiOpType() == vpiAddOp && rhs_op->Operands() && rhs_op->Operands()->size() == 2) {
+                    bool rhs_is_sub = rhs_op->VpiOpType() == vpiSubOp;
+                    if ((rhs_op->VpiOpType() == vpiAddOp || rhs_is_sub) &&
+                        rhs_op->Operands() && rhs_op->Operands()->size() == 2) {
                         auto ops = rhs_op->Operands();
                         const any* op0 = ops->at(0);
                         const any* op1 = ops->at(1);
@@ -6733,7 +6887,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             RTLIL::SigSpec inc_spec = import_constant(c);
                             if (inc_spec.is_fully_const()) {
                                 increment = inc_spec.as_const().as_int();
-                                log("        Loop increment: %s = %s + %lld\n", loop_var_name.c_str(), loop_var_name.c_str(), (long long)increment);
+                                if (rhs_is_sub) { increment = -increment; descending = true; }
+                                log("        Loop increment: %s = %s %s %lld\n", loop_var_name.c_str(), loop_var_name.c_str(),
+                                    rhs_is_sub ? "-" : "+", (long long)(increment < 0 ? -increment : increment));
                             } else {
                                 can_unroll = false;
                             }
@@ -6823,7 +6979,8 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                      body->VpiType() == vpiAssignment) &&
                     mem_writes_indexed_by_loop_var(body)) {
                     {
-                        int64_t loop_end = inclusive ? end_value : end_value - 1;
+                        int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
                         for (int64_t i = start_value;
                              increment > 0 ? i <= loop_end : i >= loop_end;
                              i += increment) {
@@ -6856,7 +7013,8 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             log("        Detected shift register pattern for array '%s'\n", lhs_name.c_str());
                             
                             // Unroll the shift register
-                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
                             
                             // For mul_unsigned, we need to handle this specially
                             // The pattern is M[i+1] <= M[i] for i from 0 to 2
@@ -6865,7 +7023,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             //   M[2] <= M[1]  
                             //   M[3] <= M[2]
                             
-                            for (int64_t i = start_value; i <= loop_end; i += increment) {
+                            for (int64_t i = start_value;
+                                 increment > 0 ? i <= loop_end : i >= loop_end;
+                                 i += increment) {
                                 log("        Unrolling iteration %lld: %s[%lld+1] <= %s[%lld]\n", 
                                     (long long)i, lhs_name.c_str(), (long long)i, lhs_name.c_str(), (long long)i);
                                 
@@ -6942,7 +7102,8 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         std::string memory_name = std::string(
                             any_cast<const bit_select*>(mem_assign->Lhs())->VpiName());
                         int mem_width = module->memories.at(RTLIL::escape_id(memory_name))->width;
-                        int64_t loop_end = inclusive ? end_value : end_value - 1;
+                        int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
                         std::vector<std::pair<int64_t, RTLIL::Const>> rom_words;
                         bool all_const = (mem_assign->Rhs() != nullptr);
                         // Evaluate each ROM word with import_expression (loop var
@@ -6953,7 +7114,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         // unsized literals and produced a ROM word that disagreed
                         // with the comparison value.  Restore loop_values after.
                         auto saved_loop_values = loop_values;
-                        for (int64_t i = start_value; all_const && i <= loop_end; i += increment) {
+                        for (int64_t i = start_value;
+                             all_const && (increment > 0 ? i <= loop_end : i >= loop_end);
+                             i += increment) {
                             loop_values[loop_var_name] = (int)i;
                             RTLIL::SigSpec rhs_value =
                                 import_expression(any_cast<const expr*>(mem_assign->Rhs()));
@@ -6994,7 +7157,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             log("        Memory initialization (single-stmt) unrolled successfully\n");
                         } else {
                             // Non-const RHS: fall back to the general sync unroll.
-                            for (int64_t i = start_value; i <= loop_end; i += increment) {
+                            for (int64_t i = start_value;
+                                 increment > 0 ? i <= loop_end : i >= loop_end;
+                                 i += increment) {
                                 loop_values[loop_var_name] = (int)i;
                                 import_statement_sync(body, sync, is_reset);
                             }
@@ -7004,8 +7169,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     } else {
                         // General assignment body: not a shift register.
                         // Unroll by setting loop_values[k]=i and calling import_statement_sync.
-                        int64_t loop_end = inclusive ? end_value : end_value - 1;
-                        for (int64_t i = start_value; i <= loop_end; i += increment) {
+                        int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
+                        for (int64_t i = start_value;
+                                 increment > 0 ? i <= loop_end : i >= loop_end;
+                                 i += increment) {
                             loop_values[loop_var_name] = (int)i;
                             import_statement_sync(body, sync, is_reset);
                         }
@@ -7211,8 +7379,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 }
                                 
                                 // Unroll the loop
-                                int64_t loop_end = inclusive ? end_value : end_value - 1;
-                                for (int64_t i = start_value; i <= loop_end; i += increment) {
+                                int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
+                                for (int64_t i = start_value;
+                                 increment > 0 ? i <= loop_end : i >= loop_end;
+                                 i += increment) {
                                     log("        Unrolling iteration %lld\n", (long long)i);
                                     
                                     // Process each statement in the loop body
@@ -7412,10 +7583,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 meminit_line = for_loop->VpiLineNo();
                             }
 
-                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
                             int priority_base = 12;
 
-                            for (int64_t i = start_value; i <= loop_end; i += increment) {
+                            for (int64_t i = start_value;
+                                 increment > 0 ? i <= loop_end : i >= loop_end;
+                                 i += increment) {
                                 for (size_t a = 0; a < mem_func_assigns.size(); a++) {
                                     const auto& mfa = mem_func_assigns[a];
                                     const func_call* fc = mfa.fc;
@@ -7530,9 +7704,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             log("        For loop interpreted successfully\n");
                         } else {
                             // Fall back to simple unrolling for other patterns
-                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                 : (inclusive ? end_value : end_value - 1);
                             
-                            for (int64_t iter = start_value; iter <= loop_end; iter += increment) {
+                            for (int64_t iter = start_value;
+                                 increment > 0 ? iter <= loop_end : iter >= loop_end;
+                                 iter += increment) {
                                 log("        Unrolling iteration %lld\n", (long long)iter);
                                 
                                 // Track variables that should be substituted with values
@@ -7548,95 +7725,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             log("        Generic for loop unrolled successfully\n");
                         }
                         
-                        // Process pending memory writes to generate proper structure
-                        if (!pending_memory_writes.empty()) {
-                            log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
-                            
-                            // Create temporary wires for each memory write (like Verilog frontend)
-                            // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
-                            std::map<int, RTLIL::Wire*> memwr_addr_wires;
-                            std::map<int, RTLIL::Wire*> memwr_data_wires;
-                            std::map<int, RTLIL::Wire*> memwr_en_wires;
-                            
-                            for (size_t i = 0; i < pending_memory_writes.size(); i++) {
-                                const auto& mem_write = pending_memory_writes[i];
-                                
-                                // Create wires for this memory write
-                                std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
-                                
-                                // Address wire (10 bits for this test)
-                                RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), 10);
-                                memwr_addr_wires[i] = addr_wire;
-                                
-                                // Data wire (4 bits for this test)
-                                RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(base_name + "_DATA"), 4);
-                                memwr_data_wires[i] = data_wire;
-                                
-                                // Enable wire (4 bits for this test)
-                                RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(base_name + "_EN"), 4);
-                                memwr_en_wires[i] = en_wire;
-                            }
-                                    
-                                    // Add assignments to sync rule for each memory write
-                                    // These special $memwr$ wires will be recognized by proc_memwr pass
-                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
-                                        const auto& mem_write = pending_memory_writes[i];
-                                        
-                                        // Add update statements for the special $memwr$ wires
-                                        sync->actions.push_back(RTLIL::SigSig(memwr_addr_wires[i], mem_write.address));
-                                        sync->actions.push_back(RTLIL::SigSig(memwr_data_wires[i], mem_write.data));
-                                        
-                                        // For enable, expand condition to match memory width
-                                        RTLIL::SigSpec enable;
-                                        if (!mem_write.condition.empty()) {
-                                            for (int j = 0; j < 4; j++) {
-                                                enable.append(mem_write.condition);
-                                            }
-                                        } else {
-                                            for (int j = 0; j < 4; j++) {
-                                                enable.append(RTLIL::Const(1, 1));
-                                            }
-                                        }
-                                        sync->actions.push_back(RTLIL::SigSig(memwr_en_wires[i], enable));
-                                        
-                                        log("        Generated memory write %zu: addr=%s, data=%s, en=%s\n",
-                                            i, log_signal(mem_write.address), log_signal(mem_write.data),
-                                            mem_write.condition.empty() ? "1111" : log_signal(mem_write.condition));
-                                    }
-                                    
-                                    // Now add the actual memwr statements using the temporary wires
-                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
-                                        const auto& mem_write = pending_memory_writes[i];
-                                        
-                                        // Add memory write action using the temporary wires
-                                        sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
-                                        RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
-                                        action.memid = mem_write.mem_id;
-                                        action.address = memwr_addr_wires[i];
-                                        action.data = memwr_data_wires[i];
-                                        action.enable = memwr_en_wires[i];
-                                        
-                                        // priority_mask: one bit per PRIOR write
-                                        // port in this sync, set only for a prior
-                                        // write to the SAME memory (last-wins).
-                                        // An all-ones mask (or a fixed 32-bit
-                                        // const holding `i`) makes proc_memwr
-                                        // write past this memory's per-memid port
-                                        // range and SEGFAULT when the sync mixes
-                                        // several many-port memories (ibex RVFI
-                                        // rvfi_ext_stage_* arrays, >32 ports).
-                                        std::vector<RTLIL::State> pmask(
-                                            i, RTLIL::State::S0);
-                                        for (size_t j = 0; j < i; j++)
-                                            if (pending_memory_writes[j].mem_id ==
-                                                mem_write.mem_id)
-                                                pmask[j] = RTLIL::State::S1;
-                                        action.priority_mask = RTLIL::Const(pmask);
-                                    }
-                                    
-                                    // Clear pending memory writes
-                                    pending_memory_writes.clear();
-                                }
+                        emit_pending_memory_writes(sync);
                                 
                                 // Check if we created any readB slice wires and combine them
                                 std::vector<RTLIL::SigSpec> readB_slices;
@@ -7680,60 +7769,30 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             }
                         }
                     } else if (can_unroll && (body->VpiType() == vpiIf || body->VpiType() == vpiIfElse)) {
-                        // For loop body is an if/if-else statement - use interpreter
-                        log("        For loop body is if/if-else - using interpreter\n");
-                        std::map<std::string, int64_t> variables;
-                        std::map<std::string, std::vector<int64_t>> arrays;
-
-                        // Initialize loop variable
-                        variables[loop_var_name] = start_value;
-
-                        // Find preceding variable initializations from parent scope
-                        const UHDM::any* loop_parent2 = for_loop->VpiParent();
-                        if (loop_parent2 && (loop_parent2->VpiType() == vpiBegin || loop_parent2->VpiType() == vpiNamedBegin)) {
-                            VectorOfany* parent_stmts = begin_block_stmts(loop_parent2);
-                            if (parent_stmts) {
-                                for (auto stmt : *parent_stmts) {
-                                    if (stmt == uhdm_stmt) break;
-                                    if (stmt->VpiType() == vpiAssignment) {
-                                        const assignment* assign = any_cast<const assignment*>(stmt);
-                                        if (assign->Lhs() && assign->Rhs()) {
-                                            std::string var_name;
-                                            if (assign->Lhs()->VpiType() == vpiRefObj) {
-                                                const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
-                                                var_name = std::string(ref->VpiName());
-                                            } else if (assign->Lhs()->VpiType() == vpiRefVar) {
-                                                const ref_var* ref = any_cast<const ref_var*>(assign->Lhs());
-                                                var_name = std::string(ref->VpiName());
-                                            }
-                                            if (!var_name.empty() && assign->Rhs()->VpiType() == vpiConstant) {
-                                                const constant* cv = any_cast<const constant*>(assign->Rhs());
-                                                RTLIL::SigSpec cs = import_constant(cv);
-                                                if (cs.is_fully_const()) {
-                                                    variables[var_name] = cs.as_const().as_int();
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        // For-loop body is an if / if-else.  This used to go to
+                        // `interpret_statement`, a CONSTANT interpreter that can
+                        // only write scalar variables back, so a guarded ARRAY or
+                        // MEMORY write in the body produced NOTHING while still
+                        // logging success — verilog-axis axis_fifo's output
+                        // pipeline
+                        //   for (j = RAM_PIPELINE; j > 0; j = j - 1)
+                        //     if (ready || ...) m_axis_pipe_reg[j] <= m_axis_pipe_reg[j-1];
+                        // lost its shift entirely, leaving the $mem with one
+                        // write port instead of two (272 of 301 co-sim cycles).
+                        // Unroll as STATEMENTS, like a vpiBegin body.
+                        log("        For loop body is if/if-else - unrolling as statements\n");
+                        int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
+                                                      : (inclusive ? end_value : end_value - 1);
+                        for (int64_t iter = start_value;
+                             increment > 0 ? iter <= loop_end : iter >= loop_end;
+                             iter += increment) {
+                            log("        Unrolling if-body iteration %lld\n", (long long)iter);
+                            std::map<std::string, int64_t> var_substitutions;
+                            var_substitutions[loop_var_name] = iter;
+                            import_statement_with_loop_vars(body, sync, is_reset, var_substitutions);
                         }
-
-                        // Execute the entire for loop using the interpreter
-                        bool break_flag = false;
-                        bool continue_flag = false;
-                        interpret_statement(uhdm_stmt, variables, arrays, break_flag, continue_flag);
-
-                        // Apply the final variable values as sync assignments
-                        for (auto& [var_name, final_value] : variables) {
-                            if (var_name == loop_var_name) continue;
-                            RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
-                            if (var_wire) {
-                                pending_sync_assignments[RTLIL::SigSpec(var_wire)] = RTLIL::Const(final_value, var_wire->width);
-                                log("        Interpreter result: %s = %lld\n", var_name.c_str(), (long long)final_value);
-                            }
-                        }
-                        log("        For loop with if body interpreted successfully\n");
+                        emit_pending_memory_writes(sync);
+                        log("        For loop with if body unrolled successfully\n");
                     } else {
                         log_warning("For loop unrolling not implemented for this statement type %d\n", body ? body->VpiType() : -1);
                     }
