@@ -1,0 +1,9 @@
+# The flop in the generate block must survive.  A constant driver on the
+# gen-scope reg deletes it, and NO formal check catches that here: the
+# behavioural RTL and the netlist both "work", the netlist just returns a
+# constant.  Assert the netlist SHAPE instead.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_reg_decl_init
+proc
+opt
+select -assert-count 2 t:$sdff
