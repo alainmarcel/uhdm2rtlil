@@ -1116,8 +1116,15 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         return;
     }
     
-    // Check if this net should be imported as a memory
-    if (is_memory_array(uhdm_net) && !async_reset_filled_arrays.count(netname)) {
+    // Check if this net should be imported as a memory.  A net assigned as a
+    // WHOLE (`assign Perm = get_perm(Seed);` on `int unsigned Perm [R][W]`,
+    // common_cells cc_sub_per_hash) cannot be a $mem: nothing can drive a
+    // memory wholesale, and the elaborated array_var pass makes the same net
+    // a flat wire.  The definition pass turned it into a memory, the whole
+    // assign then pre-created a wire under the memory's name and
+    // `addWire` asserted (`count_id(wire->name) == 0`).
+    if (is_memory_array(uhdm_net) && !async_reset_filled_arrays.count(netname) &&
+        !whole_array_accessed_names.count(netname)) {
         log("UHDM: Net '%s' has both packed and unpacked dimensions - creating memory\n", netname.c_str());
         
         // Get packed dimension (width) and unpacked dimension (size).
