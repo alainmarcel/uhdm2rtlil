@@ -968,6 +968,9 @@ struct UhdmImporter {
     bool emit_initial_readmem(const UHDM::any* stmt);
 
     // Loop variable substitution helpers
+    // Emit the memory writes the sync for-loop unroller collected as
+    // $memwr actions.  Shared by every loop-body shape.
+    void emit_pending_memory_writes(RTLIL::SyncRule* sync);
     void import_statement_with_loop_vars(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset,
                                          std::map<std::string, int64_t>& var_substitutions);
     RTLIL::SigSpec import_operation_with_substitution(const UHDM::operation* uhdm_op,
