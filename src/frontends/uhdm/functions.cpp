@@ -77,6 +77,8 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     // to a single call.
     auto saved_array_widths = array_local_element_widths;
     array_local_element_widths.clear();
+    auto saved_array_dims = array_local_unpacked_dims;
+    array_local_unpacked_dims.clear();
 
     // Create local variable map and initialize with parameters
     std::map<std::string, RTLIL::Const> local_vars;
@@ -216,6 +218,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     // wider LHS even when the LHS itself is unsigned.
     recursion_depth--;
     array_local_element_widths = saved_array_widths;
+    array_local_unpacked_dims = saved_array_dims;
     if (local_vars.count(func_name)) {
         RTLIL::Const result = local_vars[func_name];
         if ((int)result.size() != ret_width) {
@@ -234,7 +237,20 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     }
 
     array_local_element_widths = saved_array_widths;
+    array_local_unpacked_dims = saved_array_dims;
     return RTLIL::Const(0, 32);
+}
+
+bool UhdmImporter::flat_unpacked_index(const std::vector<std::pair<int,int>>& dims,
+                                       const std::vector<int>& indices, int& flat) {
+    if (dims.empty() || indices.size() != dims.size()) return false;
+    flat = 0;
+    for (size_t k = 0; k < dims.size(); k++) {
+        int off = indices[k] - dims[k].second;
+        if (off < 0 || off >= dims[k].first) return false;
+        flat = flat * dims[k].first + off;
+    }
+    return true;
 }
 
 // Helper to evaluate statements during compile-time function evaluation
@@ -419,7 +435,25 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     // `state[i][j]` — element `i`, bit `j` within the element.
                     const var_select* vs = any_cast<const var_select*>(assign->Lhs());
                     lhs_name = std::string(vs->VpiName());
-                    if (vs->Actual_group() &&
+                    std::vector<int> nd_idx;
+                    int nd_flat = 0;
+                    bool nd_hit = false;
+                    if (array_local_unpacked_dims.count(lhs_name) && vs->Exprs()) {
+                        auto& dims = array_local_unpacked_dims.at(lhs_name);
+                        if (vs->Exprs()->size() == dims.size()) {
+                            for (auto e : *vs->Exprs())
+                                nd_idx.push_back(evaluate_single_operand(e, local_vars).as_int());
+                            nd_hit = flat_unpacked_index(dims, nd_idx, nd_flat);
+                        }
+                    }
+                    if (nd_hit) {
+                        // `p[r][i] = v` on a multi-dim unpacked local: a whole
+                        // element write at the flat element index.
+                        lhs_is_array_element = true;
+                        lhs_array_element_width = array_local_element_widths[lhs_name];
+                        lhs_array_offset = nd_flat * lhs_array_element_width;
+                        bit_index = nd_flat;
+                    } else if (vs->Actual_group() &&
                         vs->Actual_group()->UhdmType() == uhdmarray_var &&
                         array_local_element_widths.count(lhs_name) &&
                         vs->Exprs() && vs->Exprs()->size() == 2) {
@@ -751,6 +785,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             }
                         }
                         int total = 1;
+                        std::vector<std::pair<int,int>> udims;
                         if (ranges) {
                             for (auto r : *ranges) {
                                 if (r->Left_expr() && r->Right_expr()) {
@@ -759,11 +794,19 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                     int left = lv.size() > 0 ? lv.as_int() : 0;
                                     int right = rv.size() > 0 ? rv.as_int() : 0;
                                     total *= std::abs(left - right) + 1;
+                                    udims.push_back({std::abs(left - right) + 1,
+                                                     std::min(left, right)});
                                 }
                             }
                         }
                         width = total * elem_w;
                         array_local_element_widths[var_name] = elem_w;
+                        // A MULTI-dim unpacked local (`int unsigned p [R][W]`,
+                        // common_cells cc_sub_per_hash's permutation tables):
+                        // `p[r][i]` is element (r*W + i), not bit i of
+                        // element r — record the dims for the select sites.
+                        if (udims.size() >= 2)
+                            array_local_unpacked_dims[var_name] = udims;
                         log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
                             var_name.c_str(), elem_w, total, width);
                     } else if (var->UhdmType() == uhdmpacked_array_var) {
@@ -1237,7 +1280,29 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         // `state[i][j]` read on a flattened function-local array_var.
         const var_select* vs = any_cast<const var_select*>(operand);
         std::string nm = std::string(vs->VpiName());
-        if (vs->Actual_group() &&
+        std::vector<int> nd_idx;
+        int nd_flat = 0;
+        bool nd_hit = false;
+        if (array_local_unpacked_dims.count(nm) && local_vars.count(nm) && vs->Exprs()) {
+            auto& dims = array_local_unpacked_dims.at(nm);
+            if (vs->Exprs()->size() == dims.size()) {
+                for (auto e : *vs->Exprs())
+                    nd_idx.push_back(evaluate_single_operand(e, local_vars).as_int());
+                nd_hit = flat_unpacked_index(dims, nd_idx, nd_flat);
+            }
+        }
+        if (nd_hit) {
+            // `p[r][i]` read on a multi-dim unpacked local: the whole
+            // element at the flat element index.
+            int elem_w = array_local_element_widths.at(nm);
+            const RTLIL::Const& target = local_vars.at(nm);
+            std::vector<RTLIL::State> bits;
+            for (int b = 0; b < elem_w; b++) {
+                int src = nd_flat * elem_w + b;
+                bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
+            }
+            val = RTLIL::Const(bits);
+        } else if (vs->Actual_group() &&
             vs->Actual_group()->UhdmType() == uhdmarray_var &&
             local_vars.count(nm) &&
             array_local_element_widths.count(nm) &&
