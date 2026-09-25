@@ -480,10 +480,41 @@ bool UhdmMemoryAnalyzer::is_power_of_two(int value) {
 }
 
 // Create RTLIL memory object from UHDM array_net
+RTLIL::Wire* UhdmImporter::scoped_wire(const std::string& bare_name) {
+    if (bare_name.empty() || !module) return nullptr;
+    for (int i = (int)gen_scope_stack.size() - 1; i >= 0; i--) {
+        std::string pp;
+        for (int j = 0; j <= i; j++) { if (j) pp += "."; pp += gen_scope_stack[j]; }
+        if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(pp + "." + bare_name)))
+            return w;
+    }
+    return module->wire(RTLIL::escape_id(bare_name));
+}
+
+RTLIL::IdString UhdmImporter::resolve_mem_id(const std::string& bare_name) {
+    if (bare_name.empty()) return RTLIL::IdString();
+    if (module) {
+        for (int i = (int)gen_scope_stack.size() - 1; i >= 0; i--) {
+            std::string pp;
+            for (int j = 0; j <= i; j++) { if (j) pp += "."; pp += gen_scope_stack[j]; }
+            RTLIL::IdString scoped = RTLIL::escape_id(pp + "." + bare_name);
+            if (module->memories.count(scoped)) return scoped;
+        }
+    }
+    return RTLIL::escape_id(bare_name);
+}
+
 void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
+    create_memory_from_array(uhdm_array, std::string());
+}
+
+void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
+                                            const std::string& name_override) {
     if (!uhdm_array) return;
     
-    std::string array_name = std::string(uhdm_array->VpiName());
+    std::string array_name = name_override.empty()
+                                 ? std::string(uhdm_array->VpiName())
+                                 : name_override;
     if (mode_debug)
         log("  Creating RTLIL memory from array: %s\n", array_name.c_str());
     

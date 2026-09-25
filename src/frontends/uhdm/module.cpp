@@ -4638,6 +4638,81 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         scan(uhdm_scope);
     }
 
+    // Arrays this scope's own processes index at a RUNTIME address, on either
+    // side (`fifo[wr_ptr] <= d`, `q <= fifo[rd_ptr]`).  Such an array is a
+    // MEMORY; the Array_nets loop below used to materialise per-element wires
+    // unconditionally, so a memory declared inside `generate` came out as N
+    // undriven wires and the module was EMPTY (verilog-pcie dma_ram_demux:
+    // 4096 undriven, dma_if_pcie_us: 19968).
+    std::set<std::string> gen_scope_dyn_indexed;
+    {
+        std::function<void(const UHDM::any*)> scan_dyn = [&](const UHDM::any* n) {
+            if (!n) return;
+            if (n->VpiType() == vpiBitSelect) {
+                auto bs = any_cast<const bit_select*>(n);
+                if (bs->VpiIndex() && offset_is_dynamic(bs->VpiIndex())) {
+                    std::string b = std::string(bs->VpiName());
+                    if (!b.empty()) gen_scope_dyn_indexed.insert(b);
+                }
+            } else if (n->VpiType() == vpiVarSelect) {
+                auto vs = any_cast<const var_select*>(n);
+                if (vs->Exprs() && !vs->Exprs()->empty() &&
+                    offset_is_dynamic((*vs->Exprs())[0])) {
+                    std::string b = std::string(vs->VpiName());
+                    if (!b.empty()) gen_scope_dyn_indexed.insert(b);
+                }
+            }
+            if (auto op = dynamic_cast<const UHDM::operation*>(n)) {
+                if (op->Operands())
+                    for (auto o : *op->Operands()) scan_dyn(o);
+                return;
+            }
+            switch (n->VpiType()) {
+            case vpiAssignment: case vpiAssignStmt:
+                if (auto a = any_cast<const UHDM::assignment*>(n)) {
+                    scan_dyn(a->Lhs());
+                    scan_dyn(a->Rhs());
+                }
+                break;
+            case vpiBegin:
+                if (auto bg = any_cast<const UHDM::begin*>(n))
+                    if (auto ss = bg->Stmts()) for (auto x : *ss) scan_dyn(x);
+                break;
+            case vpiNamedBegin:
+                if (auto nb = any_cast<const UHDM::named_begin*>(n))
+                    if (auto ss = nb->Stmts()) for (auto x : *ss) scan_dyn(x);
+                break;
+            case vpiIf:
+                scan_dyn(any_cast<const UHDM::if_stmt*>(n)->VpiStmt());
+                break;
+            case vpiIfElse: {
+                auto ie = any_cast<const UHDM::if_else*>(n);
+                scan_dyn(ie->VpiCondition());
+                scan_dyn(ie->VpiStmt());
+                scan_dyn(ie->VpiElseStmt());
+                break;
+            }
+            case vpiCase:
+                if (auto items = any_cast<const UHDM::case_stmt*>(n)->Case_items())
+                    for (auto it : *items)
+                        scan_dyn(any_cast<const UHDM::case_item*>(it)->Stmt());
+                break;
+            case vpiFor:
+                scan_dyn(any_cast<const UHDM::for_stmt*>(n)->VpiStmt());
+                break;
+            case vpiEventControl:
+                scan_dyn(any_cast<const UHDM::event_control*>(n)->Stmt());
+                break;
+            default:
+                break;
+            }
+        };
+        if (uhdm_scope->Process())
+            for (auto pr : *uhdm_scope->Process())
+                if (auto ps = dynamic_cast<const UHDM::process_stmt*>(pr))
+                    scan_dyn(ps->Stmt());
+    }
+
     // Unpacked-array NETS declared in the generate scope (`pmp_cfg_t
     // pmp_cfg [PMPNumRegions];` inside g_pmp_registers) — these live in
     // Array_nets(), which this path never imported: element references
@@ -4662,6 +4737,25 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             }
             if (an->Nets() && !an->Nets()->empty())
                 ew = get_width((*an->Nets())[0], current_instance);
+            // Name the memory after the SCOPE: the generate is replicated, so
+            // two iterations would otherwise collide on one bare memory.
+            // resolve_mem_id() maps the bare select names back to it.
+            bool an_is_mem = asize > 0 && ew > 0 &&
+                gen_scope_dyn_indexed.count(an_name) &&
+                !cont_elem_written.count(an_name) &&
+                !scope_inst_elem_written.count(an_name) &&
+                !inst_elem_written_arrays.count(an_name) &&
+                !async_reset_filled_arrays.count(an_name) &&
+                !comb_only_arrays.count(an_name);
+            if (an_is_mem) {
+                std::string gsp = get_current_gen_scope();
+                std::string mem_name = gsp.empty() ? an_name : gsp + "." + an_name;
+                log("UHDM: Gen-scope array_net '%s' is dynamically indexed — "
+                    "memory '%s' (n=%d, w=%d)\n", an_name.c_str(),
+                    mem_name.c_str(), asize, ew);
+                create_memory_from_array(an, mem_name);
+                continue;
+            }
             if (asize > 0 && ew > 0) {
                 log("UHDM: Gen-scope array_net '%s' — per-element wires "
                     "(n=%d, w=%d)\n", an_name.c_str(), asize, ew);

@@ -2675,7 +2675,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // $memrd at the address and slice the requested bits — this is
                 // the read side of byte-enable RAMs (memories/implicit_en).
                 {
-                    RTLIL::IdString mem_id = RTLIL::escape_id(base_name);
+                    RTLIL::IdString mem_id = resolve_mem_id(base_name);
                     if (module->memories.count(mem_id)) {
                         RTLIL::Memory* memory = module->memories.at(mem_id);
                         const expr* addr_expr = nullptr;
@@ -10534,8 +10534,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
     
-    // Check if this is a memory access
-    RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+    // Check if this is a memory access.  A memory declared in a generate
+    // scope is named `<gen path>.<name>`; resolve_mem_id tries that first.
+    RTLIL::IdString mem_id = resolve_mem_id(signal_name);
     if (module->memories.count(mem_id) > 0) {
         if (mode_debug)
             log("    This is a memory access - creating $memrd cell\n");

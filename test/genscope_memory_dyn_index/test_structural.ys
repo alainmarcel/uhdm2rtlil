@@ -1,0 +1,18 @@
+# Assert the netlist SHAPE.  A missing memory is NOT a formal difference here:
+# with per-element wires the elements are undriven, `setundef -zero` makes them
+# 0, and both sides "work" — the netlist just returns zeros.  Same reason
+# test/mem_dyn_idx_byte_write exists.
+#
+#   2 $mem_v2  — one per generate iteration, proving the memory was inferred
+#                AND that the two iterations did not collide on one memory
+#   6 flops    — wr_ptr, rd_ptr (reset -> $sdffe) and dout_reg ($dffe) per
+#                iteration; these vanished when the gen-scope register lookup
+#                used the bare name
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_memory_dyn_index
+proc
+memory_collect
+opt
+select -assert-count 2 t:$mem_v2
+select -assert-count 4 t:$sdffe
+select -assert-count 2 t:$dffe
