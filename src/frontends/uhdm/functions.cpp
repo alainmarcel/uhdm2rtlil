@@ -731,6 +731,22 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                 if (rt->UhdmType() == uhdmarray_typespec) {
                                     auto ats = any_cast<const array_typespec*>(rt);
                                     ranges = ats->Ranges();
+                                    // A TYPEDEF'd unpacked array local
+                                    // (`typedef int unsigned perm_t [W];
+                                    // perm_t p;`) has no inner Variables():
+                                    // its element type is the typespec's
+                                    // Elem_typespec.  Left at 1 bit, the
+                                    // function's whole result packed one
+                                    // bit per element (common_cells
+                                    // cc_sub_per_hash get_permutations).
+                                    if ((!av->Variables() || av->Variables()->empty()) &&
+                                        ats->Elem_typespec() &&
+                                        ats->Elem_typespec()->Actual_typespec()) {
+                                        int ew = get_width_from_typespec(
+                                            ats->Elem_typespec()->Actual_typespec(),
+                                            current_instance);
+                                        if (ew > 1) elem_w = ew;
+                                    }
                                 }
                             }
                         }
