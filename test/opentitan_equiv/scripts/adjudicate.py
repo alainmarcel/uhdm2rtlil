@@ -106,7 +106,18 @@ bake_str = f" #({', '.join(bake)})" if bake else ""
 
 # ---------------------------------------------------------------- netlists
 slang_wrap = FLAT if has_flat else ""
-if not (os.path.exists("adj_gold.v") and os.path.exists("adj_gate.v")):
+# Regenerate the netlists when either is missing OR older than the frontend
+# plugin / the UHDM it reads.  A cached adj_gold.v silently kept adjudicating a
+# PRE-fix read_uhdm netlist: after the otbn_mac_bignum_fsm struct-default fix
+# the formal column flipped to "equivalent" while the co-sim column still
+# printed the OLD divergence count, because only the miter netlist was rebuilt.
+def _stale(path):
+    if not os.path.exists(path):
+        return True
+    m = os.path.getmtime(path)
+    return any(os.path.exists(d) and os.path.getmtime(d) > m
+               for d in (PLUGIN, "slpp_all/surelog.uhdm"))
+if _stale("adj_gold.v") or _stale("adj_gate.v"):
     open("adj.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {TOP}
