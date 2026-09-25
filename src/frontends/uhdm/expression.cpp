@@ -6792,6 +6792,45 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (auto pe = dynamic_cast<const expr*>(deftp->Pattern()))
                         if (auto rt = pe->Typespec())
                             pts = rt->Actual_typespec();
+                    // In a PARAMETERIZED module Surelog does not inline the
+                    // localparam's pattern here: the default arrives as a bare
+                    // `ref_obj` naming it, with NO typespec of its own (the
+                    // non-parameterized module gets the folded `operation`,
+                    // which does carry the struct typespec).  Resolve the name
+                    // against the enclosing scopes' Param_assigns so the fill
+                    // still knows the value is element-typed.  Without this
+                    // `ew` stayed 1, the struct constant was truncated to its
+                    // bit 0 and replicated, and every element of
+                    // `'{default: PredecDynDefault}` read 0 — OTBN's
+                    // otbn_mac_bignum_fsm (a module with parameters) lost
+                    // mul_op_a_tmp_sel on predec_mod_mul[0] / predec_vec /
+                    // predec_mod, which is the whole reason the module and its
+                    // two consumers differed.
+                    if (!pts)
+                        if (auto pr = dynamic_cast<const UHDM::ref_obj*>(deftp->Pattern())) {
+                            std::string pn = std::string(pr->VpiName());
+                            auto sp = pn.rfind('.');
+                            if (sp != std::string::npos) pn = pn.substr(sp + 1);
+                            const UHDM::any* sc = current_scope
+                                                      ? (const UHDM::any*)current_scope
+                                                      : (const UHDM::any*)current_instance;
+                            while (sc && !pts) {
+                                if (auto scp = dynamic_cast<const UHDM::scope*>(sc))
+                                    if (auto pas = scp->Param_assigns())
+                                        for (auto pa : *pas) {
+                                            if (!pa->Lhs()) continue;
+                                            std::string ln = std::string(pa->Lhs()->VpiName());
+                                            auto lsp = ln.rfind('.');
+                                            if (lsp != std::string::npos) ln = ln.substr(lsp + 1);
+                                            if (ln != pn) continue;
+                                            if (auto pm = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
+                                                if (pm->Typespec())
+                                                    pts = pm->Typespec()->Actual_typespec();
+                                            break;
+                                        }
+                                sc = sc->VpiParent();
+                            }
+                        }
                     if (pts && (pts->UhdmType() == uhdmstruct_typespec ||
                                 pts->UhdmType() == uhdmunion_typespec ||
                                 pts->UhdmType() == uhdmpacked_array_typespec))
