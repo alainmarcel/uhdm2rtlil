@@ -6301,7 +6301,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (!lhs || lhs->UhdmType() != uhdmref_obj) continue;
             std::string lname = std::string(any_cast<const ref_obj*>(lhs)->VpiName());
             if (lname.empty() || name_map.count(lname) ||
-                module->wire(RTLIL::escape_id(lname)))
+                module->count_id(RTLIL::escape_id(lname)))
                 continue;
             int w = get_width(lhs, uhdm_module);
             if (w <= 0) w = 1;
