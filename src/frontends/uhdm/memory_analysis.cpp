@@ -746,6 +746,15 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                 typespec = ref_typespec->Actual_typespec();
             }
             
+            // A `bit [W-1:0]` element is a bit_typespec: is_memory_array now
+            // accepts it, but only a logic_typespec reached the width code below,
+            // so the memory was created ONE bit wide and every word truncated
+            // (cvw ram1p1rwe: read_slang miter and co-sim wrong).  Size it from
+            // the typespec.
+            if (typespec && typespec->UhdmType() == uhdmbit_typespec) {
+                int ew = get_width_from_typespec(typespec, current_instance);
+                if (ew > 1) width = ew;
+            }
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {

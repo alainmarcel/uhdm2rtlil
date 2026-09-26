@@ -2641,6 +2641,21 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                     return true;
                 }
             }
+            // A `bit [W-1:0] RAM [D-1:0]` element is a bit_typespec, not a
+            // logic_typespec: the same packed shape, missed by the check
+            // above.  cvw's ram1p1rwe / ram2p1r1wbe (`bit [WIDTH-1:0]
+            // RAM[DEPTH-1:0]` in a generate arm) split into per-element
+            // wires, the dynamic `RAM[addr] <= din` was lost and every
+            // element read undriven (2816 / 69632 undriven nets).
+            if (typespec && typespec->UhdmType() == uhdmbit_typespec) {
+                auto bt = any_cast<const UHDM::bit_typespec*>(typespec);
+                if (bt->Ranges() && !bt->Ranges()->empty()) {
+                    if (mode_debug)
+                        log("    Detected memory array: %s (array_var with bit-typed "
+                            "packed element)\n", std::string(uhdm_array->VpiName()).c_str());
+                    return true;
+                }
+            }
             // An ENUM element (`e_t arr [N]`) is a packed multi-bit element just
             // like `logic [W-1:0] arr [N]`, but its element typespec is an
             // enum_typespec, not a logic_typespec — so the logic-only check above
@@ -2680,6 +2695,10 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                     }
                     return true;
                 }
+            } else if (elem->UhdmType() == uhdmbit_typespec) {
+                // bit-typed packed element (see above)
+                auto bt = any_cast<const UHDM::bit_typespec*>(elem);
+                if (bt->Ranges() && !bt->Ranges()->empty()) return true;
             }
         }
     }
