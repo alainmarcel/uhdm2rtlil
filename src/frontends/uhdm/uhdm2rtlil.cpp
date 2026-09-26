@@ -6425,7 +6425,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // instance's list by the SAME pointer, so pointer identity both skips what
     // was just imported and keeps this a no-op if Surelog starts emitting them
     // on the definition.
-    if (const module_inst* elab = find_elab_instance(uhdm_module)) {
+    //
+    // Only for a DEFINITION import.  A $paramod imported from its own
+    // elaborated instance already carries its initialisers; asking for
+    // "an elaborated instance of the same definition" then returns the
+    // FIRST one — a sibling with different parameters — whose cont_assigns
+    // are different pointers, so its initialisers were imported a second
+    // time on top of this module's own (verilog-ethernet eth_mac_1g_rgmii_fifo:
+    // the DROP_WHEN_FULL=1 axis_async_fifo got the DROP_WHEN_FULL=0 copy's
+    // `m_axis_tuser_pipe` mux as a second driver — "Y port signal already
+    // driven" in opt).
+    bool self_is_elab = false;
+    {
+        build_elab_index();
+        auto sit = elab_insts_by_def_.find(std::string(uhdm_module->VpiDefName()));
+        if (sit != elab_insts_by_def_.end())
+            for (auto m : sit->second)
+                if (m == uhdm_module) { self_is_elab = true; break; }
+    }
+    if (const module_inst* elab = self_is_elab ? nullptr : find_elab_instance(uhdm_module)) {
         if (elab != uhdm_module && elab->Cont_assigns()) {
             int n = 0;
             for (auto ca : *elab->Cont_assigns()) {
