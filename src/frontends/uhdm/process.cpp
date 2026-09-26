@@ -7928,7 +7928,38 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
 void UhdmImporter::record_comb_partial_write(const RTLIL::SigSpec& lhs,
                                              const RTLIL::SigSpec& rhs) {
     if (in_always_ff_body_mode || in_always_ff_context) return;
-    if (lhs.empty() || lhs.chunks().size() != 1) return;
+    if (lhs.empty()) return;
+    // A CONCAT LHS (`{ram_wrap_next, end_offset_next} = start + count - 1;`,
+    // verilog-pcie dma_if_pcie_wr) bailed out here as "not a single chunk",
+    // so neither part got an in-flight value and the very next line's
+    // `end_offset_next >> N` read the STALE wire: the RAM segment masks were
+    // wrong and the write DMA read the wrong segments (275 co-sim
+    // divergences).  Walk the chunks (LSB first): a chunk covering its whole
+    // wire records the RHS slice as that wire's in-flight value, a partial
+    // chunk is spliced as before.
+    if (lhs.chunks().size() > 1) {
+        int off = 0;
+        for (const auto& ch : lhs.chunks()) {
+            if (ch.wire && off + ch.width <= rhs.size()) {
+                RTLIL::SigSpec part = rhs.extract(off, ch.width);
+                if (ch.width >= ch.wire->width && ch.offset == 0) {
+                    std::string bn = ch.wire->name.str();
+                    if (!bn.empty() && bn[0] == '\\') {
+                        bn = bn.substr(1);
+                        current_comb_values[bn] = part;
+                        auto ai = comb_value_aliases.find(bn);
+                        if (ai != comb_value_aliases.end()) current_comb_values[ai->second] = part;
+                    }
+                    seed_alias_elems_inflight(ch.wire, part);
+                    splice_alias_elem_inflight(ch.wire, 0, part);
+                } else {
+                    record_comb_partial_write(RTLIL::SigSpec(ch), part);
+                }
+            }
+            off += ch.width;
+        }
+        return;
+    }
     const RTLIL::SigChunk fc = *lhs.chunks().begin();
     if (!fc.wire || fc.width >= fc.wire->width) return;   // full writes handled elsewhere
     std::string bn = fc.wire->name.str();
