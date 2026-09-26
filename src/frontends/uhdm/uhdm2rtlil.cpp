@@ -1944,6 +1944,28 @@ void UhdmImporter::discard_eval_module(RTLIL::Module* tmp) {
     design->remove(tmp);
 }
 
+// Is `pname = rhs` on `inst` an OVERRIDE (written by the instantiating
+// parent) rather than the definition's default?  Surelog leaves
+// param_assign::VpiOverriden unset, so compare against the definition's own
+// param_assign for that name: a different RHS (or none) means override.
+bool UhdmImporter::param_assign_is_override(const module_inst* inst, const std::string& pname, const any* rhs) {
+    if (!inst || !rhs || !uhdm_design || !uhdm_design->AllModules()) return false;
+    const module_inst* def = nullptr;
+    for (auto m : *uhdm_design->AllModules())
+        if (m->VpiDefName() == inst->VpiDefName()) { def = m; break; }
+    if (!def || def == inst) return false;
+    if (def->Param_assigns())
+        for (auto dpa : *def->Param_assigns()) {
+            auto lp = dynamic_cast<const parameter*>(dpa->Lhs());
+            if (!lp || std::string(lp->VpiName()) != pname) continue;
+            auto de = dynamic_cast<const expr*>(dpa->Rhs());
+            auto re = dynamic_cast<const expr*>(rhs);
+            if (!de || !re) return true;
+            return std::string(de->VpiDecompile()) != std::string(re->VpiDecompile());
+        }
+    return true;
+}
+
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
 
@@ -2091,7 +2113,11 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // Create a temporary module for expression evaluation
                             this->module = design->addModule(NEW_ID);
                             
+                            const module_inst* saved_oc2 = override_eval_child_;
+                            override_eval_child_ = param_assign_is_override(uhdm_module, param_name, param_assign->Rhs())
+                                                       ? uhdm_module : nullptr;
                             RTLIL::SigSpec val_spec = this->import_expression(any_cast<const expr*>(param_assign->Rhs()));
+                            override_eval_child_ = saved_oc2;
                             if (val_spec.is_fully_const()) {
                                 val_str = std::to_string(val_spec.as_int());
                                 log("UHDM: Got value from import_expression: %s\n", val_str.c_str());
@@ -2162,8 +2188,12 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         this->module = design->addModule(NEW_ID);
                         bool saved_fcf = force_const_fold;
                         force_const_fold = true;
+                        const module_inst* saved_oc = override_eval_child_;
+                        override_eval_child_ = param_assign_is_override(uhdm_module, param_name, param_assign->Rhs())
+                                                   ? uhdm_module : nullptr;
                         RTLIL::SigSpec vs2 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
+                        override_eval_child_ = saved_oc;
                         force_const_fold = saved_fcf;
                         discard_eval_module(this->module);
                         this->module = saved_module;
@@ -3716,8 +3746,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         this->module = design->addModule(NEW_ID);
                         bool saved_fcf = force_const_fold;
                         force_const_fold = true;
+                        const module_inst* saved_oc = override_eval_child_;
+                        override_eval_child_ = param_assign_is_override(uhdm_module, param_name, param_assign->Rhs())
+                                                   ? uhdm_module : nullptr;
                         RTLIL::SigSpec vs2 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
+                        override_eval_child_ = saved_oc;
                         force_const_fold = saved_fcf;
                         discard_eval_module(this->module);
                         this->module = saved_m;

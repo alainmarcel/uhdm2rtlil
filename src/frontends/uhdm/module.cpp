@@ -2388,7 +2388,14 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
             // hpdcache_mem_resp_demux's `rt_t = resp_id_t [DEPTH-1:0]`).
             bool saved_fcf = force_const_fold;
             force_const_fold = true;
+            // An OVERRIDE actual (`.IdWidth($bits(id_t))`) is written in the
+            // instantiating parent's scope: tell the `$bits` importer which
+            // child is being parameterised so it resolves the name there.
+            const UHDM::module_inst* saved_oc3 = override_eval_child_;
+            if (current_instance && param_assign_is_override(current_instance, param_name, expr))
+                override_eval_child_ = current_instance;
             RTLIL::SigSpec value_spec = import_expression(expr);
+            override_eval_child_ = saved_oc3;
             force_const_fold = saved_fcf;
             // `'1` unbased-unsized fill RHS: import_constant returns a single
             // S1 bit (VpiSize -1); a wider-typed parameter must REPLICATE it.

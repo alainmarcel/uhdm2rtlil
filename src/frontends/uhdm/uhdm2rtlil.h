@@ -766,6 +766,11 @@ struct UhdmImporter {
     void flush_pending_sync(RTLIL::SyncRule* sync);
     int while_static_bound(const UHDM::any* cond);
     int case_context_width(const UHDM::case_stmt* cs);
+    // The child instance whose parameter OVERRIDE actual is being evaluated
+    // (set by the paramod signature builder and by import_parameter): names in
+    // that actual are written in the child's PARENT scope, not the child's.
+    const UHDM::module_inst* override_eval_child_ = nullptr;
+    bool param_assign_is_override(const UHDM::module_inst* inst, const std::string& pname, const UHDM::any* rhs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
     

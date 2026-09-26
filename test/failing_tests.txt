@@ -332,9 +332,3 @@ genscope_two_procs_same_reg
 # vacuous; we produce 5 and read_slang agrees.  test_slang_equiv.ys is the
 # gate (it fails 0/1 without the fix in the function-body case paths).
 func_casez_wildcard_items
-# while_comb_bounded: read_verilog rejects the DUT ("While loops are only
-# allowed in constant functions!"), so the read_verilog-vs-uhdm comparison
-# cannot run.  read_slang unrolls the bounded data-dependent while loop and
-# test_slang_equiv.ys is the gate (it fails 0/1 without the comb-context
-# while unroll in process.cpp).
-while_comb_bounded
