@@ -5820,7 +5820,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 log("        LHS is bit select of %s\n", signal_name.c_str());
                 
                 // Check if this is a memory
-                RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+                RTLIL::IdString mem_id = resolve_mem_id(signal_name);  // scoped: generate-scope memory
                 if (module->memories.count(mem_id) > 0) {
                     log("        This is a memory write to %s\n", signal_name.c_str());
                     
@@ -5938,8 +5938,8 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                             // The name is in VpiName of the bit_select itself
                             std::string mem_name = std::string(bs->VpiName());
                             log("        Bit select of %s, checking if it's a memory (found=%d)\n", 
-                                mem_name.c_str(), module->memories.count(RTLIL::escape_id(mem_name)));
-                            if (module->memories.count(RTLIL::escape_id(mem_name))) {
+                                mem_name.c_str(), module->memories.count(resolve_mem_id(mem_name)));
+                            if (module->memories.count(resolve_mem_id(mem_name))) {
                                 // This is a memory access
                                 // Create a $memrd cell for this read
                                 std::string cell_name = stringf("memrd_%s_%d", mem_name.c_str(), incr_autoidx());
@@ -5979,8 +5979,8 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                     addr_spec.append(high_spec);
                                     
                                     // Configure the memrd cell
-                                    RTLIL::Memory* mem = module->memories.at(RTLIL::escape_id(mem_name));
-                                    memrd->setParam(ID::MEMID, RTLIL::Const("\\" + mem_name));
+                                    RTLIL::Memory* mem = module->memories.at(resolve_mem_id(mem_name));
+                                    memrd->setParam(ID::MEMID, RTLIL::Const(resolve_mem_id(mem_name).str()));
                                     memrd->setParam(ID::ABITS, RTLIL::Const(GetSize(addr_spec)));
                                     memrd->setParam(ID::WIDTH, RTLIL::Const(mem->width));
                                     memrd->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
@@ -6052,7 +6052,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 // Special case: memory write with concatenated index
                 const bit_select* bs = any_cast<const bit_select*>(lhs);
                 std::string mem_name = std::string(bs->VpiName());
-                RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                RTLIL::IdString mem_id = resolve_mem_id(mem_name);  // scoped: generate-scope memory
                 
                 if (module->memories.count(mem_id) > 0) {
                     // Get the index expression and build address with substitution
@@ -10929,7 +10929,14 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             log_flush();
             const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
             std::string signal_name = std::string(bit_sel->VpiName());
-            RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+            // Scoped lookup: a GENERATE-scope memory is registered as
+            // `genblk1[0].rd_resp_data_pipe_reg` while the LHS names it
+            // bare.  The bare lookup missed, the write fell through to the
+            // generic path and was stored on a $memrd DATA wire — verilog-pcie
+            // dma_psdpram's read pipeline shift `pipe[j] <= pipe[j-1]` never
+            // reached the memory (rd_resp_data all zero).  Module scope was
+            // fine, and the comb-style path already resolves the scope.
+            RTLIL::IdString mem_id = resolve_mem_id(signal_name);
             
             log("            Signal name: '%s', mem_id: '%s'\n", signal_name.c_str(), mem_id.c_str());
             log("            Checking for memory in module...\n");
@@ -11063,7 +11070,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         if (lhs_chk->VpiType() == vpiBitSelect) {
             const bit_select* bs = any_cast<const bit_select*>(lhs_chk);
             std::string bs_name = std::string(bs->VpiName());
-            RTLIL::IdString bs_mem_id = RTLIL::escape_id(bs_name);
+            RTLIL::IdString bs_mem_id = resolve_mem_id(bs_name);
             RTLIL::Wire* first_elem = !module->memories.count(bs_mem_id)
                 ? module->wire(RTLIL::escape_id(bs_name + "[0]")) : nullptr;
             if (first_elem) {
@@ -11172,7 +11179,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             RTLIL::Wire* base_wire = module->wire(bid);
             if (!base_wire) base_wire = find_wire_in_scope(bn);
             if (base_wire && bs->VpiIndex() && base_wire->width > 1 &&
-                !module->memories.count(bid) &&
+                !module->memories.count(bid) && !module->memories.count(resolve_mem_id(bn)) &&
                 !module->wire(RTLIL::escape_id(bn + "[0]")) &&
                 !base_wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
                 bool edge_sync0 = sync && (sync->type == RTLIL::STp || sync->type == RTLIL::STn);
