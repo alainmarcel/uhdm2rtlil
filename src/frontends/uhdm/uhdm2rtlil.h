@@ -618,6 +618,10 @@ struct UhdmImporter {
     // array_var, so `p[r][i]` on `int unsigned p [R][W]` addresses ELEMENT
     // (r-lo_r)*W + (i-lo_i), not bit i of element r.  Cleared per-call.
     std::map<std::string, std::vector<std::pair<int,int>>> array_local_unpacked_dims;
+    // Declared width of each block-local variable, so a whole-variable
+    // assignment is sized to the DECLARATION (`reg [3:0] v; v = 0;` stays 4
+    // bits, not the 64-bit literal).  Cleared per-call.
+    std::map<std::string, int> local_declared_widths;
     // Flat element index of `indices` against `dims`; false when the
     // count differs or an index is out of range.
     static bool flat_unpacked_index(const std::vector<std::pair<int,int>>& dims,
