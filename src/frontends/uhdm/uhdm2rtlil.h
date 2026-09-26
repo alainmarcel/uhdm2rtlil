@@ -656,6 +656,7 @@ struct UhdmImporter {
     // find_own_temp_wire().
     std::map<std::string, RTLIL::Wire*> comb_signal_temp_map;
     RTLIL::Wire* find_own_temp_wire(const std::string& signal_name);
+    RTLIL::Wire* find_loop_var_wire(const std::string& var_name);
     RTLIL::Wire* find_own_ranged_temp_wire(const std::string& signal_name,
                                           int offset, int width);
     void record_comb_partial_write(const RTLIL::SigSpec& lhs, const RTLIL::SigSpec& rhs);

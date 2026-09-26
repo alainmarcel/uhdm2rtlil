@@ -8089,6 +8089,23 @@ RTLIL::Wire* UhdmImporter::find_own_ranged_temp_wire(const std::string& signal_n
     return nullptr;
 }
 
+// The module wire of a for-loop variable, for its post-loop value.  A loop
+// variable declared in a GENERATE scope (`generate ... begin : g  integer i;`)
+// lives in name_map as `g.i`, so the bare-name lookup missed it and the wire
+// was left undriven (X); read_verilog/read_slang drive it with the final
+// value.  Walk the enclosing generate scopes innermost-first, then the bare
+// name (a `for (int i…)` local has no module wire and stays loop_values-only).
+RTLIL::Wire* UhdmImporter::find_loop_var_wire(const std::string& var_name) {
+    for (int i = (int)gen_scope_stack.size() - 1; i >= 0; i--) {
+        std::string path;
+        for (int j = 0; j <= i; j++) path += (j ? "." : "") + gen_scope_stack[j];
+        auto it = name_map.find(path + "." + var_name);
+        if (it != name_map.end()) return it->second;
+    }
+    auto it = name_map.find(var_name);
+    return it != name_map.end() ? it->second : nullptr;
+}
+
 RTLIL::Wire* UhdmImporter::find_own_temp_wire(const std::string& signal_name) {
     auto it = comb_signal_temp_map.find(signal_name);
     if (it != comb_signal_temp_map.end()) return it->second;
@@ -8743,7 +8760,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
                 int64_t final_val = loop_end - inc;
                 loop_values[fl_var] = (int)final_val;
-                if (RTLIL::Wire* var_wire = name_map.count(fl_var) ? name_map[fl_var] : nullptr)
+                if (RTLIL::Wire* var_wire = find_loop_var_wire(fl_var))
                     emit_comb_assign(RTLIL::SigSpec(var_wire),
                                      RTLIL::Const((int)final_val, var_wire->width), proc);
                 log("    Comb for loop unrolled (descending): %s final=%lld\n",
@@ -8838,8 +8855,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // fallback).  Build the priority mux and let post-loop reads
                 // resolve to it instead of the constant.
                 if (has_break && !brk_flags.empty()) {
-                    RTLIL::Wire* var_wire = name_map.count(fl_var)
-                                                ? name_map[fl_var] : nullptr;
+                    RTLIL::Wire* var_wire = find_loop_var_wire(fl_var);
                     if (!var_wire)
                         var_wire = module->wire(RTLIL::escape_id(fl_var));
                     if (var_wire) {
@@ -8872,7 +8888,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // are loop_values-only).
                 if (RTLIL::Wire* var_wire = brk_idx_emitted
                         ? nullptr
-                        : (name_map.count(fl_var) ? name_map[fl_var] : nullptr)) {
+                        : find_loop_var_wire(fl_var)) {
                     int w = var_wire->width;
                     emit_comb_assign(RTLIL::SigSpec(var_wire),
                                      RTLIL::Const((int)final_val, w),
@@ -17100,8 +17116,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // of the first iteration that broke, else N (one-hot flags, so
                 // fold order is immaterial).  Mirrors the Process handler.
                 if (cr_has_break && !cr_brk_flags.empty()) {
-                    RTLIL::Wire* var_wire = name_map.count(fl_var)
-                                                ? name_map[fl_var] : nullptr;
+                    RTLIL::Wire* var_wire = find_loop_var_wire(fl_var);
                     if (!var_wire)
                         var_wire = module->wire(RTLIL::escape_id(fl_var));
                     if (var_wire) {
@@ -17119,8 +17134,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         if (!in_always_ff_body_mode)
                             current_comb_values[fl_var] = sel;
                     }
-                } else if (RTLIL::Wire* var_wire =
-                               name_map.count(fl_var) ? name_map[fl_var] : nullptr) {
+                } else if (RTLIL::Wire* var_wire = find_loop_var_wire(fl_var)) {
                     // Post-loop value of a MODULE-level loop variable
                     // (`integer i;`), as the Process-level unroller does;
                     // a `for (int i…)` local stays loop_values-only.
