@@ -1784,6 +1784,17 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                 // For non-constant single bits, zero-extend (zeros in MSB, value in LSB)
                 rhs = {RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1), rhs};
             }
+        } else if (rhs.size() < lhs.size() && rhs.is_fully_const()) {
+            // A CONSTANT stays a constant when widened.  Going through a
+            // $pos cell made it a wire, so a net-declaration initialiser
+            // narrower than its reg -- `reg [7:0] tag_reg = 7'd0, tag_next;`
+            // (verilog-pcie pcie_us_axil_master) -- was no longer
+            // "constant" below: instead of an \init attribute it became a
+            // continuous `connect \tag_reg 8'0` that double-drove the flop,
+            // which then folded to 0 (the completion TLP's tag was always 0:
+            // 279 co-sim divergences, and a miter that passed vacuously on
+            // the double driver).
+            rhs.extend_u0(lhs.size(), rhs_expr && is_expr_signed(rhs_expr));
         } else if (rhs.size() < lhs.size()) {
             // Extend RHS to match LHS width; sign-extend if the RHS wire is signed
             log_debug("Extending RHS from %d to %d bits\n", rhs.size(), lhs.size());
