@@ -258,6 +258,22 @@ bool UhdmImporter::flat_unpacked_index(const std::vector<std::pair<int,int>>& di
 }
 
 // Helper to evaluate statements during compile-time function evaluation
+// Compile-time case item match honouring casez (`z`/`?` bits) and casex
+// (`x`/`z` bits) wildcards in the ITEM; an exact `case` compares all bits.
+static bool case_const_matches(const case_stmt* cs, const RTLIL::Const& sel, const RTLIL::Const& item) {
+    int ct = cs ? cs->VpiCaseType() : vpiCaseExact;
+    int w = std::max(sel.size(), item.size());
+    for (int i = 0; i < w; i++) {
+        RTLIL::State ib = i < item.size() ? item[i] : RTLIL::State::S0;
+        RTLIL::State sb = i < sel.size() ? sel[i] : RTLIL::State::S0;
+        if (ib == RTLIL::State::Sa) continue;
+        if (ct == vpiCaseZ && ib == RTLIL::State::Sz) continue;
+        if (ct == vpiCaseX && (ib == RTLIL::State::Sz || ib == RTLIL::State::Sx)) continue;
+        if (ib != sb) return false;
+    }
+    return true;
+}
+
 RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                                   std::map<std::string, RTLIL::Const>& local_vars,
                                                   const std::string& func_name) {
@@ -1059,7 +1075,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                 any_cast<const operation*>(le), local_vars);
                         else
                             lv = evaluate_single_operand(le, local_vars);
-                        if (lv.size() > 0 && lv.as_int() == sel.as_int()) {
+                        if (lv.size() > 0 && case_const_matches(cs, sel, lv)) {
                             RTLIL::Const av = ci->Stmt()
                                 ? evaluate_function_stmt(ci->Stmt(),
                                                          local_vars, func_name)

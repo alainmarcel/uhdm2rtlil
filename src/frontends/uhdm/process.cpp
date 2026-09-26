@@ -10788,13 +10788,18 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                                         return;
                                     }
                                 }
-                                RTLIL::SigSpec cmp = import_expression(
-                                    any_cast<const expr*>(le), &func_mapping);
+                                // casez/casex items in a FUNCTION body: `keep2count`'s
+                                // `8'bzzzzzzz0` (verilog-ethernet udp_ip_tx_64) kept
+                                // its literal z bits here, so the compare never
+                                // matched (function result x -> error flag undefined)
+                                // and Verilator refused the netlist's tristate `==`.
+                                RTLIL::SigSpec cmp = case_item_wildcards(case_st, import_expression(
+                                    any_cast<const expr*>(le), &func_mapping));
                                 int w = std::max(sel.size(), cmp.size());
                                 RTLIL::SigSpec s2 = sel, c2 = cmp;
                                 if (s2.size() < w) s2.extend_u0(w);
                                 if (c2.size() < w) c2.extend_u0(w);
-                                RTLIL::SigSpec eq = module->Eq(NEW_ID, s2, c2);
+                                RTLIL::SigSpec eq = wildcard_eq(s2, c2);
                                 arm.match = arm.match.empty()
                                     ? eq : module->Or(NEW_ID, arm.match, eq);
                             };

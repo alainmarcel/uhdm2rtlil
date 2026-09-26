@@ -326,3 +326,9 @@ struct_array_member_cond_write
 # created").  Not a reader defect; the read_slang miter is the gate
 # (it fails without the fix in process.cpp's comb-style FF path).
 genscope_two_procs_same_reg
+# func_casez_wildcard_items: read_verilog folds the CONSTANT call
+# keep2count(8'b00011111) of a casez function to 4'hx (its evaluator gives
+# up on the wildcard items), so the read_verilog-vs-uhdm comparison is
+# vacuous; we produce 5 and read_slang agrees.  test_slang_equiv.ys is the
+# gate (it fails 0/1 without the fix in the function-body case paths).
+func_casez_wildcard_items
