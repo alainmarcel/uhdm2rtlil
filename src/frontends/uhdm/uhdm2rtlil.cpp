@@ -2215,10 +2215,32 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         // module — same as the modname builder in import_module —
                         // so the signature (and thus the cell type) carries the
                         // distinct reset value.
+                        //
+                        // The same branch receives an INLINED localparam:
+                        // Surelog cannot fold common_cells cc_id_queue's
+                        // `HtCapacity` (it depends on the `$bits(id_t)`
+                        // override actual, Surelog #4189) and hands
+                        // `.OnehotWidth(HtCapacity)` over as the tree
+                        // `((2**IdWidth <= Capacity) ? 2**IdWidth : Capacity)`
+                        // with the `$bits` call inlined inside it.  Imported
+                        // plainly the power / ternary stay cells and `id_t`
+                        // is looked up in the CHILD, so the value was empty,
+                        // the signature `cc_onehot_to_bin$OnehotWidth=` named
+                        // nothing, and the child was imported at its DEFAULT
+                        // width.  Fold, and resolve override names in the
+                        // instantiating scope, exactly as the func-call branch
+                        // above does.
                         RTLIL::Module* saved_module = this->module;
                         this->module = design->addModule(NEW_ID);
+                        bool saved_fcf3 = force_const_fold;
+                        force_const_fold = true;
+                        const module_inst* saved_oc3 = override_eval_child_;
+                        override_eval_child_ = param_assign_is_override(uhdm_module, param_name, param_assign->Rhs())
+                                                   ? uhdm_module : nullptr;
                         RTLIL::SigSpec vs3 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
+                        override_eval_child_ = saved_oc3;
+                        force_const_fold = saved_fcf3;
                         discard_eval_module(this->module);
                         this->module = saved_module;
                         if (vs3.is_fully_const() && vs3.size() > 0) {
@@ -3774,10 +3796,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // constant and put it in the module name so distinct
                         // reset values become distinct modules, each with its
                         // own ResetValue applied below.
+                        //
+                        // Also an INLINED localparam (`.OnehotWidth(HtCapacity)`
+                        // arriving as `((2**IdWidth <= Capacity) ? 2**IdWidth :
+                        // Capacity)` with the `$bits(id_t)` actual inlined,
+                        // common_cells cc_id_queue): fold, and resolve the
+                        // override's names in the instantiating scope, as the
+                        // signature builder does -- the two MUST agree, or the
+                        // cell type `$paramod\leaf\W=4` names a module that
+                        // was imported as plain `\leaf` at its default width.
                         RTLIL::Module* saved_m = this->module;
                         this->module = design->addModule(NEW_ID);
+                        bool saved_fcf5 = force_const_fold;
+                        force_const_fold = true;
+                        const module_inst* saved_oc5 = override_eval_child_;
+                        override_eval_child_ = param_assign_is_override(uhdm_module, param_name, param_assign->Rhs())
+                                                   ? uhdm_module : nullptr;
                         RTLIL::SigSpec vs5 = this->import_expression(
                             any_cast<const expr*>(param_assign->Rhs()));
+                        override_eval_child_ = saved_oc5;
+                        force_const_fold = saved_fcf5;
                         discard_eval_module(this->module);
                         this->module = saved_m;
                         if (vs5.is_fully_const() && vs5.size() > 0) {
