@@ -2909,28 +2909,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     pending_sync_seq.clear(); sync_blocking_values.clear();
                     import_statement_sync(stmt, sync, false);
 
-                    // One update per BASE WIRE, every bit taken from the LATEST pending
-                    // write covering it.  Pushing each map entry as its own action produced
-                    // overlapping updates (`\v_reg [0]`, `\v_reg [1]` AND `\v_reg`), which
-                    // `proc` resolves by dropping the register.
-                    {
-                        std::set<RTLIL::Wire*> bases; std::vector<RTLIL::SigSig> misc;
-                        for (const auto& [lhs, rhs] : pending_sync_assignments) {
-                            RTLIL::Wire* w = nullptr; bool one = lhs.size() > 0;
-                            for (const auto& ch : lhs.chunks()) {
-                                if (!ch.wire) { one = false; break; }
-                                if (!w) w = ch.wire; else if (w != ch.wire) { one = false; break; }
-                            }
-                            if (one) bases.insert(w); else misc.push_back(RTLIL::SigSig(lhs, rhs));
-                        }
-                        for (RTLIL::Wire* w : bases) {
-                            RTLIL::SigSpec full(w), val = pending_inflight(full), ls, rs;
-                            for (int b = 0; b < w->width; b++)
-                                if (val[b] != full[b]) { ls.append(full[b]); rs.append(val[b]); }
-                            if (ls.size()) sync->actions.push_back(RTLIL::SigSig(ls, rs));
-                        }
-                        for (auto& a : misc) sync->actions.push_back(a);
-                    }
+                    flush_pending_sync(sync);
                     pending_sync_assignments.clear();
                     pending_sync_seq.clear(); sync_blocking_values.clear();
 
@@ -3196,9 +3175,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     pending_sync_seq.clear(); sync_blocking_values.clear();
                     import_statement_sync(stmt, sync, false);
 
-                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
-                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
-                    }
+                    flush_pending_sync(sync);
                     pending_sync_assignments.clear();
                     pending_sync_seq.clear(); sync_blocking_values.clear();
 
@@ -5696,6 +5673,37 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
                 // Clear pending memory writes
                 pending_memory_writes.clear();
             }
+}
+
+// Flush pending_sync_assignments into ONE update per base wire, every bit
+// taken from the LATEST pending write covering it (pending_inflight).
+// Pushing each map entry as its own action produced overlapping updates --
+// `\v_reg [0]`, `\v_reg [1]` AND `\v_reg` -- which `proc` resolves by
+// dropping the register (verilog-axis axis_fifo).  A CONCAT key is just as
+// overlapping: `{td_update_reg, td_update_cnt_reg} <= cnt + 1` followed by
+// `td_update_cnt_reg <= 0` under reset (verilog-ethernet ptp_td_phc, on
+// the repeat/nested-for fallback path) pushed the whole-concat action AND
+// the member's reset mux, and the unconditional concat action won -- the
+// cadence counter never reset (40 co-sim divergences).  The memory-write
+// path had the per-wire flush but still pushed multi-wire keys whole; the
+// fallback path pushed everything raw.  Both use this now.
+void UhdmImporter::flush_pending_sync(RTLIL::SyncRule* sync) {
+    std::vector<RTLIL::Wire*> bases;
+    std::set<RTLIL::Wire*> seen;
+    std::vector<RTLIL::SigSig> misc;
+    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+        bool any_wire = false;
+        for (const auto& ch : lhs.chunks())
+            if (ch.wire) { any_wire = true; if (seen.insert(ch.wire).second) bases.push_back(ch.wire); }
+        if (!any_wire) misc.push_back(RTLIL::SigSig(lhs, rhs));
+    }
+    for (RTLIL::Wire* w : bases) {
+        RTLIL::SigSpec full(w), val = pending_inflight(full), ls, rs;
+        for (int b = 0; b < w->width; b++)
+            if (val[b] != full[b]) { ls.append(full[b]); rs.append(val[b]); }
+        if (ls.size()) sync->actions.push_back(RTLIL::SigSig(ls, rs));
+    }
+    for (auto& a : misc) sync->actions.push_back(a);
 }
 
 void UhdmImporter::note_pending_sync(const RTLIL::SigSpec& lhs) {
@@ -11317,13 +11325,17 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         log("            Creating conditional assignment with multiplexer\n");
         log_flush();
         
-        // Check if we already have a pending assignment to this signal
+        // The else value is the CURRENT in-flight value of every bit -- the
+        // latest pending write covering it, whatever its key shape.  An
+        // exact-key hit used to short-circuit this and take that entry
+        // whole: verilog-ethernet ptp_td_phc's
+        //   td_shift_reg <= {1'b1, td_shift_reg} >> 1;        (whole key)
+        //   td_shift_reg[17*k+1 +: 16] <= ...;                (slice keys)
+        //   if (rst) td_shift_reg <= {17*14{1'b1}};          (whole key)
+        // took the SHIFT as the reset mux's else value and every message
+        // load in between vanished (the serial output never left idle).
         RTLIL::SigSpec else_value;
-        if (pending_sync_assignments.count(lhs)) {
-            // Use the previous assignment as the else value
-            else_value = pending_sync_assignments[lhs];
-            log("            Using previous assignment as else value\n");
-        } else if (pending_inflight(lhs) != lhs) {
+        if (pending_inflight(lhs) != lhs) {
             // No exact-key entry, but OVERLAPPING pending writes exist (a
             // whole-wire write after per-bit writes, or vice versa).  The raw
             // wire as else-value would discard them — verilog-axis axis_fifo's
