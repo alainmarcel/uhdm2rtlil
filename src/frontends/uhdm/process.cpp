@@ -8743,6 +8743,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
                 int64_t final_val = loop_end - inc;
                 loop_values[fl_var] = (int)final_val;
+                if (RTLIL::Wire* var_wire = name_map.count(fl_var) ? name_map[fl_var] : nullptr)
+                    emit_comb_assign(RTLIL::SigSpec(var_wire),
+                                     RTLIL::Const((int)final_val, var_wire->width), proc);
                 log("    Comb for loop unrolled (descending): %s final=%lld\n",
                     fl_var.c_str(), (long long)final_val);
             } else if (fl_can_unroll) {
@@ -16957,6 +16960,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             std::string fl_var;
             int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
             bool fl_inclusive = false, ok = (fl_init && fl_cond && fl_body);
+            bool cr_descending = false;
             if (ok && fl_init->VpiType() == vpiAssignment) {
                 auto ia = any_cast<const assignment*>(fl_init);
                 if (ia->Lhs()) {
@@ -16965,23 +16969,38 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     else if (lt == vpiRefObj) fl_var = std::string(any_cast<const ref_obj*>(ia->Lhs())->VpiName());
                     else if (!ia->Lhs()->VpiName().empty()) fl_var = std::string(ia->Lhs()->VpiName());
                 }
-                RTLIL::SigSpec s = (ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant)
-                                   ? import_constant(any_cast<const constant*>(ia->Rhs())) : RTLIL::SigSpec();
-                if (fl_var.empty() || !s.is_fully_const()) ok = false; else fl_start = s.as_const().as_int();
+                // The start may be a parameter expression (`i = N-1`): fold
+                // it like the bound.  An EMPTY SigSpec is vacuously
+                // "fully const" and read as start 0, so reject it explicitly.
+                RTLIL::SigSpec s;
+                if (auto re = dynamic_cast<const expr*>(ia->Rhs())) s = import_expression(re);
+                if (fl_var.empty() || s.empty() || !s.is_fully_const()) ok = false;
+                else fl_start = s.as_const().as_int();
             } else ok = false;
             if (ok && fl_cond->VpiType() == vpiOperation) {
                 auto co = any_cast<const operation*>(fl_cond);
+                // Descending loops (`for (i = N-1; i >= 0; i = i - 1)`,
+                // verilog-ethernet axis_stat_counter's byte serialiser)
+                // were "unsupported ... skipping" on this CaseRule path:
+                // the loop inside `if (m_axis_tready_int_reg)` vanished and
+                // the stat frame bytes were never emitted (85 co-sim
+                // divergences).  The Process-level unroller already handles
+                // them (fl_descending); mirror it here.
                 if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
-                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false; else ok = false;
+                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false;
+                else if (co->VpiOpType() == vpiGeOp) { fl_inclusive = true; cr_descending = true; }
+                else if (co->VpiOpType() == vpiGtOp) { fl_inclusive = false; cr_descending = true; }
+                else ok = false;
                 if (ok && co->Operands() && co->Operands()->size() == 2) {
                     RTLIL::SigSpec s = import_expression(any_cast<const expr*>(co->Operands()->at(1)));
-                    if (s.is_fully_const()) fl_end = s.as_const().as_int(); else ok = false;
+                    if (!s.empty() && s.is_fully_const()) fl_end = s.as_const().as_int(); else ok = false;
                 } else ok = false;
             } else ok = false;
             if (ok && fl_inc) {
                 if (fl_inc->VpiType() == vpiOperation) {
                     int ot = any_cast<const operation*>(fl_inc)->VpiOpType();
-                    if (ot != vpiPostIncOp && ot != vpiPreIncOp) ok = false;
+                    if (ot == vpiPostDecOp || ot == vpiPreDecOp) cr_descending = true;
+                    else if (ot != vpiPostIncOp && ot != vpiPreIncOp) ok = false;
                 } else if (fl_inc->VpiType() == vpiAssignment) {
                     auto ia = any_cast<const assignment*>(fl_inc);
                     // Compound `i += N`: operator on the assignment (VpiOpType ==
@@ -16989,21 +17008,29 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     // uses vpiAssignmentOp (82) with an operation Rhs.
                     int ia_op = ia->VpiOpType();
                     if (ia_op == vpiAddOp || ia_op == vpiSubOp) {
+                        if (ia_op == vpiSubOp) cr_descending = true;
                         if (auto re = dynamic_cast<const expr*>(ia->Rhs())) {
                             RTLIL::SigSpec s = import_expression(re);
                             if (s.is_fully_const()) fl_inc_val = s.as_const().as_int(); else ok = false;
                         } else ok = false;
                     } else if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
                         auto ro = any_cast<const operation*>(ia->Rhs());
-                        if (ro->VpiOpType() == vpiAddOp && ro->Operands() && ro->Operands()->size() == 2) {
+                        if ((ro->VpiOpType() == vpiAddOp || ro->VpiOpType() == vpiSubOp) &&
+                                ro->Operands() && ro->Operands()->size() == 2) {
+                            if (ro->VpiOpType() == vpiSubOp) cr_descending = true;
                             RTLIL::SigSpec s = import_expression(any_cast<const expr*>(ro->Operands()->at(1)));
                             if (s.is_fully_const()) fl_inc_val = s.as_const().as_int(); else ok = false;
                         } else ok = false;
                     } else ok = false;
                 }
             }
+            if (ok && fl_inc_val <= 0) ok = false;
             if (ok) {
-                int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
+                int64_t loop_end = cr_descending ? (fl_inclusive ? fl_end : fl_end + 1)
+                                                 : (fl_inclusive ? fl_end : fl_end - 1);
+                // ascending iterates i <= end, descending i >= end
+                auto cr_more = [&](int64_t i) { return cr_descending ? i >= loop_end : i <= loop_end; };
+                int64_t cr_step = cr_descending ? -fl_inc_val : fl_inc_val;
                 // A body with `break` is first-match-wins (priority encoder).
                 // The Process-level handler guards each iteration with a
                 // `live` flag; this CaseRule-level handler unrolled forward
@@ -17019,7 +17046,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     log("        CaseRule for loop body has `break` — forward "
                         "iteration with live-guarded bodies\n");
                     RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
-                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    for (int64_t i = fl_start; cr_more(i); i += cr_step) {
                         loop_values[fl_var] = (int)i;
                         RTLIL::Wire* bw = module->addWire(NEW_ID, 1);
                         case_rule->actions.push_back(
@@ -17061,12 +17088,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                          module->And(NEW_ID, live, nb));
                     }
                 } else {
-                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    for (int64_t i = fl_start; cr_more(i); i += cr_step) {
                         loop_values[fl_var] = (int)i;
                         import_statement_comb(fl_body, case_rule);
                     }
                 }
-                int64_t cr_final = fl_inclusive ? fl_end + fl_inc_val : fl_end;
+                int64_t cr_final = cr_descending ? (fl_inclusive ? fl_end - fl_inc_val : fl_end)
+                                                 : (fl_inclusive ? fl_end + fl_inc_val : fl_end);
                 loop_values[fl_var] = (int)cr_final;
                 // Post-loop value of the loop variable with `break`: the index
                 // of the first iteration that broke, else N (one-hot flags, so
@@ -17091,6 +17119,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         if (!in_always_ff_body_mode)
                             current_comb_values[fl_var] = sel;
                     }
+                } else if (RTLIL::Wire* var_wire =
+                               name_map.count(fl_var) ? name_map[fl_var] : nullptr) {
+                    // Post-loop value of a MODULE-level loop variable
+                    // (`integer i;`), as the Process-level unroller does;
+                    // a `for (int i…)` local stays loop_values-only.
+                    RTLIL::SigSpec fin = RTLIL::Const((int)cr_final, var_wire->width);
+                    RTLIL::SigSpec tgt = map_to_temp_wire(RTLIL::SigSpec(var_wire));
+                    remove_target_from_switches(case_rule, tgt);
+                    case_rule->actions.push_back(RTLIL::SigSig(tgt, fin));
+                    if (!in_always_ff_body_mode)
+                        current_comb_values[fl_var] = fin;
                 }
             } else {
                 log_warning("import_statement_comb(CaseRule*): unsupported for loop, skipping\n");
