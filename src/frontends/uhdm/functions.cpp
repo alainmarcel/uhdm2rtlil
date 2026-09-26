@@ -79,6 +79,8 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     array_local_element_widths.clear();
     auto saved_array_dims = array_local_unpacked_dims;
     array_local_unpacked_dims.clear();
+    auto saved_decl_widths = local_declared_widths;
+    local_declared_widths.clear();
 
     // Create local variable map and initialize with parameters
     std::map<std::string, RTLIL::Const> local_vars;
@@ -219,6 +221,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     recursion_depth--;
     array_local_element_widths = saved_array_widths;
     array_local_unpacked_dims = saved_array_dims;
+    local_declared_widths = saved_decl_widths;
     if (local_vars.count(func_name)) {
         RTLIL::Const result = local_vars[func_name];
         if ((int)result.size() != ret_width) {
@@ -238,6 +241,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
 
     array_local_element_widths = saved_array_widths;
     array_local_unpacked_dims = saved_array_dims;
+    local_declared_widths = saved_decl_widths;
     return RTLIL::Const(0, 32);
 }
 
@@ -652,6 +656,28 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     // failed RHS evaluation): keeping the previous value
                     // matches the pre-existing behaviour of not executing the
                     // statement, instead of poisoning every later use.
+                    // Size the value to the DECLARED width of a block local:
+                    // `reg [DATA_WIDTH-1:0] data_val; data_val = 0;` took the
+                    // 64-bit literal as its new width, the following
+                    // `data_val[i] = ...` bit writes landed in the low bits,
+                    // and `{data_val, state_val}` grew to 128 bits — the
+                    // function result kept only its low bits and the data
+                    // half of verilog-ethernet lfsr's REVERSE masks was lost.
+                    auto dw = local_declared_widths.find(lhs_name);
+                    if (dw != local_declared_widths.end() && rhs_value.size() > 0 &&
+                        rhs_value.size() != dw->second) {
+                        bool sgn = (rhs_value.flags & RTLIL::CONST_FLAG_SIGNED) != 0;
+                        RTLIL::Const rv = rhs_value;
+                        if (rv.size() > dw->second)
+                            rv = rv.extract(0, dw->second);
+                        if (rv.size() < dw->second) {
+                            std::vector<RTLIL::State> bits(rv.begin(), rv.end());
+                            RTLIL::State fill = sgn && !bits.empty() ? bits.back() : RTLIL::S0;
+                            bits.resize(dw->second, fill);
+                            rv = RTLIL::Const(bits);
+                        }
+                        rhs_value = rv;
+                    }
                     local_vars[lhs_name] = rhs_value;
                     log("    Assigned %s = %s\n", lhs_name.c_str(),
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
@@ -857,6 +883,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     // Initialize the local variable to 0
                     block_vars[var_name] = RTLIL::Const(0, width);
                     local_only_vars.insert(var_name);
+                    if (width > 0) local_declared_widths[var_name] = width;
                     log("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n",
                         var_name.c_str(), width);
                 }
