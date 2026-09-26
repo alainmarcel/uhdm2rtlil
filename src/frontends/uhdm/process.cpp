@@ -8947,6 +8947,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             }
             break;
         }
+        case vpiWhile:
+            import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), &proc->root_case);
+            break;
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
             break;
@@ -15193,6 +15196,91 @@ static std::string comb_blocking_base(const RTLIL::SigSpec& target) {
 // dropped by the caller's ccv restore: CVA6 compressed_decoder's C.JR
 // `illegal_instr_o = (rs1 != '0) ? 0 : 1` two ifs deep in a case arm never
 // reached the trailing `if (illegal_instr_o) instr_o = instr_i;`.
+// Static iteration bound of a `while` condition: the constant side of a
+// `<` / `<=` / `!=` conjunct (`i < WIDTH`), the minimum over `&&` operands;
+// 0 when nothing constant bounds it.
+int UhdmImporter::while_static_bound(const any* cond) {
+    auto op = cond ? any_cast<const operation*>(cond) : nullptr;
+    if (!op || !op->Operands()) return 0;
+    auto& ops = *op->Operands();
+    switch (op->VpiOpType()) {
+        case vpiLogAndOp: {
+            int b = 0;
+            for (auto o : ops) { int c = while_static_bound(o); if (c > 0 && (b == 0 || c < b)) b = c; }
+            return b;
+        }
+        case vpiLtOp: case vpiLeOp: case vpiNeqOp: case vpiGtOp: case vpiGeOp: {
+            if (ops.size() != 2) return 0;
+            for (int k = 0; k < 2; k++) {
+                auto c = any_cast<const constant*>(ops[k]);
+                if (!c) continue;
+                RTLIL::SigSpec v = import_expression(c);
+                if (!v.is_fully_const()) continue;
+                int64_t n = v.as_const().as_int();
+                int t = op->VpiOpType();
+                if (t == vpiLeOp || t == vpiGeOp) n += 1;
+                if (n > 0 && n < 100000) return (int)n;
+            }
+            return 0;
+        }
+        default: return 0;
+    }
+}
+
+// `while (cond) body` in a comb block, as a bounded nest of guarded
+// iterations: `if (cond) { body; if (cond) { body; ... } }`.  Each guard
+// is imported against the in-flight values of the previous iterations, so
+// a data-dependent loop like cvw's lzc
+//   i = 0; while ((i < WIDTH) && (!num[WIDTH-1-i])) i = i + 1;
+// counts correctly (it used to be "Unsupported statement type in comb
+// context: 70" and ZeroCnt stayed 0; cnt and zbb inherit it).  The nest
+// depth is the loop's static bound (`i < WIDTH`), else a capped default.
+void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule* case_rule) {
+    if (!ws || !ws->VpiCondition() || !ws->VpiStmt()) return;
+    int bound = while_static_bound(ws->VpiCondition());
+    const int kCap = 256;
+    if (bound <= 0) {
+        log_warning("while loop in comb context has no static bound; unrolling %d iterations\n", kCap);
+        bound = kCap;
+    } else if (bound > kCap) {
+        log_warning("while loop bound %d capped to %d iterations\n", bound, kCap);
+        bound = kCap;
+    }
+    std::function<void(RTLIL::CaseRule*, int)> emit;
+    emit = [&](RTLIL::CaseRule* cr, int left) {
+        if (left <= 0) return;
+        RTLIL::SigSpec cond = import_expression(ws->VpiCondition(), comb_read_map());
+        if (cond.size() > 1) {
+            if (cond.is_fully_const())
+                cond = cond.as_const().as_bool() ? RTLIL::SigSpec(RTLIL::State::S1)
+                                                 : RTLIL::SigSpec(RTLIL::State::S0);
+            else
+                cond = module->ReduceBool(NEW_ID, cond);
+        }
+        if (cond.is_fully_const()) {
+            if (!cond.as_const().as_bool()) return;     // loop exits here
+            import_statement_comb(ws->VpiStmt(), cr);
+            emit(cr, left - 1);
+            return;
+        }
+        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+        sw->signal = cond;
+        add_src_attribute(sw->attributes, ws);
+        RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
+        true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+        auto saved_ccv = current_comb_values;
+        import_statement_comb(ws->VpiStmt(), true_case);
+        emit(true_case, left - 1);
+        auto then_ccv = current_comb_values;
+        current_comb_values = saved_ccv;
+        sw->cases.push_back(true_case);
+        sw->cases.push_back(new RTLIL::CaseRule);
+        cr->switches.push_back(sw);
+        thread_comb_if(cond, true_case, nullptr, &saved_ccv, &then_ccv, nullptr);
+    };
+    emit(case_rule, bound);
+}
+
 void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                                   RTLIL::CaseRule* then_case,
                                   RTLIL::CaseRule* else_case,
@@ -17770,6 +17858,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
             break;
         }
+        case vpiWhile:
+            import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), case_rule);
+            break;
         default:
             if (mode_debug)
                 log("        Unsupported statement type in case: %s (vpiType=%d)\n",
