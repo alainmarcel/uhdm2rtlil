@@ -1218,7 +1218,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
-    pending_sync_seq.clear();
+    pending_sync_seq.clear(); sync_blocking_values.clear();
     // Also clear the blocking-value map: a multi-async-reset / SR-FF body is
     // imported via import_statement_comb, which calls thread_comb_if — that reads
     // current_comb_values[nm] as the pre-branch value.  A stale entry left by a
@@ -2906,7 +2906,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->signal = clock_sig;
 
                     pending_sync_assignments.clear();
-                    pending_sync_seq.clear();
+                    pending_sync_seq.clear(); sync_blocking_values.clear();
                     import_statement_sync(stmt, sync, false);
 
                     // One update per BASE WIRE, every bit taken from the LATEST pending
@@ -2932,7 +2932,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         for (auto& a : misc) sync->actions.push_back(a);
                     }
                     pending_sync_assignments.clear();
-                    pending_sync_seq.clear();
+                    pending_sync_seq.clear(); sync_blocking_values.clear();
 
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule created (memory-in-for-loop fallback)\n");
@@ -3193,14 +3193,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->signal = clock_sig;
 
                     pending_sync_assignments.clear();
-                    pending_sync_seq.clear();
+                    pending_sync_seq.clear(); sync_blocking_values.clear();
                     import_statement_sync(stmt, sync, false);
 
                     for (const auto& [lhs, rhs] : pending_sync_assignments) {
                         sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
                     }
                     pending_sync_assignments.clear();
-                    pending_sync_seq.clear();
+                    pending_sync_seq.clear(); sync_blocking_values.clear();
 
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule created (blocking-assignment fallback)\n");
@@ -5142,7 +5142,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
 
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
-    pending_sync_seq.clear();
+    pending_sync_seq.clear(); sync_blocking_values.clear();
 
     // Build the "sync always" and the init sync rule.  We hold off pushing
     // them onto the process until we know whether any actions survive — an
@@ -5166,7 +5166,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
     }
     pending_sync_assignments.clear();
-    pending_sync_seq.clear();
+    pending_sync_seq.clear(); sync_blocking_values.clear();
 
     // Resolve cross-process init dependencies: if RHS references a wire whose
     // init value was computed by an earlier interpreter-based initial block,
@@ -11142,7 +11142,20 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             // (SV context-determined sizing).
             int prev_ctx = expression_context_width;
             expression_context_width = lhs.size();
-            rhs = import_expression(rhs_expr);
+            // A BLOCKING write earlier in this process must be visible
+            // here (verilog-ethernet axis_async_fifo: `rd_ptr_temp =
+            // rd_ptr_reg + 1; rd_ptr_reg <= rd_ptr_temp;` read the flop's
+            // OLD value and the read pointer lagged a cycle — 273 co-sim
+            // divergences under a green seq-4 proof).  This path is taken
+            // for blocks the comb-style FF import declines (a memory write
+            // inside a for loop), so ff_blocking_temps never applies here.
+            // Edge-triggered rules only: an `initial` block's `x = C;
+            // a = f(x);` would hand f a constant argument and fold it
+            // through the compile-time evaluator instead of inlining it
+            // (StreamOperatorBitReverseFunction: `{<<{val}}` came out 0).
+            bool edge_sync = sync && (sync->type == RTLIL::STp || sync->type == RTLIL::STn);
+            rhs = import_expression(rhs_expr,
+                (edge_sync && !sync_blocking_values.empty()) ? &sync_blocking_values : nullptr);
             expression_context_width = prev_ctx;
             log("            RHS imported: [signal] (size=%d)\n", rhs.size());
             log_flush();
@@ -11209,6 +11222,10 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Store in pending assignments (will be added to sync rule later)
         pending_sync_assignments[lhs] = mux_result;
         note_pending_sync(lhs);
+        if (uhdm_assign && uhdm_assign->VpiBlocking() && lhs.is_wire() && sync &&
+                (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
+                lhs.as_wire()->name.str()[0] == '\\')
+            sync_blocking_values[lhs.as_wire()->name.str().substr(1)] = mux_result;
         log("            Stored conditional assignment: %s <= %s ? %s : %s\n", 
             log_signal(lhs), log_signal(current_condition), log_signal(rhs), log_signal(else_value));
         log_flush();
@@ -11216,6 +11233,10 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Store unconditional assignment
         pending_sync_assignments[lhs] = rhs;
         note_pending_sync(lhs);
+        if (uhdm_assign && uhdm_assign->VpiBlocking() && lhs.is_wire() && sync &&
+                (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
+                lhs.as_wire()->name.str()[0] == '\\')
+            sync_blocking_values[lhs.as_wire()->name.str().substr(1)] = rhs;
         log("            Stored unconditional assignment: %s <= %s\n", 
             log_signal(lhs), log_signal(rhs).c_str());
         log_flush();

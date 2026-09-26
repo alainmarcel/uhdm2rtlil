@@ -751,6 +751,11 @@ struct UhdmImporter {
     // and `proc` collapsed the register.  pending_inflight() resolves every
     // bit to the LATEST covering write.
     std::map<RTLIL::SigSpec, uint64_t> pending_sync_seq;
+    // In-flight values of BLOCKING (`=`) writes in the legacy sync path, by
+    // wire name, so a later RHS in the same process reads the new value
+    // (`rd_ptr_temp = rd_ptr_reg + 1; rd_ptr_reg <= rd_ptr_temp;`).
+    // Cleared with pending_sync_assignments.
+    std::map<std::string, RTLIL::SigSpec> sync_blocking_values;
     uint64_t pending_sync_seq_ctr = 0;
     void note_pending_sync(const RTLIL::SigSpec& lhs);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
