@@ -1784,6 +1784,26 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             return cv;
         }
 
+        case vpiMultiConcatOp: {  // Replication ({N{value}})
+            // Was unsupported: `{1'b1, {DATA_WIDTH-1{1'b0}}}` folded to `1`
+            // (the replication came back EMPTY and the concat swallowed it),
+            // so verilog-ethernet lfsr's `for (data_mask = {1'b1, ...};
+            // data_mask != 0; data_mask >>= 1)` ran ONCE with the wrong
+            // mask and every CRC matrix entry was wrong (axis_gmii_tx /
+            // eth_mac_1g co-sim divergences, formally invisible at seq 4).
+            if (operand_values.size() >= 2) {
+                int n = operand_values[0].as_int();
+                if (n < 0) n = 0;
+                if (n > 65536) n = 65536;
+                RTLIL::Const::Builder builder;
+                for (int k = 0; k < n; k++)
+                    for (int j = 0; j < operand_values[1].size(); j++)
+                        builder.push_back(operand_values[1][j]);
+                return builder.build();
+            }
+            break;
+        }
+
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);
             break;
