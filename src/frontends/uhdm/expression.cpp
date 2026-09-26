@@ -2620,7 +2620,30 @@ static const UHDM::VectorOfrange* typedef_unpacked_ranges(const UHDM::array_var*
 RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!uhdm_expr)
         return RTLIL::SigSpec();
-    
+
+    // A declared range bound (`[HtCapacity-1:0]` on a packed or unpacked
+    // dimension) is a compile-time constant by construction, but Surelog
+    // does not always hand it over as one: a localparam it could not fold
+    // itself (common_cells cc_id_queue's HtCapacity, derived from a
+    // `$bits(id_t)` override actual, Surelog #4189) is INLINED at every use
+    // as its expression tree, `((2**IdWidth <= Capacity) ? 2**IdWidth :
+    // Capacity) - 1`.  Imported plainly, the power and the ternary stay
+    // cells, the bound is "not fully const", and every consumer of the
+    // dimension -- the width loop, the packed-element geometry attributes,
+    // the element-select decoder -- silently skips it: the head/tail table
+    // had ONE entry and its element writes were dropped.  Every range-bound
+    // site imports through here, so fold once, at the entry.
+    if (!force_const_fold) {
+        if (auto rp = uhdm_expr->VpiParent()) {
+            if (rp->UhdmType() == uhdmrange) {
+                force_const_fold = true;
+                RTLIL::SigSpec folded = import_expression(uhdm_expr, input_mapping);
+                force_const_fold = false;
+                return folded;
+            }
+        }
+    }
+
     int obj_type = uhdm_expr->VpiType();
     
     if (mode_debug) {
