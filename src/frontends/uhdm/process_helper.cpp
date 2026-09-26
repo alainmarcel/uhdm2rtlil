@@ -1673,17 +1673,28 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
     const UHDM::any* sel = nullptr;
     const UHDM::expr* second = nullptr;
     if (!vs->Exprs()) return false;
-    // Exprs() = [address, selector].  The selector is a part_select or
-    // indexed_part_select; the other entry is the word address.  A plain
-    // second index (`mem[addr][bit]`) is a single-bit select.
-    for (auto e : *vs->Exprs()) {
-        int t = e->VpiType();
-        if (t == vpiPartSelect || t == vpiIndexedPartSelect)
-            sel = e;
-        else if (!addr_expr)
-            addr_expr = e;
-        else if (!second)
-            second = e;
+    // Exprs() = [address, (element index,) selector], POSITIONALLY.  The
+    // address is always the first entry and may itself be a part-select
+    // (`mem_reg[wr_cmd_addr[SEG_ADDR_WIDTH*n +: W]][i*8 +: 8]`, verilog-pcie
+    // dma_psdpram): classifying entries by TYPE took that address as the
+    // selector, found no address and bailed, so the byte-enable write was
+    // imported as a $memrd and its data landed on the read wire.  The
+    // selector is the LAST entry when it is a part/indexed-part select; a
+    // plain last entry (`mem[addr][bit]`) is a single-bit select.
+    {
+        auto& ex = *vs->Exprs();
+        if (ex.empty()) return false;
+        addr_expr = any_cast<const UHDM::expr*>(ex[0]);
+        if (ex.size() >= 2) {
+            auto last = ex.back();
+            int t = last->VpiType();
+            if (t == vpiPartSelect || t == vpiIndexedPartSelect) {
+                sel = last;
+                if (ex.size() >= 3) second = any_cast<const UHDM::expr*>(ex[1]);
+            } else {
+                second = any_cast<const UHDM::expr*>(ex[1]);
+            }
+        }
     }
     if (!addr_expr) return false;
     if (!sel) {
