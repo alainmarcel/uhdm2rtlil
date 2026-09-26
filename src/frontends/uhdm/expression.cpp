@@ -6575,6 +6575,48 @@ UHDM::any* UhdmImporter::find_param_decl_typespec(std::string_view name, const U
     return (UHDM::any*)found;
 }
 
+// Size-match the two operands of `==` / `!=` (LRM 11.8.2/11.8.3): the
+// expression is sized to the wider operand, and the narrower one is
+// sign-extended only when BOTH operands are signed -- otherwise it is
+// zero-extended.  The old rule sign-extended any narrow CONSTANT whose MSB
+// was 1, meant for `a == -1`, so `output_count_reg == 1'b1` compared an
+// 8-bit counter with 8'hFF and verilog-ethernet axis_cobs_encode never
+// left its SEGMENT state (243 co-sim divergences); `x == 3'b101` was 8'hFD.
+// A folded ARITHMETIC sub-expression (`-1`, `2 - 3`: a unary minus on a
+// 64-bit `1` in UHDM) is context-determined and evaluated at the
+// expression width in SV, which for a negative result equals
+// sign-extending the folded value -- read_slang gives 128'hFF..F for
+// `logic [127:0] a == -1` but zero-extends a signed int PARAMETER -1.
+void UhdmImporter::equality_extend_operands(const operation* uhdm_op,
+                                            RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs) {
+    // Guard against zero-size operands (an unresolved var_select on an
+    // unpacked array element returns an empty SigSpec).
+    if (lhs.size() == rhs.size() || lhs.size() == 0 || rhs.size() == 0) return;
+    const expr* e0 = nullptr;
+    const expr* e1 = nullptr;
+    if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
+        e0 = any_cast<const expr*>((*uhdm_op->Operands())[0]);
+        e1 = any_cast<const expr*>((*uhdm_op->Operands())[1]);
+    }
+    bool s0 = (e0 && is_expr_signed(e0)) || (lhs.is_wire() && lhs.as_wire()->is_signed);
+    bool s1 = (e1 && is_expr_signed(e1)) || (rhs.is_wire() && rhs.as_wire()->is_signed);
+    bool both_signed = s0 && s1;
+    auto folded_arith = [](const expr* e) {
+        auto op = e ? any_cast<const operation*>(e) : nullptr;
+        if (!op) return false;
+        switch (op->VpiOpType()) {
+            case vpiMinusOp: case vpiPlusOp: case vpiAddOp: case vpiSubOp:
+            case vpiMultOp: case vpiDivOp: case vpiModOp: case vpiPowerOp:
+                return true;
+            default: return false;
+        }
+    };
+    if (rhs.size() < lhs.size())
+        rhs.extend_u0(lhs.size(), both_signed || (rhs.is_fully_const() && folded_arith(e1)));
+    else
+        lhs.extend_u0(rhs.size(), both_signed || (lhs.is_fully_const() && folded_arith(e0)));
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -8555,26 +8597,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiEqOp:
             if (operands.size() == 2)
             {
-                // Size-match operands: in SV, a signed constant compared with a
-                // wider unsigned operand is sign-extended to the wider width.
-                // Example: `logic [127:0] a == -1` → -1 sign-extends to 128'hFFFF...
                 RTLIL::SigSpec lhs = operands[0];
                 RTLIL::SigSpec rhs = operands[1];
-                // Guard against zero-size operands (e.g. an unresolved
-                // var_select on an unpacked array element returns an empty
-                // SigSpec). Calling `.as_const().back()` on a zero-bit Const
-                // dereferences past the bit-vector end and crashes.
-                if (lhs.size() != rhs.size() && lhs.size() > 0 && rhs.size() > 0) {
-                    if (rhs.is_fully_const() && rhs.size() < lhs.size()) {
-                        // Narrow constant on RHS compared with wider LHS wire.
-                        // Sign-extend if the constant's MSB is 1 (negative/signed value).
-                        bool rhs_msb = rhs.as_const().back() == RTLIL::State::S1;
-                        rhs.extend_u0(lhs.size(), rhs_msb);
-                    } else if (lhs.is_fully_const() && lhs.size() < rhs.size()) {
-                        bool lhs_msb = lhs.as_const().back() == RTLIL::State::S1;
-                        lhs.extend_u0(rhs.size(), lhs_msb);
-                    }
-                }
+                equality_extend_operands(uhdm_op, lhs, rhs);
 
                 // Create output wire for the comparison with proper naming
                 std::string wire_name = generate_cell_name(uhdm_op, "eq") + "_Y";
@@ -8649,8 +8674,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiNeqOp:
             if (operands.size() == 2)
                 {
+                    RTLIL::SigSpec lhs = operands[0];
+                    RTLIL::SigSpec rhs = operands[1];
+                    equality_extend_operands(uhdm_op, lhs, rhs);
                     std::string cell_name = generate_cell_name(uhdm_op, "ne");
-                    return module->Ne(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    return module->Ne(RTLIL::escape_id(cell_name), lhs, rhs);
                 }
             break;
         case vpiLtOp:
