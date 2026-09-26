@@ -15208,6 +15208,52 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
 // EVERY compressed instruction was flagged illegal and passed through undecoded.
 // The mux tree mirrors the switch's first-match-wins priority.  Bails on
 // wildcard (casez/casex) compares, which an `$eq` cannot model.
+// casez / casex item values (LRM 12.5.1): a `z` (casez; `?` is already
+// don't-care from Const::from_string) or `x`/`z` (casex) bit of a CONSTANT
+// case item is a wildcard.  RTLIL's wildcard is State::Sa (what read_verilog
+// puts there, see simplify.cc AST_CONDZ); a literal `z` bit in a switch
+// compare is a real value that never matches, so verilog-pcie
+// pcie_us_axil_master's `casez (first_be_reg) 4'bzzz1: ...` lower-address /
+// byte-count arms were all dead (279 co-sim divergences).
+RTLIL::SigSpec UhdmImporter::case_item_wildcards(const case_stmt* uhdm_case,
+                                                 const RTLIL::SigSpec& sig) {
+    int ct = uhdm_case ? uhdm_case->VpiCaseType() : vpiCaseExact;
+    if ((ct != vpiCaseZ && ct != vpiCaseX) || !sig.is_fully_const()) return sig;
+    RTLIL::Const c = sig.as_const();
+    std::vector<RTLIL::State> v;
+    v.reserve(c.size());
+    for (int i = 0; i < c.size(); i++) {
+        RTLIL::State b = c[i];
+        if (b == RTLIL::State::Sz || (ct == vpiCaseX && b == RTLIL::State::Sx))
+            b = RTLIL::State::Sa;
+        v.push_back(b);
+    }
+    return RTLIL::SigSpec(RTLIL::Const(v));
+}
+
+// `$eq(sig, cmp)` that honours don't-care (State::Sa) bits of a constant
+// compare: those bits are masked out of both sides.  A plain $eq cannot model
+// a wildcard, which is why the mux-based paths used to bail on them.
+RTLIL::SigSpec UhdmImporter::wildcard_eq(const RTLIL::SigSpec& sig_in, const RTLIL::SigSpec& cmp_in) {
+    RTLIL::SigSpec sig = sig_in, cmp = cmp_in;
+    int w = std::max(sig.size(), cmp.size());
+    if (sig.size() < w) sig.extend_u0(w);
+    if (cmp.size() < w) cmp.extend_u0(w);
+    bool has_wild = false;
+    if (cmp.is_fully_const())
+        for (int i = 0; i < w; i++)
+            if (cmp[i] == RTLIL::State::Sa) { has_wild = true; break; }
+    if (!has_wild) return module->Eq(NEW_ID, sig, cmp);
+    std::vector<RTLIL::State> mask, val;
+    for (int i = 0; i < w; i++) {
+        bool wild = cmp[i] == RTLIL::State::Sa;
+        mask.push_back(wild ? RTLIL::State::S0 : RTLIL::State::S1);
+        val.push_back(wild ? RTLIL::State::S0 : cmp[i].data);
+    }
+    RTLIL::SigSpec masked = module->And(NEW_ID, sig, RTLIL::SigSpec(RTLIL::Const(mask)));
+    return module->Eq(NEW_ID, masked, RTLIL::SigSpec(RTLIL::Const(val)));
+}
+
 void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
                                     RTLIL::SwitchRule* sw,
                                     const std::map<std::string, RTLIL::SigSpec>& pre_ccv,
@@ -15221,12 +15267,17 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
     // …` one-hot idiom (ibex cs_registers' exception_pc / depc_d), where the
     // case items are signals; `$eq(case_sig, sig)` models those fine, so only
     // bail on a width mismatch or a constant-with-x/z (true wildcard).
+    // A casez/casex item arrives with State::Sa don't-care bits, which
+    // wildcard_eq masks; any OTHER undef bit (a literal x/z in an exact
+    // case) still bails.
     for (auto* c : sw->cases)
         for (auto& cmp : c->compare) {
             if (cmp.size() != case_sig.size())
                 return;
-            if (cmp.is_fully_const() && !cmp.is_fully_def())
-                return;
+            if (cmp.is_fully_const())
+                for (int i = 0; i < cmp.size(); i++)
+                    if (cmp[i] == RTLIL::State::Sx || cmp[i] == RTLIL::State::Sz)
+                        return;
         }
 
     // The pre-case value for a base name: its pre_ccv snapshot, else the
@@ -15277,7 +15328,7 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
             if (c->compare.empty()) continue;   // default handled above
             RTLIL::SigSpec sel;
             for (auto& cmp : c->compare) {
-                RTLIL::SigSpec eq = module->Eq(NEW_ID, case_sig, cmp);
+                RTLIL::SigSpec eq = wildcard_eq(case_sig, cmp);
                 sel = sel.empty() ? eq : module->Or(NEW_ID, sel, eq);
             }
             if (sel.empty()) continue;
@@ -15557,7 +15608,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                         // Check if any expression matches
                         for (auto expr : *exprs) {
                             if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
-                                RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                                RTLIL::SigSpec expr_sig = case_item_wildcards(uhdm_case, import_expression(case_expr));
                                 if (expr_sig.is_fully_const()) {
                                     RTLIL::Const expr_value = expr_sig.as_const();
                                     // Compare values, handling width differences
@@ -15567,8 +15618,13 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                     RTLIL::Const expr_extended = expr_value;
                                     case_extended.resize(max_width, RTLIL::State::S0);
                                     expr_extended.resize(max_width, RTLIL::State::S0);
+                                    // casez/casex don't-care bits match anything
+                                    bool wild_match = true;
+                                    for (size_t bi = 0; bi < max_width; bi++)
+                                        if (expr_extended[bi] != RTLIL::State::Sa &&
+                                                expr_extended[bi] != case_extended[bi]) { wild_match = false; break; }
                                     
-                                    if (case_extended == expr_extended) {
+                                    if (wild_match) {
                                         case_matches = true;
                                         log("          Found matching case: %s == %s\n", 
                                             case_value.as_string().c_str(), expr_value.as_string().c_str());
@@ -15636,10 +15692,15 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                     // Build equality comparison for this case
                     for (auto expr : *exprs) {
                         if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
-                            RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                            RTLIL::SigSpec expr_sig = case_item_wildcards(uhdm_case, import_expression(case_expr));
                             
-                            // Create equality comparison
-                            RTLIL::SigSpec eq_sig = create_eq_cell(case_sig, expr_sig, case_item);
+                            // Create equality comparison (masked for casez/casex don't-cares)
+                            bool has_wild = false;
+                            if (expr_sig.is_fully_const())
+                                for (int bi = 0; bi < expr_sig.size(); bi++)
+                                    if (expr_sig[bi] == RTLIL::State::Sa) { has_wild = true; break; }
+                            RTLIL::SigSpec eq_sig = has_wild ? wildcard_eq(case_sig, expr_sig)
+                                                             : create_eq_cell(case_sig, expr_sig, case_item);
                             
                             if (case_condition.empty()) {
                                 case_condition = eq_sig;
@@ -15937,7 +15998,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                         }
                     }
                     if (auto ce = any_cast<const UHDM::expr*>(expr)) {
-                        RTLIL::SigSpec sig = import_expression(ce);
+                        RTLIL::SigSpec sig = case_item_wildcards(uhdm_case, import_expression(ce));
                         bool sgn = is_expr_signed(ce);
                         ctx_width = std::max(ctx_width, sig.size());
                         if (!sgn)
@@ -17226,7 +17287,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 }
                             }
                             if (auto ce = any_cast<const UHDM::expr*>(expr)) {
-                                RTLIL::SigSpec sig = import_expression(ce);
+                                RTLIL::SigSpec sig = case_item_wildcards(uhdm_case, import_expression(ce));
                                 bool sgn = is_expr_signed(ce);
                                 ctx_width = std::max(ctx_width, sig.size());
                                 if (!sgn) all_signed = false;

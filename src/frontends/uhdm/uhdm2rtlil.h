@@ -1226,6 +1226,8 @@ struct UhdmImporter {
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
     void equality_extend_operands(const UHDM::operation* uhdm_op, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
+    RTLIL::SigSpec case_item_wildcards(const UHDM::case_stmt* uhdm_case, const RTLIL::SigSpec& sig);
+    RTLIL::SigSpec wildcard_eq(const RTLIL::SigSpec& sig, const RTLIL::SigSpec& cmp);
     // SV §11.8.1: a binary arithmetic op (+ - * / %) is SIGNED only if EVERY
     // operand is signed; any unsigned operand makes the whole op unsigned.
     // Uses is_expr_signed on the UHDM operands so constants are classified
