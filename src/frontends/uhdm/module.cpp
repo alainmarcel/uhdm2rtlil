@@ -1123,8 +1123,16 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     // a flat wire.  The definition pass turned it into a memory, the whole
     // assign then pre-created a wire under the memory's name and
     // `addWire` asserted (`count_id(wire->name) == 0`).
+    // An array whose ELEMENTS are instance port actuals (`.state_out(crc_next[n])`
+    // in a generate loop -- verilog-ethernet axis_eth_fcs) is driven by those
+    // instances and must stay per-element wires; the array_var sites already
+    // honour inst_elem_written_arrays, this NET branch did not, so a dead
+    // dynamic read (`crc_next[i]` under `if (KEEP_ENABLE)` with KEEP_ENABLE=0)
+    // made it a writer-less $memory whose $memrd returned X (297 co-sim
+    // divergences, formal differs).
     if (is_memory_array(uhdm_net) && !async_reset_filled_arrays.count(netname) &&
-        !whole_array_accessed_names.count(netname)) {
+        !whole_array_accessed_names.count(netname) &&
+        !inst_elem_written_arrays.count(netname)) {
         log("UHDM: Net '%s' has both packed and unpacked dimensions - creating memory\n", netname.c_str());
         
         // Get packed dimension (width) and unpacked dimension (size).
