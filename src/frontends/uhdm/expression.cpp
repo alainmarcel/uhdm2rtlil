@@ -8231,9 +8231,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // (Surelog emits unsized literals at width 64) doesn't blow
                 // up the cell into a 64-bit add whose upper half then
                 // pollutes the destination wire with X.
+                // ...but never NARROWER than a non-constant operand: LRM
+                // 11.6.1 sizes the add to max(context, operands), and only
+                // the final assignment truncates.  Capped to the 8-bit
+                // context, `(tlp_count_reg[12:0] + pcie_addr_reg[1:0] - 1)
+                // >> 5` (verilog-pcie dma_if_pcie_wr's cycle count) lost bits
+                // 8..12 BEFORE the shift and the DMA never saw its last cycle.
+                // Only constant operands (the 64-bit literals the cap is for)
+                // stay capped.
                 int result_width = std::max(operands[0].size(), operands[1].size());
-                if (expression_context_width > 0)
-                    result_width = expression_context_width;
+                if (expression_context_width > 0) {
+                    int nonconst_w = 0;
+                    for (auto& o : operands)
+                        if (!o.is_fully_const()) nonconst_w = std::max(nonconst_w, o.size());
+                    result_width = std::max(expression_context_width, nonconst_w);
+                }
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
 
                 // SV LRM §11.8.1: when ANY operand is unsigned, the
