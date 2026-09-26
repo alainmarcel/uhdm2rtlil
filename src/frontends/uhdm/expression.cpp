@@ -7657,6 +7657,36 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         if (ctx_unsigned_entry || !ops_all_signed)
             expression_context_unsigned = true;
     }
+    // Arithmetic / bitwise binary operators are context-determined (LRM
+    // 11.6.1, Table 11-21): every operand is evaluated at the width of the
+    // WHOLE expression, max(context, self-size of each operand), and that
+    // width flows into nested arithmetic.  Under an assignment context the
+    // nested operands only saw the LHS width, so
+    //   m_axi_awlen_next = (tr_dword_count_next + axi_addr_next[4:2] - 1) >> 3
+    // (verilog-pcie pcie_us_axi_master_wr, 8-bit LHS) added the 10-bit count
+    // at 10 bits: the sum wrapped BEFORE the `- 1` (sized by the 32-bit
+    // literal) and the shift, and the burst length came out 255 instead of
+    // 127.  An UNSIZED literal counts as 32 bits (LRM 5.7.1; Surelog stores
+    // it at 64), a sized one at its size.
+    {
+        bool arith_ctx = op_type == vpiAddOp || op_type == vpiSubOp || op_type == vpiMultOp ||
+                         op_type == vpiDivOp || op_type == vpiModOp ||
+                         op_type == vpiBitAndOp || op_type == vpiBitOrOp ||
+                         op_type == vpiBitXorOp || op_type == vpiBitXNorOp;
+        if (arith_ctx && expression_context_width > 0 && uhdm_op->Operands() &&
+            uhdm_op->Operands()->size() == 2) {
+            auto cw = [&](const any* o) -> int {
+                if (auto c = any_cast<const constant*>(o)) {
+                    std::string_view d = c->VpiDecompile();
+                    if (d.find('\'') == std::string_view::npos) return 32;
+                    return c->VpiSize() > 0 ? c->VpiSize() : 0;
+                }
+                return self_determined_width(o, input_mapping);
+            };
+            int w = std::max(cw((*uhdm_op->Operands())[0]), cw((*uhdm_op->Operands())[1]));
+            if (w > expression_context_width) expression_context_width = w;
+        }
+    }
     if (uhdm_op->Operands()) {
         if (op_type == vpiConditionOp) {
             log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
