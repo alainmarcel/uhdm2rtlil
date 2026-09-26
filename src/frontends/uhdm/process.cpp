@@ -15281,6 +15281,26 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
     emit(case_rule, bound);
 }
 
+// Width the case EXPRESSION must be evaluated at (LRM 12.5.1): the max of
+// its own self-size and every item's.  `case (q[0] + q[1] + ... + q[7])`
+// with 4-bit items (hdmi tmds_channel's ones count) is a sum of 1-bit terms
+// whose self-size is 1: imported without the items' width it wrapped to a
+// single bit and every count above 1 fell into the default arm.
+int UhdmImporter::case_context_width(const case_stmt* cs) {
+    if (!cs || !cs->VpiCondition()) return 0;
+    int w = context_operand_width(cs->VpiCondition(), nullptr);
+    if (cs->Case_items())
+        for (auto item : *cs->Case_items()) {
+            auto ci = any_cast<const case_item*>(item);
+            if (!ci || !ci->VpiExprs()) continue;
+            for (auto e : *ci->VpiExprs()) {
+                if (e->VpiType() == vpiOperation) continue;   // ranges / inside sets
+                w = std::max(w, context_operand_width(e, nullptr));
+            }
+        }
+    return w;
+}
+
 void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                                   RTLIL::CaseRule* then_case,
                                   RTLIL::CaseRule* else_case,
@@ -15755,7 +15775,10 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
     
     // Get the case condition (the signal being switched on)
     if (auto condition = uhdm_case->VpiCondition()) {
+        int saved_case_ctx = expression_context_width;
+        expression_context_width = case_context_width(uhdm_case);
         RTLIL::SigSpec case_sig = import_expression(condition);
+        expression_context_width = saved_case_ctx;
         
         // Check if this is in an initial block with constant condition
         bool is_initial_block = (sync->type == RTLIL::SyncType::STi);
@@ -16099,7 +16122,10 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
         return;
     }
 
+    int saved_case_ctx = expression_context_width;
+    expression_context_width = case_context_width(uhdm_case);
     RTLIL::SigSpec case_sig = import_expression(condition);
+    expression_context_width = saved_case_ctx;
     bool case_expr_signed = is_expr_signed(condition);
 
     if (mode_debug)
@@ -17392,7 +17418,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             RTLIL::SigSpec case_expr;
             bool case_expr_signed = false;
             if (cond_expr) {
+                int saved_case_ctx = expression_context_width;
+                expression_context_width = case_context_width(uhdm_case);
                 case_expr = import_expression(cond_expr);
+                expression_context_width = saved_case_ctx;
                 case_expr_signed = is_expr_signed(cond_expr);
                 log("        Case expression: %s (signed=%d)\n", log_signal(case_expr), case_expr_signed);
             }

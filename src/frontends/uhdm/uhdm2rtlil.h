@@ -765,6 +765,7 @@ struct UhdmImporter {
     void note_pending_sync(const RTLIL::SigSpec& lhs);
     void flush_pending_sync(RTLIL::SyncRule* sync);
     int while_static_bound(const UHDM::any* cond);
+    int case_context_width(const UHDM::case_stmt* cs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
     
