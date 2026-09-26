@@ -7858,7 +7858,16 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 log_warning("For loop unrolling not implemented for this pattern\n");
                             }
                         }
-                    } else if (can_unroll && (body->VpiType() == vpiIf || body->VpiType() == vpiIfElse)) {
+                    } else if (can_unroll && (body->VpiType() == vpiIf || body->VpiType() == vpiIfElse ||
+                                              body->VpiType() == vpiFor)) {
+                        // A NESTED for as the body (`for (i…) for (j…) v[i*2+j]
+                        // <= …`) fell through to "unrolling not implemented for
+                        // this statement type 15" and the inner writes were
+                        // DROPPED silently.  Unroll the outer loop as statements
+                        // too: import_statement_with_loop_vars hands the inner
+                        // `for` back to import_statement_sync with the outer
+                        // variable's value in loop_values, so the inner bounds
+                        // and index expressions fold.
                         // For-loop body is an if / if-else.  This used to go to
                         // `interpret_statement`, a CONSTANT interpreter that can
                         // only write scalar variables back, so a guarded ARRAY or
