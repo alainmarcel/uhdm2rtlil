@@ -11972,12 +11972,26 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule) {
-    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2) return false;
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return false;
     auto& pe = *hp->Path_elems();
     if (pe[0]->UhdmType() != uhdmref_obj) return false;
-    if (pe[1]->UhdmType() != uhdmbit_select) return false;
+    if (pe.back()->UhdmType() != uhdmbit_select) return false;
+    // NESTED member (`mst_req.w.strb[b + off] = slv_w.strb[b]`, PULP
+    // axi_dw_downsizer's W lane steering): every element between the base
+    // and the selected field is a plain member ref_obj.  The size()==2 gate
+    // let that shape fall through to the generic hier_path LHS import, which
+    // ignored the index and wrote the RHS bit over the WHOLE strb field
+    // (`$0\mst_req [12:5] = {7'0, slv_w[3]}`), so the master strobe carried
+    // one lane per beat.  Walk the member chain, accumulating the offset.
+    std::vector<std::string> mid_names;
+    for (size_t i = 1; i + 1 < pe.size(); i++) {
+        if (pe[i]->UhdmType() != uhdmref_obj) return false;
+        std::string mn(pe[i]->VpiName());
+        if (mn.empty()) return false;
+        mid_names.push_back(mn);
+    }
     const ref_obj*   base_ref = any_cast<const ref_obj*>(pe[0]);
-    const bit_select* bs      = any_cast<const bit_select*>(pe[1]);
+    const bit_select* bs      = any_cast<const bit_select*>(pe.back());
     if (!base_ref || !bs || !bs->VpiIndex()) return false;
 
     std::string base_name  = std::string(base_ref->VpiName());
@@ -12018,29 +12032,50 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
     }
     if (!st_members) return false;
 
-    // Find field offset (from LSB; last listed member = LSB) and typespec.
+    // Find field offset (from LSB; last listed member = LSB) and typespec,
+    // descending through the intermediate members of a nested path.
     int field_offset = 0;
     int field_width = 0;
     const UHDM::typespec* field_ts_actual = nullptr;
     bool found_field = false;
-    for (int i = (int)st_members->size() - 1; i >= 0; i--) {
-        auto m = (*st_members)[i];
-        int mw = 0;
-        const UHDM::typespec* mts_actual = nullptr;
-        if (auto mts = m->Typespec())
-            if (auto ats = mts->Actual_typespec()) {
-                mts_actual = ats;
-                mw = get_width_from_typespec(ats, current_instance);
+    std::vector<std::string> segs = mid_names;
+    segs.push_back(field_name);
+    const UHDM::VectorOftypespec_member* members = st_members;
+    bool is_union = st_is_union;
+    for (size_t si = 0; si < segs.size(); si++) {
+        found_field = false;
+        for (int i = (int)members->size() - 1; i >= 0; i--) {
+            auto m = (*members)[i];
+            int mw = 0;
+            const UHDM::typespec* mts_actual = nullptr;
+            if (auto mts = m->Typespec())
+                if (auto ats = mts->Actual_typespec()) {
+                    mts_actual = ats;
+                    mw = get_width_from_typespec(ats, current_instance);
+                }
+            if (std::string(m->VpiName()) == segs[si]) {
+                field_ts_actual = mts_actual;
+                field_width = mw;
+                found_field = true;
+                break;
             }
-        if (std::string(m->VpiName()) == field_name) {
-            field_ts_actual = mts_actual;
-            field_width = mw;
-            found_field = true;
-            break;
+            if (!is_union) field_offset += mw;
         }
-        if (!st_is_union) field_offset += mw;
+        if (!found_field || field_width <= 0) return false;
+        if (si + 1 < segs.size()) {
+            if (!field_ts_actual) return false;
+            if (field_ts_actual->UhdmType() == uhdmstruct_typespec) {
+                members = any_cast<const UHDM::struct_typespec*>(field_ts_actual)->Members();
+                is_union = false;
+            } else if (field_ts_actual->UhdmType() == uhdmunion_typespec) {
+                members = any_cast<const UHDM::union_typespec*>(field_ts_actual)->Members();
+                is_union = true;
+            } else {
+                return false;
+            }
+            if (!members) return false;
+        }
     }
-    if (!found_field || field_width <= 0) return false;
     if (field_offset + field_width > base_w) return false;
 
     // Extract field's outer range + Elem_typespec.
