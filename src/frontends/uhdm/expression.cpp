@@ -4762,6 +4762,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                    func_name == "$ceil");
                 bool saved_fcf_args = force_const_fold;
                 if (const_args) force_const_fold = true;
+                // The argument of `$signed(e)` / `$unsigned(e)` is SELF-
+                // DETERMINED (LRM 6.24.2 / 11.6.1): the cast only changes the
+                // signedness and the result then takes part in the surrounding
+                // expression at its own width.  The argument used to inherit
+                // the surrounding context width, so verilog-pcie
+                // dma_if_pcie_us_rd's `$unsigned(wr_ptr - rd_ptr) >= 2**W-4`
+                // computed the 6-bit pointer difference at 64 bits (0 - 63 =
+                // huge instead of 1) and flagged the status FIFO full.
+                int saved_ctx_args = expression_context_width;
+                if (func_name == "$signed" || func_name == "$unsigned")
+                    expression_context_width = 0;
                 if (func_call->Tf_call_args()) {
                     for (auto arg : *func_call->Tf_call_args()) {
                         // Pass input_mapping so args resolve function params/locals
@@ -4774,6 +4785,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         args.push_back(arg_sig);
                     }
                 }
+                expression_context_width = saved_ctx_args;
                 force_const_fold = saved_fcf_args;
 
                 // Handle specific system functions
