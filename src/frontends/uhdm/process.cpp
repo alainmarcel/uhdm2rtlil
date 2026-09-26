@@ -14487,7 +14487,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         if (!ch.wire) continue;
                         std::string bn = ch.wire->name.str();
                         if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
-                        if (RTLIL::Wire* tw = module->wire("$0\\" + bn))
+                        // This process's temp — may be the RANGED
+                        // `$0\<sig>[msb:lsb]` form, which a bare
+                        // `$0\<sig>` lookup never finds (see below).
+                        if (RTLIL::Wire* tw = find_own_temp_wire(bn))
                             if (tw->width == ch.wire->width)
                                 ff_blocking_temps[bn] = RTLIL::SigSpec(tw);
                     }
@@ -16627,14 +16630,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // (e.g. `current_pc = reg_next_pc; reg_pc <=
                             // current_pc;`).  Non-blocking (`<=`) register
                             // targets are intentionally NOT tracked.
+                            // The temp is looked up through the process's own
+                            // map: the if-else FF path names it `$0\<sig>[msb:lsb]`
+                            // (ranged), so a bare `$0\<sig>` lookup found nothing
+                            // and the read stayed on the registered wire — a
+                            // MODULE-level blocking temp then lagged a cycle
+                            // (verilog-ethernet axis_async_fifo's
+                            // `rd_ptr_temp = rd_ptr_reg + 1; rd_ptr_reg <=
+                            // rd_ptr_temp;` read pointer, m_status_depth off by
+                            // one, 273 co-sim divergences).
                             if ((in_always_ff_body_mode || in_always_ff_context) &&
                                     assign->VpiBlocking() && !lhs_sig.empty()) {
                                 RTLIL::SigChunk fc = *lhs_sig.chunks().begin();
                                 if (fc.wire) {
                                     std::string bn = fc.wire->name.str();
                                     if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
-                                    if (RTLIL::Wire* t0 = module->wire("$0\\" + bn))
-                                        ff_blocking_temps[bn] = RTLIL::SigSpec(t0);
+                                    if (RTLIL::Wire* t0 = find_own_temp_wire(bn))
+                                        if (t0->width == fc.wire->width)
+                                            ff_blocking_temps[bn] = RTLIL::SigSpec(t0);
                                 }
                             }
                             // In always_comb, track the in-flight blocking value
