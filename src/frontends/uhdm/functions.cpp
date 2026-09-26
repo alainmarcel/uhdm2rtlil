@@ -1502,6 +1502,20 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             val = evaluate_single_operand((*sfc->Tf_call_args())[0], local_vars);
             if (fn == "$signed") val.flags |= RTLIL::CONST_FLAG_SIGNED;
             else                 val.flags &= ~RTLIL::CONST_FLAG_SIGNED;
+        } else if (fn == "$clog2" && sfc->Tf_call_args() && !sfc->Tf_call_args()->empty()) {
+            // `$clog2` inside a compile-time evaluated function body:
+            // common_cells cc_pkg::idx_width's `return unsigned'($clog2(num_idx))`
+            // evaluated to EMPTY here, so `HtIdxWidth = idx_width(HtCapacity)`
+            // (only reached by our evaluator when Surelog could not fold the
+            // argument) came out 0 and cc_id_queue's head/tail index fields
+            // vanished.
+            RTLIL::Const a = evaluate_single_operand((*sfc->Tf_call_args())[0], local_vars);
+            if (a.size() > 0) {
+                uint64_t n = (uint64_t)a.as_int();
+                int r = 0;
+                if (n > 1) { uint64_t v = n - 1; while (v) { v >>= 1; r++; } }
+                val = RTLIL::Const(r, 32);
+            }
         }
     }
     return val;
