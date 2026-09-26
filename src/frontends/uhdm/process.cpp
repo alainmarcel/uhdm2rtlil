@@ -11125,6 +11125,65 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         }
     }
 
+    // Dynamic BIT-select LHS on a plain packed vector in a sync block:
+    // `op_table_active[ptr[W-1:0]] <= 1'b1` (verilog-pcie dma_if_pcie_wr's
+    // operation table, whose block reaches this path through a for-loop
+    // memory write).  Like the indexed part-select above, import_expression
+    // of the LHS is the $shiftx READ, so the generic path stored the write
+    // into that throwaway wire: the table entry never became active and the
+    // TLP state machine never left IDLE (tx data all zero, 276 co-sim
+    // divergences).  Read-modify-write the whole base instead.
+    if (auto lhs_expr = uhdm_assign->Lhs()) {
+        if (lhs_expr->VpiType() == vpiBitSelect) {
+            auto bs = any_cast<const bit_select*>(lhs_expr);
+            std::string bn = std::string(bs->VpiName());
+            RTLIL::IdString bid = RTLIL::escape_id(bn);
+            RTLIL::Wire* base_wire = module->wire(bid);
+            if (!base_wire) base_wire = find_wire_in_scope(bn);
+            if (base_wire && bs->VpiIndex() && base_wire->width > 1 &&
+                !module->memories.count(bid) &&
+                !module->wire(RTLIL::escape_id(bn + "[0]")) &&
+                !base_wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+                bool edge_sync0 = sync && (sync->type == RTLIL::STp || sync->type == RTLIL::STn);
+                const std::map<std::string, RTLIL::SigSpec>* bmap =
+                    (edge_sync0 && !sync_blocking_values.empty()) ? &sync_blocking_values : nullptr;
+                RTLIL::SigSpec idx = import_expression(bs->VpiIndex(), bmap);
+                if (!idx.is_fully_const() && !idx.empty()) {
+                    RTLIL::SigSpec bit_rhs;
+                    if (auto rhs_any = uhdm_assign->Rhs())
+                        if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                            bit_rhs = import_expression(rhs_e, bmap);
+                    if (!bit_rhs.empty()) {
+                        int W = base_wire->width;
+                        RTLIL::SigSpec base_lhs(base_wire);
+                        RTLIL::SigSpec cur = pending_sync_assignments.count(base_lhs)
+                            ? pending_sync_assignments.at(base_lhs) : base_lhs;
+                        RTLIL::SigSpec pos = idx;
+                        pos.extend_u0(std::max(32, idx.size()), false);
+                        if (base_wire->start_offset != 0)
+                            pos = module->Sub(NEW_ID, pos, RTLIL::Const(base_wire->start_offset, pos.size()), false);
+                        RTLIL::SigSpec onehot = module->Shl(NEW_ID, RTLIL::SigSpec(RTLIL::Const(1, W)), pos, false);
+                        RTLIL::SigSpec bitv = bit_rhs.extract(0, 1);
+                        bitv.extend_u0(W, false);
+                        RTLIL::SigSpec data = module->Shl(NEW_ID, bitv, pos, false);
+                        RTLIL::SigSpec keep = module->And(NEW_ID, cur, module->Not(NEW_ID, onehot));
+                        RTLIL::SigSpec new_val = module->Or(NEW_ID, keep, module->And(NEW_ID, data, onehot));
+                        RTLIL::SigSpec next = new_val;
+                        if (!current_condition.empty()) {
+                            RTLIL::Wire* mux_out = module->addWire(NEW_ID, W);
+                            module->addMux(NEW_ID, cur, new_val, current_condition, mux_out);
+                            next = RTLIL::SigSpec(mux_out);
+                        }
+                        pending_sync_assignments[base_lhs] = next;
+                        note_pending_sync(base_lhs);
+                        log("            Dynamic bit-select write folded into base %s\n", log_id(base_wire->name));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
 
