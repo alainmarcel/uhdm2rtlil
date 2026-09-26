@@ -9283,6 +9283,23 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // Check if this is a function input parameter
     if (input_mapping) {
         auto it = input_mapping->find(ref_name);
+        // A block-local declared by a SECOND always_comb under a name an
+        // earlier block already used gets a renamed wire (`shift$2`), and
+        // its blocking writes are recorded under that wire name — while a
+        // read still asks for the bare `shift`.  The miss fell through to
+        // the wire, i.e. the local's FINAL value, so every earlier unrolled
+        // iteration read the last one's (common_cells cc_plru_tree: both
+        // comb blocks declare `automatic int idx_base, shift; logic
+        // new_index;` — plru_o was wrong from cycle 0).  Retry under the
+        // name the bare ref resolves to.
+        if (it == input_mapping->end() && input_mapping == &current_comb_values) {
+            auto nm = name_map.find(ref_name);
+            if (nm != name_map.end() && nm->second) {
+                std::string wn = nm->second->name.str();
+                if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                if (wn != ref_name) it = input_mapping->find(wn);
+            }
+        }
         if (it != input_mapping->end()) {
             if (mode_debug)
                 log("    Found %s in function input_mapping\n", ref_name.c_str());
