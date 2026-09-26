@@ -13821,7 +13821,65 @@ bool UhdmImporter::emit_dynamic_concat_lhs_write(
 }
 
 // Import assignment for comb context (Process* variant)
+// In always_ff body mode a NON-blocking assignment must not become the
+// signal's in-flight value (LRM 9.4.2: the register keeps its old value
+// until the end of the time step), yet several whole-wire / partial-write
+// sites below record the RHS into current_comb_values unconditionally, and
+// the `if` / `case` condition importers consult that map whenever a comb
+// process is active.  verilog-ethernet ptp_clock_cdc's sample block
+// (`sample_cnt_reg <= sample_cnt_reg + 1; ... if (sample_cnt_reg == 0)`)
+// compared the NEXT counter value, firing the sample reset a cycle early
+// (249 co-sim divergences).  Rather than guard every recording site, save
+// the entries of the LHS base name(s) before the assignment and restore
+// them afterwards -- the assignment's writes then stay invisible to later
+// reads, while a BLOCKING write in the same body is still recorded (and
+// ff_blocking_temps handles its same-cycle read).
+struct NbInflightGuard {
+    UhdmImporter* imp = nullptr;
+    bool active = false;
+    std::vector<std::pair<std::string, std::pair<bool, RTLIL::SigSpec>>> saved;
+    void add_key(const std::string& k) {
+        if (k.empty()) return;
+        for (auto& e : saved) if (e.first == k) return;
+        auto it = imp->current_comb_values.find(k);
+        saved.push_back({k, {it != imp->current_comb_values.end(),
+                             it != imp->current_comb_values.end() ? it->second : RTLIL::SigSpec()}});
+        auto ai = imp->comb_value_aliases.find(k);
+        if (ai != imp->comb_value_aliases.end() && ai->second != k) add_key(ai->second);
+    }
+    void add_expr(const any* e) {
+        if (!e) return;
+        if (e->VpiType() == vpiOperation) {
+            auto op = any_cast<const operation*>(e);
+            if (op->Operands()) for (auto* o : *op->Operands()) add_expr(o);
+            return;
+        }
+        std::string n(e->VpiName());
+        add_key(n);
+        size_t dot = n.find('.');
+        if (dot != std::string::npos) add_key(n.substr(0, dot));
+        if (e->VpiType() == vpiHierPath) {
+            auto hp = any_cast<const hier_path*>(e);
+            if (hp->Path_elems() && !hp->Path_elems()->empty())
+                add_key(std::string(hp->Path_elems()->front()->VpiName()));
+        }
+    }
+    NbInflightGuard(UhdmImporter* i, const assignment* a) : imp(i) {
+        if (!imp->in_always_ff_body_mode || !a || a->VpiBlocking()) return;
+        add_expr(a->Lhs());
+        active = !saved.empty();
+    }
+    ~NbInflightGuard() {
+        if (!active) return;
+        for (auto& e : saved) {
+            if (e.second.first) imp->current_comb_values[e.first] = e.second.second;
+            else imp->current_comb_values.erase(e.first);
+        }
+    }
+};
+
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
+    NbInflightGuard nb_guard(this, uhdm_assign);
     // A COMPOUND assignment (`x[i] |= t`, `x[i] ^= t`, ...) must fold the
     // target's CURRENT value into the RHS.  The generic path below does that
     // just before emitting (see "Handle compound assignment operators"), but
@@ -14699,6 +14757,7 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
 
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
+    NbInflightGuard nb_guard(this, uhdm_assign);
 
 
 
