@@ -4961,6 +4961,46 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // elaborated instance and measure that instead.
                     if (auto ro = dynamic_cast<const UHDM::ref_obj*>(first_arg)) {
                         const UHDM::typespec* bound_ts = nullptr;
+                        const UHDM::module_inst* bound_scope = current_instance;
+                        // `.IdWidth($bits(id_t))` -- the call is the RHS of a
+                        // parameter OVERRIDE of a child instance, so its names
+                        // are written in the INSTANTIATING scope.  Surelog binds
+                        // the ref to the child's own `localparam type id_t =
+                        // logic[IdWidth-1:0]` (common_cells cc_id_queue under
+                        // PULP axi_burst_splitter_gran), which recurses into the
+                        // very parameter being set: the queue was built at
+                        // IdWidth 1 / 2 instead of 4 and its registers read
+                        // undriven in every axi_burst_splitter / unwrap /
+                        // to_axi_lite instance.  The override's RHS node is
+                        // detached (no parent chain) and Surelog stamps it with
+                        // the instantiation site, so the two callers that
+                        // evaluate an override (the signature builders and
+                        // import_parameter) record the child in
+                        // override_eval_child_; resolve the name in that
+                        // child's parent scopes before trusting Actual_group,
+                        // so both agree on IdWidth.
+                        if (override_eval_child_) {
+                            std::string want(ro->VpiName());
+                            for (const UHDM::any* pp = override_eval_child_->VpiParent(); pp && !bound_ts; pp = pp->VpiParent()) {
+                                auto mi = dynamic_cast<const UHDM::module_inst*>(pp);
+                                if (!mi) continue;
+                                if (mi->Parameters())
+                                    for (auto p : *mi->Parameters()) {
+                                        if (p->UhdmType() != uhdmtype_parameter || p->VpiName() != want) continue;
+                                        if (auto tp = any_cast<const UHDM::type_parameter*>(p))
+                                            if (tp->Typespec()) { bound_ts = tp->Typespec()->Actual_typespec(); break; }
+                                    }
+                                if (!bound_ts && mi->Typespecs())
+                                    for (auto ts : *mi->Typespecs()) {
+                                        std::string tn(ts->VpiName());
+                                        size_t cc = tn.rfind("::");
+                                        if (cc != std::string::npos) tn = tn.substr(cc + 2);
+                                        if (tn == want) { bound_ts = ts; break; }
+                                    }
+                                if (bound_ts) bound_scope = mi;
+                            }
+                        }
+                        if (!bound_ts)
                         if (auto ag = ro->Actual_group()) {
                             if (ag->UhdmType() == uhdmtype_parameter)
                                 if (auto tp = any_cast<const UHDM::type_parameter*>(ag))
@@ -4974,7 +5014,6 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         // `$bits` in a parameter default is exactly that
                         // case), so fall back to walking the call's parent
                         // chain to whatever scope encloses it.
-                        const UHDM::module_inst* bound_scope = current_instance;
                         if (!bound_ts) {
                             // Every enclosing instance, innermost first: the
                             // call may sit in a CHILD instance's parameter
@@ -9617,7 +9656,15 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                             if (re->UhdmType() != uhdmconstant)
                                 if (auto pp = dynamic_cast<const UHDM::module_inst*>(ci->VpiParent()))
                                     current_instance = pp;
+                            // same override context as the signature builders
+                            // and import_parameter: `$bits(id_t)` resolves in
+                            // the parent's scope (cc_id_queue's IdWidth read 2
+                            // through the cycle guard here, after the other two
+                            // paths already agreed on 4).
+                            const UHDM::module_inst* saved_oc4 = override_eval_child_;
+                            if (param_assign_is_override(ci, param_name, re)) override_eval_child_ = ci;
                             RTLIL::SigSpec rs = import_expression(re);
+                            override_eval_child_ = saved_oc4;
                             current_instance = saved_pi;
                             if (rs.is_fully_const() && rs.size() > 0) {
                                 param_value = rs.as_const();
