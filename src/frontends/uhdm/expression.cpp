@@ -17779,7 +17779,55 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // apply it to the member's slice.
                 int sub_lsb = 0, sub_width = 0;
                 bool have_sub = false;
-                {
+                // The range bounds may be EXPRESSIONS Surelog could not fold,
+                // left in the member NAME as their decompiled text:
+                // `r_req_q.ar.addr[idx_width(AxiMstPortStrbWidth)-1:0]` (PULP
+                // axi_dw_downsizer's lane offsets, in a generate scope) arrives
+                // as `addr[ - 1:0]`.  The text parser below cannot read that,
+                // so the range was dropped and the WHOLE 32-bit address became
+                // the byte offset -- every lane condition `b >= offset` was
+                // false and no data byte was ever steered.  Resolve the range
+                // from the hier_path's own trailing part_select /
+                // indexed_part_select node, folding the bounds.
+                if (!remaining_path.empty() && remaining_path.back() == ']' &&
+                    uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
+                    size_t ob = remaining_path.find_last_of('[');
+                    const any* last_pe = uhdm_hier->Path_elems()->back();
+                    bool saved_fcf_ps = force_const_fold;
+                    force_const_fold = true;
+                    if (auto lps = dynamic_cast<const part_select*>(last_pe)) {
+                        if (lps->Left_range() && lps->Right_range()) {
+                            RTLIL::SigSpec l = import_expression(lps->Left_range());
+                            RTLIL::SigSpec r = import_expression(lps->Right_range());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int a = l.as_int(), b = r.as_int();
+                                sub_lsb = std::min(a, b);
+                                sub_width = std::abs(a - b) + 1;
+                                have_sub = true;
+                            }
+                        }
+                    } else if (auto lips = dynamic_cast<const indexed_part_select*>(last_pe)) {
+                        if (lips->Base_expr() && lips->Width_expr()) {
+                            RTLIL::SigSpec bsx = import_expression(lips->Base_expr());
+                            RTLIL::SigSpec wsx = import_expression(lips->Width_expr());
+                            if (bsx.is_fully_const() && wsx.is_fully_const()) {
+                                int b = bsx.as_int(), w = wsx.as_int();
+                                sub_width = w;
+                                sub_lsb = (lips->VpiIndexedPartSelectType() == vpiPosIndexed)
+                                              ? b : b - w + 1;
+                                have_sub = true;
+                            }
+                        }
+                    }
+                    force_const_fold = saved_fcf_ps;
+                    if (have_sub && ob != std::string::npos) {
+                        remaining_path = remaining_path.substr(0, ob);
+                        if (mode_debug)
+                            log("    folded member range -> '%s' [%d +: %d]\n",
+                                remaining_path.c_str(), sub_lsb, sub_width);
+                    }
+                }
+                if (!have_sub) {
                     size_t ob = remaining_path.find_last_of('[');
                     if (ob != std::string::npos &&
                         remaining_path.back() == ']') {
