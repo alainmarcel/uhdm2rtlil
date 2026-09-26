@@ -3060,6 +3060,63 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             continue;
                         }
                     }
+                    // INSTANCE-ARRAY member (`mux2 #(1) LRUMuxes[N-1:0](a, b, s, y)`,
+                    // cvw cacheLRU): Surelog elaborates the array into
+                    // `LRUMuxes[0]`, `LRUMuxes[1]`, ... and hands EVERY member
+                    // the full actual.  LRM 28.3.5: an actual as wide as
+                    // (port width x member count) is sliced, member k taking
+                    // slice k (lowest index at the LSBs); an actual of the
+                    // port's own width goes to all members.  Connected whole,
+                    // every member drove `NextLRU[...]` in full and flatten
+                    // reported the second member's mux driving the first's.
+                    RTLIL::Wire* arr_port_wire = nullptr;
+                    if (RTLIL::Module* tm = design->module(cell->type))
+                        arr_port_wire = tm->wire(RTLIL::escape_id(port_name));
+                    if (arr_port_wire && arr_port_wire->width > 0 &&
+                        actual_sig.size() > arr_port_wire->width &&
+                        actual_sig.size() % arr_port_wire->width == 0 &&
+                        !inst_name.empty() && inst_name.back() == ']') {
+                        size_t lb = inst_name.rfind('[');
+                        std::string ks = lb == std::string::npos ? "" : inst_name.substr(lb + 1, inst_name.size() - lb - 2);
+                        auto all_digits = [](const std::string& t) { if (t.empty()) return false; for (char c : t) if (c < '0' || c > '9') return false; return true; };
+                        bool numeric = all_digits(ks);
+                        if (numeric) {
+                            int k = atoi(ks.c_str());
+                            std::string base = inst_name.substr(0, lb);
+                            // siblings are named bare (`LRUMuxes[1]`) while
+                            // inst_name may carry the generate prefix
+                            size_t dot = base.rfind('.');
+                            if (dot != std::string::npos) base = base.substr(dot + 1);
+                            int n = 0, low = 1 << 30;
+                            // the members' parent is the enclosing module OR
+                            // generate scope; both list them in Modules()
+                            const UHDM::VectorOfmodule_inst* sibs = nullptr;
+                            if (auto pm = dynamic_cast<const UHDM::module_inst*>(uhdm_inst->VpiParent()))
+                                sibs = pm->Modules();
+                            else if (auto pg = dynamic_cast<const UHDM::gen_scope*>(uhdm_inst->VpiParent()))
+                                sibs = pg->Modules();
+                            if (sibs)
+                                for (auto sib : *sibs) {
+                                    std::string sn = std::string(sib->VpiName());
+                                    if (sn.size() > base.size() + 2 && sn.compare(0, base.size() + 1, base + "[") == 0 &&
+                                        sn.back() == ']') {
+                                        std::string sk = sn.substr(base.size() + 1, sn.size() - base.size() - 2);
+                                        if (all_digits(sk)) {
+                                            n++;
+                                            low = std::min(low, atoi(sk.c_str()));
+                                        }
+                                    }
+                                }
+                            if (n > 1 && actual_sig.size() == arr_port_wire->width * n) {
+                                int pos = k - low;
+                                if (pos >= 0 && pos < n) {
+                                    actual_sig = actual_sig.extract(pos * arr_port_wire->width, arr_port_wire->width);
+                                    log("    Instance-array member %s: port %s takes slice %d of the actual\n",
+                                        inst_name.c_str(), port_name.c_str(), pos);
+                                }
+                            }
+                        }
+                    }
                     cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 } else {
                     log_warning("Port %s has empty connection\n", port_name.c_str());
