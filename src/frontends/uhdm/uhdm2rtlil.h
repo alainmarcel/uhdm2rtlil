@@ -1224,6 +1224,7 @@ struct UhdmImporter {
     // case-statement context extension. Walks ref_obj into its target (variable,
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
+    void equality_extend_operands(const UHDM::operation* uhdm_op, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
     // SV §11.8.1: a binary arithmetic op (+ - * / %) is SIGNED only if EVERY
     // operand is signed; any unsigned operand makes the whole op unsigned.
     // Uses is_expr_signed on the UHDM operands so constants are classified
