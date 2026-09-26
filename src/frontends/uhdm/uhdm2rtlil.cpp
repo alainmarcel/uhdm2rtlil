@@ -6029,7 +6029,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
 
                 bool should_be_memory = !has_const_only && !is_comb_only_net && !has_mem2reg_attr &&
-                                        !async_reset_filled_arrays.count(array_name);
+                                        !async_reset_filled_arrays.count(array_name) &&
+                    // elements driven by instance outputs (`.state_out(crc_next[n])`
+                    // in a generate loop, verilog-ethernet axis_eth_fcs): the
+                    // array_var site honours inst_elem_written_arrays, this
+                    // array_net site did not, so a DEAD dynamic read
+                    // (`crc_next[i]` under `if (KEEP_ENABLE)`, KEEP_ENABLE=0)
+                    // made it a writer-less $memory whose $memrd returned X
+                    // (297 co-sim divergences, formal differs).
+                    !inst_elem_written_arrays.count(array_name);
 
                 if (should_be_memory) {
                     log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
