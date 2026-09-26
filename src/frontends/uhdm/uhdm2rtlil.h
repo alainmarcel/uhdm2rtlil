@@ -1230,6 +1230,7 @@ struct UhdmImporter {
     // case-statement context extension. Walks ref_obj into its target (variable,
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
+    int context_operand_width(const UHDM::any* o, const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     void equality_extend_operands(const UHDM::operation* uhdm_op, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
     RTLIL::SigSpec case_item_wildcards(const UHDM::case_stmt* uhdm_case, const RTLIL::SigSpec& sig);
     bool one_bit_array_is_memory(const std::string& name, int unpacked_dims);

@@ -6629,6 +6629,19 @@ void UhdmImporter::equality_extend_operands(const operation* uhdm_op,
         lhs.extend_u0(rhs.size(), both_signed || (lhs.is_fully_const() && folded_arith(e0)));
 }
 
+// Self-determined width of an operand for context sizing (LRM 11.6.1): an
+// UNSIZED literal is 32 bits (LRM 5.7.1) even though Surelog stores it at 64,
+// a sized literal is its size, anything else its self-determined width.
+int UhdmImporter::context_operand_width(const any* o,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    if (auto c = any_cast<const constant*>(o)) {
+        std::string_view d = c->VpiDecompile();
+        if (d.find('\'') == std::string_view::npos) return 32;
+        return c->VpiSize() > 0 ? c->VpiSize() : 0;
+    }
+    return self_determined_width(o, input_mapping);
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -7640,10 +7653,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // inner sub at 10 bits while the 32/64-bit literal `1` widened the
         // add — p-z wrapped for p-z < -512 and the (signed) compare took
         // the wrong branch (fpnew_fma subnormals; signed_interm_cmp).
+        // An UNSIZED literal counts as 32 bits here (LRM 5.7.1), not the 64
+        // Surelog stores: `~(arp_request_ip | subnet_mask) == 0`
+        // (verilog-ethernet arp) inverted at 64 bits, so the upper half was
+        // never zero and the in-subnet reply arm was dead (arp, ip_complete,
+        // ip_complete_64 formal counterexamples with defined inputs).
         expression_context_width = 0;
         if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
-            int sa = self_determined_width((*uhdm_op->Operands())[0], input_mapping);
-            int sb = self_determined_width((*uhdm_op->Operands())[1], input_mapping);
+            int sa = context_operand_width((*uhdm_op->Operands())[0], input_mapping);
+            int sb = context_operand_width((*uhdm_op->Operands())[1], input_mapping);
             if (sa > 0 && sb > 0)
                 expression_context_width = std::max(sa, sb);
         }
@@ -7675,15 +7693,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                          op_type == vpiBitXorOp || op_type == vpiBitXNorOp;
         if (arith_ctx && expression_context_width > 0 && uhdm_op->Operands() &&
             uhdm_op->Operands()->size() == 2) {
-            auto cw = [&](const any* o) -> int {
-                if (auto c = any_cast<const constant*>(o)) {
-                    std::string_view d = c->VpiDecompile();
-                    if (d.find('\'') == std::string_view::npos) return 32;
-                    return c->VpiSize() > 0 ? c->VpiSize() : 0;
-                }
-                return self_determined_width(o, input_mapping);
-            };
-            int w = std::max(cw((*uhdm_op->Operands())[0]), cw((*uhdm_op->Operands())[1]));
+            int w = std::max(context_operand_width((*uhdm_op->Operands())[0], input_mapping),
+                             context_operand_width((*uhdm_op->Operands())[1], input_mapping));
             if (w > expression_context_width) expression_context_width = w;
         }
     }
