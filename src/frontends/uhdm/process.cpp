@@ -10985,13 +10985,23 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 // clear adds many).  All-1s = this (later-in-source) write wins
                 // over every prior one — the standard Verilog last-write-wins
                 // semantics.
+                // ...but only over prior writes to the SAME memory: proc_memwr
+                // maps each set bit through that memory's own prev_port_ids,
+                // so a bit for a prior write to a DIFFERENT memory indexes past
+                // that list and SEGFAULTS (verilog-pcie pcie_tlp_mux /
+                // axis_ram_switch / dma_if_pcie*: one loop writes a dozen
+                // per-port arrays in turn).  Same rule as the other two sites.
                 int nprev_writes = (int)sync->mem_write_actions.size();
+                std::vector<RTLIL::State> pmask(nprev_writes, RTLIL::State::S0);
+                for (int j = 0; j < nprev_writes; j++)
+                    if (sync->mem_write_actions[j].memid == mem_id)
+                        pmask[j] = RTLIL::State::S1;
                 sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
                 RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
                 action.memid = mem_id;
                 action.address = addr;
                 action.data = data;
-                action.priority_mask = RTLIL::Const(RTLIL::State::S1, nprev_writes);
+                action.priority_mask = RTLIL::Const(pmask);
                 
                 // Use current condition as enable if we're inside an if statement
                 if (!current_condition.empty()) {
