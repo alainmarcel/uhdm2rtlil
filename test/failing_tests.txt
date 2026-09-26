@@ -317,3 +317,12 @@ packed_typedef_elem_select
 # verilog equivalence, the slang miter, and a uhdm-vs-verilog SAT miter — so
 # the frontend is not at fault, only the packed-struct-array port lowering.
 struct_array_member_cond_write
+
+# A register written by TWO always blocks (posedge and negedge, verilog-
+# ethernet oddr) is multi-driven by design: `proc` makes two $dff cells
+# on \genblk1.q_reg on BOTH frontends, and the harness's write_verilog
+# round trip of the read_verilog side then aborts ("Cannot add cell
+# \genblk1.q_reg_reg because a cell with the same name was already
+# created").  Not a reader defect; the read_slang miter is the gate
+# (it fails without the fix in process.cpp's comb-style FF path).
+genscope_two_procs_same_reg

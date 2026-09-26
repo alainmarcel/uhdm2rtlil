@@ -3393,6 +3393,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                     // Set context so map_to_temp_wire() finds the $0\ wires
                     current_temp_wires = temp_wires_map;
+                    // Register this process's temps by SIGNAL NAME too: the
+                    // body's name-based lookup (find_own_temp_wire) falls back
+                    // to `$0\<name>` when no map has the name, which is
+                    // another process's temp once this one owns `$1\<name>`.
+                    // A second always block writing the same generate-scope
+                    // register (verilog-ethernet oddr's posedge/negedge
+                    // `q_reg`) then assigned the first block's `$0` and
+                    // updated from its own untouched `$1`: the negedge write
+                    // vanished, and after flatten the shared `$0` aliased two
+                    // differently-initialised nets ("Conflicting init values"
+                    // in rgmii_phy_if).
+                    comb_signal_temp_map.clear();
+                    for (const auto& [sig_name, temp_wire] : signal_temp_wires)
+                        comb_signal_temp_map[sig_name] = temp_wire;
 
                     // Add hold defaults: $0\x = \x (ensures registers hold value when not assigned)
                     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
