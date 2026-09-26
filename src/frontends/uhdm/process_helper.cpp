@@ -2520,6 +2520,21 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
 }
 
 // TARGETED FIX: Check if a single net is a memory array (has both packed and unpacked dimensions)
+// A 1-bit element unpacked array becomes a width-1 memory only when it is
+// ONE-dimensional, accessed inside a clocked always block, and never used
+// as a whole value: `logic a [1:0][2:0]` with per-element continuous
+// assigns (2DUnpackedArray), `assign b = a` (array-copy) and
+// `sel ? a3 : b3` (array_assign) must keep the per-element / single-wire
+// handling that every wider array with the same usage gets through the
+// callers' whole-array and comb-only vetoes -- those vetoes run AFTER this
+// gate for nets, so the gate itself must stay narrow.
+bool UhdmImporter::one_bit_array_is_memory(const std::string& name, int unpacked_dims) {
+    if (unpacked_dims != 1) return false;
+    if (whole_array_accessed_names.count(name)) return false;
+    if (!clocked_access_arrays.count(name)) return false;
+    return true;
+}
+
 bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     if (!uhdm_net) return false;
     
@@ -2602,6 +2617,17 @@ bool UhdmImporter::is_memory_array(const UHDM::array_net* uhdm_array) {
                     }
                     return true;
                 }
+                // A module-level `reg t [N-1:0]` elaborates as an array_net
+                // (not an array_var), so this is the gate a 1-bit element
+                // array actually reaches -- see the array_var overload for
+                // the rationale (pcie_us_axi_dma_wr's op table).
+                if (one_bit_array_is_memory(std::string(uhdm_array->VpiName()),
+                                            uhdm_array->Ranges() ? (int)uhdm_array->Ranges()->size() : 0)) {
+                    if (mode_debug)
+                        log("    Detected memory array: %s (array_net with 1-bit element)\n",
+                            std::string(uhdm_array->VpiName()).c_str());
+                    return true;
+                }
             }
         }
     }
@@ -2638,6 +2664,23 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                         log("    Detected memory array: %s (array_var with packed dimensions)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     }
+                    return true;
+                }
+                // A ONE-BIT element array (`reg op_table_bubble_cycle [N-1:0]`,
+                // verilog-pcie pcie_us_axi_dma_wr's op table) has no packed
+                // range, so it was never a memory; its dynamic write in the
+                // sync block then went through the per-element comb path and
+                // came out as `en ? data : 'x` with NO flop (the write was
+                // visible the same cycle and gone the next -- 260 co-sim
+                // divergences, plus a logic loop).  read_slang keeps it as a
+                // width-1 memory (`reg [0:0] x [7:0]`); so do we now.  A
+                // constant-indexed one still becomes per-element registers
+                // through has_only_constant_array_accesses.
+                if (one_bit_array_is_memory(std::string(uhdm_array->VpiName()),
+                                            uhdm_array->Ranges() ? (int)uhdm_array->Ranges()->size() : 0)) {
+                    if (mode_debug)
+                        log("    Detected memory array: %s (array_var with 1-bit element)\n",
+                            std::string(uhdm_array->VpiName()).c_str());
                     return true;
                 }
             }

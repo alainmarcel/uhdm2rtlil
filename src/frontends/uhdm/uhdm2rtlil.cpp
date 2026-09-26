@@ -3519,17 +3519,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // became a $memory whose comb partial write overran the data wire).
     struct ClassificationGuard {
         UhdmImporter* self;
-        std::set<std::string> comb_only, inst_elem, whole, async_filled, proc_elem;
+        std::set<std::string> comb_only, inst_elem, whole, async_filled, proc_elem, clocked_acc;
         ClassificationGuard(UhdmImporter* s) : self(s),
             comb_only(s->comb_only_arrays), inst_elem(s->inst_elem_written_arrays),
             whole(s->whole_array_accessed_names), async_filled(s->async_reset_filled_arrays),
-            proc_elem(s->proc_elem_written) {}
+            proc_elem(s->proc_elem_written), clocked_acc(s->clocked_access_arrays) {}
         ~ClassificationGuard() {
             self->comb_only_arrays = std::move(comb_only);
             self->inst_elem_written_arrays = std::move(inst_elem);
             self->whole_array_accessed_names = std::move(whole);
             self->async_reset_filled_arrays = std::move(async_filled);
             self->proc_elem_written = std::move(proc_elem);
+            self->clocked_access_arrays = std::move(clocked_acc);
         }
     } classification_guard(this);
     // A child imported from inside the parent's generate scope must not
@@ -4168,6 +4169,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         // Collect which array names are touched by clocked vs combinational always blocks.
         std::set<std::string> clocked_access;
         std::set<std::string> any_access;
+        clocked_access_arrays.clear();
         std::set<std::string> comb_written;
 
         // Helper: recursively collect bit_select names (= array element accesses)
@@ -4326,7 +4328,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             collect_array_accesses(stmt, accessed);
             for (const auto& name : accessed) {
                 any_access.insert(name);
-                if (is_clocked) clocked_access.insert(name);
+                if (is_clocked) { clocked_access.insert(name); clocked_access_arrays.insert(name); }
             }
             // Arrays WRITTEN from a combinational block: a $memory write port
             // is clocked, so such an array can never be a $memory even when a

@@ -571,6 +571,10 @@ struct UhdmImporter {
     // bit_select / var_select access patterns can safely flatten to per-element
     // wires (matching the Verilog frontend).
     std::set<std::string> whole_array_accessed_names;
+    // Arrays accessed (read or written) inside a CLOCKED always block of the
+    // current module -- the only place a 1-bit element array is worth a
+    // width-1 $mem (see is_memory_array's 1-bit branch).
+    std::set<std::string> clocked_access_arrays;
     // Arrays whose ELEMENTS appear as INSTANCE port actuals
     // (`.rd_data_o(pmp_addr[i])`, `.counter_val_o(mhpmcounter[N])`): an
     // instance output cannot drive a $memory or a collapsed wire — these
@@ -1227,6 +1231,7 @@ struct UhdmImporter {
     bool is_expr_signed(const UHDM::expr* e);
     void equality_extend_operands(const UHDM::operation* uhdm_op, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
     RTLIL::SigSpec case_item_wildcards(const UHDM::case_stmt* uhdm_case, const RTLIL::SigSpec& sig);
+    bool one_bit_array_is_memory(const std::string& name, int unpacked_dims);
     RTLIL::SigSpec wildcard_eq(const RTLIL::SigSpec& sig, const RTLIL::SigSpec& cmp);
     // SV §11.8.1: a binary arithmetic op (+ - * / %) is SIGNED only if EVERY
     // operand is signed; any unsigned operand makes the whole op unsigned.
