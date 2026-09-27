@@ -6704,6 +6704,65 @@ int UhdmImporter::context_operand_width(const any* o,
     return self_determined_width(o, input_mapping);
 }
 
+
+// `{a, b, c, d}` assigned to a whole UNPACKED array (`logic [6:0] taps [3:0]`)
+// is an unpacked-array concatenation: one operand per element.  Resolve the
+// target's element count, element width and range direction from the
+// assignment's LHS declaration (definition-view array_var, or the elaborated
+// logic_net/var whose typespec is the typedef's array_typespec).  Only a
+// plain ref_obj target (the whole array) qualifies.
+bool UhdmImporter::unpacked_array_concat_geometry(const UHDM::operation* op, int& n, int& ew, bool& asc) {
+    if (!op || !op->VpiParent()) return false;
+    const UHDM::any* parent = op->VpiParent();
+    const UHDM::any* lhs = nullptr;
+    if (parent->UhdmType() == uhdmassignment)
+        lhs = any_cast<const UHDM::assignment*>(parent)->Lhs();
+    else if (parent->UhdmType() == uhdmcont_assign)
+        lhs = any_cast<const UHDM::cont_assign*>(parent)->Lhs();
+    if (!lhs || lhs->UhdmType() != uhdmref_obj) return false;
+    const UHDM::any* decl = any_cast<const UHDM::ref_obj*>(lhs)->Actual_group();
+    if (!decl) return false;
+    const UHDM::VectorOfrange* ranges = nullptr;
+    const UHDM::typespec* elem_ts = nullptr;
+    const UHDM::any* inner = nullptr;
+    const UHDM::ref_typespec* rt = nullptr;
+    if (auto av = dynamic_cast<const UHDM::array_var*>(decl)) {
+        ranges = av->Ranges();
+        if (av->Variables() && !av->Variables()->empty()) inner = (*av->Variables())[0];
+        rt = av->Typespec();
+    } else if (auto an = dynamic_cast<const UHDM::array_net*>(decl)) {
+        ranges = an->Ranges();
+        rt = an->Typespec();
+    } else if (auto lv = dynamic_cast<const UHDM::logic_var*>(decl)) {
+        rt = lv->Typespec();
+    } else if (auto ln = dynamic_cast<const UHDM::logic_net*>(decl)) {
+        rt = ln->Typespec();
+    } else {
+        return false;
+    }
+    if (rt && rt->Actual_typespec() && rt->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+        auto at = any_cast<const UHDM::array_typespec*>(rt->Actual_typespec());
+        if (!ranges || ranges->empty()) ranges = at->Ranges();
+        if (at->Elem_typespec()) elem_ts = at->Elem_typespec()->Actual_typespec();
+    }
+    if (!ranges || ranges->size() != 1) return false;
+    auto r0 = (*ranges)[0];
+    if (!r0->Left_expr() || !r0->Right_expr()) return false;
+    bool sf = force_const_fold;
+    force_const_fold = true;
+    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+    RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+    force_const_fold = sf;
+    if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+    int l = ls.as_int(), r = rs.as_int();
+    n = std::abs(l - r) + 1;
+    asc = l < r;
+    ew = 0;
+    if (inner) ew = get_width(inner, current_instance);
+    if (ew <= 0 && elem_ts) ew = get_width_from_typespec(elem_ts, current_instance);
+    return ew > 0 && n > 0;
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
@@ -7622,10 +7681,24 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         has_missized_enum_operand = refs_mse(uhdm_op);
     }
 
+    // A concatenation assigned to an UNPACKED array (`taps = {'d64, 'd63,
+    // 'd61, 'd60}` into `logic [6:0] taps [3:0]`, PULP axi_opt_lfsr) is an
+    // unpacked-array concatenation: one operand per ELEMENT, each cast to the
+    // element type.  ExprEval folds it as a PACKED concat of the literals at
+    // their minimal widths (7+6+6+6 bits) -- garbage in every element.  Keep
+    // it out of the fold; the element-wise path below handles it.
+    bool has_unpacked_array_concat_target = false;
+    int uac_n = 0, uac_ew = 0;
+    bool uac_asc = false;
+    if (op_type == vpiConcatOp && !uhdm_op->VpiReordered() && uhdm_op->Operands())
+        has_unpacked_array_concat_target =
+            unpacked_array_concat_geometry(uhdm_op, uac_n, uac_ew, uac_asc) &&
+            (size_t)uac_n == uhdm_op->Operands()->size();
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
         !has_struct_param_hier_operand && !has_loop_value_operand &&
         !has_param_replication_count && !has_gen_scope_param_operand &&
-        !has_missized_enum_operand) {
+        !has_missized_enum_operand && !has_unpacked_array_concat_target) {
         ExprEval eval;
         // Element select on a multi-dimensional packed PARAMETER
         // (`localparam logic [1:0][31:0] ADDR_MASK_PERI`): ExprEval reads the
@@ -7857,6 +7930,36 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (op_type == vpiLogOrOp && as_true)
                 return RTLIL::SigSpec(RTLIL::State::S1);
         }
+    }
+
+    // UNPACKED array concatenation: `taps = {'d64, 'd63, 'd61, 'd60}`
+    // into `logic [6:0] taps [3:0]` (PULP axi_opt_lfsr's tap
+    // table) assigns one operand per ELEMENT, each cast to the
+    // element type.  Treated as a packed concat, the four unsized
+    // 32-bit literals made a 128-bit vector whose low 28 bits
+    // landed in the flat array wire -- every element garbage and
+    // the LFSR feedback tap out of range.  When the assignment's
+    // target is a one-dimensional unpacked array with as many
+    // elements as operands, size each operand to the element
+    // width and place it by element index (the flat wire keeps
+    // element 0 at the LSB; a descending `[3:0]` lists element 3
+    // first, an ascending `[0:3]` lists element 0 first).
+    if (has_unpacked_array_concat_target && (size_t)uac_n == operands.size()) {
+        RTLIL::SigSpec result;
+        auto fit = [&](RTLIL::SigSpec v) {
+            if (v.size() < uac_ew) v.extend_u0(uac_ew, false);
+            else if (v.size() > uac_ew) v = v.extract(0, uac_ew);
+            return v;
+        };
+        // The flat wire keeps element 0 at the LSB: a descending `[3:0]`
+        // lists element 3 first (goes to the top), an ascending `[0:3]`
+        // lists element 0 first (goes to the bottom).
+        if (uac_asc)
+            for (int i = 0; i < uac_n; i++) result.append(fit(operands[i]));
+        else
+            for (int i = uac_n - 1; i >= 0; i--) result.append(fit(operands[i]));
+        log_debug("UHDM: unpacked-array concat: %d elements x %d bits\n", uac_n, uac_ew);
+        return result;
     }
 
     if (all_const && operands.size() > 0 &&
