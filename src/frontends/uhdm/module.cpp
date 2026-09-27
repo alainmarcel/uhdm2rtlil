@@ -3535,13 +3535,33 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                                 rr2 = rs.as_int();
                                 return true;
                             };
+                            // A duplicate only when the typespec is the ANONYMOUS
+                            // full type Surelog stamps on the function-return form
+                            // (its ranges ARE the pav's).  A NAMED typedef's ranges
+                            // are the typedef's own inner dims, never the
+                            // declaration's outer ones: `hpdcache_req_data_t
+                            // [RATIO-1:0][ways-1:0] data_read_words` with
+                            // `typedef word_t [0:0] hpdcache_req_data_t` (a TYPE
+                            // PARAMETER in hpdcache_memctrl) matched the typedef's
+                            // [0:0] against the declaration's [0:0] by value,
+                            // dropped both outer dims, and sized the 512-bit array
+                            // to 64 -- every `data_read_words[i][j][k]` write
+                            // became a 1-bit select and 56 bits of the way mux
+                            // input were undriven (CVA6 hpdcache_memctrl /
+                            // hpdcache_ctrl).
                             bool dup = false;
-                            if (tsrg && !tsrg->empty()) {
-                                int pl, pr, tl, tr;
-                                if (eval_rng((*pav->Ranges())[0], pl, pr) &&
-                                    eval_rng((*tsrg)[0], tl, tr) &&
-                                    pl == tl && pr == tr)
-                                    dup = true;
+                            if (tsrg && !tsrg->empty() && a->VpiName().empty() &&
+                                tsrg->size() == pav->Ranges()->size()) {
+                                dup = true;
+                                for (size_t ri = 0; ri < tsrg->size(); ri++) {
+                                    int pl, pr, tl, tr;
+                                    if (!eval_rng((*pav->Ranges())[ri], pl, pr) ||
+                                        !eval_rng((*tsrg)[ri], tl, tr) ||
+                                        pl != tl || pr != tr) {
+                                        dup = false;
+                                        break;
+                                    }
+                                }
                             }
                             if (!dup) {
                                 bool ok = true;
