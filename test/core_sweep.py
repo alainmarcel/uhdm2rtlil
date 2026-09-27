@@ -1367,6 +1367,23 @@ def _inst_cosims(rows, inst_dir, srcs, incs, var, extra, ties, cycles, jobs):
         if r["module"] not in types and "slang_cosim" not in r:
             r["slang_cosim"] = "—"
 
+# The chip flows print "# read_uhdm FAILED" / "# surelog produced no UHDM" /
+# "# wrapper generation FAILED" and then no instance at all.  A "0/0
+# instances equivalent" cell reads like an empty shard, not a broken read
+# (the 2026-09-27 caliptra and egret nightlies were green with no results
+# while read_uhdm was dying on both chips); name the failure in the row.
+_CHIP_FAIL_RE = re.compile(
+    r"# (read_uhdm(?: \(bare\))? FAILED|surelog produced no UHDM[^\n]*|"
+    r"wrapper generation FAILED|read_slang FAILED)")
+
+
+def _chip_top_formal(out, nproven, ninst):
+    m = _CHIP_FAIL_RE.search(out or "")
+    if m:
+        return f"❌ {m.group(1).strip()} — 0 instances"
+    return f"{nproven}/{ninst} instances equivalent"
+
+
 def sweep_chip(chip, jobs, cycles=300, flt=None):
     """Pavona full chip (top_egret / top_dragonfly): Surelog + read_uhdm +
     read_slang of the WHOLE top, a read_uhdm-vs-read_slang SAT miter per
@@ -1431,7 +1448,7 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
     nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
     # The merge job adds the shards' top rows together (see --merge).
     rows.insert(0, {"module": f"top_{chip} (full chip)",
-                    "formal": f"{nproven}/{len(rows)} instances equivalent",
+                    "formal": _chip_top_formal(out, nproven, len(rows)),
                     "cosim": cs, "slang_cosim": scs})
     return rows
 
@@ -1652,7 +1669,7 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
                      [f"CALIPTRA={env['CALIPTRA']}"], [], _CALIPTRA_TIES, cycles, jobs)
     nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
     rows.insert(0, {"module": "caliptra_top (full chip)",
-                    "formal": f"{nproven}/{len(rows)} instances equivalent",
+                    "formal": _chip_top_formal(out, nproven, len(rows)),
                     "cosim": cs, "slang_cosim": scs})
     return rows
 
@@ -1788,10 +1805,14 @@ def main():
         seen, uniq, tops = set(), [], {}
         for r in sorted(rows, key=lambda r: r["module"]):
             if r["module"].endswith("(full chip)"):
-                t = tops.setdefault(r["module"], dict(r, _n=0, _d=0))
+                t = tops.setdefault(r["module"], dict(r, _n=0, _d=0, _fail=""))
                 m = re.match(r"(\d+)/(\d+) instances", r.get("formal", ""))
                 if m:
                     t["_n"] += int(m.group(1)); t["_d"] += int(m.group(2))
+                elif str(r.get("formal", "")).startswith("❌"):
+                    # A shard whose chip read failed: the merged row says so
+                    # instead of summing the other shards' tallies quietly.
+                    t["_fail"] = r["formal"]
                 for k in ("cosim", "slang_cosim"):
                     if r.get(k, "—") != "—":
                         t[k] = r[k]
@@ -1801,7 +1822,9 @@ def main():
             seen.add(r["module"])
             uniq.append(r)
         for name, t in tops.items():
-            t["formal"] = f"{t.pop('_n')}/{t.pop('_d')} instances equivalent"
+            fail = t.pop("_fail", "")
+            n, d = t.pop("_n"), t.pop("_d")
+            t["formal"] = fail if fail else f"{n}/{d} instances equivalent"
             uniq.insert(0, t)
         report = render(args.core, uniq, cycles)
         print(report)
