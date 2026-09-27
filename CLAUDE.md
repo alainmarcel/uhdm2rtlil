@@ -480,6 +480,20 @@ Source-level cases found so far (NOT frontend bugs):
 | hdl-util `packet_picker` | `subs[255:0][3:0]` | sparse table, a handful of the 256 packet types implemented |
 | verilog-ethernet `xgmii_interleave` | `output_xgmii_dc[72]` | declared `[72:0]` = 73 bits, but the RTL drives only `[71:0]` (8 lanes x 9 bits); the 73rd bit has no assignment anywhere |
 | PULP axi `axi_lite_lfsr` | `i_axi_opt_lfsr_r.data_i` (64) | the read-side `axi_opt_lfsr` instance leaves `.data_i ( /* NOT CONNECTED */ )` with `inp_en_i` tied to 0; an unconnected input port has no driver |
+| cva6 `trigger_module` | every `*_q[i]` register (1044) | written only under `if (CVA6Cfg.SDTRIG)`; the sweep config has `SDTRIG: 0`, so no arm ever assigns them |
+| cva6 `id_stage` | `dcache_req_ports_o` (207) | driven only by `zcmt_decoder_i` inside `if (CVA6Cfg.RVZCMT)`; the else arm never assigns it and the config has `RVZCMT: 0` |
+| cva6 `cva6_hpdcache_if_adapter` | `cva6_amo_resp_o`, the flush FSM, most of `cva6_req_o` (130) | assigned only in the store-port arm; the sweep instantiates `IsLoadPort = 1` |
+| cva6 `control_mvp` (and `div_sqrt_top_mvp`, `nrbd_nrsc_mvp`, `fpnew_divsqrt_multi` above it) | `Iteration_cell_sum_AMASK_D[3]`, `Iteration_cell_carry_D[3]` (4) | the iteration-cell generate loop runs `i <= Iteration_unit_num_S` (= 2'b10, cells 0..2), but `Sqrt_quotinent_S` under `case (Format_sel_S)` reads all four `[0..3]`; element 3 has no driver anywhere |
+| XS-Verilog-Library `int64_div_cla3` | `rem[62][63]` | `rem` is triangular (`rem[i][i:0]` assigned per stage) and the last stage reads the whole `rem[62]`, including its never-assigned bit 63 (int64_div_cla3.sv:892) |
+| cva6 `zcmt_decoder` | `req_port_o.address_index`, `.address_tag` (64) | assigned only under `if (CVA6Cfg.IS_XLEN32)` inside the IDLE arm of the always_comb (no default); the sweep config is RV64 |
+| cva6 `wt_cache_subsystem` | `i_adapter.i_axi_shim.wr_data_i` (64) | the `wt_axi_adapter` row above, seen through its parent |
+| cva6 `std_nbdcache` (and `std_cache_subsystem`) | `valid_dirty_sram...i_tc_sram.wdata_i` (48) | `dirty_wdata` is `4*DCACHE_DIRTY_WIDTH` = 64 bits but the generate assigns only bits `[8*i]` (dirty) and `[8*i+1]` (valid) of each byte |
+| cva6 `cva6_ptw` | `bad_gpaddr_o` (41), `shared_tlb_update_o.v_st_enbl` (1) | `bad_gpaddr_o` is assigned only under `if (CVA6Cfg.RVH)` (config `RVH: 0`); `v_st_enbl` is never assigned anywhere in the ptw |
+| cva6 `cva6_mmu` (and `ex_stage`, `load_store_unit`) | `csr_hs_ld_st_inst_o` | assigned only inside `if (CVA6Cfg.RVH)` in the always_comb; config has `RVH: 0` |
+| cva6 `macro_decoder` | `itype_inst` minus `.imm` (20) | only the `imm` field of the `riscv::itype_t` local is ever assigned; the struct is read whole |
+| cva6 `hwpf_stride` | `hpdcache_req_o.pma.wr_policy_hint` (3) | the continuous-assign block sets every other field of the request and never this one |
+| cva6 `hpdcache_ctrl` | `prop_core_req_size_max`, `prop_core_req_be_align` (1 each) | SVA `property` names, same class as the caliptra row below |
+| rp32 `r5p_degu` / `r5p_degu_soc_top` / `r5p_mouse_soc_top` / `soc_vfriendly` | `tcb_lsu.req.byt` (4), mouse also `.ctl` (2) | `r5p_lsu` drives `siz`, never `byt` (the byte enables are derived downstream); the mouse config has `CTL: 0`, so `logic [CFG.BUS.CTL-1:0] ctl` is the degenerate `[-1:0]` and no core drives it |
 | caliptra | `unused_assert_connected` etc. | assertion hooks / SVA property names -- they vanish once `delete t:$check t:$assert` runs, which the sweeps DO.  Measuring without that step reports ~69 phantom undriven nets on caliptra_top_flat |
 
 DO NOT try to X-fill undriven nets inside read_uhdm.  It was attempted and
