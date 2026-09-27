@@ -312,7 +312,13 @@ module fpnew_opgroup_block_equiv
     parameter int unsigned                Width         = 32,
   parameter logic                       EnableVectors = 1'b1,
   parameter fpnew_pkg::divsqrt_unit_t   DivSqrtSel    = fpnew_pkg::THMULTI,
-  parameter fpnew_pkg::fmt_logic_t      FpFmtMask     = '1,
+  // Not the module default ('1): with the default Width of 32 the FP64 format
+  // has ZERO lanes (num_lanes = 32/64), so its slice divides Width by
+  // NUM_LANES = 0 and elaborates nothing -- a degenerate configuration no
+  // fpnew_top ever builds (CVA6 pairs FP64 with Width 64).  Keep every
+  // format that fits in 32 bits.  fmt_logic_t is [0:4] = {FP32, FP64, FP16,
+  // FP8, FP16ALT}.
+  parameter fpnew_pkg::fmt_logic_t      FpFmtMask     = 5'b10111,
   parameter fpnew_pkg::ifmt_logic_t     IntFmtMask    = '1,
   parameter fpnew_pkg::fmt_unsigned_t   FmtPipeRegs   = '{default: 0},
   parameter fpnew_pkg::fmt_unit_types_t FmtUnitTypes  = '{default: fpnew_pkg::PARALLEL},

@@ -58,7 +58,7 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (~1111 tests, ~30 min).  A PR lands
+`cd test && ./run_parallel.sh 6 --no-cva6` (~1120 tests, ~30 min).  A PR lands
 only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
@@ -71,9 +71,9 @@ only on a clean run.
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **986** tests formally equivalent UHDM vs Verilog; **576** UHDM-only
+- **986** tests formally equivalent UHDM vs Verilog; **578** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **122 / 123** SV-only designs also proven against `read_slang`, and **9**
+  **122 / 123** SV-only designs also proven against `read_slang`, and **10**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop or a missing `$mem` still "works" — it just returns
   constants).
@@ -112,7 +112,7 @@ proof gap is never mistaken for a bug.
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **19 / 22 instances proven** (the rest are SAT timeouts on vault register files, not mismatches), **21 / 21 co-sim (100%)**; **0 undriven, 0 driver conflicts**; full-chip co-sim **NO_DIVERGENCE** over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | The XiangShan project's **hand-written SystemVerilog** arithmetic library — SRT integer dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**: XiangShan itself is Chisel/Scala and emits no Verilog without running its generator | **16 / 19 proven**, 19 / 19 elaborate, **18 / 18 co-sim (100%)**, **0 undriven on 18 of 19**; 3 SAT timeouts (64-bit divide datapaths), 2 not comparable — `read_slang` rejects them for a port mismatch in the library's own RTL (`port 'quot_o' does not exist in 'radix_4_sign_coder'`) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig` (frontend + backend + vector + MMU, L2 + L3) — **there is no Verilog to read**: the sweep runs the Chisel generator itself (mill + firtool → **1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules**), then sweeps 42 of them | Whole core **elaborates clean**: Surelog 0 errors, `read_uhdm` + `hierarchy -check -top XSTop` exit 0, 1981 modules / 6.52 M cells, **1 warning**.  Per-module: **24 / 24 zero undriven, 23 / 24 co-sim PASS**, 11 proven — the rest are SAT budget (timeout / memory cap), 2 cex | `make xiangshan-core-full` (not CI-sized — see below) |
-| **External IP** (8 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **436 / 470 comparable modules proven**, **co-sim 100% in every family** (432 / 432 co-simulable modules track the RTL).  274 of 744 are **not comparable** and excluded: 7 cannot elaborate standalone with their own default parameters, 264 `read_slang` cannot read, 3 have interface ports.  Of the 34 comparable-but-unproven, **12 are miter errors** (7 of them one Surelog defect, [chipsalliance/Surelog#4189](https://github.com/chipsalliance/Surelog/issues/4189), that elaborated zero generate iterations in PULP's `id_queue` — fixed upstream in [#4192](https://github.com/chipsalliance/Surelog/pull/4192), the seven prove in a local re-sweep, nightly refresh pending; the rest blackbox SRAM / lint helpers), 8 are SAT budget (deep RAMs, 64-bit dividers), and the remaining differs are adjudicated source or Surelog classes — **0 `read_uhdm` read failures** (was 10).  Deliberately unfiltered — the un-curated tail (sweep of 2026-09-27) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **External IP** (8 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **446 / 470 comparable modules proven**, **co-sim 100% in every family** (439 / 439 co-simulable modules track the RTL).  274 of 744 are **not comparable** and excluded: 267 `read_slang` cannot read, 7 have interface ports or no standalone testbench.  Of the 24 comparable-but-unproven, **3 are miter errors** (blackbox SRAM / lint helpers `read_slang` rejects), 10 are SAT budget (7 timeouts, 3 over the memory cap: deep RAMs, 64-bit dividers), 3 cannot elaborate standalone with their own default parameters, and the 8 that differ are adjudicated source or Surelog classes — **0 `read_uhdm` read failures**.  Every remaining undriven row is a documented source-level case (CLAUDE.md).  Deliberately unfiltered — the un-curated tail (sweep of 2026-09-27) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 
 CVA6 is the one family excluded from the local `--no-cva6` developer run, so
 its figures are a **dated snapshot** (2026-09-17 sharded regression) rather
@@ -133,10 +133,10 @@ failure.  `undriven` likewise counts comparable rows only.
 
 | Family | Upstream repo | Commit | Proven | Not comparable | Undriven |
 |---|---|---|---|---|---|
-| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **25 / 35** | 73 of 108 | 64 (`axi_lfsr`: an unconnected `data_i` port; the 7 modules that sat behind [Surelog#4189](https://github.com/chipsalliance/Surelog/issues/4189) prove since Surelog [#4192](https://github.com/chipsalliance/Surelog/pull/4192) — local re-sweep, nightly refresh pending) |
+| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **32 / 35** | 73 of 108 | 128 (`axi_lfsr` and `axi_lite_lfsr`, 64 each: an unconnected `data_i` port on the read-side LFSR — source-level) |
 | PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | **116 / 119** | 7 of 126 | 0 |
 | OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | **14 / 21** | 2 of 23 | 0 |
-| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **83 / 88** | 146 of 234 | 0 (`trickbox_apb`'s 63 fixed by Surelog [#4191](https://github.com/chipsalliance/Surelog/pull/4191) — local re-sweep, nightly refresh pending) |
+| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **86 / 88** | 146 of 234 | 0 |
 | hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | **5 / 7** | 3 of 10 | 0 |
 | verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **107 / 108** | 21 of 129 | 1 (source: `xgmii_interleave` bit 72 never assigned) |
 | verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **70 / 73** | 20 of 93 | 0 |
