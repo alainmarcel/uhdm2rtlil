@@ -107,10 +107,10 @@ CHIPS_DIR = TEST_DIR / "pavona_chips"
 CALIPTRA_DIR = TEST_DIR / "caliptra_chip"
 
 
-def sh(cmd, cwd=None, timeout=None):
+def sh(cmd, cwd=None, timeout=None, env=None):
     """Run a command; return (rc, combined-output).  Never raises."""
     try:
-        p = subprocess.run(cmd, cwd=cwd, text=True, timeout=timeout,
+        p = subprocess.run(cmd, cwd=cwd, text=True, timeout=timeout, env=env,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return p.returncode, p.stdout
     except subprocess.TimeoutExpired as e:

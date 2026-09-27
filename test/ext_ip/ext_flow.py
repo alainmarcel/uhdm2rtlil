@@ -45,6 +45,14 @@ EXT = Path(os.environ.get("EXT_IP_ROOT", os.path.expanduser("~/ext")))
 DUMP_LIMIT = 2 << 20
 # Closure size above which the design is checked hierarchically instead of flat.
 FLATTEN_LIMIT = 8 << 20
+# Optional manifest cap ("max_closure_mb"): a module whose source closure is
+# larger is reported as skipped (not comparable) without running Surelog.
+# Surelog's peak memory grows with the closure (~0.25 GB per MB of generated
+# firtool RTL: XiangShan's 151 MB XSTop needs 36 GB), so a hosted 16 GB runner
+# can sweep the 1994 XiangShan core modules under 16 MB but not the 8
+# top-level blocks above it; those get an honest row instead of an OOM kill
+# that takes the shard down.
+MAX_CLOSURE_BYTES = 0
 
 
 def _sl_timeout(src_bytes):
@@ -312,6 +320,15 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
                 "check": "— (no elaboration)", "cosim": "—", "slang_cosim": "—",
                 "note": "no source found"}
+    if MAX_CLOSURE_BYTES > 0:
+        cbytes = sum(os.path.getsize(f) for f in files if os.path.exists(f))
+        if cbytes > MAX_CLOSURE_BYTES:
+            return {"module": m,
+                    "formal": f"skip (closure {cbytes / (1 << 20):.0f} MB of {len(files)} "
+                              f"files > {MAX_CLOSURE_BYTES >> 20} MB cap)",
+                    "formal_raw": "skip", "check": "— (not comparable)",
+                    "cosim": "—", "slang_cosim": "—",
+                    "note": "too big for a hosted runner; sweep it from a workstation"}
     bound = _bind_wrapper(w, fam, m, files)
     if bound:
         files = files + [bound[0]]
@@ -519,6 +536,8 @@ def main():
     work_root.mkdir(parents=True, exist_ok=True)
     cl = Closure(man["roots"])
     excl = [re.compile(x) for x in man.get("exclude", [])]
+    global MAX_CLOSURE_BYTES
+    MAX_CLOSURE_BYTES = int(float(man.get("max_closure_mb", 0)) * (1 << 20))
     if man.get("modules") == "auto":
         pref = man.get("only_prefix")
         mods = [{"name": n} for n in sorted(cl.mod_files)

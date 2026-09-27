@@ -85,14 +85,24 @@ xiangshan-core: all
 	@cd test && python3 core_sweep.py xiangshan-core
 
 # The COMPLETE Kunminghu core (CONFIG=DefaultConfig): the full out-of-order
-# core with L2 and L3, ~1980 SystemVerilog files / 3.2 M lines / 2002 modules.
-# This is deliberately NOT in the nightly matrix -- it needs ~40 GB of JVM heap
-# to generate (~45 min cold, ~6 min warm) and ~36 GB of RAM for Surelog on
-# XSTop, which no hosted CI runner has.  Run it on a workstation.
+# core with L2 and L3, ~1980 SystemVerilog files / 3.2 M lines / 2002 modules,
+# every module swept with the parameterisation it has under XSTop (firtool
+# emits one concrete module per file).  This is the nightly CI family
+# (sweep-ext.yml, 16 shards): it fetches the generator's OUTPUT from the
+# release asset xiangshan-rtl-e4566c29 instead of running the Chisel
+# generator, and modules whose source closure exceeds the manifest's 16 MB cap
+# (the 8 top-level blocks) are reported as skipped -- Surelog on XSTop needs
+# ~36 GB.  Run it here the same way (no JDK needed).
 xiangshan-core-full: all
-	@echo "XiangShan DefaultConfig (complete Kunminghu core): generating RTL and sweeping..."
-	@echo "  NOTE: needs ~40 GB JVM heap to generate and ~36 GB RAM for Surelog on XSTop."
+	@echo "XiangShan DefaultConfig (complete Kunminghu core): fetching the generated RTL and sweeping every module..."
 	@cd test && python3 core_sweep.py xiangshan-core-full
+
+# Same core, but GENERATED locally (mill + firtool, ~40 GB JVM heap, ~45 min
+# cold) and with the 42 hand-picked blocks of the original workstation
+# manifest, top-level blocks included (they need ~36 GB of RAM for Surelog).
+xiangshan-core-full-gen: all
+	@echo "XiangShan DefaultConfig: generating RTL (needs ~40 GB JVM heap) and sweeping the hand-picked blocks..."
+	@cd test && python3 core_sweep.py xiangshan-core-gen
 
 # Preprocess Yosys test files to fix incompatible constructs
 preprocess-yosys-tests:
@@ -160,8 +170,10 @@ help:
 	@echo "  frontends  - Build sv2v for the 4-frontend matrix (slang is built into yosys)"
 	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
 	@echo "  xiangshan-core      - Generate (Chisel) + sweep the XiangShan core, MinimalConfig"
-	@echo "  xiangshan-core-full - ... the COMPLETE Kunminghu core (DefaultConfig);"
-	@echo "                        needs ~40 GB JVM heap + ~36 GB RAM, not CI-sized"
+	@echo "  xiangshan-core-full - the COMPLETE Kunminghu core (DefaultConfig), every module,"
+	@echo "                        from the published generated RTL (the nightly CI family)"
+	@echo "  xiangshan-core-full-gen - ... generated locally instead (~40 GB JVM heap),"
+	@echo "                        hand-picked blocks incl. XSTop (~36 GB RAM for Surelog)"
 	@echo "  clean      - Remove ALL build artifacts (build dirs, out/, in-tree Yosys/abc objects)"
 	@echo "  install    - Install the plugin"
 	@echo "  help       - Show this help message"
