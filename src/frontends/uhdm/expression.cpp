@@ -6718,6 +6718,31 @@ void UhdmImporter::equality_extend_operands(const operation* uhdm_op,
             default: return false;
         }
     };
+    // A CONSTANT wider than the signal it is compared with (`rst_l == 0`:
+    // Surelog stores the unsized literal at 64 bits) is narrowed to the
+    // signal when its extra bits are only the extension the signal would get
+    // (zeros, or sign copies when both sides are signed) -- the compare is
+    // the same function and stays at the signal's width, which is what
+    // read_verilog emits and what yosys's proc_arst needs to recognise
+    // `if (rst_l == 0)` as the async reset of `@(posedge clk or negedge
+    // rst_l)`.  Widening `rst_l` to a 64-bit `$eq` instead left the flop with
+    // two edge-sensitive events ("Multiple edge sensitive events found"),
+    // which killed the caliptra chip co-sim netlist (every veer_el2 rvdff).
+    // A constant whose extra bits are NOT the extension keeps its width: the
+    // compare then decides statically, as it should.
+    auto narrow_const = [&](RTLIL::SigSpec& c, const RTLIL::SigSpec& sig, bool sext) -> bool {
+        if (!c.is_fully_const() || sig.is_fully_const() || c.size() <= sig.size() || sig.size() == 0)
+            return false;
+        RTLIL::Const cv = c.as_const();
+        RTLIL::State fill = RTLIL::State::S0;
+        if (sext && cv[sig.size() - 1] == RTLIL::State::S1) fill = RTLIL::State::S1;
+        for (int i = sig.size(); i < cv.size(); i++)
+            if (cv[i] != fill) return false;
+        c = RTLIL::SigSpec(RTLIL::Const(std::vector<RTLIL::State>(cv.begin(), cv.begin() + sig.size())));
+        return true;
+    };
+    if (narrow_const(rhs, lhs, both_signed) || narrow_const(lhs, rhs, both_signed))
+        return;
     if (rhs.size() < lhs.size())
         rhs.extend_u0(lhs.size(), both_signed || (rhs.is_fully_const() && folded_arith(e1)));
     else
