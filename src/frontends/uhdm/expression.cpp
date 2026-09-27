@@ -6461,9 +6461,15 @@ int UhdmImporter::self_determined_width(const UHDM::any* node,
             case vpiConditionOp:
                 return std::max(W(1), W(2));
             case vpiConcatOp: {
+                // Carry the function-argument mapping down: a concat of
+                // selects of a FORMAL (`{x[0], x[63:1]} ^ {x[7:0], x[63:8]}`
+                // in caliptra's sha512_masked ROT1) is sized while the
+                // enclosing XOR resolves its context width, and without the
+                // mapping the leaf bit-select probe found no wire `x` and
+                // hard-errored -- the whole caliptra_top read died.
                 int s = 0;
                 for (auto o : ops)
-                    s += self_determined_width(o);
+                    s += self_determined_width(o, input_mapping);
                 return s;
             }
             // Comparisons, logical, reductions: 1 bit.
