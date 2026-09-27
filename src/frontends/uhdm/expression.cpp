@@ -12040,6 +12040,21 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
 
             shift_amount = RTLIL::SigSpec(mul_wire);
         }
+    } else if (outer_left >= 0 && outer_right >= 0 &&
+               (outer_left < outer_right || std::min(outer_left, outer_right) != 0)) {
+        // A vector declared with an ASCENDING (`logic [8:15] xa`) or a
+        // NON-ZERO-LSB (`logic [15:8]`) range: the dynamic index is in the
+        // declared coordinates and must be mapped to the bit position --
+        // `xa[8 + ai]` shifted the 8-bit wire by 8+ai and returned X (constant
+        // selects on such vectors were already mapped, #697).  Ascending:
+        // position = right - idx; descending: idx - low.
+        RTLIL::SigSpec index32 = index;
+        index32.extend_u0(32);
+        if (outer_left < outer_right)
+            shift_amount = module->Sub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(outer_right, 32)), index32);
+        else
+            shift_amount = module->Sub(NEW_ID, index32,
+                                       RTLIL::SigSpec(RTLIL::Const(std::min(outer_left, outer_right), 32)));
     } else {
         shift_amount = index;
     }
