@@ -1,0 +1,10 @@
+# proc must recognise `if (rst_l == 0)` as the async reset: one $adff, and no
+# "Multiple edge sensitive events" error (which is what a 64-bit reset
+# compare produced before the fix).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top async_reset_eq_zero_wide_const
+proc
+flatten
+opt_clean
+select -assert-count 1 t:$adff
+select -assert-count 0 t:$dff
