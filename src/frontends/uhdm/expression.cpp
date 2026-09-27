@@ -17497,7 +17497,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int flen = w * sel_elem_w;
                             if (w > 0 && flen <= field_width && fstart >= 0 &&
                                 fstart + field_width <= base_wire->width) {
-                                RTLIL::SigSpec ilo = bs;
+                                // Same re-import as the bit-select branch: `bs`
+                                // was sized under force_const_fold.
+                                force_const_fold = saved_fcf;
+                                int saved_ctx_ips = expression_context_width;
+                                expression_context_width = 0;   // a base index is self-determined
+                                RTLIL::SigSpec ilo = import_expression(ips->Base_expr(), input_mapping);
+                                expression_context_width = saved_ctx_ips;
+                                if (ilo.size() == 0) ilo = bs;
                                 ilo.extend_u0(32);
                                 if (!pos)
                                     ilo = module->Sub(NEW_ID, ilo, RTLIL::Const(w - 1, 32));
@@ -17533,6 +17540,48 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             lsb = idx_to_bit_lo(ib, ib);
                             len = sel_elem_w;
                             bounds_ok = true;
+                        } else if (split < names.size() && ix.size() > 0 && off_ok && module) {
+                            // DYNAMIC index on a NESTED member
+                            // (`slv_req_i.w.strb[b + slv_port_offset - mst_port_offset]`,
+                            // PULP axi_dw_upsizer's W lane steering): the
+                            // constant-only path fell through to decodeHierPath and
+                            // the strobe lane read the field's first bit.  Same
+                            // declared-coordinate mapping as idx_to_bit_lo, in
+                            // cells, then a $shiftx over the FIELD slice (a
+                            // packed-array member yields one ELEMENT).
+                            int fstart = elem_off + field_offset;
+                            if (sel_elem_w > 0 && sel_elem_w <= field_width && fstart >= 0 &&
+                                fstart + field_width <= base_wire->width) {
+                                // `ix` was imported under force_const_fold (set
+                                // above for the constant case), which sizes a
+                                // non-constant `4'd8 + ai` at the operand's 3
+                                // bits; re-import it as a plain expression.
+                                force_const_fold = saved_fcf;
+                                int saved_ctx_bs = expression_context_width;
+                                expression_context_width = 0;   // an index is self-determined
+                                RTLIL::SigSpec ixs = import_expression(fbs->VpiIndex(), input_mapping);
+                                expression_context_width = saved_ctx_bs;
+                                if (ixs.size() == 0) ixs = ix;
+                                ixs.extend_u0(32);
+                                RTLIL::SigSpec lsb_sig;
+                                if (!have_decl || (!decl_asc && decl_low == 0))
+                                    lsb_sig = ixs;
+                                else if (!decl_asc)
+                                    lsb_sig = module->Sub(NEW_ID, ixs, RTLIL::Const(decl_low, 32));
+                                else
+                                    lsb_sig = module->Sub(NEW_ID, RTLIL::Const(decl_high, 32), ixs);
+                                if (sel_elem_w != 1)
+                                    lsb_sig = module->Mul(NEW_ID, lsb_sig, RTLIL::Const(sel_elem_w, 32));
+                                force_const_fold = saved_fcf;
+                                RTLIL::SigSpec field = RTLIL::SigSpec(base_wire).extract(fstart, field_width);
+                                RTLIL::Wire* out = module->addWire(NEW_ID, sel_elem_w);
+                                module->addShiftx(NEW_ID, field, lsb_sig, out);
+                                if (mode_debug)
+                                    log("    Nested struct-field dynamic bit-select: %s -> "
+                                        "$shiftx(%s[%d+:%d])\n", path_name.c_str(),
+                                        base_wire->name.c_str(), fstart, field_width);
+                                return RTLIL::SigSpec(out);
+                            }
                         }
                     } else {
                         // Whole-field read: the entire field.
