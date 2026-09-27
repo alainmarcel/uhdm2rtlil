@@ -770,6 +770,8 @@ struct UhdmImporter {
     // (set by the paramod signature builder and by import_parameter): names in
     // that actual are written in the child's PARENT scope, not the child's.
     const UHDM::module_inst* override_eval_child_ = nullptr;
+    // Geometry of an unpacked-array assignment target for a concat RHS.
+    bool unpacked_array_concat_geometry(const UHDM::operation* op, int& n, int& ew, bool& asc);
     bool param_assign_is_override(const UHDM::module_inst* inst, const std::string& pname, const UHDM::any* rhs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);

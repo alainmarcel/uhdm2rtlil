@@ -4760,7 +4760,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     create_memory_from_array(array_var);
                 } else if (is_memory_array(array_var) &&
                            (whole_array_accessed_names.count(array_name) ||
-                            (array_var->Ranges() && array_var->Ranges()->size() > 1))) {
+                            (array_var->Ranges() && array_var->Ranges()->size() > 1) ||
+                            (!array_var->Ranges() && whole_array_accessed_names.count(array_name)))) {
                     // WHOLE-array-accessed or MULTI-dim struct array
                     // (CVA6 bht/btb `bht_d[NR_ROWS-1:0][IPF-1:0]`, written
                     // whole via `bht_d = bht_q`): the per-element-only
@@ -4769,6 +4770,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // canonical wire (all dims × element) + per-ROW alias
                     // slices, mirroring the array_net whole-access path.
                     auto ranges = array_var->Ranges();
+                    // A TYPEDEF'd unpacked array (`typedef logic [6:0] entry_t
+                    // [3:0]; entry_t XnorFeedback;`, PULP axi_opt_lfsr's tap
+                    // table) carries its dimension on the typedef's
+                    // array_typespec, not on the array_var: Ranges() is empty,
+                    // dims_ok fell to false and the table was "left
+                    // unmaterialized" as a 1-bit wire -- every tap read was out
+                    // of range and the LFSR feedback bit was wrong from cycle 1
+                    // (axi_lite_lfsr / axi_lfsr).  Take the typespec's ranges
+                    // (and its element type for the width) in that case.
+                    const UHDM::typespec* av_elem_ts = nullptr;
+                    if (!ranges || ranges->empty()) {
+                        if (auto rts = array_var->Typespec())
+                            if (auto ats = rts->Actual_typespec())
+                                if (ats->UhdmType() == uhdmarray_typespec) {
+                                    auto at = any_cast<const UHDM::array_typespec*>(ats);
+                                    ranges = at->Ranges();
+                                    if (at->Elem_typespec())
+                                        av_elem_ts = at->Elem_typespec()->Actual_typespec();
+                                }
+                    }
                     int array_size = 1, array_low = 0, inner_count = 1;
                     int inner_low = 0;
                     bool dims_ok = true;
@@ -4803,6 +4824,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         inner_var = array_var->Variables()->at(0);
                         elem_w = get_width(inner_var, uhdm_module);
                     }
+                    if (elem_w <= 0 && av_elem_ts)
+                        elem_w = get_width_from_typespec(av_elem_ts, uhdm_module);
                     if (dims_ok && elem_w > 0) {
                         int row_w = elem_w * inner_count;
                         int total_w = row_w * array_size;
