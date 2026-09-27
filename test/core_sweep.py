@@ -1587,8 +1587,12 @@ def sweep_ext(family, jobs, cycles=300, flt=None):
     work = EXT_DIR / "work" / family
     work.mkdir(parents=True, exist_ok=True)
     out_json = work / (f"rows_shard{_SHARD[0] + 1}.json" if _SHARD[1] > 1 else "rows.json")
-    cmd = [sys.executable, str(flow), family, "--jobs", str(max(1, jobs)),
-           "--cycles", str(cycles), "--out", str(out_json)] + mods
+    # The shard's module names are POSITIONAL (`modules`, nargs="*") and must
+    # precede the options: argparse assigns a positional group once, so names
+    # after `--out ...` were "unrecognized arguments" and every sharded ext
+    # shard died before sweeping anything (xiangshan-core-full's first run).
+    cmd = [sys.executable, str(flow), family] + mods + ["--jobs", str(max(1, jobs)),
+           "--cycles", str(cycles), "--out", str(out_json)]
     if flt and not mods:
         cmd += ["--filter", flt]
     rc, out = sh(cmd, timeout=6 * 3600)
