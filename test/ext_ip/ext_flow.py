@@ -530,7 +530,8 @@ def main():
     ap.add_argument("--survey", action="store_true")
     ap.add_argument("--out", type=Path)
     ap.add_argument("--list", action="store_true", help="print the module list and exit")
-    args = ap.parse_args()
+    # Intermixed: a sharded caller may put the module names after the options.
+    args = ap.parse_intermixed_args()
     man = json.loads((HERE / f"{args.family}.json").read_text())
     work_root = TEST / "ext_ip" / "work" / args.family
     work_root.mkdir(parents=True, exist_ok=True)
