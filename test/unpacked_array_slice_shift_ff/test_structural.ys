@@ -1,0 +1,9 @@
+# Structural gate: the flat-materialised array must have exactly ONE driver
+# per bit.  Before the fix the element-0 write drove the alias wire
+# \gpio_t[0] against the flip-flop's whole-array update (DAT conflicting
+# drivers), which also makes the SAT miter pass VACUOUSLY -- so `check` is the
+# discriminating test here, not the miter.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_array_slice_shift_ff
+proc; opt_clean
+check -assert

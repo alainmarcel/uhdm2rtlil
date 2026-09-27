@@ -16685,9 +16685,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                             module->wire(RTLIL::escape_id(signal_name + "[0]"))) {
                                             RTLIL::SigSpec is = import_expression(bidx);
                                             if (is.is_fully_const()) {
-                                                signal_name += "[" +
+                                                std::string en = signal_name + "[" +
                                                     std::to_string(is.as_const().as_int()) + "]";
-                                                is_partial = false;
+                                                // Only when that element has its OWN
+                                                // temp.  A flat-materialised array
+                                                // (whole-array reset + element writes)
+                                                // owns a single $0\<arr> temp and the
+                                                // element wires are aliases of the flat
+                                                // -- keep the base name and let the
+                                                // alias-chunk remap below land the
+                                                // write on the flat temp's slice
+                                                // (tcb_dev_gpio_cdc: else `gpio_t[0]
+                                                // <= ...` drove \gpio_t[0] directly,
+                                                // against the FF's flat update).
+                                                if (current_signal_temp_wires.count(en) ||
+                                                    !current_signal_temp_wires.count(signal_name)) {
+                                                    signal_name = en;
+                                                    is_partial = false;
+                                                }
                                             }
                                         }
                                     }

@@ -10410,6 +10410,53 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
             base = RTLIL::SigSpec(wire);
+            // ELEMENT slice of a flat-materialised UNPACKED array: `arr[hi:lo]`
+            // where `arr` got ONE flat wire plus per-element alias wires
+            // \arr[k] (the whole-array + per-element write mix, see the
+            // "flat wire + per-row slices" path).  The bounds are element
+            // indices, not bits -- element k lives at (k - low) * elem_w
+            // (elem0 at the LSB).  Without this the shift
+            // `gpio_t[CDC-1:1] <= gpio_t[CDC-2:0]` (tcb_dev_gpio_cdc) became
+            // a 2-bit move of bits [2:1] <= [1:0] on a 3x32-bit array, and
+            // the element-0 write then double-drove the flat wire (32 driver
+            // conflicts on every rp32 SoC).  Packed arrays keep their own
+            // packed_elem_width path further down.
+            if (!wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+                int alow = expanded_array_low(base_signal_name);
+                RTLIL::Wire* e0 = nullptr;
+                if (alow >= 0) {
+                    std::string en = base_signal_name + "[" + std::to_string(alow) + "]";
+                    e0 = name_map.count(en) ? name_map[en] : find_wire_in_scope(en);
+                }
+                if (e0 && e0 != wire && e0->width > 0 && wire->width > e0->width &&
+                    wire->width % e0->width == 0) {
+                    int el = -1, er = -1;
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    if (auto le = uhdm_part->Left_range()) {
+                        RTLIL::SigSpec ls = import_expression(le, input_mapping);
+                        if (ls.is_fully_const()) el = ls.as_const().as_int();
+                    }
+                    if (auto re = uhdm_part->Right_range()) {
+                        RTLIL::SigSpec rs = import_expression(re, input_mapping);
+                        if (rs.is_fully_const()) er = rs.as_const().as_int();
+                    }
+                    force_const_fold = saved_fcf;
+                    if (el >= 0 && er >= 0) {
+                        int lo = std::min(el, er), hi = std::max(el, er);
+                        int n = wire->width / e0->width;
+                        if (lo >= alow && hi - alow < n) {
+                            RTLIL::SigSpec sl = base.extract((lo - alow) * e0->width,
+                                                             (hi - lo + 1) * e0->width);
+                            log("    part_select: flat unpacked array %s[%d:%d] -> elements "
+                                "(elem_w=%d) bits [%d+:%d]\n",
+                                base_signal_name.c_str(), el, er, e0->width,
+                                (lo - alow) * e0->width, sl.size());
+                            return sl;
+                        }
+                    }
+                }
+            }
             // Same-cycle in-flight value of a GENERATE-PARENT local: the comb
             // read map is keyed by the resolved wire name
             // (`gen_round[0].data_state_sbox`) while the select carries the
