@@ -3841,6 +3841,22 @@ UhdmImporter::declaring_instance_of_cloned_typespec(const UHDM::any* typespec) {
                                             ":" + name);
         if (it == elab_typedef_owners_.end() || it->second.empty())
             return nullptr;
+        // A module's OWN typedef is not a relayed clone.  The AllModules
+        // definition pass imports `dmi_jtag` with its parameter DEFAULTS and
+        // shares the `dmi_t` typespec node with the elaborated instance
+        // `rv_dm.dap` (NumDmiWordAbits = 7); the node has no parent, so it
+        // looked like a detached clone and was measured in that instance:
+        // the `dmi` net came out 41 bits while the member offsets, folded in
+        // the definition's own scope, said address = [49:34].  `dmi.address`
+        // then built a chunk past the wire and the whole egret chip read
+        // aborted on an RTLIL assertion.  When the owning instance is an
+        // instance of the very module being imported, measure locally.
+        if (auto cmi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+            std::string cdef(cmi->VpiDefName());
+            for (auto cand : it->second)
+                if (cand != cmi && std::string(cand->VpiDefName()) == cdef)
+                    return nullptr;
+        }
         for (const UHDM::any* a = current_instance; a; a = a->VpiParent())
             for (auto cand : it->second)
                 if (cand == a)
