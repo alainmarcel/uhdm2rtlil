@@ -3121,13 +3121,40 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 if (!l.is_fully_const() || !rr.is_fully_const()) { own_dims.clear(); return; }
                                 own_dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
                             }
-                            int ew = 0;
-                            if (ots && ots->Actual_typespec())
-                                ew = get_width_from_typespec(ots->Actual_typespec(), current_instance);
-                            if (ew > 0)
-                                own_dims.push_back({ew - 1, 0});
-                            else
-                                own_dims.clear();
+                            // The element type is expanded as a DIM CHAIN, not
+                            // folded into one bit dim: `hpdcache_req_data_t
+                            // [RATIO-1:0][ways-1:0] data_read_words` with
+                            // `typedef word_t [0:0] hpdcache_req_data_t` (a
+                            // type parameter) has dims [0:0][7:0] + [0:0][63:0];
+                            // folding the typedef to a single [63:0] made the
+                            // third index of `data_read_words[i][j][k]` a BIT
+                            // select of the word (56 undriven bits on the
+                            // way-mux input, CVA6 hpdcache_memctrl).
+                            const UHDM::any* ea = ots ? ots->Actual_typespec() : nullptr;
+                            bool ok = ea != nullptr;
+                            int guard = 0;
+                            while (ok && ea && guard++ < 8) {
+                                if (auto ets = dynamic_cast<const UHDM::typespec*>(ea))
+                                    ea = resolve_type_param_typespec(ets, current_instance);
+                                auto elt = dynamic_cast<const UHDM::logic_typespec*>(ea);
+                                if (elt && elt->Elem_typespec() &&
+                                    elt->Elem_typespec()->Actual_typespec()) {
+                                    if (elt->Ranges())
+                                        for (auto r : *elt->Ranges()) {
+                                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                            if (!l.is_fully_const() || !rr.is_fully_const()) { ok = false; break; }
+                                            own_dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+                                        }
+                                    ea = elt->Elem_typespec()->Actual_typespec();
+                                    continue;
+                                }
+                                int ew = get_width_from_typespec(ea, current_instance);
+                                if (ew > 1) own_dims.push_back({ew - 1, 0});
+                                else if (ew != 1) ok = false;
+                                break;
+                            }
+                            if (!ok) own_dims.clear();
                         };
                         own_geo(vs->Actual_group());
                         if (own_dims.empty() && current_instance) {
