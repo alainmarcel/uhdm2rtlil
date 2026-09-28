@@ -1253,7 +1253,17 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
 
     RTLIL::Wire* w = create_wire(netname, width, upto, start_offset);
     add_src_attribute(w->attributes, uhdm_net);
-    
+
+    // Same as the variable path: when the width above was recovered from the
+    // def view (`wire req_t [2:0] app_req` -- elaboration keeps only `req_t`
+    // on the net), stamp the element stride so `app_req[k]` slices ELEMENTS.
+    // Without it the widened net was still bit-selected: `app_req[1] =
+    // kmac_data_o` connected ONE bit (caliptra-ss lc_ctrl).
+    if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
+        if (uhdm_net->Typespec() && uhdm_net->Typespec()->Actual_typespec())
+            stamp_packed_attrs_from_def(w, std::string(mi->VpiDefName()), netname,
+                                        uhdm_net->Typespec()->Actual_typespec());
+
     // Check if net is signed
     if (auto ref_typespec = uhdm_net->Typespec()) {
         log("UHDM: Checking signed attribute for net '%s'\n", netname.c_str());
