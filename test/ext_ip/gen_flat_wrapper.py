@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Flat shim for a module with UNPACKED-ARRAY ports.
+
+    output tlul_pkg::tl_h2d_t tl_d_o [N]      ->  output logic [$bits(tlul_pkg::tl_h2d_t)*(N)-1:0] tl_d_o_flat
+
+Every RTLIL frontend flattens an unpacked-array port to one vector, but they do
+not agree on the element order for an ASCENDING dimension (`x [N]` is `[0:N-1]`):
+read_slang puts element 0 at the MSBs, read_uhdm at the LSBs, and both agree for
+`[N-1:0]`.  Mitered as-is the two netlists "differ" on a pure convention, and a
+Verilator testbench cannot connect a vector to an array port at all ("skip (sim
+build)").  The pavona harness papers over the same thing with hand-written
+shims (test/pavona_tlul_equiv/wrappers/flat_tlul_socket_1n.sv); this generates
+one: the wrapper declares the arrays, connects element i to bits [i*W +: W]
+(element 0 at the LSBs, whatever the declared direction) with explicit index
+arithmetic both frontends read identically, and instantiates the module with
+its DEFAULT parameters under `.*`.  The parameter header (an `include`d struct
+parameter in VeeR's case) and the package imports are copied verbatim so the
+port types and dimension expressions resolve exactly as in the module.
+
+usage: gen_flat_wrapper.py --module M --out M_flat.sv <srcs...>
+exit 3 = the module has no unpacked-array port (nothing to do).
+"""
+import argparse, re, sys
+from pathlib import Path
+
+PORT_RE = re.compile(
+    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?P<type>[^,;()]*?)\s+(?P<name>[A-Za-z_]\w*)"
+    r"\s*(?P<dims>(?:\[[^\]]*\]\s*)+)(?=\s*(?:,|\)|$|//|/\*))", re.M)
+NETKW = {"wire", "var", "logic", "reg", "tri"}
+
+
+def balanced(t, i):
+    d = 0
+    for j in range(i, len(t)):
+        if t[j] == "(": d += 1
+        elif t[j] == ")":
+            d -= 1
+            if d == 0: return j + 1
+    raise ValueError("unbalanced")
+
+
+def module_span(txt, name):
+    m = re.search(r"^\s*module\s+" + re.escape(name) + r"\b", txt, re.M)
+    if not m:
+        sys.exit(f"# gen_flat_wrapper: module {name} not found")
+    i = m.end()
+    j = txt.find("#", i); k = txt.find("(", i)
+    pre = ""
+    if j != -1 and j < k:
+        pre = txt[i:j]                     # `import pkg::*;` between name and #(
+        s = txt.index("(", j); e = balanced(txt, s)
+        params = txt[j:e]                  # "#( ... )"
+        i = e
+    else:
+        pre = txt[i:k]; params = ""
+    s = txt.index("(", i); e = balanced(txt, s)
+    ports = txt[s + 1:e - 1]
+    body_end = txt.find(";", e)
+    return pre, params, ports, txt[m.start():body_end + 1]
+
+
+def dim_count(d):
+    """SV size of one unpacked dimension text: `[N]` -> N, `[A:B]` -> |A-B|+1."""
+    inner = d.strip()[1:-1].strip()
+    if ":" not in inner:
+        return f"({inner})", "0"
+    a, b = inner.split(":", 1)
+    a, b = a.strip(), b.strip()
+    return (f"((({a})>({b}))?(({a})-({b})+1):(({b})-({a})+1))",
+            f"((({a})<({b}))?({a}):({b}))")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--module", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("srcs", nargs="+")
+    a = ap.parse_args()
+    txt = None
+    for s in a.srcs:
+        t = Path(s).read_text(errors="replace")
+        if re.search(r"^\s*module\s+" + re.escape(a.module) + r"\b", t, re.M):
+            txt = t; break
+    if txt is None:
+        sys.exit(f"# gen_flat_wrapper: no source declares module {a.module}")
+    pre, params, ports, _ = module_span(txt, a.module)
+
+    arrays = []
+    def rewrite(m):
+        dirn, typ, name, dims = m.group("dir"), " ".join(m.group("type").split()), m.group("name"), m.group("dims")
+        dl = re.findall(r"\[[^\]]*\]", dims)
+        if len(dl) != 1:
+            return m.group(0)              # multi-dimensional unpacked: leave as is
+        # an `ifdef line glued in front of the direction keyword stays put: the
+        # regex anchors on the direction keyword, so `typ` is the type only.
+        toks = [t for t in typ.split() if t not in NETKW]
+        elem = " ".join(toks) if toks else "logic"
+        if re.match(r"^\[", elem):         # `logic [31:0]` -> `logic [31:0]`
+            elem = "logic " + elem
+        cnt, lo = dim_count(dl[0])
+        # Element width: `$bits(T)` for a named type; for a plain vector
+        # (`logic [31:0]`, `logic`) the product of its packed ranges instead --
+        # read_uhdm evaluates `$bits(logic [31:0])` as 1 (a reader bug tracked
+        # separately), which would size the flat port 32x too narrow.
+        pk = re.findall(r"\[[^\]]*\]", elem)
+        base = re.sub(r"\[[^\]]*\]", "", elem).strip()
+        if base in ("logic", "reg", "bit", "wire") or not base:
+            ew = "*".join(dim_count(d)[0] for d in pk) if pk else "1"
+        else:
+            ew = f"$bits({elem})"
+        arrays.append((dirn, elem, name, dl[0], cnt, lo, ew))
+        return f"{dirn} logic [({ew})*{cnt}-1:0] {name}_flat"
+    new_ports = PORT_RE.sub(rewrite, ports)
+    if not arrays:
+        sys.exit(3)
+    L = [f"// GENERATED by test/ext_ip/gen_flat_wrapper.py -- flat shim for {a.module}:",
+         f"// its unpacked-array ports become one vector each, element 0 at the LSBs,",
+         f"// so read_uhdm, read_slang and the Verilator co-sim see the same port list.",
+         f"module {a.module}_flat{pre.rstrip()}{(' ' + params) if params else ''} ({new_ports});"]
+    for dirn, elem, name, dim, cnt, lo, ew in arrays:
+        L.append(f"  {elem} {name} {dim};")
+    for dirn, elem, name, dim, cnt, lo, ew in arrays:
+        L.append(f"  for (genvar gi = 0; gi < {cnt}; gi++) begin : g_flat_{name}")
+        if dirn == "input":
+            L.append(f"    assign {name}[{lo} + gi] = {name}_flat[gi*({ew}) +: ({ew})];")
+        else:
+            L.append(f"    assign {name}_flat[gi*({ew}) +: ({ew})] = {name}[{lo} + gi];")
+        L.append("  end")
+    L.append(f"  {a.module} u_dut (.*);")
+    L.append("endmodule")
+    Path(a.out).write_text("\n".join(L) + "\n")
+    print(f"# gen_flat_wrapper: {a.module}_flat with {len(arrays)} flattened array port(s): "
+          + ", ".join(n for _, _, n, _, _, _, _ in arrays))
+
+
+if __name__ == "__main__":
+    main()

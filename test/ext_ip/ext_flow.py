@@ -336,6 +336,31 @@ def _bind_wrapper(w, fam, mod, files):
     return str(out), f"{mod}_bound"
 
 
+def _flat_wrapper(w, mod, files):
+    """Generate the flat shim for a module with UNPACKED-ARRAY ports and return
+    (wrapper_path, top) -- or None when it has none.
+
+    `output tl_h2d_t tl_d_o [N]` is flattened to one vector by every frontend,
+    but for an ASCENDING dimension (`[N]` is `[0:N-1]`) read_slang puts element
+    0 at the MSBs and read_uhdm at the LSBs (they agree for `[N-1:0]`), so the
+    miter reported a pure convention as "differs" -- tlul_socket_1n / _m1, the
+    two reg_top windows, VeeR's pmp / dec_pmp_ctl / dec_tlu_ctl in caliptra-ss
+    -- and Verilator cannot connect the co-sim testbench's vector to an array
+    port at all ("skip (sim build)").  The shim (gen_flat_wrapper.py) makes
+    the element order explicit index arithmetic that both frontends read the
+    same way, exactly like the hand-written pavona shims
+    (test/pavona_tlul_equiv/wrappers/flat_tlul_socket_1n.sv), and instantiates
+    the module with its default parameters under `.*`.
+    """
+    out = w / f"{mod}_flat.sv"
+    rc, log = sh([sys.executable, str(HERE / "gen_flat_wrapper.py"),
+                  "--module", mod, "--out", str(out), *files], timeout=120)
+    (w / "flat.log").write_text(log or "")
+    if rc != 0 or not out.exists():
+        return None
+    return str(out), f"{mod}_flat"
+
+
 def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
     w = work_root / m
     w.mkdir(parents=True, exist_ok=True)
@@ -364,6 +389,11 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     if bound:
         files = files + [bound[0]]
         top = bound[1]
+    else:
+        flat = _flat_wrapper(w, m, files)
+        if flat:
+            files = files + [flat[0]]
+            top = flat[1]
     (w / "srcs.txt").write_text("\n".join(files) + "\n")
     (w / "incs.txt").write_text("\n".join(str(EXT / d) for d in incs) + "\n")
     inc_flags = [f"-I{EXT / d}" for d in incs]
