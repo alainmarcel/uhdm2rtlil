@@ -29,7 +29,7 @@
   "caliptra-ss/third_party/caliptra-rtl/src/**/rtl/*.sv",
   "caliptra-ss/third_party/caliptra-rtl/src/**/rtl/**/*.sv",
   "caliptra-ss/third_party/i3c-core/src/**/*.sv",
-  "caliptra-ss/third_party/usb2/**/*.sv",
+  "caliptra-ss/third_party/usb2/src/**/*.sv",
   "caliptra-ss/third_party/caliptra-rtl/submodules/adams-bridge/src/**/rtl/*.sv",
   "caliptra-ss/third_party/caliptra-rtl/submodules/adams-bridge/src/**/rtl/**/*.sv",
   "caliptra-ss/third_party/caliptra-rtl/src/**/rtl/*.v",
@@ -40,7 +40,7 @@
  "sweep_paths": [
   "caliptra-ss/src/",
   "caliptra-ss/third_party/i3c-core/src/",
-  "caliptra-ss/third_party/usb2/"
+  "caliptra-ss/third_party/usb2/src/"
  ],
  "always_srcs": [
   "caliptra-ss/third_party/caliptra-rtl/src/caliptra_prim/rtl/*_pkg.sv",
