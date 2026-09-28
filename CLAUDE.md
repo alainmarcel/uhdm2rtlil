@@ -6,18 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
-The Yosys submodule is pinned at **YosysHQ tag v0.68 + one fork patch**
+The Yosys submodule is pinned at **YosysHQ tag v0.69 + one fork patch**
 (`third_party/yosys`, tracking alainmarcel/yosys branch
-`v0.68-proc-dlatch-memo`): the proc_dlatch memoization of the
+`v0.69-proc-dlatch-memo`): the proc_dlatch memoization of the
 find_mux_feedback/find_mux_constant DAG walks, which are exponential on
 shared mux subtrees without it (CVA6 cva6_tlb).  The patch is not yet
 upstreamed — when YosysHQ merges it, repoint `.gitmodules` to
-https://github.com/YosysHQ/yosys.git.  v0.68 requires **C++20**
+https://github.com/YosysHQ/yosys.git.  v0.69 requires **C++20**
 (kernel/yosys_common.h hard-errors otherwise), so the plugin's
-`CMAKE_CXX_STANDARD` is 20.  (v0.68 is the latest stable release as of
-2026-08-24; Yosys has no "stable" branch — releases are tags.)
+`CMAKE_CXX_STANDARD` is 20.  (v0.69, released 2026-09-09, is the latest
+stable release as of 2026-09-28; Yosys has no "stable" branch — releases are
+tags.  0.68 → 0.69 removed nothing this project uses: coolrunner2/greenpak4
+synth, nlutmap, `abc -retime/-noabc9/-abc2`, `logger -stderr`.)
 
-**v0.68 is CMake-only** — the top-level Makefile is gone.  Our CMakeLists builds
+**v0.69 is CMake-only** (since v0.68) — the top-level Makefile is gone.  Our CMakeLists builds
 Yosys via `cmake -B third_party/yosys/build … && cmake --build … && cmake
 --install` (was `make CONFIG=gcc PREFIX=… install`), installing the yosys binary
 + yosys-config into `out/current/`.  The build passes

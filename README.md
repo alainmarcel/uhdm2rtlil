@@ -353,7 +353,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 ## Quick Start
 
 ### Prerequisites
-- GCC ≥ 11 (C++20; the bundled Yosys v0.68 and its built-in `read_slang` frontend require it)
+- GCC ≥ 11 (C++20; the bundled Yosys v0.69 and its built-in `read_slang` frontend require it)
 - CMake **3.28 – 3.31** (≥ 3.28 for the bundled slang library; CMake 4.x is rejected by
   Surelog/UHDM's capnproto — `pip install 'cmake==3.31.6'` on ubuntu-22.04)
 - Python 3.8+
@@ -650,7 +650,7 @@ uhdm2rtlil/
 ├── docs/                        # Sub-tables and changelogs (pavona_sweep.md, test-cases.md, ...)
 ├── third_party/                # External dependencies
 │   ├── Surelog/               # SystemVerilog parser (includes UHDM)
-│   └── yosys/                 # Synthesis framework (v0.68 + one fork patch, built with read_slang)
+│   └── yosys/                 # Synthesis framework (v0.69 + one fork patch, built with read_slang)
 ├── .github/workflows/         # ci.yml (PR gate), regression-sharded.yml, frontend-matrix.yml, sweep-*.yml
 ├── build/                     # Build artifacts
 ├── CMakeLists.txt            # CMake build configuration
