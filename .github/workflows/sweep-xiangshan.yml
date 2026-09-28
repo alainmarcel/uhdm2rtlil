@@ -1,0 +1,41 @@
+name: Sweep xiangshan
+
+# Per-module report for the XiangShan Kunminghu CORE (CONFIG=DefaultConfig):
+# every generated module -- one concrete module per file, so each carries
+# exactly the parameterisation it has under XSTop -- read by read_uhdm and
+# read_slang, SAT-mitered from reset, opt-checked and Verilator co-simulated
+# against the RTL (test/ext_ip/ext_flow.py via core_sweep.py, family
+# xiangshan-core-full).  The RTL is the Chisel generator's OUTPUT, fetched
+# from the release asset xiangshan-rtl-e4566c29 (the generator itself needs a
+# 40 GB JVM heap); modules whose source closure exceeds the manifest's 16 MB
+# cap (the 8 top-level blocks) are reported as skipped.  Sharded 16 ways.
+# Nightly + manual dispatch.  The hand-written XS-Verilog-Library is the
+# `xiangshan` family of sweep-ext.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "47 4 * * *"   # nightly 04:47 UTC, clear of the ext / pavona sweeps
+
+concurrency:
+  group: sweep-xiangshan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: xiangshan-core-full
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      shards: 16
+      timeout: 330
+      # 16 GB-runner arithmetic (see cvw in sweep-ext.yml): at the default
+      # 12 GB cap two concurrent modules exhausted the runner before either
+      # tripped its ulimit and three shards were shut down.  At 7 GB x 2 the
+      # heavy modules fail their own row as "SAT over memory cap".
+      mem_limit_kb: "7000000"
