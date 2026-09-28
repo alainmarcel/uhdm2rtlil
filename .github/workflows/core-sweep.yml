@@ -32,6 +32,11 @@ on:
         required: false
         type: string
         default: "12000000"
+      jobs:
+        description: "concurrent miters (JOBS) and co-sims (--jobs) per shard; 1 serialises them for a family whose heaviest Verilator builds do not fit two-at-a-time in 16 GB"
+        required: false
+        type: string
+        default: "2"
 
 jobs:
   build:
@@ -192,8 +197,8 @@ jobs:
         # --shard runs only this shard's ~1/N of the modules; each shard writes
         # its rows as JSON, merged into the final table by the `merge` job.
         MEM_LIMIT_KB=${{ inputs.mem_limit_kb }} \
-        JOBS=2 FULL_SWEEP=1 python3 core_sweep.py ${{ inputs.core }} \
-          --cycles ${{ inputs.cycles }} --jobs 2 \
+        JOBS=${{ inputs.jobs }} FULL_SWEEP=1 python3 core_sweep.py ${{ inputs.core }} \
+          --cycles ${{ inputs.cycles }} --jobs ${{ inputs.jobs }} \
           --shard ${{ matrix.shard }}/${{ inputs.shards }} \
           --emit-json "$GITHUB_WORKSPACE/${{ inputs.core }}-shard-${{ matrix.shard }}.json" \
           --out "$GITHUB_WORKSPACE/${{ inputs.core }}-shard-${{ matrix.shard }}.md"
