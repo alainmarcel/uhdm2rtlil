@@ -1,0 +1,6 @@
+${CVA6_RTL}/core/cache_subsystem/hpdcache/rtl/include
+${CVA6_RTL}/core/include
+${CVA6_RTL}/vendor/pulp-platform/common_cells/include
+${CVA6_RTL}/vendor/pulp-platform/common_cells/src
+${CVA6_RTL}/vendor/pulp-platform/axi/include
+${CVA6_RTL}/common/local/util

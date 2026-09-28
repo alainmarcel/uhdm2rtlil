@@ -105,6 +105,7 @@ PERIPH4_DIR = TEST_DIR / "pavona_periph4_equiv"
 PERIPH5_DIR = TEST_DIR / "pavona_periph5_equiv"
 CHIPS_DIR = TEST_DIR / "pavona_chips"
 CALIPTRA_DIR = TEST_DIR / "caliptra_chip"
+CVA6_CHIP_DIR = TEST_DIR / "cva6_chip"
 
 
 def sh(cmd, cwd=None, timeout=None, env=None):
@@ -1454,6 +1455,64 @@ def sweep_chip(chip, jobs, cycles=300, flt=None):
 
 
 
+def sweep_cva6_chip(jobs, cycles=300, flt=None):
+    """CVA6 full core: Surelog + read_uhdm + read_slang of the `cva6` top ONCE,
+    every instance at every level of the elaborated hierarchy paired by path,
+    one read_uhdm-vs-read_slang SAT miter per distinct parameterisation
+    ($paramod: every module the core instantiates, with exactly the parameters
+    it has under the chip configuration) with the structural check on each
+    (test/cva6_chip/scripts/chip_flow.py).  Co-sim stays with the per-module
+    sweep (see the note in the loop below); the whole-core co-sim is its
+    `cva6` row."""
+    env = dict(os.environ, JOBS=str(max(1, jobs)), CVA6_RTL=str(CVA6_DIR / "rtl"))
+    env["SHARD"] = f"{_SHARD[0] + 1}/{_SHARD[1]}"
+    inst_dir = CVA6_CHIP_DIR / "work" / "inst"
+    cmd = [sys.executable, "scripts/chip_flow.py"] + ([flt] if flt else [])
+    try:
+        p = subprocess.run(cmd, cwd=CVA6_CHIP_DIR, text=True, timeout=5 * 3600, env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = p.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+    print(out)
+    label = {"proven": "✅ equivalent", "cex": "❌ differs",
+             "timeout": "❓ SAT timeout", "memlimit": "❓ SAT over memory cap",
+             "error": "error"}
+    groups = {}
+    if (inst_dir / "groups.json").exists():
+        groups = json.loads((inst_dir / "groups.json").read_text())
+    rows = []
+    for line in out.splitlines():
+        m = re.match(r"\s*[✅❌]\s*(\S+)\s+(proven|cex|timeout|memlimit|error)\b", line)
+        if m:
+            g = groups.get(m.group(1), {})
+            paths = g.get("paths", [])
+            note = g.get("rep", "")
+            if len(paths) > 1:
+                note += f" (+{len(paths) - 1} more instance(s) of this parameterisation)"
+            rows.append({"module": m.group(1), "formal": label[m.group(2)], "cosim": "—",
+                         "note": note})
+    rows.sort(key=lambda r: r["module"])
+    for r in rows:
+        r["check"], r["conflicts"] = _il_check(
+            inst_dir / f"{r['module']}_uhdm.il", f"{r['module']}_uhdm")
+        # No per-instance co-sim yet: every CVA6 module takes the STRUCT-valued
+        # `CVA6Cfg` (and type parameters) that the $paramod name encodes as
+        # bit strings, which Verilator's -G cannot take, so the RTL side of the
+        # instance cannot be rebuilt the way pavona's plain-parameter instances
+        # are (a per-instance wrapper generator is the follow-up).  The RTL
+        # co-sim of every module, at the core-level parameters, is the
+        # per-module sweep's; the whole-core co-sim is its `cva6` row.
+        r["cosim"] = "— (RTL co-sim: the per-module sweep)"
+        r["slang_cosim"] = "—"
+    nproven = sum(1 for r in rows if r["formal"].startswith("✅"))
+    rows.insert(0, {"module": "cva6 (full core)",
+                    "formal": _chip_top_formal(out, nproven, len(rows)),
+                    "cosim": "— (whole-core co-sim: the cva6 row of the per-module sweep)",
+                    "slang_cosim": "—"})
+    return rows
+
+
 def _fetch_caliptra():
     """caliptra-rtl checkout: $CALIPTRA if set, else a shallow clone at the
     pinned commit (caliptra_chip/caliptra.commit)."""
@@ -1777,7 +1836,7 @@ def main():
     ap.add_argument("core", choices=["ibex", "rp32", "cva6", "pavona", "tlul",
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
-                                     "egret", "dragonfly", "caliptra",
+                                     "egret", "dragonfly", "caliptra", "cva6-chip",
                                      "opentitan"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
@@ -1862,6 +1921,8 @@ def main():
         rows = sweep_kmac(args.jobs, args.cycles, args.filter, ip=args.core)
     elif args.core in ("egret", "dragonfly"):
         rows = sweep_chip(args.core, args.jobs, args.cycles, args.filter)
+    elif args.core == "cva6-chip":
+        rows = sweep_cva6_chip(args.jobs, args.cycles, args.filter)
     elif args.core == "caliptra":
         rows = sweep_caliptra(args.jobs, args.cycles, args.filter)
     elif args.core in _ext_families():
