@@ -53,6 +53,12 @@ FLATTEN_LIMIT = 8 << 20
 # top-level blocks above it; those get an honest row instead of an OOM kill
 # that takes the shard down.
 MAX_CLOSURE_BYTES = 0
+ALWAYS_SRCS = []
+# Extra read_slang flags from the manifest ("slang_flags").  caliptra-ss needs
+# --single-unit: VeeR's `css_mcu0_RV_BUILD_AXI4` comes from a defines header
+# listed as a SOURCE in its flist, and without single-unit the macro dies at
+# the end of that file, so the wrapper's `.*` finds no AXI ports.
+SLANG_FLAGS = ""
 
 
 def _sl_timeout(src_bytes):
@@ -316,6 +322,12 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     w.mkdir(parents=True, exist_ok=True)
     top = m
     files = cl.closure(m)
+    # "always_srcs": files (globs, relative to $EXT_IP_ROOT) prepended to
+    # every closure -- packages a module reaches only through an included
+    # .svh, which the identifier scan of .sv/.v roots cannot see
+    # (caliptra-ss's caliptra_prim_ram_1p_pkg behind caliptra_prim_assert.svh).
+    if files and ALWAYS_SRCS:
+        files = [f for f in ALWAYS_SRCS if f not in files] + files
     if not files:
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
                 "check": "— (no elaboration)", "cosim": "—", "slang_cosim": "—",
@@ -386,7 +398,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     # us nothing, so such a module is SKIPPED, not failed: 17 of 108 axi rows
     # were being reported as read-failures purely for this reason.
     (w / "slang.ys").write_text(
-        f"read_slang --ignore-assertions {slang_defs} {slang_incs} {srcs_q} --top {top}\n"
+        f"read_slang --ignore-assertions {SLANG_FLAGS} {slang_defs} {slang_incs} {srcs_q} --top {top}\n"
         f"hierarchy -check -top {top}\nwrite_rtlil slang_hier.il\n")
     # NOT -q: the per-line slang diagnostics are what tell a default-parameter
     # elaboration failure apart from a slang limitation, and -q collapses them
@@ -537,13 +549,23 @@ def main():
     work_root.mkdir(parents=True, exist_ok=True)
     cl = Closure(man["roots"])
     excl = [re.compile(x) for x in man.get("exclude", [])]
-    global MAX_CLOSURE_BYTES
+    global MAX_CLOSURE_BYTES, ALWAYS_SRCS, SLANG_FLAGS
+    SLANG_FLAGS = " ".join(man.get("slang_flags", []))
     MAX_CLOSURE_BYTES = int(float(man.get("max_closure_mb", 0)) * (1 << 20))
+    ALWAYS_SRCS = sorted({f for g in man.get("always_srcs", [])
+                          for f in glob.glob(str(EXT / g), recursive=True) if os.path.isfile(f)})
     if man.get("modules") == "auto":
         pref = man.get("only_prefix")
+        # "sweep_paths": sweep only the modules DEFINED under these prefixes
+        # (relative to $EXT_IP_ROOT); the roots outside them stay available
+        # to the closures.  caliptra-ss vendors caliptra-rtl and i3c-core as
+        # submodules: its own RTL needs them to elaborate, but the Caliptra
+        # core has its own chip sweep and would otherwise be counted twice.
+        sp = [str(EXT / d) for d in man.get("sweep_paths", [])]
         mods = [{"name": n} for n in sorted(cl.mod_files)
                 if not any(x.search(n) for x in excl)
-                and (not pref or n.startswith(pref))]
+                and (not pref or n.startswith(pref))
+                and (not sp or any(cl.mod_files[n].startswith(d) for d in sp))]
     else:
         mods = man["modules"]
     if args.modules:

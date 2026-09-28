@@ -3,7 +3,8 @@ name: Sweep external IP
 # Per-module report for the external IP families under test/ext_ip/ (PULP
 # common_cells / AXI, OpenHW CVE2 / CORE-V Wally, XiangShan's SystemVerilog
 # arithmetic library, Alex Forencich's
-# verilog-ethernet / verilog-pcie, hdl-util hdmi ...): every module of a
+# verilog-ethernet / verilog-pcie, hdl-util hdmi, the Caliptra subsystem
+# caliptra-ss ...): every module of a
 # family is read by read_uhdm and read_slang from a shallow clone at the
 # manifest's pinned commit, SAT-mitered from reset, opt-checked and Verilator
 # co-simulated against the RTL (test/ext_ip/ext_flow.py via core_sweep.py).
@@ -46,6 +47,18 @@ jobs:
           - family: verilog-pcie
           - family: hdmi
           - family: xiangshan
+          # Caliptra subsystem (chipsalliance/caliptra-ss @ dfa6c631, with its
+          # caliptra-rtl / i3c-core / usb2 / adams-bridge submodules): the
+          # subsystem's OWN modules (src/, i3c-core, usb2 -- `sweep_paths`),
+          # the vendored caliptra-rtl serving the closures only (it is the
+          # caliptra chip sweep).  ~280 modules, some with 13 MB Surelog
+          # closures (the MCU / subsystem tops), sharded 3 ways under the
+          # same 7 GB x 2-job cap as cvw.  The MCU top needs Surelog's
+          # struct-member size-cast fix to elaborate (see the manifest).
+          - family: caliptra-ss
+            shards: 3
+            timeout: 330
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
