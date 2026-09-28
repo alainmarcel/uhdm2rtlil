@@ -214,9 +214,6 @@ packed_struct_array_net_elem
 # check_mem/sub_addr — miter proves UHDM == Verilog (equiv_induct incompleteness,
 #   not a real diff).
 check_mem/sub_addr.sv
-# memories/wide_all — NOT a UHDM bug: Yosys v0.67's `synth` SEGFAULTS on this
-#   asymmetric wide-port memory for BOTH frontends (read_verilog crashes too).
-memories/wide_all.v
 # --- (all other imported feature-gap failures fixed) ---
 
 # ---------------------------------------------------------------------------
