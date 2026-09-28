@@ -59,9 +59,17 @@ jobs:
           # -- see test/ext_ip/xiangshan-core-full.json.  Sharded 16 ways:
           # ~125 modules per runner, each a small Surelog closure (the 8
           # top-level blocks above the 16 MB cap are reported as skipped).
+          # Same 16 GB-runner arithmetic as cvw above: at the default 12 GB
+          # cap, two concurrent modules exhausted the runner before either
+          # tripped its ulimit and three of sixteen shards were shut down
+          # ("exit code 143", ~375 modules unreported in the first nightly).
+          # At 7 GB x 2 jobs the heavy modules (RenameBuffer, ram_65540x21,
+          # the wide TL buffers) fail their own row as "SAT over memory cap"
+          # and the other ~120 in the shard still report.
           - family: xiangshan-core-full
             shards: 16
             timeout: 330
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
