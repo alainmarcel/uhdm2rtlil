@@ -342,6 +342,38 @@ bool UhdmImporter::resolve_struct_array_elem_member_lhs(
 // Import the condition at width 0 (self-determined) and reduce a multi-bit
 // result to one bit the way the comb path does (import_if_stmt_comb), keeping
 // a constant a constant so dead arms still fold away.
+// The base of a part-select / indexed-part-select LHS inside an inlined
+// function body.  A block-local (declared inside the begin block) is already in
+// input_mapping; a FUNCTION-LEVEL local is not until its first whole-variable
+// write creates the `$<ctx>$local_<name>` wire -- and with a non-ANSI header
+// (`input logic [7:0] byteen;` in the body) Surelog lists every local on the
+// function's Variables(), never on the begin block.  A local whose FIRST write
+// is a part-select (`size[1:0] = ...; return size[1:0];`, VeeR EL2
+// get_write_size / get_write_addr) therefore had no base at all: "Part-select
+// LHS size[1:0] out of bounds (base_size=0)", the write was dropped and the
+// function returned 0.  Create the same function-scoped wire the whole-variable
+// path would, at the declared width, and map it.
+RTLIL::SigSpec UhdmImporter::func_local_base_for_select(
+        const std::string& base_name, std::map<std::string, RTLIL::SigSpec>& input_mapping,
+        const std::string& func_call_context, const std::map<std::string, int>& local_var_widths) {
+    auto it = input_mapping.find(base_name);
+    if (it != input_mapping.end())
+        return it->second;
+    auto wit = local_var_widths.find(base_name);
+    if (wit == local_var_widths.end() || wit->second <= 0)
+        return RTLIL::SigSpec();
+    std::string lname = stringf("$%s$local_%s", func_call_context.c_str(), base_name.c_str());
+    RTLIL::Wire* lw = module->wire(RTLIL::escape_id(lname));
+    if (!lw)
+        lw = module->addWire(RTLIL::escape_id(lname), wit->second);
+    RTLIL::SigSpec base(lw);
+    input_mapping[base_name] = base;
+    if (mode_debug)
+        log("  process_stmt_to_case: function-level local %s mapped for a select write (width=%d)\n",
+            base_name.c_str(), wit->second);
+    return base;
+}
+
 RTLIL::SigSpec UhdmImporter::import_func_if_condition(const any* cond_expr,
                                                       std::map<std::string, RTLIL::SigSpec>& input_mapping) {
     int saved_ctx = expression_context_width;
@@ -1375,9 +1407,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (base_name == func_name) {
                         base_spec = RTLIL::SigSpec(result_wire);
                     } else {
-                        auto it = input_mapping.find(base_name);
-                        if (it != input_mapping.end())
-                            base_spec = it->second;
+                        base_spec = func_local_base_for_select(base_name, input_mapping,
+                                                               func_call_context, local_var_widths);
                     }
 
                     if (base_spec.size() > 0 && offset + width <= base_spec.size()) {
@@ -1423,9 +1454,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (base_name == func_name) {
                         base_spec = RTLIL::SigSpec(result_wire);
                     } else {
-                        auto it = input_mapping.find(base_name);
-                        if (it != input_mapping.end())
-                            base_spec = it->second;
+                        base_spec = func_local_base_for_select(base_name, input_mapping,
+                                                               func_call_context, local_var_widths);
                     }
                     if (offset >= 0 && base_spec.size() > 0 &&
                         offset + width_val <= base_spec.size()) {
