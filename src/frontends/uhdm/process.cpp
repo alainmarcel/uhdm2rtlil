@@ -2006,7 +2006,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 current_ff_clock_sig = clock_sig;
                                 log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
                                 
+                                // Non-blocking semantics for the clocked
+                                // branch, as the synchronous always_ff path
+                                // does: with the flag off, a read of an array
+                                // element after its `<=` in the same block saw
+                                // the pending write through current_comb_values
+                                // (hpdcache_regbank_wmask_1rw's `rdata <=
+                                // mem[addr]` read the word being written).
+                                bool saved_ff_body_mode = in_always_ff_body_mode;
+                                in_always_ff_body_mode = true;
                                 import_statement_comb(else_stmt, case_false);
+                                in_always_ff_body_mode = saved_ff_body_mode;
                                 
                                 // Clear context
                                 current_signal_temp_wires.clear();
