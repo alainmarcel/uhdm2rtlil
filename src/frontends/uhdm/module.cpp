@@ -3023,8 +3023,31 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             }
                         }
                     }
-                    if (actual_sig.empty())
+                    if (actual_sig.empty()) {
+                        // An unbased-unsized fill actual (`.be_i('1)`) takes
+                        // the FORMAL's width (LRM 5.7.1) -- import_constant
+                        // sizes a fill by expression_context_width, which at
+                        // this point is whatever the caller left (0 inside a
+                        // generate scope, a stale LHS width at module scope),
+                        // so CVA6 wt_dcache_mem's `gen_tag_srams[i].i_tag_sram
+                        // (.be_i('1))` connected a 1-bit constant and wrote one
+                        // byte lane of every tag word.  Size it by the target
+                        // module's port wire; everything else is imported
+                        // self-determined as before.
+                        int saved_ctx_pc = expression_context_width;
+                        int fill_w = 0;
+                        if (auto hcc = dynamic_cast<const UHDM::constant*>(high_conn))
+                            if (hcc->VpiSize() == -1)
+                                if (RTLIL::Module* tm = design->module(cell->type))
+                                    if (RTLIL::Wire* pw = tm->wire(RTLIL::escape_id(port_name)))
+                                        fill_w = pw->width;
+                        expression_context_width = fill_w;
                         actual_sig = import_expression(any_cast<const expr*>(high_conn));
+                        expression_context_width = saved_ctx_pc;
+                        if (fill_w > 0)
+                            log("    Port %s: fill literal sized to the formal (%d bits)\n",
+                                port_name.c_str(), fill_w);
+                    }
                 } catch (...) {
                     log_warning("Failed to import port connection for %s\n", port_name.c_str());
                     actual_sig = RTLIL::SigSpec();
