@@ -485,6 +485,11 @@ struct UhdmImporter {
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
+    // The CaseRule whose statements are being imported (null at the root
+    // case).  A function call with OUTPUT arguments inlined from an
+    // expression inside an if/case arm must write those arguments into
+    // THIS arm, not unconditionally into the root case.
+    RTLIL::CaseRule* active_comb_case_ = nullptr;
     // Set by a `return` inside an inlined task/void-function body
     // (inline_task_body_comb) so subsequent statements in the same block are
     // skipped — `assign x=1; return; assign x=2;` must keep x=1 not x=2

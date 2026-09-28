@@ -10246,6 +10246,63 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
         inline_func_body_comb(func_stmt, proc, func_mapping, func_name, context, "", process_src);
     }
 
+    // OUTPUT / INOUT arguments: the body's final value of the formal is the
+    // caller's variable from here on.  They were mapped like inputs (the
+    // actual's current value) and their writes stayed in func_mapping, so
+    // `state_d = start_transfer(req, req_value_d, drive_mode_d, counter_en)`
+    // (I3C bus_tx_flow) returned the state and dropped all three outputs:
+    // the block's defaults survived and sel_od_pp_o never left open-drain.
+    // Written into the ACTIVE if/case arm when the call sits in one, else at
+    // the root case -- the same placement an assignment statement gets.
+    if (io_decls && fc->Tf_call_args()) {
+        int k = 0;
+        for (auto io_any : *io_decls) {
+            auto io = any_cast<const io_decl*>(io_any);
+            if (!io) continue;
+            int dir = io->VpiDirection();
+            if ((dir == vpiOutput || dir == vpiInout) &&
+                k < (int)fc->Tf_call_args()->size()) {
+                std::string pn = std::string(io->VpiName());
+                auto vit = func_mapping.find(pn);
+                const any* arg = (*fc->Tf_call_args())[k];
+                RTLIL::Wire* tw = nullptr;
+                if (vit != func_mapping.end() && arg && arg->VpiType() == vpiRefObj) {
+                    std::string an = std::string(any_cast<const ref_obj*>(arg)->VpiName());
+                    std::string gs = get_current_gen_scope();
+                    while (true) {
+                        std::string q = gs.empty() ? an : gs + "." + an;
+                        if (name_map.count(q)) tw = name_map[q];
+                        else tw = module->wire(RTLIL::escape_id(q));
+                        if (tw || gs.empty()) break;
+                        size_t d = gs.rfind('.');
+                        gs = (d == std::string::npos) ? "" : gs.substr(0, d);
+                    }
+                }
+                if (tw) {
+                    RTLIL::SigSpec val = vit->second;
+                    if (val.size() < tw->width) val.extend_u0(tw->width);
+                    else if (val.size() > tw->width) val = val.extract(0, tw->width);
+                    if (active_comb_case_) {
+                        RTLIL::SigSpec tgt = map_to_temp_wire(RTLIL::SigSpec(tw));
+                        active_comb_case_->actions.push_back(RTLIL::SigSig(tgt, val));
+                        if (!in_always_ff_body_mode) {
+                            std::string sn = tw->name.str();
+                            if (!sn.empty() && sn[0] == '\\') sn = sn.substr(1);
+                            current_comb_values[sn] = val;
+                        }
+                    } else {
+                        emit_comb_assign(RTLIL::SigSpec(tw), val, proc);
+                    }
+                    log("    import_func_call_comb: output arg %s -> %s\n", pn.c_str(), log_id(tw->name));
+                } else if (vit != func_mapping.end()) {
+                    log_warning("function %s: output argument %d is not a plain variable; its write-back was skipped\n",
+                                call_name.c_str(), k);
+                }
+            }
+            k++;
+        }
+    }
+
     // Create process action for result temp wire = final result value
     RTLIL::SigSpec final_result = func_mapping[func_name];
     proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(result_temp), final_result));
@@ -16338,6 +16395,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             log("        import_statement_comb: null statement\n");
         return;
     }
+    struct ActiveCase {
+        UhdmImporter& i_; RTLIL::CaseRule* saved_;
+        ActiveCase(UhdmImporter& i, RTLIL::CaseRule* c) : i_(i), saved_(i.active_comb_case_) { i_.active_comb_case_ = c; }
+        ~ActiveCase() { i_.active_comb_case_ = saved_; }
+    } _active_case(*this, case_rule);
     
     int stmt_type = uhdm_stmt->VpiType();
     
