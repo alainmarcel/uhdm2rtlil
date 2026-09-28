@@ -771,6 +771,10 @@ struct UhdmImporter {
     void flush_pending_sync(RTLIL::SyncRule* sync);
     int while_static_bound(const UHDM::any* cond);
     int case_context_width(const UHDM::case_stmt* cs);
+    RTLIL::SigSpec func_local_base_for_select(const std::string& base_name,
+                                              std::map<std::string, RTLIL::SigSpec>& input_mapping,
+                                              const std::string& func_call_context,
+                                              const std::map<std::string, int>& local_var_widths);
     RTLIL::SigSpec import_func_if_condition(const UHDM::any* cond_expr,
                                             std::map<std::string, RTLIL::SigSpec>& input_mapping);
     // The child instance whose parameter OVERRIDE actual is being evaluated
