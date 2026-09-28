@@ -333,6 +333,31 @@ bool UhdmImporter::resolve_struct_array_elem_member_lhs(
     return true;
 }
 
+// The condition of an `if` inside an inlined function body is SELF-DETERMINED
+// (LRM 11.6.1): `if (~found)` tests the 1-bit local.  process_stmt_to_case runs
+// with the CALL SITE's expression_context_width still active (`assign ptr =
+// f(...)` leaves 3), and a context-sized `~found` became `~{2'b00, found}` =
+// 3'b111 which the arm's `case 3'001` never matched -- VeeR EL2's
+// get_nxtbyte_ptr (caliptra-ss css_mcu0_axi4_to_ahb) folded to a constant 0.
+// Import the condition at width 0 (self-determined) and reduce a multi-bit
+// result to one bit the way the comb path does (import_if_stmt_comb), keeping
+// a constant a constant so dead arms still fold away.
+RTLIL::SigSpec UhdmImporter::import_func_if_condition(const any* cond_expr,
+                                                      std::map<std::string, RTLIL::SigSpec>& input_mapping) {
+    int saved_ctx = expression_context_width;
+    expression_context_width = 0;
+    RTLIL::SigSpec cond = import_expression(any_cast<const expr*>(cond_expr), &input_mapping);
+    expression_context_width = saved_ctx;
+    if (cond.size() > 1) {
+        if (cond.is_fully_const())
+            cond = cond.as_const().as_bool() ? RTLIL::SigSpec(RTLIL::State::S1)
+                                             : RTLIL::SigSpec(RTLIL::State::S0);
+        else
+            cond = module->ReduceBool(NEW_ID, cond);
+    }
+    return cond;
+}
+
 void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
                                         RTLIL::Wire* result_wire,
                                         std::map<std::string, RTLIL::SigSpec>& input_mapping,
@@ -733,7 +758,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // Get condition
             RTLIL::SigSpec cond;
             if (ie->VpiCondition()) {
-                cond = import_expression(any_cast<const expr*>(ie->VpiCondition()), &input_mapping);
+                cond = import_func_if_condition(ie->VpiCondition(), input_mapping);
             }
             
             // Create a switch rule for the if-else with source location
@@ -907,7 +932,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         if (is) {
             RTLIL::SigSpec cond;
             if (is->VpiCondition()) {
-                cond = import_expression(any_cast<const expr*>(is->VpiCondition()), &input_mapping);
+                cond = import_func_if_condition(is->VpiCondition(), input_mapping);
             }
 
             // Optimization: constant-false condition — body is dead code, skip entirely.
