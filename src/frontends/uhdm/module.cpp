@@ -3479,9 +3479,23 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                 // Elaboration drops the anonymous outer packed dims of
                 // `data_t [3:0] arr` (only `data_t` survives on the
                 // elaborated net) — recover them from the def view.
+                // A packed_array_net carries its outer dims ITSELF
+                // (`p::fp_info_t [1:0] info_q` keeps Ranges on the net and
+                // the element type as its typespec); those are applied by
+                // the caller, so the def-view recovery below would count
+                // them twice (info_q measured 32 for 16).  Only a plain net
+                // whose dims elaboration dropped needs the def view.
+                // The packed_array_net branch above measures ELEMENT 0,
+                // which carries the array's name: match that the same way.
+                bool own_dims = false;
+                if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(net))
+                    own_dims = pan->Ranges() && !pan->Ranges()->empty();
+                if (net->VpiParent() &&
+                    net->VpiParent()->UhdmType() == uhdmpacked_array_net)
+                    own_dims = true;
                 if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
                     if (auto at = typespec->Actual_typespec())
-                        if (!std::string(at->VpiName()).empty()) {
+                        if (!own_dims && !std::string(at->VpiName()).empty()) {
                             int wd = widen_from_def_elem_match(
                                 std::string(mi->VpiDefName()),
                                 std::string(net->VpiName()), at, inst);
