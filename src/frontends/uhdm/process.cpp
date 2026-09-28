@@ -12936,6 +12936,114 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         return false;
     }
 
+    // `s.field[dyn +: w] = rhs` on a plain packed-struct VARIABLE (no array
+    // select): two path elems, ref_obj(base) + indexed_part_select(field) with
+    // a non-constant base.  The >= 3-elem tail path above wants an array
+    // element in front and the whole-member hier_path path wants no select,
+    // so this shape fell through both and the write was DROPPED: CVA6
+    // cache_ctrl's WAIT_REFILL_GNT arm `miss_req_o.wdata[axi_offset +: XLEN]
+    // = mem_req_q.wdata` (and .be) sent every refill with zero data.  Same
+    // masked read-modify-write as the array-element path, at
+    // member offset + dynamic base.
+    {
+        auto& pe2 = *hp->Path_elems();
+        if (pe2.size() == 2 && pe2[0]->UhdmType() == uhdmref_obj &&
+            pe2[1]->UhdmType() == uhdmindexed_part_select) {
+            auto lips = any_cast<const UHDM::indexed_part_select*>(pe2[1]);
+            std::string base_name = std::string(pe2[0]->VpiName());
+            std::string field_name = std::string(lips->VpiName());
+            int m_off = 0, m_w = 0;
+            if (lips->Base_expr() && lips->Width_expr() && !base_name.empty() &&
+                struct_member_slice_of_ref(pe2[0], field_name, nullptr, m_off, m_w)) {
+                RTLIL::SigSpec bb = import_expression(
+                    dynamic_cast<const UHDM::expr*>(lips->Base_expr()), comb_read_map());
+                RTLIL::SigSpec ww = import_expression(
+                    dynamic_cast<const UHDM::expr*>(lips->Width_expr()));
+                RTLIL::Wire* base_wire = name_map.count(base_name)
+                                             ? name_map[base_name]
+                                             : module->wire(RTLIL::escape_id(base_name));
+                if (base_wire && !bb.is_fully_const() && ww.is_fully_const() &&
+                    ww.as_const().as_int() > 0 && ww.as_const().as_int() <= m_w) {
+                    int write_w = ww.as_const().as_int();
+                    int base_w2 = base_wire->width;
+                    if (mode_debug)
+                        log("    dyn_elem_field_write: struct member dynamic slice %s.%s[dyn +: %d] at member offset %d\n",
+                            base_name.c_str(), field_name.c_str(), write_w, m_off);
+                    // bit position = member offset + base (`-:` counts down)
+                    RTLIL::SigSpec pos = bb;
+                    pos.extend_u0(32, false);
+                    if (lips->VpiIndexedPartSelectType() == 2)
+                        pos = module->Sub(NEW_ID, pos, RTLIL::SigSpec(RTLIL::Const(write_w - 1, 32)), false);
+                    if (m_off > 0)
+                        pos = module->Add(NEW_ID, pos, RTLIL::SigSpec(RTLIL::Const(m_off, 32)), false);
+                    auto rhs_e3 = dynamic_cast<const UHDM::expr*>(rhs_any);
+                    if (!rhs_e3) return false;
+                    int prev_ctx3 = expression_context_width;
+                    expression_context_width = write_w;
+                    RTLIL::SigSpec rhs3 = import_expression(rhs_e3, comb_read_map());
+                    expression_context_width = prev_ctx3;
+                    if (rhs3.size() < write_w)
+                        rhs3.extend_u0(write_w, is_expr_signed(rhs_e3));
+                    else if (rhs3.size() > write_w)
+                        rhs3 = rhs3.extract(0, write_w);
+                    rhs3 = compound_fold(rhs3, write_w);
+                    std::vector<RTLIL::State> mb(base_w2, RTLIL::State::S0);
+                    for (int i2 = 0; i2 < write_w; i2++) mb[i2] = RTLIL::State::S1;
+                    RTLIL::SigSpec mask_c = RTLIL::SigSpec(RTLIL::Const(mb));
+                    RTLIL::SigSpec rhs_wide = rhs3;
+                    rhs_wide.extend_u0(base_w2, false);
+                    RTLIL::Wire* mask_raw = module->addWire(NEW_ID, base_w2);
+                    module->addShl(NEW_ID, mask_c, pos, mask_raw, false);
+                    // A slice that runs past the member (`wdata[63 +: 8]`)
+                    // writes only its in-range bits (LRM 11.5.1): clamp the
+                    // mask to the member so nothing spills into the neighbour.
+                    std::vector<RTLIL::State> mm(base_w2, RTLIL::State::S0);
+                    for (int i2 = m_off; i2 < m_off + m_w && i2 < base_w2; i2++) mm[i2] = RTLIL::State::S1;
+                    RTLIL::Wire* mask_sh = module->addWire(NEW_ID, base_w2);
+                    module->addAnd(NEW_ID, RTLIL::SigSpec(mask_raw), RTLIL::SigSpec(RTLIL::Const(mm)), mask_sh);
+                    RTLIL::Wire* val_raw = module->addWire(NEW_ID, base_w2);
+                    module->addShl(NEW_ID, rhs_wide, pos, val_raw, false);
+                    RTLIL::Wire* val_sh = module->addWire(NEW_ID, base_w2);
+                    module->addAnd(NEW_ID, RTLIL::SigSpec(val_raw), RTLIL::SigSpec(mask_sh), val_sh);
+                    RTLIL::Wire* inv_m = module->addWire(NEW_ID, base_w2);
+                    module->addNot(NEW_ID, RTLIL::SigSpec(mask_sh), inv_m);
+                    RTLIL::SigSpec cur = current_comb_values.count(base_name)
+                                             ? current_comb_values[base_name]
+                                             : RTLIL::SigSpec(base_wire);
+                    if (!current_comb_values.count(base_name) && case_rule) {
+                        std::string tn0 = "$0\\" + base_name;
+                        RTLIL::Wire* tw0 = module->wire(tn0);
+                        RTLIL::SigSpec want = tw0 ? RTLIL::SigSpec(tw0)
+                                                  : RTLIL::SigSpec(base_wire);
+                        for (int ai = (int)case_rule->actions.size() - 1; ai >= 0; ai--) {
+                            if (case_rule->actions[ai].first == want &&
+                                case_rule->actions[ai].second.size() == base_w2) {
+                                cur = case_rule->actions[ai].second;
+                                break;
+                            }
+                        }
+                    }
+                    RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w2);
+                    module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_m), cleared);
+                    RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w2);
+                    module->addOr(NEW_ID, RTLIL::SigSpec(cleared), RTLIL::SigSpec(val_sh), new_full);
+                    if (proc) {
+                        emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
+                    } else if (case_rule) {
+                        std::string temp_name = "$0\\" + base_name;
+                        RTLIL::Wire* tw = module->wire(temp_name);
+                        RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
+                        remove_target_from_switches(case_rule, tgt);
+                        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
+                    }
+                    if (!in_always_ff_body_mode)
+                        current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+                    return true;
+                }
+            }
+        }
+    }
+
     auto& pe = *hp->Path_elems();
     if (pe[0]->UhdmType() != uhdmbit_select) return false;
     const bit_select* bs = any_cast<const bit_select*>(pe[0]);
