@@ -2504,7 +2504,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // the spimm*16 term entirely).
             int saved_ctx = expression_context_width;
             expression_context_width = result_wire->width;
+            // Same as the comb inliner: a `return '{...}` of a struct-returning
+            // function is sized by the return struct's members.
+            const UHDM::typespec* saved_ctx_ts = expression_context_typespec;
+            if (current_func_return_struct_ts)
+                expression_context_typespec = current_func_return_struct_ts;
             RTLIL::SigSpec rhs_sig = import_expression(ret->VpiCondition(), &input_mapping);
+            expression_context_typespec = saved_ctx_ts;
             expression_context_width = saved_ctx;
             RTLIL::SigSpec lhs_sig = RTLIL::SigSpec(result_wire);
             if (rhs_sig.size() < lhs_sig.size()) {
