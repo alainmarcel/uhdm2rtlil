@@ -248,6 +248,46 @@ void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
 // read_lock/write_lock at its MuBi8False default).  Resolve the element
 // struct and the array range from the local's declaration.  Returns the
 // mapped base name and the member's [off +: w] slice of the flat value.
+// [offset, width) of member `field` in the packed struct a `base_ref` (the
+// ref_obj of a struct-typed variable) is declared over.  The ref's own
+// Typespec is often null for a function local; recover it from the bound
+// variable (Actual_group), else use `fallback_ts` (the function's return
+// struct when the base IS the return variable).  LSB-first: the struct's last
+// member is the LSB.  Shared by the always_comb function inliner; the assign
+// path has the same walk inline.
+bool UhdmImporter::struct_member_slice_of_ref(const UHDM::any* base_ref,
+                                              const std::string& field,
+                                              const UHDM::struct_typespec* fallback_ts,
+                                              int& off, int& width) {
+    const UHDM::struct_typespec* st = nullptr;
+    if (auto bref = dynamic_cast<const UHDM::ref_obj*>(base_ref)) {
+        if (auto bts = bref->Typespec())
+            if (auto a = bts->Actual_typespec())
+                if (a->UhdmType() == uhdmstruct_typespec)
+                    st = any_cast<const UHDM::struct_typespec*>(a);
+        if (!st)
+            if (auto ag = bref->Actual_group())
+                if (auto ex = dynamic_cast<const UHDM::expr*>(ag))
+                    if (auto ets = ex->Typespec())
+                        if (auto a = ets->Actual_typespec())
+                            if (a->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(a);
+    }
+    if (!st) st = fallback_ts;
+    if (!st || !st->Members()) return false;
+    off = 0; width = 0;
+    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+        auto m = (*st->Members())[i];
+        int mw = 0;
+        if (auto mts = m->Typespec())
+            if (auto a = mts->Actual_typespec())
+                mw = get_width_from_typespec(a, current_instance);
+        if (std::string(m->VpiName()) == field) { width = mw; return mw > 0; }
+        off += mw;
+    }
+    return false;
+}
+
 bool UhdmImporter::resolve_struct_array_elem_member_lhs(
     const UHDM::assignment* assign, const UHDM::hier_path* hp,
     std::map<std::string, RTLIL::SigSpec>& mapping,
