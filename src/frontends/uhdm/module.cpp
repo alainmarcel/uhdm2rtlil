@@ -1253,7 +1253,17 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
 
     RTLIL::Wire* w = create_wire(netname, width, upto, start_offset);
     add_src_attribute(w->attributes, uhdm_net);
-    
+
+    // Same as the variable path: when the width above was recovered from the
+    // def view (`wire req_t [2:0] app_req` -- elaboration keeps only `req_t`
+    // on the net), stamp the element stride so `app_req[k]` slices ELEMENTS.
+    // Without it the widened net was still bit-selected: `app_req[1] =
+    // kmac_data_o` connected ONE bit (caliptra-ss lc_ctrl).
+    if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
+        if (uhdm_net->Typespec() && uhdm_net->Typespec()->Actual_typespec())
+            stamp_packed_attrs_from_def(w, std::string(mi->VpiDefName()), netname,
+                                        uhdm_net->Typespec()->Actual_typespec());
+
     // Check if net is signed
     if (auto ref_typespec = uhdm_net->Typespec()) {
         log("UHDM: Checking signed attribute for net '%s'\n", netname.c_str());
@@ -3469,9 +3479,23 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                 // Elaboration drops the anonymous outer packed dims of
                 // `data_t [3:0] arr` (only `data_t` survives on the
                 // elaborated net) — recover them from the def view.
+                // A packed_array_net carries its outer dims ITSELF
+                // (`p::fp_info_t [1:0] info_q` keeps Ranges on the net and
+                // the element type as its typespec); those are applied by
+                // the caller, so the def-view recovery below would count
+                // them twice (info_q measured 32 for 16).  Only a plain net
+                // whose dims elaboration dropped needs the def view.
+                // The packed_array_net branch above measures ELEMENT 0,
+                // which carries the array's name: match that the same way.
+                bool own_dims = false;
+                if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(net))
+                    own_dims = pan->Ranges() && !pan->Ranges()->empty();
+                if (net->VpiParent() &&
+                    net->VpiParent()->UhdmType() == uhdmpacked_array_net)
+                    own_dims = true;
                 if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst))
                     if (auto at = typespec->Actual_typespec())
-                        if (!std::string(at->VpiName()).empty()) {
+                        if (!own_dims && !std::string(at->VpiName()).empty()) {
                             int wd = widen_from_def_elem_match(
                                 std::string(mi->VpiDefName()),
                                 std::string(net->VpiName()), at, inst);

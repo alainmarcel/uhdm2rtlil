@@ -1845,9 +1845,13 @@ void UhdmImporter::stamp_packed_attrs_from_def(RTLIL::Wire* wire,
                                                const UHDM::typespec* elab_at) {
     if (!wire || wire->attributes.count(RTLIL::escape_id("packed_elem_width")))
         return;
-    auto lts = def_elem_match_ts(def_name, var_name, elab_at);
-    if (!lts || !lts->Ranges() || lts->Ranges()->empty()) return;
-    auto r0 = (*lts->Ranges())[0];
+    const UHDM::VectorOfrange* ranges = nullptr;
+    if (auto lts = def_elem_match_ts(def_name, var_name, elab_at))
+        ranges = lts->Ranges();
+    else if (auto pts = def_packed_array_match_ts(def_name, var_name, elab_at))
+        ranges = pts->Ranges();
+    if (!ranges || ranges->empty()) return;
+    auto r0 = (*ranges)[0];
     if (!r0->Left_expr() || !r0->Right_expr()) return;
     RTLIL::SigSpec l = import_expression(r0->Left_expr());
     RTLIL::SigSpec r = import_expression(r0->Right_expr());
@@ -1870,7 +1874,54 @@ int UhdmImporter::widen_from_def_elem_match(const std::string& def_name,
                                             const UHDM::scope* inst) {
     if (auto lts = def_elem_match_ts(def_name, var_name, elab_at))
         return get_width_from_typespec(lts, inst);
+    if (auto pts = def_packed_array_match_ts(def_name, var_name, elab_at))
+        return get_width_from_typespec(pts, inst);
     return 0;
+}
+
+// The `wire`-keyworded declaration of the same shape -- `wire req_t [2:0]
+// app_req;` (caliptra-ss lc_ctrl, the three KMAC application-interface
+// request slots) -- is a logic_net whose def-view typespec is a
+// packed_array_typespec (ranges + Elem_typespec) rather than a logic_typespec
+// with Elem_typespec, so def_elem_match_ts saw nothing and the net kept the
+// elaborated view's bare `req_t`: 74 bits for a 222-bit array, `app_req[1] =
+// kmac_data_o` a 1-bit select, and 71 of the 74 bits of the KMAC app port
+// undriven.  Same match rule (the def element typespec must be the typespec
+// the elaborated net carries), packed_array_typespec form.
+const UHDM::packed_array_typespec* UhdmImporter::def_packed_array_match_ts(
+        const std::string& def_name, const std::string& var_name,
+        const UHDM::typespec* elab_at) {
+    if (!uhdm_design || !uhdm_design->AllModules() || !elab_at) return nullptr;
+    for (auto m : *uhdm_design->AllModules()) {
+        if (std::string(m->VpiDefName()) != def_name) continue;
+        auto try_obj = [&](const UHDM::any* o) -> const UHDM::packed_array_typespec* {
+            const UHDM::ref_typespec* rt = nullptr;
+            if (auto n = dynamic_cast<const UHDM::net*>(o)) rt = n->Typespec();
+            else if (auto v = dynamic_cast<const UHDM::variables*>(o)) rt = v->Typespec();
+            if (!rt || !rt->Actual_typespec()) return nullptr;
+            auto pts = dynamic_cast<const UHDM::packed_array_typespec*>(rt->Actual_typespec());
+            if (!pts || !pts->Ranges() || pts->Ranges()->empty()) return nullptr;
+            if (!pts->Elem_typespec()) return nullptr;
+            const UHDM::typespec* det = pts->Elem_typespec()->Actual_typespec();
+            if (!det) return nullptr;
+            bool match = (det == elab_at) ||
+                         (det->UhdmType() == elab_at->UhdmType() &&
+                          det->VpiLineNo() == elab_at->VpiLineNo() &&
+                          det->VpiColumnNo() == elab_at->VpiColumnNo() &&
+                          det->VpiName() == elab_at->VpiName());
+            return match ? pts : nullptr;
+        };
+        if (m->Nets())
+            for (auto n : *m->Nets())
+                if (std::string(n->VpiName()) == var_name)
+                    if (auto pts = try_obj(n)) return pts;
+        if (m->Variables())
+            for (auto v : *m->Variables())
+                if (std::string(v->VpiName()) == var_name)
+                    if (auto pts = try_obj(v)) return pts;
+        return nullptr;
+    }
+    return nullptr;
 }
 
 // True if `e` references (possibly nested in an operation) a ref_obj whose name

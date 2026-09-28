@@ -71,7 +71,7 @@ only on a clean run.
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **986** tests formally equivalent UHDM vs Verilog; **578** UHDM-only
+- **986** tests formally equivalent UHDM vs Verilog; **579** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
   **122 / 123** SV-only designs also proven against `read_slang`, and **10**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check

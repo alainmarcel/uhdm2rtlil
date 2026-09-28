@@ -903,6 +903,11 @@ struct UhdmImporter {
     const UHDM::logic_typespec* def_elem_match_ts(const std::string& def_name,
                                                   const std::string& var_name,
                                                   const UHDM::typespec* elab_at);
+    // The `wire`-keyworded form of the same declaration (`wire data_t [3:0]
+    // arr`) puts the outer dims on a packed_array_typespec instead.
+    const UHDM::packed_array_typespec* def_packed_array_match_ts(
+        const std::string& def_name, const std::string& var_name,
+        const UHDM::typespec* elab_at);
     void stamp_packed_attrs_from_def(RTLIL::Wire* wire,
                                      const std::string& def_name,
                                      const std::string& var_name,
