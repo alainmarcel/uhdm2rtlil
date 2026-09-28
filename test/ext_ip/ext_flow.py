@@ -205,6 +205,25 @@ _DEFAULT_ELAB_ERRORS = (
 )
 
 
+def slang_failure_reason(log: str) -> str:
+    """The one line of a failed read_slang log worth putting in the report.
+
+    slang prints one `<file>:<line>:<col>: error: ...` diagnostic per problem
+    and yosys then aborts with the generic `ERROR: Design elaboration failed;
+    see full log for details`.  Yosys 0.68 flushed the diagnostics first;
+    0.69 emits the generic line BEFORE them, so "first line mentioning error"
+    turned every reason column into the same useless sentence (the 2026-09-28
+    ext sweep on the 0.69 branch: 354 of 544 caliptra-ss rows changed text and
+    none changed verdict).  Prefer the diagnostic wherever it lands; the
+    generic line is the fallback for a failure that produced none.
+    """
+    diag = re.search(r"^[^\n]*\berror: [^\n]*", log, re.M)
+    if diag:
+        return diag.group(0)
+    generic = re.search(r"(ERROR|error)[^\n]*", log)
+    return generic.group(0) if generic else ""
+
+
 def _defaults_unelaboratable(files, mod, slang_out):
     """True when read_slang's rejection is caused by the module's own DEFAULT
     parameters rather than by a construct read_slang does not support.
@@ -407,8 +426,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     (w / "slang.log").write_text(out2 or "")
     slang_ok = rc2 == 0 and (w / "slang_hier.il").exists()
     if not slang_ok:
-        serr = re.search(r"(ERROR|error)[^\n]*", out2 or "")
-        serr_txt = serr.group(0) if serr else ""
+        serr_txt = slang_failure_reason(out2 or "")
         if _defaults_unelaboratable(files, m, out2 or ""):
             return {"module": m, "formal": "skip (defaults don't elaborate)",
                     "formal_raw": "skip", "check": "— (not comparable)",
