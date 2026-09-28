@@ -771,6 +771,8 @@ struct UhdmImporter {
     void flush_pending_sync(RTLIL::SyncRule* sync);
     int while_static_bound(const UHDM::any* cond);
     int case_context_width(const UHDM::case_stmt* cs);
+    bool struct_member_slice_of_ref(const UHDM::any* base_ref, const std::string& field,
+                                    const UHDM::struct_typespec* fallback_ts, int& off, int& width);
     RTLIL::SigSpec func_local_base_for_select(const std::string& base_name,
                                               std::map<std::string, RTLIL::SigSpec>& input_mapping,
                                               const std::string& func_call_context,

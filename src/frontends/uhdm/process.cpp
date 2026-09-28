@@ -10665,6 +10665,43 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                 }
             }
 
+            // `local.field = ...` on a function-local STRUCT variable (or the
+            // return variable) inside an always_comb inline: only the
+            // `acc[k].field` array form above was handled, so the member
+            // write fell to the generic path under a name that is no
+            // func_mapping key, the local stayed Sx and `return m` was X --
+            // usb2's ocp_response_meta() (known/bytes members, caliptra-ss
+            // usb_ocp_recovery_ctrl_decode) read as 8'x from always_comb while
+            // the same call from a continuous assign was right.
+            if (!rhs.empty() && assign->Lhs() &&
+                assign->Lhs()->UhdmType() == uhdmhier_path) {
+                auto hp = any_cast<const hier_path*>(assign->Lhs());
+                auto pe = hp ? hp->Path_elems() : nullptr;
+                if (pe && pe->size() == 2 && (*pe)[0]->UhdmType() == uhdmref_obj) {
+                    std::string sm_base = std::string((*pe)[0]->VpiName());
+                    std::string sm_field = std::string((*pe)[1]->VpiName());
+                    auto bit = func_mapping.find(sm_base);
+                    if (bit != func_mapping.end() && bit->second.size() > 0) {
+                        int sm_off = 0, sm_w = 0;
+                        if (struct_member_slice_of_ref((*pe)[0], sm_field,
+                                sm_base == func_name ? current_func_return_struct_ts : nullptr,
+                                sm_off, sm_w) &&
+                            sm_off + sm_w <= bit->second.size()) {
+                            RTLIL::SigSpec cur = bit->second;
+                            RTLIL::SigSpec r2 = rhs;
+                            if (r2.size() < sm_w) r2.extend_u0(sm_w);
+                            else if (r2.size() > sm_w) r2 = r2.extract(0, sm_w);
+                            cur.replace(sm_off, r2);
+                            func_mapping[sm_base] = mask_write(sm_base, cur);
+                            log("      inline_func_body_comb: %s.%s [%d+:%d] = %s\n",
+                                sm_base.c_str(), sm_field.c_str(), sm_off, sm_w,
+                                log_signal(r2).c_str());
+                            break;
+                        }
+                    }
+                }
+            }
+
             if (rhs.empty()) break;
 
             // Width matching
