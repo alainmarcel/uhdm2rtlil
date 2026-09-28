@@ -13371,12 +13371,21 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     // LHS READ import (assigned the $shiftx aux wire; the FIFO memory
     // never stored a word and rdata_o read 0).
     {
+        // Walk OUT of the scope chain: the array may be declared in an
+        // ENCLOSING generate block (`gen_a.storage` written from
+        // `gen_a.gen_b` -- caliptra_prim_fifo_sync's storage lives in
+        // gen_normal_fifo and is written in gen_depth_gt1_no_reset), so
+        // try `gen_a.gen_b.storage`, then `gen_a.storage`, then the bare name.
         std::string gs = get_current_gen_scope();
-        if (!gs.empty()) {
+        while (!gs.empty()) {
             std::string qual = gs + "." + base_name;
             if (name_map.count(qual) ||
-                module->wire(RTLIL::escape_id(qual)))
+                module->wire(RTLIL::escape_id(qual))) {
                 base_name = qual;
+                break;
+            }
+            size_t dot = gs.rfind('.');
+            gs = (dot == std::string::npos) ? "" : gs.substr(0, dot);
         }
         // Processes are imported with the gen-scope stack EMPTY; the scan
         // that created the `$0\` temp resolved the scoped wire, so recover
