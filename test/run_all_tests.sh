@@ -385,7 +385,10 @@ classify_divergence() {
         echo "unknown"; return
     fi
     local v
-    v=$(cd "$SCRIPT_DIR" && timeout 150 python3 triage_cosim.py "$base" \
+    # 400 s, not 150: Yosys 0.69's mapping made dynslice's seq-14 miter take
+    # 73 s alone and past 150 s under a 6-shard run, and an inconclusive miter
+    # here turns an adjudicated artefact into an UNCLASSIFIED row.
+    v=$(cd "$SCRIPT_DIR" && timeout 400 python3 triage_cosim.py "$base" \
             --no-cosim --seq 14 2>/dev/null \
             | grep -oE 'NON-EQUIVALENT|EQUIVALENT|INCONCLUSIVE' | head -1)
     case "$v" in
