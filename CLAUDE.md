@@ -6,18 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
-The Yosys submodule is pinned at **YosysHQ tag v0.68 + one fork patch**
+The Yosys submodule is pinned at **YosysHQ tag v0.69 + one fork patch**
 (`third_party/yosys`, tracking alainmarcel/yosys branch
-`v0.68-proc-dlatch-memo`): the proc_dlatch memoization of the
+`v0.69-proc-dlatch-memo`): the proc_dlatch memoization of the
 find_mux_feedback/find_mux_constant DAG walks, which are exponential on
 shared mux subtrees without it (CVA6 cva6_tlb).  The patch is not yet
 upstreamed — when YosysHQ merges it, repoint `.gitmodules` to
-https://github.com/YosysHQ/yosys.git.  v0.68 requires **C++20**
+https://github.com/YosysHQ/yosys.git.  v0.69 requires **C++20**
 (kernel/yosys_common.h hard-errors otherwise), so the plugin's
-`CMAKE_CXX_STANDARD` is 20.  (v0.68 is the latest stable release as of
-2026-08-24; Yosys has no "stable" branch — releases are tags.)
+`CMAKE_CXX_STANDARD` is 20.  (v0.69, released 2026-09-09, is the latest
+stable release as of 2026-09-28; Yosys has no "stable" branch — releases are
+tags.  0.68 → 0.69 removed nothing this project uses: coolrunner2/greenpak4
+synth, nlutmap, `abc -retime/-noabc9/-abc2`, `logger -stderr`.)
 
-**v0.68 is CMake-only** — the top-level Makefile is gone.  Our CMakeLists builds
+**v0.69 is CMake-only** (since v0.68) — the top-level Makefile is gone.  Our CMakeLists builds
 Yosys via `cmake -B third_party/yosys/build … && cmake --build … && cmake
 --install` (was `make CONFIG=gcc PREFIX=… install`), installing the yosys binary
 + yosys-config into `out/current/`.  The build passes
@@ -35,6 +37,19 @@ PATH) or build with `-DUHDM2RTLIL_ENABLE_SLANG=OFF`.  NOTE the top-level project
 must be *configured* with that cmake, because the vendored-Yosys build reuses the
 same `CMAKE_COMMAND` for its nested `cmake -B third_party/yosys/build`.  The
 matrix's default / golden frontend remains Yosys-native `read_verilog`.
+
+**One allocator in the yosys process.**  The top-level CMakeLists forces
+`SURELOG_WITH_TCMALLOC=OFF`: Surelog links tcmalloc when the system has it, the
+plugin inherits that link from `surelog::surelog`, and the yosys binary that
+`dlopen()`s the plugin uses glibc malloc -- a glibc block freed through tcmalloc's
+interposed `free` aborts with `tcmalloc.cc:333] Attempt to free invalid pointer`,
+nondeterministically (4-6 co-sim rows per regression under Yosys 0.69).  Do not
+turn it back on for the plugin build.  The option alone is not enough: Surelog's
+CMakeLists links tcmalloc whenever the `TCMALLOC_LIBRARY` cache entry is set (the
+option only gates the `find_library`), so the top-level CMakeLists also forces
+that entry to NOTFOUND -- a build tree that was ever configured with tcmalloc
+found keeps linking it otherwise.  Check with
+`readelf -d build/uhdm2rtlil.so | grep tcmalloc` (must be empty).
 
 ## Build Commands
 

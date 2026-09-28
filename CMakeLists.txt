@@ -24,6 +24,20 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Build Surelog using CMake
+# Surelog links tcmalloc when the system has it (SURELOG_WITH_TCMALLOC
+# defaults ON), and the uhdm2rtlil plugin inherits that link from the
+# surelog::surelog target -- while the yosys binary that dlopen()s the plugin
+# uses glibc malloc.  Two allocators in one process: memory glibc handed out
+# before the plugin loaded is later freed through tcmalloc's interposed free
+# ("tcmalloc.cc:333] Attempt to free invalid pointer", nondeterministic --
+# 4 to 6 co-sim rows per regression died in the netlist-generation yosys run
+# under Yosys 0.69).  valgrind shows tcmalloc's own MallocExtension::Initialize
+# freeing a glibc block at dlopen time.  Keep the whole build on one allocator.
+set(SURELOG_WITH_TCMALLOC OFF CACHE BOOL "uhdm2rtlil: one allocator in the yosys process" FORCE)
+# Surelog's CMakeLists links tcmalloc whenever the TCMALLOC_LIBRARY cache
+# entry is set (the option only gates the find_library), so a build tree that
+# was ever configured with the option ON keeps linking it: clear the entry too.
+set(TCMALLOC_LIBRARY "TCMALLOC_LIBRARY-NOTFOUND" CACHE FILEPATH "uhdm2rtlil: tcmalloc deliberately not linked" FORCE)
 add_subdirectory(third_party/Surelog)
 
 # Custom target to build Yosys using its Makefile
@@ -84,7 +98,7 @@ else()
     add_custom_target(yosys DEPENDS ${INSTALL_DIR}/bin/yosys)
     add_custom_command(
       OUTPUT ${INSTALL_DIR}/bin/yosys
-      COMMAND ${CMAKE_COMMAND} -E echo "Compiling Yosys v0.68 via CMake, slang=${UHDM2RTLIL_ENABLE_SLANG}"
+      COMMAND ${CMAKE_COMMAND} -E echo "Compiling Yosys v0.69 via CMake, slang=${UHDM2RTLIL_ENABLE_SLANG}"
       COMMAND ${CMAKE_COMMAND} -B ${YOSYS_BUILD_DIR} -S ${YOSYS_SRC_DIR}
               -DCMAKE_BUILD_TYPE=Release
               -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}

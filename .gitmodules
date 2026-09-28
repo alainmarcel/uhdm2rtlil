@@ -4,8 +4,8 @@
 [submodule "third_party/yosys"]
 	path = third_party/yosys
 	url = https://github.com/alainmarcel/yosys.git
-	# Tracking the alainmarcel fork: v0.68 + the proc_dlatch memoization patch
-	# (branch v0.68-proc-dlatch-memo, PR alainmarcel/yosys#4).  Without the
+	# Tracking the alainmarcel fork: v0.69 + the proc_dlatch memoization patch
+	# (branch v0.69-proc-dlatch-memo, PR alainmarcel/yosys#4).  Without the
 	# patch, proc_dlatch's un-memoized find_mux_feedback/find_mux_constant DAG
 	# walks are exponential on shared mux subtrees (CVA6 cva6_tlb update_flush
 	# kept proc_dlatch spinning >9h; patched: full-core proc in ~45s).  Also a
