@@ -327,9 +327,9 @@ module hpdcache_mem_resp_demux_equiv
   input  resp_id_t       mem_resp_id_i,
   input  resp_t          mem_resp_i,
 
-  input  logic           mem_resp_ready_i [N-1:0],
-  output logic           mem_resp_valid_o [N-1:0],
-  output resp_t          mem_resp_o       [N-1:0],
+  input logic [(1)*(((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1))-1:0] mem_resp_ready_i_flat,
+  output logic [(1)*(((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1))-1:0] mem_resp_valid_o_flat,
+  output logic [($bits(resp_t))*(((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1))-1:0] mem_resp_o_flat,
 
   input  rt_t            mem_resp_rt_i
 
@@ -361,6 +361,19 @@ module hpdcache_mem_resp_demux_equiv
   };
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
+  logic mem_resp_ready_i [N-1:0];
+  logic mem_resp_valid_o [N-1:0];
+  resp_t mem_resp_o [N-1:0];
+  for (genvar gi = 0; gi < (((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1)); gi++) begin : g_flat_mem_resp_ready_i
+    assign mem_resp_ready_i[(((N-1)<(0))?(N-1):(0)) + gi] = mem_resp_ready_i_flat[gi*(1) +: (1)];
+  end
+  for (genvar gi = 0; gi < (((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1)); gi++) begin : g_flat_mem_resp_valid_o
+    assign mem_resp_valid_o_flat[gi*(1) +: (1)] = mem_resp_valid_o[(((N-1)<(0))?(N-1):(0)) + gi];
+  end
+  for (genvar gi = 0; gi < (((N-1)>(0))?((N-1)-(0)+1):((0)-(N-1)+1)); gi++) begin : g_flat_mem_resp_o
+    assign mem_resp_o_flat[gi*($bits(resp_t)) +: ($bits(resp_t))] = mem_resp_o[(((N-1)<(0))?(N-1):(0)) + gi];
+  end
+
 
   hpdcache_mem_resp_demux #(
       .N(N),

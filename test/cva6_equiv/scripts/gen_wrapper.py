@@ -506,6 +506,66 @@ def split_param_entries(block):
     if "".join(cur).strip(): out.append("".join(cur))
     return [e.strip() for e in out if e.strip()]
 
+
+# --- unpacked-array ports -> flat vectors -------------------------------------
+# Every RTLIL frontend flattens an unpacked-array port to one vector, but for an
+# ASCENDING dimension (`x [N]` is `[0:N-1]`) read_slang puts element 0 at the
+# MSBs and read_uhdm at the LSBs (they agree for `[N-1:0]`), so a wrapper that
+# copies such a port verbatim miters a pure convention as "differs"
+# (hpdcache_core_arbiter: core_req_valid 4'b1100 vs 4'b0110) and cannot be
+# driven by the Verilator testbench at all.  Same shim as test/ext_ip/
+# gen_flat_wrapper.py: the port becomes `dir logic [W*N-1:0] name_flat`, the
+# array is declared inside, element i wired to bits [i*W +: W] (element 0 at
+# the LSBs whatever the declared direction) with index arithmetic both
+# frontends read identically; `dut (.*)` still binds the DUT's `name` port to
+# the internal array of that name.
+_APORT_RE = re.compile(
+    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?P<type>[^,;()]*?)\s+(?P<name>[A-Za-z_]\w*)"
+    r"\s*(?P<dims>(?:\[[^\]]*\]\s*)+)(?=\s*(?:,|\)|$|//|/\*))", re.M)
+_NETKW = {"wire", "var", "logic", "reg", "tri"}
+
+def _dim_count(d):
+    inner = d.strip()[1:-1].strip()
+    if ":" not in inner:
+        return f"({inner})", "0"
+    a, b = (x.strip() for x in inner.split(":", 1))
+    return (f"((({a})>({b}))?(({a})-({b})+1):(({b})-({a})+1))",
+            f"((({a})<({b}))?({a}):({b}))")
+
+def flatten_array_ports(ports):
+    """(rewritten port block, body lines declaring the arrays and wiring them)."""
+    arrays = []
+    def rewrite(m):
+        dl = re.findall(r"\[[^\]]*\]", m.group("dims"))
+        if len(dl) != 1:
+            return m.group(0)
+        typ = " ".join(m.group("type").split())
+        toks = [t for t in typ.split() if t not in _NETKW]
+        elem = " ".join(toks) if toks else "logic"
+        if elem.startswith("["):
+            elem = "logic " + elem
+        cnt, lo = _dim_count(dl[0])
+        pk = re.findall(r"\[[^\]]*\]", elem)
+        base = re.sub(r"\[[^\]]*\]", "", elem).strip()
+        # width: packed-range product for a plain vector (Surelog folds
+        # `$bits(logic [31:0])` to 1), $bits(T) for a named type
+        ew = ("*".join(_dim_count(d)[0] for d in pk) if pk else "1") \
+             if base in ("logic", "reg", "bit", "wire", "") else f"$bits({elem})"
+        arrays.append((m.group("dir"), elem, m.group("name"), dl[0], cnt, lo, ew))
+        return f"{m.group('dir')} logic [({ew})*{cnt}-1:0] {m.group('name')}_flat"
+    new_ports = _APORT_RE.sub(rewrite, ports)
+    body = []
+    for dirn, elem, name, dim, cnt, lo, ew in arrays:
+        body.append(f"  {elem} {name} {dim};")
+    for dirn, elem, name, dim, cnt, lo, ew in arrays:
+        body.append(f"  for (genvar gi = 0; gi < {cnt}; gi++) begin : g_flat_{name}")
+        if dirn == "input":
+            body.append(f"    assign {name}[{lo} + gi] = {name}_flat[gi*({ew}) +: ({ew})];")
+        else:
+            body.append(f"    assign {name}_flat[gi*({ew}) +: ({ew})] = {name}[{lo} + gi];")
+        body.append("  end")
+    return new_ports, body
+
 def gen(target, out_path, extra_binds=None, import_pkgs=None):
     cva6_txt = open(f"{CORE}/cva6.sv").read()
     cva6_params, _ = extract_param_block(cva6_txt, "cva6")
@@ -826,6 +886,11 @@ def gen(target, out_path, extra_binds=None, import_pkgs=None):
     imports = "\n".join(f"  import {p}::*;" for p in pkgs)
     helper_includes = "".join(f'`include "{i}"\n' for i in sorted(need_includes))
     wtop = f"{target}_equiv"
+    tgt_ports, flat_body = flatten_array_ports(tgt_ports)
+    if flat_body:
+        print("  flattened unpacked-array ports: " + ", ".join(
+            l.split(":")[-1].strip()[len("g_flat_"):] for l in flat_body if l.startswith("  for")))
+        cva6_body_lp = cva6_body_lp + "\n" + "\n".join(flat_body) + "\n"
     out = f"""// AUTO-GENERATED per-module equivalence wrapper for {target}
 // Parameter environment copied verbatim from cva6.sv (build_config-computed
 // CVA6Cfg + shared type params) = the values used in the real hierarchy.
