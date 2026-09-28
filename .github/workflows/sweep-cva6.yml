@@ -38,6 +38,16 @@ jobs:
       # skipped, not for new work.
       shards: 8
       timeout: 240
+      # One miter / one co-sim at a time.  Shard 7 carries the two heaviest
+      # Verilator builds of the whole matrix -- std_nbdcache (its read_uhdm
+      # netlist maps 25 bit-enabled tc_sram memories to 376,857 one-bit flops:
+      # 1.76 M lines of Verilog) and the full `cva6` core -- and with two
+      # co-sims in flight they exceeded the 16 GB runner: the shard died with
+      # "runner has received a shutdown signal" (exit 143) at ~48 min in both
+      # 2026-09-28 runs on the Yosys 0.69 branch (the same netlists; the
+      # allocator change made the reads ~35% slower, which shifted the two
+      # builds into overlap).  Serial shards trade ~30 min for surviving.
+      jobs: "1"
 
   # The full core the way the pavona / caliptra chips are swept: `cva6`
   # elaborated ONCE (read_uhdm + read_slang, hierarchy kept), every instance
