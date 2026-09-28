@@ -38,6 +38,19 @@ must be *configured* with that cmake, because the vendored-Yosys build reuses th
 same `CMAKE_COMMAND` for its nested `cmake -B third_party/yosys/build`.  The
 matrix's default / golden frontend remains Yosys-native `read_verilog`.
 
+**One allocator in the yosys process.**  The top-level CMakeLists forces
+`SURELOG_WITH_TCMALLOC=OFF`: Surelog links tcmalloc when the system has it, the
+plugin inherits that link from `surelog::surelog`, and the yosys binary that
+`dlopen()`s the plugin uses glibc malloc -- a glibc block freed through tcmalloc's
+interposed `free` aborts with `tcmalloc.cc:333] Attempt to free invalid pointer`,
+nondeterministically (4-6 co-sim rows per regression under Yosys 0.69).  Do not
+turn it back on for the plugin build.  The option alone is not enough: Surelog's
+CMakeLists links tcmalloc whenever the `TCMALLOC_LIBRARY` cache entry is set (the
+option only gates the `find_library`), so the top-level CMakeLists also forces
+that entry to NOTFOUND -- a build tree that was ever configured with tcmalloc
+found keeps linking it otherwise.  Check with
+`readelf -d build/uhdm2rtlil.so | grep tcmalloc` (must be empty).
+
 ## Build Commands
 
 ```bash
