@@ -1862,12 +1862,15 @@ def main():
             rows.extend(data.get("rows", []))
             cycles = data.get("cycles", cycles)
         # De-dup by module (a module should appear in one shard only) and sort.
-        # A chip family's "(full chip)" row appears in EVERY shard: add the
-        # instance tallies together and take the co-sim cells from the shard
-        # that ran the chip co-sim.
+        # A chip family's "(full chip)" / "(full core)" row appears in EVERY
+        # shard: add the instance tallies together and take the co-sim cells
+        # from the shard that ran the chip co-sim.  (cva6-chip's row is
+        # "cva6 (full core)"; matching "(full chip)" only let the de-dup keep
+        # ONE shard's tally -- "21/23 instances equivalent" in a 137-row
+        # nightly -- from the first cva6-chip run until 2026-09-28.)
         seen, uniq, tops = set(), [], {}
         for r in sorted(rows, key=lambda r: r["module"]):
-            if r["module"].endswith("(full chip)"):
+            if r["module"].endswith(("(full chip)", "(full core)")):
                 t = tops.setdefault(r["module"], dict(r, _n=0, _d=0, _fail=""))
                 m = re.match(r"(\d+)/(\d+) instances", r.get("formal", ""))
                 if m:
