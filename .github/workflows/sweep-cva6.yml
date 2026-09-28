@@ -38,3 +38,18 @@ jobs:
       # skipped, not for new work.
       shards: 8
       timeout: 240
+
+  # The full core the way the pavona / caliptra chips are swept: `cva6`
+  # elaborated ONCE (read_uhdm + read_slang, hierarchy kept), every instance
+  # at every level paired by path, one miter per distinct elaborated
+  # parameterisation (every module with exactly the parameters it has under
+  # the chip configuration -- the per-module sweep above cannot see an
+  # instantiation's own overrides), plus a per-instance co-sim against the
+  # RTL rebuilt with those parameters (test/cva6_chip/scripts/chip_flow.py).
+  chip:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: cva6-chip
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      shards: 6
+      timeout: 300
