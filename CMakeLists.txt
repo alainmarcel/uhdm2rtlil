@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
-project(uhdm2rtlil VERSION 1.86)
+project(uhdm2rtlil VERSION 0.69)
 
 # Set C++ standard.  Keep the TREE at C++17: third_party/Surelog (and its
 # bundled antlr4) is added below via add_subdirectory and does NOT build under
