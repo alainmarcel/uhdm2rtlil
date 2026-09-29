@@ -73,7 +73,7 @@ control_mvp                            4   400   proven
 controller                             4   900   proven
 copro_alu                              4   400   proven
 csr_buffer                             4   900   proven
-csr_regfile                            4   180   cex
+csr_regfile                            4   180   cex      # unique/priority case VIOLATION stimulus: the cex drives two one-hot arms at once (LRM: undefined); read_slang X / independent arms, read_uhdm full_case/parallel_case don't-care, Verilator $stop -- not a reader defect
 cva6                                   4   180   timeout
 cva6_fifo_v3                           4   900   proven
 cva6_hpdcache_if_adapter               4   400   proven   # proven since 2026-09-16 (3 consecutive sharded runs)
@@ -147,7 +147,7 @@ hpdcache                               4   180   dead     # CVA6Cfg.DCacheType =
 hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   proven
-hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_cmo                           4   400   cex      # unique case VIOLATION stimulus (two arms true at once), same class as csr_regfile -- not a reader defect
 hpdcache_core_arbiter                  4   180   proven   # the unpacked-array ports are flattened by the wrapper now (gen_wrapper flatten_array_ports), the element-order convention cex is gone
 hpdcache_ctrl                          4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 185v187 (comparison artifact)
 hpdcache_ctrl_pe                       4   180   proven
@@ -188,7 +188,7 @@ hpdcache_sram_wbyteenable_1rw          4   400   timeout  # now elaborates+miter
 hpdcache_sram_wmask                    4   180   proven
 hpdcache_sram_wmask_1rw                4   180   proven
 hpdcache_sync_buffer                   4   900   proven
-hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_uncached                      4   400   cex      # unique case VIOLATION stimulus (two arms true at once), same class as csr_regfile -- not a reader defect
 hpdcache_victim_plru                   4  3600   proven   # PROVEN 2026-08-24: dyn packed elem write used elem-typedef range as outer dim (wrote set*256, read set*8)
 hpdcache_victim_random                 4   180   proven
 hpdcache_victim_sel                    4   180   proven   # PROVEN after part-select param-bound fold fix
@@ -213,7 +213,7 @@ iteration_div_sqrt_mvp                 4   900   proven
 load_store_unit                        4   180   timeout
 load_unit                              4   900   proven
 lsu_bypass                             4   900   proven
-macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
+macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix); latch-vs-X class: read_uhdm holds the previous value where read_slang assigns X (CLAUDE.md, memory cva6_zcmt_latch_vs_x) -- not a reader defect
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of
 # sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
 # #838).  With that fixed the miter must prove the module outright and does
@@ -284,5 +284,5 @@ wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3
 # the shared sim-artefact class (X-init / stimulus), not a reader bug.
 
 wt_dcache_wbuffer                      4   180   timeout
-zcmt_decoder                           4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
+zcmt_decoder                           4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix); latch-vs-X class, same as macro_decoder -- not a reader defect
 rr_arb_tree                            4   400   proven
