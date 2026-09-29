@@ -544,6 +544,14 @@ def sweep_cva6(cycles, jobs, flt=None):
                      r"crash|elabfail|dead|skipped)", line)
         if m:
             formal[m.group(1)] = m.group(2)
+            continue
+        # A PROMOTION ("⬆  mod now PROVEN (manifest says cex)") is a proof the
+        # manifest has not caught up with; it fell through to the manifest's
+        # expectation below and was rendered "differs" (hpdcache_core_arbiter
+        # after its wrapper flattened the array ports).
+        m = re.match(r"\s*⬆\s+(\S+)\s+now PROVEN\b", line)
+        if m:
+            formal[m.group(1)] = "proven"
     label = {
         "proven": "✅ equivalent", "cex": "❌ differs",
         "timeout": "❓ SAT timeout", "error": "error", "crash": "crash",

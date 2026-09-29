@@ -148,7 +148,7 @@ hpdcache_1hot_to_binary                4   180   proven
 hpdcache_amo                           4   900   proven
 hpdcache_cbuf                          4   180   proven
 hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
-hpdcache_core_arbiter                  4   180   cex      # co-sim 0/0 after $bits dedup-sig fix; residual cex = unpacked-top-port flattening convention vs slang (elem0 LSB vs MSB), not a logic diff
+hpdcache_core_arbiter                  4   180   proven   # the unpacked-array ports are flattened by the wrapper now (gen_wrapper flatten_array_ports), the element-order convention cex is gone
 hpdcache_ctrl                          4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 185v187 (comparison artifact)
 hpdcache_ctrl_pe                       4   180   proven
 hpdcache_data_downsize                 4   400   dead     # accessWidth == memDataWidth, so hpdcache_data_resize instantiates neither resizer (both binding directions hit its own $fatal)

@@ -351,17 +351,17 @@ module hpdcache_equiv
 
     //      Core request interface
     //         1st cycle
-    input  logic                          core_req_valid_i [HPDcacheCfg.u.nRequesters],
-    output logic                          core_req_ready_o [HPDcacheCfg.u.nRequesters],
-    input  hpdcache_req_t                 core_req_i       [HPDcacheCfg.u.nRequesters],
+    input logic [(1)*(HPDcacheCfg.u.nRequesters)-1:0] core_req_valid_i_flat,
+    output logic [(1)*(HPDcacheCfg.u.nRequesters)-1:0] core_req_ready_o_flat,
+    input logic [($bits(hpdcache_req_t))*(HPDcacheCfg.u.nRequesters)-1:0] core_req_i_flat,
     //         2nd cycle
-    input  logic                          core_req_abort_i [HPDcacheCfg.u.nRequesters],
-    input  hpdcache_tag_t                 core_req_tag_i   [HPDcacheCfg.u.nRequesters],
-    input  hpdcache_pma_t                 core_req_pma_i   [HPDcacheCfg.u.nRequesters],
+    input logic [(1)*(HPDcacheCfg.u.nRequesters)-1:0] core_req_abort_i_flat,
+    input logic [($bits(hpdcache_tag_t))*(HPDcacheCfg.u.nRequesters)-1:0] core_req_tag_i_flat,
+    input logic [($bits(hpdcache_pma_t))*(HPDcacheCfg.u.nRequesters)-1:0] core_req_pma_i_flat,
 
     //      Core response interface
-    output logic                          core_rsp_valid_o [HPDcacheCfg.u.nRequesters],
-    output hpdcache_rsp_t                 core_rsp_o       [HPDcacheCfg.u.nRequesters],
+    output logic [(1)*(HPDcacheCfg.u.nRequesters)-1:0] core_rsp_valid_o_flat,
+    output logic [($bits(hpdcache_rsp_t))*(HPDcacheCfg.u.nRequesters)-1:0] core_rsp_o_flat,
 
     //      Read / Invalidation memory interface
     input  logic                          mem_req_read_ready_i,
@@ -451,6 +451,39 @@ module hpdcache_equiv
   };
   localparam NumPorts = 4;
   localparam PC_QUEUE_DEPTH = 16;
+  logic core_req_valid_i [HPDcacheCfg.u.nRequesters];
+  logic core_req_ready_o [HPDcacheCfg.u.nRequesters];
+  hpdcache_req_t core_req_i [HPDcacheCfg.u.nRequesters];
+  logic core_req_abort_i [HPDcacheCfg.u.nRequesters];
+  hpdcache_tag_t core_req_tag_i [HPDcacheCfg.u.nRequesters];
+  hpdcache_pma_t core_req_pma_i [HPDcacheCfg.u.nRequesters];
+  logic core_rsp_valid_o [HPDcacheCfg.u.nRequesters];
+  hpdcache_rsp_t core_rsp_o [HPDcacheCfg.u.nRequesters];
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_valid_i
+    assign core_req_valid_i[0 + gi] = core_req_valid_i_flat[gi*(1) +: (1)];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_ready_o
+    assign core_req_ready_o_flat[gi*(1) +: (1)] = core_req_ready_o[0 + gi];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_i
+    assign core_req_i[0 + gi] = core_req_i_flat[gi*($bits(hpdcache_req_t)) +: ($bits(hpdcache_req_t))];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_abort_i
+    assign core_req_abort_i[0 + gi] = core_req_abort_i_flat[gi*(1) +: (1)];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_tag_i
+    assign core_req_tag_i[0 + gi] = core_req_tag_i_flat[gi*($bits(hpdcache_tag_t)) +: ($bits(hpdcache_tag_t))];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_req_pma_i
+    assign core_req_pma_i[0 + gi] = core_req_pma_i_flat[gi*($bits(hpdcache_pma_t)) +: ($bits(hpdcache_pma_t))];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_rsp_valid_o
+    assign core_rsp_valid_o_flat[gi*(1) +: (1)] = core_rsp_valid_o[0 + gi];
+  end
+  for (genvar gi = 0; gi < (HPDcacheCfg.u.nRequesters); gi++) begin : g_flat_core_rsp_o
+    assign core_rsp_o_flat[gi*($bits(hpdcache_rsp_t)) +: ($bits(hpdcache_rsp_t))] = core_rsp_o[0 + gi];
+  end
+
 
   hpdcache #(
       .HPDcacheCfg(HPDcacheCfg),
