@@ -65,7 +65,7 @@ bht                                    4   900   proven
 bht2lvl                                2   900   proven
 branch_unit                            4   900   proven
 btb                                    4   900   proven
-cache_ctrl                             4   180   cex
+cache_ctrl                             4   180   proven   # miss_req_o.wdata/be dynamic-base member slice writes now emitted (struct-member dyn indexed part-select fix)
 commit_stage                           4   900   proven
 compressed_decoder                     4   900   proven
 compressed_instr_decoder               4   400   proven
