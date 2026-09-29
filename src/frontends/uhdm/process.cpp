@@ -153,13 +153,22 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
         switch (op->VpiOpType()) {
             // Arithmetic / bitwise binary: signed iff ALL operands signed.
             case vpiAddOp: case vpiSubOp: case vpiMultOp: case vpiDivOp:
-            case vpiModOp: case vpiPowerOp:
+            case vpiModOp:
             case vpiBitAndOp: case vpiBitOrOp: case vpiBitXorOp:
                 return ops_signed(0, 2);
             // Unary +/-/~: follow the operand.
             case vpiMinusOp: case vpiPlusOp: case vpiBitNegOp:
                 return ops_signed(0, 1);
-            // Shifts: signed iff the value (left) operand is signed.
+            // Shifts AND the power operator: the right operand (shift count,
+            // exponent) is self-determined and does not take part in the
+            // signedness of the result (LRM 11.8.1 / Table 11-21), so the
+            // result is signed iff the LEFT operand is.  Grouping `**` with
+            // the arithmetic operators made `final_exponent >=
+            // 2**(fpnew_pkg::exp_bits(dst_fmt_q2))-1` an UNSIGNED compare
+            // because exp_bits() returns `int unsigned`: a negative exponent
+            // read as overflow and fpnew_fma_multi returned infinity
+            // (iverilog and Verilator both compare signed here).
+            case vpiPowerOp:
             case vpiLShiftOp: case vpiRShiftOp:
             case vpiArithLShiftOp: case vpiArithRShiftOp:
                 return ops_signed(0, 1);
