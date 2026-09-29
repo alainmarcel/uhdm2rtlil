@@ -10241,10 +10241,24 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
         }
     }
 
-    // Inline function body
+    // Inline function body.  Expose the return STRUCT typespec while the body
+    // is inlined: `return '{known: .., bytes: ..}` is an anonymous pattern with
+    // no typespec of its own, and without the target struct every field was
+    // sized to context/count (8/2 = 4 bits apiece for {logic; logic [6:0]}),
+    // packing {4'b0001, 4'd4} = 8'h14 where the RTL means {1'b1, 7'd4} = 8'h84
+    // (usb2 ocp_response_meta from an always_comb).  The vpiReturn handler
+    // threads it as the pattern's context typespec.
+    const UHDM::struct_typespec* saved_ret_struct = current_func_return_struct_ts;
+    current_func_return_struct_ts = nullptr;
+    if (func_def->Return() && func_def->Return()->Typespec() &&
+        func_def->Return()->Typespec()->Actual_typespec() &&
+        func_def->Return()->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec)
+        current_func_return_struct_ts = any_cast<const UHDM::struct_typespec*>(
+            func_def->Return()->Typespec()->Actual_typespec());
     if (auto func_stmt = func_def->Stmt()) {
         inline_func_body_comb(func_stmt, proc, func_mapping, func_name, context, "", process_src);
     }
+    current_func_return_struct_ts = saved_ret_struct;
 
     // OUTPUT / INOUT arguments: the body's final value of the formal is the
     // caller's variable from here on.  They were mapped like inputs (the
@@ -10757,7 +10771,13 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                 }
                 int saved_ctx = expression_context_width;
                 if (ret_ctx > 0) expression_context_width = ret_ctx;
+                // A struct-returning function's `return '{...}` sizes its
+                // fields by the return struct's members, not by context/count.
+                const UHDM::typespec* saved_ctx_ts = expression_context_typespec;
+                if (current_func_return_struct_ts)
+                    expression_context_typespec = current_func_return_struct_ts;
                 RTLIL::SigSpec rhs = import_expression(rs->VpiCondition(), &func_mapping);
+                expression_context_typespec = saved_ctx_ts;
                 expression_context_width = saved_ctx;
                 if (!rhs.empty()) {
                     auto it = func_mapping.find(func_name);
