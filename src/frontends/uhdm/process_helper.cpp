@@ -2511,6 +2511,11 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
     if (!scan_scope(uhdm_module->Process(), uhdm_module->Gen_scope_arrays())) {
         return false;  // Found non-constant access somewhere
     }
+    {
+        UHDM::VectorOfprocess_stmt extra;
+        gen_region_extras(uhdm_module, &extra, nullptr);
+        if (!scan_scope(&extra, nullptr)) return false;
+    }
 
     if (mode_debug) {
         log("    Array %s has only constant index accesses\n", array_name.c_str());

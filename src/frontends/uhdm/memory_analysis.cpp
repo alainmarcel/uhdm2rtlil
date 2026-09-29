@@ -187,9 +187,12 @@ int UhdmMemoryAnalyzer::calculate_address_width(int size) {
 
 // Analyze memory usage in always blocks (skip initial blocks - they're simulation-only)
 void UhdmMemoryAnalyzer::analyze_memory_usage_in_processes(const module_inst* uhdm_module) {
-    if (!uhdm_module->Process()) return;
+    VectorOfprocess_stmt processes;
+    if (uhdm_module->Process()) processes = *uhdm_module->Process();
+    gen_region_extras(uhdm_module, &processes, nullptr);
+    if (processes.empty()) return;
 
-    for (auto process : *uhdm_module->Process()) {
+    for (auto process : processes) {
         // Skip initial blocks - they don't contain synthesizable memory operations
         int proc_type = process->VpiType();
         if (proc_type == vpiInitial)

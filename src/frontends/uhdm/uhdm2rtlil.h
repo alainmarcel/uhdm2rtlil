@@ -99,6 +99,18 @@ static inline int parse_vpi_value_to_int(const std::string& vpi_value) {
 // Forward declarations
 struct UhdmImporter;
 
+// What a bare `generate ... endgenerate` region holds that Surelog did NOT lift
+// into the module's own Process() / Cont_assigns(): an always block or a
+// continuous assign written directly in the region NEXT TO a genvar loop stays
+// only under Gen_stmts() -> gen_region -> begin (cv32e40p_register_file_ff's
+// "R0 is nil" always_ff, so `mem[0]` had no driver).  A region without a
+// loop is lifted, so entries are deduplicated by source location against the
+// lifted lists.  gen_for / gen_if / gen_case inside the region are already
+// materialised as gen_scope_arrays and are skipped.
+void gen_region_extras(const UHDM::module_inst* m,
+                       UHDM::VectorOfprocess_stmt* procs,
+                       UHDM::VectorOfcont_assign* cas);
+
 // Clock and reset information for sequential logic
 struct UhdmClocking {
     RTLIL::Module *module = nullptr;

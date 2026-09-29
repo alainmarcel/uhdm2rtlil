@@ -3627,20 +3627,27 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
         const UHDM::VectorOfprocess_stmt* procs = nullptr;
         const UHDM::VectorOfgen_scope_array* gsas = nullptr;
         const UHDM::VectorOfcont_assign* casgns = nullptr;
+        UHDM::VectorOfprocess_stmt extra_procs;
+        UHDM::VectorOfcont_assign extra_cas;
         if (auto md = dynamic_cast<const UHDM::module_inst*>(sc)) {
             procs = md->Process(); gsas = md->Gen_scope_arrays(); casgns = md->Cont_assigns();
+            gen_region_extras(md, &extra_procs, &extra_cas);
         } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(sc)) {
             procs = gs->Process(); gsas = gs->Gen_scope_arrays(); casgns = gs->Cont_assigns();
         }
-        if (procs)
-            for (auto proc : *procs) {
+        auto scan_procs = [&](const UHDM::VectorOfprocess_stmt* pv) {
+            for (auto proc : *pv) {
                 if (auto al = any_cast<const always*>(proc))
                     elem_writes(unwrap_ec(al->Stmt()), false);
                 else if (auto ini = any_cast<const initial*>(proc))
                     lhs_only(unwrap_ec(ini->Stmt()));   // names only
             }
+        };
+        if (procs) scan_procs(procs);
+        scan_procs(&extra_procs);
         if (casgns)
             for (auto ca : *casgns) cont_elem_write(ca->Lhs());
+        for (auto ca : extra_cas) cont_elem_write(ca->Lhs());
         // A child instance's output / inout actual is a driver of that net.
         const UHDM::VectorOfmodule_inst* kids = nullptr;
         if (auto md = dynamic_cast<const UHDM::module_inst*>(sc)) kids = md->Modules();
@@ -3660,6 +3667,66 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     for (const auto& n : proc_elem_written)
         log("UHDM: array '%s' has per-element writes — flat alias assembled "
             "from elements\n", n.c_str());
+}
+
+void gen_region_extras(const module_inst* m, VectorOfprocess_stmt* procs, VectorOfcont_assign* cas)
+{
+    if (!m) return;
+    // The ELABORATED instance carries no Gen_stmts(): the region lives on the
+    // AllModules definition only.  Find that definition by name from the
+    // design root (the instance's ancestor chain ends at the `design`).
+    const module_inst* src = m->Gen_stmts() ? m : nullptr;
+    if (!src) {
+        const any* root = m;
+        while (root && root->UhdmType() != uhdmdesign) root = root->VpiParent();
+        auto d = root ? any_cast<const design*>(root) : nullptr;
+        if (d && d->AllModules())
+            for (auto am : *d->AllModules())
+                if (am && am->Gen_stmts() && am->VpiDefName() == m->VpiDefName()) { src = am; break; }
+    }
+    if (!src || !src->Gen_stmts()) return;
+    auto key = [](const any* a) {
+        return std::make_tuple(std::string(a->VpiFile()), (int)a->VpiLineNo(), (int)a->VpiColumnNo(),
+                               (int)a->VpiEndLineNo(), (int)a->VpiEndColumnNo());
+    };
+    std::set<std::tuple<std::string, int, int, int, int>> have;
+    std::set<const any*> have_ptr;
+    if (m->Process()) for (auto p : *m->Process()) { have.insert(key(p)); have_ptr.insert(p); }
+    if (m->Cont_assigns()) for (auto c : *m->Cont_assigns()) { have.insert(key(c)); have_ptr.insert(c); }
+    std::function<void(const any*)> walk = [&](const any* s) {
+        if (!s) return;
+        switch (s->UhdmType()) {
+        case uhdmgen_region:
+            walk(any_cast<const gen_region*>(s)->VpiStmt());
+            break;
+        case uhdmbegin:
+            if (auto b = any_cast<const begin*>(s); b && b->Stmts())
+                for (auto x : *b->Stmts()) walk(x);
+            break;
+        // A NAMED block in the region (`begin : A ... end`, gen_test9) is a
+        // generate scope of its own, materialised as a gen_scope_array with
+        // its items -- walking into it would import them a second time at
+        // module level.  Only the region's own unnamed wrapper is entered.
+        case uhdmnamed_begin:
+            break;
+        case uhdmalways:
+        case uhdminitial:
+            if (procs && !have_ptr.count(s) && !have.count(key(s))) {
+                have_ptr.insert(s); have.insert(key(s));
+                procs->push_back(const_cast<process_stmt*>(any_cast<const process_stmt*>(s)));
+            }
+            break;
+        case uhdmcont_assign:
+            if (cas && !have_ptr.count(s) && !have.count(key(s))) {
+                have_ptr.insert(s); have.insert(key(s));
+                cas->push_back(const_cast<cont_assign*>(any_cast<const cont_assign*>(s)));
+            }
+            break;
+        default:
+            break;   // gen_for / gen_if / gen_case: materialised as gen_scope_arrays
+        }
+    };
+    for (auto g : *src->Gen_stmts()) walk(g);
 }
 
 // Index every ELABORATED instance by its definition name, once per import.
@@ -4492,6 +4559,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (!m) return;
             if (m->Process())
                 for (auto p : *m->Process()) all_procs.push_back(p);
+            {
+                VectorOfprocess_stmt extra;
+                gen_region_extras(m, &extra, nullptr);
+                for (auto p : extra) all_procs.push_back(p);
+            }
             if (m->Gen_scope_arrays())
                 for (auto gsa : *m->Gen_scope_arrays())
                     if (gsa->Gen_scopes())
@@ -4686,15 +4758,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 default: break;
             }
         };
+        VectorOfprocess_stmt gr_procs;
+        VectorOfcont_assign gr_cas;
+        gen_region_extras(uhdm_module, &gr_procs, &gr_cas);
         if (uhdm_module->Cont_assigns())
             for (auto ca : *uhdm_module->Cont_assigns()) {
                 scan(ca->Lhs());
                 if (auto r = dynamic_cast<const expr*>(ca->Rhs())) scan(r);
             }
+        for (auto ca : gr_cas) {
+            scan(ca->Lhs());
+            if (auto r = dynamic_cast<const expr*>(ca->Rhs())) scan(r);
+        }
         if (uhdm_module->Process())
             for (auto proc : *uhdm_module->Process()) {
                 if (auto al = any_cast<const always*>(proc)) scan(al->Stmt());
             }
+        for (auto proc : gr_procs)
+            if (auto al = any_cast<const always*>(proc)) scan(al->Stmt());
         // Sub-instance port connections also count as whole-array access
         // when the actual is a `ref_obj` (e.g. `inst (.b(b_internal))`).
         if (uhdm_module->Modules())
@@ -6619,10 +6700,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
         // Import continuous assignments
     std::set<const UHDM::cont_assign*> imported_cont_assigns;
-    if (uhdm_module->Cont_assigns()) {
-        log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
+    VectorOfcont_assign module_cont_assigns;
+    if (uhdm_module->Cont_assigns())
+        module_cont_assigns = *uhdm_module->Cont_assigns();
+    gen_region_extras(uhdm_module, nullptr, &module_cont_assigns);
+    if (!module_cont_assigns.empty()) {
+        log("UHDM: Found %d continuous assignments to import\n", (int)module_cont_assigns.size());
         int assign_idx = 0;
-        for (auto cont_assign : *uhdm_module->Cont_assigns()) {
+        for (auto cont_assign : module_cont_assigns) {
             log("UHDM: About to import continuous assignment %d (line:%d-%d)\n",
                 assign_idx++, cont_assign->VpiLineNo(), cont_assign->VpiEndLineNo());
 
@@ -6820,10 +6905,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import processes (always blocks) - re-enabled with debugging
     log("UHDM: Checking for processes...\n");
     log_flush();
-    if (uhdm_module->Process()) {
-        log("UHDM: Found %d processes to import\n", (int)uhdm_module->Process()->size());
+    VectorOfprocess_stmt module_processes;
+    if (uhdm_module->Process())
+        module_processes = *uhdm_module->Process();
+    gen_region_extras(uhdm_module, &module_processes, nullptr);
+    if (!module_processes.empty()) {
+        log("UHDM: Found %d processes to import\n", (int)module_processes.size());
         log_flush();
-        for (auto process : *uhdm_module->Process()) {
+        for (auto process : module_processes) {
             log("UHDM: About to import process\n");
             log_flush();
             try {
