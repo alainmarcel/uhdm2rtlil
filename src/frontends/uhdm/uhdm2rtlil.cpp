@@ -3457,12 +3457,26 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
     // range that can't be sized here just yields a stable approximate width,
     // which still distinguishes bindings; struct ports are member-summed
     // without hitting import_expression at all).
+    //
+    // Probe inside a THROWAWAY module: this runs while `this->module` is still
+    // the PARENT being imported (a child instance's definition is imported
+    // from inside the parent), and a range the definition sizes from a header
+    // localparam (`fpnew_fma #(..., parameter type TagType = logic,
+    // localparam int unsigned WIDTH = fp_width(FpFormat))` with
+    // `input logic [2:0][WIDTH-1:0] operands_i`) resolves `WIDTH` as an
+    // unknown signal -- the fallback fabricated a stray 1-bit `\WIDTH` wire
+    // in every fpnew_opgroup_fmt_slice.  discard_eval_module() also drops
+    // the caches that would otherwise point at the freed wire.
     std::string sig = "$typaram";
     if (uhdm_module->Ports()) {
+        RTLIL::Module* saved_m = this->module;
+        this->module = design->addModule(NEW_ID);
         for (auto port : *uhdm_module->Ports()) {
             int w = get_width(port, uhdm_module);
             sig += "_" + std::to_string(w);
         }
+        discard_eval_module(this->module);
+        this->module = saved_m;
     }
     return sig;
 }
