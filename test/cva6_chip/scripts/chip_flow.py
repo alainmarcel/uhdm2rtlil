@@ -192,17 +192,56 @@ FLOW = ("proc; flatten; opt_clean; memory -nomap; "
         "delete t:$check t:$assert t:$assume t:$print t:$scopeinfo")
 
 
+def _ports(il, top):
+    """{name: direction} of the top module's ports in a split .il"""
+    ports, inside = {}, False
+    for line in open(il, errors="replace"):
+        if line.startswith("module "):
+            inside = line.split()[1] == "\\" + top
+        elif inside and line.startswith("end"):
+            break
+        elif inside and line.startswith("  wire "):
+            m = re.search(r"\b(input|output|inout) \d+ (\S+)$", line.rstrip())
+            if m:
+                ports[m.group(2)] = m.group(1)
+    return ports
+
+
 def miter(n):
     d = INST / n
     d.mkdir(parents=True, exist_ok=True)
     flow = FLOW.format(m=MEMSIZE)
+    pu = _ports(INST / f"{n}_uhdm.il", f"{n}_uhdm")
+    ps = _ports(INST / f"{n}_slang.il", f"{n}_slang")
+    # A module with no output at all (cva6's `unread` sink, `input d_i` and
+    # nothing else) has nothing to compare: `design -copy-from` finds no
+    # module to copy once flatten/opt have emptied it, and the miter errored
+    # on a row that is trivially equivalent.
+    if not any(v != "input" for v in pu.values()) and not any(v != "input" for v in ps.values()):
+        (d / "miter.log").write_text("no output port on either side: nothing to compare "
+                                     "(sink module) -- trivially equivalent\n")
+        return n, "proven"
+    # An upward hierarchical reference from OUTSIDE the instance
+    # (`issue_stage_i.i_scoreboard.issue_instr_o` read by cva6's instr_tracer,
+    # which is `ifndef VERILATOR` and elaborated by read_uhdm only) is exported
+    # as an extra dotted port of the instance on that side alone; miter -equiv
+    # then aborts with "No matching port in gate module".  Those exports carry
+    # no logic of the instance: drop the one-sided dotted ports before the
+    # miter.  Ports both sides have (interface members, `\iface.sig`) stay.
+    def drop(side_ports, other):
+        return [f"delete -port w:{p}" for p in side_ports
+                if "." in p.lstrip("\\") and p not in other]
+    drop_u = "\n".join(drop(pu, ps))
+    drop_s = "\n".join(drop(ps, pu))
     ys = f"""read_rtlil {INST}/{n}_uhdm.il
 hierarchy -top {n}_uhdm
+{drop_u}
 {flow}
 rename {n}_uhdm gold
 design -stash gold
 read_rtlil {INST}/{n}_slang.il
 hierarchy -top {n}_slang
+{drop_s}
 {flow}
 rename {n}_slang gate
 design -stash gate
