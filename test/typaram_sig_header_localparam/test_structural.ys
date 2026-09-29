@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+# the parent must not carry a stray wire named after the child's header localparam
+select -assert-count 0 w:WIDTH
+# both lanes instantiate the leaf (the type parameter relayed from the parent)
+select -module dut
+select -assert-count 2 c:*lane_instance
