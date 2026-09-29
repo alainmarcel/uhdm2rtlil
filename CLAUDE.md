@@ -511,6 +511,17 @@ Source-level cases found so far (NOT frontend bugs):
 | rp32 `r5p_degu` / `r5p_degu_soc_top` / `r5p_mouse_soc_top` / `soc_vfriendly` | `tcb_lsu.req.byt` (4), mouse also `.ctl` (2) | `r5p_lsu` drives `siz`, never `byt` (the byte enables are derived downstream); the mouse config has `CTL: 0`, so `logic [CFG.BUS.CTL-1:0] ctl` is the degenerate `[-1:0]` and no core drives it |
 | caliptra | `unused_assert_connected` etc. | assertion hooks / SVA property names -- they vanish once `delete t:$check t:$assert` runs, which the sweeps DO.  Measuring without that step reports ~69 phantom undriven nets on caliptra_top_flat |
 
+**How the sweeps tell the two apart (2026-09-28):** read_uhdm stamps
+`(* uhdm_src_lhs *)` on every wire the source assigns somewhere in the module
+(any procedural or continuous LHS, a select's base, a child instance's output
+actual -- collected by `collect_proc_elem_written`), and the sweeps'
+`_undriven_check` / `_il_check` / ext_flow check end with
+`select -list a:uhdm_src_lhs`.  An undriven net WITHOUT the attribute is one
+the RTL never assigns (this table) and is reported as
+`✅ 0 undriven (N never assigned in the source)`; an undriven net WITH it is a
+driver the reader dropped and stays `❌ N undriven`.  test/src_lhs_attr gates
+the marking with a `test_structural.ys`.
+
 DO NOT try to X-fill undriven nets inside read_uhdm.  It was attempted and
 reverted: a correct driver analysis is not available at read time, because
 `hierarchy` has not resolved cell port directions or paramods and `proc` has

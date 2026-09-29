@@ -336,6 +336,55 @@ def _bind_wrapper(w, fam, mod, files):
     return str(out), f"{mod}_bound"
 
 
+
+# --- undriven-net classification -------------------------------------------
+# read_uhdm stamps `(* uhdm_src_lhs *)` on every wire the SOURCE assigns
+# somewhere (any procedural / continuous LHS, a child's output actual).  An
+# undriven net WITHOUT it is one the RTL never assigns under this
+# configuration -- cva6's trigger_module registers under SDTRIG=0, id_stage's
+# dcache_req_ports_o under RVZCMT=0, the CLAUDE.md source-class table --
+# which read_slang hides by driving a constant X.  Only an undriven net WITH
+# the attribute is a driver the reader dropped, and only those stay red.
+_UNDRIVEN_RE = re.compile(r"Wire (\S+?)(?: \[\d+\])? is used but has no driver")
+_SELLIST_RE = re.compile(r"^[^\s/]+/(\S+)$", re.M)
+
+def _wire_key(n):
+    """Flattened `top.\\a.b` / `top/\\a.b` / `\\a.b [3]` -> `a.b`."""
+    n = n.strip()
+    if n.startswith("\\"):
+        n = n[1:]
+    else:
+        # `check` prefixes the module: `kmac_ss.\\gen.u.seed` -> after the first
+        # `.\\`; a plain `kmac_ss.seed` -> after the first `.`
+        i = n.find(".\\")
+        if i >= 0:
+            n = n[i + 2:]
+        elif "." in n and not n.startswith("$"):
+            n = n.split(".", 1)[1]
+    return n
+
+def classify_undriven(out):
+    """(dropped, source_never_assigns) counts from a check log that ends with
+    `select -list a:uhdm_src_lhs`."""
+    out = out or ""
+    listed = {_wire_key(m) for m in _SELLIST_RE.findall(out)}
+    dropped = never = 0
+    for m in _UNDRIVEN_RE.finditer(out):
+        if _wire_key(m.group(1)) in listed:
+            dropped += 1
+        else:
+            never += 1
+    return dropped, never
+
+def undriven_cell(dropped, never):
+    if dropped == 0 and never == 0:
+        return "✅ 0 undriven"
+    if dropped == 0:
+        return f"✅ 0 undriven ({never} never assigned in the source)"
+    if never:
+        return f"❌ {dropped} undriven (+{never} never assigned in the source)"
+    return f"❌ {dropped} undriven"
+
 def _flat_wrapper(w, mod, files):
     """Generate the flat shim for a module with UNPACKED-ARRAY ports and return
     (wrapper_path, top) -- or None when it has none.
@@ -476,7 +525,8 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     flat = "flatten\n" if src_bytes <= FLATTEN_LIMIT else ""
     (w / "check.ys").write_text(
         f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -check -top {top}\n"
-        f"write_rtlil uhdm_hier.il\nproc\n{flat}opt_clean\nstat\ncheck\n")
+        f"write_rtlil uhdm_hier.il\nproc\n{flat}opt_clean\nstat\ncheck\n"
+        f"select -list a:uhdm_src_lhs\n")
     rc, out = sh(_capped([str(Y), "-q", "-m", str(P), "check.ys"]), cwd=w,
                  timeout=_sl_timeout(src_bytes))
     (w / "check.log").write_text(out or "")
@@ -495,9 +545,10 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                 "formal_raw": "skip", "check": "— (not comparable)",
                 "cosim": "—", "slang_cosim": "—",
                 "note": f"port {degen[0]} has a negative range (parameter 0 by default)"}
-    undriven = len(re.findall(r"is used but has no driver", out or ""))
+    dropped, never = classify_undriven(out or "")
+    undriven = dropped + never
     cells = re.search(r"Number of cells:\s*(\d+)", out or "")
-    check = "✅ 0 undriven" if undriven == 0 else f"❌ {undriven} undriven"
+    check = undriven_cell(dropped, never)
     # A module whose manifest entry asks only for "read" stops here, as does a
     # --survey run: that is how a whole-core top is swept, where the question
     # is "does it elaborate and is every net driven", not "is a 6.5 M-cell SAT
