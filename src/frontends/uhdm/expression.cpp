@@ -11349,6 +11349,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             // own `VpiValue()`.
             RTLIL::Const param_value;
             bool got = false;
+            bool fill_literal = false;   // value came from an unbased-unsized `'0` / `'1`
             // The module's ELABORATED parameter value first: the Param_assigns
             // Rhs can be a garbage Surelog clone stamp, which
             // reeval_stamped_param_assign has already corrected in
@@ -11383,6 +11384,8 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         if (rs.is_fully_const()) {
                             param_value = rs.as_const();
                             got = true;
+                            if (auto c = dynamic_cast<const UHDM::constant*>(re))
+                                fill_literal = (c->VpiSize() == -1);
                         }
                     }
                     break;
@@ -11429,6 +11432,17 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 }
             }
             if (got) {
+                // A fill literal default (`parameter fmt_logic_t FpFmtConfig =
+                // '1`) imports as ONE bit; the parameter is as wide as its
+                // typespec (5 formats), so `FpFmtConfig[fpnew_pkg::FP8]` was
+                // out of range and fell through to the wire lookup --
+                // "Could not find wire 'FpFmtConfig'" on the definition pass
+                // of fpnew_divsqrt_multi under cv32e40p_fp_wrapper.
+                if (fill_literal && param_value.size() == 1 && param->Typespec() &&
+                    param->Typespec()->Actual_typespec()) {
+                    int tw = get_width_from_typespec(param->Typespec()->Actual_typespec(), inst);
+                    if (tw > 1) param_value = RTLIL::Const(param_value[0], tw);
+                }
                 int total = param_value.size();
                 RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
                 {
@@ -11460,6 +11474,22 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                                         outer_low = std::min(l, r);
                                         if (outer_size > 0 && total % outer_size == 0)
                                             elem_w = total / outer_size;
+                                    }
+                                } else if (lt && lt->Ranges() && lt->Ranges()->size() == 1) {
+                                    // A plain 1-D vector parameter declared
+                                    // ASCENDING (`typedef logic [0:4]
+                                    // fmt_logic_t`, fpnew): `P[3]` is the
+                                    // fourth bit from the LEFT, not bit 3
+                                    // from the LSB.  Every non-uniform
+                                    // FpFmtMask read the wrong format bit.
+                                    auto r0 = (*lt->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        outer_low = std::min(l, r);
+                                        outer_high = std::max(l, r);
+                                        outer_ascending = (l < r);
                                     }
                                 }
                             } else if (ats->UhdmType() == uhdmarray_typespec) {
@@ -11648,6 +11678,28 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     return RTLIL::SigSpec(out);
                 }
             }
+        }
+        {
+            // Diagnose the failed lookup before dying: which scope was current,
+            // what the select's Actual_group is, and whether the RTLIL module
+            // carries a parameter of that name (a bit-select on a PARAMETER
+            // lands here only when every value source above came back empty).
+            const any* ag = uhdm_bit->Actual_group();
+            const char* ci_kind = "none";
+            std::string ci_name;
+            if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                ci_kind = "module_inst"; ci_name = std::string(mi->VpiFullName());
+            } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(current_instance)) {
+                ci_kind = "gen_scope"; ci_name = std::string(gs->VpiFullName());
+            }
+            log("    bit-select '%s' lookup failed: Actual_group=%s current_instance=%s(%s) "
+                "module=%s has_param_default=%d\n",
+                signal_name.c_str(),
+                ag ? UHDM::UhdmName(ag->UhdmType()).c_str() : "null",
+                ci_kind, ci_name.c_str(),
+                module ? module->name.c_str() : "null",
+                module ? (int)module->parameter_default_values.count(RTLIL::escape_id(signal_name)) : -1);
+            log_flush();
         }
         log_error("Could not find wire '%s' for bit select\n", signal_name.c_str());
     }
