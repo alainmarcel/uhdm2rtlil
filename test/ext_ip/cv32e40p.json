@@ -1,0 +1,56 @@
+{
+ "title": "OpenHW CV32E40P",
+ "url": "https://github.com/openhwfoundation/cv32e40p",
+ "repos": [
+  {
+   "url": "https://github.com/openhwfoundation/cv32e40p",
+   "commit": "6033d2b1be3295ec774d17ac4cf226faacfdeb08",
+   "dir": "cv32e40p",
+   "submodules": "recursive"
+  }
+ ],
+ "roots": [
+  "cv32e40p/rtl/include/*.sv",
+  "cv32e40p/rtl/*.sv",
+  "cv32e40p/rtl/vendor/pulp_platform_fpnew/src/*.sv",
+  "cv32e40p/rtl/vendor/pulp_platform_fpnew/src/fpu_div_sqrt_mvp/hdl/*.sv",
+  "cv32e40p/rtl/vendor/pulp_platform_common_cells/src/*.sv",
+  "cv32e40p/bhv/cv32e40p_sim_clock_gate.sv",
+  "cv32e40p/rtl/vendor/pulp_platform_fpnew/vendor/opene906/E906_RTL_FACTORY/gen_rtl/fdsu/rtl/*.v",
+  "cv32e40p/rtl/vendor/pulp_platform_fpnew/vendor/opene906/E906_RTL_FACTORY/gen_rtl/fpu/rtl/*.v",
+  "cv32e40p/rtl/vendor/pulp_platform_fpnew/vendor/opene906/E906_RTL_FACTORY/gen_rtl/clk/rtl/*.v"
+ ],
+ "incdirs": [
+  "cv32e40p/rtl/include",
+  "cv32e40p/rtl/vendor/pulp_platform_common_cells/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "cv32e40p/rtl/"
+ ],
+ "exclude": [
+  "^(?!cv32e40p_)",
+  "_tb$",
+  "^tb_",
+  "^cv32e40p_tracer",
+  "^cv32e40p_sim_",
+  "^cv32e40p_dbg_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "overrides": {
+  "cv32e40p_cs_registers": {
+   "want": "cex",
+   "note": "unique case (1'b1) VIOLATION stimulus: the cex raises csr_save_id_i and csr_save_ex_i together (LRM: undefined); read_slang X / independent arms, read_uhdm parallel_case -- not a reader defect"
+  },
+  "cv32e40p_fp_wrapper": {
+   "want": "error",
+   "note": "not comparable: fpnew_divsqrt_multi instantiates div_sqrt_top_mvp (fpu_div_sqrt_mvp), which cv32e40p does not vendor -- neither frontend can elaborate the wrapper"
+  }
+ },
+ "slang_flags": [
+  "-Wno-index-oob"
+ ]
+}

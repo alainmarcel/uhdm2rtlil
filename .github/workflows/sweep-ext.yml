@@ -32,6 +32,8 @@ jobs:
           - family: common_cells
           - family: axi
           - family: cve2
+          - family: cv32e40p
+          - family: cvfpu
           # cvw's fdivsqrtuslc4 is 113 lines that declare a 1024-entry unpacked
           # array and fill it from a nested loop inside always_comb.  Unrolled,
           # read_uhdm peaks at 10.5 GB on it.  The sweep runs --jobs 2, so at

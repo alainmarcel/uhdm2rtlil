@@ -1,0 +1,47 @@
+{
+ "title": "OpenHW CVFPU",
+ "url": "https://github.com/openhwfoundation/cvfpu",
+ "repos": [
+  {
+   "url": "https://github.com/openhwfoundation/cvfpu",
+   "commit": "77811635cb7e8649f1d9484733ee6a0bdb44a0e6",
+   "dir": "cvfpu",
+   "submodules": "recursive"
+  }
+ ],
+ "roots": [
+  "cvfpu/src/*.sv",
+  "cvfpu/src/fpu_div_sqrt_mvp/hdl/*.sv",
+  "cvfpu/src/common_cells/src/*.sv",
+  "cvfpu/vendor/openc910/C910_RTL_FACTORY/gen_rtl/vfdsu/rtl/*.v",
+  "cvfpu/vendor/opene906/E906_RTL_FACTORY/gen_rtl/fdsu/rtl/*.v",
+  "cvfpu/vendor/cvw/fma/*.sv",
+  "cvfpu/vendor/opene906/E906_RTL_FACTORY/gen_rtl/fpu/rtl/*.v",
+  "cvfpu/vendor/openc910/C910_RTL_FACTORY/gen_rtl/clk/rtl/*.v"
+ ],
+ "incdirs": [
+  "cvfpu/src/common_cells/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "cvfpu/src/"
+ ],
+ "exclude": [
+  "^(?!fpnew_|div_sqrt_|control_mvp|iteration_div_sqrt_mvp|norm_div_sqrt_mvp|nrbd_nrsc_mvp|preprocess_mvp)",
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "slang_flags": [
+  "-Wno-index-oob"
+ ],
+ "overrides": {
+  "fpnew_opgroup_block": {
+   "want": "cex",
+   "note": "not comparable at the module defaults: Width=32 with FP64 in FpFmtMask gives a ZERO-lane FP64 slice (SIMD_WIDTH = 32/0, [NUM_LANES-1:0] = [-1:0]); its out_valid is undriven, read_slang folds that X into the arbiter as don't-care and the cex is a grant to that slice -- fpnew_top instantiates it consistently"
+  }
+ }
+}

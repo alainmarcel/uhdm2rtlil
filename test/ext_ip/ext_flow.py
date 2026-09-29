@@ -26,6 +26,12 @@ Manifest keys:
   modules:  "auto" | [{"name", "seq", "timeout", "want", "top"?}]
   exclude:  [regex, ...]                 module names to skip in auto mode
   seq / timeout / want:                  defaults for auto mode
+  overrides: {name: {"want", "seq", "timeout", "note"}}
+                                         per-module entries merged into the auto
+                                         list: a row that is NOT a reader defect
+                                         (unique-case violation stimulus, a
+                                         latch-vs-X class) keeps its verdict
+                                         and says why in the note column
 """
 import argparse, concurrent.futures as cf, glob, json, os, re, shlex, subprocess, sys, time
 from pathlib import Path
@@ -443,12 +449,21 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         if flat:
             files = files + [flat[0]]
             top = flat[1]
+    # The closure is part of the UHDM's identity: a manifest that gains a
+    # root (cvfpu's vendored T-Head fdsu, cv32e40p's bhv clock gate) changes
+    # srcs.txt, and a surelog.uhdm built from the old list must not be
+    # reused -- it was, and the new module stayed "Cannot find a module
+    # definition" on the read_uhdm side while read_slang saw it.
+    old_srcs = (w / "srcs.txt").read_text() if (w / "srcs.txt").exists() else None
+    old_incs = (w / "incs.txt").read_text() if (w / "incs.txt").exists() else None
     (w / "srcs.txt").write_text("\n".join(files) + "\n")
     (w / "incs.txt").write_text("\n".join(str(EXT / d) for d in incs) + "\n")
     inc_flags = [f"-I{EXT / d}" for d in incs]
     def_flags = [f"-D{d}" for d in defines]
     uhdm = w / "slpp_all" / "surelog.uhdm"
-    stale = (not uhdm.exists()) or S.stat().st_mtime > uhdm.stat().st_mtime
+    stale = (not uhdm.exists()) or S.stat().st_mtime > uhdm.stat().st_mtime \
+        or old_srcs != (w / "srcs.txt").read_text() or old_incs != (w / "incs.txt").read_text() \
+        or any(os.path.exists(f) and os.path.getmtime(f) > uhdm.stat().st_mtime for f in files)
     # Closure size drives three budgets below, and is needed whether or not the
     # UHDM has to be rebuilt.
     src_bytes = sum(os.path.getsize(f) for f in files if os.path.exists(f))
@@ -665,6 +680,8 @@ def main():
                 if not any(x.search(n) for x in excl)
                 and (not pref or n.startswith(pref))
                 and (not sp or any(cl.mod_files[n].startswith(d) for d in sp))]
+        ov = man.get("overrides", {})
+        mods = [{**x, **ov.get(x["name"], {})} for x in mods]
     else:
         mods = man["modules"]
     if args.modules:
@@ -692,6 +709,8 @@ def main():
             ico = "✅" if r.get("formal_raw") in ("proven", "read") else ("‼" if r.get("formal_raw") == "elabfail" else "❌")
         if r.get("formal_raw") == want:
             ico = "✅"
+        if x.get("note") and not r.get("note"):
+            r["note"] = x["note"]
         print(f"  {ico} {r['module']:<34} {r['formal']:<28} {r['check']:<16} {r['cosim']:<32} "
               f"{r.get('note','')[:60]}  [{time.time() - t0:.0f}s]", flush=True)
         return r
