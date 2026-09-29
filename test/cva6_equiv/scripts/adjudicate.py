@@ -121,6 +121,10 @@ def rnd(n, w):
 # "both simulators failed".  Find those ports in the wrapper and give the RTL
 # instance its own array-shaped nets, packed to/from the flat vector.
 unpacked = {}          # port name -> element count
+# port name -> True when the unpacked dim was declared ASCENDING (`[N]`,
+# `[0:N-1]`).  Its LEFT index then takes the MSBs of the flat netlist port,
+# which is what read_slang and read_uhdm both do (LRM 11.4.14 stream order).
+unpacked_asc = {}
 try:
     wtxt = open(WRAP).read()
     wtxt = re.sub(r"//[^\n]*", "", wtxt)
@@ -142,6 +146,9 @@ try:
             cnt = int(dim)
         if cnt:
             unpacked[pname] = cnt
+            # `[N-1:0]` / `[3:0]` are descending; the bare `[N]` shorthand
+            # means `[0:N-1]` and is ascending.
+            unpacked_asc[pname] = not (m or re.fullmatch(r"\s*\d+\s*:\s*0\s*", dim))
         else:
             unresolved.setdefault(dim.strip(), []).append((pname, ptype))
     # A dim like `HPDcacheCfg.u.nRequesters` (struct-param field built by a
@@ -160,6 +167,7 @@ try:
             if cnt:
                 for pname, _ in plist:
                     unpacked[pname] = cnt
+                    unpacked_asc.setdefault(pname, False)
 except OSError:
     pass
 
@@ -168,6 +176,7 @@ _bad = [n for n, c in unpacked.items()
         if n in _allports and (c <= 0 or _allports[n] % c)]
 for n in _bad:
     del unpacked[n]
+    unpacked_asc.pop(n, None)
 if _bad:
     print(f"{mod}: unpacked ports not evenly divisible, left flat: {_bad}")
 _unres = [n for n in re.findall(
@@ -183,40 +192,35 @@ if _unres:
 decl  = "\n".join(f"  reg [{w-1}:0] {n};" for n, w in ins)
 wires = "\n".join(f"  wire [{w-1}:0] r_{n}, g_{n}, s_{n};" for n, w in outs)
 
-# Array-shaped views for the RTL instance; the netlists stay flat — but the
-# two frontends FLATTEN an unpacked port in OPPOSITE element orders (UHDM
-# and read_verilog put element 0 at the LSBs; yosys-slang puts it at the
-# MSBs — verified on `input logic [7:0] a [2]; diff = a[0]-a[1]`), so each
-# netlist gets its OWN flat view of the same driven data.  A single shared
-# order mislabels the requesters of one side and an arbiter then reads as
-# 289/300 "divergences" (hpdcache_core_arbiter).
+# Array-shaped views for the RTL instance; the netlists stay flat.  BOTH
+# frontends flatten an unpacked port the same way now: the LEFT index of the
+# declared dimension takes the MSBs, so `a [2]` / `a [0:1]` put element 0 at
+# the top and `a [N-1:0]` puts it at the bottom (LRM 11.4.14 stream order,
+# what Verilator computes).  This used to compensate for read_uhdm putting
+# element 0 at the LSB in BOTH directions, which was right only for the
+# descending form -- the compensation then mislabelled every DESCENDING
+# port instead.
 arr_decl, arr_glue = [], []
 for n, w in ins:
     if n not in unpacked: continue
-    c = unpacked[n]; ew = w // c
+    c = unpacked[n]; ew = w // c; asc = unpacked_asc.get(n, False)
     arr_decl.append(f"  wire [{ew-1}:0] a_{n} [0:{c-1}];")
     for k in range(c):
-        # elem 0 at the LSBs of the shared driven vector (UHDM order).
-        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(k+1)*ew-1}:{k*ew}];")
-    # slang view: elem 0 at the MSBs.
-    arr_decl.append(f"  wire [{w-1}:0] ms_{n};")
-    arr_glue.append("  assign ms_%s = {%s};" %
-                    (n, ", ".join(f"a_{n}[{k}]" for k in range(0, c))))
+        slot = (c - 1 - k) if asc else k      # ascending: element 0 on top
+        arr_glue.append(f"  assign a_{n}[{k}] = {n}[{(slot+1)*ew-1}:{slot*ew}];")
 for n, w in outs:
     if n not in unpacked: continue
-    c = unpacked[n]; ew = w // c
+    c = unpacked[n]; ew = w // c; asc = unpacked_asc.get(n, False)
     arr_decl.append(f"  wire [{ew-1}:0] a_r_{n} [0:{c-1}];")
-    # RTL array -> flat in UHDM order (elem 0 at LSBs) for comparison.
+    # RTL array -> flat in the SAME order both netlists use.  A concat lists
+    # the MSB first, so walk the elements from the highest slot down.
+    order = range(0, c) if asc else range(c - 1, -1, -1)
     arr_glue.append("  assign r_%s = {%s};" %
-                    (n, ", ".join(f"a_r_{n}[{k}]" for k in range(c-1, -1, -1))))
-    # slang output arrives elem0-at-MSBs: reorder to the shared order.
-    arr_decl.append(f"  wire [{w-1}:0] slo_{n};")
-    arr_glue.append("  assign slo_%s = {%s};" %
-                    (n, ", ".join(f"s_{n}[{(k+1)*ew-1}:{k*ew}]" for k in range(0, c))))
+                    (n, ", ".join(f"a_r_{n}[{k}]" for k in order)))
 arrays = "\n".join(arr_decl + arr_glue)
 
 conn  = ", ".join(f".{n}({n})" for n, _ in ins)
-gate_conn = ", ".join(f".{n}(ms_{n})" if n in unpacked else f".{n}({n})"
+gate_conn = ", ".join(f".{n}({n})"
                       for n, _ in ins)
 # The RTL sees the array views where a port is unpacked; the netlists never do.
 rtl_conn = ", ".join(f".{n}(a_{n})" if n in unpacked else f".{n}({n})"
@@ -241,7 +245,6 @@ drive = "\n      ".join(rnd(n, w) for n, w in ins) + constr
 # RTL side is not a divergence -- it is the reference declining to say.
 gbad = " || ".join(f"((r_{n} === r_{n}) && (g_{n} !== r_{n}))" for n, _ in outs)
 sbad = " || ".join(
-    f"((r_{n} === r_{n}) && (slo_{n} !== r_{n}))" if n in unpacked else
     f"((r_{n} === r_{n}) && (s_{n} !== r_{n}))" for n, _ in outs)
 # Name the first output that diverges, per side -- "they differ" is not a
 # diagnosis, and with a dozen ports the count alone does not say where to look.
@@ -262,7 +265,7 @@ act_init = "\n    ".join(f"prv_{n} = r_{n};" for n, _ in outs)
 act_chg  = " || ".join(f"(prv_{n} !== r_{n})" for n, _ in outs) or "1'b0"
 act_save = "\n      ".join(f"prv_{n} <= r_{n};" for n, _ in outs)
 def _report_line(n):
-    sname = f"slo_{n}" if n in unpacked else f"s_{n}"
+    sname = f"s_{n}"
     return (
         f'      if (!repg_{n} && (r_{n} === r_{n}) && (g_{n} !== r_{n})) '
         f'begin repg_{n} = 1; $display("FIRST-UHDM %0d {n} rtl=%h uhdm=%h", i, '

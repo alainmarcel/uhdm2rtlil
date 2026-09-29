@@ -7163,6 +7163,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
 
+    // The module's PUBLIC face presents an unpacked-array port with element 0
+    // at the MSB (see reverse_unpacked_array_ports).  Only a TOP module needs
+    // it: inside the hierarchy both sides of a cell connection are read_uhdm's
+    // own flat order, so they already agree, and reversing there would scramble
+    // the data unless the instance actual were reversed to match.
+    if (is_top_level)
+        reverse_unpacked_array_ports();
+
     // Finalize module
     module->fixup_ports();
     
@@ -7172,6 +7180,58 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Restore saved instance context
     current_instance = saved_instance;
+}
+
+// An unpacked-array port is one flat wire in RTLIL, and the two frontends chose
+// opposite element orders for it: read_uhdm assembled element 0 at the LSB,
+// read_slang puts it at the MSB.  The MSB order is the one the language itself
+// implies -- the stream operator `{>>{x}}` sends the first element left (LRM
+// 11.4.14), and that is what Verilator computes -- so the PUBLIC face of a top
+// module is reversed here to match.  The module keeps its internal elem0@LSB
+// layout (twenty code paths rely on it); only the port face flips, which is the
+// only place read_slang or a Verilator testbench can observe the order.
+void UhdmImporter::reverse_unpacked_array_ports() {
+    if (!module) return;
+    const RTLIL::IdString A_CNT = RTLIL::escape_id("unpacked_count");
+    const RTLIL::IdString A_EW = RTLIL::escape_id("unpacked_elem_width");
+    std::vector<RTLIL::Wire*> targets;
+    for (auto w : module->wires())
+        if (w->attributes.count(A_CNT) && w->attributes.count(A_EW))
+            targets.push_back(w);
+    for (auto iw : targets) {
+        int cnt = iw->attributes.at(A_CNT).as_int();
+        int ew = iw->attributes.at(A_EW).as_int();
+        iw->attributes.erase(A_CNT);
+        iw->attributes.erase(A_EW);
+        // An INOUT would need the reversal on both halves of a tristate net;
+        // leave those alone rather than introduce a second driver.
+        if (cnt < 2 || ew < 1 || (long long)cnt * ew != iw->width ||
+            !(iw->port_input ^ iw->port_output))
+            continue;
+        bool is_in = iw->port_input;
+        int pid = iw->port_id;
+        RTLIL::IdString pub = iw->name;
+        // Take the body's wire out of the port list under a private name and
+        // give the module a fresh public port wire of the same width.
+        module->rename(iw, RTLIL::IdString("$unpacked" + pub.str()));
+        iw->port_input = iw->port_output = false;
+        iw->port_id = 0;
+        RTLIL::Wire* pw = module->addWire(pub, iw->width);
+        pw->port_input = is_in;
+        pw->port_output = !is_in;
+        pw->port_id = pid;
+        pw->attributes = iw->attributes;
+        // Public slot s holds element cnt-1-s, so element 0 lands at the top.
+        RTLIL::SigSpec rev;
+        for (int slot = 0; slot < cnt; slot++)
+            rev.append(RTLIL::SigSpec(iw).extract((cnt - 1 - slot) * ew, ew));
+        if (is_in)
+            module->connect(rev, RTLIL::SigSpec(pw));
+        else
+            module->connect(RTLIL::SigSpec(pw), rev);
+        log("UHDM: Port '%s' unpacked array: public face reversed to element 0 "
+            "at the MSB (%d x %d bits)\n", pub.c_str(), cnt, ew);
+    }
 }
 
 // Create a parameterized module based on parameter values in the base module
