@@ -148,6 +148,14 @@ miter -equiv -flatten -make_assert gold gate miter
 hierarchy -top miter
 sat -verify -prove-asserts -seq $seq -set-init-zero -show-inputs miter
 EOF
+  # NOTE: truncating every $mem to a few words before memory_map (what the
+  # chip flow does) was tried here and rejected: the two frontends do not
+  # always shape a memory the same way, so the truncation is asymmetric and
+  # produced SEVEN spurious counterexamples (load_unit, store_unit,
+  # std_nbdcache, ...).  The SRAM-heavy modules whose full-depth model no
+  # longer fits the 12 GB cap (cva6_icache, cva6_icache_axi_wrapper,
+  # wt_dcache_mem -- their byte enables are all-ones since the `.be_i('1)`
+  # fix) are recorded as `timeout` in cva6_modules.txt instead.
   # MEM_LIMIT_KB (CI): cap yosys's address space so a big-module SAT blowup
   # kills yosys instead of the runner VM — the 16 GB GitHub runners' agent
   # died mid-SAT ("runner received a shutdown signal") on cva6/mult/
@@ -163,6 +171,15 @@ EOF
   if [ -n "${MEM_LIMIT_KB:-}" ] && [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ] &&
      grep -qiE "bad_alloc|out of memory|failed to allocate" miter.log; then
     rc=124  # memory-limit kill = budget outcome
+  fi
+  # The same kill without the C++ runtime's message (the abort can land before
+  # `what(): std::bad_alloc` is flushed): SIGABRT (134) under the cap, the SAT
+  # stage reached and no yosys ERROR line, is a budget outcome too -- CI
+  # reported cva6_icache as "yosys CRASHED" while the local run of the same
+  # miter printed the bad_alloc and was folded into `timeout`.
+  if [ -n "${MEM_LIMIT_KB:-}" ] && [ "$rc" -eq 134 ] &&
+     ! grep -q "^ERROR:" miter.log && grep -q "Executing SAT pass" miter.log; then
+    rc=124
   fi
   cex=$(grep -c "model found: FAIL" miter.log 2>/dev/null); cex=${cex:-0}
   if [ "$rc" -eq 0 ]; then                     got=proven
