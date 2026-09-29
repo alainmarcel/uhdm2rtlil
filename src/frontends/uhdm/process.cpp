@@ -443,6 +443,41 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
 //
 // Operates only on single-wire LHS chunks (the common case); concatenation
 // LHS is left untouched.  Applied recursively into nested switches/cases.
+// A `$0\x` temp that NO action of the process writes (only its full-width
+// hold default `$0\x = \x` names it) belongs to a signal whose every
+// assignment in the block sat inside a branch the parameter fold removed:
+//   if (rst_n == 1'b0) begin if (FPU == 1) fflags_q <= '0; end
+//   else               begin if (FPU == 1) fflags_q <= fflags_n; end
+// with FPU = 0 (cv32e40p_cs_registers).  read_verilog and read_slang leave
+// such a signal out of the process; a hold-only temp with a sync update makes
+// proc_arst see a NON-CONSTANT reset value and abort the whole module
+// ("Async reset \rst_n yields non-constant value 5'mmmmm").  A temp can
+// also be driven outside the case tree (a dynamic element write connects it
+// through a mux), so a wire with such a driver is NOT hold-only.
+static bool temp_driven_outside_cases(RTLIL::Module* module, RTLIL::Wire* tw)
+{
+    for (const auto& conn : module->connections())
+        for (const auto& ch : conn.first.chunks())
+            if (ch.wire == tw) return true;
+    for (auto cell : module->cells())
+        for (const auto& [port, sig] : cell->connections()) {
+            if (!cell->known() || !cell->output(port)) continue;
+            for (const auto& ch : sig.chunks())
+                if (ch.wire == tw) return true;
+        }
+    return false;
+}
+
+static void drop_hold_only_temp(RTLIL::Process* proc, RTLIL::Wire* tw,
+                                const RTLIL::SigSpec& lhs, const std::string& sig_name)
+{
+    auto& acts = proc->root_case.actions;
+    for (auto it = acts.begin(); it != acts.end(); ++it)
+        if (it->first == RTLIL::SigSpec(tw) && it->second == lhs) { acts.erase(it); break; }
+    log("      %s: no write in the block survives the parameter fold -- "
+        "no sync update\n", sig_name.c_str());
+}
+
 static void normalize_overlapping_writes(RTLIL::CaseRule* case_rule)
 {
     if (!case_rule) return;
@@ -2112,9 +2147,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             continue;
                         }
                         std::set<int> wb;
-                        if (lhs.is_wire() &&
-                            (int)temp_wire->width == lhs.size())
+                        bool full_temp = lhs.is_wire() &&
+                            (int)temp_wire->width == lhs.size();
+                        if (full_temp)
                             body_written_bits(temp_wire, lhs.as_wire(), wb);
+                        if (full_temp && wb.empty() &&
+                            !temp_driven_outside_cases(module, temp_wire)) {
+                            drop_hold_only_temp(yosys_proc, temp_wire, lhs, sig_name);
+                            continue;
+                        }
                         if (!wb.empty() && (int)wb.size() < lhs.size()) {
                             // Emit one action per run of written bits.
                             RTLIL::SigSpec l, r;
@@ -2600,6 +2641,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         std::set<int> bb;
                         body_written_bits(temp_wire, orig_wire, bb);
                         if (!bb.empty()) if_written_bits[sig_name] = bb;
+                        else if (!temp_driven_outside_cases(module, temp_wire)) {
+                            drop_hold_only_temp(yosys_proc, temp_wire,
+                                                RTLIL::SigSpec(orig_wire), sig_name);
+                            continue;
+                        }
                     }
                     auto wb = if_written_bits.find(sig_name);
                     if (wb != if_written_bits.end() &&
