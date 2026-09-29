@@ -11212,7 +11212,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     start = last;  // give EVERY element an explicit idx==i mux
                 } else {
                     std::string last_name = signal_name + "[" + std::to_string(last) + "]";
-                    if (current_comb_values.count(last_name))
+                    // Inside an always_ff body a non-blocking read of an
+                    // element must see the REGISTERED value, never the
+                    // element's pending write from the same block:
+                    // `mem[addr] <= f(mem[addr]); rdata <= mem[addr];` read
+                    // the new data (a transparent RAM) -- HPDcache's
+                    // hpdcache_regbank_wmask_1rw returned the word being
+                    // written one cycle early.
+                    if (!in_always_ff_body_mode && current_comb_values.count(last_name))
                         result = current_comb_values.at(last_name);
                     else {
                         RTLIL::Wire* w = elem_wire(last);
@@ -11224,7 +11231,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 for (int i = start; i >= arr_low; i--) {
                     std::string ename = signal_name + "[" + std::to_string(i) + "]";
                     RTLIL::SigSpec elem_val;
-                    if (current_comb_values.count(ename))
+                    if (!in_always_ff_body_mode && current_comb_values.count(ename))
                         elem_val = current_comb_values.at(ename);
                     else {
                         RTLIL::Wire* w = elem_wire(i);
