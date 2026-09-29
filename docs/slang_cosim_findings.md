@@ -140,7 +140,10 @@ Both suites already carry what the measurement needs — a wrapper, a
 testbench and stimulus — and a known-good `read_uhdm` baseline.  Until
 2026-09-29 the co-simulation was only ever run with the `read_uhdm`
 netlist, so the reference frontend went unmeasured over 1650 tests.  It is
-now a soft-warn column of the regression (`run_slang_cosim_softwarn`).
+now a soft-warn column of the regression (`run_slang_cosim_softwarn`), off by
+default and enabled with the `slang_cosim` input of `regression-sharded.yml`
+(or `RUN_SLANG_COSIM=1` locally): running both co-simulations on every shard
+doubles the Verilator builds and killed the runner VM outright.
 
 | Suite | Co-simulated | `read_slang` diverges | of those: slang-only | both, unequal | shared |
 |---|---|---|---|---|---|

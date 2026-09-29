@@ -26,6 +26,11 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      slang_cosim:
+        description: "Also co-simulate the read_slang netlist against the RTL (doubles the Verilator builds; refreshes docs/slang_cosim_findings.md)"
+        type: boolean
+        default: false
+    inputs:
       jobs:
         # SAT is memory-hungry; the frontend matrix learned that parallelism
         # inside a shard OOM-kills the 16 GB runner ("received a shutdown
@@ -195,6 +200,7 @@ jobs:
         # to "runner received a shutdown signal" mid-SAT.
         MEM_LIMIT_KB=12000000 \
         JOBS=${{ github.event.inputs.jobs || 1 }} \
+        RUN_SLANG_COSIM=${{ github.event.inputs.slang_cosim == 'true' && '1' || '0' }} \
         ./run_all_tests.sh --all \
           --shard ${{ matrix.shard }}/12 \
           --results-file "$GITHUB_WORKSPACE/shard${{ matrix.shard }}.txt" \

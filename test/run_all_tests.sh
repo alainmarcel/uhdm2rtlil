@@ -534,7 +534,13 @@ SLANG_COSIM_DIVERGED_NAMES=()
 run_slang_cosim_softwarn() {
     local test_dir="$1"
     local cycles="${2:-200}"
-    [ "${RUN_SLANG_COSIM:-1}" = "1" ] || return 0
+    # OFF by default: it doubles the Verilator builds, and a 12-way sharded
+    # run with both co-sims killed the runner VM outright ("the runner has
+    # received a shutdown signal", exit 143, shard 11 of PR #991).  Turn it
+    # on deliberately -- the `slang_cosim` input of regression-sharded.yml,
+    # or RUN_SLANG_COSIM=1 locally -- when refreshing
+    # docs/slang_cosim_findings.md.
+    [ "${RUN_SLANG_COSIM:-0}" = "1" ] || return 0
     local script="$SCRIPT_DIR/test_sim_equivalence.py"
     [ -f "$script" ] || return 0
     [ -f "$test_dir/slpp_all/surelog.uhdm" ] || return 0
