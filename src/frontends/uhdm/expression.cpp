@@ -11800,6 +11800,21 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         ew = get_width_from_typespec(rpts ? rpts : pts, inst);
                     }
                 }
+            // The element typespec is the LEAF type.  With MORE THAN ONE
+            // packed range (`fp_info_t [NUM_FORMATS-1:0][2:0] info_q`,
+            // fpnew_fma_multi) `info_q[fmt]` selects a whole ROW: leaf width
+            // times every inner range.  Scaling only the leaf made the
+            // instance actual `.info_o(info_q[fmt])` 8 bits against a 24-bit
+            // port -- hierarchy widened it with x and 80 info_q bits were
+            // never driven.
+            if (ew > 1 && prg && prg->size() > 1) {
+                for (size_t k = 1; k < prg->size(); k++) {
+                    RTLIL::SigSpec il = import_expression((*prg)[k]->Left_expr());
+                    RTLIL::SigSpec ir = import_expression((*prg)[k]->Right_expr());
+                    if (il.is_fully_const() && ir.is_fully_const())
+                        ew *= std::abs(il.as_int() - ir.as_int()) + 1;
+                }
+            }
             if (ew > 1 && prg && !prg->empty()) {
                 auto r0 = (*prg)[0];
                 RTLIL::SigSpec ls = import_expression(r0->Left_expr());
@@ -11874,6 +11889,15 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             if (pat->Elem_typespec() && pat->Elem_typespec()->Actual_typespec())
                 ew = get_width_from_typespec(
                     pat->Elem_typespec()->Actual_typespec(), inst);
+            // Same row rule as above: the leaf type times every inner range.
+            if (ew > 1 && pat->Ranges() && pat->Ranges()->size() > 1) {
+                for (size_t k = 1; k < pat->Ranges()->size(); k++) {
+                    RTLIL::SigSpec il = import_expression((*pat->Ranges())[k]->Left_expr());
+                    RTLIL::SigSpec ir = import_expression((*pat->Ranges())[k]->Right_expr());
+                    if (il.is_fully_const() && ir.is_fully_const())
+                        ew *= std::abs(il.as_int() - ir.as_int()) + 1;
+                }
+            }
             if (ew > 1 && pat->Ranges() && !pat->Ranges()->empty()) {
                 auto r0 = (*pat->Ranges())[0];
                 RTLIL::SigSpec ls = import_expression(r0->Left_expr());
