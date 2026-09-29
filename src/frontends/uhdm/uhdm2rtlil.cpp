@@ -3469,12 +3469,85 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
 
 void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     proc_elem_written.clear();
+    src_lhs_names.clear();
     if (!uhdm_module) return;
+    // Base name of ANY write target: `x`, `x[i]`, `x[h:l]`, `x[b +: w]`,
+    // `x[i][j]`, `s.f` / `s.f[i]` (the struct base), `{a, b}` (each operand).
+    std::function<void(const any*)> note_lhs;
+    note_lhs = [&](const any* lhs) {
+        if (!lhs) return;
+        if (lhs->UhdmType() == uhdmoperation) {
+            if (auto op = any_cast<const operation*>(lhs))
+                if (op->Operands()) for (auto o : *op->Operands()) note_lhs(o);
+            return;
+        }
+        if (lhs->UhdmType() == uhdmhier_path) {
+            if (auto hp = any_cast<const hier_path*>(lhs))
+                if (hp->Path_elems() && !hp->Path_elems()->empty()) {
+                    std::string b = std::string((*hp->Path_elems())[0]->VpiName());
+                    size_t br = b.find('[');
+                    if (br != std::string::npos) b = b.substr(0, br);
+                    if (!b.empty()) src_lhs_names.insert(b);
+                }
+            return;
+        }
+        std::string b = std::string(lhs->VpiName());
+        if (b.empty())
+            if (auto ex = dynamic_cast<const expr*>(lhs))
+                if (ex->VpiParent() && !ex->VpiParent()->VpiName().empty() &&
+                    (lhs->VpiType() == vpiIndexedPartSelect || lhs->VpiType() == vpiPartSelect))
+                    b = std::string(ex->VpiParent()->VpiName());
+        size_t dot = b.find('.');
+        if (dot != std::string::npos) b = b.substr(0, dot);
+        size_t br = b.find('[');
+        if (br != std::string::npos) b = b.substr(0, br);
+        if (!b.empty()) src_lhs_names.insert(b);
+    };
     // Unwrap the @(...) event control to reach the always block's body.
     auto unwrap_ec = [&](const any* s) -> const any* {
         if (s && s->VpiType() == vpiEventControl)
             if (auto ec = any_cast<const event_control*>(s)) return ec->Stmt();
         return s;
+    };
+    // Name-only walk (feeds src_lhs_names, never proc_elem_written) for the
+    // statement kinds the per-element classification deliberately ignores:
+    // initial blocks and foreach / while / repeat bodies.
+    std::function<void(const any*)> lhs_only;
+    lhs_only = [&](const any* node) {
+        if (!node) return;
+        switch (node->VpiType()) {
+            case vpiAssignment: case vpiAssignStmt:
+                if (auto a = any_cast<const assignment*>(node)) note_lhs(a->Lhs());
+                break;
+            case vpiBegin: case vpiNamedBegin:
+                if (auto stmts = begin_block_stmts(node))
+                    for (auto st : *stmts) lhs_only(st);
+                break;
+            case vpiFor:
+                if (auto f = any_cast<const for_stmt*>(node)) lhs_only(f->VpiStmt());
+                break;
+            case vpiForeachStmt:
+                if (auto fe = any_cast<const foreach_stmt*>(node)) lhs_only(fe->VpiStmt());
+                break;
+            case vpiWhile:
+                if (auto w = any_cast<const while_stmt*>(node)) lhs_only(w->VpiStmt());
+                break;
+            case vpiRepeat:
+                if (auto r = any_cast<const repeat*>(node)) lhs_only(r->VpiStmt());
+                break;
+            case vpiIf:
+                if (auto i = any_cast<const if_stmt*>(node)) lhs_only(i->VpiStmt());
+                break;
+            case vpiIfElse:
+                if (auto ie = any_cast<const if_else*>(node)) { lhs_only(ie->VpiStmt()); lhs_only(ie->VpiElseStmt()); }
+                break;
+            case vpiCase:
+                if (auto cs = any_cast<const case_stmt*>(node))
+                    if (cs->Case_items())
+                        for (auto it : *cs->Case_items()) lhs_only(it->Stmt());
+                break;
+            default: break;
+        }
     };
     // Record the base name of any per-element write LHS (`arr[i] <= …`,
     // `arr[i] = …`) found anywhere below `node`.
@@ -3488,6 +3561,9 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
         if (!node) return;
         switch (node->VpiType()) {
             case vpiAssignment: case vpiAssignStmt:
+                if (auto a = any_cast<const assignment*>(node))
+                    if (const any* lhs = a->Lhs())
+                        note_lhs(lhs);
                 if (auto a = any_cast<const assignment*>(node))
                     if (const any* lhs = a->Lhs())
                         if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
@@ -3515,6 +3591,9 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
             case vpiFor:
                 if (auto f = any_cast<const for_stmt*>(node)) elem_writes(f->VpiStmt(), true);
                 break;
+            case vpiForeachStmt: case vpiWhile: case vpiRepeat:
+                lhs_only(node);   // names only: not a per-element classification input
+                break;
             case vpiIf:
                 if (auto i = any_cast<const if_stmt*>(node)) elem_writes(i->VpiStmt(), in_for);
                 break;
@@ -3536,6 +3615,7 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     // elements the write targets.
     auto cont_elem_write = [&](const any* lhs) {
         if (!lhs) return;
+        note_lhs(lhs);
         if (lhs->VpiType() == vpiBitSelect || lhs->VpiType() == vpiVarSelect) {
             std::string b = std::string(lhs->VpiName());
             if (!b.empty()) proc_elem_written.insert(b);
@@ -3553,11 +3633,24 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
             procs = gs->Process(); gsas = gs->Gen_scope_arrays(); casgns = gs->Cont_assigns();
         }
         if (procs)
-            for (auto proc : *procs)
+            for (auto proc : *procs) {
                 if (auto al = any_cast<const always*>(proc))
                     elem_writes(unwrap_ec(al->Stmt()), false);
+                else if (auto ini = any_cast<const initial*>(proc))
+                    lhs_only(unwrap_ec(ini->Stmt()));   // names only
+            }
         if (casgns)
             for (auto ca : *casgns) cont_elem_write(ca->Lhs());
+        // A child instance's output / inout actual is a driver of that net.
+        const UHDM::VectorOfmodule_inst* kids = nullptr;
+        if (auto md = dynamic_cast<const UHDM::module_inst*>(sc)) kids = md->Modules();
+        else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(sc)) kids = gs->Modules();
+        if (kids)
+            for (auto k : *kids)
+                if (k && k->Ports())
+                    for (auto pt : *k->Ports())
+                        if (pt && (pt->VpiDirection() == vpiOutput || pt->VpiDirection() == vpiInout))
+                            note_lhs(pt->High_conn());
         if (gsas)
             for (auto gsa : *gsas)
                 if (gsa->Gen_scopes())
@@ -6746,6 +6839,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     } else {
         log("UHDM: No processes found\n");
         log_flush();
+    }
+
+    // `(* uhdm_src_lhs *)` on every wire the source assigns somewhere in this
+    // module (collect_proc_elem_written): a sweep's undriven probe can then
+    // separate "the RTL never assigns it" from "the reader dropped the driver".
+    // Generate-scope wires are `scope.name`; match on the last component.
+    for (auto w : module->wires()) {
+        std::string n = w->name.str();
+        if (n.empty() || n[0] != '\\') continue;
+        n = n.substr(1);
+        size_t br = n.find('[');
+        if (br != std::string::npos) n = n.substr(0, br);
+        bool hit = src_lhs_names.count(n) > 0;
+        if (!hit) {
+            size_t dot = n.rfind('.');
+            if (dot != std::string::npos) hit = src_lhs_names.count(n.substr(dot + 1)) > 0;
+        }
+        if (hit) w->attributes[RTLIL::escape_id("uhdm_src_lhs")] = RTLIL::Const(1);
     }
 
     // Import concurrent assertions (assert property (...))

@@ -1,0 +1,12 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+# every wire the source assigns carries the attribute ...
+select -assert-count 1 w:q_proc a:uhdm_src_lhs %i
+select -assert-count 1 w:q_cont a:uhdm_src_lhs %i
+select -assert-count 1 w:q_part a:uhdm_src_lhs %i
+select -assert-count 1 w:q_inst a:uhdm_src_lhs %i
+select -assert-count 1 w:sel a:uhdm_src_lhs %i
+# ... and a net the source never assigns does not
+select -assert-count 0 w:q_never a:uhdm_src_lhs %i
+select -assert-count 0 w:q_gated a:uhdm_src_lhs %i
+select -assert-count 0 w:d a:uhdm_src_lhs %i

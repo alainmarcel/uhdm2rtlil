@@ -149,6 +149,55 @@ def read_analyzed_names():
     return names
 
 
+
+# --- undriven-net classification -------------------------------------------
+# read_uhdm stamps `(* uhdm_src_lhs *)` on every wire the SOURCE assigns
+# somewhere (any procedural / continuous LHS, a child's output actual).  An
+# undriven net WITHOUT it is one the RTL never assigns under this
+# configuration -- cva6's trigger_module registers under SDTRIG=0, id_stage's
+# dcache_req_ports_o under RVZCMT=0, the CLAUDE.md source-class table --
+# which read_slang hides by driving a constant X.  Only an undriven net WITH
+# the attribute is a driver the reader dropped, and only those stay red.
+_UNDRIVEN_RE = re.compile(r"Wire (\S+?)(?: \[\d+\])? is used but has no driver")
+_SELLIST_RE = re.compile(r"^[^\s/]+/(\S+)$", re.M)
+
+def _wire_key(n):
+    """Flattened `top.\\a.b` / `top/\\a.b` / `\\a.b [3]` -> `a.b`."""
+    n = n.strip()
+    if n.startswith("\\"):
+        n = n[1:]
+    else:
+        # `check` prefixes the module: `kmac_ss.\\gen.u.seed` -> after the first
+        # `.\\`; a plain `kmac_ss.seed` -> after the first `.`
+        i = n.find(".\\")
+        if i >= 0:
+            n = n[i + 2:]
+        elif "." in n and not n.startswith("$"):
+            n = n.split(".", 1)[1]
+    return n
+
+def classify_undriven(out):
+    """(dropped, source_never_assigns) counts from a check log that ends with
+    `select -list a:uhdm_src_lhs`."""
+    out = out or ""
+    listed = {_wire_key(m) for m in _SELLIST_RE.findall(out)}
+    dropped = never = 0
+    for m in _UNDRIVEN_RE.finditer(out):
+        if _wire_key(m.group(1)) in listed:
+            dropped += 1
+        else:
+            never += 1
+    return dropped, never
+
+def undriven_cell(dropped, never):
+    if dropped == 0 and never == 0:
+        return "✅ 0 undriven"
+    if dropped == 0:
+        return f"✅ 0 undriven ({never} never assigned in the source)"
+    if never:
+        return f"❌ {dropped} undriven (+{never} never assigned in the source)"
+    return f"❌ {dropped} undriven"
+
 def _undriven_check(work_dir, top):
     """Structural opt-level undriven-net probe on the read_uhdm netlist: flatten,
     opt_clean, then `check` for nets with no driver.  read_slang produces zero
@@ -174,7 +223,8 @@ def _undriven_check(work_dir, top):
         f"proc\n"
         f"flatten; opt_clean\n"
         f"stat\n"
-        f"check\n")
+        f"check\n"
+        f"select -list a:uhdm_src_lhs\n")
     # Belt and braces on a 16 GB CI runner: cap the address space so a blowup
     # fails this row instead of taking the whole job down with it.
     mem = os.environ.get("MEM_LIMIT_KB")
@@ -215,9 +265,9 @@ def _undriven_check(work_dir, top):
     if "is not part of the design" in out or \
        re.search(r"Resizing cell port \S+ from \d+ bits to 1 bits", out):
         return "— (blackbox children)"
-    undriven = len(re.findall(r"used but has no driver", out))
-    if undriven:
-        return f"❌ {undriven} undriven"
+    dropped, never = classify_undriven(out)
+    if dropped or never:
+        return undriven_cell(dropped, never)
     return "error" if rc else "✅ 0 undriven"
 
 
@@ -236,17 +286,17 @@ def _il_check(il, top):
                   f"hierarchy -top {top}\n"
                   f"proc\nflatten; opt_clean\n"
                   f"delete t:$check t:$assert t:$assume t:$print t:$scopeinfo\n"
-                  f"opt_clean\ncheck\n")
+                  f"opt_clean\ncheck\nselect -list a:uhdm_src_lhs\n")
     rc, out = sh([str(yosys), "-q", "-m", str(plugin), ys.name],
                  cwd=il.parent, timeout=1800)
     out = out or ""
     if rc and "found and reported" not in out.lower():
         return "error", "—"
-    undriven = len(re.findall(r"used but has no driver", out))
+    dropped, never = classify_undriven(out)
     conf = (len(re.findall(r"conflicting drivers for", out)) +
             len(re.findall(r"Drivers conflicting with", out)) +
             len(re.findall(r"^\s+action \d+'[01xz]+ <= ", out, re.M)))
-    ucell = f"❌ {undriven} undriven" if undriven else "✅ 0 undriven"
+    ucell = undriven_cell(dropped, never)
     ccell = f"❌ {conf} conflict{'s' if conf != 1 else ''}" if conf else "✅ 0"
     return ucell, ccell
 

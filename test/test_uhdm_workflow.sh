@@ -123,6 +123,9 @@ cat > test_uhdm_read.ys << EOF
 # Test script to read UHDM file in Yosys
 plugin -i ../../build/uhdm2rtlil.so
 read_uhdm $UHDM_READ_FLAG slpp_all/surelog.uhdm
+# `(* uhdm_src_lhs *)` is sweep bookkeeping (a wire the source assigns); it
+# must not reach the synthesised Verilog the equivalence flow compares.
+setattr -unset uhdm_src_lhs
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_uhdm_nohier.il
 hierarchy -check -auto-top

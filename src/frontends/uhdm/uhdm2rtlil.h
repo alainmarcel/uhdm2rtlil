@@ -616,6 +616,13 @@ struct UhdmImporter {
     // unpacked-array OUTPUT-port element aliasing.  Populated per module (before
     // ports are imported) by collect_proc_elem_written().
     std::set<std::string> proc_elem_written;
+    // Every base name the SOURCE assigns in the module being imported (any
+    // procedural / continuous LHS, any child instance output actual),
+    // collected by collect_proc_elem_written() alongside proc_elem_written.
+    // Wires named here get `(* uhdm_src_lhs *)` so a sweep can tell an
+    // undriven net the RTL never assigns (the CLAUDE.md source-class table)
+    // from a driver the reader dropped.
+    std::set<std::string> src_lhs_names;
 
     // Element widths for function-local unpacked array_var instances.
     // Key: variable name (within the function evaluation scope).  Value: width
