@@ -151,7 +151,9 @@ table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
 also measure the frontend they compare against.  Every row where it does not
 track the RTL is collected in [docs/slang_cosim_findings.md](docs/slang_cosim_findings.md),
 classified (a `read_slang` defect, a shared co-simulation artefact, or still to
-adjudicate) with a pre-filled Yosys issue link for each defect.
+adjudicate) with a pre-filled Yosys issue link for each defect.  The same
+question is asked of both test suites — 1139 local tests and 511 upstream Yosys
+tests — which is where the smallest reproducers come from.
 
 #### Generated IP: the XiangShan core
 

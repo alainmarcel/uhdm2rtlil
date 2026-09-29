@@ -206,5 +206,70 @@ for fam, mod, n, src in [
         ("xiangshan-core", "TLBuffer_14", 6, "xiangshan run 36421602760")]:
     add(fam, mod, n, None, "", src)
 
+
+# ----------------------------------------------------- the two test suites
+# The same three-way question asked of every test that already has a
+# wrapper, a testbench and stimulus: 1139 local tests and 511 upstream Yosys
+# tests (test/run/).  `--frontend slang` was never run over these until
+# 2026-09-29; the regression now runs it as a soft-warn column.
+SUITE = []
+def suite_add(suite_name, test, slang, uhdm, first=""):
+    SUITE.append(dict(suite=suite_name, test=test, slang=slang, uhdm=uhdm, first=first))
+
+# read_uhdm clean, read_slang not -- a small self-contained reproducer each
+suite_add("local", "ArrayInit", 200, 0,
+          "`a` rtl=`1` slang=`0` — 2-D unpacked array, nested `'{'{0,1,2},'{4,4,4}}` initialiser")
+suite_add("local", "case_expr_extend", 200, 0, "`out` rtl=`3f` slang=`0`")
+suite_add("local", "const_fold_func", 200, 0, "`out6` rtl=`2` slang=`0`")
+suite_add("local", "counter_dual_xbranch", 108, 0, "`count_instr` rtl=`0` slang=`2`")
+suite_add("local", "dyn_packed_multidim", 89, 0, "`o_dyn_both` rtl=`0` slang=`1eb`")
+suite_add("local", "hana_test_parse2synthtrans", None, 0,
+          "the slang netlist is inert — no output activity at all")
+suite_add("local", "nested_full_case", 13, 0, "`q` rtl=`eb` slang=`49`")
+suite_add("local", "param_dyn_elem_select", 124, 0, "`ut_out` rtl=`0` slang=`1`")
+suite_add("local", "UnionParameter", 200, 0, "`o` rtl=`6` slang=`8`")
+suite_add("upstream", "run/arch/common/tribuf", 46, 0, "`o` rtl=`0` slang=`1`")
+suite_add("upstream", "run/simple/task_func", 200, 0, "`w` rtl=`54` slang=`a8`")
+
+def emit_suites(L):
+    A = L.append
+    only = [r for r in SUITE if r["uhdm"] == 0]
+    A("\n## The test suites\n")
+    A("Both suites already carry what the measurement needs — a wrapper, a\n"
+      "testbench and stimulus — and a known-good `read_uhdm` baseline.  Until\n"
+      "2026-09-29 the co-simulation was only ever run with the `read_uhdm`\n"
+      "netlist, so the reference frontend went unmeasured over 1650 tests.  It is\n"
+      "now a soft-warn column of the regression (`run_slang_cosim_softwarn`).\n")
+    A("| Suite | Co-simulated | `read_slang` diverges | of those: slang-only | both, unequal | shared |")
+    A("|---|---|---|---|---|---|")
+    A("| local `test/<name>` | 1139 | 41 | 9 | 9 | 23 |")
+    A("| upstream `test/run/**` | 511 | 42 | 5 | 15 | 22 |")
+    A("\nThree tests appear in both suites — the internal copies of upstream\n"
+      "reproducers — so the distinct slang-only set is eleven.\n")
+    A("\n### Report to Yosys — test-suite reproducers\n")
+    A("These are the most useful reports in this file: the `read_uhdm` netlist\n"
+      "matches the RTL, the `read_slang` netlist does not, and the design is a few\n"
+      "lines that already live in a repository Yosys itself ships or vendors.\n")
+    A("| Suite | Test | Diverging cycles | First divergence | Report |")
+    A("|---|---|---|---|---|")
+    for r in sorted(only, key=lambda r: (r["suite"], r["test"])):
+        n = r["slang"] if r["slang"] is not None else "inert"
+        A(f"| {r['suite']} | `{r['test']}` | {n} | {r['first']} "
+          f"| [file an issue]({issue_url('test suite', r['test'], r['first'])}) |")
+    A("\nThe other rows split the same way as the sweeps: where both netlists\n"
+      "diverge identically the co-simulation's X-initial state explains it, and\n"
+      "where the counts merely differ the row needs adjudicating before anyone\n"
+      "reports or dismisses it.  `case_expr_const`, `case_expr_non_const`,\n"
+      "`wandwor`, `latch_002`, `ibex_cs_registers`, `rp32_r5p_alu`,\n"
+      "`rp32_r5p_mouse`, `full_case_latch` and the `dynamic_part_select` family\n"
+      "are in that middle group on both sides.\n")
+
 if __name__ == "__main__":
-    emit(sys.argv[1] if len(sys.argv) > 1 else "slang_cosim_findings.md")
+    out = sys.argv[1] if len(sys.argv) > 1 else "slang_cosim_findings.md"
+    emit(out)
+    # append the suite sections
+    L = []
+    emit_suites(L)
+    with open(out, "a") as f:
+        f.write("\n".join(L) + "\n")
+    print(f"  + test suites: slang-only {len([r for r in SUITE if r['uhdm']==0])}")

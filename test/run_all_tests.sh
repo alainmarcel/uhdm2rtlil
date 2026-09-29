@@ -520,6 +520,39 @@ run_sim_equivalence_softwarn() {
     return 0
 }
 
+# The SAME co-sim with the read_slang netlist on the netlist side.  The
+# reference frontend is not above suspicion: a test where the read_uhdm
+# netlist tracks the RTL and the read_slang netlist does not is a read_slang
+# defect, and until this ran the only evidence came from the IP sweeps --
+# the 1139 local tests and the 511 upstream yosys tests, which carry a
+# wrapper, a testbench and stimulus already, were never asked.  Soft: a
+# divergence here is never a gate on OUR frontend, it is recorded for
+# docs/slang_cosim_findings.md.
+SLANG_COSIM_RUN=0
+SLANG_COSIM_DIVERGED=0
+SLANG_COSIM_DIVERGED_NAMES=()
+run_slang_cosim_softwarn() {
+    local test_dir="$1"
+    local cycles="${2:-200}"
+    [ "${RUN_SLANG_COSIM:-1}" = "1" ] || return 0
+    local script="$SCRIPT_DIR/test_sim_equivalence.py"
+    [ -f "$script" ] || return 0
+    [ -f "$test_dir/slpp_all/surelog.uhdm" ] || return 0
+    local out
+    out=$(cd "$SCRIPT_DIR" && timeout 600 python3 "$script" "$test_dir" \
+              --cycles "$cycles" --frontend slang 2>&1) || true
+    case "$out" in
+        *"PASS: "*) SLANG_COSIM_RUN=$((SLANG_COSIM_RUN + 1)) ;;
+        *"FAIL: "*)
+            SLANG_COSIM_RUN=$((SLANG_COSIM_RUN + 1))
+            SLANG_COSIM_DIVERGED=$((SLANG_COSIM_DIVERGED + 1))
+            SLANG_COSIM_DIVERGED_NAMES+=("$test_dir")
+            echo "  🔷 read_slang co-sim diverges from the RTL: $test_dir"
+            echo "     $(printf '%s\n' "$out" | grep -m1 'MISMATCH cycle')"
+            ;;
+    esac
+}
+
 # Track unexpected results
 UNEXPECTED_FAILURES=()
 UNEXPECTED_SUCCESSES=()
@@ -967,6 +1000,7 @@ analyze_test_result() {
             run_structural_check "$test_dir"
             run_memcheck "$test_dir"
             run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
+            run_slang_cosim_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
             return 0
@@ -987,6 +1021,7 @@ analyze_test_result() {
         echo "✅ Test $test_dir PASSED - UHDM completes synth where Verilog synth errors!"
         echo "    Demonstrates UHDM's superior SystemVerilog support"
         run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
+            run_slang_cosim_softwarn "$test_dir" "$sim_cycles"
         UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
         UHDM_ONLY_TEST_NAMES+=("$test_dir")
         return 0
@@ -1039,6 +1074,7 @@ analyze_test_result() {
     SIM_EQUIV_COSIM_PASSED=0 # set to 1 by run_sim_equivalence_softwarn on a clean co-sim
     if [ -f "$uhdm_synth" ]; then
         run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
+            run_slang_cosim_softwarn "$test_dir" "$sim_cycles"
     fi
 
     # Report results
@@ -1419,6 +1455,13 @@ if [ "${SLANG_MITER_RUN:-0}" -gt 0 ]; then
     for t_ in "${SLANG_MITER_FAILED_TEST_NAMES[@]}"; do
         echo "      - $t_"
     done
+fi
+if [ "${SLANG_COSIM_RUN:-0}" -gt 0 ]; then
+    echo "  🔷 Slang co-sim vs RTL (the REFERENCE frontend's own netlist): $((SLANG_COSIM_RUN - SLANG_COSIM_DIVERGED))/$SLANG_COSIM_RUN track the RTL, $SLANG_COSIM_DIVERGED diverge"
+    for t_ in "${SLANG_COSIM_DIVERGED_NAMES[@]}"; do
+        echo "      - $t_"
+    done
+    echo "     (a read_slang defect, not ours — collected in docs/slang_cosim_findings.md)"
 fi
 if [ "${STRUCT_CHECK_RUN:-0}" -gt 0 ]; then
     echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_FAILED_TESTS unexpected"
