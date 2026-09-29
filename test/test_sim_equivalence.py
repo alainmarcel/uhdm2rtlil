@@ -494,9 +494,16 @@ def emit_wrapper_and_tb(dut_path: Path,
     # inside the wrapper and `assign` slices of the flat input into it.
     # We avoid the `'{...}` assignment-pattern form in the port
     # connection because Verilator drops the live-update of those args
-    # in some configurations.  Yosys flattens element 0 to the LSBs of
-    # the synthesized port (verified via `connect \iP[0] \iP[13:0]` in
-    # the IL), so the assigns mirror that ordering.
+    # in some configurations.  ELEMENT ORDER follows the DECLARED direction
+    # of the unpacked dimension: its LEFT index takes the most significant
+    # bits of the synthesized flat port.  So `x [N]` / `x [0:N-1]`
+    # (ascending) put element 0 at the TOP, while `x [N-1:0]` (descending)
+    # put it at the bottom.  That is what read_slang emits and what the
+    # LRM's stream operator computes (`{>>{x}}` sends the first element
+    # left, 11.4.14); read_uhdm now matches.  The old mapping was
+    # elem0-at-the-LSB unconditionally, which was right only for descending
+    # dims and made every read_slang co-sim of an ASCENDING one diverge
+    # (ibex_id_stage imd_val_q_ex_o, 52 spurious "divergences").
     intermediates: list[str] = []
     def conn(n: str, w: int, d: str) -> str:
         if unpacked and n in unpacked:
@@ -511,12 +518,14 @@ def emit_wrapper_and_tb(dut_path: Path,
                     # and the flat wrapper port is rebuilt from its elements
                     # (the input-only form left the output port undriven and
                     # double-drove the array — ibex_ex_block imd_val_d_o).
+                    # descending dim: element i keeps slot i; ascending: reversed
+                    slot = i if descending else count - 1 - i
                     if d == "output":
                         intermediates.append(
-                            f"  assign {n}[{(i+1)*ew-1}:{i*ew}] = {n}_arr[{i}];")
+                            f"  assign {n}[{(slot+1)*ew-1}:{slot*ew}] = {n}_arr[{i}];")
                     else:
                         intermediates.append(
-                            f"  assign {n}_arr[{i}] = {n}[{(i+1)*ew-1}:{i*ew}];")
+                            f"  assign {n}_arr[{i}] = {n}[{(slot+1)*ew-1}:{slot*ew}];")
                 return f"    .{n}({n}_arr)"
         return f"    .{n}({n})"
     inst_conn = [conn(n, w, d) for (n, w, d) in ports]

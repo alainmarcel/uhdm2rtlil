@@ -658,6 +658,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     // `Array_nets()` / `Variables()` for an `array_net`/`array_var` of
     // the same name and using its dimensions to size the port wire.
     int unpacked_count = 0;
+    // Outer unpacked dim declared ASCENDING (`[0:N-1]`, or the `[N]`
+    // shorthand)?  Then its LEFT index -- element 0 -- takes the MOST
+    // significant bits of the flat port wire, the way read_slang and the
+    // LRM stream operator order it.  A descending `[N-1:0]` puts element 0
+    // at the LSB, which is what this importer does natively.
+    bool unpacked_ascending = false;
     int unpacked_elem_w = 0;
     if (current_instance) {
         // Walk the module instance's Array_nets() (unpacked-array nets).
@@ -672,9 +678,11 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             if (r->Left_expr() && r->Right_expr()) {
                                 RTLIL::SigSpec ls = import_expression(r->Left_expr());
                                 RTLIL::SigSpec rs = import_expression(r->Right_expr());
-                                if (ls.is_fully_const() && rs.is_fully_const())
+                                if (ls.is_fully_const() && rs.is_fully_const()) {
+                                    if (r == (*an->Ranges())[0])
+                                        unpacked_ascending = ls.as_int() < rs.as_int();
                                     total *= std::abs(ls.as_int() - rs.as_int()) + 1;
-                                else { total = 0; break; }
+                                } else { total = 0; break; }
                             }
                         }
                     }
@@ -719,9 +727,11 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         if (r->Left_expr() && r->Right_expr()) {
                             RTLIL::SigSpec ls = import_expression(r->Left_expr());
                             RTLIL::SigSpec rs = import_expression(r->Right_expr());
-                            if (ls.is_fully_const() && rs.is_fully_const())
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                if (r == (*av->Ranges())[0])
+                                    unpacked_ascending = ls.as_int() < rs.as_int();
                                 total *= std::abs(ls.as_int() - rs.as_int()) + 1;
-                            else { total = 0; break; }
+                            } else { total = 0; break; }
                         }
                     }
                     force_const_fold = saved_fcf;
@@ -849,6 +859,14 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 name_map[ename] = ew;
             }
         }
+        // Geometry for reverse_unpacked_array_ports(), ASCENDING dims only:
+        // there the left index (element 0) belongs at the MSB.
+        if (unpacked_ascending) {
+            w->attributes[RTLIL::escape_id("unpacked_count")] =
+                RTLIL::Const(unpacked_count);
+            w->attributes[RTLIL::escape_id("unpacked_elem_width")] =
+                RTLIL::Const(unpacked_elem_w);
+        }
     }
 
     // Store packed array metadata for use in bit_select handling
@@ -924,15 +942,18 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     elem_w = get_width_from_typespec(
                         ats->Elem_typespec()->Actual_typespec(), current_instance);
                 int total = 0;
+                bool ts_ascending = false;
                 if (ats->Ranges()) {
                     total = 1;
                     for (auto r : *ats->Ranges()) {
                         if (r->Left_expr() && r->Right_expr()) {
                             RTLIL::SigSpec lspec = import_expression(r->Left_expr());
                             RTLIL::SigSpec rspec = import_expression(r->Right_expr());
-                            if (lspec.is_fully_const() && rspec.is_fully_const())
+                            if (lspec.is_fully_const() && rspec.is_fully_const()) {
+                                if (r == (*ats->Ranges())[0])
+                                    ts_ascending = lspec.as_int() < rspec.as_int();
                                 total *= std::abs(lspec.as_int() - rspec.as_int()) + 1;
-                            else { total = 0; break; }
+                            } else { total = 0; break; }
                         }
                     }
                 }
@@ -953,6 +974,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     }
                     log("UHDM: Port '%s' unpacked array: elem_w=%d, count=%d\n",
                         portname.c_str(), elem_w, total);
+                    if (ts_ascending) {
+                        w->attributes[RTLIL::escape_id("unpacked_count")] =
+                            RTLIL::Const(total);
+                        w->attributes[RTLIL::escape_id("unpacked_elem_width")] =
+                            RTLIL::Const(elem_w);
+                    }
                 }
             }
         }
