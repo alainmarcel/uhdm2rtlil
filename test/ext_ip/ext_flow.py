@@ -325,6 +325,29 @@ def _with_wrapper_packages(cl, files, wrapper):
     # Packages must precede their users for a per-file compilation unit.
     return extra + files
 
+
+def _config_wrapper(w, fam, mod, files):
+    """Bind a module's CONFIGURATION parameter (`#(parameter cvw_t P)`, no
+    default) so read_slang can make it a top level.
+
+    cvw is written around one struct parameter that carries the whole
+    configuration and has NO default -- `module alu import cvw::*; #(parameter
+    cvw_t P)` -- and the repository supplies the value as an INCLUDE
+    (`config/shared/parameter-defs.vh` builds `localparam cvw_t P` out of the
+    132 localparams in `config/rv64gc/config.vh`).  Read standalone the
+    parameter is unbound, so read_slang refuses the module as a top level and
+    136 cvw rows were reported as "read_slang cannot read this design" when we
+    had simply never handed it the configuration.  See gen_config_wrapper.py."""
+    out = w / f"{mod}_cfg.sv"
+    rc, log = sh([sys.executable, str(HERE / "gen_config_wrapper.py"),
+                  "--module", mod, "--manifest", str(HERE / f"{fam}.json"),
+                  "--out", str(out), *files], timeout=300)
+    (w / "cfgbind.log").write_text(log or "")
+    if rc != 0 or not out.exists():
+        return None
+    return str(out), f"{mod}_cfg"
+
+
 def _bind_wrapper(w, fam, mod, files):
     """Generate a type-bound wrapper for a module whose defaults cannot
     elaborate, and return (wrapper_path, top) -- or None.
@@ -512,7 +535,13 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         files = _with_wrapper_packages(cl, files, bound[0]) + [bound[0]]
         top = bound[1]
     else:
-        flat = _flat_wrapper(w, m, files)
+        cfgw = _config_wrapper(w, fam, m, files)
+        if cfgw:
+            # The generated wrapper names a package the module itself never
+            # mentions (`import cvw::*;`), so pull it into the closure.
+            files = _with_wrapper_packages(cl, files, cfgw[0]) + [cfgw[0]]
+            top = cfgw[1]
+        flat = None if cfgw else _flat_wrapper(w, m, files)
         if flat:
             files = files + [flat[0]]
             top = flat[1]
