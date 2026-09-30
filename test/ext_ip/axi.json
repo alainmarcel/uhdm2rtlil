@@ -51,6 +51,10 @@
   "seq": 4,
   "timeout": 300,
   "want": "proven",
+  "slang_flags": [
+    "--unroll-limit",
+    "20000"
+  ],
   "bind": {
     "prelude_raw": [
       "`include \"axi/typedef.svh\""
@@ -175,6 +179,10 @@
       ]
     ],
     "values": [
+      [
+        "(?i)slv_?axi_?id_?width$",
+        2
+      ],
       [
         "(?i)addr_?width$",
         32

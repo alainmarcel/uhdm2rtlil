@@ -24,5 +24,25 @@
  ],
  "seq": 4,
  "timeout": 300,
- "want": "proven"
+ "want": "proven",
+ "bind": {
+  "values": [
+   [
+    "(?i)audio_?bit_?width$",
+    16
+   ],
+   [
+    "(?i)audio_?rate$",
+    48000
+   ],
+   [
+    "(?i)video_?rate$",
+    25000000
+   ],
+   [
+    "(?i)width$",
+    8
+   ]
+  ]
+ }
 }
