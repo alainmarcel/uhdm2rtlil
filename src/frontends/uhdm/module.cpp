@@ -280,6 +280,30 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 ag = any_cast<const ref_obj*>(hc)->Actual_group();
                             else if (hc && hc->UhdmType() == uhdmbit_select)
                                 ag = any_cast<const UHDM::bit_select*>(hc)->Actual_group();
+                            else if (hc && hc->UhdmType() == uhdmhier_path) {
+                                // `.in(in_i.Slave)` -- naming the MODPORT
+                                // explicitly, which is what a generated
+                                // interface wrapper writes and what any RTL
+                                // that connects a specific modport writes --
+                                // arrives as a hier_path, and neither of its
+                                // path elements carries a vpiActual.  Resolve
+                                // the head (`in_i`) by name among the PARENT
+                                // instance's interfaces: that is the
+                                // elaborated instance holding the real
+                                // parameter values.
+                                std::string hn = std::string(hc->VpiName());
+                                std::string base = hn.substr(0, hn.find('.'));
+                                const UHDM::any* par = mi->VpiParent();
+                                if (!base.empty() && par &&
+                                    par->UhdmType() == uhdmmodule_inst) {
+                                    auto pm = any_cast<const UHDM::module_inst*>(par);
+                                    if (pm->Interfaces())
+                                        for (auto ii : *pm->Interfaces())
+                                            if (std::string(ii->VpiName()) == base) {
+                                                ag = ii; break;
+                                            }
+                                }
+                            }
                             if (ag) {
                                 if (ag->UhdmType() == uhdminterface_inst)
                                     return any_cast<const UHDM::interface_inst*>(ag);
