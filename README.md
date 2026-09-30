@@ -146,6 +146,15 @@ failure.  `undriven` likewise counts comparable rows only.
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **16 / 19** | 2 of 21 | 1 |
 | Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **182 / 201** | 81 of 282 | 0 |
 
+**How the reference frontend itself does.** The left-most column of every sweep
+table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
+also measure the frontend they compare against.  Every row where it does not
+track the RTL is collected in [docs/slang_cosim_findings.md](docs/slang_cosim_findings.md),
+classified (a `read_slang` defect, a shared co-simulation artefact, or still to
+adjudicate) with a pre-filled Yosys issue link for each defect.  The same
+question is asked of both test suites — 1139 local tests and 511 upstream Yosys
+tests — which is where the smallest reproducers come from.
+
 #### Generated IP: the XiangShan core
 
 XiangShan's core is **Chisel/Scala** — the repository contains no Verilog, so
