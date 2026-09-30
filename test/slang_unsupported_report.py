@@ -197,6 +197,13 @@ def main(out_path):
       "against.  They are not failures of this frontend — `read_uhdm` reads them —\n"
       "and they are the part of the corpus the other report cannot see, because a\n"
       "divergence needs two netlists.\n")
+    A("It was **360** on 2026-09-29, before an audit of every class in this file\n"
+      "asked which of them were OUR project setup rather than a limitation of\n"
+      "read_slang.  Most were: a configuration the design forbids at its own\n"
+      "defaults, a package or macro the closure withheld, an interface port nobody\n"
+      "wrapped, slang's unroll limit left at 4000, a header the repository never\n"
+      "vendored.  Those are fixed (#996, #997, #999, #1002), and what is left below\n"
+      "is split three ways so the distinction survives the next reader.\n")
     A("Until 2026-09-29 the sweep abandoned such a row entirely: no undriven check,\n"
       "no co-simulation, nothing recorded either way.  The behavioural RTL is still\n"
       "there and neither measurement needs slang, so each row now carries a\n"
