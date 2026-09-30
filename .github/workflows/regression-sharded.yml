@@ -30,7 +30,6 @@ on:
         description: "Also co-simulate the read_slang netlist against the RTL (doubles the Verilator builds; refreshes docs/slang_cosim_findings.md)"
         type: boolean
         default: false
-    inputs:
       jobs:
         # SAT is memory-hungry; the frontend matrix learned that parallelism
         # inside a shard OOM-kills the 16 GB runner ("received a shutdown
