@@ -5,7 +5,7 @@ Row: family, module, slang_div, uhdm_div, first_div, source
   slang_div / uhdm_div: divergence counts against the behavioural RTL in the
   same Verilator testbench; None when not measured.
 """
-import sys, urllib.parse
+import os, re, sys, urllib.parse
 
 ROWS = []          # filled by the caller via add()
 def add(family, module, slang, uhdm, first="", source=""):
@@ -126,86 +126,63 @@ def emit(out):
     print(f"{out}: report={len(g['report'])} adjudicate={len(g['adjudicate'])} "
           f"shared={len(g['shared'])} unmeasured={len(g['unmeasured'])} cleared={len(g['clean'])}")
 
-# ----------------------------------------------------------------- the rows
-# Measured with the corrected harnesses (2026-09-29) unless marked otherwise.
-CI = "CI sweep report, pre-correction"
+# ------------------------------------------------------------ the sweep rows
+# Parsed straight from the downloaded CI sweep reports, so the file cites what
+# the nightly measured rather than anything run by hand.  Point SWEEPS at a
+# directory of `gh run download` results: <family>_<runid>/<fam>-sweep-report/*.md.
+SWEEPS = os.environ.get("SLANG_REPORT_SWEEPS", "build/sweeps/post_elemorder")
 
-# --- report: read_uhdm clean, read_slang not
-add("caliptra-ss", "width_converter_8toN", 58, 0,
-    "cycle 26, `source_data_o` rtl=`0000073f` slang=`0000003f`")
-add("cv32e40p", "cv32e40p_register_file", 230, 0,
-    "cycle 27, `rdata_a_o` rtl=`82b7c5e0` slang=`00000000`")
-add("cva6", "macro_decoder", 1, 0,
-    "cycle 6, `instr_o` rtl=`ff313823` slang=`c172ff1c`")
-add("cvfpu", "fpnew_fma_multi", 19, 0,
-    "cycle 16, `result_o` rtl=`…ffff7fc0` slang=`…ffff5ae0`")
-add("opentitan", "otbn_rnd", 296, 0,
-    "cycle 4, `ispr_urnd_state_rdata_o` (slang zeroes the low limb)")
-add("verilog-ethernet", "axis_ram_switch", 176, 0,
-    "cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000`")
-add("verilog-pcie", "axis_ram_switch", 206, 0,
-    "cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000` (same module, vendored twice)")
-add("verilog-pcie", "pcie_axil_master", 219, 0, "cycle 55, `tx_cpl_tlp_data`")
-add("verilog-pcie", "pcie_s10_cfg", 103, 0,
-    "cycle 198, `cfg_msi_address` rtl=`c2af88347c3321e0` slang=`000000007c3321e0`")
+# First divergence for the rows where it was captured (the co-sim log's
+# FIRST-SLANG line; the sweep report keeps only the count).
+FIRST = {
+    "width_converter_8toN": "cycle 26, `source_data_o` rtl=`0000073f` slang=`0000003f`",
+    "cv32e40p_register_file": "cycle 27, `rdata_a_o` rtl=`82b7c5e0` slang=`00000000`",
+    "macro_decoder": "cycle 6, `instr_o` rtl=`ff313823` slang=`c172ff1c`",
+    "fpnew_fma_multi": "cycle 16, `result_o` rtl=`…ffff7fc0` slang=`…ffff5ae0`",
+    "otbn_rnd": "cycle 4, `ispr_urnd_state_rdata_o` (slang zeroes the low limb)",
+    "axis_ram_switch": "cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000`",
+    "pcie_axil_master": "cycle 55, `tx_cpl_tlp_data`",
+    "pcie_s10_cfg": "cycle 198, `cfg_msi_address` rtl=`c2af88347c3321e0` slang=`000000007c3321e0`",
+    "ibex_cs_registers": "cycle 206, `csr_mepc_o` rtl=`0` slang=`548c3846`",
+}
 
-# --- both diverge, counts differ
-add("cv32e40p", "cv32e40p_cs_registers", 200, 136)
-add("cva6", "axi_adapter", 53, 33)
-add("cva6", "hpdcache_ctrl", 151, 154)
-add("cva6", "hpdcache_memctrl", 160, 140)
-add("cva6", "wt_dcache_mem", 63, 25)
-add("ibex", "ibex_cs_registers", 61, 51,
-    "cycle 206, `csr_mepc_o` rtl=`0` slang=`548c3846`")
-add("verilog-pcie", "pcie_us_if_rc", 238, 272)
+def _num(cell):
+    m = re.search(r"(\d+) div", cell)
+    return int(m.group(1)) if m else None
 
-# --- shared: both netlists diverge on the same cycles
-for fam, mod, n in [
-        ("common_cells", "cc_clk_int_div", 5),
-        ("cv32e40p", "cv32e40p_controller", 92),
-        ("cv32e40p", "cv32e40p_fifo", 30),
-        ("cv32e40p", "cv32e40p_prefetch_buffer", 9),
-        ("cva6", "hpdcache_amo", 171),
-        ("cva6", "hpdcache_cmo", 298),
-        ("cva6", "hpdcache_uncached", 300),
-        ("cva6", "issue_stage", 3),
-        ("cva6", "miss_handler", 1),
-        ("cva6", "wt_dcache_wbuffer", 216),
-        ("cve2", "cve2_alu", 18),
-        ("cve2", "cve2_ex_block", 14),
-        ("ibex", "ibex_alu", 38),
-        ("ibex", "ibex_ex_block", 58),
-        ("pavona", "ibex_cs_registers", 256),
-        ("verilog-ethernet", "ptp_td_rel2tod", 2),
-        ("verilog-pcie", "pcie_ptile_cfg", 189)]:
-    add(fam, mod, n, n)
+def _uhdm_div(cell):
+    """Divergence count on the read_uhdm side, from the right-most co-sim cell."""
+    if cell.startswith("✅") or "PASS" in cell:
+        return 0
+    m = re.search(r"uhdm=(\d+)", cell) or re.search(r"\((\d+) div", cell) or re.search(r"(\d+) div", cell)
+    return int(m.group(1)) if m else None
 
-# --- cleared by the correction
-add("ibex", "ibex_id_stage", 0, 0, "52 divergences")
-add("opentitan", "otbn_reg_top", 0, 0, "19 divergences")
+NOREF = []            # rows read_slang cannot read at all -- the other report
+RUNS = {}
 
-add("aes", "aes_prng_masking", 300, 0)
-add("kmac", "kmac_reduced", 62, 0)
-add("rp32", "rp32_r5p_alu", 519, 493)
-add("rp32", "rp32_r5p_mouse", 438, 499)
-add("rp32", "rp32_r5p_wbu", 181, 181)
-
-# --- carried from the last CI report; the read_uhdm side has not been re-run
-#     since the harness correction, so these stay unclassified for now.
-for fam, mod, n, src in [
-        ("periph5", "spid_status", 15, "pavona nightly 36421592007"),
-        ("dragonfly", "u_keymgr_dpe", 301, "pavona nightly 36421592007"),
-        ("dragonfly", "u_lc_ctrl", 301, "pavona nightly 36421592007"),
-        ("dragonfly", "u_rv_core_ibex", 258, "pavona nightly 36421592007"),
-        ("egret", "u_flash_ctrl", 301, "pavona run 36346999995"),
-        ("egret", "u_keymgr", 301, "pavona run 36346999995"),
-        ("egret", "u_lc_ctrl", 301, "pavona run 36346999995"),
-        ("egret", "u_otp_ctrl", 301, "pavona run 36346999995"),
-        ("xiangshan-core", "Queue2_TLBundleB_2", 1, "xiangshan run 36421602760"),
-        ("xiangshan-core", "Queue2_TLBundleD_21", 1, "xiangshan run 36421602760"),
-        ("xiangshan-core", "TLBuffer_14", 6, "xiangshan run 36421602760")]:
-    add(fam, mod, n, None, "", src)
-
+def load_sweeps(root):
+    import glob
+    for f in sorted(glob.glob(os.path.join(root, "*", "*-sweep-report", "*.md"))):
+        fam = os.path.basename(f).replace("-sweep.md", "")
+        run = os.path.basename(os.path.dirname(os.path.dirname(f))).rsplit("_", 1)[-1]
+        RUNS[fam] = run
+        hdr = None
+        for line in open(f):
+            if not line.startswith("| "):
+                continue
+            c = [x.strip() for x in line.strip().strip("|").split("|")]
+            if hdr is None:
+                hdr = c
+                continue
+            if len(c) < 4 or set(c[0]) <= set("-: "):
+                continue
+            mod, formal, cos = c[1], c[2], c[-1]
+            if "no reference" in formal or formal.startswith("— (no miter"):
+                NOREF.append((fam, mod, formal))
+                continue
+            if not c[0].startswith(("❌", "⚠")):
+                continue
+            add(fam, mod, _num(c[0]), _uhdm_div(cos), FIRST.get(mod, ""), f"CI run {run}")
 
 # ----------------------------------------------------- the two test suites
 # The same three-way question asked of every test that already has a
@@ -266,10 +243,27 @@ def emit_suites(L):
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "slang_cosim_findings.md"
+    load_sweeps(SWEEPS)
     emit(out)
-    # append the suite sections
     L = []
     emit_suites(L)
+    L.append("\n## Designs `read_slang` cannot read at all\n")
+    L.append(f"A further **{len(NOREF)}** sweep rows never reach this comparison because\n"
+             "`read_slang` cannot elaborate the design, so there is no netlist to\n"
+             "co-simulate: an interface port at the top, `$readmemh`, a package or macro\n"
+             "it does not resolve, an unroll limit.  Those are a capability gap rather\n"
+             "than a divergence and are counted here only so this file is not mistaken\n"
+             "for the whole picture.\n")
+    byfam = {}
+    for fam, mod, why in NOREF:
+        byfam[fam] = byfam.get(fam, 0) + 1
+    L.append("| Sweep | Rows |")
+    L.append("|---|---|")
+    for fam in sorted(byfam, key=lambda k: -byfam[k]):
+        L.append(f"| {fam} | {byfam[fam]} |")
+    L.append(f"\nMeasured on CI runs: " +
+             ", ".join(f"{k} `{v}`" for k, v in sorted(RUNS.items())) + ".\n")
     with open(out, "a") as f:
         f.write("\n".join(L) + "\n")
-    print(f"  + test suites: slang-only {len([r for r in SUITE if r['uhdm']==0])}")
+    print(f"  + suites: slang-only {len([r for r in SUITE if r['uhdm']==0])}"
+          f"  + noref rows: {len(NOREF)}")

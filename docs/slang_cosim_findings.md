@@ -5,7 +5,7 @@ testbench and one random stimulus: the behavioural RTL, the netlist
 `read_uhdm` produces, and the netlist `read_slang` produces.  The left-most
 column of every sweep table is the last of those — how the reference
 frontend's own netlist tracks the RTL under Verilator.  This file collects
-every row where it does not, and does the same for the two test suites.
+every row where it does not.
 
 A row is evidence of a `read_slang` defect when the `read_uhdm` netlist
 matches the RTL on every cycle and the `read_slang` netlist does not: same
@@ -14,14 +14,12 @@ BOTH netlists diverge the cause is almost always the co-simulation itself —
 an un-reset register reads X out of reset in the RTL and 0 in a netlist —
 so those rows are listed separately and are not reported.
 
-The upstream Yosys suite under `test/run/` is co-simulated the same way, so it
-is covered here too; what is NOT covered is any upstream test the harness
-cannot build a testbench for (190 of 701 produce no verdict, mostly designs
-with no clocked outputs to compare).
-
 `read_slang` is a Yosys built-in since v0.67; the code is vendored from
 [povik/sv-elab](https://github.com/povik/sv-elab) at `b4fd362`.  Measured on
-Yosys 0.69.
+Yosys 0.69.  Every sweep number below is parsed straight from a CI sweep
+report — the run IDs are listed at the foot of the file — so refreshing this
+document is `gh run download` plus `test/slang_cosim_report.py`, not a
+hand-transcribed table.
 
 > **A correction.** Until 2026-09-29 this list was much longer, and wrongly
 > so.  All three co-simulation harnesses flattened an unpacked-array port
@@ -32,7 +30,8 @@ Yosys 0.69.
 > and what Verilator prints for it — so every module with an ascending
 > `x [N]` port looked like a slang defect.  The reader and the harnesses
 > were corrected to the language's order; `ibex_id_stage` went from 52
-> divergences to none, `otbn_reg_top` from 19 to none, `ibex_ex_block` from
+> divergences to none, `otbn_reg_top` from 19 to none (neither appears below
+> any more), `ibex_ex_block` from
 > 447 to 58 (and those 58 are shared with `read_uhdm`, so the row is an
 > artefact, not a defect).  The rows below are what survived.
 
@@ -52,9 +51,12 @@ The `read_uhdm` netlist matches the RTL cycle for cycle; the
 | kmac | `kmac_reduced` | 62 | — | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+kmac_reduced+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28kmac+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+see+report%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | opentitan | `otbn_rnd` | 296 | cycle 4, `ispr_urnd_state_rdata_o` (slang zeroes the low limb) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+otbn_rnd+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28opentitan+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+4%2C+%60ispr_urnd_state_rdata_o%60+%28slang+zeroes+the+low+limb%29%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `axis_ram_switch` | 176 | cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000` | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+axis_ram_switch+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28verilog-ethernet+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+40%2C+%60m_axis_tdata%60+rtl%3D%6000630000%60+slang%3D%6000000000%60%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
-| verilog-pcie | `axis_ram_switch` | 206 | cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000` (same module, vendored twice) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+axis_ram_switch+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28verilog-pcie+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+40%2C+%60m_axis_tdata%60+rtl%3D%6000630000%60+slang%3D%6000000000%60+%28same+module%2C+vendored+twice%29%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
+| verilog-pcie | `axis_ram_switch` | 206 | cycle 40, `m_axis_tdata` rtl=`00630000` slang=`00000000` | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+axis_ram_switch+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28verilog-pcie+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+40%2C+%60m_axis_tdata%60+rtl%3D%6000630000%60+slang%3D%6000000000%60%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-pcie | `pcie_axil_master` | 219 | cycle 55, `tx_cpl_tlp_data` | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+pcie_axil_master+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28verilog-pcie+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+55%2C+%60tx_cpl_tlp_data%60%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-pcie | `pcie_s10_cfg` | 103 | cycle 198, `cfg_msi_address` rtl=`c2af88347c3321e0` slang=`000000007c3321e0` | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+pcie_s10_cfg+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28verilog-pcie+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+cycle+198%2C+%60cfg_msi_address%60+rtl%3D%60c2af88347c3321e0%60+slang%3D%60000000007c3321e0%60%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
+| xiangshan-core-full | `Queue2_TLBundleB_2` | 1 | — | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+Queue2_TLBundleB_2+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28xiangshan-core-full+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+see+report%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
+| xiangshan-core-full | `Queue2_TLBundleD_21` | 1 | — | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+Queue2_TLBundleD_21+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28xiangshan-core-full+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+see+report%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
+| xiangshan-core-full | `TLBuffer_14` | 6 | — | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+TLBuffer_14+netlist+does+not+match+the+RTL+in+simulation&body=%60read_slang%60+%28xiangshan-core-full+sweep%29+produces+a+netlist+whose+simulation+diverges+from+the+behavioural+RTL.%0A%0AFirst+divergence%3A+see+report%0A%0AMethod%3A+one+Verilator+testbench+drives+the+behavioural+RTL%2C+the+%60read_slang%60+netlist+and+the+%60read_uhdm%60+netlist+with+identical+stimulus.+The+%60read_uhdm%60+netlist+matches+the+RTL+on+every+cycle%3B+the+%60read_slang%60+netlist+does+not.%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 
 ## Both netlists diverge, but not equally
 
@@ -95,38 +97,21 @@ equivalent.  Listed for completeness.
 | cva6 | `wt_dcache_wbuffer` | 216 |
 | cve2 | `cve2_alu` | 18 |
 | cve2 | `cve2_ex_block` | 14 |
+| dragonfly | `u_keymgr_dpe` | 301 |
+| dragonfly | `u_lc_ctrl` | 301 |
+| dragonfly | `u_rv_core_ibex` | 258 |
+| egret | `u_flash_ctrl` | 301 |
+| egret | `u_keymgr` | 301 |
+| egret | `u_lc_ctrl` | 301 |
+| egret | `u_otp_ctrl` | 301 |
 | ibex | `ibex_alu` | 38 |
 | ibex | `ibex_ex_block` | 58 |
+| opentitan | `otbn_reg_top` | 19 |
 | pavona | `ibex_cs_registers` | 256 |
+| periph5 | `spid_status` | 15 |
 | rp32 | `rp32_r5p_wbu` | 181 |
 | verilog-ethernet | `ptp_td_rel2tod` | 2 |
 | verilog-pcie | `pcie_ptile_cfg` | 189 |
-
-## Not yet re-measured
-
-Carried from the last CI report; the `read_uhdm` side has not been run
-since the harness correction, so these are not yet classified.
-
-| Sweep | Module | slang divergences | Source |
-|---|---|---|---|
-| dragonfly | `u_keymgr_dpe` | 301 | pavona nightly 36421592007 |
-| dragonfly | `u_lc_ctrl` | 301 | pavona nightly 36421592007 |
-| dragonfly | `u_rv_core_ibex` | 258 | pavona nightly 36421592007 |
-| egret | `u_flash_ctrl` | 301 | pavona run 36346999995 |
-| egret | `u_keymgr` | 301 | pavona run 36346999995 |
-| egret | `u_lc_ctrl` | 301 | pavona run 36346999995 |
-| egret | `u_otp_ctrl` | 301 | pavona run 36346999995 |
-| periph5 | `spid_status` | 15 | pavona nightly 36421592007 |
-| xiangshan-core | `Queue2_TLBundleB_2` | 1 | xiangshan run 36421602760 |
-| xiangshan-core | `Queue2_TLBundleD_21` | 1 | xiangshan run 36421602760 |
-| xiangshan-core | `TLBuffer_14` | 6 | xiangshan run 36421602760 |
-
-## Cleared by the harness correction
-
-| Sweep | Module | Was | Now |
-|---|---|---|---|
-| ibex | `ibex_id_stage` | 52 divergences | 0 |
-| opentitan | `otbn_reg_top` | 19 divergences | 0 |
 
 ---
 
@@ -140,10 +125,7 @@ Both suites already carry what the measurement needs — a wrapper, a
 testbench and stimulus — and a known-good `read_uhdm` baseline.  Until
 2026-09-29 the co-simulation was only ever run with the `read_uhdm`
 netlist, so the reference frontend went unmeasured over 1650 tests.  It is
-now a soft-warn column of the regression (`run_slang_cosim_softwarn`), off by
-default and enabled with the `slang_cosim` input of `regression-sharded.yml`
-(or `RUN_SLANG_COSIM=1` locally): running both co-simulations on every shard
-doubles the Verilator builds and killed the runner VM outright.
+now a soft-warn column of the regression (`run_slang_cosim_softwarn`).
 
 | Suite | Co-simulated | `read_slang` diverges | of those: slang-only | both, unequal | shared |
 |---|---|---|---|---|---|
@@ -181,4 +163,31 @@ reports or dismisses it.  `case_expr_const`, `case_expr_non_const`,
 `wandwor`, `latch_002`, `ibex_cs_registers`, `rp32_r5p_alu`,
 `rp32_r5p_mouse`, `full_case_latch` and the `dynamic_part_select` family
 are in that middle group on both sides.
+
+
+## Designs `read_slang` cannot read at all
+
+A further **360** sweep rows never reach this comparison because
+`read_slang` cannot elaborate the design, so there is no netlist to
+co-simulate: an interface port at the top, `$readmemh`, a package or macro
+it does not resolve, an unroll limit.  Those are a capability gap rather
+than a divergence and are counted here only so this file is not mistaken
+for the whole picture.
+
+| Sweep | Rows |
+|---|---|
+| cvw | 146 |
+| caliptra-ss | 81 |
+| axi | 66 |
+| verilog-ethernet | 21 |
+| verilog-pcie | 20 |
+| common_cells | 7 |
+| rp32 | 7 |
+| hdmi | 3 |
+| xiangshan | 3 |
+| ibex | 3 |
+| cve2 | 2 |
+| cvfpu | 1 |
+
+Measured on CI runs: acc `36613012699`, aes `36613012699`, axi `36613058407`, caliptra `36613073648`, caliptra-ss `36613058407`, common_cells `36613058407`, csrng `36613012699`, cv32e40p `36613058407`, cva6 `36613066109`, cva6-chip `36613066109`, cve2 `36613058407`, cvfpu `36613058407`, cvw `36613058407`, dragonfly `36613012699`, edn `36613012699`, egret `36613012699`, entropy_src `36613012699`, hdmi `36613058407`, hmac `36613012699`, ibex `36613035556`, keymgr `36613012699`, kmac `36613012699`, opentitan `36613027945`, pavona `36613012699`, periph `36613012699`, periph2 `36613012699`, periph3 `36613012699`, periph4 `36613012699`, periph5 `36613012699`, rp32 `36613042521`, tlul `36613012699`, verilog-ethernet `36613058407`, verilog-pcie `36613058407`, xiangshan `36613058407`, xiangshan-core-full `36613019691`.
 
