@@ -416,6 +416,42 @@ def _flat_wrapper(w, mod, files):
     return str(out), f"{mod}_flat"
 
 
+
+def _uhdm_only_cosim(w, m, top, cycles, ties, mem):
+    """Co-simulate the read_uhdm netlist against the behavioural RTL with NO
+    slang netlist.  netlist_cosim.py takes `--slang-il` as optional, so a
+    module read_slang cannot read is still measurable on our side -- which is
+    the point: the RTL is the reference, not the other frontend."""
+    (w / "ren_uhdm.ys").write_text(
+        f"read_rtlil uhdm_hier.il\nhierarchy -top {top}\nrename {top} {m}_uhdm\n"
+        f"write_rtlil {m}_uhdm.il\n")
+    sh([str(Y), "-q", "ren_uhdm.ys"], cwd=w, timeout=600)
+    cw = w / "cosim"
+    cw.mkdir(exist_ok=True)
+    (cw / "ties.json").write_text(json.dumps(ties))
+    ccmd = [sys.executable, str(TEST / "netlist_cosim.py"), "--work", str(cw),
+            "--uhdm-il", str(w / f"{m}_uhdm.il"),
+            "--top", f"{m}_uhdm", "--rtl-top", top,
+            "--srcs", str(w / "srcs.txt"), "--incs", str(w / "incs.txt"),
+            "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
+    if mem:
+        ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " + " ".join(shlex.quote(c) for c in ccmd)]
+    rc, out = sh(ccmd, cwd=w, timeout=3600)
+    (cw / "cosim.log").write_text(out or "")
+    mm = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+)", out or "")
+    act = re.search(r"ACTIVITY (\d+) cycles", out or "")
+    if mm:
+        u = int(mm.group(1))
+        a = f" ({cycles + 1} cycles, {act.group(1)} active)" if act else ""
+        return ("✅ PASS" + a) if u == 0 else f"❌ {u} div"
+    if "no outputs to compare" in (out or "") or "no clocks found" in (out or ""):
+        return "— (comb/no clk)"
+    if "NO_RUN" in (out or "") or "netlist generation FAILED" in (out or ""):
+        return "skip (no run)"
+    if "both simulators failed" in (out or "") or "build FAILED" in (out or ""):
+        return "skip (sim build)"
+    return "error"
+
 def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
     w = work_root / m
     w.mkdir(parents=True, exist_ok=True)
@@ -526,9 +562,17 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                     "formal_raw": "skip", "check": "— (not comparable)",
                     "cosim": "—", "slang_cosim": "—",
                     "note": serr_txt[:140]}
-        return {"module": m, "formal": "no reference (read_slang fails)",
-                "formal_raw": "noref", "check": "— (not comparable)",
-                "cosim": "—", "slang_cosim": "—", "note": serr_txt[:140]}
+        # A module read_slang cannot read has no FORMAL reference -- but the
+        # behavioural RTL is still there, and neither the undriven check nor
+        # the Verilator co-sim needs slang at all.  Returning here measured
+        # NOTHING on 349 rows across the families, and those rows are where
+        # the interesting designs are: an interface port at the top,
+        # $readmemh, a package slang cannot resolve.  Carry on with the
+        # read_uhdm side and report it; only the miter and the slang co-sim
+        # are skipped.
+        noref_note = serr_txt[:140]
+    else:
+        noref_note = None
 
     # --- survey / opt-check: read_uhdm, hierarchy -check, flatten, check
     # `flatten` is what makes `check` see the whole cone at once, but a
@@ -572,6 +616,16 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         return {"module": m, "formal": "read OK", "formal_raw": "read",
                 "check": check, "cosim": "—", "slang_cosim": "—",
                 "note": f"{cells.group(1)} cells" if cells else ""}
+    if noref_note is not None:
+        row = {"module": m, "formal": "no reference (read_slang fails)",
+               "formal_raw": "noref", "check": check, "cosim": "—",
+               "slang_cosim": "— (read_slang cannot read it)",
+               "note": noref_note}
+        if do_cosim and cycles > 0:
+            row["cosim"] = _uhdm_only_cosim(w, m, top, cycles, ties,
+                                            os.environ.get("MEM_LIMIT_KB"))
+        return row
+
     # --- miter
     (w / "miter.ys").write_text(f"""read_rtlil uhdm_hier.il
 hierarchy -top {top}

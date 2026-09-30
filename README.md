@@ -155,6 +155,13 @@ adjudicate) with a pre-filled Yosys issue link for each defect.  The same
 question is asked of both test suites — 1139 local tests and 511 upstream Yosys
 tests — which is where the smallest reproducers come from.
 
+**What the reference frontend cannot read.** 360 sweep modules cannot be
+elaborated by `read_slang` at all — an interface port on the top module,
+`$readmemh`, a package it does not resolve — so they carry no formal verdict.
+[docs/slang_unsupported.md](docs/slang_unsupported.md) lists them with what
+`read_uhdm` makes of each: whether every net is driven, and whether our
+netlist tracks the RTL under Verilator.
+
 #### Generated IP: the XiangShan core
 
 XiangShan's core is **Chisel/Scala** — the repository contains no Verilog, so
