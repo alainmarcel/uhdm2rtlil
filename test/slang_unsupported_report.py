@@ -61,9 +61,43 @@ CLASSES = [
      "a port it does not find on a child module"),
     (r"upstream RTL incomplete|empty module",
      "nothing to compare (the upstream RTL is incomplete, or the module is empty)"),
+    (r"blocking assignment to variable .* is not supported after previous non-blocking",
+     "a blocking assignment to a variable a non-blocking one already wrote"),
+    (r"Assert `.*' failed in|Assertion failed|internal compiler",
+     "an internal assertion inside read_slang (a crash, not a rejection)"),
+    (r"did not finish within",
+     "no answer inside the sweep's time budget (a read_slang performance limit)"),
     (r"Design elaboration failed",
      "elaboration failed with no single diagnostic"),
 ]
+
+# Which of those classes is a read_slang LIMITATION (worth an issue) and which is
+# a fact about the design or the checkout (worth stating, never worth filing).
+# After the 2026-09-30 project-setup audit the second group is what is left of
+# the rows this file used to blame on slang: a module nobody ships, a
+# configuration the design itself rejects, RTL the upstream never finished.
+NOT_SLANG = {
+    "a module it cannot find in the closure the sweep gives it",
+    "a file the sweep's closure does not hand it",
+    "nothing to compare (the upstream RTL is incomplete, or the module is empty)",
+    "an elaboration-time `$error`/`$fatal` the design guards with parameters",
+    "a dimension it evaluates as non-positive",
+    "an out-of-range select in code a parameter makes dead",
+    "a parameter whose default carries `x` bits",
+    "refuses the module as a top level (usually an unbound interface or an unresolved parameter)",
+    # ... and the classes the 09-30 audit traced to the project we hand the
+    # tools.  They should not appear at all any more (the wrappers bind the
+    # configuration, the closure carries the package, the manifest raises the
+    # unroll limit and supplies the header the repository never vendored); a row
+    # that still lands here is a setup gap to fix, not an issue to file.
+    "a macro the sweep's include set does not define for it",
+    "a package or class it cannot resolve",
+    "an identifier it does not resolve in that scope",
+    "an interface port on the top module",
+    "a generate/for construct past its unroll limit",
+    "a port it does not find on a child module",
+}
+
 
 def classify(formal):
     for rx, name in CLASSES:
@@ -132,7 +166,10 @@ def main(out_path):
             m = (re.search(r"error: ([^)]+)", why) or
                  re.search(r"no miter: ([^)]+)", why) or
                  re.search(r"ERROR: ([^)]+)", why))
-            why_short = (m.group(1) if m else why).strip()[:110]
+            # 110 characters cut the diagnostic off mid-word on 22 rows
+            # ("error: bloc"), and the classifier below then had nothing to
+            # match, so they all landed in "other".
+            why_short = (m.group(1) if m else why).strip()[:200]
             und, cos = meas.get(mod, ("— (not measured yet)", "— (not measured yet)"))
             rows.append(dict(fam=fam, mod=mod, cls=classify(formal),
                              why=why_short, und=und, cos=cos))
@@ -158,23 +195,46 @@ def main(out_path):
       "RTL cannot be built standalone by Verilator (a vendor primitive, an\n"
       "interface port no port-by-port testbench can drive) — a harness limit, not\n"
       "a verdict.\n")
-    A("\n## What slang is missing, by construct\n")
     by = {}
     for r in rows:
         by.setdefault(r["cls"], []).append(r)
-    A("| Construct `read_slang` declines | Modules | Sweeps |")
-    A("|---|---|---|")
-    for cls in sorted(by, key=lambda k: -len(by[k])):
-        fams = sorted({r["fam"] for r in by[cls]})
-        A(f"| {cls} | {len(by[cls])} | {', '.join(fams[:6])}"
-          f"{' …' if len(fams) > 6 else ''} |")
+
+    def table(title, note, keep):
+        sel = {k: v for k, v in by.items() if keep(k)}
+        if not sel:
+            return
+        A(f"\n## {title}\n")
+        A(note + "\n")
+        A("| Construct | Modules | Sweeps |")
+        A("|---|---|---|")
+        for cls in sorted(sel, key=lambda k: -len(sel[k])):
+            fams = sorted({r["fam"] for r in sel[cls]})
+            A(f"| {cls} | {len(sel[cls])} | {', '.join(fams[:6])}"
+              f"{' …' if len(fams) > 6 else ''} |")
+
+    table("What read_slang declines",
+          "These are read_slang's own limits: every one of them is a construct the\n"
+          "other two frontends accept, and each row below carries a pre-filled issue\n"
+          "link.",
+          lambda k: k not in NOT_SLANG and k != "other")
+    table("What the design, the checkout, or our own project setup declines",
+          "Not read_slang's doing.  A module the repository never shipped (OpenTitan\n"
+          "primitives vendored without their `prim_*` library), a configuration the\n"
+          "design itself rejects, RTL the upstream left unfinished -- and, where a\n"
+          "row still shows a package, macro, unroll limit or interface port, a gap\n"
+          "in the project WE hand the tools, which is ours to close and never an\n"
+          "issue to file.  read_uhdm reads several of these only because Surelog is\n"
+          "quieter about a missing file, which is not an advantage.",
+          lambda k: k in NOT_SLANG)
+    table("Unclassified", "One-off diagnostics; read the rows.",
+          lambda k: k == "other")
     A("\n## Every row\n")
     A("`read_uhdm` columns are blank where the row has not been re-measured yet.\n")
     A("| Sweep | Module | `read_slang` says | read_uhdm: undriven | read_uhdm vs RTL | Report |")
     A("|---|---|---|---|---|---|")
     for r in sorted(rows, key=lambda r: (r["fam"], r["mod"])):
         rep = (f"[file an issue]({issue_url(r['mod'], r['why'], r['und'])})"
-               if r["und"].startswith("✅") else "—")
+               if r["und"].startswith("✅") and r["cls"] not in NOT_SLANG else "—")
         A(f"| {r['fam']} | `{r['mod']}` | {r['why']} | {r['und']} | {r['cos']} | {rep} |")
     A("\n---\n")
     A("Regenerate with `test/slang_unsupported_report.py` after a sweep cycle.\n"

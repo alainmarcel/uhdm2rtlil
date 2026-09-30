@@ -22,6 +22,12 @@ Manifest keys:
   repos:    [{"url", "commit", "dir"}]   dir is relative to $EXT_IP_ROOT
   roots:    [glob, ...]                  source roots, relative to $EXT_IP_ROOT
   incdirs:  [dir, ...]                   relative to $EXT_IP_ROOT
+  harness_incdirs: [dir, ...]            relative to test/ext_ip -- for a header
+                                         the REPOSITORY does not ship (see
+                                         stubs/prim_assert.sv)
+  harness_srcs: [file, ...]              relative to test/ext_ip -- compiled
+                                         FIRST, for a macro header a file uses
+                                         without including it
   defines:  ["SYNTHESIS", ...]
   modules:  "auto" | [{"name", "seq", "timeout", "want", "top"?}]
   exclude:  [regex, ...]                 module names to skip in auto mode
@@ -114,6 +120,14 @@ class Closure:
     def __init__(self, roots, exts=(".sv", ".v")):
         self.defs, self.files, self.macros = {}, {}, {}
         self.mod_files = {}
+        # EVERY definition of a name, not just the first: this style of
+        # repository keeps independent designs side by side and the same module
+        # name can mean two different things (XS-Verilog-Library has two
+        # `radix_4_sign_coder`, one with `quot_o` and one with `quo_o`).  The
+        # first alphabetically won, so int_div_radix_4_v1 was swept against
+        # int_div_radix_16_v4's copy and read_slang reported "port 'quot_o'
+        # does not exist" -- our closure, not its limitation.
+        self.all_defs = {}
         for r in roots:
             for pat in (str(EXT / r),):
                 for f in sorted(glob.glob(pat, recursive=True)):
@@ -124,8 +138,10 @@ class Closure:
                     for m in re.findall(r"^\s*(?:module|interface)\s+(\w+)", t, re.M):
                         self.defs.setdefault(m, f)
                         self.mod_files.setdefault(m, f)
+                        self.all_defs.setdefault(m, []).append(f)
                     for p in re.findall(r"^\s*package\s+(\w+)", t, re.M):
                         self.defs.setdefault(p, f)
+                        self.all_defs.setdefault(p, []).append(f)
                         is_pkg = True
                     self.files.setdefault(f, is_pkg)
                     lines = t.split("\n")
@@ -167,17 +183,34 @@ class Closure:
         self._tcache[f] = r
         return r
 
+    def resolve(self, name, anchor):
+        """The definition of `name` nearest to `anchor` in the tree."""
+        cands = self.all_defs.get(name) or ([self.defs[name]] if name in self.defs else [])
+        if len(cands) < 2:
+            return cands[0] if cands else None
+        def score(f):
+            a, b = os.path.dirname(anchor).split(os.sep), os.path.dirname(f).split(os.sep)
+            n = 0
+            for x, y in zip(a, b):
+                if x != y:
+                    break
+                n += 1
+            return n
+        return sorted(cands, key=lambda f: (-score(f), f))[0]
+
     def closure(self, target):
-        seen, st = set(), [target]
+        anchor = self.defs.get(target, "")
+        seen, st, pick = set(), [target], {}
         while st:
             n = st.pop()
             if n in seen or n not in self.defs:
                 continue
             seen.add(n)
-            for r in self.refs(self.defs[n]):
+            pick[n] = self.resolve(n, anchor) or self.defs[n]
+            for r in self.refs(pick[n]):
                 if r in self.defs and r not in seen:
                     st.append(r)
-        files = {self.defs[n] for n in seen}
+        files = {pick[n] for n in seen}
         # packages first, in dependency order (a package may import another)
         pkgs = [f for f in files if self.files.get(f)]
         rest = sorted(f for f in files if not self.files.get(f))
@@ -226,6 +259,12 @@ def slang_failure_reason(log: str) -> str:
     diag = re.search(r"^[^\n]*\berror: [^\n]*", log, re.M)
     if diag:
         return diag.group(0)
+    if log.rstrip().endswith("TIMEOUT"):
+        # A read that never finished is a fact about read_slang, and the row
+        # used to carry an EMPTY reason for it -- which reads as "no idea"
+        # (verilog-ethernet eth_phy_10g, eth_mac_phy_10g_tx: 600 s each once the
+        # unroll limit let them start at all).
+        return "read_slang did not finish within the sweep's 600 s budget"
     generic = re.search(r"(ERROR|error)[^\n]*", log)
     return generic.group(0) if generic else ""
 
@@ -378,7 +417,51 @@ def _config_wrapper(w, fam, mod, files):
     return str(out), f"{mod}_cfg"
 
 
-def _bind_wrapper(w, fam, mod, files):
+
+def _value_bind_possible(fam, mod, files):
+    """True when the manifest can bind this module's DEGENERATE value parameters.
+
+    A sweep reads every module at its DEFAULT parameters, and this style of RTL
+    writes `parameter int unsigned ADDR_WIDTH = 0` to mean "you must override
+    me".  Left alone the module is not a legal configuration at all, and the
+    diagnostics say so in a dozen different voices -- "value must be positive",
+    "cannot select range of [4:4] from 'id_t'", "value must not have any unknown
+    bits", the design's own `$fatal`.  None of those is a read_slang limitation,
+    and reporting them as one is what this checks for: if the module declares a
+    zero-defaulted value parameter whose NAME the family manifest has a rule
+    for, the row deserves a second attempt with those values bound.
+    """
+    man_p = HERE / f"{fam}.json"
+    if not man_p.exists():
+        return False
+    rules = (json.loads(man_p.read_text()).get("bind") or {}).get("values") or []
+    if not rules:
+        return False
+    pat = re.compile(r"\bmodule\s+" + re.escape(mod) + r"\b")
+    for f in files:
+        try:
+            src = open(f, "r", errors="replace").read()
+        except OSError:
+            continue
+        mm = pat.search(src)
+        if not mm:
+            continue
+        head = src[mm.start():mm.start() + 8000]
+        # Any value parameter the manifest has a rule for.  NOT just the ones
+        # defaulted to zero: VeeR's `css_mcu0_rvdffe #(parameter WIDTH=1)`
+        # `$error`s unless WIDTH >= 8, so its own default is an illegal
+        # configuration too.  This only ever runs after the module has already
+        # failed to elaborate, and a retry that does not come out comparable is
+        # thrown away, so a loose candidate test costs one extra read at worst.
+        for pm in re.finditer(r"parameter\s+(?:int\s+unsigned|int|bit|logic|integer)?"
+                              r"[^,()=]*?(\w+)\s*=\s*([^,)\n]+)", head):
+            if any(re.search(p, pm.group(1)) for p, _ in rules):
+                return True
+        return False
+    return False
+
+
+def _bind_wrapper(w, fam, mod, files, values_only=False):
     """Generate a type-bound wrapper for a module whose defaults cannot
     elaborate, and return (wrapper_path, top) -- or None.
 
@@ -411,7 +494,7 @@ def _bind_wrapper(w, fam, mod, files):
                             src[mm.start():mm.start() + 8000]):
             declares_type_param = True
             break
-    if not declares_type_param:
+    if not declares_type_param and not values_only:
         return None
     # NOT `<mod>.sv`: a wrapper file whose basename matches the module's own
     # source file shadows it, and the module then never reaches the netlist
@@ -419,6 +502,7 @@ def _bind_wrapper(w, fam, mod, files):
     out = w / f"{mod}_bound.sv"
     rc, log = sh([sys.executable, str(HERE / "gen_param_wrapper.py"),
                   "--module", mod, "--manifest", str(HERE / f"{fam}.json"),
+                  *(["--values-only"] if values_only else []),
                   "--out", str(out), *files], timeout=300)
     (w / "bind.log").write_text(log or "")
     if rc != 0 or not out.exists():
@@ -536,8 +620,14 @@ def _uhdm_only_cosim(w, m, top, cycles, ties, mem):
         return "skip (sim build)"
     return "error"
 
-def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey, work_root, ties):
-    w = work_root / m
+def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, survey,
+               work_root, ties, force_bind=False):
+    # The bound RETRY gets its own directory: it rebuilds srcs.txt and the
+    # Surelog output for a DIFFERENT top, and when its verdict is discarded the
+    # caller still has to read the UHDM built for its own top.  Sharing the
+    # directory left hdmi's packet_picker reading the retry's elaboration and
+    # failing with "Module `packet_picker_flat' not found".
+    w = work_root / (f"{m}__bound" if force_bind else m)
     w.mkdir(parents=True, exist_ok=True)
     top = m
     files = cl.closure(m)
@@ -560,7 +650,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                     "formal_raw": "skip", "check": "— (not comparable)",
                     "cosim": "—", "slang_cosim": "—",
                     "note": "too big for a hosted runner; sweep it from a workstation"}
-    bound = _bind_wrapper(w, fam, m, files)
+    bound = _bind_wrapper(w, fam, m, files, values_only=force_bind)
     if bound:
         files = _with_wrapper_packages(cl, files, bound[0]) + [bound[0]]
         top = bound[1]
@@ -622,6 +712,31 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
             pass
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
                 "check": "— (no elaboration)", "cosim": "—", "slang_cosim": "—", "note": err}
+    # A module that is not elaboratable at its defaults gets ONE retry with the
+    # manifest's parameter values bound (see _value_bind_possible): the sweep
+    # is meant to compare two readers, and a row that says "read_slang cannot
+    # read this" when the truth is "nobody can read this configuration" is a
+    # report about our project setup, not about slang.
+    def _retry_bound():
+        if force_bind or not _value_bind_possible(fam, m, files):
+            return None
+        r = run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles,
+                       do_cosim, survey, work_root, ties, force_bind=True)
+        if not r:
+            return None
+        if r.get("formal_raw") not in ("skip", "noref", "error", "elabfail"):
+            return r
+        # Still no reference -- but if the bound configuration fails for a
+        # DIFFERENT reason, that reason is the honest one: it was measured on a
+        # configuration the design actually permits.  hdmi's packet_picker read
+        # as "value must be positive" (its own zero defaults) and with the
+        # values bound says what it really is -- a blocking assignment after a
+        # non-blocking one, which read_slang does not support.  An error inside
+        # the GENERATED wrapper is our own bug, so that one is not promoted.
+        if r.get("formal_raw") == "noref" and "_bound.sv" not in (r.get("note") or ""):
+            return r
+        return None
+
     slang_incs = " ".join(f"-I {shlex.quote(str(EXT / d))}" for d in incs)
     slang_defs = " ".join(f"-D{d}" for d in defines)
     srcs_q = " ".join(shlex.quote(f) for f in files)
@@ -654,10 +769,11 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     if not slang_ok:
         serr_txt = slang_failure_reason(out2 or "")
         if _defaults_unelaboratable(files, m, out2 or ""):
-            return {"module": m, "formal": "skip (defaults don't elaborate)",
+            return _retry_bound() or {
+                    "module": m, "formal": "skip (defaults don't elaborate)",
                     "formal_raw": "skip", "check": "— (not comparable)",
                     "cosim": "—", "slang_cosim": "—",
-                    "note": serr_txt[:140]}
+                    "note": serr_txt[:220]}
         # A module read_slang cannot read has no FORMAL reference -- but the
         # behavioural RTL is still there, and neither the undriven check nor
         # the Verilator co-sim needs slang at all.  Returning here measured
@@ -666,7 +782,10 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         # $readmemh, a package slang cannot resolve.  Carry on with the
         # read_uhdm side and report it; only the miter and the slang co-sim
         # are skipped.
-        noref_note = serr_txt[:140]
+        retried = _retry_bound()
+        if retried:
+            return retried
+        noref_note = serr_txt[:220]
     else:
         noref_note = None
 
@@ -689,14 +808,15 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         err = re.search(r"ERROR:[^\n]*", out or "")
         return {"module": m, "formal": "read-fail (uhdm)", "formal_raw": "error",
                 "check": "—", "cosim": "—", "slang_cosim": "—",
-                "note": (err.group(0)[:140] if err else "read_uhdm failed")}
+                "note": (err.group(0)[:220] if err else "read_uhdm failed")}
     # A degenerate port means the module's own defaults are not a legal
     # configuration -- skip it like the other default-parameter cases rather
     # than reporting its undriven bits as a frontend defect.
     degen = (_degenerate_ports(w / "uhdm_hier.il", f"{top}") or
              _degenerate_ports(w / "slang_hier.il", f"{top}"))
     if degen:
-        return {"module": m, "formal": "skip (defaults degenerate)",
+        return _retry_bound() or {
+                "module": m, "formal": "skip (defaults degenerate)",
                 "formal_raw": "skip", "check": "— (not comparable)",
                 "cosim": "—", "slang_cosim": "—",
                 "note": f"port {degen[0]} has a negative range (parameter 0 by default)"}
@@ -818,6 +938,19 @@ def main():
     MAX_CLOSURE_BYTES = int(float(man.get("max_closure_mb", 0)) * (1 << 20))
     ALWAYS_SRCS = sorted({f for g in man.get("always_srcs", [])
                           for f in glob.glob(str(EXT / g), recursive=True) if os.path.isfile(f)})
+    # A macro header used WITHOUT being included -- caliptra-ss's adc.sv and
+    # ast.sv write `ASSERT(...) with no `include "prim_assert.sv"` anywhere, and
+    # its i3c files use `I3C_ASSERT the same way -- only resolves if the header
+    # is compiled as a source ahead of them (the family reads --single-unit).
+    ALWAYS_SRCS = [str(HERE / f) for f in man.get("harness_srcs", [])] + ALWAYS_SRCS
+    # A header the REPOSITORY does not ship: caliptra-ss vendored 14 OpenTitan
+    # files that `include "prim_assert.sv"` without vendoring the header, so
+    # both readers were handed an incomplete project (read_slang stopped at the
+    # missing include; Surelog carried on with every `ASSERT* unresolved and
+    # said nothing).  These directories live with the harness, not in the
+    # checkout, and go on the include path of BOTH readers.
+    incdirs = list(man.get("incdirs", [])) + \
+        [str(HERE / d) for d in man.get("harness_incdirs", [])]
     if man.get("modules") == "auto":
         pref = man.get("only_prefix")
         # "sweep_paths": sweep only the modules DEFINED under these prefixes
@@ -848,7 +981,7 @@ def main():
     def one(x):
         t0 = time.time()
         r = run_module(args.family, cl, x["name"], x.get("seq", seq0), x.get("timeout", tmo0),
-                       x.get("want", want0), man.get("incdirs", []), man.get("defines", ["SYNTHESIS"]),
+                       x.get("want", want0), incdirs, man.get("defines", ["SYNTHESIS"]),
                        args.cycles, not args.no_cosim, args.survey, work_root, ties)
         want = x.get("want", want0)
         # skip / noref are "not comparable", not failures: mark them ⏭ so the

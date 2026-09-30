@@ -84,6 +84,14 @@ def main():
     if txt is None:
         sys.exit(f"# gen_flat_wrapper: no source declares module {a.module}")
     pre, params, ports, _ = module_span(txt, a.module)
+    # Line comments inside the PORT LIST are not decoration to the rewrites
+    # below: `// 57 = FP64_FRAC_W + 4` carries an `=` at depth 0, and the
+    # initialiser stripper then deleted everything from it to the next comma --
+    # taking the port declared on the following line with it.  xiangshan's
+    # fpdiv_r64_block lost `divisor_i` that way, and `u_dut (.*)` could not
+    # bind ("could not find connection for implicit named port 'divisor_i'").
+    ports = re.sub(r"/\*.*?\*/", "", ports, flags=re.S)
+    ports = re.sub(r"//[^\n]*", "", ports)
 
     arrays = []
     def rewrite(m):
