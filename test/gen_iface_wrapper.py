@@ -30,13 +30,18 @@ Everything needed is discoverable, so this works for any module:
     by name against the DUT's ports
 
   usage: gen_iface_wrapper.py <netlist.il> <top> <out.sv> <rtl.sv>...
-         [--rtl-top <name>]
+         [--rtl-top <name>] [--manifest <family>.json]
+
+`--manifest` binds the width parameters that default to 0 -- both the
+interface's and the DUT's -- from the family manifest's `bind.values`, so a
+module written to be configured (`parameter int unsigned ADDR_WIDTH = 0`) does
+not merely trade its interface-port rejection for a negative-range one.
 
 `<top>` names the module in the NETLIST, which a per-module sweep frequently
 renames (`soc_ifc_top1_uhdm`); `--rtl-top` names it in the SOURCES
 (`soc_ifc_top`) when the two differ.
 """
-import re, sys
+import json, re, sys
 from pathlib import Path
 
 # Same role heuristics netlist_cosim.py uses, so the wrapper ties an
@@ -77,6 +82,134 @@ IFPARAM = re.compile(r"parameter\s+(?:type\s+)?(?:[\w:]+\s+)*?(\w+)\s*=\s*([^,)]
 LOCALP = re.compile(r"^\s*(localparam\s[^;]+;)\s*$", re.M)
 
 
+# --- parameter VALUES from a family manifest --------------------------------
+# A module whose interface ports are degenerate standalone almost always has
+# degenerate WIDTH parameters as well -- axi_cut_intf declares `ADDR_WIDTH = 0`
+# and AXI_BUS declares `AXI_ADDR_WIDTH = 0`, so the wrapper elaborates with
+# `[-1:0]` ports and read_slang rejects it for a NEGATIVE RANGE instead of for
+# the interface port we just wrapped away.  The external-IP manifests already
+# carry the values the family is meant to be swept at (`bind.values`, a list of
+# [name regex, value]); with `--manifest` the wrapper binds both its own
+# interface parameters and the DUT's from that one list, so the two agree by
+# construction (`AXI_ADDR_WIDTH` and `ADDR_WIDTH` both match `(?i)addr_?width$`).
+_ZERO = re.compile(r"^(?:\d+'[sdbhoSDBHO]+)?0+$|^'0$")
+
+
+def manifest_values(path):
+    """[(name regex, value)] from the manifest's "bind" section."""
+    bind = json.loads(Path(path).read_text()).get("bind") or {}
+    return [tuple(r) for r in bind.get("values", [])]
+
+
+def first_match(rules, name):
+    for pat, val in rules:
+        if re.search(pat, name):
+            return str(val)
+    return None
+
+
+def bound_value(rules, name, dflt):
+    """The manifest's value for parameter `name`, or None to keep `dflt`.
+
+    Only a DEGENERATE default is overridden.  A parameter with a real default
+    is the module's own choice and rebinding it would sweep something the
+    family never asked for -- and `bit BYPASS = 1'b0` is a real default that a
+    width rule must not touch, which is why the rule has to match the NAME.
+    """
+    if dflt and not _ZERO.match(dflt.strip()):
+        return None
+    return first_match(rules, name)
+
+
+def module_param_text(txt, name):
+    """The text inside `module <name> #( ... )`, or '' when it has none."""
+    for body in txt.values():
+        m = re.search(r"^\s*module\s+" + re.escape(name) + r"\b", body, re.M)
+        if not m:
+            continue
+        i = m.end()
+        while i < len(body) and body[i] not in "#(;":
+            if body.startswith("import", i):
+                i = body.find(";", i)
+                if i < 0:
+                    return ""
+                i += 1
+                continue
+            i += 1
+        if i >= len(body) or body[i] != "#":
+            return ""
+        s = body.index("(", i)
+        depth, j = 0, s
+        while j < len(body):
+            if body[j] == "(":
+                depth += 1
+            elif body[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    return body[s + 1:j]
+            j += 1
+        return ""
+    return ""
+
+
+def module_value_params(txt, name):
+    """[(param, default)] of the module's non-type parameters."""
+    ptext = re.sub(r"//[^\n]*", "", module_param_text(txt, name))
+    out, depth, cur = [], 0, []
+    ents = []
+    for ch in ptext:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if ch == "," and depth == 0:
+            ents.append("".join(cur)); cur = []
+        else:
+            cur.append(ch)
+    if "".join(cur).strip():
+        ents.append("".join(cur))
+    for ent in ents:
+        e = " ".join(ent.split())
+        if e.startswith("localparam") or re.match(r"(parameter\s+)?type\b", e):
+            continue
+        e = re.sub(r"^parameter\s+", "", e)
+        nm, _, dflt = e.partition("=")
+        ids = re.findall(r"[A-Za-z_][A-Za-z_0-9$]*", nm)
+        if ids:
+            out.append((ids[-1], dflt.strip()))
+    return out
+
+
+def _iface_port_conns(ihdr, plain):
+    """`.clk(clk_i), .rst_n(cptra_rst_b)` for an interface's OWN ports.
+
+    An interface declared `(input logic clk, input logic rst_n)` left
+    unconnected is unclocked, or held in reset forever, and the DUT behind it
+    then does nothing at all.  The DUT rarely spells them the same way, so the
+    match is by name first and by ROLE second -- the netlist path below has
+    done this for a year; the decl path simply never did.
+    """
+    iports = re.findall(r"(?:input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\w+)\s*(?:,|$|\))",
+                        ihdr)
+    names = [n for d, rng, n in plain]
+    scalars = [n for d, rng, n in plain if d == "input" and not rng]
+    conn = []
+    for ip in iports:
+        if ip in names:
+            conn.append(f".{ip}({ip})")
+            continue
+        isrst = bool(RST_RE.search(ip))
+        cand = [n for n in scalars if (RST_RE.search(n) if isrst else CLK_RE.search(n))]
+        if isrst:
+            strict = re.compile(r"(^|_)(rst|reset)(_|$)|_rst\w*$")
+            cand = [n for n in cand if strict.search(n)] or cand
+            lo = bool(LOW_RE.search(ip))
+            cand = [n for n in cand if bool(LOW_RE.search(n)) == lo] or cand
+        if cand:
+            conn.append(f".{ip}({cand[0]})")
+    return ", ".join(conn)
+
+
 def iface_body(txt, iface):
     """(header, body) text of `interface <iface> ... endinterface`."""
     for src in txt.values():
@@ -99,6 +232,35 @@ def iface_members(body):
         if mm and mm.group(1) not in _NOT_A_TYPE:
             out.append((mm.group(1), mm.group(2), mm.group(3)))
     return out
+
+
+def iface_typedefs(body):
+    """Every `typedef ... ;` in the interface, whole.
+
+    A regex `typedef[^;]+;` truncates a STRUCT typedef at the first member's
+    semicolon (`typedef struct packed { logic [DW-1:0] data;` ...), and the
+    fragment copied into the wrapper's parameter list is a syntax error that
+    makes the whole design unreadable -- caliptra-ss's axi_mem and mcu_mbox
+    both declare their interface members over a packed struct.  Scan to the
+    `;` at brace depth 0 instead.
+    """
+    out, i = [], 0
+    while True:
+        m = re.compile(r"(^|\n)\s*typedef\s", re.M).search(body, i)
+        if not m:
+            return out
+        j, depth = m.end(), 0
+        while j < len(body):
+            c = body[j]
+            if c in "{[(":
+                depth += 1
+            elif c in "}])":
+                depth -= 1
+            elif c == ";" and depth == 0:
+                break
+            j += 1
+        out.append(body[m.end() - len("typedef "):j + 1])
+        i = j + 1
 
 
 def iface_modports(body):
@@ -230,23 +392,42 @@ def iface_decl(txt, iface):
     return [], [], {}
 
 
-def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
+def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
+                   value_rules=()):
     """Wrapper built from the INTERFACE DECLARATION rather than the netlist."""
     decls, insts, conns, dut, plines = [], [], [], [], []
     seen_param = set()
-    locals_ = []
+    locals_, imports = [], []
+    # The DUT's own (non-interface) ports come first: an interface with its own
+    # `(input logic clk, input logic rst_n)` has to be tied to the DUT's clock
+    # and reset, and those are among these.
+    plain = []
+    mhdr = module_header(txt, rtl_top)
+    for line in (mhdr or "").splitlines():
+        # `.rstrip(",")` alone leaves the SPACES that PULP puts before the
+        # comma (`input logic     clk_i  ,`), the name then does not end the
+        # line and the port is silently dropped -- axi_cut_intf's wrapper came
+        # out with no clk_i and no rst_ni at all, so the co-sim clocked
+        # nothing ("0 cycles with an output change") and the miter compared two
+        # unclocked netlists.
+        line = re.sub(r"//.*", "", line).strip().rstrip(",").strip()
+        mm = re.match(r"^(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\[[^\]]*\]\s*)?(\w+)$", line)
+        if mm:
+            plain.append((mm.group(1), mm.group(2) or "", mm.group(3)))
     for base, (iface, modport) in sorted(ifaces.items()):
         hdr, body = iface_body(txt, iface)
         if hdr is None:
             sys.exit(f"# gen_iface_wrapper: no declaration for interface {iface}")
         # the interface's own parameters become the WRAPPER's parameters, so the
         # member declarations below can be copied verbatim
+        my_param = []
         for pm in IFPARAM.finditer(hdr):
             nm, dflt = pm.group(1), pm.group(2).strip()
+            my_param.append(nm)
             if nm in seen_param:
                 continue
             seen_param.add(nm)
-            val = iface_params.get(nm, dflt)
+            val = iface_params.get(nm) or bound_value(value_rules, nm, dflt) or dflt
             plines.append(f"  parameter int unsigned {nm} = {val}")
         # Localparams and typedefs must reach the PORT LIST, which the ports
         # below are declared with -- so they go into the ANSI parameter list as
@@ -257,7 +438,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
             e = lp.rstrip(";").strip()
             if e not in locals_:
                 locals_.append(e)
-        for td in TYPEDEF.findall(body):
+        for td in iface_typedefs(body):
             # `typedef logic [AXI_ID_WIDTH-1:0] id_t;` -> `localparam type id_t = logic [AXI_ID_WIDTH-1:0]`
             mm = re.match(r"typedef\s+(.*?)\s+(\w+)\s*;\s*$", td.strip(), re.S)
             if not mm:
@@ -265,10 +446,26 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
             e = f"localparam type {mm.group(2)} = {mm.group(1).strip()}"
             if e not in locals_:
                 locals_.append(e)
+        # A member may be declared over a type the interface imports --
+        # caliptra's axi_if declares `logic [$bits(axi_burst_e)-1:0] arburst`
+        # under `import axi_pkg::*;` -- and the declaration is copied verbatim
+        # into the wrapper's port list, so the wrapper needs the same import.
+        # It goes between the module name and the parameter list, the only
+        # place an import reaches an ANSI port list from.
+        for im in re.findall(r"^\s*import\s+([^;]+);", body, re.M):
+            for one in im.split(","):
+                one = one.strip()
+                if one and one not in imports:
+                    imports.append(one)
         mports = iface_modports(body)
         dirs = mports.get(modport, {})
-        pv = ", ".join(f".{n}({n})" for n in seen_param)
-        insts.append(f"  {iface} #({pv}) {base}_i ();" if pv else f"  {iface} {base}_i ();")
+        # ONLY this interface's own parameters: a module with two DIFFERENT
+        # interface ports (caliptra-ss axi_mem has three) would otherwise be
+        # handed the union, and read_slang rejects the instance outright
+        # ("parameter 'DW' does not exist in ...").
+        pv = ", ".join(f".{n}({n})" for n in my_param)
+        pfx = f"#({pv}) " if pv else ""
+        insts.append(f"  {iface} {pfx}{base}_i ({_iface_port_conns(hdr, plain)});")
         dut.append(f"    .{base}({base}_i.{modport})")
         for ty, rng, mem in iface_members(body):
             d = dirs.get(mem)
@@ -283,18 +480,18 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
     # the DUT's own width parameters, matched by ROLE: this codebase spells them
     # ADDR_WIDTH / AXI_ADDR_WIDTH / ... interchangeably
     dparams = []
-    for dn, dv in sorted(dut_params.items()):
+    dbind = dict(dut_params)
+    for dn, dflt in module_value_params(txt, rtl_top):
+        if dn not in dbind:
+            v = bound_value(value_rules, dn, dflt)
+            if v is not None:
+                dbind[dn] = v
+    for dn, dv in sorted(dbind.items()):
         dparams.append(f".{dn}({dv})")
     # plain (non-interface) ports of the DUT
-    hdr = module_header(txt, rtl_top)
-    if hdr:
-        for line in hdr.splitlines():
-            line = re.sub(r"//.*", "", line).strip().rstrip(",")
-            mm = re.match(r"^(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\[[^\]]*\]\s*)?(\w+)$", line)
-            if mm:
-                d, rng, nm = mm.group(1), mm.group(2) or "", mm.group(3)
-                decls.append(f"  {d} logic {rng}{nm}")
-                dut.append(f"    .{nm}({nm})")
+    for d, rng, nm in plain:
+        decls.append(f"  {d} logic {rng}{nm}")
+        dut.append(f"    .{nm}({nm})")
     with open(out, "w") as fh:
         fh.write(f"// GENERATED by test/gen_iface_wrapper.py (--from-decl).\n"
                  f"// Flat-port wrapper around {rtl_top}.  Its interface ports are\n"
@@ -302,7 +499,9 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params):
                  f"// so the ports below are the interface's own member declarations copied\n"
                  f"// verbatim and the wrapper carries the interface's parameter names --\n"
                  f"// no width has to be evaluated here.\n"
-                 f"module {rtl_top}_flat #(\n")
+                 f"module {rtl_top}_flat"
+                 + (" import " + ", ".join(imports) + ";" if imports else "")
+                 + " #(\n")
         fh.write(",\n".join(plines + ["  " + l for l in locals_]) + "\n) (\n")
         fh.write(",\n".join(decls) + "\n);\n\n")
         fh.write("\n".join(insts) + "\n\n")
@@ -323,6 +522,11 @@ def main():
     from_decl = "--from-decl" in argv
     if from_decl:
         argv.remove("--from-decl")
+    value_rules = []
+    if "--manifest" in argv:
+        i = argv.index("--manifest")
+        value_rules = manifest_values(argv[i + 1])
+        del argv[i:i + 2]
     iface_params, dut_params = {}, {}
     while "--iface-param" in argv:
         i = argv.index("--iface-param")
@@ -341,7 +545,8 @@ def main():
         ifaces = iface_ports_of(txt, rtl_top)
         if not ifaces:
             sys.exit(f"# gen_iface_wrapper: {rtl_top} declares no interface ports")
-        emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params)
+        emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
+                       value_rules)
         return
     ports = netlist_ports(il, top)
     if not ports:
