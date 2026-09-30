@@ -45,8 +45,19 @@ jobs:
           # other 233 still report.
           - family: cvw
             mem_limit_kb: "7000000"
+          # Both of these grew a lot of work on 2026-09-30: raising slang's
+          # unroll limit and binding the segment counts turned rows that used
+          # to fail in a second into rows that elaborate, miter and
+          # co-simulate, and the single shard was killed at 47 minutes ("exit
+          # code 143" -- the runner, not the row).  Same treatment as cvw and
+          # caliptra-ss: split the work and cap each process so `jobs x cap`
+          # fits a 16 GB runner.
           - family: verilog-ethernet
+            shards: 2
+            mem_limit_kb: "7000000"
           - family: verilog-pcie
+            shards: 2
+            mem_limit_kb: "7000000"
           - family: hdmi
           - family: xiangshan
           # Caliptra subsystem (chipsalliance/caliptra-ss @ dfa6c631, with its
