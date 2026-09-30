@@ -28,5 +28,14 @@
  ],
  "seq": 3,
  "timeout": 300,
- "want": "proven"
+ "want": "proven",
+ "config_bind": {
+  "import": [
+   "cvw::*"
+  ],
+  "includes": [
+   "config.vh",
+   "parameter-defs.vh"
+  ]
+ }
 }
