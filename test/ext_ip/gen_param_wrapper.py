@@ -264,7 +264,14 @@ def main():
         if tname in type_binds or tname in dep_types:
             b = type_binds.get(tname) or dep_types[tname]
             tn = f"{name}_t"
-            ptypes.append(f"  typedef {b} {tn} {dims};" if dims
+            # `dims` is captured from the text BEFORE the port name, so it is
+            # always a PACKED dimension.  `typedef T name [1:0]` would declare
+            # an UNPACKED array instead, and the wrapper then failed to bind to
+            # its own DUT: read_slang rejected the design with "no implicit
+            # conversion from 'axi_aw_chan_t$[1:0]' to 'slv_aw_chan_t[1:0]'"
+            # (the `$` is slang's marker for unpacked), and Surelog accepted the
+            # mismatch silently.  Keep the dimension packed.
+            ptypes.append(f"  typedef {b} {dims} {tn};" if dims
                           else f"  typedef {b} {tn};")
             q = f"{a.pkg}::{tn}"
             decls.append(f"  {dirn} logic [$bits({q})-1:0] {name}_flat")

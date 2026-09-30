@@ -294,6 +294,37 @@ def _degenerate_ports(il_path, top):
 
 
 
+
+def _with_wrapper_packages(cl, files, wrapper):
+    """The GENERATED binding wrapper can reference a package the module itself
+    never mentions -- gen_param_wrapper emits `typedef axi_pkg::xbar_rule_32_t
+    rule_t` for a rule type -- and the closure was built from the module, so
+    that package is not in it.  read_slang then refuses the design ("unknown
+    class or package 'axi_pkg'") and the row is reported as a slang
+    limitation, when the truth is that WE handed it an incomplete project.
+    Six axi rows read that way.
+
+    Worse, Surelog accepts the unresolved package quietly, so read_uhdm
+    "reads" the module and every type that came from the package is wrong
+    without a word.  Pulling the package into the closure fixes both halves.
+    """
+    have = set(files)
+    extra = []
+    try:
+        txt = open(wrapper, errors="replace").read()
+    except OSError:
+        return files
+    for pkg in sorted(set(re.findall(r"\b(\w+)\s*::", txt))):
+        f = cl.defs.get(pkg)
+        if not f or f in have:
+            continue
+        for g in cl.closure(pkg):
+            if g not in have:
+                have.add(g)
+                extra.append(g)
+    # Packages must precede their users for a per-file compilation unit.
+    return extra + files
+
 def _bind_wrapper(w, fam, mod, files):
     """Generate a type-bound wrapper for a module whose defaults cannot
     elaborate, and return (wrapper_path, top) -- or None.
@@ -478,7 +509,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                     "note": "too big for a hosted runner; sweep it from a workstation"}
     bound = _bind_wrapper(w, fam, m, files)
     if bound:
-        files = files + [bound[0]]
+        files = _with_wrapper_packages(cl, files, bound[0]) + [bound[0]]
         top = bound[1]
     else:
         flat = _flat_wrapper(w, m, files)
