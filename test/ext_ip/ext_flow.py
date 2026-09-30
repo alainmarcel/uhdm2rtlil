@@ -326,6 +326,36 @@ def _with_wrapper_packages(cl, files, wrapper):
     return extra + files
 
 
+def _iface_port_wrapper(w, fam, mod, files):
+    """Wrap away an INTERFACE port so the module has a top level read_slang can
+    take.
+
+    A SystemVerilog interface port becomes one dotted escaped name per member
+    in every RTLIL frontend, and read_slang refuses a top with an unconnected
+    one ("top-level module 'X' has unconnected interface port 's_axi_w_if'") --
+    39 rows across axi and caliptra-ss were reported as a read_slang limitation
+    for it.  CLAUDE.md has said all along that this is a testbench limitation
+    and that the fix is to hand the tools a module whose top level has no
+    interface ports; test/gen_iface_wrapper.py generates exactly that and the
+    chip flow has used it for a year.  The external-IP flow simply never called
+    it.
+
+    The manifest goes along so the wrapper binds the width parameters too: a
+    module written for an interface port is written to be configured, and both
+    sides default to zero (axi_cut_intf `ADDR_WIDTH = 0`, AXI_BUS
+    `AXI_ADDR_WIDTH = 0`), so without it the row merely trades its
+    interface-port rejection for a negative-range one."""
+    out = w / f"{mod}_ifc.sv"
+    man = HERE / f"{fam}.json"
+    extra = ["--manifest", str(man)] if man.exists() else []
+    rc, log = sh([sys.executable, str(TEST / "gen_iface_wrapper.py"), "--from-decl",
+                  *extra, str(w / "uhdm_hier.il"), mod, str(out), *files], timeout=300)
+    (w / "ifacebind.log").write_text(log or "")
+    if rc != 0 or not out.exists():
+        return None
+    return str(out), f"{mod}_flat"
+
+
 def _config_wrapper(w, fam, mod, files):
     """Bind a module's CONFIGURATION parameter (`#(parameter cvw_t P)`, no
     default) so read_slang can make it a top level.
@@ -535,13 +565,19 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
         files = _with_wrapper_packages(cl, files, bound[0]) + [bound[0]]
         top = bound[1]
     else:
-        cfgw = _config_wrapper(w, fam, m, files)
-        if cfgw:
-            # The generated wrapper names a package the module itself never
-            # mentions (`import cvw::*;`), so pull it into the closure.
-            files = _with_wrapper_packages(cl, files, cfgw[0]) + [cfgw[0]]
-            top = cfgw[1]
-        flat = None if cfgw else _flat_wrapper(w, m, files)
+        # An interface port at the top comes first: no other wrapper can bind
+        # a module read_slang will not accept as a top level at all.
+        ifcw = _iface_port_wrapper(w, fam, m, files)
+        cfgw = None if ifcw else _config_wrapper(w, fam, m, files)
+        for pick in (ifcw, cfgw):
+            if pick:
+                # The generated wrapper names a package the module itself never
+                # mentions (the interface's own `import axi_pkg::*;`, cvw's
+                # `import cvw::*;`), so pull it into the closure.
+                files = _with_wrapper_packages(cl, files, pick[0]) + [pick[0]]
+                top = pick[1]
+                break
+        flat = None if (ifcw or cfgw) else _flat_wrapper(w, m, files)
         if flat:
             files = files + [flat[0]]
             top = flat[1]
