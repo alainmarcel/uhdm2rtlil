@@ -31,5 +31,17 @@
  ],
  "seq": 4,
  "timeout": 300,
- "want": "proven"
+ "want": "proven",
+ "bind": {
+  "values": [
+   [
+    "(?i)^out_tlp_seg_count$",
+    2
+   ]
+  ]
+ },
+ "slang_flags": [
+  "--unroll-limit",
+  "20000"
+ ]
 }

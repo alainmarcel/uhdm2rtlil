@@ -35,5 +35,13 @@
  ],
  "seq": 4,
  "timeout": 300,
- "want": "proven"
+ "want": "proven",
+ "bind": {
+  "values": [
+   [
+    "(?i)^sync_?stages$",
+    3
+   ]
+  ]
+ }
 }

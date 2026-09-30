@@ -27,5 +27,9 @@
  ],
  "seq": 4,
  "timeout": 300,
- "want": "proven"
+ "want": "proven",
+ "slang_flags": [
+  "--unroll-limit",
+  "20000"
+ ]
 }
