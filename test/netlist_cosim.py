@@ -392,6 +392,34 @@ VFLAGS = ["--binary", "-j", "0", "--timing", "--no-assert", "-Wno-fatal", "-Wno-
           "--top-module", "tb", "-O1"]
 incs = [f"+incdir+{d}" for d in paths(args.incs)]
 srcs = paths(args.srcs) + list(args.extra_src)
+# A DPI import with no implementation links nowhere: CORE-V Wally's memory
+# models call `getenvval` to find a memory image, so the RTL reference build
+# died at the LINK step ("undefined reference to `getenvval'") and six rows
+# reported "skip (sim build)" with no measurement at all.  Supply a stub for any
+# DPI-C function the sources import -- returning an empty string / zero is right
+# for a synthesis-shaped run, where the memory image is not part of the compare.
+dpi_names = set()
+for f in srcs:
+    try:
+        dpi_names |= set(re.findall(
+            r'import\s+"DPI-C"\s+(?:context\s+|pure\s+)?function\s+(\w+)\s+(\w+)\s*\(',
+            open(f, errors="replace").read()))
+    except OSError:
+        pass
+if dpi_names:
+    stub = WORK / "dpi_stubs.cpp"
+    body = ['#include <svdpi.h>', '#include <cstring>', 'extern "C" {']
+    for rtype, fname in sorted(dpi_names):
+        if rtype == "string":
+            body.append(f'  const char* {fname}(const char*) {{ return ""; }}')
+        elif rtype in ("int", "longint", "shortint", "byte", "bit", "logic"):
+            body.append(f'  long long {fname}(const char*) {{ return 0; }}')
+        else:
+            body.append(f'  void {fname}(const char*) {{}}')
+    body.append("}")
+    stub.write_text("\n".join(body) + "\n")
+    srcs = srcs + [str(stub)]
+    print(f"{tag_name}: DPI stubs for {', '.join(sorted(n for _, n in dpi_names))}")
 builds = {
     # The RTL build elaborates only `TOP` (with the instance's parameters) but
     # parses the whole chip source list, exactly like the chip elaboration.
