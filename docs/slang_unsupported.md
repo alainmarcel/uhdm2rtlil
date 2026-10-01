@@ -7,19 +7,12 @@ against.  They are not failures of this frontend — `read_uhdm` reads them —
 and they are the part of the corpus the other report cannot see, because a
 divergence needs two netlists.
 
-It was **360** on 2026-09-29, before an audit of every class in this file
-asked which of them were OUR project setup rather than a limitation of
-read_slang.  Most were: a configuration the design forbids at its own
-defaults, a package or macro the closure withheld, an interface port nobody
-wrapped, slang's unroll limit left at 4000, a header the repository never
-vendored.  Those are fixed (#996, #997, #999, #1002), and what is left below
-is split three ways so the distinction survives the next reader.
-
-Until 2026-09-29 the sweep abandoned such a row entirely: no undriven check,
-no co-simulation, nothing recorded either way.  The behavioural RTL is still
-there and neither measurement needs slang, so each row now carries a
-`read_uhdm` verdict: whether every net is driven, and whether our netlist
-tracks the RTL under Verilator.
+Each row carries a `read_uhdm` verdict as well -- whether every net is
+driven, and whether our netlist tracks the RTL under Verilator -- because
+neither measurement needs slang.  The rows are split three ways: what
+read_slang declines, where it is stricter than the other frontends and the
+language is on its side, and what the design, the checkout or our own
+project setup declines.  Only the first group is a report about slang.
 
 Of the 126: **28** are confirmed read and elaborated by
 `read_uhdm` with every net driven, and **5** of those also
