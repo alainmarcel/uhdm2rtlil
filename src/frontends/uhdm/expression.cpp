@@ -13454,9 +13454,41 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         std::string v = eval_param_struct_field(uhdm_hier, &fw);
         if (!v.empty()) {
             int iv = atoi(v.c_str());
-            log("    hier_path: %s -> %d via struct parameter field (w=%d)\n",
-                path_name.c_str(), iv, fw);
-            return RTLIL::SigSpec(RTLIL::Const(iv, fw > 0 ? fw : 32));
+            RTLIL::SigSpec val(RTLIL::Const(iv, fw > 0 ? fw : 32));
+            // A SELECT on the field is part of the path, and dropping it
+            // returned the whole field at its declared width: cvw fround's
+            // `{Xs, P.BIAS[P.NE-1:0], {P.NF{1'b0}}}` put a 64-bit `1023` in the
+            // middle of a 64-bit concatenation, so the result was 1023 << 52 and
+            // the SIGN fell off the top -- every `round to +/- 1` came out
+            // positive (`FRound` 0x3c00 where the RTL says 0xbc00).
+            const UHDM::any* last = uhdm_hier->Path_elems()->back();
+            auto slice = [&](int msb, int lsb) {
+                if (lsb > msb) std::swap(msb, lsb);
+                if (lsb < 0 || msb >= val.size()) return;
+                val = val.extract(lsb, msb - lsb + 1);
+            };
+            if (last && last->UhdmType() == uhdmpart_select) {
+                auto ps = any_cast<const UHDM::part_select*>(last);
+                RTLIL::SigSpec l = ps->Left_range()
+                    ? import_expression(any_cast<const expr*>(ps->Left_range()), input_mapping)
+                    : RTLIL::SigSpec();
+                RTLIL::SigSpec r = ps->Right_range()
+                    ? import_expression(any_cast<const expr*>(ps->Right_range()), input_mapping)
+                    : RTLIL::SigSpec();
+                if (l.is_fully_const() && r.is_fully_const() && !l.empty() && !r.empty())
+                    slice(l.as_const().as_int(), r.as_const().as_int());
+            } else if (last && last->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const UHDM::bit_select*>(last);
+                RTLIL::SigSpec i = bs->VpiIndex()
+                    ? import_expression(any_cast<const expr*>(bs->VpiIndex()), input_mapping)
+                    : RTLIL::SigSpec();
+                if (i.is_fully_const() && !i.empty())
+                    slice(i.as_const().as_int(), i.as_const().as_int());
+            }
+            log("    hier_path: %s -> %d via struct parameter field (w=%d"
+                "%s)\n", path_name.c_str(), iv, fw,
+                val.size() != (fw > 0 ? fw : 32) ? ", select applied" : "");
+            return val;
         }
     }
     // Cross-module reference (XMR) READ: `u_processor.internal_ready` where
