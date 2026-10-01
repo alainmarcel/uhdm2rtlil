@@ -198,12 +198,23 @@ are in that middle group on both sides.
 
 ## Designs `read_slang` cannot read at all
 
-A further **126** sweep rows never reach this comparison because
-`read_slang` cannot elaborate the design, so there is no netlist to
-co-simulate: an interface port at the top, `$readmemh`, a package or macro
-it does not resolve, an unroll limit.  Those are a capability gap rather
-than a divergence and are counted here only so this file is not mistaken
-for the whole picture.
+A further **126** sweep rows never reach this comparison at all:
+`read_slang` cannot elaborate the design, so there is no second netlist to
+co-simulate.  They are counted here only so this file is not mistaken for
+the whole picture — [docs/slang_unsupported.md](slang_unsupported.md) lists
+every one with its diagnostic and what `read_uhdm` makes of it.
+
+**Most of them are not read_slang's doing.**  That list was 360 rows on
+2026-09-29, and an audit of every class found the usual suspects were ours:
+a configuration the design forbids at its own defaults, a package or macro
+our closure withheld, an interface port nobody wrapped, slang's unroll limit
+left at 4000, a header the repository never vendored.  Of what remains,
+**13** rows in 6 classes are genuinely read_slang limits, **10** are places
+where read_slang is stricter than the other frontends and the language is on
+its side (Verilator rejects the enum case too, IEEE 1800 6.19.3), and the
+rest belong to the design, the checkout, or still to our own project setup —
+25 rows whose diagnostic points at our closure are the next round of that
+work, not a report about slang.
 
 | Sweep | Rows |
 |---|---|
