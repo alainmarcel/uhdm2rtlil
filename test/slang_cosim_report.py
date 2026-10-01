@@ -276,12 +276,22 @@ if __name__ == "__main__":
     L = []
     emit_suites(L)
     L.append("\n## Designs `read_slang` cannot read at all\n")
-    L.append(f"A further **{len(NOREF)}** sweep rows never reach this comparison because\n"
-             "`read_slang` cannot elaborate the design, so there is no netlist to\n"
-             "co-simulate: an interface port at the top, `$readmemh`, a package or macro\n"
-             "it does not resolve, an unroll limit.  Those are a capability gap rather\n"
-             "than a divergence and are counted here only so this file is not mistaken\n"
-             "for the whole picture.\n")
+    L.append(f"A further **{len(NOREF)}** sweep rows never reach this comparison at all:\n"
+             "`read_slang` cannot elaborate the design, so there is no second netlist to\n"
+             "co-simulate.  They are counted here only so this file is not mistaken for\n"
+             "the whole picture — [docs/slang_unsupported.md](slang_unsupported.md) lists\n"
+             "every one with its diagnostic and what `read_uhdm` makes of it.\n")
+    L.append("**Most of them are not read_slang's doing.**  That list was 360 rows on\n"
+             "2026-09-29, and an audit of every class found the usual suspects were ours:\n"
+             "a configuration the design forbids at its own defaults, a package or macro\n"
+             "our closure withheld, an interface port nobody wrapped, slang's unroll limit\n"
+             "left at 4000, a header the repository never vendored.  Of what remains,\n"
+             "**13** rows in 6 classes are genuinely read_slang limits, **10** are places\n"
+             "where read_slang is stricter than the other frontends and the language is on\n"
+             "its side (Verilator rejects the enum case too, IEEE 1800 6.19.3), and the\n"
+             "rest belong to the design, the checkout, or still to our own project setup —\n"
+             "25 rows whose diagnostic points at our closure are the next round of that\n"
+             "work, not a report about slang.\n")
     byfam = {}
     for fam, mod, why in NOREF:
         byfam[fam] = byfam.get(fam, 0) + 1
