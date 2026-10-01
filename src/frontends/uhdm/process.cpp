@@ -6975,6 +6975,26 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 } else {
                                     can_unroll = false;
                                 }
+                            } else if (auto rexp = dynamic_cast<const expr*>(right_op)) {
+                                // Anything else the bound can be, as long as it
+                                // folds: a struct-member parameter
+                                // (`index < P.RAS_SIZE`, CORE-V Wally's
+                                // RASPredictor) arrives as a hier_path and hit
+                                // the bail-out below, so "Cannot unroll for loop
+                                // - complex pattern" silently DROPPED the whole
+                                // reset arm -- the RAS never cleared and 188 of
+                                // 301 co-sim cycles diverged.
+                                RTLIL::SigSpec bound = import_expression(rexp);
+                                if (bound.is_fully_const()) {
+                                    end_value = bound.as_const().as_int();
+                                    log("        Loop condition: %s %s expr (resolved to %lld)\n",
+                                        loop_var_name.c_str(),
+                                        is_neq_condition ? "!=" : (inclusive ? "<=" : "<"),
+                                        (long long)end_value);
+                                } else {
+                                    can_unroll = false;
+                                    log("        Cannot resolve loop bound to a constant\n");
+                                }
                             } else {
                                 can_unroll = false;
                             }
@@ -11030,6 +11050,64 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     //   shifted_mask = mask_pattern << offset      (mask_pattern has `width` low bits set)
     //   new_base     = (base & ~shifted_mask) | shifted_data
     // Then: full_base <= new_base (under any current_condition).
+    // A dynamic ROW write into a PACKED array under a clock: `memory[Ptr] <=
+    // PCLinkE` where `memory` is `logic [P.RAS_SIZE-1:0][P.XLEN-1:0]` -- one
+    // flat wire, no element wires, no `$mem` (CORE-V Wally's RASPredictor).
+    // Importing that LHS as an expression yields the READ of the row (a
+    // `$shiftx` output), so the write landed on an aux wire and `memory` was
+    // never driven: 1024 undriven bits, `RASPCF` stuck at 0, 194 diverging
+    // cycles against the RTL.  Same read-modify-write the indexed-part-select
+    // path below does, with the shift scaled by the element width.
+    if (auto lhs_expr = uhdm_assign->Lhs();
+        lhs_expr && lhs_expr->VpiType() == vpiBitSelect) {
+        auto bs = any_cast<const bit_select*>(lhs_expr);
+        std::string bname(bs->VpiName());
+        RTLIL::Wire* bw = bname.empty() ? nullptr
+                                        : module->wire(RTLIL::escape_id(bname));
+        auto idx_e = dynamic_cast<const UHDM::expr*>(bs->VpiIndex());
+        if (bw && idx_e && !module->memories.count(RTLIL::escape_id(bname)) &&
+            expanded_array_low(bname) < 0) {
+            std::map<std::string, RTLIL::SigSpec> blocking_map;
+            for (const auto& [plhs, prhs] : pending_sync_assignments)
+                if (plhs.is_wire())
+                    blocking_map[RTLIL::unescape_id(plhs.as_wire()->name)] = prhs;
+            RTLIL::SigSpec idx = import_expression(idx_e, &blocking_map);
+            if (!idx.is_fully_const()) {
+                RTLIL::SigSpec rhs = import_expression(
+                    any_cast<const expr*>(uhdm_assign->Rhs()), &blocking_map);
+                int base_w = bw->width, elem_w = rhs.size();
+                // Only a MULTI-BIT row: a single-bit dynamic select into a plain
+                // vector (`op_table_active[ptr] <= 1'b1`, verilog-pcie
+                // dma_if_pcie_wr) already has its own handling further down, and
+                // intercepting it here broke the composition of two arms writing
+                // the same vector -- test/sync_path_dyn_bitsel_write caught it.
+                if (elem_w > 1 && base_w > elem_w && base_w % elem_w == 0) {
+                    RTLIL::SigSpec base = pending_inflight(RTLIL::SigSpec(bw));
+                    RTLIL::SigSpec i32 = idx;
+                    i32.extend_u0(32);
+                    RTLIL::SigSpec shift = module->Mul(
+                        NEW_ID, i32, RTLIL::SigSpec(RTLIL::Const(elem_w, 32)), false);
+                    RTLIL::SigSpec rhs_ext = rhs;
+                    rhs_ext.extend_u0(base_w);
+                    RTLIL::SigSpec data = module->Shl(NEW_ID, rhs_ext, shift, false);
+                    RTLIL::SigSpec mask_lit(RTLIL::Const(RTLIL::State::S1, elem_w));
+                    mask_lit.extend_u0(base_w);
+                    RTLIL::SigSpec mask = module->Shl(NEW_ID, mask_lit, shift, false);
+                    RTLIL::SigSpec keep = module->And(
+                        NEW_ID, base, module->Not(NEW_ID, mask));
+                    RTLIL::SigSpec merged = module->Or(NEW_ID, keep, data);
+                    if (!current_condition.empty())
+                        merged = module->Mux(NEW_ID, base, merged, current_condition);
+                    pending_sync_assignments[RTLIL::SigSpec(bw)] = merged;
+                    note_pending_sync(RTLIL::SigSpec(bw));
+                    log("            dynamic packed row write: %s[%d-bit rows] "
+                        "read-modify-write\n", bname.c_str(), elem_w);
+                    return;
+                }
+            }
+        }
+    }
+
     if (auto lhs_expr = uhdm_assign->Lhs(); lhs_expr && lhs_expr->VpiType() == vpiIndexedPartSelect) {
         const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
         // Blocking temps already assigned earlier in this block (e.g.

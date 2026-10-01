@@ -1,0 +1,11 @@
+# The write must reach the ARRAY, not an aux wire: `\memory` has to be driven
+# by the sync rule, and a `$shiftx` output must never be its target.  (A formal
+# check cannot see this on its own -- with the write lost the design is still
+# self-consistent, it just reads zero for ever.)
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+# exactly one 512-bit memory wire, and it is driven
+select -assert-count 1 w:*memory w:*$* %d
+select -assert-count 1 t:$dff %co w:*memory %i
+check -assert

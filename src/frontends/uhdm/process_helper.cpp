@@ -215,6 +215,18 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
                     expanded_array_low(sig.name) >= 0) {
                     return;
                 }
+                // A dynamic row write into a PACKED array -- one flat wire, no
+                // element wires, no `$mem` (`logic [P.RAS_SIZE-1:0][P.XLEN-1:0]
+                // memory; memory[Ptr] <= PCLinkE`, CORE-V Wally's RASPredictor).
+                // Keeping the LHS expression here made the FF temp from the
+                // READ of that select -- a 64-bit `$shiftx` output wire -- so
+                // the sync rule updated the aux wire and `memory` was never
+                // driven at all: 1024 undriven bits and `RASPCF` stuck at 0.
+                // Null the expression so the temp is the full base wire, which
+                // is what emit_dynamic_packed_select_write writes into.
+                if (!module->memories.count(mem_id) &&
+                    module->wire(RTLIL::escape_id(sig.name)))
+                    sig.lhs_expr = nullptr;
             }
         }
         signals.push_back(sig);
@@ -773,6 +785,24 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     log("extract_assigned_signals: Skipping dynamic write to expanded array '%s'\n",
                                         sig.name.c_str());
                                     break;
+                                }
+                                // A dynamic row write into a PACKED array: one
+                                // flat wire, no element wires, no `$mem`
+                                // (`logic [P.RAS_SIZE-1:0][P.XLEN-1:0] memory;
+                                // memory[Ptr] <= PCLinkE`, CORE-V Wally's
+                                // RASPredictor).  With the LHS expression kept,
+                                // the FF temp was built from the READ of that
+                                // select -- the 64-bit `$shiftx` output wire --
+                                // so the sync rule updated the aux wire and
+                                // `memory` was never driven at all: 1024
+                                // undriven bits and `RASPCF` stuck at 0.  Null
+                                // it: the temp is then the full base wire, which
+                                // is what emit_dynamic_packed_select_write
+                                // writes into.
+                                if (!module->memories.count(mem_id) &&
+                                    module->wire(RTLIL::escape_id(sig.name))) {
+                                    sig.lhs_expr = nullptr;
+                                    sig.is_part_select = false;
                                 }
                             } else if (expanded_array_low(sig.name) >= 0) {
                                 // Constant/genvar bit-select of an UNPACKED array
