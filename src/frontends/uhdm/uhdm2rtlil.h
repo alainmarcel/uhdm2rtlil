@@ -1227,6 +1227,18 @@ struct UhdmImporter {
     RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     RTLIL::SigSpec import_bit_select_inner(const UHDM::bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     RTLIL::SigSpec import_indexed_part_select(const UHDM::indexed_part_select* uhdm_indexed, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
+    /// The DECLARED bounds of a 1-D vector, looked up BY NAME in the current
+    /// instance.  An indexed part-select carries no vpiActual (its vpiParent is
+    /// the enclosing var_select, not a ref_obj), so unlike bit_select it cannot
+    /// reach the typespec from the node -- and `logic [3:2] q` needs it, because
+    /// the RTLIL wire starts at bit 0 and `q[2 +: 2]` means bits [1:0].
+    /// Returns false when the name has no single-range logic typespec.
+    bool declared_vector_bounds(const UHDM::any* node, const std::string& name,
+                                int& left, int& right);
+    /// Memo for declared_vector_bounds: (instance, name) -> bounds, with
+    /// {INT_MIN, INT_MIN} recording "no single-range declaration".
+    std::map<std::pair<const UHDM::module_inst*, std::string>, std::pair<int, int>>
+        decl_vec_bounds_cache_;
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     // `PARAM[idx].field` where PARAM is an unpacked array of structs.  Empty

@@ -12371,6 +12371,68 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
 }
 
 // Import indexed part select (e.g., data[i*8 +: 8])
+bool UhdmImporter::declared_vector_bounds(const UHDM::any* node, const std::string& name,
+                                          int& left, int& right)
+{
+    if (name.empty())
+        return false;
+    // `current_instance` is NULL while an instance's port ACTUALS are imported,
+    // and that is exactly where VeeR's `.dout(dccm_rd_addr_lo_q[WIDTH_BITS +:
+    // BANK_BITS])` needs this -- so fall back to the module_inst ancestors of
+    // the select itself.  The nearest one is the CHILD being instantiated (the
+    // actual hangs off its port), so every ancestor is tried, nearest first,
+    // until one declares the name.
+    std::vector<const UHDM::module_inst*> scopes;
+    if (current_instance)
+        scopes.push_back(current_instance);
+    for (const UHDM::any* p = node; p; p = p->VpiParent())
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(p))
+            if (std::find(scopes.begin(), scopes.end(), mi) == scopes.end())
+                scopes.push_back(mi);
+    if (scopes.empty())
+        return false;
+    auto key = std::make_pair(scopes.front(), name);
+    auto it = decl_vec_bounds_cache_.find(key);
+    if (it == decl_vec_bounds_cache_.end()) {
+        std::pair<int, int> bounds(INT_MIN, INT_MIN);
+        const UHDM::any* obj = nullptr;
+        for (auto sc : scopes) {
+            if (sc->Nets())
+                for (auto n0 : *sc->Nets())
+                    if (std::string(n0->VpiName()) == name) { obj = n0; break; }
+            if (!obj && sc->Variables())
+                for (auto v0 : *sc->Variables())
+                    if (std::string(v0->VpiName()) == name) { obj = v0; break; }
+            if (obj)
+                break;
+        }
+        const UHDM::ref_typespec* rt = nullptr;
+        if (auto e = dynamic_cast<const UHDM::expr*>(obj))
+            rt = e->Typespec();
+        const UHDM::typespec* ts = rt ? rt->Actual_typespec() : nullptr;
+        const UHDM::VectorOfrange* rgs = nullptr;
+        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ts))
+            if (!lt->Elem_typespec()) rgs = lt->Ranges();
+        if (rgs && rgs->size() == 1) {
+            auto r0 = (*rgs)[0];
+            int saved = expression_context_width;
+            expression_context_width = 0;
+            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+            expression_context_width = saved;
+            if (l.is_fully_const() && r.is_fully_const())
+                bounds = std::make_pair(l.as_const().as_int(), r.as_const().as_int());
+        }
+        it = decl_vec_bounds_cache_.emplace(key, bounds).first;
+    }
+    if (it->second.first == INT_MIN)
+        return false;
+    left = it->second.first;
+    right = it->second.second;
+    return true;
+}
+
+
 RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing indexed part select\n");
@@ -12551,6 +12613,59 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         // (IndexedPartSelect c).
         bool pos = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
         int low = pos ? offset : (offset - width + 1);
+        // Vector declared with a NON-ZERO LSB (`logic [3:2] q`): the RTLIL wire
+        // starts at bit 0, so the source-level index has to be mapped through
+        // the DECLARED range -- `q[2 +: 2]` is bits [1:0] of the wire.  Two ways
+        // to get this wrong, and VeeR's dccm_mem hit the first: the slice was
+        // rejected as out of range ("Invalid indexed part select: low=2,
+        // width=2, base_size=2"), the caller got an empty SigSpec, and
+        // `dccm_bank_dout[dccm_rd_addr_lo_q[WIDTH_BITS +: BANK_BITS]]` lost its
+        // bank index and read bank 0 on every access -- 261 diverging cycles
+        // against the RTL with the read_slang netlist clean.  The second way is
+        // silent: on `logic [5:2] q`, `q[2 +: 2]` FITS a 4-bit wire and would
+        // read bits [3:2] instead of [1:0], so the mapping must not be gated on
+        // the slice looking out of range.
+        // Map the SOURCE-level index through the base's DECLARED range.  The
+        // RTLIL wire for `logic [3:2] q` holds 2 bits, so `q[2 +: 2]` is bits
+        // [1:0] of it -- and a descending range that does not start at 0, or an
+        // ascending one, has to be converted or the slice reads the wrong bits.
+        // Two ways to get it wrong, and VeeR's dccm_mem hit the first: the slice
+        // was rejected as out of range ("Invalid indexed part select: low=2,
+        // width=2, base_size=2"), the caller got an EMPTY SigSpec, and
+        // `dccm_bank_dout[dccm_rd_addr_lo_q[WIDTH_BITS +: BANK_BITS]]` lost its
+        // bank index and read bank 0 on every access -- 261 diverging cycles
+        // against the RTL with the read_slang netlist clean.  The second is
+        // silent: on `logic [5:2] q` the same `q[2 +: 2]` FITS a 4-bit wire and
+        // reads bits [3:2] instead of [1:0], so this must not be gated on the
+        // slice looking out of range.
+        //
+        // A PORT records its declared range in the wire (`start_offset`/`upto`);
+        // an internal `logic [3:2]` does not, so its bounds come from the
+        // declaration, looked up by name (an indexed part-select carries no
+        // vpiActual -- its vpiParent is the enclosing var_select).
+        if (pk_ew <= 1 && geom_wire && width > 0) {
+            int dli = 0, dri = 0;
+            bool have = false;
+            if (geom_wire->upto || geom_wire->start_offset != 0) {
+                dri = geom_wire->start_offset;
+                dli = geom_wire->start_offset + geom_wire->width - 1;
+                if (geom_wire->upto) std::swap(dli, dri);
+                have = true;
+            } else {
+                have = declared_vector_bounds(uhdm_indexed, base_signal_name, dli, dri);
+            }
+            int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+            int shigh = low + width - 1;
+            if (have && base.size() == dhigh - dlow + 1 &&
+                low >= dlow && shigh <= dhigh) {
+                int mapped = (dli >= dri) ? (low - dlow)     // descending
+                                          : (dhigh - shigh); // ascending
+                if (mapped != low && mode_debug)
+                    log("    indexed part-select: declared [%d:%d], [%d+:%d] "
+                        "-> bits [%d+:%d]\n", dli, dri, low, width, mapped, width);
+                low = mapped;
+            }
+        }
         if (low < 0 || width <= 0 || low + width > base.size()) {
             log_warning("Invalid indexed part select: low=%d, width=%d, base_size=%d\n",
                 low, width, base.size());

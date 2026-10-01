@@ -1,0 +1,19 @@
+# The index of a dynamic packed-row read is an indexed part-select of a vector
+# declared with a NON-ZERO LSB.  Without the mapping through the declared range
+# `rd_ff` loses its index entirely (empty select -> row 0) and `rd_wide` reads
+# the wrong two bits, so this miter fails on both outputs.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter
