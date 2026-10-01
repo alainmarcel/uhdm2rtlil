@@ -1,0 +1,19 @@
+# read_verilog cannot parse a `parameter type` at all, so the ordinary
+# verilog-vs-uhdm comparison is vacuous here and this miter is the real gate.
+# Without the fix `u_tap`'s ports come out 3 bits instead of 14 and the top
+# bits of every `c[j]` are lost, which this finds immediately.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter
