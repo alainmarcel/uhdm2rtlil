@@ -101,6 +101,16 @@ LOCALP = re.compile(r"^\s*(localparam\s[^;]+;)\s*$", re.M)
 _ZERO = re.compile(r"^(?:\d+'[sdbhoSDBHO]+)?0+$|^'0$")
 
 
+def manifest_defines(path):
+    """The `defines` the sweep reads this family with (ext_flow's own default
+    when the manifest does not say)."""
+    try:
+        man = json.loads(Path(path).read_text())
+    except Exception:
+        return ["SYNTHESIS"]
+    return man.get("defines", ["SYNTHESIS"])
+
+
 def manifest_values(path):
     """[(name regex, value)] from the manifest's "bind" section."""
     bind = json.loads(Path(path).read_text()).get("bind") or {}
@@ -184,6 +194,121 @@ def module_value_params(txt, name):
         if ids:
             out.append((ids[-1], dflt.strip()))
     return out
+
+
+def module_param_decls(txt, name):
+    """[(name, default)] of EVERY entry of the module's parameter port list,
+    `localparam` ones included, in declaration order.
+
+    `module_value_params` deliberately skips localparams (they cannot be
+    overridden, so they are not bindable), but a copied port declaration may
+    still be sized by one: caliptra-ss's axi_adapter writes `localparam int
+    unsigned CsrAddrWidth = 12` in its parameter list and declares `output
+    logic [CsrAddrWidth-1:0] s_cpuif_addr`.  The wrapper copies that port
+    verbatim, so it has to declare the parameter too or Verilator stops at
+    "Can't find definition of variable: 'CsrAddrWidth'"."""
+    ptext = re.sub(r"//[^\n]*", "", module_param_text(txt, name))
+    out, depth, cur, ents = [], 0, [], []
+    for ch in ptext:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if ch == "," and depth == 0:
+            ents.append("".join(cur)); cur = []
+        else:
+            cur.append(ch)
+    if "".join(cur).strip():
+        ents.append("".join(cur))
+    for ent in ents:
+        e = " ".join(ent.split())
+        if re.match(r"(parameter\s+|localparam\s+)?type\b", e):
+            continue
+        e = re.sub(r"^(parameter|localparam)\s+", "", e)
+        nm, _, dflt = e.partition("=")
+        ids = re.findall(r"[A-Za-z_][A-Za-z_0-9$]*", nm)
+        if ids and dflt.strip():
+            out.append((ids[-1], dflt.strip()))
+    return out
+
+
+def _ids(text):
+    return set(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", text or ""))
+
+
+def dut_param_locals(txt, rtl_top, used, known, values):
+    """`localparam` lines for the DUT parameters a copied port declaration names.
+
+    Only the ones actually referenced, transitively (axi_adapter's
+    `LowerAddrBits = $clog2(CsrDataWidth/8)` pulls `CsrDataWidth` in), and never
+    a name the wrapper already declares -- the interface's own parameters win,
+    they are what the member declarations are written against.  A parameter the
+    manifest binds is declared at the BOUND value, the same one the DUT instance
+    is specialised with."""
+    decls = module_param_decls(txt, rtl_top)
+    byname = dict(decls)
+    want, pending = set(), set(i for i in used if i in byname and i not in known)
+    while pending:
+        nm = pending.pop()
+        if nm in want:
+            continue
+        want.add(nm)
+        for i in _ids(values.get(nm) or byname[nm]):
+            if i in byname and i not in known and i not in want:
+                pending.add(i)
+    return [f"localparam {nm} = {values.get(nm) or dflt}"
+            for nm, dflt in decls if nm in want]
+
+
+def resolve_iface_bits(expr, ifaces, txt):
+    """Rewrite `$bits(<iface port>.<member>[.<field>])` to `$bits(<its type>)`.
+
+    caliptra-ss's mci_axi_sub_decode sizes four ordinary ports off one of its
+    own interface ports -- `input logic [$bits(soc_resp_if.req_data.user)-1:0]
+    strap_mcu_lsu_axi_user`.  Copied verbatim the name means nothing in the
+    wrapper (the instance is `soc_resp_if_i`, and it is declared after the port
+    list anyway), and Verilator stopped at "Can't find definition of
+    scope/variable: 'soc_resp_if'".  The member's declared type is right there
+    in the interface, and it is written over the interface parameters the
+    wrapper already declares, so substituting it resolves the port."""
+    def one(m):
+        base, path = m.group(1), [q for q in m.group(2).split(".") if q]
+        if base not in ifaces:
+            return m.group(0)
+        iface = ifaces[base][0]
+        hdr, body = iface_body(txt, iface)
+        if body is None:
+            return m.group(0)
+        ty, rng = None, None
+        for t, r, nm in iface_members(body):
+            if nm == path[0]:
+                ty, rng = t, r
+                break
+        if ty is None:
+            return m.group(0)
+        for field in path[1:]:
+            td = next((t for t in iface_typedefs(body)
+                       if re.search(r"\}\s*" + re.escape(ty) + r"\s*;\s*$", t.strip())),
+                      None)
+            if td is None:
+                return m.group(0)
+            fm = next((mm for mm in (MEMBER.match(l.strip())
+                                     for l in re.sub(r"//.*", "", td).splitlines())
+                       if mm and mm.group(3) == field), None)
+            if fm is None:
+                return m.group(0)
+            ty, rng = fm.group(1), fm.group(2)
+        # The result is substituted INSIDE a `[...]` port range, so it must not
+        # contain a bracket of its own: `[$bits(logic [UW-1:0])-1:0]` does not
+        # parse as one range and the port was silently dropped instead.  A
+        # declared `[msb:lsb]` is its own width expression.
+        if rng:
+            mb = re.match(r"^\s*\[(.+):(.+)\]\s*$", rng)
+            if not mb:
+                return m.group(0)
+            return f"(({mb.group(1).strip()})-({mb.group(2).strip()})+1)"
+        return "1" if ty in ("logic", "bit", "reg", "wire") else f"$bits({ty})"
+    return re.sub(r"\$bits\s*\(\s*(\w+)((?:\s*\.\s*\w+)+)\s*\)", one, expr)
 
 
 def _dim_count(dim, params):
@@ -357,6 +482,74 @@ def read_all(srcs):
     return txt
 
 
+def defined_names(txt, defines):
+    """Macro names that are defined when the sweep reads these sources.
+
+    The sweep hands every design ONE define set (the manifest's `defines`), so
+    which arm of a `ifdef the elaborated module really has is knowable: a name
+    counts as defined when the manifest lists it, when any source `define's it,
+    or when an included header next to a source does."""
+    names = set(defines)
+    for body in txt.values():
+        names.update(re.findall(r"^\s*`define\s+(\w+)", body, re.M))
+    seen = set()
+    for path, body in txt.items():
+        d = Path(path).parent
+        for inc in re.findall(r"^\s*`include\s+\"([^\"]+)\"", body, re.M):
+            for cand in (d / inc, d / Path(inc).name):
+                if cand.is_file() and str(cand) not in seen:
+                    seen.add(str(cand))
+                    names.update(re.findall(r"^\s*`define\s+(\w+)",
+                                            cand.read_text(errors="replace"), re.M))
+    return names
+
+
+def strip_inactive(txt, defines):
+    """Blank the `ifdef arms the sweep's define set does NOT take.
+
+    A regex scan of a module declaration sees every arm at once: caliptra-ss's
+    i3c declares its frontend bus as `ifdef I3C_USE_AHB <13 AHB ports> `elsif
+    I3C_USE_AXI <two interface ports>, and neither macro is defined anywhere in
+    the repository.  The wrapper was therefore generated for interface ports
+    the elaborated module does not have, over AHB ports it does not have
+    either, and Verilator stopped at "Can't find definition of variable:
+    'AhbAddrWidth'" -- the sweep could only report `skip (sim build)`, with
+    nothing measured for i3c or i3c_wrapper.
+
+    Inactive lines are blanked rather than removed so every diagnostic keeps
+    pointing at the right line of the original file."""
+    names = defined_names(txt, defines)
+    out = {}
+    for path, body in txt.items():
+        if "`if" not in body:
+            out[path] = body
+            continue
+        res, stack = [], []        # [taken_any, active_now, parent_active]
+        for line in body.splitlines(True):
+            nl = "\n" if line.endswith("\n") else ""
+            m = re.match(r"`(ifdef|ifndef|elsif|else|endif)\b\s*(\w+)?", line.strip())
+            if m:
+                kind, nm = m.group(1), m.group(2)
+                parent = stack[-1][1] if stack else True
+                if kind in ("ifdef", "ifndef"):
+                    cond = (nm in names) if kind == "ifdef" else (nm not in names)
+                    stack.append([cond, cond and parent, parent])
+                elif stack and kind == "elsif":
+                    taken, _, parent = stack[-1]
+                    cond = (not taken) and (nm in names)
+                    stack[-1] = [taken or cond, cond and parent, parent]
+                elif stack and kind == "else":
+                    taken, _, parent = stack[-1]
+                    stack[-1] = [True, (not taken) and parent, parent]
+                elif stack and kind == "endif":
+                    stack.pop()
+                res.append(nl)
+                continue
+            res.append(line if (not stack or stack[-1][1]) else nl)
+        out[path] = "".join(res)
+    return out
+
+
 def module_header(txt, name):
     """The text between `module <name>` and the end of its port list."""
     for body in txt.values():
@@ -450,7 +643,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
     decls, insts, conns, dut, plines = [], [], [], [], []
     seen_param = set()
     locals_, imports = [], []
-    macro_typedefs, macro_includes = [], []
+    macro_typedefs, macro_includes, param_includes = [], [], []
     param_vals = {}
     # The DUT's own (non-interface) ports come first: an interface with its own
     # `(input logic clk, input logic rst_n)` has to be tied to the DUT's clock
@@ -465,6 +658,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         # nothing ("0 cycles with an output change") and the miter compared two
         # unclocked netlists.
         line = re.sub(r"//.*", "", line).strip().rstrip(",").strip()
+        line = resolve_iface_bits(line, ifaces, txt)
         mm = re.match(r"^(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\[[^\]]*\]\s*)?(\w+)$", line)
         if mm:
             plain.append((mm.group(1), mm.group(2) or "", mm.group(3)))
@@ -481,6 +675,16 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             sys.exit(f"# gen_iface_wrapper: no declaration for interface {iface}")
         # the interface's own parameters become the WRAPPER's parameters, so the
         # member declarations below can be copied verbatim
+        # An interface may declare its parameters with an `include: VeeR's
+        # css_mcu0_el2_mem_if is `#( `include "css_mcu0_el2_param.vh" )`, one
+        # 2291-bit struct parameter `pt` that every member width is written
+        # over.  That include belongs in the WRAPPER's parameter list, where the
+        # interface itself puts it -- emitted at file scope the parameter lands
+        # in the compilation unit and the port list cannot see it ("use of
+        # undeclared identifier 'pt'", 7 caliptra-ss css_mcu0 rows).
+        for inc in re.findall(r"`include\s+\"[^\"]+\"", hdr or ""):
+            if inc not in param_includes:
+                param_includes.append(inc)
         my_param = []
         for pm in IFPARAM.finditer(hdr):
             nm, dflt = pm.group(1), pm.group(2).strip()
@@ -514,7 +718,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             if mline not in macro_typedefs:
                 macro_typedefs.append(mline)
         for inc in re.findall(r"^[ \t]*(`include\s+\"[^\"]+\")", src_of_iface, re.M):
-            if inc not in macro_includes:
+            if inc not in macro_includes and inc not in param_includes:
                 macro_includes.append(inc)
         for td in iface_typedefs(body):
             # `typedef logic [AXI_ID_WIDTH-1:0] id_t;` -> `localparam type id_t = logic [AXI_ID_WIDTH-1:0]`
@@ -593,6 +797,19 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                 dbind[dn] = v
     for dn, dv in sorted(dbind.items()):
         dparams.append(f".{dn}({dv})")
+    # A copied plain-port declaration may be sized by one of the DUT's OWN
+    # parameters, which nothing has declared in the wrapper so far.
+    known = set(seen_param)
+    for l in locals_:
+        mm = re.match(r"^localparam\s+(?:type\s+)?(?:\w+\s+)*?(\w+)\s*=", l.strip())
+        if mm:
+            known.add(mm.group(1))
+    used = set()
+    for _, rng, _nm in plain:
+        used |= _ids(rng)
+    for l in dut_param_locals(txt, rtl_top, used, known, dbind):
+        if l not in locals_:
+            locals_.append(l)
     # plain (non-interface) ports of the DUT
     for d, rng, nm in plain:
         decls.append(f"  {d} logic {rng}{nm}")
@@ -640,10 +857,17 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                      + (" import " + ", ".join(imports) + ";" if imports else "")
                      + " (\n")
         else:
+            # An EMPTY parameter list is a syntax error (`module m #( ) (...)`,
+            # "missing ';' at 'module'"), and a module whose interface declares
+            # no parameters of its own gets one -- that is the whole of why
+            # caliptra-ss's css_mcu0_el2_veer_wrapper reported `elab-fail`.
+            plist = plines + ["  " + i for i in param_includes] \
+                           + ["  " + l for l in locals_]
             fh.write(f"module {rtl_top}_flat"
                      + (" import " + ", ".join(imports) + ";" if imports else "")
-                     + " #(\n")
-            fh.write(",\n".join(plines + ["  " + l for l in locals_]) + "\n) (\n")
+                     + (" #(\n" if plist else " (\n"))
+            if plist:
+                fh.write(",\n".join(plist) + "\n) (\n")
         fh.write(",\n".join(decls) + "\n);\n\n")
         fh.write("\n".join(insts) + "\n\n")
         pv = (" #(" + ", ".join(dparams) + ")") if dparams else ""
@@ -664,9 +888,16 @@ def main():
     if from_decl:
         argv.remove("--from-decl")
     value_rules = []
+    defines = None
     if "--manifest" in argv:
         i = argv.index("--manifest")
         value_rules = manifest_values(argv[i + 1])
+        defines = manifest_defines(argv[i + 1])
+        del argv[i:i + 2]
+    extra_defs = []
+    while "--define" in argv:
+        i = argv.index("--define")
+        extra_defs.append(argv[i + 1])
         del argv[i:i + 2]
     iface_params, dut_params = {}, {}
     while "--iface-param" in argv:
@@ -682,6 +913,11 @@ def main():
     il, top, out = argv[0], argv[1], argv[2]
     rtl_top = rtl_top or top
     txt = read_all(argv[3:])
+    # Scan only the arms the sweep's define set actually takes -- see
+    # strip_inactive().  With no manifest and no --define we would be guessing,
+    # so leave the text alone.
+    if defines is not None or extra_defs:
+        txt = strip_inactive(txt, set(defines or []) | set(extra_defs))
     if from_decl:
         ifaces = iface_ports_of(txt, rtl_top)
         if not ifaces:
