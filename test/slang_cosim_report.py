@@ -103,6 +103,23 @@ def emit(out):
         for r in sorted(g["shared"], key=lambda r: (r["family"], r["module"])):
             A(f"| {r['family']} | `{r['module']}` | {r['slang']} |")
 
+    if UHDM_ONLY:
+        A("\n## The other direction: read_slang clean, OUR netlist wrong\n")
+        A("The same measurement, read the other way round.  These rows are defects in\n"
+          "THIS frontend, not in read_slang, and they belong in the same document: a\n"
+          "file that only ever lists the other tool's mistakes is not a measurement,\n"
+          "it is advocacy.\n")
+        A("The 2026-09-30 round is the case in point.  Binding cvw's configuration\n"
+          "made 234 rows comparable for the first time and 68 of them landed here at\n"
+          "once — one cause, and ours: the generated wrapper put the configuration in\n"
+          "the compilation unit, where Surelog drops the instance's binding, so\n"
+          "`read_uhdm` imported every module with `P` unbound and `P.XLEN` one bit\n"
+          "wide.  Two rows survive the fix.\n")
+        A("| Sweep | Module | read_uhdm diverging cycles | formal vs slang |")
+        A("|---|---|---|---|")
+        for r in sorted(UHDM_ONLY, key=lambda r: (r["family"], r["module"])):
+            A(f"| {r['family']} | `{r['module']}` | {r['uhdm']} | {r['formal']} |")
+
     if g["unmeasured"]:
         A("\n## Not yet re-measured\n")
         A("Carried from the last CI report; the `read_uhdm` side has not been run\n"
@@ -123,7 +140,7 @@ def emit(out):
     A("Regenerate with `test/slang_cosim_report.py` after a sweep cycle.  A row moves\n"
       "out of this file the moment its sweep reports the slang column clean.\n")
     open(out, "w").write("\n".join(L) + "\n")
-    print(f"{out}: report={len(g['report'])} adjudicate={len(g['adjudicate'])} "
+    print(f"{out}: uhdm_only={len(UHDM_ONLY)} report={len(g['report'])} adjudicate={len(g['adjudicate'])} "
           f"shared={len(g['shared'])} unmeasured={len(g['unmeasured'])} cleared={len(g['clean'])}")
 
 # ------------------------------------------------------------ the sweep rows
@@ -159,6 +176,12 @@ def _uhdm_div(cell):
 
 NOREF = []            # rows read_slang cannot read at all -- the other report
 RUNS = {}
+# The other half of the same measurement: rows where the read_slang netlist
+# tracks the RTL and OURS does not.  The file used to drop these on the floor --
+# load_sweeps only recorded a row when the slang column was bad -- which made a
+# document about read_slang read as if read_uhdm were never wrong.  It is, and
+# the 2026-09-30 cvw round is the proof: 68 rows at once, all one cause.
+UHDM_ONLY = []
 
 def load_sweeps(root):
     import glob
@@ -181,6 +204,11 @@ def load_sweeps(root):
                 NOREF.append((fam, mod, formal))
                 continue
             if not c[0].startswith(("❌", "⚠")):
+                # read_slang clean: is OUR netlist?
+                ud = _uhdm_div(cos)
+                if c[0].startswith("✅") and ud:
+                    UHDM_ONLY.append(dict(family=fam, module=mod, uhdm=ud,
+                                          formal=formal, run=run))
                 continue
             add(fam, mod, _num(c[0]), _uhdm_div(cos), FIRST.get(mod, ""), f"CI run {run}")
 
