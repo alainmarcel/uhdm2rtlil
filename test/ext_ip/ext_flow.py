@@ -667,6 +667,14 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                 files = _with_wrapper_packages(cl, files, pick[0]) + [pick[0]]
                 top = pick[1]
                 break
+        # The shim cannot chain onto a configuration wrapper: that wrapper
+        # declares its ports NON-ANSI (the configuration include has to precede
+        # them), and gen_flat_wrapper reads an ANSI port list.  So a module with
+        # an unpacked-array port AND a configuration parameter still cannot be
+        # co-simulated port-by-port ("Illegal input port connection
+        # 'PMPCFG_ARRAY_REGW', mismatch between port which is an array" -- cvw's
+        # mmu, rvvisynth).  Flattening an array port on the RTL side of the
+        # testbench is the fix, and it belongs in netlist_cosim.py.
         flat = None if (ifcw or cfgw) else _flat_wrapper(w, m, files)
         if flat:
             files = files + [flat[0]]
