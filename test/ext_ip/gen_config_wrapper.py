@@ -23,6 +23,7 @@ with `#(P)`, resolves every width against the real configuration.
 usage: gen_config_wrapper.py --module M --manifest fam.json --out M_cfg.sv <srcs...>
 exit 3 = the module declares no such parameter (nothing to do).
 """
+import os
 import argparse, json, re, sys
 from pathlib import Path
 
@@ -118,6 +119,20 @@ def main():
     # busfsm has `parameter logic READ_ONLY` -- and inventing a configuration is
     # exactly what this harness is trying to stop doing, so decline instead and
     # let the row stay honestly unmeasured.
+    # What the configuration includes already declare, so the wrapper does not
+    # declare it twice.
+    cfg_defined = set()
+    ext_root = os.environ.get("EXT_IP_ROOT", os.path.expanduser("~/ext"))
+    for inc in cfg.get("includes", []):
+        for root, _d, fs in os.walk(ext_root):
+            if inc in fs:
+                try:
+                    cfg_defined |= set(re.findall(
+                        r"localparam\s+(?:[^=;]*?\s)?(\w+)\s*=",
+                        open(os.path.join(root, inc), errors="replace").read()))
+                except OSError:
+                    pass
+                break
     extra = []
     for ent in rest_params.split(","):
         ent = re.sub(r"//[^\n]*", "", ent).strip().rstrip(")").strip()
@@ -130,6 +145,11 @@ def main():
             continue
         if not eq or not dflt.strip():
             sys.exit(3)
+        # The configuration include may declare the same name -- cvw's config.vh
+        # has INSTR_CLASS_PRED, which icpred also takes as a parameter -- and a
+        # second declaration is a hard error ("Duplicate declaration of signal").
+        if ids[-1] in cfg_defined:
+            continue
         extra.append(f"  localparam {ids[-1]} = {dflt.strip()};")
     # `P.XLEN` -> `XLEN`: parameter-defs.vh fills each field from an
     # identically-named localparam of the config, so the names already agree.
@@ -138,31 +158,49 @@ def main():
     ports = re.sub(r"//[^\n]*", "", ports)
     ports = "\n".join(l.rstrip() for l in ports.splitlines() if l.strip())
     # The port NAMES, for a non-ANSI header (see below).
-    NETKW = {"logic", "wire", "reg", "bit", "var", "signed", "unsigned", "tri"}
+    def split_top_commas(t):
+        out, depth, cur = [], 0, []
+        for ch in t:
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                depth -= 1
+            if ch == "," and depth == 0:
+                out.append("".join(cur)); cur = []
+            else:
+                cur.append(ch)
+        if "".join(cur).strip():
+            out.append("".join(cur))
+        return [x.strip() for x in out if x.strip()]
+
+    def port_name(item):
+        """The NAME of one port item: the last identifier not inside brackets.
+
+        `var logic [7:0] PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0]` (cvw's mmu) has
+        its unpacked dimension AFTER the name, and a left-to-right token walk
+        consumed the name as a type -- Verilator then said "Input/output/inout
+        does not appear in port list".  `tlul_pkg::tl_h2d_t tl_i` must not yield
+        the package, and `input logic a, b, c` must yield all three.
+        """
+        mask, depth = [], 0
+        for ch in item:
+            if ch == "[":
+                depth += 1
+            mask.append(" " if (depth or ch == "]") else ch)
+            if ch == "]":
+                depth -= 1
+        ids = re.findall(r"[A-Za-z_]\w*", "".join(mask))
+        return ids[-1] if ids else ""
+
     names = []
-    for line in ports.splitlines():
-        e = re.sub(r"//[^\n]*", "", line).strip().rstrip(",").strip()
-        m = re.match(r"^(input|output|inout)\b(.*)$", e)
-        if not m:
+    for item in split_top_commas(ports):
+        e = re.sub(r"//[^\n]*", "", item).strip()
+        if not e:
             continue
-        rest = m.group(2).strip()
-        # Strip the type: leading net keywords, a user type name, and any packed
-        # dimensions, in any order.  `input var [PERIPHS-1:0][XLEN-1:0] PRDATA`
-        # (cvw's ahbapbbridge) kept `var [..][..] PRDATA` as a "name" with a
-        # regex that only knew logic/wire/reg/bit, and the wrapper's port list
-        # then did not parse at all.
-        while True:
-            m2 = re.match(r"^(\[[^\]]*\]|[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?)\s*(.*)$", rest)
-            if not m2:
-                break
-            tok, tail = m2.group(1), m2.group(2)
-            # the LAST identifier(s) are the port names: stop when what remains
-            # has no further type tokens (no brackets, no following identifier)
-            if not tok.startswith("[") and tok not in NETKW and \
-               not re.match(r"^(\[|[A-Za-z_])", tail):
-                break
-            rest = tail
-        names += [x.strip() for x in rest.split(",") if x.strip()]
+        e = re.sub(r"^(input|output|inout)\b", "", e).strip()
+        n = port_name(e)
+        if n:
+            names.append(n)
     imports = "".join(f"import {p};\n" for p in cfg.get("import", []))
     incs = "".join(f'  `include "{h}"\n' for h in cfg.get("includes", []))
     decls = "\n".join("  " + l.strip().rstrip(",") + ";" for l in ports.splitlines() if l.strip())
