@@ -54,7 +54,13 @@ LOW_RE = re.compile(r"(_n|_ni|_b|_l|_n_i|_b_i)$|(^|_)por_n|pwrgood|_l_i$")
 WIRE = re.compile(r"^\s+wire\s+(?:width\s+(\d+)\s+)?(?:offset\s+(-?\d+)\s+)?"
                   r"(input|output|inout)\s+\d+\s+\\(\S+)\s*$")
 # `axi_if.w_sub  s_axi_w_if,`  (an interface port, with modport)
-IFACE_PORT = re.compile(r"^\s*([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*,?\s*(?://.*)?$")
+# `axi_if.w_sub s_axi_w_if,` and the ARRAY form `AXI_BUS.Master mst [N-1:0]`
+# (PULP's axi_demux_intf / axi_mux_intf / axi_xbar_intf).  An array port needs an
+# array of interface INSTANCES in the wrapper and one set of flat ports per
+# element; without it the row could not be co-simulated at all ("Interface port
+# 'mst' is not connected to interface/modport pin expression").
+IFACE_PORT = re.compile(r"^\s*([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s+([A-Za-z_]\w*)"
+                        r"\s*(\[[^\]]*\])?\s*,?\s*(?://.*)?$")
 
 
 
@@ -180,6 +186,47 @@ def module_value_params(txt, name):
     return out
 
 
+def _dim_count(dim, params):
+    """Element count of an interface-array dimension: `[3]`, `[N-1:0]`, `[0:N-1]`.
+
+    The bounds may name the DUT's own parameters, which the manifest has already
+    bound to values, so substitute those and evaluate.
+    """
+    inner = dim.strip().strip("[]").strip()
+    if not inner:
+        return None
+    def val(expr):
+        e = expr
+        for _ in range(8):      # parameters may be defined in terms of others
+            new = re.sub(r"[A-Za-z_]\w*",
+                         lambda m: str(params.get(m.group(0), m.group(0))), e)
+            if new == e:
+                break
+            e = new
+        # SystemVerilog literals: `32'd3`, `4'hf`, `8'b1010`, plain decimals.
+        # A naive `replace("'d", "")` turned `32'd3` into THREE HUNDRED AND
+        # TWENTY-THREE and sized an interface array at 323 elements.
+        def lit(m):
+            w, base, digits = m.group(1), (m.group(2) or "d").lower(), m.group(3)
+            try:
+                return str(int(digits, {"d": 10, "h": 16, "b": 2, "o": 8}[base]))
+            except (ValueError, KeyError):
+                return "0"
+        e = re.sub(r"(\d+)'([sSdDhHbBoO]?)[sS]?([0-9a-fA-F_]+)", lit, e)
+        try:
+            return int(eval(e, {"__builtins__": {}}, {}))
+        except Exception:
+            return None
+    if ":" in inner:
+        a, b = inner.split(":", 1)
+        va, vb = val(a), val(b)
+        if va is None or vb is None:
+            return None
+        return abs(va - vb) + 1
+    v = val(inner)
+    return v if v and v > 0 else None
+
+
 def _iface_port_conns(ihdr, plain):
     """`.clk(clk_i), .rst_n(cptra_rst_b)` for an interface's OWN ports.
 
@@ -211,7 +258,11 @@ def _iface_port_conns(ihdr, plain):
 
 
 def iface_body(txt, iface):
-    """(header, body) text of `interface <iface> ... endinterface`."""
+    """(header, body) text of `interface <iface> ... endinterface`.
+
+    Also records the whole file in `iface_body.src`, because the macros its body
+    invokes are defined by an `include` at the top of that file.
+    """
     for src in txt.values():
         m = re.search(r"^\s*interface\s+" + re.escape(iface) + r"\b", src, re.M)
         if not m:
@@ -219,6 +270,7 @@ def iface_body(txt, iface):
         end = re.search(r"^\s*endinterface\b", src[m.end():], re.M)
         stop = m.end() + (end.start() if end else len(src) - m.end())
         semi = src.find(";", m.end())
+        iface_body.src = src
         return src[m.end():semi], src[semi + 1:stop]
     return None, None
 
@@ -363,7 +415,7 @@ def iface_ports_of(txt, top):
         line = re.sub(r"//.*", "", line)
         m = IFACE_PORT.match(line)
         if m and not re.match(r"^(input|output|inout|logic|wire|reg|bit|parameter|localparam|import)$", m.group(1)):
-            found[m.group(3)] = (m.group(1), m.group(2))
+            found[m.group(3)] = (m.group(1), m.group(2), (m.group(4) or "").strip())
     return found
 
 
@@ -398,6 +450,8 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
     decls, insts, conns, dut, plines = [], [], [], [], []
     seen_param = set()
     locals_, imports = [], []
+    macro_typedefs, macro_includes = [], []
+    param_vals = {}
     # The DUT's own (non-interface) ports come first: an interface with its own
     # `(input logic clk, input logic rst_n)` has to be tied to the DUT's clock
     # and reset, and those are among these.
@@ -414,8 +468,15 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         mm = re.match(r"^(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\[[^\]]*\]\s*)?(\w+)$", line)
         if mm:
             plain.append((mm.group(1), mm.group(2) or "", mm.group(3)))
-    for base, (iface, modport) in sorted(ifaces.items()):
+    # The DUT's own value parameters, for sizing an interface ARRAY port.
+    dut_value_params = {}
+    for dn, dflt in module_value_params(txt, rtl_top):
+        v = dut_params.get(dn) or bound_value(value_rules, dn, dflt) or dflt
+        if v:
+            dut_value_params[dn] = v
+    for base, (iface, modport, adim) in sorted(ifaces.items()):
         hdr, body = iface_body(txt, iface)
+        src_of_iface = getattr(iface_body, "src", "")
         if hdr is None:
             sys.exit(f"# gen_iface_wrapper: no declaration for interface {iface}")
         # the interface's own parameters become the WRAPPER's parameters, so the
@@ -428,6 +489,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                 continue
             seen_param.add(nm)
             val = iface_params.get(nm) or bound_value(value_rules, nm, dflt) or dflt
+            param_vals[nm] = val
             plines.append(f"  parameter int unsigned {nm} = {val}")
         # Localparams and typedefs must reach the PORT LIST, which the ports
         # below are declared with -- so they go into the ANSI parameter list as
@@ -438,6 +500,22 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             e = lp.rstrip(";").strip()
             if e not in locals_:
                 locals_.append(e)
+        # A member type may be built by a MACRO rather than a `typedef`:
+        # PULP's AXI_BUS_ASYNC_GRAY declares its channels with
+        # `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)`.  Those have
+        # to be emitted at FILE scope (a macro invocation cannot be a
+        # `localparam type` entry in a parameter list), together with the
+        # include that defines them -- otherwise the wrapper names a type
+        # nothing declares and Verilator stops at "Can't find
+        # typedef/interface: 'aw_chan_t'", which the sweep could only report as
+        # "skip (sim build)" with no measurement at all.
+        for mline in re.findall(r"^[ \t]*(`[A-Z][A-Z0-9_]*\s*\([^\n]*\))[ \t]*$",
+                                body, re.M):
+            if mline not in macro_typedefs:
+                macro_typedefs.append(mline)
+        for inc in re.findall(r"^[ \t]*(`include\s+\"[^\"]+\")", src_of_iface, re.M):
+            if inc not in macro_includes:
+                macro_includes.append(inc)
         for td in iface_typedefs(body):
             # `typedef logic [AXI_ID_WIDTH-1:0] id_t;` -> `localparam type id_t = logic [AXI_ID_WIDTH-1:0]`
             mm = re.match(r"typedef\s+(.*?)\s+(\w+)\s*;\s*$", td.strip(), re.S)
@@ -463,20 +541,47 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         # interface ports (caliptra-ss axi_mem has three) would otherwise be
         # handed the union, and read_slang rejects the instance outright
         # ("parameter 'DW' does not exist in ...").
-        pv = ", ".join(f".{n}({n})" for n in my_param)
+        # Pass the VALUES, not the names: the parameters live at file scope now,
+        # and Surelog records a parameter actual that is a compilation-unit
+        # localparam with NO right-hand side -- the interface instance then has
+        # P unbound, its members go degenerate, and the row diverges from the
+        # RTL by hundreds of cycles while read_slang (which resolves it) stays
+        # clean.  That is the same trap the cvw configuration wrapper hit.
+        pv = ", ".join(f".{n}({param_vals.get(n, n)})" for n in my_param)
         pfx = f"#({pv}) " if pv else ""
-        insts.append(f"  {iface} {pfx}{base}_i ({_iface_port_conns(hdr, plain)});")
-        dut.append(f"    .{base}({base}_i.{modport})")
-        for ty, rng, mem in iface_members(body):
-            d = dirs.get(mem)
-            if not d:                      # not in this modport
-                continue
-            flat = f"{base}__{mem}"
-            decls.append(f"  {d} {ty} {rng + ' ' if rng else ''}{flat}")
-            if d == "input":
-                conns.append(f"  assign {base}_i.{mem} = {flat};")
-            else:
-                conns.append(f"  assign {flat} = {base}_i.{mem};")
+        iports = _iface_port_conns(hdr, plain)
+        # An interface ARRAY port (`AXI_BUS.Master mst [NO_MST_PORTS-1:0]`,
+        # PULP's axi_demux_intf / axi_mux_intf / axi_xbar_intf) needs an ARRAY
+        # of interface instances and one set of flat ports per element.  With a
+        # single instance the port cannot bind at all -- "Interface port 'mst'
+        # is not connected to interface/modport pin expression" -- and the row
+        # was reported as a skipped co-simulation with nothing measured.
+        count = 1
+        if adim:
+            count = _dim_count(adim, dut_value_params)
+            if count is None:
+                sys.exit(f"# gen_iface_wrapper: cannot size the interface array "
+                         f"port {base}{adim} of {rtl_top}")
+        if count > 1:
+            insts.append(f"  {iface} {pfx}{base}_i [{count-1}:0] ({iports});")
+            dut.append(f"    .{base}({base}_i)")
+        else:
+            insts.append(f"  {iface} {pfx}{base}_i ({iports});")
+            dut.append(f"    .{base}({base}_i.{modport})" if not adim
+                       else f"    .{base}({base}_i)")
+        for e in range(count):
+            sel = f"[{e}]" if count > 1 else ""
+            tag = f"_{e}" if count > 1 else ""
+            for ty, rng, mem in iface_members(body):
+                d = dirs.get(mem)
+                if not d:                  # not in this modport
+                    continue
+                flat = f"{base}{tag}__{mem}"
+                decls.append(f"  {d} {ty} {rng + ' ' if rng else ''}{flat}")
+                if d == "input":
+                    conns.append(f"  assign {base}_i{sel}.{mem} = {flat};")
+                else:
+                    conns.append(f"  assign {flat} = {base}_i{sel}.{mem};")
     # the DUT's own width parameters, matched by ROLE: this codebase spells them
     # ADDR_WIDTH / AXI_ADDR_WIDTH / ... interchangeably
     dparams = []
@@ -497,12 +602,48 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                  f"// Flat-port wrapper around {rtl_top}.  Its interface ports are\n"
                  f"// DEGENERATE standalone (the interface's width parameters default to 0),\n"
                  f"// so the ports below are the interface's own member declarations copied\n"
-                 f"// verbatim and the wrapper carries the interface's parameter names --\n"
-                 f"// no width has to be evaluated here.\n"
-                 f"module {rtl_top}_flat"
-                 + (" import " + ", ".join(imports) + ";" if imports else "")
-                 + " #(\n")
-        fh.write(",\n".join(plines + ["  " + l for l in locals_]) + "\n) (\n")
+                 f"// verbatim.\n")
+        if macro_typedefs:
+            fh.write(
+                 f"//\n"
+                 f"// This interface declares its member types with MACROS\n"
+                 f"// (`AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, ...)`, PULP's\n"
+                 f"// AXI_BUS_ASYNC_GRAY), and a macro invocation cannot be a `localparam\n"
+                 f"// type` entry in a parameter list -- so for THIS shape the whole chain\n"
+                 f"// (parameters, localparams, typedefs, macros) is emitted at file scope,\n"
+                 f"// where the macros can see what they need.  The parameter-list form\n"
+                 f"// below is kept for every other interface: file-scope parameters would\n"
+                 f"// otherwise reach the interface instance as a compilation-unit\n"
+                 f"// localparam, which Surelog records with no right-hand side (the same\n"
+                 f"// trap the cvw configuration wrapper hit) -- axi_cut_intf went from\n"
+                 f"// equivalent to 280 diverging cycles that way.\n")
+        for inc in macro_includes:
+            fh.write(inc + "\n")
+        for imp in imports:
+            fh.write(f"import {imp};\n")
+        for pl in (plines if macro_typedefs else []):
+            fh.write(re.sub(r"^parameter\b", "localparam", pl.strip()) + ";\n")
+        for l in (locals_ if macro_typedefs else []):
+            e = l.strip()
+            m_lt = re.match(r"^localparam\s+type\s+(\w+)\s*=\s*(.+)$", e)
+            # `localparam type id_t = logic [W-1:0]` is a parameter-list form;
+            # at file scope the same thing is `typedef logic [W-1:0] id_t;`
+            # (name LAST -- emitting it in parameter order gave
+            # `typedef id_t logic [...]`, which is a syntax error).
+            fh.write((f"typedef {m_lt.group(2).rstrip(';')} {m_lt.group(1)};\n")
+                     if m_lt else (e.rstrip(";") + ";\n"))
+        for td in macro_typedefs:
+            fh.write(td + "\n")
+        fh.write("\n")
+        if macro_typedefs:
+            fh.write(f"module {rtl_top}_flat"
+                     + (" import " + ", ".join(imports) + ";" if imports else "")
+                     + " (\n")
+        else:
+            fh.write(f"module {rtl_top}_flat"
+                     + (" import " + ", ".join(imports) + ";" if imports else "")
+                     + " #(\n")
+            fh.write(",\n".join(plines + ["  " + l for l in locals_]) + "\n) (\n")
         fh.write(",\n".join(decls) + "\n);\n\n")
         fh.write("\n".join(insts) + "\n\n")
         pv = (" #(" + ", ".join(dparams) + ")") if dparams else ""
