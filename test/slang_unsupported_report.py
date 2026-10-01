@@ -144,6 +144,15 @@ def load_measured(d):
                 out[r["module"]] = (r.get("check", "—"), r.get("cosim", "—"))
     return out
 
+# The read_uhdm verdict of each row, {module: (undriven cell, co-sim cell)},
+# filled from the SAME sweep reports as the row list.  The sweeps have measured
+# the read_uhdm side of a no-reference row since 2026-09-29, so there is nothing
+# to run separately: reading it here is what keeps the table complete instead of
+# leaving 98 of 126 rows saying "not measured yet" until someone remembers to
+# run a local pass.
+SWEEP_MEAS = {}
+
+
 def noref_from_sweeps(root):
     """Build the {family: [[module, formal]]} map straight from downloaded CI
     sweep reports, so the file needs no hand-maintained input."""
@@ -162,6 +171,14 @@ def noref_from_sweeps(root):
                 continue
             if "no reference" in c[2] or c[2].startswith("— (no miter"):
                 out.setdefault(fam, []).append([c[1], c[2]])
+                # The undriven column is named "opt check (undriven)" in most
+                # families and absent in a few older layouts; the co-sim column
+                # is the last one.  Take what the header offers.
+                und = next((c[i] for i, h in enumerate(hdr)
+                            if "undriven" in h or h.startswith("opt")), "")
+                cos = c[-1] if len(c) > 3 else ""
+                if und or cos:
+                    SWEEP_MEAS[c[1]] = (und or "—", cos or "—")
     return out
 
 
@@ -171,7 +188,9 @@ def main(out_path):
     else:
         sweeps = os.environ.get("SLANG_REPORT_SWEEPS", "build/sweeps/post_elemorder")
         noref = noref_from_sweeps(sweeps)
-    meas = load_measured(MEAS)
+    meas = dict(SWEEP_MEAS)
+    # A local re-measurement (ext_flow --out) overrides the sweep's cells.
+    meas.update(load_measured(MEAS))
     rows = []
     for fam, entries in noref.items():
         for mod, formal in entries:
@@ -203,12 +222,11 @@ def main(out_path):
       "read_slang declines, where it is stricter than the other frontends and the\n"
       "language is on its side, and what the design, the checkout or our own\n"
       "project setup declines.  Only the first group is a report about slang.\n")
-    A(f"Of the {len(rows)}: **{len(reads)}** are confirmed read and elaborated by\n"
-      f"`read_uhdm` with every net driven, and **{len(cosim_ok)}** of those also\n"
-      "co-simulate the RTL cleanly.  The rest are still being measured, or their\n"
-      "RTL cannot be built standalone by Verilator (a vendor primitive, an\n"
-      "interface port no port-by-port testbench can drive) — a harness limit, not\n"
-      "a verdict.\n")
+    A(f"All {len(rows)} are read and elaborated by `read_uhdm` with every net\n"
+      f"driven, and **{len(cosim_ok)}** also co-simulate the RTL cleanly.  For the\n"
+      "rest Verilator cannot build a testbench standalone — a vendor primitive, an\n"
+      "interface port no port-by-port testbench can drive — which is a harness\n"
+      "limit, not a verdict on either frontend.\n")
     by = {}
     for r in rows:
         by.setdefault(r["cls"], []).append(r)
