@@ -33,13 +33,30 @@ def module_header(txt, name):
     if not m:
         return None
     i = m.end()
-    # A value parameter of a named type with no default: `#(parameter cvw_t P)`.
-    pm = re.compile(r"#\s*\(\s*parameter\s+(\w+)\s+(\w+)\s*\)").search(txt, i, i + 4000)
+    # A value parameter of a named type with no default, FIRST in the list:
+    # `#(parameter cvw_t P)` and also `#(parameter cvw_t P, parameter Depth = 10)`
+    # -- 20 cvw rows (btb, busfsm, ahbapbbridge ...) declare a second parameter
+    # after the configuration and were declined by a pattern that required the
+    # list to end right after the name.  The others keep their defaults; `#(P)`
+    # binds positionally, which is what the design intends.
+    pm = re.compile(r"#\s*\(\s*parameter\s+(\w+)\s+(\w+)\s*[,)]").search(txt, i, i + 4000)
     if not pm:
         return None
     if pm.group(1) in ("type", "int", "logic", "bit", "integer", "real"):
         return None            # a plain value parameter, or PULP's type param
-    j = txt.find("(", pm.end() - 1 + 1)
+    # Walk to the end of the `#( ... )` parameter list, then the port list is the
+    # next parenthesised group.
+    popen = txt.find("(", pm.start())
+    depth, k = 0, popen
+    while k < len(txt):
+        if txt[k] == "(":
+            depth += 1
+        elif txt[k] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        k += 1
+    j = txt.find("(", k + 1)
     if j < 0:
         return None
     depth, k = 0, j
@@ -51,7 +68,25 @@ def module_header(txt, name):
             if depth == 0:
                 break
         k += 1
-    return pm.group(2), txt[j + 1:k]
+    # The port list ends at its own matching ')'.
+    depth, kp = 0, j
+    while kp < len(txt):
+        if txt[kp] == "(":
+            depth += 1
+        elif txt[kp] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        kp += 1
+    # The parameters AFTER the configuration one: a copied port may be declared
+    # with them (`input logic [PERIPHS-1:0] HSEL`, cvw's ahbapbbridge), and a
+    # wrapper that does not declare them does not parse at all.
+    rest = txt[pm.end():k]            # k is the param list's own ')'
+    # pm matched through the separator, so `rest` starts after it; cut anything
+    # from the first ')' in case the scan above overshot a nested group.
+    if ")" in rest:
+        rest = rest[:rest.index(")")]
+    return pm.group(2), txt[j + 1:kp], rest
 
 
 def main():
@@ -76,7 +111,26 @@ def main():
             break
     if not hdr:
         sys.exit(3)
-    pname, ports = hdr
+    pname, ports, rest_params = hdr
+    # Declare the DUT's OTHER parameters as localparams, with their own
+    # defaults, so a port declared with one of them resolves in the wrapper.
+    # A parameter with NO default would have to be invented here -- cvw's
+    # busfsm has `parameter logic READ_ONLY` -- and inventing a configuration is
+    # exactly what this harness is trying to stop doing, so decline instead and
+    # let the row stay honestly unmeasured.
+    extra = []
+    for ent in rest_params.split(","):
+        ent = re.sub(r"//[^\n]*", "", ent).strip().rstrip(")").strip()
+        if not ent or not ent.startswith("parameter"):
+            continue
+        body = ent[len("parameter"):].strip()
+        name, eq, dflt = body.partition("=")
+        ids = re.findall(r"[A-Za-z_]\w*", name)
+        if not ids:
+            continue
+        if not eq or not dflt.strip():
+            sys.exit(3)
+        extra.append(f"  localparam {ids[-1]} = {dflt.strip()};")
     # `P.XLEN` -> `XLEN`: parameter-defs.vh fills each field from an
     # identically-named localparam of the config, so the names already agree.
     ports = re.sub(r"\b" + re.escape(pname) + r"\s*\.\s*", "", ports)
@@ -84,12 +138,31 @@ def main():
     ports = re.sub(r"//[^\n]*", "", ports)
     ports = "\n".join(l.rstrip() for l in ports.splitlines() if l.strip())
     # The port NAMES, for a non-ANSI header (see below).
+    NETKW = {"logic", "wire", "reg", "bit", "var", "signed", "unsigned", "tri"}
     names = []
     for line in ports.splitlines():
-        m = re.match(r"\s*(input|output|inout)\s+(?:logic|wire|reg|bit)?\s*"
-                     r"(?:\[[^\]]*\]\s*)*(.*)$", line.rstrip().rstrip(","))
-        if m:
-            names += [x.strip() for x in m.group(2).split(",") if x.strip()]
+        e = re.sub(r"//[^\n]*", "", line).strip().rstrip(",").strip()
+        m = re.match(r"^(input|output|inout)\b(.*)$", e)
+        if not m:
+            continue
+        rest = m.group(2).strip()
+        # Strip the type: leading net keywords, a user type name, and any packed
+        # dimensions, in any order.  `input var [PERIPHS-1:0][XLEN-1:0] PRDATA`
+        # (cvw's ahbapbbridge) kept `var [..][..] PRDATA` as a "name" with a
+        # regex that only knew logic/wire/reg/bit, and the wrapper's port list
+        # then did not parse at all.
+        while True:
+            m2 = re.match(r"^(\[[^\]]*\]|[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?)\s*(.*)$", rest)
+            if not m2:
+                break
+            tok, tail = m2.group(1), m2.group(2)
+            # the LAST identifier(s) are the port names: stop when what remains
+            # has no further type tokens (no brackets, no following identifier)
+            if not tok.startswith("[") and tok not in NETKW and \
+               not re.match(r"^(\[|[A-Za-z_])", tail):
+                break
+            rest = tail
+        names += [x.strip() for x in rest.split(",") if x.strip()]
     imports = "".join(f"import {p};\n" for p in cfg.get("import", []))
     incs = "".join(f'  `include "{h}"\n' for h in cfg.get("includes", []))
     decls = "\n".join("  " + l.strip().rstrip(",") + ";" for l in ports.splitlines() if l.strip())
@@ -113,7 +186,8 @@ def main():
         f"module {a.module}_cfg ({', '.join(names)});\n"
         f"{imports and ''.join('  ' + l + chr(10) for l in imports.splitlines())}"
         f"{incs}"
-        f"{decls}\n"
+        + ("\n".join(extra) + "\n" if extra else "")
+        + f"{decls}\n"
         f"  {a.module} #({pname}) dut (.*);\n"
         f"endmodule\n")
     print(f"{a.module}: bound {pname} from {', '.join(cfg.get('includes', []))}")
