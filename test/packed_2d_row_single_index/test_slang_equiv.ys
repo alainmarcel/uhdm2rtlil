@@ -1,0 +1,20 @@
+# read_verilog cannot parse the `parameter type` half at all, so the ordinary
+# verilog-vs-uhdm comparison is vacuous here and this miter is the real gate.
+# Without the fix `row` and `u_leaf`'s input carry only the base element (12 of
+# 24 bits) while the nested `n` is unaffected, so this fails on the single-index
+# outputs alone.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter
