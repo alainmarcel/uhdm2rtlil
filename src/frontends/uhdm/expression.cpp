@@ -11030,6 +11030,22 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     return r;
 }
 
+// Bits selected by ONE index into a packed array of `elem_w`-bit elements
+// whose outer dimension is [l:r].  That is `total / N`, which equals `elem_w`
+// for a plain one-dimensional array and is LARGER when the declaration has more
+// packed dimensions below the outer one (`payload_t [3:0][3:0]`: 54-bit
+// elements, 216-bit rows).  Falls back to `elem_w` whenever the outer count
+// does not divide the base, so a sub-slice base can never be misread.
+static int packed_row_width(int total, int elem_w, int outer_l, int outer_r) {
+    if (outer_l < 0 || outer_r < 0 || elem_w <= 0 || total <= 0)
+        return elem_w;
+    int n = std::abs(outer_l - outer_r) + 1;
+    if (n <= 1 || total % n != 0)
+        return elem_w;
+    int row = total / n;
+    return (row > elem_w && row % elem_w == 0) ? row : elem_w;
+}
+
 RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing bit select\n");
@@ -12029,6 +12045,20 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             log("    Bit select index: %d\n", idx);
 
         if (packed_elem_w > 1) {
+            // ONE index into an array of N elements selects total/N bits.
+            // `packed_elem_width` is the BASE element (it has to be: a nested
+            // `a[i][j]` steps the inner index by it), so on an array with more
+            // packed dimensions below the outer one it is only PART of a row:
+            // `payload_t [3:0][3:0] out_data` (PULP cc_stream_xbar) has 54-bit
+            // payloads and 216-bit rows, and `out_data[j]` handed the arbiter
+            // behind it 54 of the 216 bits -- one input instead of four
+            // (axi_to_mem_banked_intf, 280 diverging cycles with the
+            // read_slang netlist clean).  Deriving the row from the base this
+            // select was given also composes for the nested form, because the
+            // outer select has already narrowed `base` to one row by then
+            // (`status_t [1:0][1:0]` + `a[0][0]`: 8 -> 4 -> 2 bits).
+            int row_w = packed_row_width(base.size(), packed_elem_w,
+                                         packed_outer_l, packed_outer_r);
             int outer_lo = std::min(packed_outer_l, packed_outer_r);
             int outer_hi = std::max(packed_outer_l, packed_outer_r);
             // Ascending [0:N] puts element `low` at the MSBs (fpnew's
@@ -12036,14 +12066,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             bool asc = (packed_outer_l >= 0 && packed_outer_r >= 0 &&
                         packed_outer_l < packed_outer_r);
             int slot = asc ? (outer_hi - idx) : (idx - outer_lo);
-            int off = slot * packed_elem_w;
-            if (off < 0 || off + packed_elem_w > base.size()) {
+            int off = slot * row_w;
+            if (off < 0 || off + row_w > base.size()) {
                 log_warning("Packed array element index %d is out of range "
                             "for wire '%s' (elem_w=%d, total=%d)\n",
-                            idx, signal_name.c_str(), packed_elem_w, base.size());
-                return RTLIL::SigSpec(RTLIL::State::Sx, packed_elem_w);
+                            idx, signal_name.c_str(), row_w, base.size());
+                return RTLIL::SigSpec(RTLIL::State::Sx, row_w);
             }
-            return base.extract(off, packed_elem_w);
+            return base.extract(off, row_w);
         }
 
         // Vector declared with a NON-ZERO LSB index (`logic [31:1] q`):
@@ -12273,6 +12303,12 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
+    // Same rule as the constant-index path: ONE index into an array of N
+    // elements selects total/N bits, which is more than the BASE element when
+    // the declaration has further packed dimensions below the outer one
+    // (`my_t [1:0][1:0] e` with a dynamic `e[k]` took 12 of the row's 24 bits).
+    element_width = packed_row_width(base.size(), element_width,
+                                     outer_left, outer_right);
     if (mode_debug)
         log("    Creating $shiftx for dynamic bit select (element_width=%d)\n", element_width);
 
