@@ -3818,6 +3818,24 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec(
     return tp_cur;
 }
 
+// The enclosing module instance of a node, skipping GENERATE SCOPES.  A
+// generate block is a `scope` but not a `module_inst`, so stepping straight to
+// `VpiParent()` as a module_inst stops an ancestor walk dead at the first
+// generate block -- and that is where the type-parameter bindings above it
+// live.  PULP's cc_stream_xbar declares `spill_data_t = struct packed {
+// payload_t data; idx_inp_t idx; }` inside `for (genvar j ...) begin : gen_outs`
+// and relays it to cc_spill_register: measured from the child instance the walk
+// never reached the xbar, `payload_t` fell back to its default
+// `logic [DataWidth-1:0]` (DataWidth = 1), and the spill register's data port
+// came out 3 bits instead of 56.  The identical code OUTSIDE a generate block
+// resolved correctly, which is why this survived so long.
+static const UHDM::module_inst* enclosing_module_inst(const UHDM::any* n) {
+    for (const UHDM::any* p = n ? n->VpiParent() : nullptr; p; p = p->VpiParent())
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(p))
+            return mi;
+    return nullptr;
+}
+
 const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
         const UHDM::typespec* ts_c, const UHDM::scope* inst) {
     auto mi = dynamic_cast<const UHDM::module_inst*>(
@@ -3837,7 +3855,7 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
         !ts_c->VpiName().empty()) {
         std::string want(ts_c->VpiName());
         for (int depth = 0; mi && depth < 8; depth++,
-             mi = dynamic_cast<const UHDM::module_inst*>(mi->VpiParent())) {
+             mi = enclosing_module_inst(mi)) {
             if (!mi->Parameters()) continue;
             for (auto p : *mi->Parameters()) {
                 if (p->UhdmType() != uhdmtype_parameter) continue;
@@ -3865,7 +3883,7 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
     // instance chain and try each level: the declaring ancestor's instance
     // carries the binding.
     for (int depth = 0; mi && depth < 8; depth++,
-         mi = dynamic_cast<const UHDM::module_inst*>(mi->VpiParent())) {
+         mi = enclosing_module_inst(mi)) {
         bool has_tp = false;
         if (mi->Parameters())
             for (auto p : *mi->Parameters())
