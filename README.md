@@ -58,7 +58,7 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (~1153 tests, ~30 min).  A PR lands
+`cd test && ./run_parallel.sh 6 --no-cva6` (~1154 tests, ~30 min).  A PR lands
 only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
@@ -179,7 +179,7 @@ our netlist tracks the RTL and `read_slang`'s does not, 14 still to adjudicate,
 that can only record another tool's mistakes is not a measurement.  That number
 was 74 one sweep earlier: binding cvw's configuration made 234 rows comparable
 for the first time and 68 of them failed at once, all on one cause and all ours.
-The same question is asked of both test suites — 1153 local tests and 511
+The same question is asked of both test suites — 1154 local tests and 511
 upstream Yosys tests — which is where the smallest reproducers come from.
 
 **What the reference frontend cannot read.** 92 sweep modules cannot be
