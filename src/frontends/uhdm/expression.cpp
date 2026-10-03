@@ -8053,8 +8053,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 expression_context_width = 0;
                 if (op_type == vpiMultiConcatOp)
                     force_const_fold = true;
-                if (self_det_rhs)
+                if (self_det_rhs) {
+                    // Self-determined means the amount's OWN width, not no
+                    // width at all: inside it, context-determined operators
+                    // still size their operands.  verilog-pcie's
+                    // `be << (addr_reg & ({PART_COUNT_WIDTH{1'b1}} << PART_OFFSET_WIDTH))`
+                    // has a 16-bit `&`, so the inner `1'b1 << 3` is evaluated
+                    // at 16 bits (= 8); imported under a width of 0 it kept
+                    // its 1-bit operand width and became 0, and every byte
+                    // enable landed in the wrong lane (ram_wr_cmd_be
+                    // 0x00d6 vs 0xd600, 269 of 301 cycles).
+                    expression_context_width =
+                        self_determined_width(operand, input_mapping);
                     expression_context_unsigned = false;
+                }
             }
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
             if (op_type == vpiConditionOp || op_type == vpiMultiConcatOp || self_det_rhs) {
