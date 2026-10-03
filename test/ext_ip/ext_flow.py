@@ -603,7 +603,7 @@ def _uhdm_only_cosim(w, m, top, cycles, ties, mem):
             "--srcs", str(w / "srcs.txt"), "--incs", str(w / "incs.txt"),
             "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
     if mem:
-        ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " + " ".join(shlex.quote(c) for c in ccmd)]
+        ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in ccmd]
     rc, out = sh(ccmd, cwd=w, timeout=3600)
     (cw / "cosim.log").write_text(out or "")
     mm = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+)", out or "")
@@ -901,7 +901,7 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
                 "--srcs", str(w / "srcs.txt"), "--incs", str(w / "incs.txt"),
                 "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
         if mem:
-            ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " + " ".join(shlex.quote(c) for c in ccmd)]
+            ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in ccmd]
         rc4, out4 = sh(ccmd, cwd=w, timeout=3600)
         (cw / "cosim.log").write_text(out4 or "")
         mm = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)", out4 or "")

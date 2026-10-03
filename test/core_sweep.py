@@ -16,7 +16,6 @@ The table is printed as GitHub-flavoured markdown; with $GITHUB_STEP_SUMMARY
 set it is appended there too, so the Action run page shows it directly.
 """
 import argparse
-import shlex
 import concurrent.futures as cf
 import glob
 import json
@@ -230,8 +229,7 @@ def _undriven_check(work_dir, top):
     mem = os.environ.get("MEM_LIMIT_KB")
     cmd = [str(yosys), "-q", "-m", str(plugin), "check_undriven.ys"]
     if mem:
-        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " +
-               " ".join(shlex.quote(c) for c in cmd)]
+        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in cmd]
     rc, out = sh(cmd, cwd=work_dir, timeout=1800)
     out = out or ""
     # Cache the flattened cell count (from `stat`) so the auto-miter gate can
@@ -1393,8 +1391,7 @@ def _inst_cosim(inst_dir, name, typ, srcs, incs, var, extra, ties, cycles):
     # as "skip (sim build)" instead of taking the runner down mid-shard.
     mem = os.environ.get("MEM_LIMIT_KB")
     if mem:
-        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec " +
-               " ".join(shlex.quote(c) for c in cmd)]
+        cmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in cmd]
     rc, out = sh(cmd, timeout=7200)
     (work / "cosim.log").write_text(out or "")
     return _cosim_cells(out, rc, cycles)
