@@ -1,6 +1,6 @@
 # Designs `read_slang` cannot read
 
-**92** modules across the nightly IP sweeps cannot be elaborated by
+**88** modules across the nightly IP sweeps cannot be elaborated by
 `read_slang` at all.  They carry no formal verdict for a plain reason: the
 sweeps prove `read_uhdm` against `read_slang`, and there is nothing to prove
 against.  They are not failures of this frontend — `read_uhdm` reads them —
@@ -14,7 +14,7 @@ read_slang declines, where it is stricter than the other frontends and the
 language is on its side, and what the design, the checkout or our own
 project setup declines.  Only the first group is a report about slang.
 
-All 92 are read and elaborated by `read_uhdm` with every net
+All 88 are read and elaborated by `read_uhdm` with every net
 driven, and **19** also co-simulate the RTL cleanly.  For the
 rest Verilator cannot build a testbench standalone — a vendor primitive, an
 interface port no port-by-port testbench can drive — which is a harness
@@ -29,8 +29,8 @@ link.
 
 | Construct | Modules | Sweeps |
 |---|---|---|
-| no answer inside the sweep's time budget (a read_slang performance limit) | 7 | verilog-ethernet |
 | a blocking assignment to a variable a non-blocking one already wrote | 3 | hdmi, verilog-pcie |
+| no answer inside the sweep's time budget (a read_slang performance limit) | 3 | verilog-ethernet |
 | an assignment pattern it judges incomplete | 2 | axi |
 | a non-blocking assignment in an initial block | 2 | verilog-ethernet, verilog-pcie |
 | an internal assertion inside read_slang (a crash, not a rejection) | 1 | axi |
@@ -157,17 +157,13 @@ One-off diagnostics; read the rows.
 | rp32 | `rp32_r5p_mouse_soc_top` | slang $readmemh | ✅ 0 undriven (6 never assigned in the source) | skip | — |
 | rp32 | `rp32_soc_vfriendly` | slang $readmemh | ✅ 0 undriven (4 never assigned in the source) | ✅ PASS (300 cycles, 300 active) | — |
 | verilog-ethernet | `axis_baser_rx_64` | cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | ✅ 0 undriven | ✅ PASS (301 cycles, 299 active) | — |
-| verilog-ethernet | `axis_eth_fcs_insert_64` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+axis_eth_fcs_insert_64&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `axis_srl_fifo` | non-blocking assignments unsupported in design initialization | ✅ 0 undriven | ❌ 261 div | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+axis_srl_fifo&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+non-blocking+assignments+unsupported+in+design+initialization%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `axis_xgmii_rx_32` | cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | ✅ 0 undriven | ✅ PASS (301 cycles, 293 active) | — |
 | verilog-ethernet | `eth_mac_phy_10g` | cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | ✅ 0 undriven (2 never assigned in the source) | skip (sim build) | — |
 | verilog-ethernet | `eth_mac_phy_10g_fifo` | cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | ✅ 0 undriven (2 never assigned in the source) | skip (sim build) | — |
 | verilog-ethernet | `eth_mac_phy_10g_rx` | cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | ✅ 0 undriven (2 never assigned in the source) | skip (sim build) | — |
-| verilog-ethernet | `eth_mac_phy_10g_tx` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_mac_phy_10g_tx&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `eth_phy_10g` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_phy_10g&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `eth_phy_10g_rx` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_phy_10g_rx&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
-| verilog-ethernet | `eth_phy_10g_rx_if` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_phy_10g_rx_if&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
-| verilog-ethernet | `eth_phy_10g_tx` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_phy_10g_tx&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `eth_phy_10g_tx_if` | no reference (read_slang fails) (read_slang did not finish within the sweep's 600 s budget) | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+eth_phy_10g_tx_if&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+no+reference+%28read_slang+fails%29+%28read_slang+did+not+finish+within+the+sweep%27s+600+s+budget%29%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-ethernet | `ssio_sdr_in_diff` | parameter 'IODDR_STYLE' does not exist in 'ssio_sdr_in' [-Wundefined-param-override] | ✅ 0 undriven | skip (sim build) | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+ssio_sdr_in_diff&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+parameter+%27IODDR_STYLE%27+does+not+exist+in+%27ssio_sdr_in%27+%5B-Wundefined-param-override%5D%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
 | verilog-pcie | `axis_srl_fifo` | non-blocking assignments unsupported in design initialization | ✅ 0 undriven | ❌ 261 div | [file an issue](https://github.com/YosysHQ/yosys/issues/new?title=read_slang%3A+cannot+elaborate+axis_srl_fifo&body=%60read_slang%60+cannot+read+this+design%3B+%60read_uhdm%60+does.%0A%0ADiagnostic%3A+non-blocking+assignments+unsupported+in+design+initialization%0A%0Aread_uhdm+on+the+same+sources%3A+%E2%9C%85+0+undriven%0A%0AYosys+0.69%2C+read_slang+from+the+vendored+sv-elab+%28povik%2Fsv-elab+%40+b4fd362%29.) |
