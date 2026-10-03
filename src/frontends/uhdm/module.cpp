@@ -4034,7 +4034,41 @@ UhdmImporter::declaring_instance_of_typeparam_default(const UHDM::any* typespec)
         }
         if (!decl_def.empty()) break;
     }
-    if (decl_def.empty()) return nullptr;
+    if (decl_def.empty()) {
+        // An ELABORATED instance carries its own copy of an un-overridden
+        // type parameter's default -- resolve_type_param_typespec hands that
+        // copy back, not the definition's node -- so the pointer scan above
+        // never matches it and the typespec was measured in the RECEIVING
+        // scope, where the parameter its range is written over sits at its
+        // own default.  PULP axi_lite_mailbox_intf declares
+        // `parameter int unsigned AXI_ADDR_WIDTH = 32'd0` and
+        // `parameter type addr_t = logic [AXI_ADDR_WIDTH-1:0]`, builds its
+        // channel structs over `addr_t`, and relays the request struct two
+        // modules down: every `ar.addr` / `aw.addr` member measured [-1:0],
+        // two bits, and the slave's address decoder saw two bits of the
+        // address -- 280 of 301 co-simulated cycles diverged while the plain
+        // axi_lite_mailbox (no type-parameter hop) was clean.  Match the
+        // ancestors' INSTANCE type-parameter actuals by pointer, and when
+        // current_instance is not set (a port actual being imported), find
+        // the owning instance through the copy's own parent chain.
+        for (const UHDM::any* a = current_instance; a; a = a->VpiParent()) {
+            auto mi = dynamic_cast<const UHDM::module_inst*>(a);
+            if (!mi || !mi->Parameters()) continue;
+            for (auto p : *mi->Parameters()) {
+                if (p->UhdmType() != uhdmtype_parameter) continue;
+                auto tp = any_cast<const UHDM::type_parameter*>(p);
+                if (tp->Typespec() && tp->Typespec()->Actual_typespec() == typespec)
+                    return mi;
+            }
+        }
+        bool via_tp = false;
+        for (const UHDM::any* q = typespec->VpiParent(); q; q = q->VpiParent()) {
+            if (q->UhdmType() == uhdmtype_parameter) { via_tp = true; continue; }
+            if (q->UhdmType() == uhdmmodule_inst)
+                return via_tp ? any_cast<const UHDM::module_inst*>(q) : nullptr;
+        }
+        return nullptr;
+    }
     // The relay runs downward, so the declaring module's elaborated instance
     // is an ANCESTOR of the one being imported.
     for (const UHDM::any* a = current_instance; a; a = a->VpiParent()) {
