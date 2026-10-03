@@ -8033,18 +8033,34 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // struct-param arithmetic count (`{{53+CVA6Cfg.VLEN-64{sign}}}`,
             // CVA6 instr_scan rvc_imm_o) folds instead of emitting cells and
             // zero-filling the replication.
+            // A shift AMOUNT (operand 1 of `<<` `>>` `<<<` `>>>`) and a power
+            // EXPONENT are self-determined (LRM §11.6.1, Table 11-21): the
+            // assignment's context width must not reach them.  Imported
+            // under a 64-bit context, `{31'h0, map, 1'h0} << ~(vAddr[4:0])`
+            // (XiangShan ICacheMainPipe) extended the 5-bit slice to 64 bits
+            // BEFORE the NOT, so the amount was 2^64-32+x and the aligned
+            // RVC map came out 0 in every cycle (153 of 301 diverged); the
+            // same leak made `x << (5'(a) + 5'h3)` shift by a 64-bit sum.
+            const bool self_det_rhs =
+                (op_type == vpiLShiftOp || op_type == vpiRShiftOp ||
+                 op_type == vpiArithLShiftOp || op_type == vpiArithRShiftOp ||
+                 op_type == vpiPowerOp) && operands.size() == 1;
             int cond_saved_ctx = expression_context_width;
             bool cond_saved_fcf = force_const_fold;
-            if ((op_type == vpiConditionOp || op_type == vpiMultiConcatOp) &&
-                operands.empty()) {
+            bool cond_saved_unsigned = expression_context_unsigned;
+            if (((op_type == vpiConditionOp || op_type == vpiMultiConcatOp) &&
+                 operands.empty()) || self_det_rhs) {
                 expression_context_width = 0;
                 if (op_type == vpiMultiConcatOp)
                     force_const_fold = true;
+                if (self_det_rhs)
+                    expression_context_unsigned = false;
             }
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
-            if (op_type == vpiConditionOp || op_type == vpiMultiConcatOp) {
+            if (op_type == vpiConditionOp || op_type == vpiMultiConcatOp || self_det_rhs) {
                 expression_context_width = cond_saved_ctx;
                 force_const_fold = cond_saved_fcf;
+                expression_context_unsigned = cond_saved_unsigned;
             }
             if (op_type == vpiConditionOp) {
                 log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
