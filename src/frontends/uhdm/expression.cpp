@@ -1595,9 +1595,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         int total = 0;
                         if (base_name == func_name)
                             total = result_wire ? result_wire->width : 0;
-                        else if (auto it = input_mapping.find(base_name);
-                                 it != input_mapping.end())
-                            total = (int)it->second.size();
+                        else {
+                            RTLIL::SigSpec b = func_local_base_for_select(
+                                base_name, input_mapping, func_call_context, local_var_widths);
+                            total = (int)b.size();
+                        }
                         int ew = 1, olo = 0;
                         if (total > 0 &&
                             bitselect_outer_dim(actual, total, ew, olo) && ew > 0)
@@ -1630,7 +1632,27 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         log("UHDM: Warning - non-constant bit select index in function %s\n", func_name.c_str());
                     }
                 } else {
-                    // Handle bit select on other variables
+                    // Handle bit select on other variables.
+                    //
+                    // A DECLARED local that has never been assigned whole is
+                    // not in input_mapping yet -- the part-select and indexed
+                    // part-select branches above materialise it on demand
+                    // through func_local_base_for_select, but this branch
+                    // looked the name up directly and fell through to the
+                    // generic path when it was absent.  That path resolved
+                    // the bare name against the MODULE and fabricated a
+                    // 1-bit wire `\e` for it, so every `e[k] = ...` wrote a
+                    // stray module wire while the function's own local stayed
+                    // at x, and `return e[2:0]` returned a constant 0.  VeeR's
+                    // f_Enc8to3 is exactly this (three bit writes to a local,
+                    // then `return Enc_value[2:0]`): CmdPtr0 was permanently
+                    // 0, every bus command picked buffer slot 0, and
+                    // css_mcu0_el2_lsu_bus_buffer diverged from the RTL on 164
+                    // of 301 co-simulated cycles -- while the bounded miter
+                    // passed, because a second CMD entry takes more cycles to
+                    // reach than it explores.
+                    func_local_base_for_select(base_name, input_mapping,
+                                               func_call_context, local_var_widths);
                     auto it = input_mapping.find(base_name);
                     if (it != input_mapping.end()) {
                         RTLIL::SigSpec index_sig;
