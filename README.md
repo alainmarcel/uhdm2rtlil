@@ -112,10 +112,10 @@ proof gap is never mistaken for a bug.
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules, plus the full core split into its 138 distinct instantiations (366 instances paired with `read_slang`) | **99 / 142 proven** · 136 / 136 co-sim · 136 / 142 opt-clean · full core lowers with 0 inferred latches · per-instantiation **129 / 138** | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **20 / 22 instances proven** · 21 / 21 co-sim · 0 undriven, 0 driver conflicts · full-chip co-sim NO_DIVERGENCE over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | the project's **hand-written** SystemVerilog arithmetic library — SRT dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**, which is Chisel | **18 / 21 proven** · 21 / 21 co-sim · 0 undriven on 20 of 21 · 3 SAT timeouts (64-bit divide datapaths) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
-| **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig`.  **There is no Verilog to read**: the RTL is the Chisel generator's output (1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules, one per file), published as the release asset [`xiangshan-rtl-e4566c29`](https://github.com/alainmarcel/uhdm2rtlil/releases/tag/xiangshan-rtl-e4566c29) and swept module by module in 16 CI shards | whole core elaborates clean (1981 modules / 6.52 M cells, 1 warning) · per-module **1599 / 2002 proven** · 1941 / 1944 co-sim · 1994 / 1994 opt-clean · 8 top blocks skipped (Surelog needs up to 36 GB) | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| **External IP** (11 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **795 / 871 comparable proven** of 1072 rows · 822 / 848 co-sim · 201 not comparable, down from 435 after four project-setup fixes | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig`.  **There is no Verilog to read**: the RTL is the Chisel generator's output (1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules, one per file), published as the release asset [`xiangshan-rtl-e4566c29`](https://github.com/alainmarcel/uhdm2rtlil/releases/tag/xiangshan-rtl-e4566c29) and swept module by module in 16 CI shards | whole core elaborates clean (1981 modules / 6.52 M cells, 1 warning) · per-module **1594 / 2002 proven** · 1942 / 1945 co-sim · 1994 / 1994 opt-clean · 8 top blocks skipped (Surelog needs up to 36 GB) | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
+| **External IP** (11 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **830 / 901 comparable proven** of 1072 rows · 867 / 892 co-sim · 171 not comparable, down from 435 after four project-setup fixes | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 
-Numbers above are the 2026-09-30 nightly runs.  What the Result column no longer
+Numbers above are the 2026-10-02 nightly runs.  What the Result column no longer
 spells out:
 
 - **CVA6's 5 `differs` rows are adjudicated non-defects** — unique/priority-case
@@ -125,7 +125,7 @@ spells out:
 - **rp32's formal column is unreliable on 3 modules**: they carry 32 driver
   conflicts each (sibling generate scopes sharing a name — a Surelog defect), and
   bogus feedback can make a miter pass vacuously.
-- **External IP: 201 rows are still not comparable, down from 435.** Four
+- **External IP: 171 rows are still not comparable, down from 435.** Four
   project-setup fixes did that — binding cvw's configuration struct (234 rows
   comparable for the first time, 156 proven), wrapping away an interface port at
   the top (39 rows), retrying a module at parameters its own design permits
@@ -155,17 +155,17 @@ failure.  `undriven` likewise counts comparable rows only.
 
 | Family | Upstream repo | Commit | Proven | Not comparable | Undriven |
 |---|---|---|---|---|---|
-| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **71 / 76** | 32 of 108 | 128 (`axi_lfsr` and `axi_lite_lfsr`, 64 each: an unconnected `data_i` port on the read-side LFSR — source-level) |
-| PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | **120 / 123** | 3 of 126 | 0 |
+| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **89 / 92** | 16 of 108 | 128 (`axi_lfsr` and `axi_lite_lfsr`, 64 each: an unconnected `data_i` port on the read-side LFSR — source-level) |
+| PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | **120 / 120** | 6 of 126 | 0 |
 | OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | **16 / 21** | 2 of 23 | 0 |
 | OpenHW CV32E40P | [openhwfoundation/cv32e40p](https://github.com/openhwfoundation/cv32e40p) | [`6033d2b1`](https://github.com/openhwfoundation/cv32e40p/commit/6033d2b1be32) | **21 / 25** | 1 of 26 | 0 |
 | OpenHW CVFPU | [openhwfoundation/cvfpu](https://github.com/openhwfoundation/cvfpu) | [`77811635`](https://github.com/openhwfoundation/cvfpu/commit/77811635cb7e8649f1d9484733ee6a0bdb44a0e6) | **13 / 19** | 1 of 20 | 0 (`control_mvp` and its parents: 4 bits the source never assigns) |
-| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **156 / 172** | 62 of 234 | 0 |
+| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **163 / 181** | 53 of 234 | 0 |
 | hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | **5 / 7** | 3 of 10 | 0 |
-| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **103 / 114** | 15 of 129 | 1 (source: `xgmii_interleave` bit 72 never assigned) |
+| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **103 / 111** | 18 of 129 | 1 (source: `xgmii_interleave` bit 72 never assigned) |
 | verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **71 / 79** | 14 of 93 | 0 |
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **18 / 21** | 0 of 21 | 1 |
-| Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **201 / 214** | 68 of 282 | 0 |
+| Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **211 / 225** | 57 of 282 | 0 |
 
 **How the reference frontend itself does.** The left-most column of every sweep
 table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
@@ -175,14 +175,14 @@ classified (a `read_slang` defect, a shared co-simulation artefact, or still to
 adjudicate) with a pre-filled Yosys issue link for each defect: **16** rows where
 our netlist tracks the RTL and `read_slang`'s does not, 14 still to adjudicate,
 28 shared artefacts.  The same file lists the **other direction** as well —
-**10** rows where `read_slang` is clean and OURS is wrong, because a document
+**8** rows where `read_slang` is clean and OURS is wrong, because a document
 that can only record another tool's mistakes is not a measurement.  That number
 was 74 one sweep earlier: binding cvw's configuration made 234 rows comparable
 for the first time and 68 of them failed at once, all on one cause and all ours.
 The same question is asked of both test suites — 1149 local tests and 511
 upstream Yosys tests — which is where the smallest reproducers come from.
 
-**What the reference frontend cannot read.** 126 sweep modules cannot be
+**What the reference frontend cannot read.** 92 sweep modules cannot be
 elaborated by `read_slang` at all, so they carry no formal verdict.
 [docs/slang_unsupported.md](docs/slang_unsupported.md) lists them with what
 `read_uhdm` makes of each — whether every net is driven, and whether our netlist
