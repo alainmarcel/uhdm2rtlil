@@ -133,12 +133,10 @@ wide.  Two rows survive the fix.
 
 | Sweep | Module | read_uhdm diverging cycles | formal vs slang |
 |---|---|---|---|
-| axi | `axi_lite_demux` | 280 | ❌ differs |
-| axi | `axi_to_mem_interleaved` | 290 | ❌ differs |
+| axi | `axi_lite_mailbox_intf` | 280 | ✅ equivalent |
 | caliptra-ss | `css_mcu0_el2_lsu_bus_buffer` | 164 | ✅ equivalent |
 | caliptra-ss | `css_mcu0_el2_lsu_bus_intf` | 110 | ✅ equivalent |
-| cvw | `RASPredictor` | 194 | ❌ differs |
-| cvw | `fround` | 5 | ❌ differs |
+| cvw | `RASPredictor` | 188 | ❌ differs |
 | egret | `u_rv_dm` | 1 | ✅ equivalent |
 | xiangshan-core-full | `BypassShadowBuffer` | 1 | ✅ equivalent |
 | xiangshan-core-full | `BypassShadowBuffer_1` | 1 | ✅ equivalent |
@@ -198,7 +196,7 @@ are in that middle group on both sides.
 
 ## Designs `read_slang` cannot read at all
 
-A further **126** sweep rows never reach this comparison at all:
+A further **92** sweep rows never reach this comparison at all:
 `read_slang` cannot elaborate the design, so there is no second netlist to
 co-simulate.  They are counted here only so this file is not mistaken for
 the whole picture — [docs/slang_unsupported.md](slang_unsupported.md) lists
@@ -218,16 +216,16 @@ work, not a report about slang.
 
 | Sweep | Rows |
 |---|---|
-| caliptra-ss | 48 |
-| axi | 22 |
-| cvw | 20 |
-| verilog-ethernet | 11 |
+| caliptra-ss | 36 |
+| verilog-ethernet | 14 |
 | verilog-pcie | 11 |
-| rp32 | 6 |
+| cvw | 10 |
+| rp32 | 7 |
+| axi | 6 |
 | ibex | 3 |
 | cve2 | 2 |
 | hdmi | 2 |
 | cvfpu | 1 |
 
-Measured on CI runs: acc `36699754819`, aes `36699754819`, axi `36776648042`, caliptra `36750769603`, caliptra-ss `36776648042`, common_cells `36776648042`, csrng `36699754819`, cv32e40p `36776648042`, cva6 `36750733486`, cva6-chip `36750733486`, cve2 `36776648042`, cvfpu `36776648042`, cvw `36776648042`, dragonfly `36699754819`, edn `36699754819`, egret `36699754819`, entropy_src `36699754819`, hdmi `36776648042`, hmac `36699754819`, ibex `36750742272`, keymgr `36699754819`, kmac `36699754819`, opentitan `36718313021`, pavona `36699754819`, periph `36699754819`, periph2 `36699754819`, periph3 `36699754819`, periph4 `36699754819`, periph5 `36699754819`, rp32 `36750751237`, tlul `36699754819`, verilog-ethernet `36776648042`, verilog-pcie `36776648042`, xiangshan `36776648042`, xiangshan-core-full `36750760355`.
+Measured on CI runs: acc `36993371680`, aes `36993371680`, axi `36993322499`, caliptra `36999217175`, caliptra-ss `36993322499`, common_cells `36993322499`, csrng `36993371680`, cv32e40p `36993322499`, cva6 `36991422502`, cva6-chip `36991422502`, cve2 `36993322499`, cvfpu `36993322499`, cvw `36993322499`, dragonfly `36993371680`, edn `36993371680`, egret `36993371680`, entropy_src `36993371680`, hdmi `36993322499`, hmac `36993371680`, ibex `36984512248`, keymgr `36993371680`, kmac `36993371680`, opentitan `37010906543`, pavona `36993371680`, periph `36993371680`, periph2 `36993371680`, periph3 `36993371680`, periph4 `36993371680`, periph5 `36993371680`, rp32 `36987334315`, tlul `36993371680`, verilog-ethernet `36993322499`, verilog-pcie `36993322499`, xiangshan `36993322499`, xiangshan-core-full `36997189098`.
 
