@@ -18074,6 +18074,31 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 have_decl = true;
                             }
                             int inner_w = 1;
+                            // The field's declared range is only usable for
+                            // rebasing when it agrees with the field's MEASURED
+                            // width.  A struct relayed through a type parameter
+                            // carries its member ranges as CLONES whose names
+                            // resolve in the receiving scope: PULP axi_id_remap
+                            // reads `mst_resp_i.b.id[IdxWidth-1:0]` where `id`
+                            // is the intf module's `logic [AXI_MST_PORT_ID_WIDTH-1:0]`,
+                            // and in the remap module that parameter sits at
+                            // its default 0, so the range read `[-1:0]` --
+                            // ASCENDING with high 0 -- and `[1:0]` mapped to
+                            // bit -1: the remap table was fed {id[0], resp[1]}
+                            // and returned the wrong slave id (276 of 301
+                            // co-simulated cycles).  Measured 4, declared 2:
+                            // drop the declared range and index from bit 0.
+                            if (have_decl && mranges->size() == 1 && !elem_rts &&
+                                decl_high - decl_low + 1 != field_width) {
+                                if (mode_debug)
+                                    log("    declared range [%d:%d] disagrees with the "
+                                        "measured field width %d -- indexing from 0\n",
+                                        decl_high, decl_low, field_width);
+                                have_decl = false;
+                                decl_low = 0;
+                                decl_high = field_width - 1;
+                                decl_asc = false;
+                            }
                             for (size_t ri = 1; ri < mranges->size(); ri++) {
                                 auto rn = (*mranges)[ri];
                                 RTLIL::SigSpec il = import_expression(rn->Left_expr(), input_mapping);
