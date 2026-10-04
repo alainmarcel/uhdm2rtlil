@@ -854,6 +854,16 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     (w / "check.log").write_text(out or "")
     if rc != 0 or not (w / "uhdm_hier.il").exists():
         err = re.search(r"ERROR:[^\n]*", out or "")
+        # read_uhdm refuses an instance of a module nobody defined and lists
+        # the modules on the lines after the ERROR: name them in the row --
+        # this is a hole in the closure the sweep hands the tools, not a
+        # netlist anyone produced (it used to score "✅ 0 undriven").
+        und = re.search(r"that ha(?:s|ve) no definition[^\n]*\n((?:  \S+ \(\d+ instances?\)\n)+)", out or "")
+        if und:
+            mods = re.findall(r"  (\S+) \(", und.group(1))
+            return {"module": m, "formal": "⛔ undefined module" + ("s" if len(mods) > 1 else ""),
+                    "formal_raw": "error", "check": "—", "cosim": "—", "slang_cosim": "—",
+                    "note": "read_uhdm refused: no definition for " + ", ".join(mods[:6])}
         return {"module": m, "formal": "read-fail (uhdm)", "formal_raw": "error",
                 "check": "—", "cosim": "—", "slang_cosim": "—",
                 "note": (err.group(0)[:220] if err else "read_uhdm failed")}

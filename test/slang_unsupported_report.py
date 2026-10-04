@@ -281,8 +281,10 @@ def main(out_path):
           "design itself rejects, RTL the upstream left unfinished -- and, where a\n"
           "row still shows a package, macro, unroll limit or interface port, a gap\n"
           "in the project WE hand the tools, which is ours to close and never an\n"
-          "issue to file.  read_uhdm reads several of these only because Surelog is\n"
-          "quieter about a missing file, which is not an advantage.",
+          "issue to file.  read_uhdm used to read several of these only because\n"
+          "Surelog is quieter about a missing file; it now refuses an instance of a\n"
+          "module that has no definition and names the module, so such a row shows\n"
+          "a read failure on both sides until the source is supplied.",
           lambda k: k in not_slang)
     table("Where read_slang is stricter than the other frontends",
           "read_slang refuses these; `read_verilog`, Surelog and sv2v accept them.\n"
