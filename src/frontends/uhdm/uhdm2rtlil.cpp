@@ -5838,7 +5838,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                         // Only when the geometry matches the wire
                                         // we actually built: a mismatched tag
                                         // would mis-index every select on it.
-                                        if (ew > 1 && ne > 1 && ew * ne == wire->width) {
+                                        // ONE row counts (`logic [NumChecks-1:0][Width-1:0]`
+                                        // with NumChecks = 1, OpenTitan prim_multibit_sync):
+                                        // untagged, its row range `[0:0]` read ONE BIT and the
+                                        // synchronizer's consistency check never passed
+                                        // (caliptra-ss dev_entropy's rate never updated).
+                                        if (ew > 1 && ne >= 1 && ew * ne == wire->width) {
                                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
                                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
                                             wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
@@ -5960,7 +5965,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 int ol = l.as_const().as_int();
                                 int orr = r.as_const().as_int();
                                 int osz = std::abs(ol - orr) + 1;
-                                if (osz > 1 && wire->width > 0 &&
+                                if (osz >= 1 && wire->width > 0 &&
                                     wire->width % osz == 0 &&
                                     (wire->width / osz) > 1) {
                                     wire->attributes[RTLIL::escape_id("packed_elem_width")] =
