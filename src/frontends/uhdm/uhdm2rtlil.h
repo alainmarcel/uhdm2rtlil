@@ -866,6 +866,8 @@ struct UhdmImporter {
     void resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const std::string& sig);
     RTLIL::Wire* resolve_xmr_write(RTLIL::Module* mod, RTLIL::Cell* cell, const std::string& sig);
     void import_instance(const UHDM::module_inst* uhdm_inst);
+    bool slice_instance_array_actual(const UHDM::module_inst* uhdm_inst, const std::string& inst_name,
+                                     const std::string& port_name, RTLIL::Cell* cell, RTLIL::SigSpec& actual);
     void import_ref_module(const UHDM::ref_module* ref_mod);
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);

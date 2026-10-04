@@ -3154,6 +3154,11 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 }
                             }
 
+                            // INSTANCE-ARRAY member: slice an actual as wide as
+                            // (port width x member count) per member (LRM
+                            // 28.3.5).  cvw tlbcam's eight camlines all read
+                            // `WriteEnables[0]` and drove `Matches[0]` without it.
+                            slice_instance_array_actual(uhdm_module, inst_name, port_name, cell, conn);
                             cell->setPort(RTLIL::escape_id(port_name), conn);
                             log("UHDM: Connected port %s\n", port_name.c_str());
                         }

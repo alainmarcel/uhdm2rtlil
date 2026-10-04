@@ -2537,6 +2537,72 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
 }
 
 // Import a module instance
+// INSTANCE-ARRAY member (`mux2 #(1) LRUMuxes[N-1:0](a, b, s, y)`, cvw
+// cacheLRU; `tlbcamline camlines[TLB_ENTRIES-1:0](.Match(Matches), ...)`,
+// cvw tlbcam): Surelog elaborates the array into `LRUMuxes[0]`,
+// `LRUMuxes[1]`, ... and hands EVERY member the full actual.  LRM 28.3.5: an
+// actual as wide as (port width x member count) is partitioned, member k
+// taking slice k (the lowest index at the LSBs, as for a `[N-1:0]` range);
+// an actual of the port's own width goes to all members.  Connected whole,
+// yosys' hierarchy pass resizes it to the LOW bits, so every member read
+// `WriteEnables[0]` and drove `Matches[0]` -- the other seven camlines never
+// matched (201 of 301 co-sim cycles diverged).  Returns true when `actual`
+// was sliced.  Called from BOTH instance paths (module.cpp import_instance
+// and uhdm2rtlil.cpp import_module_hierarchy -- the latter had no slicing).
+bool UhdmImporter::slice_instance_array_actual(const UHDM::module_inst* uhdm_inst,
+                                               const std::string& inst_name,
+                                               const std::string& port_name,
+                                               RTLIL::Cell* cell,
+                                               RTLIL::SigSpec& actual) {
+    if (!uhdm_inst || !cell || inst_name.empty() || inst_name.back() != ']') return false;
+    RTLIL::Module* tm = design->module(cell->type);
+    RTLIL::Wire* pw = tm ? tm->wire(RTLIL::escape_id(port_name)) : nullptr;
+    if (!pw || pw->width <= 0 || actual.size() <= pw->width ||
+        actual.size() % pw->width != 0) return false;
+    size_t lb = inst_name.rfind('[');
+    if (lb == std::string::npos) return false;
+    std::string ks = inst_name.substr(lb + 1, inst_name.size() - lb - 2);
+    auto all_digits = [](const std::string& t) {
+        if (t.empty()) return false;
+        for (char c : t) if (c < '0' || c > '9') return false;
+        return true;
+    };
+    if (!all_digits(ks)) return false;
+    int k = atoi(ks.c_str());
+    std::string base = inst_name.substr(0, lb);
+    // siblings are named bare (`LRUMuxes[1]`) while inst_name may carry the
+    // generate prefix
+    if (size_t dot = base.rfind('.'); dot != std::string::npos) base = base.substr(dot + 1);
+    // The members' parent is the enclosing module OR generate scope; both
+    // list them in Modules().  The instance_array object, when Surelog links
+    // it, lists exactly the members.
+    const UHDM::VectorOfmodule_inst* sibs = nullptr;
+    if (auto ia = uhdm_inst->Instance_array()) sibs = ia->Modules();
+    if (!sibs || sibs->empty()) {
+        if (auto pm = dynamic_cast<const UHDM::module_inst*>(uhdm_inst->VpiParent()))
+            sibs = pm->Modules();
+        else if (auto pg = dynamic_cast<const UHDM::gen_scope*>(uhdm_inst->VpiParent()))
+            sibs = pg->Modules();
+    }
+    if (!sibs) return false;
+    int n = 0, low = 1 << 30;
+    for (auto sib : *sibs) {
+        std::string sn = std::string(sib->VpiName());
+        if (sn.size() > base.size() + 2 && sn.compare(0, base.size() + 1, base + "[") == 0 &&
+            sn.back() == ']') {
+            std::string sk = sn.substr(base.size() + 1, sn.size() - base.size() - 2);
+            if (all_digits(sk)) { n++; low = std::min(low, atoi(sk.c_str())); }
+        }
+    }
+    if (n <= 1 || actual.size() != pw->width * n) return false;
+    int pos = k - low;
+    if (pos < 0 || pos >= n) return false;
+    actual = actual.extract(pos * pw->width, pw->width);
+    log("    Instance-array member %s: port %s takes slice %d of the actual\n",
+        inst_name.c_str(), port_name.c_str(), pos);
+    return true;
+}
+
 void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     log("UHDM: import_instance called for '%s' of type '%s'\n", 
         std::string(uhdm_inst->VpiName()).c_str(), 
@@ -3170,63 +3236,9 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             continue;
                         }
                     }
-                    // INSTANCE-ARRAY member (`mux2 #(1) LRUMuxes[N-1:0](a, b, s, y)`,
-                    // cvw cacheLRU): Surelog elaborates the array into
-                    // `LRUMuxes[0]`, `LRUMuxes[1]`, ... and hands EVERY member
-                    // the full actual.  LRM 28.3.5: an actual as wide as
-                    // (port width x member count) is sliced, member k taking
-                    // slice k (lowest index at the LSBs); an actual of the
-                    // port's own width goes to all members.  Connected whole,
-                    // every member drove `NextLRU[...]` in full and flatten
-                    // reported the second member's mux driving the first's.
-                    RTLIL::Wire* arr_port_wire = nullptr;
-                    if (RTLIL::Module* tm = design->module(cell->type))
-                        arr_port_wire = tm->wire(RTLIL::escape_id(port_name));
-                    if (arr_port_wire && arr_port_wire->width > 0 &&
-                        actual_sig.size() > arr_port_wire->width &&
-                        actual_sig.size() % arr_port_wire->width == 0 &&
-                        !inst_name.empty() && inst_name.back() == ']') {
-                        size_t lb = inst_name.rfind('[');
-                        std::string ks = lb == std::string::npos ? "" : inst_name.substr(lb + 1, inst_name.size() - lb - 2);
-                        auto all_digits = [](const std::string& t) { if (t.empty()) return false; for (char c : t) if (c < '0' || c > '9') return false; return true; };
-                        bool numeric = all_digits(ks);
-                        if (numeric) {
-                            int k = atoi(ks.c_str());
-                            std::string base = inst_name.substr(0, lb);
-                            // siblings are named bare (`LRUMuxes[1]`) while
-                            // inst_name may carry the generate prefix
-                            size_t dot = base.rfind('.');
-                            if (dot != std::string::npos) base = base.substr(dot + 1);
-                            int n = 0, low = 1 << 30;
-                            // the members' parent is the enclosing module OR
-                            // generate scope; both list them in Modules()
-                            const UHDM::VectorOfmodule_inst* sibs = nullptr;
-                            if (auto pm = dynamic_cast<const UHDM::module_inst*>(uhdm_inst->VpiParent()))
-                                sibs = pm->Modules();
-                            else if (auto pg = dynamic_cast<const UHDM::gen_scope*>(uhdm_inst->VpiParent()))
-                                sibs = pg->Modules();
-                            if (sibs)
-                                for (auto sib : *sibs) {
-                                    std::string sn = std::string(sib->VpiName());
-                                    if (sn.size() > base.size() + 2 && sn.compare(0, base.size() + 1, base + "[") == 0 &&
-                                        sn.back() == ']') {
-                                        std::string sk = sn.substr(base.size() + 1, sn.size() - base.size() - 2);
-                                        if (all_digits(sk)) {
-                                            n++;
-                                            low = std::min(low, atoi(sk.c_str()));
-                                        }
-                                    }
-                                }
-                            if (n > 1 && actual_sig.size() == arr_port_wire->width * n) {
-                                int pos = k - low;
-                                if (pos >= 0 && pos < n) {
-                                    actual_sig = actual_sig.extract(pos * arr_port_wire->width, arr_port_wire->width);
-                                    log("    Instance-array member %s: port %s takes slice %d of the actual\n",
-                                        inst_name.c_str(), port_name.c_str(), pos);
-                                }
-                            }
-                        }
-                    }
+                    // INSTANCE-ARRAY member: an actual as wide as (port width x
+                    // member count) is sliced per member (LRM 28.3.5).
+                    slice_instance_array_actual(uhdm_inst, inst_name, port_name, cell, actual_sig);
                     cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 } else {
                     log_warning("Port %s has empty connection\n", port_name.c_str());
