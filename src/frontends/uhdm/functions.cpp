@@ -992,6 +992,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     }
                 }
 
+                if (mode_debug) log("    while cond = %s\n", cond_value.as_string().c_str());
                 if (cond_value.is_fully_zero()) break;
 
                 // Execute body
@@ -1573,6 +1574,30 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
         for (int i = 0; i < w; i++) c.set(i, ((v >> i) & 1) ? RTLIL::State::S1 : RTLIL::State::S0);
         return c;
     };
+    // Bitwise and relational operators run at the WIDER operand's width.
+    // They used to go through `as_int()`, i.e. 32 bits: verilog-ethernet's
+    // lfsr_mask walks `for (data_mask = {1'b1, {63{1'b0}}}; data_mask != 0;
+    // data_mask >>= 1)` -- the guard read the low 32 bits of a value whose
+    // only set bit is 63, saw 0 and never entered the loop, and every
+    // 58-bit `lfsr_mask_state[j-1] ^ state_val` lost its upper 26 bits.
+    // Narrow (<= 32-bit) operands keep the historical signed `int`
+    // comparison so `integer` loop guards (`i >= 0`) still terminate.
+    auto max_width = [&]() -> int {
+        int w = 1;
+        for (auto& v : operand_values) w = std::max(w, v.size());
+        return w;
+    };
+    auto narrow = [&]() -> bool {
+        for (auto& v : operand_values) if (v.size() > 32) return false;
+        return true;
+    };
+    const bool opnds_signed = operands_all_signed(op);
+    auto wide_bitwise = [&](RTLIL::Const (*f)(const RTLIL::Const&, const RTLIL::Const&, bool, bool, int)) {
+        return f(operand_values[0], operand_values[1], opnds_signed, opnds_signed, max_width());
+    };
+    auto wide_compare = [&](RTLIL::Const (*f)(const RTLIL::Const&, const RTLIL::Const&, bool, bool, int)) {
+        return f(operand_values[0], operand_values[1], opnds_signed, opnds_signed, 1);
+    };
 
     // Perform the operation
     switch (op_type) {
@@ -1608,57 +1633,58 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             
         case vpiBitXorOp:  // XOR operator (^)
             if (operand_values.size() >= 2) {
-                // Perform XOR
-                int result = operand_values[0].as_int() ^ operand_values[1].as_int();
-                log("      XOR: %d ^ %d = %d\n", 
-                    operand_values[0].as_int(), operand_values[1].as_int(), result);
-                return RTLIL::Const(result, 32);
+                RTLIL::Const result = wide_bitwise(RTLIL::const_xor);
+                if (mode_debug)
+                    log("      XOR: %s ^ %s = %s\n", operand_values[0].as_string().c_str(),
+                        operand_values[1].as_string().c_str(), result.as_string().c_str());
+                return result;
             }
             break;
             
-        case vpiEqOp:
+        case vpiEqOp:  // ==
             if (operand_values.size() >= 2) {
-                // Perform equality comparison
+                if (!narrow()) return wide_compare(RTLIL::const_eq);
                 bool result = operand_values[0].as_int() == operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
             break;
             
-        case vpiLeOp:  // Less than or equal (<=)
+        case vpiLeOp:  // <=
             if (operand_values.size() >= 2) {
-                // Perform less-than-or-equal comparison
+                if (!narrow()) return wide_compare(RTLIL::const_le);
                 bool result = operand_values[0].as_int() <= operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
             break;
             
-        case vpiLtOp:  // Less than (<)
+        case vpiLtOp:  // <
             if (operand_values.size() >= 2) {
-                // Perform less-than comparison
+                if (!narrow()) return wide_compare(RTLIL::const_lt);
                 bool result = operand_values[0].as_int() < operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
             break;
             
-        case vpiGeOp:  // Greater than or equal (>=)
+        case vpiGeOp:  // >=
             if (operand_values.size() >= 2) {
-                // Perform greater-than-or-equal comparison
+                if (!narrow()) return wide_compare(RTLIL::const_ge);
                 bool result = operand_values[0].as_int() >= operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
             break;
             
-        case vpiGtOp:  // Greater than (>)
+        case vpiGtOp:  // >
             if (operand_values.size() >= 2) {
-                // Perform greater-than comparison
+                if (!narrow()) return wide_compare(RTLIL::const_gt);
                 bool result = operand_values[0].as_int() > operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
             break;
             
-        case vpiNeqOp:  // Not equal (!=)
+        case vpiNeqOp:  // !=
             if (operand_values.size() >= 2) {
-                // Perform not-equal comparison
+                if (mode_debug) log("      NEQ: %s != %s (narrow=%d)\n", operand_values[0].as_string().c_str(), operand_values[1].as_string().c_str(), narrow() ? 1 : 0);
+                if (!narrow()) return wide_compare(RTLIL::const_ne);
                 bool result = operand_values[0].as_int() != operand_values[1].as_int();
                 return RTLIL::Const(result ? 1 : 0, 1);
             }
@@ -1674,6 +1700,8 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
 
         case vpiMinusOp:  // Unary minus (-)
             if (operand_values.size() >= 1) {
+                if (operand_values[0].size() > 32)
+                    return RTLIL::const_neg(operand_values[0], RTLIL::Const(), true, false, operand_values[0].size());
                 int result = -operand_values[0].as_int();
                 return RTLIL::Const(result, operand_values[0].size());
             }
@@ -1707,24 +1735,18 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
         }
 
         case vpiBitAndOp:  // Bitwise AND (&)
-            if (operand_values.size() >= 2) {
-                int result = operand_values[0].as_int() & operand_values[1].as_int();
-                return RTLIL::Const(result, 32);
-            }
+            if (operand_values.size() >= 2)
+                return wide_bitwise(RTLIL::const_and);
             break;
 
         case vpiBitOrOp:  // Bitwise OR (|)
-            if (operand_values.size() >= 2) {
-                int result = operand_values[0].as_int() | operand_values[1].as_int();
-                return RTLIL::Const(result, 32);
-            }
+            if (operand_values.size() >= 2)
+                return wide_bitwise(RTLIL::const_or);
             break;
 
         case vpiBitXNorOp:  // Bitwise XNOR (~^)
-            if (operand_values.size() >= 2) {
-                int result = ~(operand_values[0].as_int() ^ operand_values[1].as_int());
-                return RTLIL::Const(result, 32);
-            }
+            if (operand_values.size() >= 2)
+                return wide_bitwise(RTLIL::const_xnor);
             break;
 
         case vpiLogAndOp:  // Logical AND (&&)
