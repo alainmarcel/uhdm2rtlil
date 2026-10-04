@@ -157,17 +157,17 @@ failure.  `undriven` likewise counts comparable rows only.
 
 | Family | Upstream repo | Commit | Proven | Not comparable | Undriven |
 |---|---|---|---|---|---|
-| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **89 / 92** | 16 of 108 | 128 (`axi_lfsr` and `axi_lite_lfsr`, 64 each: an unconnected `data_i` port on the read-side LFSR — source-level) |
+| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **91 / 93** | 15 of 108 | 128 (`axi_lfsr` and `axi_lite_lfsr`, 64 each: an unconnected `data_i` port on the read-side LFSR — source-level) |
 | PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | [`121182ea`](https://github.com/pulp-platform/common_cells/commit/121182eaa0fa) | **120 / 120** | 6 of 126 | 0 |
-| OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | **16 / 21** | 2 of 23 | 0 |
+| OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | [`d079e8c8`](https://github.com/openhwgroup/cve2/commit/d079e8c8e6a0) | **17 / 21** | 2 of 23 | 0 |
 | OpenHW CV32E40P | [openhwfoundation/cv32e40p](https://github.com/openhwfoundation/cv32e40p) | [`6033d2b1`](https://github.com/openhwfoundation/cv32e40p/commit/6033d2b1be32) | **21 / 25** | 1 of 26 | 0 |
 | OpenHW CVFPU | [openhwfoundation/cvfpu](https://github.com/openhwfoundation/cvfpu) | [`77811635`](https://github.com/openhwfoundation/cvfpu/commit/77811635cb7e8649f1d9484733ee6a0bdb44a0e6) | **13 / 19** | 1 of 20 | 0 (`control_mvp` and its parents: 4 bits the source never assigns) |
-| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **163 / 181** | 53 of 234 | 0 |
-| hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | **5 / 7** | 3 of 10 | 0 |
-| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **103 / 111** | 18 of 129 | 1 (source: `xgmii_interleave` bit 72 never assigned) |
-| verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **71 / 79** | 14 of 93 | 0 |
+| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | [`bc7012a9`](https://github.com/openhwgroup/cvw/commit/bc7012a92273) | **171 / 192** | 42 of 234 | 0 |
+| hdl-util HDMI | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | [`83b1c954`](https://github.com/hdl-util/hdmi/commit/83b1c9543a91) | **6 / 9** | 2 of 11 | 0 |
+| verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | [`77320a94`](https://github.com/alexforencich/verilog-ethernet/commit/77320a9471d1) | **105 / 113** | 16 of 129 | 1 (source: `xgmii_interleave` bit 72 never assigned) |
+| verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **73 / 89** | 4 of 93 | 0 |
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **18 / 21** | 0 of 21 | 1 |
-| Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **211 / 225** | 57 of 282 | 0 |
+| Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **241 / 254** | 28 of 282 | 0 |
 
 **How the reference frontend itself does.** The left-most column of every sweep
 table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
