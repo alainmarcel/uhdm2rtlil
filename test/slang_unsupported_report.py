@@ -142,7 +142,23 @@ def load_measured(d):
         for r in rows:
             if isinstance(r, dict) and r.get("module"):
                 out[r["module"]] = (r.get("check", "—"), r.get("cosim", "—"))
+                LOCAL_FORMAL[r["module"]] = r.get("formal", "")
     return out
+
+# The formal cell of each locally re-measured row.  A row whose fresh formal
+# verdict is a real one (equivalent / differs / SAT timeout) is a design
+# read_slang CAN read now -- the current build, not the nightly that listed
+# it -- and it leaves the file, as the footer promises.
+LOCAL_FORMAL = {}
+
+def slang_reads_it(formal):
+    f = formal or ""
+    if not f or "no reference" in f or "read_slang" in f:
+        return False
+    for mark in ("—", "skip", "elab-fail", "read-fail", "⛔", "error"):
+        if f.startswith(mark):
+            return False
+    return True
 
 # The read_uhdm verdict of each row, {module: (undriven cell, co-sim cell)},
 # filled from the SAME sweep reports as the row list.  The sweeps have measured
@@ -192,8 +208,12 @@ def main(out_path):
     # A local re-measurement (ext_flow --out) overrides the sweep's cells.
     meas.update(load_measured(MEAS))
     rows = []
+    dropped = []
     for fam, entries in noref.items():
         for mod, formal in entries:
+            if mod in LOCAL_FORMAL and slang_reads_it(LOCAL_FORMAL[mod]):
+                dropped.append((fam, mod, LOCAL_FORMAL[mod]))
+                continue
             why = formal
             m = (re.search(r"error: ([^)]+)", why) or
                  re.search(r"no miter: ([^)]+)", why) or
@@ -248,8 +268,10 @@ def main(out_path):
       "declines.  A row no tool has yet built and co-simulated proves nothing\n"
       "about slang -- it is a module nobody supports, or a harness gap -- and it\n"
       "stays in the third group until it does.\n")
-    A(f"All {len(rows)} are read and elaborated by `read_uhdm` with every net\n"
-      f"driven, and **{len(cosim_ok)}** also co-simulate the RTL cleanly.  For the\n"
+    A(f"**{len(reads)}** of the {len(rows)} are read and elaborated by `read_uhdm` with every\n"
+      f"net driven, and **{len(cosim_ok)}** also co-simulate the RTL cleanly.  (read_uhdm now\n"
+      f"refuses an instance of a module that has no definition, so a design missing\n"
+      f"its sources fails on both sides.)  For the\n"
       "rest Verilator cannot build a testbench standalone — a vendor primitive, an\n"
       "interface port no port-by-port testbench can drive — which is a harness\n"
       "limit, not a verdict on either frontend.\n")
@@ -311,6 +333,8 @@ def main(out_path):
     open(out_path, "w").write("\n".join(L) + "\n")
     print(f"{out_path}: {len(rows)} rows, {len(reads)} confirmed read by read_uhdm, "
           f"{len(cosim_ok)} co-sim clean, {len(by)} construct classes")
+    for fam, mod, f in dropped:
+        print(f"  left the file (read_slang reads it now): {fam} {mod}: {f}")
 
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else "slang_unsupported.md")
