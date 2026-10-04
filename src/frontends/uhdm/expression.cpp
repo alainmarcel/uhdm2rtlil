@@ -7323,6 +7323,38 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (cand && cand->UhdmType() == uhdmstruct_typespec)
                     struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
             }
+            // An ARRAY-of-struct target -- caliptra-ss otp_ctrl_part_pkg's
+            // `localparam part_info_t PartInfo [NumPart] = '{ '{variant: ..,
+            // size: 72, ..}, ... }` -- hands each element to the nested
+            // pattern below with the element WIDTH (43) but no element TYPE,
+            // so the inner fields were sized self-determined (an unsized `72`
+            // and a `key_sel_e'('0)` cast at 64 bits each), the inner concat
+            // ran to 156 bits and its low 43 were kept: `variant`, `offset`
+            // and `size` landed above the cut and read 0, and otp_ctrl_dai
+            // took every partition for non-secret (otp_size_o 1 instead of 3).
+            // Thread the element struct type into each nested pattern.
+            const UHDM::typespec* elem_struct_ts = nullptr;
+            if (!struct_ts) {
+                const UHDM::typespec* ats = nullptr;
+                if (uhdm_op->Typespec()) ats = uhdm_op->Typespec()->Actual_typespec();
+                if (!ats && uhdm_op->VpiParent() &&
+                    uhdm_op->VpiParent()->UhdmType() == uhdmparam_assign) {
+                    auto pa = any_cast<const UHDM::param_assign*>(uhdm_op->VpiParent());
+                    if (pa->Lhs())
+                        if (auto p = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
+                            if (p->Typespec()) ats = p->Typespec()->Actual_typespec();
+                }
+                if (!ats) ats = expression_context_typespec;
+                const UHDM::ref_typespec* ert = nullptr;
+                if (ats && ats->UhdmType() == uhdmarray_typespec)
+                    ert = any_cast<const UHDM::array_typespec*>(ats)->Elem_typespec();
+                else if (ats && ats->UhdmType() == uhdmpacked_array_typespec)
+                    ert = any_cast<const UHDM::packed_array_typespec*>(ats)->Elem_typespec();
+                if (ert && ert->Actual_typespec() &&
+                    (ert->Actual_typespec()->UhdmType() == uhdmstruct_typespec ||
+                     ert->Actual_typespec()->UhdmType() == uhdmunion_typespec))
+                    elem_struct_ts = ert->Actual_typespec();
+            }
             int field_idx = 0;
             std::vector<std::string> field_tags;  // tag name per field ("" = untagged)
             for (auto operand : *uhdm_op->Operands()) {
@@ -7386,6 +7418,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (field_member_ts && (field_member_ts->UhdmType() == uhdmstruct_typespec ||
                                         field_member_ts->UhdmType() == uhdmunion_typespec))
                     expression_context_typespec = field_member_ts;
+                else if (!field_member_ts && elem_struct_ts &&
+                         field_expr->VpiType() == vpiOperation)
+                    expression_context_typespec = elem_struct_ts;   // one ELEMENT of an array of structs
                 RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
                 expression_context_typespec = saved_ctx_ts;
                 expression_context_width = saved_ctx;
