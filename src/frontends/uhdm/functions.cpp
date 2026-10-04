@@ -79,6 +79,8 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     array_local_element_widths.clear();
     auto saved_array_dims = array_local_unpacked_dims;
     array_local_unpacked_dims.clear();
+    auto saved_array_names = array_local_unpacked_names;
+    array_local_unpacked_names.clear();
     auto saved_decl_widths = local_declared_widths;
     local_declared_widths.clear();
 
@@ -177,6 +179,14 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
         for (auto var : *func_def->Variables()) {
             std::string var_name = std::string(var->VpiName());
             if (var_name == func_name || local_vars.count(var_name)) continue;
+            // Function-scope locals (a non-ANSI function's `reg [63:0]
+            // tbl [0:3];` after its `input` items) are declared like
+            // block-scope ones: storage width and element geometry.
+            int width = declare_function_local(var, local_vars);
+            local_vars[var_name] = RTLIL::Const(0, width);
+            if (width > 0) local_declared_widths[var_name] = width;
+            log("    Declared local variable %s in function scope (width=%d)\n",
+                var_name.c_str(), width);
             if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                 if (v->Expr()) {
                     RTLIL::Const init = evaluate_single_operand(v->Expr(), local_vars);
@@ -221,6 +231,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     recursion_depth--;
     array_local_element_widths = saved_array_widths;
     array_local_unpacked_dims = saved_array_dims;
+    array_local_unpacked_names = saved_array_names;
     local_declared_widths = saved_decl_widths;
     if (local_vars.count(func_name)) {
         RTLIL::Const result = local_vars[func_name];
@@ -241,6 +252,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
 
     array_local_element_widths = saved_array_widths;
     array_local_unpacked_dims = saved_array_dims;
+    array_local_unpacked_names = saved_array_names;
     local_declared_widths = saved_decl_widths;
     return RTLIL::Const(0, 32);
 }
@@ -272,6 +284,129 @@ static bool case_const_matches(const case_stmt* cs, const RTLIL::Const& sel, con
         if (ib != sb) return false;
     }
     return true;
+}
+
+// Declare one function-local variable for the compile-time evaluator and
+// return its storage width.  Shared by block-scope declarations (`begin`
+// Variables()) and FUNCTION-scope ones (`function::Variables()`, where a
+// non-ANSI function's tf_item declarations land); until the latter went
+// through here, `reg [63:0] tbl [0:3];` after an `input` declaration was
+// never declared at all -- every `tbl[i]` was a one-bit write and an empty
+// read.
+int UhdmImporter::declare_function_local(const UHDM::any* var,
+                                         std::map<std::string, RTLIL::Const>& scope_vars) {
+    std::string var_name = std::string(var->VpiName());
+    // For an unpacked array_var (e.g. `reg [3:0] state[4]`),
+    // flatten the storage into a single wide Const where
+    // element `i` occupies bits `[i*ew + ew - 1 : i*ew]`.
+    // Bit-select / var-select access on the array is handled
+    // below using the same offset arithmetic.
+    int width = 0;
+    if (var->UhdmType() == uhdmarray_var) {
+        auto av = any_cast<const array_var*>(var);
+        int elem_w = 1;
+        if (av->Variables() && !av->Variables()->empty())
+            elem_w = get_width(av->Variables()->at(0), current_instance);
+        // Surelog stores the array's unpacked dimensions inside
+        // its typespec (`array_typespec::Ranges()`), not on the
+        // array_var directly.  Walk to the typespec.
+        VectorOfrange* ranges = nullptr;
+        if (av->Typespec()) {
+            if (auto rt = av->Typespec()->Actual_typespec()) {
+                if (rt->UhdmType() == uhdmarray_typespec) {
+                    auto ats = any_cast<const array_typespec*>(rt);
+                    ranges = ats->Ranges();
+                    // A TYPEDEF'd unpacked array local
+                    // (`typedef int unsigned perm_t [W];
+                    // perm_t p;`) has no inner Variables():
+                    // its element type is the typespec's
+                    // Elem_typespec.  Left at 1 bit, the
+                    // function's whole result packed one
+                    // bit per element (common_cells
+                    // cc_sub_per_hash get_permutations).
+                    if ((!av->Variables() || av->Variables()->empty()) &&
+                        ats->Elem_typespec() &&
+                        ats->Elem_typespec()->Actual_typespec()) {
+                        int ew = get_width_from_typespec(
+                            ats->Elem_typespec()->Actual_typespec(),
+                            current_instance);
+                        if (ew > 1) elem_w = ew;
+                    }
+                }
+            }
+        }
+        int total = 1;
+        std::vector<std::pair<int,int>> udims;
+        if (ranges) {
+            for (auto r : *ranges) {
+                if (r->Left_expr() && r->Right_expr()) {
+                    RTLIL::Const lv = evaluate_single_operand(r->Left_expr(), scope_vars);
+                    RTLIL::Const rv = evaluate_single_operand(r->Right_expr(), scope_vars);
+                    int left = lv.size() > 0 ? lv.as_int() : 0;
+                    int right = rv.size() > 0 ? rv.as_int() : 0;
+                    total *= std::abs(left - right) + 1;
+                    udims.push_back({std::abs(left - right) + 1,
+                                     std::min(left, right)});
+                }
+            }
+        }
+        width = total * elem_w;
+        array_local_element_widths[var_name] = elem_w;
+        // A MULTI-dim unpacked local (`int unsigned p [R][W]`,
+        // common_cells cc_sub_per_hash's permutation tables):
+        // `p[r][i]` is element (r*W + i), not bit i of
+        // element r — record the dims for the select sites.
+        if (udims.size() >= 2)
+            array_local_unpacked_dims[var_name] = udims;
+        log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
+            var_name.c_str(), elem_w, total, width);
+    } else if (var->UhdmType() == uhdmpacked_array_var) {
+        // Packed array of (e.g.) enums: `sp2v_e [1:0] out` — element
+        // width comes from Elements()[0], total from get_width.  Register
+        // the element width so `out[0] = X` writes a whole element slice
+        // rather than a single bit.
+        auto pav = any_cast<const packed_array_var*>(var);
+        width = get_width(var, current_instance);
+        int elem_w = 1;
+        if (pav->Elements() && !pav->Elements()->empty())
+            if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
+                elem_w = get_width(e0, current_instance);
+        if (elem_w > 0) array_local_element_widths[var_name] = elem_w;
+        log("    packed_array_var %s: elem_w=%d, width=%d\n",
+            var_name.c_str(), elem_w, width);
+    } else {
+        width = get_width(var, current_instance);
+        // A packed multi-dimensional local (`logic [4:0][1:0]
+        // result`, often via a typedef) needs its inner element
+        // width registered so element / part-select access
+        // (`result[i]`, `result[i][hi:lo]`) slices the right
+        // bits in const-eval (BitSelectPartSelectInFunction).
+        if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+            if (v->Typespec() && v->Typespec()->Actual_typespec() &&
+                v->Typespec()->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(
+                    v->Typespec()->Actual_typespec());
+                int inner_w = 0;
+                if (lt->Ranges() && lt->Ranges()->size() >= 2) {
+                    auto ri = lt->Ranges()->at(lt->Ranges()->size() - 1);
+                    if (ri->Left_expr() && ri->Right_expr()) {
+                        int l = evaluate_single_operand(ri->Left_expr(), scope_vars).as_int();
+                        int r = evaluate_single_operand(ri->Right_expr(), scope_vars).as_int();
+                        inner_w = std::abs(l - r) + 1;
+                    }
+                } else if (lt->Elem_typespec() &&
+                           lt->Elem_typespec()->Actual_typespec()) {
+                    inner_w = get_width_from_typespec(
+                        lt->Elem_typespec()->Actual_typespec(), current_instance);
+                }
+                if (inner_w > 1 && inner_w < width)
+                    array_local_element_widths[var_name] = inner_w;
+            }
+        }
+    }
+    if (var->UhdmType() == uhdmarray_var)
+        array_local_unpacked_names.insert(var_name);
+    return width;
 }
 
 RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
@@ -443,9 +578,10 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         bit_index = idx_val.as_int();
                     }
                     // Detect array-element write: `state[i] = <value>`.
-                    if (bs->Actual_group() &&
-                        (bs->Actual_group()->UhdmType() == uhdmarray_var ||
-                         bs->Actual_group()->UhdmType() == uhdmpacked_array_var) &&
+                    if (((bs->Actual_group() &&
+                          (bs->Actual_group()->UhdmType() == uhdmarray_var ||
+                           bs->Actual_group()->UhdmType() == uhdmpacked_array_var)) ||
+                         array_local_unpacked_names.count(lhs_name)) &&
                         array_local_element_widths.count(lhs_name)) {
                         lhs_is_array_element = true;
                         lhs_array_element_width = array_local_element_widths[lhs_name];
@@ -473,8 +609,9 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         lhs_array_element_width = array_local_element_widths[lhs_name];
                         lhs_array_offset = nd_flat * lhs_array_element_width;
                         bit_index = nd_flat;
-                    } else if (vs->Actual_group() &&
-                        vs->Actual_group()->UhdmType() == uhdmarray_var &&
+                    } else if (((vs->Actual_group() &&
+                                 vs->Actual_group()->UhdmType() == uhdmarray_var) ||
+                                array_local_unpacked_names.count(lhs_name)) &&
                         array_local_element_widths.count(lhs_name) &&
                         vs->Exprs() && vs->Exprs()->size() == 2) {
                         RTLIL::Const i0 = evaluate_single_operand((*vs->Exprs())[0], local_vars);
@@ -787,114 +924,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 for (auto var : *block_variables) {
                     std::string var_name = std::string(var->VpiName());
 
-                    // For an unpacked array_var (e.g. `reg [3:0] state[4]`),
-                    // flatten the storage into a single wide Const where
-                    // element `i` occupies bits `[i*ew + ew - 1 : i*ew]`.
-                    // Bit-select / var-select access on the array is handled
-                    // below using the same offset arithmetic.
-                    int width = 0;
-                    if (var->UhdmType() == uhdmarray_var) {
-                        auto av = any_cast<const array_var*>(var);
-                        int elem_w = 1;
-                        if (av->Variables() && !av->Variables()->empty())
-                            elem_w = get_width(av->Variables()->at(0), current_instance);
-                        // Surelog stores the array's unpacked dimensions inside
-                        // its typespec (`array_typespec::Ranges()`), not on the
-                        // array_var directly.  Walk to the typespec.
-                        VectorOfrange* ranges = nullptr;
-                        if (av->Typespec()) {
-                            if (auto rt = av->Typespec()->Actual_typespec()) {
-                                if (rt->UhdmType() == uhdmarray_typespec) {
-                                    auto ats = any_cast<const array_typespec*>(rt);
-                                    ranges = ats->Ranges();
-                                    // A TYPEDEF'd unpacked array local
-                                    // (`typedef int unsigned perm_t [W];
-                                    // perm_t p;`) has no inner Variables():
-                                    // its element type is the typespec's
-                                    // Elem_typespec.  Left at 1 bit, the
-                                    // function's whole result packed one
-                                    // bit per element (common_cells
-                                    // cc_sub_per_hash get_permutations).
-                                    if ((!av->Variables() || av->Variables()->empty()) &&
-                                        ats->Elem_typespec() &&
-                                        ats->Elem_typespec()->Actual_typespec()) {
-                                        int ew = get_width_from_typespec(
-                                            ats->Elem_typespec()->Actual_typespec(),
-                                            current_instance);
-                                        if (ew > 1) elem_w = ew;
-                                    }
-                                }
-                            }
-                        }
-                        int total = 1;
-                        std::vector<std::pair<int,int>> udims;
-                        if (ranges) {
-                            for (auto r : *ranges) {
-                                if (r->Left_expr() && r->Right_expr()) {
-                                    RTLIL::Const lv = evaluate_single_operand(r->Left_expr(), block_vars);
-                                    RTLIL::Const rv = evaluate_single_operand(r->Right_expr(), block_vars);
-                                    int left = lv.size() > 0 ? lv.as_int() : 0;
-                                    int right = rv.size() > 0 ? rv.as_int() : 0;
-                                    total *= std::abs(left - right) + 1;
-                                    udims.push_back({std::abs(left - right) + 1,
-                                                     std::min(left, right)});
-                                }
-                            }
-                        }
-                        width = total * elem_w;
-                        array_local_element_widths[var_name] = elem_w;
-                        // A MULTI-dim unpacked local (`int unsigned p [R][W]`,
-                        // common_cells cc_sub_per_hash's permutation tables):
-                        // `p[r][i]` is element (r*W + i), not bit i of
-                        // element r — record the dims for the select sites.
-                        if (udims.size() >= 2)
-                            array_local_unpacked_dims[var_name] = udims;
-                        log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
-                            var_name.c_str(), elem_w, total, width);
-                    } else if (var->UhdmType() == uhdmpacked_array_var) {
-                        // Packed array of (e.g.) enums: `sp2v_e [1:0] out` — element
-                        // width comes from Elements()[0], total from get_width.  Register
-                        // the element width so `out[0] = X` writes a whole element slice
-                        // rather than a single bit.
-                        auto pav = any_cast<const packed_array_var*>(var);
-                        width = get_width(var, current_instance);
-                        int elem_w = 1;
-                        if (pav->Elements() && !pav->Elements()->empty())
-                            if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
-                                elem_w = get_width(e0, current_instance);
-                        if (elem_w > 0) array_local_element_widths[var_name] = elem_w;
-                        log("    packed_array_var %s: elem_w=%d, width=%d\n",
-                            var_name.c_str(), elem_w, width);
-                    } else {
-                        width = get_width(var, current_instance);
-                        // A packed multi-dimensional local (`logic [4:0][1:0]
-                        // result`, often via a typedef) needs its inner element
-                        // width registered so element / part-select access
-                        // (`result[i]`, `result[i][hi:lo]`) slices the right
-                        // bits in const-eval (BitSelectPartSelectInFunction).
-                        if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
-                            if (v->Typespec() && v->Typespec()->Actual_typespec() &&
-                                v->Typespec()->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
-                                auto lt = any_cast<const UHDM::logic_typespec*>(
-                                    v->Typespec()->Actual_typespec());
-                                int inner_w = 0;
-                                if (lt->Ranges() && lt->Ranges()->size() >= 2) {
-                                    auto ri = lt->Ranges()->at(lt->Ranges()->size() - 1);
-                                    if (ri->Left_expr() && ri->Right_expr()) {
-                                        int l = evaluate_single_operand(ri->Left_expr(), block_vars).as_int();
-                                        int r = evaluate_single_operand(ri->Right_expr(), block_vars).as_int();
-                                        inner_w = std::abs(l - r) + 1;
-                                    }
-                                } else if (lt->Elem_typespec() &&
-                                           lt->Elem_typespec()->Actual_typespec()) {
-                                    inner_w = get_width_from_typespec(
-                                        lt->Elem_typespec()->Actual_typespec(), current_instance);
-                                }
-                                if (inner_w > 1 && inner_w < width)
-                                    array_local_element_widths[var_name] = inner_w;
-                            }
-                        }
-                    }
+                    int width = declare_function_local(var, block_vars);
 
                     // Initialize the local variable to 0
                     block_vars[var_name] = RTLIL::Const(0, width);
@@ -1185,8 +1215,9 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         // unpacked array_var, return the corresponding `element_width` bits.
         const bit_select* bs = any_cast<const bit_select*>(operand);
         std::string nm = std::string(bs->VpiName());
-        if (bs->Actual_group() &&
-            bs->Actual_group()->UhdmType() == uhdmarray_var &&
+        if (((bs->Actual_group() &&
+              bs->Actual_group()->UhdmType() == uhdmarray_var) ||
+             array_local_unpacked_names.count(nm)) &&
             local_vars.count(nm) &&
             array_local_element_widths.count(nm)) {
             int idx = 0;
@@ -1346,8 +1377,9 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
                 bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
             }
             val = RTLIL::Const(bits);
-        } else if (vs->Actual_group() &&
-            vs->Actual_group()->UhdmType() == uhdmarray_var &&
+        } else if (((vs->Actual_group() &&
+                     vs->Actual_group()->UhdmType() == uhdmarray_var) ||
+                    array_local_unpacked_names.count(nm)) &&
             local_vars.count(nm) &&
             array_local_element_widths.count(nm) &&
             vs->Exprs() && vs->Exprs()->size() == 2) {
