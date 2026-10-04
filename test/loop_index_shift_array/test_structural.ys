@@ -1,0 +1,14 @@
+# STRUCTURAL gate: every process access to data_reg is a constant index
+# (the for loops are unrolled), so the array must be per-element registers.
+# The bug produced a $mem with a read port and no write port, which the
+# formal check cannot see (the netlist is still a function of its inputs);
+# the co-sim does (q reads 0 forever).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+memory_collect
+opt_clean
+select -assert-count 0 t:$mem_v2
+select -assert-count 0 t:$memrd t:$memrd_v2 %u
+# the four element registers survive
+select -assert-min 4 t:$dff t:$sdff t:$dffe t:$sdffe %u %u %u

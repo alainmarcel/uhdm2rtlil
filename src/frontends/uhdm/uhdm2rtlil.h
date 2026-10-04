@@ -1316,6 +1316,10 @@ struct UhdmImporter {
     // already in loop_values, or a parameter/constant, is compile-time constant
     // (folds on import), so it returns false.
     bool offset_is_dynamic(const UHDM::any* e);
+    // For-loop variables of the loops enclosing the statement extract_assigned_signals
+    // is scanning (a per-iteration constant once the loop is unrolled).
+    std::set<std::string> scan_loop_vars_;
+    bool index_is_loop_constant(const UHDM::any* e);
     // Collect the control-variable names of every `for` loop in a statement
     // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
     // a loop counter is not a flip-flop and has no constant async-reset value.

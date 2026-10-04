@@ -551,6 +551,38 @@ bool UhdmImporter::offset_is_dynamic(const UHDM::any* e) {
     return true;            // bit/part/var-selects etc. index a runtime signal
 }
 
+// True when every non-constant leaf of `e` is a variable of an enclosing for
+// loop being scanned (scan_loop_vars_) or a parameter -- i.e. the index is a
+// constant in every unrolled iteration.
+bool UhdmImporter::index_is_loop_constant(const UHDM::any* e) {
+    if (!e) return false;
+    switch (e->VpiType()) {
+        case vpiConstant: return true;
+        case vpiRefObj:
+        case vpiRefVar: {
+            std::string nm = std::string(e->VpiName());
+            if (scan_loop_vars_.count(nm)) return true;
+            if (auto ro = dynamic_cast<const UHDM::ref_obj*>(e))
+                if (auto act = ro->Actual_group())
+                    if (act->UhdmType() == UHDM::uhdmparameter) return true;
+            return false;
+        }
+        case vpiOperation: {
+            auto op = any_cast<const UHDM::operation*>(e);
+            if (!op || !op->Operands()) return false;
+            bool saw_loop_var = false;
+            for (auto o : *op->Operands()) {
+                if (!index_is_loop_constant(o)) return false;
+                if (o->VpiType() == vpiRefObj || o->VpiType() == vpiRefVar)
+                    if (scan_loop_vars_.count(std::string(o->VpiName()))) saw_loop_var = true;
+                if (o->VpiType() == vpiOperation) saw_loop_var = true;  // nested, already vetted
+            }
+            return saw_loop_var;
+        }
+        default: return false;
+    }
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
 
@@ -774,6 +806,38 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             }
                             if (!is_const_idx) {
                                 RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
+                                // Indexed by an enclosing for loop's variable
+                                // (`p_reg[j] <= p_reg[j-1]`): the loop is
+                                // unrolled, so each iteration writes ONE element
+                                // at a constant index -- but which elements is
+                                // unknowable here, so register them ALL.  Skipped
+                                // as "dynamic", no element had a `$0\` temp and
+                                // the unrolled writes landed in the case tree as
+                                // combinational assignments: the shift register's
+                                // upper stages lost their flops
+                                // (forloop_desc_array_shift, verilog-ethernet
+                                // axis_srl_fifo once the array was per-element).
+                                if (!module->memories.count(mem_id) &&
+                                    expanded_array_low(sig.name) >= 0 && idx &&
+                                    index_is_loop_constant(idx)) {
+                                    int low = expanded_array_low(sig.name);
+                                    int n = 0;
+                                    while (module->wire(RTLIL::escape_id(
+                                               sig.name + "[" + std::to_string(low + n) + "]")))
+                                        n++;
+                                    log("extract_assigned_signals: loop-indexed write to expanded array '%s' -> all %d elements\n",
+                                        sig.name.c_str(), n);
+                                    for (int k = low; k < low + n; k++) {
+                                        AssignedSignal es = sig;
+                                        es.name = sig.name + "[" + std::to_string(k) + "]";
+                                        es.is_part_select = false;
+                                        es.lhs_expr = nullptr;
+                                        bool dup = false;
+                                        for (auto& ex : signals) if (ex.name == es.name) { dup = true; break; }
+                                        if (!dup) signals.push_back(es);
+                                    }
+                                    break;
+                                }
                                 if (!module->memories.count(mem_id) &&
                                     expanded_array_low(sig.name) >= 0) {
                                     // Remember the array: a constant-index
@@ -1249,8 +1313,20 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                 }
             }
             if (auto body = for_loop->VpiStmt()) {
+                // The loop variable is a per-iteration constant for the body
+                // scan (see the expanded-array element registration above).
+                std::vector<std::string> added_lv;
+                if (for_loop->VpiForInitStmts())
+                    for (auto s0 : *for_loop->VpiForInitStmts()) {
+                        if (s0->VpiType() != vpiAssignment) continue;
+                        auto ia = any_cast<const assignment*>(s0);
+                        if (!ia || !ia->Lhs()) continue;
+                        std::string nm = std::string(ia->Lhs()->VpiName());
+                        if (!nm.empty() && scan_loop_vars_.insert(nm).second) added_lv.push_back(nm);
+                    }
                 std::vector<AssignedSignal> body_signals;
                 extract_assigned_signals(body, body_signals);
+                for (auto& nm : added_lv) scan_loop_vars_.erase(nm);
                 for (auto& sig : body_signals) dedup_add(sig);
             }
             break;
@@ -2225,11 +2301,25 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
     // Capture the module for lambda access
     auto rtlil_module = module;
     
+    // Variables of the enclosing `for` loops whose init value is constant: the
+    // importer UNROLLS such loops, so `data_reg[k+1] <= data_reg[k]` is a
+    // constant-index write per iteration.  Scored as dynamic, verilog-ethernet's
+    // axis_srl_fifo got a $mem that nothing wrote (the unrolled writes went to
+    // element wires) and read 0 forever: 262 of 302 co-sim cycles diverged.
+    std::set<std::string> loop_vars;
+    // Inside an `initial` block a loop-written array is a TABLE
+    // (`for (i) y_table[i] <= mylog2(i)` + `assign y = y_table[a]`, yosys
+    // repwhile): keep it a $mem with a $meminit per word, as read_verilog does,
+    // rather than 64 element wires.  Loop variables count as constant only in
+    // always blocks, where unrolling yields per-element registers.
+    bool scanning_initial = false;
     // Helper lambda to check if an expression is a constant
     std::function<bool(const UHDM::expr*)> is_constant_expr = [&, rtlil_module](const UHDM::expr* expr) -> bool {
         if (!expr) return true;
         
         switch (expr->VpiType()) {
+            case vpiRefVar:
+                return loop_vars.count(std::string(expr->VpiName())) > 0;
             case vpiConstant:  // vpiIntConst has the same value
             case vpiRealConst:
             case vpiStringConst:
@@ -2240,6 +2330,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 return true;
             
             case vpiRefObj: {
+                if (loop_vars.count(std::string(expr->VpiName()))) return true;
                 // Check if it's a parameter reference
                 auto ref = any_cast<const ref_obj*>(expr);
                 if (ref) {
@@ -2457,7 +2548,26 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
             case vpiFor: {
                 auto for_s = any_cast<const UHDM::for_stmt*>(stmt);
                 if (for_s) {
-                    if (!check_array_access(for_s->VpiStmt(), cur_depth + 1)) return false;
+                    // The loop variable is a compile-time index when its init
+                    // value is constant (the importer unrolls the loop).
+                    std::vector<std::string> added;
+                    auto note_init = [&](const UHDM::any* st) {
+                        if (!st || st->VpiType() != vpiAssignment) return;
+                        auto as = any_cast<const UHDM::assignment*>(st);
+                        if (!as || !as->Lhs()) return;
+                        std::string nm = std::string(as->Lhs()->VpiName());
+                        auto rhs = dynamic_cast<const UHDM::expr*>(as->Rhs());
+                        if (!scanning_initial && !nm.empty() && rhs && is_constant_expr(rhs) && !loop_vars.count(nm)) {
+                            loop_vars.insert(nm);
+                            added.push_back(nm);
+                        }
+                    };
+                    note_init(for_s->VpiForInitStmt());
+                    if (for_s->VpiForInitStmts())
+                        for (auto st : *for_s->VpiForInitStmts()) note_init(st);
+                    bool ok = check_array_access(for_s->VpiStmt(), cur_depth + 1);
+                    for (auto& nm : added) loop_vars.erase(nm);
+                    if (!ok) return false;
                 }
                 break;
             }
@@ -2519,10 +2629,13 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 if (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysComb ||
                     proc->VpiType() == vpiAlwaysFF || proc->VpiType() == vpiInitial) {
                     auto always_proc = any_cast<const process_stmt*>(proc);
+                    scanning_initial = (proc->VpiType() == vpiInitial);
                     if (always_proc && always_proc->Stmt() &&
                         !check_array_access(always_proc->Stmt(), 1)) {
+                        scanning_initial = false;
                         return false;  // Found non-constant access
                     }
+                    scanning_initial = false;
                 }
             }
         }
