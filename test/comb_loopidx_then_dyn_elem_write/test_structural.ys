@@ -1,0 +1,9 @@
+# The buggy netlist is a combinational loop (each element driven by a mux
+# whose other input is the element itself) and the loop's adders are dead.
+# Assert a loop-free netlist that still has the four `a + i` adders.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert
+select -assert-min 5 t:$add

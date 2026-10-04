@@ -63,17 +63,17 @@ only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1695 | 1170 | 525 |
-| Functional | 1648 (97%) | 1140 | 508 |
+| Tests | 1697 | 1172 | 525 |
+| Functional | 1650 (97%) | 1142 | 508 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1040** tests formally equivalent UHDM vs Verilog; **608** UHDM-only
+- **1040** tests formally equivalent UHDM vs Verilog; **610** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **200 / 201** SV-only designs also proven against `read_slang`, and **14**
+  **201 / 202** SV-only designs also proven against `read_slang`, and **16**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop or a missing `$mem` still "works" — it just returns
   constants).

@@ -7166,91 +7166,18 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     }
                 }
 
-                // Handle single assignment in loop body (shift register pattern)
+                // Single assignment in the loop body
                 if (body->VpiType() == vpiAssignment) {
-                    const assignment* assign = any_cast<const assignment*>(body);
-                    
-                    // Check for M[i+1] <= M[i] pattern
-                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect &&
-                        assign->Rhs() && assign->Rhs()->VpiType() == vpiBitSelect) {
-                        
-                        const bit_select* lhs_bs = any_cast<const bit_select*>(assign->Lhs());
-                        const bit_select* rhs_bs = any_cast<const bit_select*>(assign->Rhs());
-                        
-                        std::string lhs_name = std::string(lhs_bs->VpiName());
-                        std::string rhs_name = std::string(rhs_bs->VpiName());
-                        
-                        // Check if both are the same memory/array
-                        if (lhs_name == rhs_name) {
-                            log("        Detected shift register pattern for array '%s'\n", lhs_name.c_str());
-                            
-                            // Unroll the shift register
-                            int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
-                                                 : (inclusive ? end_value : end_value - 1);
-                            
-                            // For mul_unsigned, we need to handle this specially
-                            // The pattern is M[i+1] <= M[i] for i from 0 to 2
-                            // This should generate:
-                            //   M[1] <= M[0]
-                            //   M[2] <= M[1]  
-                            //   M[3] <= M[2]
-                            
-                            for (int64_t i = start_value;
-                                 increment > 0 ? i <= loop_end : i >= loop_end;
-                                 i += increment) {
-                                log("        Unrolling iteration %lld: %s[%lld+1] <= %s[%lld]\n", 
-                                    (long long)i, lhs_name.c_str(), (long long)i, lhs_name.c_str(), (long long)i);
-                                
-                                // Create the assignments
-                                // We need to import the assignment with substituted indices
-                                RTLIL::SigSpec lhs_spec;
-                                RTLIL::SigSpec rhs_spec;
-                                
-                                // Get the memory
-                                RTLIL::IdString mem_id = RTLIL::escape_id(lhs_name);
-                                
-                                // Check if individual wires exist for array elements
-                                std::string src_wire_name = stringf("\\%s[%d]", lhs_name.c_str(), (int)i);
-                                std::string dst_wire_name = stringf("\\%s[%d]", lhs_name.c_str(), (int)(i+1));
-                                
-                                RTLIL::Wire* src_wire = module->wire(src_wire_name);
-                                RTLIL::Wire* dst_wire = module->wire(dst_wire_name);
-                                
-                                if (src_wire && dst_wire) {
-                                    // Use the individual wires
-                                    lhs_spec = RTLIL::SigSpec(dst_wire);
-                                    rhs_spec = RTLIL::SigSpec(src_wire);
-                                } else {
-                                    // This is actually a memory, handle as memory element
-                                    // We'll need to create the wires
-                                    if (module->memories.count(mem_id) > 0) {
-                                        RTLIL::Memory* mem = module->memories.at(mem_id);
-                                        
-                                        if (!src_wire) {
-                                            src_wire = module->addWire(src_wire_name, mem->width);
-                                        }
-                                        if (!dst_wire) {
-                                            dst_wire = module->addWire(dst_wire_name, mem->width);
-                                        }
-                                        
-                                        lhs_spec = RTLIL::SigSpec(dst_wire);
-                                        rhs_spec = RTLIL::SigSpec(src_wire);
-                                    } else {
-                                        log_warning("Array '%s' not found as memory\n", lhs_name.c_str());
-                                        continue;
-                                    }
-                                }
-                                
-                                // Add the assignment to the sync rule
-                                sync->actions.push_back(RTLIL::SigSig(lhs_spec, rhs_spec));
-                                
-                                log("        Added shift register assignment: %s <= %s\n", 
-                                    dst_wire_name.c_str(), src_wire_name.c_str());
-                            }
-                            
-                            log("        Shift register unrolled successfully\n");
-                        }
-                    } else if (in_initial_block &&
+                    // A `M[i+1] <= M[i]` body used to take a shortcut here that
+                    // pushed `\M[i+1] <= \M[i]` straight into the sync rule.  It
+                    // ignored the enclosing condition (`if (shift)`), the real
+                    // index expressions and the pending-write store: the chain
+                    // shifted EVERY cycle, and a reset loop over the same
+                    // elements produced overlapping updates that `proc` resolved
+                    // by dropping the registers (verilog-ethernet axis_srl_fifo;
+                    // test/loop_index_shift_array).  A shift loop is an ordinary
+                    // loop body: the general unroll below handles it.
+                    if (in_initial_block &&
                                body->VpiType() == vpiAssignment &&
                                any_cast<const assignment*>(body)->Lhs() &&
                                any_cast<const assignment*>(body)->Lhs()->VpiType() == vpiBitSelect &&
