@@ -1,0 +1,18 @@
+# read_verilog cannot parse a `parameter type`, so this miter is the real gate.
+# On the previous Surelog `mid` has no addr_t type parameter: a_i/b_o are 1 bit
+# and y reads bits of a 1-bit wire, which this finds immediately.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
