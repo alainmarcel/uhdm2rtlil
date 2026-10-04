@@ -207,6 +207,27 @@ def main(out_path):
                              why=why_short, und=und, cos=cos))
     reads = [r for r in rows if r["und"].startswith("✅")]
     cosim_ok = [r for r in reads if r["cos"].startswith("✅")]
+    # The rule that decides what a row says about slang (2026-10-04): a row
+    # counts against read_slang only when Verilator builds the module AND
+    # read_uhdm co-simulates it cleanly -- then two tools handle what slang
+    # declines, whatever the diagnostic class.  A row that no tool has yet
+    # built and co-simulated says nothing about slang: it is a module nobody
+    # supports (or a harness gap), and it sits with the design/setup rows until
+    # it does.  The "stricter" classes stay where they are: the language is on
+    # slang's side there, co-sim or not.
+    PROVEN_SUFFIX = " -- yet Verilator builds it and read_uhdm co-simulates it cleanly"
+    UNPROVEN_SUFFIX = " -- and no tool has yet built and co-simulated it"
+    demoted = set()
+    for r in rows:
+        if r["cls"] in STRICTER or r["cls"] == "other":
+            continue
+        proven = r["cos"].startswith("✅")
+        if proven and r["cls"] in NOT_SLANG:
+            r["cls"] = r["cls"] + PROVEN_SUFFIX
+        elif not proven and r["cls"] not in NOT_SLANG:
+            r["cls"] = r["cls"] + UNPROVEN_SUFFIX
+            demoted.add(r["cls"])
+    not_slang = NOT_SLANG | demoted
     L = []
     A = L.append
     A("# Designs `read_slang` cannot read\n")
@@ -221,7 +242,12 @@ def main(out_path):
       "neither measurement needs slang.  The rows are split three ways: what\n"
       "read_slang declines, where it is stricter than the other frontends and the\n"
       "language is on its side, and what the design, the checkout or our own\n"
-      "project setup declines.  Only the first group is a report about slang.\n")
+      "project setup declines.  Only the first group is a report about slang,\n"
+      "and a row reaches it on one condition: Verilator builds the module and\n"
+      "`read_uhdm` co-simulates it cleanly, so two tools handle what read_slang\n"
+      "declines.  A row no tool has yet built and co-simulated proves nothing\n"
+      "about slang -- it is a module nobody supports, or a harness gap -- and it\n"
+      "stays in the third group until it does.\n")
     A(f"All {len(rows)} are read and elaborated by `read_uhdm` with every net\n"
       f"driven, and **{len(cosim_ok)}** also co-simulate the RTL cleanly.  For the\n"
       "rest Verilator cannot build a testbench standalone — a vendor primitive, an\n"
@@ -248,7 +274,7 @@ def main(out_path):
           "These are read_slang's own limits: every one of them is a construct the\n"
           "other two frontends accept, and each row below carries a pre-filled issue\n"
           "link.",
-          lambda k: k not in NOT_SLANG and k not in STRICTER and k != "other")
+          lambda k: k not in not_slang and k not in STRICTER and k != "other")
     table("What the design, the checkout, or our own project setup declines",
           "Not read_slang's doing.  A module the repository never shipped (OpenTitan\n"
           "primitives vendored without their `prim_*` library), a configuration the\n"
@@ -257,7 +283,7 @@ def main(out_path):
           "in the project WE hand the tools, which is ours to close and never an\n"
           "issue to file.  read_uhdm reads several of these only because Surelog is\n"
           "quieter about a missing file, which is not an advantage.",
-          lambda k: k in NOT_SLANG)
+          lambda k: k in not_slang)
     table("Where read_slang is stricter than the other frontends",
           "read_slang refuses these; `read_verilog`, Surelog and sv2v accept them.\n"
           "The language is on read_slang's side -- Verilator rejects the enum case\n"
@@ -274,7 +300,7 @@ def main(out_path):
     A("|---|---|---|---|---|---|")
     for r in sorted(rows, key=lambda r: (r["fam"], r["mod"])):
         rep = (f"[file an issue]({issue_url(r['mod'], r['why'], r['und'])})"
-               if r["und"].startswith("✅") and r["cls"] not in NOT_SLANG
+               if r["und"].startswith("✅") and r["cls"] not in not_slang
                and r["cls"] not in STRICTER else "—")
         A(f"| {r['fam']} | `{r['mod']}` | {r['why']} | {r['und']} | {r['cos']} | {rep} |")
     A("\n---\n")
