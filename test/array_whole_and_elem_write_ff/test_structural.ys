@@ -1,0 +1,13 @@
+# An unpacked array written WHOLE (`p <= '{...}`), by an element RANGE
+# (`p[3:0] <= nn`) and by one ELEMENT (`p[4] <= ...`) in the same always_ff.
+# The elements are the storage (the flat `\p` is assembled from them), yet the
+# flat wire got its own temp and sync update too: after proc the flat register
+# and the element flops drove the same bits -- 40 driver conflicts that
+# `check` reports and that yosys resolves by picking the constant, so the
+# element written alone read 0 (hdl-util/hdmi packet_assembler's ECC).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+check -assert
+# one flop per element, none for the flat alias
+select -assert-count 5 t:$dff t:$dffe t:$sdff t:$sdffe t:$adff %u %u %u %u

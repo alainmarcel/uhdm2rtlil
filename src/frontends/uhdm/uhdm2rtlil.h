@@ -1267,6 +1267,7 @@ struct UhdmImporter {
     // Side-effect helpers for assignment expressions and inc/dec
     void emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc);
     RTLIL::SigSpec map_to_temp_wire(RTLIL::SigSpec sig);
+    void fold_whole_array_writes_onto_elements(std::vector<AssignedSignal>& assigned_signals);
     // `\arr[k]` per-element alias wire of a flat unpacked array `\arr` (both
     // wires exist; import_module alias-connects them) -> the flat wire, with
     // `off` = element k's bit offset in it.  nullptr for any other wire.
