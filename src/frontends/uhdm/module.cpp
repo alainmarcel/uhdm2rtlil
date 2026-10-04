@@ -5626,8 +5626,24 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                         } else if (init_val.size() > w->width) {
                             init_val = init_val.extract(0, w->width);
                         }
-                        module->connect(RTLIL::SigSpec(w), init_val);
-                        log("UHDM: Added initializer assignment for '%s'\n", hierarchical_name.c_str());
+                        // A process in this generate scope drives the variable
+                        // (`logic internal_reset = 1'b1; always_ff ... <= 1'b0;`,
+                        // hdl-util/hdmi serializer): the initializer is the
+                        // register's power-up value, an `\init` attribute, as the
+                        // net-declaration path above already does.  A `connect`
+                        // made the constant a second driver that `opt` kept over
+                        // the flop -- the serializer's reset never released and
+                        // 246 of 302 co-sim cycles diverged.
+                        std::string bare = var_name;
+                        if (auto d = bare.rfind('.'); d != std::string::npos) bare = bare.substr(d + 1);
+                        if (init_val.is_fully_const() && gen_scope_proc_written.count(bare)) {
+                            w->attributes[ID::init] = init_val.as_const();
+                            log("UHDM: Set \\init on gen-scope reg '%s' (a process drives it) [wire %s, module %s]\n",
+                                hierarchical_name.c_str(), w->name.c_str(), module->name.c_str());
+                        } else {
+                            module->connect(RTLIL::SigSpec(w), init_val);
+                            log("UHDM: Added initializer assignment for '%s'\n", hierarchical_name.c_str());
+                        }
                     }
                 }
             }
