@@ -830,9 +830,13 @@ write_rtlil ${test_name}_from_verilog.il
 synth -auto-top
 write_verilog -noexpr ${test_name}_from_verilog_synth.v
 EOF
+    # Yosys's own tests read a design FILE BY FILE: a testbench instantiates the
+    # module a later `read_verilog` (or a -lib cell library) defines, so an
+    # undefined module here is a blackbox to resolve later, not a hole.
+    # read_uhdm refuses undefined modules by default; these tests opt out.
     cat > "$abs_dir/test_uhdm_read.ys" << EOF
 plugin -i $UHDM_PLUGIN
-read_uhdm slpp_all/surelog.uhdm
+read_uhdm -allow-undefined-modules slpp_all/surelog.uhdm
 ${lib_reads}
 write_rtlil ${test_name}_from_uhdm_nohier.il
 hierarchy -auto-top
@@ -977,6 +981,23 @@ analyze_test_result() {
 
     # Check if UHDM output exists (post-hierarchy or nohier)
     local uhdm_nohier="${test_dir}/${prefix}_from_uhdm_nohier.il"
+    # A test that ships `expect_read_error.txt` (a regex) is a REFUSAL test:
+    # read_uhdm must reject the design with an error matching the regex, and
+    # produce no netlist.  Accepting the design is the failure (an instance of
+    # an undefined module used to come out as an empty cell with "0 undriven").
+    if [ -f "${test_dir}/expect_read_error.txt" ]; then
+        local want_err; want_err="$(head -1 "${test_dir}/expect_read_error.txt")"
+        if [ ! -f "$uhdm_file" ] && [ ! -f "$uhdm_nohier" ] && \
+           grep -qE "ERROR: .*${want_err}" "${test_dir}/uhdm_path.log" 2>/dev/null; then
+            echo "✅ Test $test_dir PASSED - read_uhdm refused the design as expected (/${want_err}/)"
+            PASSED_TESTS=$((PASSED_TESTS + 1))
+            return 0
+        fi
+        echo "❌ Test $test_dir FAILED - read_uhdm must refuse this design with an error matching /${want_err}/"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+        FAILED_TEST_NAMES+=("$test_dir")
+        return 1
+    fi
     if [ ! -f "$uhdm_file" ] && [ ! -f "$uhdm_nohier" ]; then
         echo "❌ Test $test_dir FAILED - UHDM output missing"
         FAILED_TESTS=$((FAILED_TESTS + 1))

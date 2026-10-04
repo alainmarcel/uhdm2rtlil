@@ -63,8 +63,8 @@ only on a clean run.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1700 | 1175 | 525 |
-| Functional | 1653 (97%) | 1145 | 508 |
+| Tests | 1701 | 1176 | 525 |
+| Functional | 1654 (97%) | 1146 | 508 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
@@ -487,7 +487,7 @@ All arguments are forwarded to Surelog verbatim, exactly as if it were the
 `read_sv` forces parse + elaborate + in-memory UHDM elaboration on and `.uhdm`
 file writing off.  Pass any Surelog flag as usual; `-nobuiltin` is recommended
 to skip Surelog's built-in classes.  Plugin-only options (consumed, not passed
-to Surelog): `-uhdm_debug`, `-formal`, `-keep_names`.
+to Surelog): `-uhdm_debug`, `-formal`, `-keep_names`, `-allow-undefined-modules`.
 
 #### `read_uhdm` — read a pre-generated UHDM file
 
@@ -503,7 +503,11 @@ test workflow, or for caching/debugging the `.uhdm`):
   -p "read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
 ```
 
-Options: `-debug`, `-formal`, `-keep_names`.
+Options: `-debug`, `-formal`, `-keep_names`, `-allow-undefined-modules`.  An
+instance of a module that has no definition is REFUSED by default, with the
+modules named (Surelog only warns and would hand over an empty cell); the flag
+keeps such instances as blackbox cells for a design read file by file, which
+is what `read_verilog` does.
 
 #### Using the test workflow
 ```bash

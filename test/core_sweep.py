@@ -260,6 +260,15 @@ def _undriven_check(work_dir, top):
     # 76<->152, `trn_dly` 1<->2 in the rp32 degu SoC) is a benign width
     # adaptation yosys resolves correctly, NOT a blackbox — those designs fully
     # elaborate and their real undriven count below is meaningful.
+    # read_uhdm REFUSES an instance of a module nobody defined (it used to
+    # import an empty cell, and an empty cell has nothing undriven to report:
+    # caliptra-ss's vendored OpenTitan ast/ files scored "✅ 0 undriven" for
+    # weeks without their prim_* library).  Name the modules in the cell: this
+    # row is a hole in the sources the sweep hands the tools, nobody's netlist.
+    m = re.search(r"module(?:s)? that ha(?:s|ve) no definition[^\n]*\n((?:  \S+ \(\d+ instances?\)\n)+)", out)
+    if m:
+        mods = re.findall(r"  (\S+) \(", m.group(1))
+        return "⛔ undefined module" + ("s" if len(mods) > 1 else "") + ": " + ", ".join(mods[:4]) + (" …" if len(mods) > 4 else "")
     if "is not part of the design" in out or \
        re.search(r"Resizing cell port \S+ from \d+ bits to 1 bits", out):
         return "— (blackbox children)"

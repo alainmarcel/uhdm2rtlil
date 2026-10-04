@@ -356,6 +356,10 @@ struct UhdmImporter {
     bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
     bool mode_debug = true;
     bool mode_formal = false;
+    // read_uhdm -allow-undefined-modules: keep an instance of an undefined module
+    // as a blackbox cell instead of refusing the read (see the stub resolution
+    // in import_design).
+    bool allow_undefined_modules = false;
     
     // Counter for unique cell names
     int logic_not_counter = 0;

@@ -40,6 +40,11 @@ struct ReadUHDMPass : public Frontend {
         log("    -keep_names      keep original signal names\n");
         log("    -debug           enable debug output\n");
         log("    -formal          enable formal verification constructs\n");
+        log("    -allow-undefined-modules\n");
+        log("                     keep an instance of a module that has no definition as a\n");
+        log("                     blackbox cell (the read_verilog behaviour, for designs read\n");
+        log("                     file by file).  By default the read is REFUSED and the\n");
+        log("                     undefined modules are listed.\n");
         log("\n");
     }
 
@@ -49,6 +54,7 @@ struct ReadUHDMPass : public Frontend {
         bool keep_names = false;
         bool debug = false;
         bool formal = false;
+        bool allow_undefined_modules = false;
         
         size_t argidx = 1;
         for (; argidx < args.size(); argidx++) {
@@ -62,6 +68,10 @@ struct ReadUHDMPass : public Frontend {
             }
             if (args[argidx] == "-formal") {
                 formal = true;
+                continue;
+            }
+            if (args[argidx] == "-allow-undefined-modules") {
+                allow_undefined_modules = true;
                 continue;
             }
             if (args[argidx] == "-help" || args[argidx] == "--help") {
@@ -108,6 +118,7 @@ struct ReadUHDMPass : public Frontend {
         // Create importer and import design
         UhdmImporter importer(design, keep_names, debug);
         importer.mode_formal = formal;
+        importer.allow_undefined_modules = allow_undefined_modules;
         importer.import_design(uhdm_design);
         
         log("Successfully imported %zu modules from UHDM.\n", 
@@ -139,6 +150,9 @@ struct ReadSVPass : public Pass {
         log("    -uhdm_debug      enable importer debug output\n");
         log("    -formal          enable formal verification constructs\n");
         log("    -keep_names      keep original signal names\n");
+        log("    -allow-undefined-modules\n");
+        log("                     keep an instance of an undefined module as a blackbox cell\n");
+        log("                     instead of refusing the read (see read_uhdm -help)\n");
         log("\n");
     }
 
@@ -146,6 +160,8 @@ struct ReadSVPass : public Pass {
         log_header(design, "Executing read_sv (Surelog + UHDM frontend, in-memory).\n");
 
         bool keep_names = false, debug = false, formal = false;
+
+        bool allow_undefined_modules = false;
 
         // argv[0] is the program name Surelog expects; the rest are forwarded
         // verbatim, except for the few plugin-only options we consume here.
@@ -169,6 +185,7 @@ struct ReadSVPass : public Pass {
             if (args[i] == "-uhdm_debug") { debug = true; continue; }
             if (args[i] == "-formal")     { formal = true; continue; }
             if (args[i] == "-keep_names") { keep_names = true; continue; }
+            if (args[i] == "-allow-undefined-modules") { allow_undefined_modules = true; continue; }
             if (args[i] == "-help" || args[i] == "--help") { help(); return; }
             sl_args.push_back(args[i]);
         }
@@ -223,6 +240,7 @@ struct ReadSVPass : public Pass {
         // Import BEFORE shutdown — shutdown_compiler purges UHDM/VPI memory.
         UhdmImporter importer(design, keep_names, debug);
         importer.mode_formal = formal;
+        importer.allow_undefined_modules = allow_undefined_modules;
         importer.import_design(uhdm_design);
 
         SURELOG::shutdown_compiler(compiler);
@@ -592,6 +610,31 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                             mod->connections_.empty() && mod->memories.empty();
             if (!is_empty) continue;
             stubs.push_back(mod);
+        }
+        // An instance of a module nobody defined is a hole in the design, and
+        // a netlist with a hole in it proves nothing: the sweeps scored such
+        // modules "✅ 0 undriven" for weeks (caliptra-ss's vendored OpenTitan
+        // ast/pwrmgr files without their prim_* library) because an empty cell
+        // has nothing undriven to report, while read_slang and Verilator both
+        // refused the same sources.  Refuse too, and NAME the modules so the
+        // missing files can be supplied.  -allow-undefined-modules keeps the
+        // blackbox behaviour for a design read file by file, the way Yosys's
+        // own tests read a testbench before the module it instantiates.
+        if (!stubs.empty() && !allow_undefined_modules) {
+            std::map<std::string, int> uses;
+            for (auto stub : stubs)
+                for (auto mod : design->modules())
+                    for (auto cell : mod->cells())
+                        if (cell->type == stub->name) uses[stub->name.str().substr(stub->name.str().rfind("::") + 2)]++;
+            std::string list;
+            for (auto& [name, n] : uses)
+                list += stringf("  %s (%d instance%s)\n", name.c_str(), n, n == 1 ? "" : "s");
+            log_error("read_uhdm: the design instantiates %d module%s that ha%s no definition "
+                      "(Surelog: \"Cannot find a module definition\"):\n%s"
+                      "Add the missing source files, or pass -allow-undefined-modules to keep "
+                      "them as blackbox cells.\n",
+                      (int)uses.size(), uses.size() == 1 ? "" : "s", uses.size() == 1 ? "s" : "ve",
+                      list.c_str());
         }
         for (auto stub : stubs) {
             std::string sname = stub->name.str();              // "\bug3670::RAMB36E1"

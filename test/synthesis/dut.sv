@@ -33,3 +33,9 @@ initial begin $dumpfile("dump_dff.vcd"); $dumpvars(0); end
 
 endmodule
 
+
+// Xilinx's `glbl` (global set/reset) has no definition in this test's sources.
+// read_uhdm refuses an instance of an undefined module, so give it the empty
+// body the Xilinx library's glbl amounts to under synthesis.
+module glbl();
+endmodule
