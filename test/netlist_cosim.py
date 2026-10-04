@@ -26,7 +26,9 @@ Prints (parsed by core_sweep.py):
   ACTIVITY <n> cycles with an output change
   ADJUDICATION <cycles> cycles: uhdm_vs_rtl=<n> slang_vs_rtl=<n|-1>
   FIRST-<TAG> cycle <c> <port> rtl=.. <tag>=..
-  VERDICT NO_DIVERGENCE | SHARED_DIVERGENCE | UHDM_DIVERGENCE
+  VERDICT NO_DIVERGENCE | SHARED_DIVERGENCE | UHDM_DIVERGENCE | RTL_INERT (the RTL
+          never changed an output: nothing to compare against, e.g. a body under
+          `ifndef VERILATOR`)
 and on a failure to run: NO_RUN (<why>) / <tag> Verilator build FAILED: ...
 Exit 2 = NO_RUN (nothing to compare), 1 = build/sim failure, 0 = compared.
 """
@@ -229,8 +231,14 @@ TIES = json.loads(Path(args.ties).read_text()) if args.ties else {}
 # A clock is `clk`/`clock`, `*_clk`, `*clk_i`, pavona's `clk_<dom>_i`, JTAG tck,
 # or VeeR's gated names — NOT every name containing "clk" (`clk_gate_en`,
 # `rdc_clk_dis` are ordinary controls; driving them from the clock froze cg).
+# hdl-util/hdmi names its clocks `clk_pixel`, `clk_pixel_x5`, `clk_audio`: a
+# `clk_<domain>` with an optional `_x<N>` multiplier is a clock too.  Driven as
+# DATA (random bits), the serializer's `always @(posedge CLK) q <= CLKDIV` races
+# against its own other clock and the RTL and the netlist resolve the race
+# differently -- 246 of 302 cycles diverged on nothing.
 CLK_RE = re.compile(r"^(clk|clock|tb_clk|rawclk|gw_clk|l1clk|clk_cg)$|(^|_)(clk|clock)_i$"
-                    r"|_(clk|clock)$|^clk_[a-z0-9]+_i$|(^|_)tck$")
+                    r"|_(clk|clock)$|^clk_[a-z0-9]+_i$|(^|_)tck$"
+                    r"|^clk_(?!(en|dis|sel|gate|div|req|ack|ok|stop|rst)$)[a-z]+(_x[0-9]+)?$")
 RST_RE = re.compile(r"(^|_)(rst|reset|por|pwrgood|trst)(_|$)|_rst\w*$")
 LOW_RE = re.compile(r"(_n|_ni|_b|_l|_n_i|_b_i)$|(^|_)por_n|pwrgood|_l_i$")
 clocks = [n for d, w, n in ports if d == "input" and w == 1 and CLK_RE.search(n)]
@@ -250,8 +258,27 @@ conns = ",\n    ".join(f".{n}({n})" for _, _, n in ports)
 # baked in and take the plain instantiation.
 DUT_MARK = "  @@DUT@@"
 tb.append(DUT_MARK)
+# `<base>_x<N>` beside `<base>` (hdl-util/hdmi's clk_pixel / clk_pixel_x5): the
+# multiplied clock IS the testbench clock and the base runs N times slower, so
+# the serializer's CLKDIV edge detect fires once per word instead of never
+# (both driven from one clock, the design is frozen and the co-sim is vacuous:
+# "PASS, 0 active").  N-cycle period, high for ceil(N/2) of them.
+divided = {}
 for c in clocks:
-    tb.append(f"  assign {c} = tb_clk;")
+    m = re.match(r"^(.+)_x(\d+)$", c)
+    if m and m.group(1) in clocks and int(m.group(2)) > 1:
+        divided[m.group(1)] = int(m.group(2))
+for c in clocks:
+    if c in divided:
+        n = divided[c]
+        tb.append(f"  int {c}_cnt = 0;")
+        # Advance on the NEGATIVE edge: the base clock then changes half a
+        # cycle away from the edge the design samples it on, so the RTL and
+        # the netlist cannot resolve a same-edge race differently.
+        tb.append(f"  always @(negedge tb_clk) {c}_cnt <= ({c}_cnt == {n - 1}) ? 0 : {c}_cnt + 1;")
+        tb.append(f"  assign {c} = ({c}_cnt < {(n + 1) // 2});")
+    else:
+        tb.append(f"  assign {c} = tb_clk;")
 tb.append("  always #5 tb_clk = ~tb_clk;")
 tb.append("  function automatic logic [63:0] step(logic [63:0] x);")
 tb.append("    x ^= x << 13; x ^= x >> 7; x ^= x << 17; return x;")
@@ -501,6 +528,14 @@ ms = compare("slang")[1] if "slang" in traces else -1
 print(f"{tag_name} ADJUDICATION {n} cycles: uhdm_vs_rtl={mu} slang_vs_rtl={ms}")
 if mu == 0:
     verdict = "NO_DIVERGENCE"
+elif activity == 0:
+    # The RTL never moved an output while a netlist did: Verilator was handed
+    # a module with nothing in it.  hdl-util/hdmi's serializer keeps its whole
+    # body under `ifndef VERILATOR` (OSERDESE2 primitives or a vendor model), so
+    # under Verilator `tmds` is driven by nothing and reads 0 forever.  That is
+    # not a divergence of either frontend -- there is no oracle -- and it must
+    # not be scored as one.
+    verdict = "RTL_INERT"
 elif ms > 0:
     verdict = "SHARED_DIVERGENCE"
 else:

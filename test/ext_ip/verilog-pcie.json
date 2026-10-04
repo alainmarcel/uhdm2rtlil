@@ -37,6 +37,18 @@
    [
     "(?i)^out_tlp_seg_count$",
     2
+   ],
+   [
+    "(?i)^tlp_seg_count$",
+    2
+   ],
+   [
+    "(?i)^seg_count$",
+    2
+   ],
+   [
+    "(?i)^axis_pcie_data_width$",
+    512
    ]
   ]
  },

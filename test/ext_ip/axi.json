@@ -180,6 +180,10 @@
     ],
     "values": [
       [
+        "(?i)^mem_?(addr|data)_?width$",
+        null
+      ],
+      [
         "(?i)slv_?axi_?id_?width$",
         2
       ],

@@ -37,5 +37,35 @@
    "config.vh",
    "parameter-defs.vh"
   ]
- }
+ },
+ "bind": {
+  "values": [
+   [
+    "^KEY_BITS$",
+    61
+   ],
+   [
+    "^SEGMENT_BITS$",
+    9
+   ],
+   [
+    "^READ_ONLY$",
+    0
+   ],
+   [
+    "^MAX_CSRS$",
+    4
+   ],
+   [
+    "^UART_PRESCALE$",
+    16
+   ]
+  ]
+ },
+ "_note": [
+  "",
+  "bind.values: parameters WITHOUT a default that a standalone read cannot",
+  "supply -- busfsm's READ_ONLY, packetizer's MAX_CSRS, uartPC16550D's",
+  "UART_PRESCALE; the values are the ones wallypipelinedsoc / the testbenches use."
+ ]
 }

@@ -66,6 +66,14 @@ FLATTEN_LIMIT = 8 << 20
 # that takes the shard down.
 MAX_CLOSURE_BYTES = 0
 ALWAYS_SRCS = []
+# "unit_imports": packages the DESIGN's own build imports into $unit from an
+# earlier file of its filelist (caliptra-ss's mci_lcc_st_trans.vf compiles
+# caliptra_prim_mubi4_sync.sv, whose file-scope `import caliptra_prim_mubi_pkg::*;`
+# is what makes a bare `MuBi4True` in mci_lcc_st_trans.sv legal).  A closure
+# built by identifier scan never carries that file, so every tool was handed a
+# module the design itself never compiles standalone.  The harness writes the
+# same imports into one small file placed right after the closure's packages.
+UNIT_IMPORTS = []
 # Extra read_slang flags from the manifest ("slang_flags").  caliptra-ss needs
 # --single-unit: VeeR's `css_mcu0_RV_BUILD_AXI4` comes from a defines header
 # listed as a SOURCE in its flist, and without single-unit the macro dies at
@@ -117,8 +125,14 @@ def _capped(cmd):
 class Closure:
     """Identifier-scan dependency closure over the manifest's source roots."""
 
-    def __init__(self, roots, exts=(".sv", ".v")):
+    def __init__(self, roots, exts=(".sv", ".v"), exclude_srcs=()):
         self.defs, self.files, self.macros = {}, {}, {}
+        # "exclude_srcs": files of the roots the closure must never pick --
+        # caliptra-ss's vendored OpenTitan ast/ files want the prim_pkg of
+        # THEIR era (`prim_pkg::impl_e`); today's OpenTitan ships a prim_pkg
+        # without it, so the harness supplies the legacy one (stubs/prim_pkg.sv,
+        # a harness root) and the checkout's copy is excluded here.
+        excl = [re.compile(x) for x in exclude_srcs]
         self.mod_files = {}
         # EVERY definition of a name, not just the first: this style of
         # repository keeps independent designs side by side and the same module
@@ -129,9 +143,12 @@ class Closure:
         # does not exist" -- our closure, not its limitation.
         self.all_defs = {}
         for r in roots:
-            for pat in (str(EXT / r),):
+            # a root given as an absolute path is a HARNESS root (test/ext_ip/...)
+            for pat in (r if os.path.isabs(r) else str(EXT / r),):
                 for f in sorted(glob.glob(pat, recursive=True)):
                     if not os.path.isfile(f) or not f.endswith(exts):
+                        continue
+                    if any(x.search(f) for x in excl):
                         continue
                     t = open(f, errors="replace").read()
                     is_pkg = False
@@ -453,8 +470,12 @@ def _value_bind_possible(fam, mod, files):
         # configuration too.  This only ever runs after the module has already
         # failed to elaborate, and a retry that does not come out comparable is
         # thrown away, so a loose candidate test costs one extra read at worst.
-        for pm in re.finditer(r"parameter\s+(?:int\s+unsigned|int|bit|logic|integer)?"
-                              r"[^,()=]*?(\w+)\s*=\s*([^,)\n]+)", head):
+        # ... and a parameter with NO default at all (cvw's `parameter logic
+        # READ_ONLY`, `parameter UART_PRESCALE`, hdmi's `parameter real
+        # VIDEO_RATE`): no tool can make such a module a top level, so a rule
+        # for its name is the only way the row ever measures anything.
+        for pm in re.finditer(r"parameter\s+(?:int\s+unsigned|int|bit|logic|integer|real)?"
+                              r"[^,()=]*?(\w+)\s*(?:=\s*([^,)\n]+)|(?=\s*[,)]))", head):
             if any(re.search(p, pm.group(1)) for p, _ in rules):
                 return True
         return False
@@ -611,6 +632,8 @@ def _uhdm_only_cosim(w, m, top, cycles, ties, mem):
     if mm:
         u = int(mm.group(1))
         a = f" ({cycles + 1} cycles, {act.group(1)} active)" if act else ""
+        if "VERDICT RTL_INERT" in (out or ""):
+            return "— (RTL inert under Verilator: no oracle)"
         return ("✅ PASS" + a) if u == 0 else f"❌ {u} div"
     if "no outputs to compare" in (out or "") or "no clocks found" in (out or ""):
         return "— (comb/no clk)"
@@ -637,6 +660,13 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     # (caliptra-ss's caliptra_prim_ram_1p_pkg behind caliptra_prim_assert.svh).
     if files and ALWAYS_SRCS:
         files = [f for f in ALWAYS_SRCS if f not in files] + files
+    if files and UNIT_IMPORTS:
+        ui = w / "unit_imports.sv"
+        ui.write_text("// $unit-scope imports the design's own filelists rely on "
+                      "(manifest \"unit_imports\")\n" +
+                      "".join(f"import {pkg}::*;\n" for pkg in UNIT_IMPORTS))
+        last_pkg = max([i for i, f in enumerate(files) if cl.files.get(f)], default=-1)
+        files = files[:last_pkg + 1] + [str(ui)] + files[last_pkg + 1:]
     if not files:
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
                 "check": "— (no elaboration)", "cosim": "—", "slang_cosim": "—",
@@ -654,6 +684,16 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     if bound:
         files = _with_wrapper_packages(cl, files, bound[0]) + [bound[0]]
         top = bound[1]
+        # The bound wrapper is ANSI and copies the DUT's port list, unpacked
+        # array ports included (hdmi serializer's `tmds_internal [N-1:0]`), so
+        # the flat shim chains onto it the same way it does onto a bare module;
+        # without it the port-by-port testbench cannot connect the array
+        # ("mismatch between port which is an array, and expression which is
+        # not") and the row stays "skip (sim build)".
+        flat = _flat_wrapper(w, top, files)
+        if flat:
+            files = files + [flat[0]]
+            top = flat[1]
     else:
         # An interface port at the top comes first: no other wrapper can bind
         # a module read_slang will not accept as a top level at all.
@@ -909,8 +949,13 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
         if mm:
             u, sl = int(mm.group(1)), int(mm.group(2))
             a = f" ({cycles + 1} cycles, {act.group(1)} active)" if act else ""
-            row["cosim"] = ("✅ PASS" + a) if u == 0 else (
-                f"⚠ shared div (uhdm={u}, slang={sl})" if sl > 0 else f"❌ {u} div (slang clean)")
+            if "VERDICT RTL_INERT" in (out4 or ""):
+                # The RTL side moved nothing (body under `ifndef VERILATOR`,
+                # hdl-util/hdmi serializer): no oracle, not a divergence.
+                row["cosim"] = "— (RTL inert under Verilator: no oracle)"
+            else:
+                row["cosim"] = ("✅ PASS" + a) if u == 0 else (
+                    f"⚠ shared div (uhdm={u}, slang={sl})" if sl > 0 else f"❌ {u} div (slang clean)")
             row["slang_cosim"] = "✅ PASS" if sl == 0 else f"❌ {sl} div"
         elif "no outputs to compare" in (out4 or "") or "no clocks found" in (out4 or ""):
             row["cosim"] = "— (comb/no clk)"
@@ -939,9 +984,14 @@ def main():
     man = json.loads((HERE / f"{args.family}.json").read_text())
     work_root = TEST / "ext_ip" / "work" / args.family
     work_root.mkdir(parents=True, exist_ok=True)
-    cl = Closure(man["roots"])
+    # "harness_roots": extra source roots that live with the harness
+    # (relative to test/ext_ip), scanned FIRST so a stand-in there defines a
+    # name before the checkout's copy does.
+    cl = Closure([str(HERE / r) for r in man.get("harness_roots", [])] + man["roots"],
+                 exclude_srcs=man.get("exclude_srcs", []))
     excl = [re.compile(x) for x in man.get("exclude", [])]
-    global MAX_CLOSURE_BYTES, ALWAYS_SRCS, SLANG_FLAGS
+    global MAX_CLOSURE_BYTES, ALWAYS_SRCS, SLANG_FLAGS, UNIT_IMPORTS
+    UNIT_IMPORTS = list(man.get("unit_imports", []))
     SLANG_FLAGS = " ".join(man.get("slang_flags", []))
     MAX_CLOSURE_BYTES = int(float(man.get("max_closure_mb", 0)) * (1 << 20))
     ALWAYS_SRCS = sorted({f for g in man.get("always_srcs", [])

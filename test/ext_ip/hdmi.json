@@ -44,5 +44,13 @@
     8
    ]
   ]
- }
+ },
+ "harness_roots": [
+  "stubs/hdmi/*.sv"
+ ],
+ "_note": [
+  "",
+  "harness_roots: stubs/hdmi/OSERDESE2.sv, a behavioural stand-in for the Xilinx",
+  "serializer primitive serializer.sv instantiates unconditionally."
+ ]
 }

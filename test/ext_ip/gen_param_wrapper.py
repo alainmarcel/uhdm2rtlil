@@ -175,17 +175,19 @@ def parse_ports(ptext):
         if m:
             last_dir = m.group(1)
             e = e[m.end():].strip()
-        ids = re.findall(r"[A-Za-z_][A-Za-z_0-9$]*", e)
-        if not ids:
+        # The NAME is the last identifier OUTSIDE brackets (split_param_name):
+        # taking the last identifier outright picked `NUM_CHANNELS` out of
+        # `tmds_internal [NUM_CHANNELS-1:0]` and the wrapper connected a
+        # parameter as a port (hdmi serializer).
+        sp = split_param_name(e)
+        if not sp:
             continue
-        name = ids[-1]
-        body = e[:e.rfind(name)].strip()
+        body, name, udims = sp
         # Whatever follows the NAME is an UNPACKED dimension (`input logic
         # [W-1:0] audio_sample_word [1:0]`).  Dropped, the wrapper declared a
         # packed port and could not bind to its own DUT -- read_slang: "value of
         # type 'logic[15:0]' cannot be assigned to type 'logic[15:0]$[1:0]'"
         # (hdmi packet_picker).  Keep it, on the far side of the name.
-        udims = e[e.rfind(name) + len(name):].strip()
         toks = body.split()
         tname = ""
         for tk in toks:
