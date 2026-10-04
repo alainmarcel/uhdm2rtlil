@@ -1831,6 +1831,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
             }
 
+            fold_whole_array_writes_onto_elements(assigned_signals);
+
             // Create ONE temp wire per unique signal (not per assignment)
             std::set<std::string> processed_signals;
             for (const auto& sig : assigned_signals) {
@@ -3298,6 +3300,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Extract signals assigned in the always_ff body
                     std::vector<AssignedSignal> assigned_signals;
                     extract_assigned_signals(stmt, assigned_signals);
+                    fold_whole_array_writes_onto_elements(assigned_signals);
 
                     // Create $0\ temp wires for each uniquely assigned signal (same logic as import_always_comb)
                     std::map<const UHDM::expr*, RTLIL::Wire*> temp_wires_map;
@@ -8197,6 +8200,49 @@ void UhdmImporter::splice_alias_elem_inflight(RTLIL::Wire* elem, int off, const 
     current_comb_values[bn] = cur;
 }
 
+// An unpacked array whose ELEMENTS are the storage (a process writes some of
+// them one by one -- proc_elem_written) keeps its flat wire as an alias
+// ASSEMBLED FROM the elements.  A whole-array write (`parity <= '{0,0,0,0,0}`)
+// in the same always block must therefore land on the ELEMENT temps:
+// registering the flat wire too gave it its own `$0\parity` and sync update,
+// so after flatten the flat register's held zero and the element flops drove
+// the same bits ("Driver-driver conflict ... Resolved using constant") and
+// hdl-util/hdmi's packet_assembler sent an all-zero ECC -- the parity bits
+// reach packet_data only at counter 28..31, past the sweep's 4-step miter, so
+// only the co-sim saw it.  Replace the flat entry by one entry per element;
+// map_to_temp_wire's flat_split then lands a flat-wire LHS on those temps.
+void UhdmImporter::fold_whole_array_writes_onto_elements(std::vector<AssignedSignal>& assigned_signals) {
+    std::vector<AssignedSignal> norm;
+    std::set<std::string> have;
+    for (const auto& s : assigned_signals) have.insert(s.name);
+    bool changed = false;
+    for (const auto& s : assigned_signals) {
+        int low = (!s.is_part_select && proc_elem_written.count(s.name))
+                      ? expanded_array_low(s.name) : -1;
+        RTLIL::Wire* flat = low >= 0 ? module->wire(RTLIL::escape_id(s.name)) : nullptr;
+        int n = 0;
+        if (flat)
+            while (module->wire(RTLIL::escape_id(s.name + "[" + std::to_string(low + n) + "]"))) n++;
+        if (!flat || n == 0 || flat->width != n * module->wire(RTLIL::escape_id(s.name + "[" + std::to_string(low) + "]"))->width) {
+            norm.push_back(s);
+            continue;
+        }
+        log("      Whole-array write to '%s' (its elements are the storage): "
+            "registering its %d elements instead of the flat alias\n", s.name.c_str(), n);
+        changed = true;
+        for (int k = low; k < low + n; k++) {
+            std::string en = s.name + "[" + std::to_string(k) + "]";
+            if (!have.insert(en).second) continue;
+            AssignedSignal es;
+            es.name = en;
+            es.is_part_select = false;
+            es.lhs_expr = nullptr;
+            norm.push_back(es);
+        }
+    }
+    if (changed) assigned_signals = norm;
+}
+
 RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
     // A per-process RANGED temp owns exactly these bits and the sync rule
     // updates the real wire FROM it, so it must win over both the full-width
@@ -8219,7 +8265,6 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
         }
         if (hit) return ranged;
     }
-    if (current_temp_wires.empty()) return sig;
     // A chunk on a per-element ALIAS wire (`\arr[k]`) that has no temp of its
     // own but whose flat base does (this process also writes `arr` whole, so
     // import_always_comb folded every element write onto ONE full-width
@@ -8235,6 +8280,50 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
         out.append(RTLIL::SigChunk(tw, eoff + offset, width));
         return true;
     };
+    // The reverse of alias_redirect: a chunk on a FLAT array wire whose
+    // ELEMENTS own the temps (the elements are the storage and this process
+    // writes the array whole -- see the always_ff temp allocation) is split
+    // onto the element temps, element k at (k - low) x element width.
+    auto flat_split = [&](RTLIL::Wire* w, int offset, int width,
+                          RTLIL::SigSpec& out) -> bool {
+        std::string n = w->name.str();
+        if (n.empty() || n[0] != '\\') return false;
+        n = n.substr(1);
+        int low = expanded_array_low(n);
+        if (low < 0) return false;
+        RTLIL::Wire* e0 = module->wire(RTLIL::escape_id(n + "[" + std::to_string(low) + "]"));
+        if (!e0 || e0->width <= 0 || w->width % e0->width != 0) return false;
+        const int ew = e0->width;
+        RTLIL::SigSpec acc;
+        int pos = offset;
+        while (pos < offset + width) {
+            int k = pos / ew, in = pos % ew;
+            int take = std::min(ew - in, offset + width - pos);
+            RTLIL::Wire* tw = find_own_temp_wire(n + "[" + std::to_string(low + k) + "]");
+            if (!tw || tw->width != ew) return false;
+            acc.append(RTLIL::SigChunk(tw, in, take));
+            pos += take;
+        }
+        out.append(acc);
+        return true;
+    };
+    if (current_temp_wires.empty()) {
+        // No per-process temp map (the always_ff lowering that allots temps
+        // by name) -- a flat-array LHS whose ELEMENTS own `$0\` temps must
+        // still land on them: `buf_q <= '{default:'0}` beside a per-element
+        // loop write (ff_array_reset_default_elem_writes) otherwise drove the
+        // raw flat alias against the element flops (112 driver conflicts).
+        RTLIL::SigSpec out;
+        bool changed = false;
+        for (const auto& chunk : sig.chunks()) {
+            if (chunk.wire && flat_split(chunk.wire, chunk.offset, chunk.width, out)) {
+                changed = true;
+                continue;
+            }
+            out.append(chunk);
+        }
+        return changed ? out : sig;
+    }
     // Full-wire LHS: swap `\foo` for its own-process temp outright.
     if (sig.is_wire()) {
         RTLIL::Wire* target_wire = sig.as_wire();
@@ -8247,6 +8336,8 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
             return RTLIL::SigSpec(temp_wire);
         RTLIL::SigSpec red;
         if (alias_redirect(target_wire, 0, target_wire->width, red))
+            return red;
+        if (flat_split(target_wire, 0, target_wire->width, red))
             return red;
         return sig;
     }
@@ -8270,6 +8361,9 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
                     continue;
                 }
             } else if (alias_redirect(chunk.wire, chunk.offset, chunk.width, out)) {
+                changed = true;
+                continue;
+            } else if (flat_split(chunk.wire, chunk.offset, chunk.width, out)) {
                 changed = true;
                 continue;
             }
@@ -17200,9 +17294,38 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                             ch.wire != it->second) {
                                             mapped.append(RTLIL::SigChunk(it->second, ch.offset, ch.width));
                                             any = true;
-                                        } else {
-                                            mapped.append(ch);
+                                            continue;
                                         }
+                                        // The FLAT alias of an array whose ELEMENTS own the
+                                        // temps (fold_whole_array_writes_onto_elements):
+                                        // `buf_q <= '{default:'0}` lowered to the flat wire
+                                        // -- split it onto `$0\buf_q[k]`, element k at
+                                        // (k - low) x element width.
+                                        int low = ch.wire ? expanded_array_low(wn) : -1;
+                                        RTLIL::Wire* e0 = low >= 0 ? module->wire(RTLIL::escape_id(wn + "[" + std::to_string(low) + "]")) : nullptr;
+                                        if (e0 && e0->width > 0 && ch.wire->width % e0->width == 0 &&
+                                            current_signal_temp_wires.count(wn + "[" + std::to_string(low) + "]")) {
+                                            const int ew = e0->width;
+                                            RTLIL::SigSpec acc;
+                                            bool ok = true;
+                                            int pos = ch.offset;
+                                            while (pos < ch.offset + ch.width) {
+                                                int k = pos / ew, in = pos % ew;
+                                                int take = std::min(ew - in, ch.offset + ch.width - pos);
+                                                auto et = current_signal_temp_wires.find(wn + "[" + std::to_string(low + k) + "]");
+                                                if (et == current_signal_temp_wires.end() || et->second->width != ew) { ok = false; break; }
+                                                acc.append(RTLIL::SigChunk(et->second, in, take));
+                                                pos += take;
+                                            }
+                                            if (ok) {
+                                                mapped.append(acc);
+                                                any = true;
+                                                if (mode_debug)
+                                                    log("        Flat array LHS '%s' split onto its element temps\n", wn.c_str());
+                                                continue;
+                                            }
+                                        }
+                                        mapped.append(ch);
                                     }
                                     if (any) target_sig = mapped;
                                 }
