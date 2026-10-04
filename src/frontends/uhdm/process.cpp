@@ -13417,7 +13417,28 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     // emit_dynamic_unpacked_array_elem_write).  A dynamic trailing field
     // index RMWs the FIELD slice through one shared shifted mask/value
     // network so only the addressed sub-element changes.
-    if (!base_wire) {
+    // MIXED representation whose ELEMENTS own this process's temps: the array
+    // has a flat alias (a whole-array `q <= d` elsewhere) but this block wrote
+    // it element by element (`for (i) d[i] = q[i]`), so the temps are
+    // `$0\d[k]` and there is no `$0\d`.  The flat RMW below then read `cur`
+    // from the flat ALIAS -- assembled from the very elements this process
+    // drives -- and wrote the result back through them: a combinational loop
+    // (CVA6 trigger_module `textra64_tdata3_d[tselect_q].svalue = ...`, 5
+    // logic loops, tdata3_o followed tdata3_i with no clock).  Treat it like
+    // the per-element-only representation.
+    bool elems_own_temps = false;
+    if (base_wire && !find_own_temp_wire(base_name)) {
+        RTLIL::Wire* e0 = module->wire(RTLIL::escape_id(
+            base_name + "[" + std::to_string(array_low) + "]"));
+        if (e0 && e0->width == elem_w &&
+            module->wire("$0\\" + base_name + "[" + std::to_string(array_low) + "]"))
+            elems_own_temps = true;
+    }
+    if (!base_wire || elems_own_temps) {
+        if (mode_debug)
+            log("    dyn_elem_field_write PER-ELEMENT: base '%s' (elem %d x %d, low %d%s)\n",
+                base_name.c_str(), elem_w, n_elems, array_low,
+                elems_own_temps ? ", mixed: elements own the temps" : "");
         const bool nb_mode = in_always_ff_body_mode || in_always_ff_context;
         RTLIL::SigSpec eidx = import_expression(bs->VpiIndex(), comb_read_map());
         if (eidx.size() == 0) return false;
@@ -13661,6 +13682,12 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     RTLIL::SigSpec cur = current_comb_values.count(base_name)
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
+    if (mode_debug)
+        log("    dyn_elem_field_write FLAT RMW: base '%s' (%s, %d bits, elem %d x %d) cur=%s own_temp=%s elem_temp0=%s\n",
+            base_name.c_str(), base_wire->name.c_str(), base_w, elem_w, n_elems,
+            current_comb_values.count(base_name) ? "in-flight" : "flat wire",
+            find_own_temp_wire(base_name) ? find_own_temp_wire(base_name)->name.c_str() : "none",
+            module->wire("$0\\" + base_name + "[" + std::to_string(array_low) + "]") ? "yes" : "no");
     if (!current_comb_values.count(base_name) && case_rule) {
         // always_ff: current_comb_values is suppressed to keep non-blocking
         // semantics, so the in-flight value is the RHS of the pending action on
