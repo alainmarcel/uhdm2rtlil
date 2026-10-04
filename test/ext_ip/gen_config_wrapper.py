@@ -133,17 +133,43 @@ def main():
                 except OSError:
                     pass
                 break
-    extra = []
+    extra, bound_extra = [], []
+    # A comma list continues the previous `parameter` keyword:
+    # `parameter TLB_ENTRIES = 8, KEY_BITS = 20, SEGMENT_BITS = 10` declares
+    # three value parameters (cvw tlbcam).  Only the first entry carries the
+    # keyword, so the others were skipped -- and could never be bound.
+    in_value_params = False
     for ent in rest_params.split(","):
         ent = re.sub(r"//[^\n]*", "", ent).strip().rstrip(")").strip()
-        if not ent or not ent.startswith("parameter"):
+        if not ent:
             continue
-        body = ent[len("parameter"):].strip()
+        if ent.startswith("parameter"):
+            body = ent[len("parameter"):].strip()
+            in_value_params = not body.startswith("type")
+        elif in_value_params and re.match(r"^[A-Za-z_]\w*\s*=", ent):
+            body = ent
+        else:
+            in_value_params = False
+            continue
         name, eq, dflt = body.partition("=")
         ids = re.findall(r"[A-Za-z_]\w*", name)
         if not ids:
             continue
+        # The manifest's bind.values may name this parameter -- the same rule
+        # the plain value-bind wrapper applies.  A rule OVERRIDES a default:
+        # tlbcam's `KEY_BITS = 20` is a placeholder the real tlb never uses
+        # (it passes P.VPN_BITS + P.ASID_BITS), and with it the rv64gc key
+        # slices run off the end of the key.
+        rule = next((val for pat, val in (man.get("bind") or {}).get("values", [])
+                     if re.search(pat, ids[-1])), None)
+        if rule is not None:
+            extra.append(f"  localparam {ids[-1]} = {rule};")
+            bound_extra.append(ids[-1])
+            continue
         if not eq or not dflt.strip():
+            # No default (packetizer's `parameter integer MAX_CSRS`) and no
+            # rule: inventing a configuration is exactly what this harness is
+            # trying to stop doing, so decline and let the row stay unmeasured.
             sys.exit(3)
         # The configuration include may declare the same name -- cvw's config.vh
         # has INSTR_CLASS_PRED, which icpred also takes as a parameter -- and a
@@ -226,7 +252,7 @@ def main():
         f"{incs}"
         + ("\n".join(extra) + "\n" if extra else "")
         + f"{decls}\n"
-        f"  {a.module} #({pname}) dut (.*);\n"
+        f"  {a.module} #(.{pname}({pname}){''.join(f', .{n}({n})' for n in bound_extra)}) dut (.*);\n"
         f"endmodule\n")
     print(f"{a.module}: bound {pname} from {', '.join(cfg.get('includes', []))}")
 

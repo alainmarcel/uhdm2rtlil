@@ -20,7 +20,7 @@ port types and dimension expressions resolve exactly as in the module.
 usage: gen_flat_wrapper.py --module M --out M_flat.sv <srcs...>
 exit 3 = the module has no unpacked-array port (nothing to do).
 """
-import argparse, re, sys
+import re, argparse, re, sys
 from pathlib import Path
 
 PORT_RE = re.compile(
@@ -62,9 +62,13 @@ def module_span(txt, name):
 def dim_count(d):
     """SV size of one unpacked dimension text: `[N]` -> N, `[A:B]` -> |A-B|+1."""
     inner = d.strip()[1:-1].strip()
-    if ":" not in inner:
+    # The range separator is a SINGLE colon: a package-qualified bound
+    # (`bindpkg::NUM_CHANNELS-1:0`, a bound wrapper's dimension) must not be
+    # split at its `::`.
+    inner_sep = re.sub(r"::", "\x00", inner)
+    if ":" not in inner_sep:
         return f"({inner})", "0"
-    a, b = inner.split(":", 1)
+    a, b = (x.replace("\x00", "::") for x in inner_sep.split(":", 1))
     a, b = a.strip(), b.strip()
     return (f"((({a})>({b}))?(({a})-({b})+1):(({b})-({a})+1))",
             f"((({a})<({b}))?({a}):({b}))")

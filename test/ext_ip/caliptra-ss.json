@@ -13,7 +13,23 @@
   "",
   "always_srcs: the caliptra_prim packages and the generic prim library, which",
   "modules reach only through included .svh files the identifier-scan closure",
-  "cannot see (caliptra_prim_ram_1p_pkg behind caliptra_prim_assert.svh)."
+  "cannot see (caliptra_prim_ram_1p_pkg behind caliptra_prim_assert.svh).",
+  "",
+  "opentitan (lowRISC, pinned): the subsystem vendors OpenTitan's ast/, pwrmgr/,",
+  "sensor_ctrl, tlul_adapter_dmi... but NOT the prim library they instantiate",
+  "(prim_clock_buf, prim_flop_2sync, prim_pkg, prim_mubi_pkg, the",
+  "`PRIM_FLOP_SPARSE_FSM macros).  Those modules could not be built by ANY",
+  "tool -- the rows said nothing about any frontend.  The library comes from the",
+  "OpenTitan checkout (prim/ + prim_generic/, with its real prim_assert.sv",
+  "header, which reduces every macro to nothing under SYNTHESIS), so that a",
+  "frontend failure on them is the frontend's and not the closure's.",
+  "",
+  "harness_roots/exclude_srcs: stubs/prim_pkg.sv is the legacy prim_pkg (with",
+  "impl_e) the vendored ast/*_pgd.sv files expect; the checkout's prim_pkg is",
+  "excluded.  unit_imports: the design's own filelists compile",
+  "caliptra_prim_mubi4_sync.sv (file-scope `import caliptra_prim_mubi_pkg::*;`)",
+  "ahead of modules that write a bare MuBi4True / mubi8_t -- the closure gets",
+  "the same $unit import."
  ],
  "repos": [
   {
@@ -21,6 +37,11 @@
    "commit": "dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc",
    "dir": "caliptra-ss",
    "submodules": "recursive"
+  },
+  {
+   "url": "https://github.com/lowRISC/opentitan.git",
+   "commit": "f49474bc89c3ce8a99536329a1e16bf22936da37",
+   "dir": "opentitan"
   }
  ],
  "roots": [
@@ -35,7 +56,9 @@
   "caliptra-ss/third_party/caliptra-rtl/src/**/rtl/*.v",
   "caliptra-ss/third_party/caliptra-rtl/src/**/rtl/**/*.v",
   "caliptra-ss/src/**/rtl/*.v",
-  "caliptra-ss/src/**/rtl/**/*.v"
+  "caliptra-ss/src/**/rtl/**/*.v",
+  "opentitan/hw/ip/prim/rtl/*.sv",
+  "opentitan/hw/ip/prim_generic/rtl/*.sv"
  ],
  "sweep_paths": [
   "caliptra-ss/src/",
@@ -121,7 +144,8 @@
   "caliptra-ss/third_party/caliptra-rtl/src/sha3/rtl",
   "caliptra-ss/third_party/caliptra-rtl/src/entropy_combiner/rtl",
   "caliptra-ss/third_party/i3c-core/src/libs",
-  "caliptra-ss/third_party/i3c-core/src/csr"
+  "caliptra-ss/third_party/i3c-core/src/csr",
+  "opentitan/hw/ip/prim/rtl"
  ],
  "defines": [
   "SYNTHESIS",
@@ -146,12 +170,6 @@
   "--single-unit",
   "--relax-enum-conversions"
  ],
- "harness_incdirs": [
-  "stubs"
- ],
- "harness_srcs": [
-  "stubs/prim_assert.sv"
- ],
  "bind": {
   "values": [
    [
@@ -159,5 +177,14 @@
     8
    ]
   ]
- }
+ },
+ "harness_roots": [
+  "stubs/caliptra-ss/*.sv"
+ ],
+ "exclude_srcs": [
+  "opentitan/hw/ip/prim_generic/rtl/prim_pkg\\.sv$"
+ ],
+ "unit_imports": [
+  "caliptra_prim_mubi_pkg"
+ ]
 }
