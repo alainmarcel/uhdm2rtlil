@@ -646,6 +646,15 @@ struct UhdmImporter {
     // array_var, so `p[r][i]` on `int unsigned p [R][W]` addresses ELEMENT
     // (r-lo_r)*W + (i-lo_i), not bit i of element r.  Cleared per-call.
     std::map<std::string, std::vector<std::pair<int,int>>> array_local_unpacked_dims;
+    // Names declared as UNPACKED array locals (array_var) in the current
+    // call.  A non-ANSI function's `reg [63:0] tbl [0:3];` (a tf_item
+    // declaration) reaches the body with its bit_selects UNBOUND -- no
+    // Actual_group -- so the select sites cannot ask the UHDM object what
+    // it is; they ask this set.
+    std::set<std::string> array_local_unpacked_names;
+    // Declare one function-local variable (block- or function-scope): compute
+    // its storage width, register unpacked / packed element geometry.
+    int declare_function_local(const UHDM::any* var, std::map<std::string, RTLIL::Const>& scope_vars);
     // Declared width of each block-local variable, so a whole-variable
     // assignment is sized to the DECLARATION (`reg [3:0] v; v = 0;` stays 4
     // bits, not the 64-bit literal).  Cleared per-call.
