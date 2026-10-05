@@ -1,0 +1,21 @@
+# The module imports `p::*` and declares its own `CoproInstr [NbInstr]` while
+# the package also has a `CoproInstr`.  Surelog (before 47f59c3ec7) bound the
+# module's parameter to the PACKAGE's: the 65-bit x 2 table was laid out as
+# 73-bit x 3 and every field read landed off its element (CVA6
+# compressed_instr_decoder decoded nothing).  The miter against read_slang
+# fails with the old Surelog and passes with the fix.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
