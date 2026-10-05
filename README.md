@@ -58,13 +58,17 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (~1155 tests, ~30 min).  A PR lands
-only on a clean run.
+`cd test && ./run_parallel.sh 6 --no-cva6` (the 1170 internal tests, ~30 min).  A PR
+lands only on a clean run.  The counts below are the regression's own summary
+(`Total tests run` / per-suite lines of the combined report), not a tally kept
+by hand; "upstream" counts the 547 generated yosys tests the suite scores, out
+of 576 generated (the 29 others are the deliberately invalid `tests/errors` and
+tests that produce no RTLIL under any frontend).
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1705 | 1180 | 525 |
-| Functional | 1658 (97%) | 1150 | 508 |
+| Tests | 1717 | 1170 | 547 |
+| Functional | 1671 (97%) | 1162 | 509 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
@@ -323,7 +327,7 @@ out of the README to keep this section focused on the leaderboard:
 
 - Changelog / fixes → [`docs/recent-improvements.md`](docs/recent-improvements.md)
 - Test catalog (incl. the UHDM-only list) → [`docs/test-cases.md`](docs/test-cases.md)
-- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1169 local tests and the 576 upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
+- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1170 internal tests and the 576 generated upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
 
 ## Architecture & Workflow
 

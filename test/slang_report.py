@@ -307,6 +307,7 @@ def main():
             rep, inc = cnt(lambda r: r["set"] == key)
             A(f"| {'internal tests' if key == 'internal' else 'yosys tests'} | {n} | {t['FAIL'] + t['TIMEOUT']} | {rep} | {inc} |")
     A("")
+    A("The yosys line counts every generated `run/` directory, 29 of which the regression does not score (the deliberately invalid `tests/errors` and tests that produce no RTLIL under any frontend); the regression's own count is 547.\n")
     A("The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.\n")
 
     A("## Failure classes\n")
