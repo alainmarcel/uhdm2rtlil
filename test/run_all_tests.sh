@@ -527,7 +527,7 @@ run_sim_equivalence_softwarn() {
 # the 1139 local tests and the 511 upstream yosys tests, which carry a
 # wrapper, a testbench and stimulus already, were never asked.  Soft: a
 # divergence here is never a gate on OUR frontend, it is recorded for
-# docs/slang_cosim_findings.md.
+# docs/slang_unsupported.md.
 SLANG_COSIM_RUN=0
 SLANG_COSIM_DIVERGED=0
 SLANG_COSIM_DIVERGED_NAMES=()
@@ -539,7 +539,7 @@ run_slang_cosim_softwarn() {
     # received a shutdown signal", exit 143, shard 11 of PR #991).  Turn it
     # on deliberately -- the `slang_cosim` input of regression-sharded.yml,
     # or RUN_SLANG_COSIM=1 locally -- when refreshing
-    # docs/slang_cosim_findings.md.
+    # docs/slang_unsupported.md.
     [ "${RUN_SLANG_COSIM:-0}" = "1" ] || return 0
     local script="$SCRIPT_DIR/test_sim_equivalence.py"
     [ -f "$script" ] || return 0
@@ -1488,7 +1488,7 @@ if [ "${SLANG_COSIM_RUN:-0}" -gt 0 ]; then
     for t_ in "${SLANG_COSIM_DIVERGED_NAMES[@]}"; do
         echo "      - $t_"
     done
-    echo "     (a read_slang defect, not ours — collected in docs/slang_cosim_findings.md)"
+    echo "     (a read_slang defect, not ours — collected in docs/slang_unsupported.md)"
 fi
 if [ "${STRUCT_CHECK_RUN:-0}" -gt 0 ]; then
     echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_FAILED_TESTS unexpected"
