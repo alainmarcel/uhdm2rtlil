@@ -1,0 +1,13 @@
+# `for (i) d[i] = q[i]; ... d[sel_q].field = x;` on an unpacked array of structs
+# that ANOTHER process reads whole (`q <= d;`), so the array is MIXED: a flat
+# alias assembled from the element wires.  The comb block owns per-ELEMENT
+# temps, and the dynamic field write must read-modify-write those in-flight
+# elements -- reading the flat alias (driven by this very process) closes a
+# combinational loop (CVA6 trigger_module: tdata3_o followed tdata3_i with no
+# clock edge).  `check -assert` after proc is the gate; `opt -fast` would hide
+# the loop here because every field of the element is written.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert
