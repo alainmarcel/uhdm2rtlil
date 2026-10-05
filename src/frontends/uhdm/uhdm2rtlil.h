@@ -678,6 +678,7 @@ struct UhdmImporter {
     // Key = unescaped signal name, value = per-bit integer (0/1, -1 = unset).
     std::map<std::string, std::vector<int>> const_eval_module_writes;
     RTLIL::SigSpec current_ff_clock_sig;
+    RTLIL::SigSpec current_ff_iff_cond;   // `@(posedge clk iff cond)`: the qualifier, 1 bit, guards the body
     // For multi-edge always blocks (`always @(posedge a, negedge b)`):
     // all edge triggers, one entry per `(signal, posedge?)` pair.
     // Used by `$print` / `$check` emission to build multi-bit `TRG`
