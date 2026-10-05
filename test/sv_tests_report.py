@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""docs/sv_tests_coverage.md from sv_tests_sweep.py's results.tsv.
+
+Usage: python3 sv_tests_report.py --results build/sv_tests/results.tsv \
+         --commit <sv-tests sha> > ../docs/sv_tests_coverage.md
+"""
+import argparse, csv, re, sys
+from collections import Counter, defaultdict
+
+SVT = "https://github.com/chipsalliance/sv-tests"
+
+CLASSES = [  # (label, regex on the read_uhdm diagnostic), first match wins
+    ("a file with no module (class / package / `$unit` declarations only): read_uhdm errors \"No modules found\", the other frontends accept an empty design", r"No modules found"),
+    ("several blocking assignments to one variable inside `initial` taken as conflicting init values", r"Conflicting init values"),
+    ("`@(posedge clk iff cond)` event control: no clock extracted", r"Clock signal is empty"),
+    ("sized decimal `?`/`z` literal (`16'sd?`) not parsed", r"Failed to parse decimal constant"),
+    ("Surelog syntax error", r"surelog: \[SNT"),
+    ("Surelog reports an error", r"surelog:"),
+]
+
+CORES = [  # (sv-tests core test, what sv-tests runs, our coverage)
+    ("ariane / CVA6 (`cva6_cv64a6_imafdc_sv39`)", "full core, top `cva6`", "yes -- per-module miters + per-instance chip sweep (`sweep-cva6.yml`, same configuration)"),
+    ("ariane / CVA6 (`cv64a6_imafdc_sv39_hpdcache`, `cv64a6_imafdch_sv39`, `cv32a6_imac_sv32`, `ariane_testharness`)", "full core at four more configurations", "**no** -- one configuration only"),
+    ("ibex (`ibex_simple_system`, fusesoc)", "full core", "yes -- per-module (`sweep-ibex.yml`) and `ibex_top` / `ibex_lockstep` as internal tests"),
+    ("veer-el2 (`veer-el2_wrapper` synth, `tb_top` sim)", "full core, default config", "partly -- the VeeR EL2 instances inside the Caliptra chip (`sweep-caliptra.yml`), not standalone"),
+    ("veer-eh1 (`veer-eh1_wrapper`, fusesoc)", "full core", "**no**"),
+    ("black-parrot (`bp_default`, `bp_unicore`, `bp_multicore_1`, `_cce_ucode`, `bp_multicore_4`, `_cce_ucode_cfg`) with basejump_stl + HardFloat", "six configurations, top `wrapper`", "**no**"),
+    ("scr1 (`scr1_top_tb_axi`)", "full core + AXI top", "**no**"),
+    ("rsd (`Core`)", "full core", "**no**"),
+    ("tnoc (`tnoc`)", "network-on-chip", "**no**"),
+    ("rggen (`rggen`, rggen-sv-rtl + rggen-sample)", "generated register files", "**no**"),
+    ("fx68k", "68000 core (needs `--allow-dup-initial-drivers` under slang)", "**no**"),
+    ("yosys tests (`yosys_hana`)", "the upstream yosys test files", "yes -- the 576 generated `test/run/**` tests in the regression"),
+    ("ivtest (Icarus tests)", "the Icarus Verilog test suite", "**no**"),
+]
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--results", required=True)
+    ap.add_argument("--commit", required=True)
+    ap.add_argument("--repo", default=__import__("os").path.expanduser("~/ext/sv-tests"))
+    a = ap.parse_args()
+    rows = list(csv.DictReader(open(a.results), delimiter="\t"))
+    run = [r for r in rows if r["uhdm"] != "SKIP"]
+    skipped = len(rows) - len(run)
+    def cnt(fe): return Counter(r[fe] for r in run)
+    link = lambda t: f"[`{t.replace('tests/', '')}`]({SVT}/blob/{a.commit}/{t})"
+    L = []; A = L.append
+    A("# chipsalliance/sv-tests: what our frontend misses\n")
+    A(f"[sv-tests]({SVT}) at `{a.commit[:9]}` is the LRM-chapter corpus every SystemVerilog tool is")
+    A("scored on. `test/sv_tests_sweep.py` runs its synthesis set -- every test not marked")
+    A(f"`:unsynthesizable: 1` outside `uvm/` and `testbenches/`, {len(run)} of {len(rows)} -- through three")
+    A("frontends with sv-tests' own rules: the test's mode (simulation > elaboration > parsing >")
+    A("preprocessing from its `:type:`), the Yosys runner's script per mode (`hierarchy; proc;")
+    A("check; clean; memory_dff; memory_collect; stat; check`, then `sim -assert` for simulation")
+    A("tests), and `:should_fail_because:` tests PASS when the tool rejects them.\n")
+    A("| frontend | PASS | FAIL | what the column means |")
+    A("|---|---|---|---|")
+    c = cnt("uhdm"); A(f"| read_uhdm (Surelog + our frontend) | {c['PASS']} | {c['FAIL'] + c['TIMEOUT']} | Surelog parse + read_uhdm + the mode script |")
+    c = cnt("verilog"); A(f"| read_verilog (yosys, sv-tests' own Yosys runner) | {c['PASS']} | {c['FAIL'] + c['TIMEOUT']} | the same mode script |")
+    c = cnt("slang"); A(f"| read_slang (sv-tests' yosys_slang runner flags) | {c['PASS']} | {c['FAIL'] + c['TIMEOUT']} | read only -- that runner never elaborates further, so this is \"slang reads it\" |")
+    A("")
+    miss = [r for r in run if r["uhdm"] != "PASS" and (r["verilog"] == "PASS" or r["slang"] == "PASS")]
+    ours_only = sum(1 for r in run if r["uhdm"] == "PASS" and r["verilog"] != "PASS")
+    allfail = [r for r in run if r["uhdm"] != "PASS" and r["verilog"] != "PASS" and r["slang"] != "PASS"]
+    A(f"**{len(miss)}** tests pass under read_verilog or read_slang and not under read_uhdm (the misses");
+    A(f"below); **{ours_only}** pass under read_uhdm and not under read_verilog; **{len(allfail)}** fail under all three.\n")
+    A("## How to reproduce\n")
+    A("```")
+    A("git clone --depth 1 https://github.com/chipsalliance/sv-tests ~/ext/sv-tests")
+    A("cd test && python3 sv_tests_sweep.py --repo ~/ext/sv-tests --jobs 8 --out ../build/sv_tests   # all 1015 tests, ~10 min")
+    A("python3 sv_tests_sweep.py --filter 'chapter-9/9.4.2.3'                                       # one test")
+    A("ls ../build/sv_tests/work/tests__chapter-9__9.4.2.3--event_conditional.sv/   # surelog.log, uhdm.ys/.log, verilog.ys/.log, slang.ys/.log")
+    A("python3 sv_tests_report.py --results ../build/sv_tests/results.tsv --commit <sha> > ../docs/sv_tests_coverage.md")
+    A("```\n")
+    A("## Misses, by cause\n")
+    by = defaultdict(list)
+    for r in miss:
+        if r["should_fail"] == "1":
+            by[("should-fail test accepted: Surelog elaborates code the LRM forbids (every row lists the rule)", 100)].append(r); continue
+        d = r["uhdm_err"]
+        for i, (label, rx) in enumerate(CLASSES):
+            if re.search(rx, d):
+                by[(label, i)].append(r); break
+        else:
+            by[(d[:80] or "(no diagnostic)", 50)].append(r)
+    A("| cause | tests | kind |")
+    A("|---|---|---|")
+    for (label, i), lst in sorted(by.items(), key=lambda kv: -len(kv[1])):
+        kind = "reader behaviour" if i == 0 else "Surelog leniency" if i == 100 else "Surelog" if 4 <= i <= 5 else "reader bug"
+        A(f"| {label} | {len(lst)} | {kind} |")
+    A("")
+    for (label, i), lst in sorted(by.items(), key=lambda kv: -len(kv[1])):
+        A(f"### {label} -- {len(lst)}\n")
+        A("| test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |")
+        A("|---|---|---|---|---|---|")
+        for r in sorted(lst, key=lambda r: r["test"]):
+            why = r["uhdm_err"]
+            if r["should_fail"] == "1":
+                try:
+                    txt = open(f"{a.repo}/{r['test']}", errors='replace').read(4000)
+                except Exception:
+                    txt = ""
+                m = re.search(r":should_fail_because:\s*(.*)", txt)
+                why = ("should fail: " + m.group(1).strip()) if m else "should fail"
+            A(f"| {link(r['test'])} | {r['mode']} | {r['uhdm']} | {r['verilog']} | {r['slang']} | {why.replace('|', chr(92) + '|')[:160]} |")
+        A("")
+    A("## Fails under all three frontends\n")
+    A("| test | mode | read_uhdm | read_slang |")
+    A("|---|---|---|---|")
+    for r in sorted(allfail, key=lambda r: r["test"]):
+        A(f"| {link(r['test'])} | {r['mode']} | {r['uhdm_err'][:100] or r['uhdm']} | {r['slang_err'][:100] or r['slang']} |")
+    A("")
+    A("## The cores sv-tests covers, and which we sweep\n")
+    A("sv-tests generates one test per core configuration from `generators/*` (full-core")
+    A("elaboration, top module named); our nightly sweeps prove per module against read_slang")
+    A("and co-simulate.  What they have that we do not:\n")
+    A("| sv-tests core test | what it is | our sweep |")
+    A("|---|---|---|")
+    for core, what, ours in CORES:
+        A(f"| {core} | {what} | {ours} |")
+    A("")
+    print("\n".join(L))
+
+if __name__ == "__main__":
+    main()
