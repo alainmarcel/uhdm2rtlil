@@ -6334,7 +6334,10 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             // one).  stoll would throw on the letter, so map it to an X/Z const.
             if (dec_str.find_first_of("xX") != std::string::npos)
                 return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, width));
-            if (dec_str.find_first_of("zZ") != std::string::npos)
+            // `?` is the alternative spelling of z in a sized literal
+            // (IEEE 1800-2017 5.7.1: `16'sd?` is `16'sbz`); Surelog keeps it
+            // as DEC:? and stoll threw on it (sv-tests 5.7.1--integers-signed).
+            if (dec_str.find_first_of("zZ?") != std::string::npos)
                 return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, width));
             try {
                 // Use stoll to handle larger integers
