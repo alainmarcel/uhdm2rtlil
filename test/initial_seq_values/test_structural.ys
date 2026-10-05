@@ -1,0 +1,9 @@
+# The initial values must be the SEQUENTIAL result (a=1, b=1, c=2, e=2) and
+# the registers must keep them until the first clock edge: prove `ok` holds
+# in the initial state from the \init attributes.  Without the fix read_uhdm
+# aliased b to a (and the design did not even survive opt: "Conflicting
+# init values").
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -seq 1 -prove ok 1'b1 -verify

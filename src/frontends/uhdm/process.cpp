@@ -16,6 +16,7 @@
 #include <uhdm/variables.h>
 #include <uhdm/attribute.h>
 #include "kernel/fmt.h"
+#include "kernel/consteval.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -5213,29 +5214,48 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
     pending_sync_assignments.clear();
     pending_sync_seq.clear(); sync_blocking_values.clear();
 
-    // Resolve cross-process init dependencies: if RHS references a wire whose
-    // init value was computed by an earlier interpreter-based initial block,
-    // substitute the constant value so PROC_INIT can evaluate it
-    for (auto& action : sync_init->actions) {
-        RTLIL::SigSpec& rhs = action.second;
-        if (!rhs.is_fully_const()) {
-            RTLIL::SigSpec resolved;
-            bool all_resolved = true;
-            for (auto& chunk : rhs.chunks()) {
-                if (chunk.wire && interpreter_init_values.count(chunk.wire)) {
-                    RTLIL::Const wire_val = interpreter_init_values[chunk.wire];
-                    // Extract the relevant bits
-                    RTLIL::SigSpec wire_sig(wire_val);
-                    resolved.append(wire_sig.extract(chunk.offset, chunk.width));
-                } else if (chunk.wire) {
-                    all_resolved = false;
-                    break;
-                } else {
-                    resolved.append(chunk);
+    // Resolve init dependencies in statement order.  An initial block is
+    // SEQUENTIAL: `a = 1; b = a; c = b + 1;` leaves b at 1 and c at 2.  Each
+    // action's RHS is evaluated over the netlist built so far (ConstEval
+    // walks the cells an expression became) with the values known at that
+    // point: a declaration initializer (`reg a = 0;` runs before the block),
+    // a value an earlier interpreter-based initial block computed, and the
+    // actions before it in this block.  The RHS was imported WITHOUT
+    // substituting blocking values on purpose (a constant argument would
+    // fold a function call through the compile-time evaluator); resolving
+    // the finished expression here is safe.  Before this, `b = a` fell
+    // through to a continuous `connect \b \a` -- b permanently aliased to
+    // a's wire -- and with `reg b = 2` the two inits collided in ffinit
+    // ("Conflicting init values"; chipsalliance/sv-tests 10.4.1, 9.3.1,
+    // 9.3.4, 9.3.5, 9.4.5).
+    {
+        // Whole-wire values by wire (a later value REPLACES an earlier one:
+        // the block's `a = 1` overrides the declaration's `a = 3`), partial
+        // writes kept aside; ConstEval::set refuses two values for one bit.
+        std::map<RTLIL::Wire*, RTLIL::Const> full;
+        std::vector<std::pair<RTLIL::SigSpec, RTLIL::Const>> partial;
+        for (auto w : module->wires())
+            if (w->attributes.count(ID::init) && w->attributes.at(ID::init).size() == w->width)
+                full[w] = w->attributes.at(ID::init);
+        for (auto& [w, c] : interpreter_init_values)
+            if (c.size() == w->width) full[w] = c;
+        for (auto& action : sync_init->actions) {
+            RTLIL::SigSpec& rhs = action.second;
+            if (!rhs.is_fully_const()) {
+                ConstEval ce(module);
+                for (auto& [w, c] : full) ce.set(RTLIL::SigSpec(w), c);
+                for (auto& [sig, c] : partial) {
+                    bool clash = false;
+                    for (auto& ch : sig.chunks()) if (ch.wire && full.count(ch.wire)) clash = true;
+                    if (!clash) ce.set(sig, c);
                 }
+                RTLIL::SigSpec r = rhs;
+                if (ce.eval(r) && r.is_fully_const())
+                    rhs = r;
             }
-            if (all_resolved) {
-                rhs = resolved;
+            if (rhs.is_fully_const()) {
+                if (action.first.is_wire()) full[action.first.as_wire()] = rhs.as_const();
+                else partial.emplace_back(action.first, rhs.as_const());
             }
         }
     }
