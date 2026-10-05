@@ -292,6 +292,14 @@ hierarchy -auto-top
 proc
 flatten
 opt -purge  # Remove dead wires to break circular signal dependencies
+# write_verilog -noexpr names every unnamed wire `_<N>_`, numbered in cell order,
+# and the two synth runs do not order cells identically: `_1934_[2]` is an XOR
+# output on one side and an unused bit on the other (macc under Yosys 0.69).
+# equiv_make pairs wires by NAME, so a same-numbered pair of unrelated signals
+# is an $equiv cell nothing can prove, and the test falls through to the 32-step
+# SAT miter -- 800k variables, minutes at best, over STEP_TIMEOUT_S under shard
+# load.  Hide the auto names: pairing then uses ports and the user's own names.
+rename -hide w:_*_
 design -stash gold_flat
 
 design -reset
@@ -301,6 +309,14 @@ hierarchy -auto-top
 proc
 flatten
 opt -purge  # Remove dead wires to break circular signal dependencies
+# write_verilog -noexpr names every unnamed wire `_<N>_`, numbered in cell order,
+# and the two synth runs do not order cells identically: `_1934_[2]` is an XOR
+# output on one side and an unused bit on the other (macc under Yosys 0.69).
+# equiv_make pairs wires by NAME, so a same-numbered pair of unrelated signals
+# is an $equiv cell nothing can prove, and the test falls through to the 32-step
+# SAT miter -- 800k variables, minutes at best, over STEP_TIMEOUT_S under shard
+# load.  Hide the auto names: pairing then uses ports and the user's own names.
+rename -hide w:_*_
 design -stash gate_flat
 
 design -copy-from gold_flat -as gold *
