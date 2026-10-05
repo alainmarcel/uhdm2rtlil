@@ -1,0 +1,32 @@
+{
+ "title": "Syntacore SCR1",
+ "url": "https://github.com/syntacore/scr1",
+ "repos": [
+  {
+   "url": "https://github.com/syntacore/scr1",
+   "commit": "ebb5e3551a9d93c0ee95f0b767dd878b8927e702",
+   "dir": "scr1"
+  }
+ ],
+ "roots": [
+  "scr1/src/core/*.sv",
+  "scr1/src/core/pipeline/*.sv",
+  "scr1/src/core/primitives/*.sv",
+  "scr1/src/top/*.sv"
+ ],
+ "incdirs": [
+  "scr1/src/includes"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^scr1_tracelog$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven"
+}
