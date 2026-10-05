@@ -27,7 +27,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 
 | set | tests / modules | read_slang fails | of which in this report | in incomplete_testcases.md |
 |---|---|---|---|---|
-| internal tests | 1169 | 127 | 124 | 3 |
+| internal tests | 1170 | 127 | 124 | 3 |
 | yosys tests | 576 | 165 | 131 | 34 |
 | sweep aes | 1 rows read | 1 | 1 | 0 |
 | sweep axi | 9 rows read | 9 | 5 | 4 |
@@ -51,6 +51,8 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep verilog-ethernet | 14 rows read | 14 | 13 | 1 |
 | sweep verilog-pcie | 18 rows read | 18 | 7 | 11 |
 | sweep xiangshan-core-full | 3 rows read | 3 | 3 | 0 |
+
+The yosys line counts every generated `run/` directory, 29 of which the regression does not score (the deliberately invalid `tests/errors` and tests that produce no RTLIL under any frontend); the regression's own count is 547.
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 

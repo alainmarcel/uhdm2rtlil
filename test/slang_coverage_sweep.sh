@@ -130,7 +130,7 @@ if [ -n "$ONE" ]; then
 fi
 
 {
-    for d in */; do d=${d%/}; case "$d" in run|parallel_results|ext_ip|cva6_equiv|cva6_chip|pavona_*|caliptra_chip|ibex|rp32|cva6*|xiangshan*|opentitan*) continue;; esac
+    for d in */; do d=${d%/}; case "$d" in run|parallel_results|ext_ip|cva6_equiv|cva6_chip|pavona_*|caliptra_chip|ibex|rp32|opentitan_equiv) continue;; esac
         [ -f "$d/test_verilog_read.ys" ] || [ -f "$d/dut.sv" ] || [ -f "$d/dut.v" ] || [ -f "$d/project.f" ] || continue; echo "$d"; done
     find run -name test_verilog_read.ys -printf '%h\n' | sort
 } | xargs -P "$JOBS" -I{} bash -c 'one "$@"' _ {} | sort > "$OUT"
