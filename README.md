@@ -133,10 +133,9 @@ spells out:
   vendored.  They also settled nine axi rows that had been reporting `differs`
   with undriven nets: those were compared in a degenerate configuration, so the
   findings were never real.
-- **Still open on our side:** 10 rows where `read_slang` tracks the RTL and we do
-  not ([docs/slang_cosim_findings.md](docs/slang_cosim_findings.md)) — two cvw,
-  two axi, two VeeR LSU rows that are nonetheless formally proven, three
-  XiangShan, one egret.
+- **Still open on our side:** the sweep rows where `read_slang` tracks the RTL and
+  we do not are listed, in the same format as slang's own failures, in the "other
+  direction" section of [docs/slang_unsupported.md](docs/slang_unsupported.md).
 - CVA6 is the one family excluded from the local `--no-cva6` developer run, so
   read the nightly rather than a local run for its figures.
 
@@ -170,32 +169,33 @@ failure.  `undriven` likewise counts comparable rows only.
 **How the reference frontend itself does.** The left-most column of every sweep
 table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
 also measure the frontend they compare against.  Every row where it does not
-track the RTL is collected in [docs/slang_cosim_findings.md](docs/slang_cosim_findings.md),
-classified (a `read_slang` defect, a shared co-simulation artefact, or still to
-adjudicate) with a pre-filled Yosys issue link for each defect: **16** rows where
-our netlist tracks the RTL and `read_slang`'s does not, 14 still to adjudicate,
-28 shared artefacts.  The same file lists the **other direction** as well —
-**8** rows where `read_slang` is clean and OURS is wrong, because a document
-that can only record another tool's mistakes is not a measurement.  That number
-was 74 one sweep earlier: binding cvw's configuration made 234 rows comparable
-for the first time and 68 of them failed at once, all on one cause and all ours.
-The same question is asked of both test suites — 1155 local tests and 511
-upstream Yosys tests — which is where the smallest reproducers come from.
+track the RTL -- and every design it cannot read at all, in the sweeps, in the
+local test suite and in the upstream Yosys tests -- is collected in ONE report,
+[docs/slang_unsupported.md](docs/slang_unsupported.md): one format (reason, link
+to the test, recipe to reproduce), the recipes described up front.  Rows the
+harness could not give slang a fair run on (a module no file of the test defines,
+a test invalid on purpose, a design no frontend elaborates, a co-sim both netlists
+fail identically) are in [docs/incomplete_testcases.md](docs/incomplete_testcases.md)
+with a statement of which frontends fail on them.  The same report lists the
+**other direction** -- rows where `read_slang` is clean and OURS is wrong --
+because a document that can only record another tool's mistakes is not a
+measurement.
 
-**What the reference frontend cannot read.** 92 sweep modules cannot be
-elaborated by `read_slang` at all, so they carry no formal verdict.
-[docs/slang_unsupported.md](docs/slang_unsupported.md) lists them with what
-`read_uhdm` makes of each — whether every net is driven, and whether our netlist
-tracks the RTL under Verilator — and splits them three ways, because most of
-them were never `read_slang`'s fault.  It was **360** on 2026-09-29: an audit of
-every class found that a configuration the design forbids at its own defaults,
-a package or macro our closure withheld, an interface port nobody wrapped, an
-unroll limit left at its default and a header the repository never vendored
-accounted for 234 of them.  What is left is **13** rows in 6 classes that are
-genuinely `read_slang` limits (and carry an issue link), **10** where
-`read_slang` is stricter than the other frontends and the language is on its
-side — Verilator rejects the enum case too, citing IEEE 1800 6.19.3 — and the
-rest, which belong to the design, the checkout, or our own project setup.
+**What the reference frontend cannot read.** 45 sweep modules cannot be
+elaborated by `read_slang` at all and 16 more produce a netlist that does not
+track the RTL while ours does; all of them are in
+[docs/slang_unsupported.md](docs/slang_unsupported.md) with the reason, a link to
+the module's source and the recipe that reproduces it, next to the local and
+upstream tests slang cannot read.  84 further sweep rows carry no slang verdict
+at all -- a design neither frontend elaborates, a co-sim both netlists fail
+identically, a testbench Verilator could not build -- and sit in
+[docs/incomplete_testcases.md](docs/incomplete_testcases.md) with a statement of
+which frontends fail on them.  The unreadable count was **360** on 2026-09-29: an
+audit of every class found that a configuration the design forbids at its own
+defaults, a package or macro our closure withheld, an interface port nobody
+wrapped, an unroll limit left at its default and a header the repository never
+vendored accounted for 234 of them -- harness, not slang -- and fixing the
+harness is what brought the number down.
 
 #### Generated IP: the XiangShan core
 
@@ -323,6 +323,7 @@ out of the README to keep this section focused on the leaderboard:
 
 - Changelog / fixes → [`docs/recent-improvements.md`](docs/recent-improvements.md)
 - Test catalog (incl. the UHDM-only list) → [`docs/test-cases.md`](docs/test-cases.md)
+- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1169 local tests and the 576 upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
 
 ## Architecture & Workflow
 
