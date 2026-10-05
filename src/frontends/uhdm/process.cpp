@@ -1255,6 +1255,7 @@ void UhdmImporter::ff_simple_eval(const UHDM::any* stmt,
 
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
+    current_ff_iff_cond = RTLIL::SigSpec();
     log("    Importing always_ff block\n");
     log_flush();
     
@@ -1308,6 +1309,36 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Event expression is operation\n");
                     log_flush();
                     const operation* op = any_cast<const operation*>(event_expr);
+                    // `@(posedge clk iff en)` (IEEE 1800 9.4.2.3): the event
+                    // is operand 0, the qualifier operand 1.  The block runs
+                    // only when the qualifier holds at the edge -- a clock
+                    // enable -- so unwrap the edge here and guard the body
+                    // below.  Unhandled, no clock was found at all
+                    // (chipsalliance/sv-tests 9.4.2.3--event_conditional).
+                    // Surelog nests it as posedge(iff(clk, cond)): the edge
+                    // operand IS the iff operation.  edge_signal() peels it.
+                    auto edge_signal = [&](const operation* edge_op) -> RTLIL::SigSpec {
+                        const any* e = (*edge_op->Operands())[0];
+                        if (e->VpiType() == vpiOperation) {
+                            auto inner = any_cast<const operation*>(e);
+                            if (inner->VpiOpType() == vpiIffOp && inner->Operands() && inner->Operands()->size() == 2) {
+                                current_ff_iff_cond = import_expression(any_cast<const expr*>((*inner->Operands())[1]));
+                                if (current_ff_iff_cond.size() > 1)
+                                    current_ff_iff_cond = module->ReduceBool(NEW_ID, current_ff_iff_cond);
+                                log("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
+                                e = (*inner->Operands())[0];
+                            }
+                        }
+                        return import_expression(any_cast<const expr*>(e));
+                    };
+                    if (op->VpiOpType() == vpiIffOp && op->Operands() && op->Operands()->size() == 2) {
+                        current_ff_iff_cond = import_expression(any_cast<const expr*>((*op->Operands())[1]));
+                        if (current_ff_iff_cond.size() > 1)
+                            current_ff_iff_cond = module->ReduceBool(NEW_ID, current_ff_iff_cond);
+                        if ((*op->Operands())[0]->VpiType() == vpiOperation)
+                            op = any_cast<const operation*>((*op->Operands())[0]);
+                        log("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
+                    }
                     log("      Operation type: %d (vpiEventOrOp=%d, vpiPosedgeOp=%d, vpiNegedgeOp=%d)\n", 
                         op->VpiOpType(), vpiEventOrOp, vpiPosedgeOp, vpiNegedgeOp);
                     log_flush();
@@ -1359,7 +1390,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (op->Operands() && !op->Operands()->empty()) {
                             log("      Importing clock signal from posedge\n");
                             log_flush();
-                            clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            clock_sig = edge_signal(op);
                             // An edge expression triggers on its LSB (IEEE 1800);
                             // a wider result (e.g. `CLK ^ (POL || OPT=="POS")`
                             // mis-sized to 64 bits via a string compare in
@@ -1376,7 +1407,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (op->Operands() && !op->Operands()->empty()) {
                             log("      Importing clock signal from negedge\n");
                             log_flush();
-                            clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            clock_sig = edge_signal(op);
                             // Edge triggers on the LSB — reduce a mis-sized
                             // multi-bit clock expression (memlib_clock_sdp's
                             // `negedge (CLK ^ (POL || OPT=="POS"))`).
@@ -3559,6 +3590,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 sync->signal = RTLIL::SigSpec();
             }
         }
+    }
+
+    // `@(posedge clk iff en)` (IEEE 1800 9.4.2.3): the block runs only when
+    // the qualifier holds at the edge -- a clock enable.  Every body path
+    // above (switch-structured, SSA-threaded, sync fallback) ends in the
+    // clock's sync rule updating each register from its next-value signal;
+    // qualify that update instead of each path: next = en ? next : held.
+    // A reset edge in the same list is not qualified (the iff binds to its
+    // own event), so only the rule on the clock is touched.
+    if (current_ff_iff_cond.size() == 1) {
+        for (auto sync : yosys_proc->syncs) {
+            if ((sync->type != RTLIL::STp && sync->type != RTLIL::STn) ||
+                sync->signal != current_ff_clock_sig)
+                continue;
+            for (auto& act : sync->actions)
+                act.second = module->Mux(NEW_ID, act.first, act.second, current_ff_iff_cond);
+        }
+        current_ff_iff_cond = RTLIL::SigSpec();
     }
 
     // Clear contexts at the end of import_always_ff

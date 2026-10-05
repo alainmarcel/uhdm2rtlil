@@ -1,0 +1,9 @@
+# The qualifier must become a clock ENABLE on every register: after proc+opt
+# no flop may be a plain (enable-less) $dff / $sdff / $adff -- `y` is a
+# $dffe, `cnt` an enable-bearing sync-reset flop ($sdffe / $sdffce).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+select -assert-none t:$dff t:$sdff t:$adff t:$aldff
+select -assert-min 1 t:$dffe
+select -assert-min 2 t:$dffe t:$sdffe t:$sdffce t:$adffe t:$aldffe
