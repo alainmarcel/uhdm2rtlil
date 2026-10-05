@@ -112,8 +112,27 @@ struct ReadUHDMPass : public Frontend {
             visit_designs({vpi_design}, std::cout);
         }
 
-        if (!uhdm_design->AllModules())
+        // A file with no module at all -- classes, a package, `$unit`
+        // declarations -- is a legal design that elaborates to nothing.
+        // read_verilog and read_slang accept it; refusing it failed 82 of
+        // chipsalliance/sv-tests' 707 synthesis tests for no reason (every
+        // chapter-18 randomization test is a class and a program block).
+        if (!uhdm_design->AllModules() || uhdm_design->AllModules()->empty()) {
+            // Only when the design holds SOMETHING.  A UHDM with no modules,
+            // packages, classes or interfaces at all is a file Surelog parsed
+            // to nothing (yosys/tests/arch/fabulous/arith_map.v: a techmap
+            // library whose every module carries `(* techmap_celltype *)`),
+            // and reading that as an empty design made the regression score
+            // the test as a vacuous pass -- keep refusing it.
+            auto nonempty = [](auto* v) { return v && !v->empty(); };
+            if (nonempty(uhdm_design->AllPackages()) || nonempty(uhdm_design->TopPackages()) ||
+                nonempty(uhdm_design->AllClasses()) || nonempty(uhdm_design->AllInterfaces())) {
+                log_warning("No modules found in UHDM design (packages, classes or "
+                            "$unit declarations only) -- nothing to import.\n");
+                return;
+            }
             log_error("No modules found in UHDM design.\n");
+        }
 
         // Create importer and import design
         UhdmImporter importer(design, keep_names, debug);
