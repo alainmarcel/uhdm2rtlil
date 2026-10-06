@@ -8,6 +8,7 @@ import argparse, csv, re, sys
 from collections import Counter, defaultdict
 
 SVT = "https://github.com/chipsalliance/sv-tests"
+CYCLES = 300   # matches sv_tests_sweep.py's --cycles default
 
 CLASSES = [  # (label, regex on the read_uhdm diagnostic), first match wins
     ("a file with no module (class / package / `$unit` declarations only): read_uhdm errors \"No modules found\", the other frontends accept an empty design", r"No modules found"),
@@ -65,60 +66,85 @@ def main():
     c = cnt("verilog"); A(f"| read_verilog (yosys, sv-tests' own Yosys runner) | {c['PASS']} | {c['FAIL'] + c['TIMEOUT']} | the same mode script |")
     c = cnt("slang"); A(f"| read_slang (sv-tests' yosys_slang runner flags) | {c['PASS']} | {c['FAIL'] + c['TIMEOUT']} | read only -- that runner never elaborates further, so this is \"slang reads it\" |")
     A("")
-    # ---- the columns every other sweep reports ------------------------------
+    # ---- the same table every other sweep prints ---------------------------
     # sv-tests' own verdict is only "did the frontend read it".  That says
     # nothing about whether what we BUILT is right, which is what the core /
-    # ext / pavona sweeps measure.  These rows come from the same probes:
-    # core_sweep's undriven / conflict checks and netlist_cosim.py.
+    # ext / pavona sweeps measure per module.  Same probes, same columns, same
+    # order and same summary lines as core_sweep.py's table, so a reader can
+    # compare an sv-tests row against an ibex or pavona row directly.
     deep = [r for r in run if (r.get("formal") or "—") != "—"
             and not (r.get("formal") or "").startswith("— (")]
     if deep:
-        ok = lambda v: v.startswith("✅")
-        n_formal_ok = sum(1 for r in deep if ok(r.get("formal") or ""))
-        n_formal_bad = sum(1 for r in deep if (r.get("formal") or "").startswith("❌"))
-        n_noref = sum(1 for r in deep if (r.get("formal") or "").startswith("no reference"))
-        meas_und = [r for r in deep if (r.get("undriven") or "").startswith(("✅", "❌"))]
-        n_und_ok = sum(1 for r in meas_und if ok(r["undriven"]))
-        meas_cf = [r for r in deep if (r.get("conflicts") or "").startswith(("✅", "❌"))]
-        n_cf_ok = sum(1 for r in meas_cf if ok(r["conflicts"]))
-        cos = [r for r in deep if (r.get("cosim") or "").startswith(("✅", "❌"))]
-        n_cos_ok = sum(1 for r in cos if ok(r["cosim"]))
-        scos = [r for r in deep if (r.get("slang_cosim") or "").startswith(("✅", "❌"))]
-        n_scos_ok = sum(1 for r in scos if ok(r["slang_cosim"]))
-        A("## Beyond \"did it read\": the same checks the other sweeps run\n")
-        A("Reading a file proves nothing about the netlist.  Every row that")
-        A("elaborates to a top is therefore also put through the probes the core,")
-        A("ext and pavona sweeps use: a SAT miter against `read_slang`, the")
-        A("structural opt-check for dropped drivers and driver conflicts, and a")
-        A("Verilator co-simulation of BOTH netlists against the original RTL.\n")
-        A(f"**Formal (read_uhdm vs read_slang):** {n_formal_ok}/{n_formal_ok + n_formal_bad}"
-          f" equivalent ({n_formal_bad} differ, {n_noref} with no read_slang reference).")
-        A(f"**Opt check:** {n_und_ok}/{len(meas_und)} with zero undriven nets.")
-        A(f"**Driver conflicts:** {n_cf_ok}/{len(meas_cf)} with none.")
-        A(f"**Co-sim vs RTL:** {n_cos_ok}/{len(cos)} pass"
-          f"  ·  **read_slang baseline:** {n_scos_ok}/{len(scos)}.\n")
+        deep.sort(key=lambda r: r["test"])
+        sc = lambda r: r.get("slang_cosim") or "—"
+        has_conf = any((r.get("conflicts") or "—") != "—" for r in deep)
+        has_check = any((r.get("undriven") or "—") != "—" for r in deep)
+        has_unres = any((r.get("unresolved") or "—") != "—" for r in deep)
+        A(f"## sv-tests sweep — formal (vs read_slang) + Verilator co-sim "
+          f"({CYCLES} cycles)\n")
+        A("Reading a file proves nothing about the netlist, so every row that")
+        A("elaborates to a top also goes through the probes the core / ext /")
+        A("pavona sweeps use -- a SAT miter against `read_slang`, the structural")
+        A("opt-check for dropped drivers and driver conflicts, and a Verilator")
+        A("co-simulation of BOTH netlists against the original RTL.\n")
+        hdr = ["slang co-sim vs RTL", "module", "formal vs slang"]
+        if has_conf:
+            hdr.append("driver conflicts")
+        if has_check:
+            hdr.append("opt check (undriven)")
+        if has_unres:
+            hdr.append("unresolved reads")
+        hdr.append("co-sim vs RTL")
+        A("| " + " | ".join(hdr) + " |")
+        A("|" + "---|" * len(hdr))
+        for r in deep:
+            cells = [sc(r), link(r["test"]), r.get("formal") or "—"]
+            if has_conf:
+                cells.append(r.get("conflicts") or "—")
+            if has_check:
+                cells.append(r.get("undriven") or "—")
+            if has_unres:
+                cells.append(r.get("unresolved") or "—")
+            cells.append(r.get("cosim") or "—")
+            A("| " + " | ".join(cells) + " |")
+        spass = sum(1 for r in deep if sc(r).startswith("✅"))
+        sfail = sum(1 for r in deep if sc(r).startswith("❌"))
+        npass = sum(1 for r in deep if (r.get("cosim") or "").startswith("✅"))
+        nfail = sum(1 for r in deep if (r.get("cosim") or "").startswith("❌"))
+        nadj = sum(1 for r in deep if (r.get("cosim") or "").startswith("⚠"))
+        comparable = npass + nfail
+        pct = (100.0 * npass / comparable) if comparable else 100.0
+        nequiv = sum(1 for r in deep if (r.get("formal") or "").startswith("✅"))
+        A("")
+        A(f"**Slang co-sim baseline:** {spass}/{spass + sfail} read_slang "
+          f"netlists track the RTL ({sfail} diverge; "
+          f"{len(deep) - spass - sfail} not comparable).")
+        A(f"**Formal:** {nequiv}/{len(deep)} modules equivalent with read_slang.")
+        A(f"**Co-sim pass rate:** {npass}/{comparable} (**{pct:.1f}%**) — "
+          f"{nadj} adjudicated non-bug divergences (⚠ rows, excluded), "
+          f"{len(deep) - comparable - nadj} not comparable (skipped / no run).")
+        if has_check:
+            nclean = sum(1 for r in deep if (r.get("undriven") or "").startswith("✅"))
+            ndirty = sum(1 for r in deep if (r.get("undriven") or "").startswith("❌"))
+            A(f"**Opt check:** {nclean}/{nclean + ndirty} modules with zero "
+              f"undriven nets ({ndirty} with dropped drivers).")
+        if has_conf:
+            cclean = sum(1 for r in deep if (r.get("conflicts") or "").startswith("✅"))
+            cdirty = sum(1 for r in deep if (r.get("conflicts") or "").startswith("❌"))
+            A(f"**Driver conflicts:** {cclean}/{cclean + cdirty} modules with "
+              f"none ({cdirty} with a net driven twice, or an assignment whose "
+              f"target is a constant / input port). A row with conflicts makes "
+              f"the formal column UNRELIABLE — the bogus feedback constrains "
+              f"the miter to the inputs where gold and gate agree, so it can "
+              f"pass vacuously.")
+        A("")
         A("Most rows co-sim as `skip (no run)`: an LRM snippet usually has no")
-        A("clocked I/O for a testbench to drive, so there is nothing to compare.\n")
-        diff = [r for r in deep
-                if (r.get("formal") or "").startswith("❌")
-                or (r.get("cosim") or "").startswith("❌")
-                or (r.get("undriven") or "").startswith("❌")
-                or (r.get("conflicts") or "").startswith("❌")]
-        if diff:
-            A(f"### Rows that are not clean -- {len(diff)}\n")
-            A("A `differs` here is NOT automatically a reader defect: most are")
-            A("**simulation-only constructs** (associative arrays and their methods,")
-            A("`force`/`release`, `$test$plusargs`, `cover`) that neither frontend")
-            A("synthesises to anything meaningful, so a miter between the two")
-            A("netlists compares two different nothings.  They are listed so the")
-            A("genuinely suspicious ones stay visible rather than averaged away.\n")
-            A("| test | mode | formal vs slang | opt check (undriven) | driver conflicts | co-sim vs RTL | read_slang co-sim |")
-            A("|---|---|---|---|---|---|---|")
-            for r in sorted(diff, key=lambda r: r["test"]):
-                A(f"| {link(r['test'])} | {r['mode']} | {r.get('formal') or '—'} |"
-                  f" {r.get('undriven') or '—'} | {r.get('conflicts') or '—'} |"
-                  f" {r.get('cosim') or '—'} | {r.get('slang_cosim') or '—'} |")
-            A("")
+        A("clocked I/O for a testbench to drive, so there is nothing to compare.")
+        A("And a `differs` here is NOT automatically a reader defect -- most of")
+        A("them are **simulation-only constructs** (associative arrays and their")
+        A("methods, `force`/`release`, `$test$plusargs`, `cover`) that neither")
+        A("frontend synthesises to anything meaningful, so the miter compares two")
+        A("different nothings.\n")
 
     miss = [r for r in run if r["uhdm"] != "PASS" and (r["verilog"] == "PASS" or r["slang"] == "PASS")]
     ours_only = sum(1 for r in run if r["uhdm"] == "PASS" and r["verilog"] != "PASS")
