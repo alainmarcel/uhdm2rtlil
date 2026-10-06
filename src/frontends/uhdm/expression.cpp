@@ -9518,6 +9518,37 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         // (CVA6 INTERRUPTS.* collapsed through
                         // `(XLEN'(1)<<(XLEN-1))`); leave it unresolved so the
                         // pass-through fallback below keeps the operand.
+                        // A parameterized size cast whose width parameter
+                        // Surelog could not elaborate: it emits a typespec
+                        // (an `unsupported_typespec` for a $unit parameter)
+                        // carrying only the parameter NAME.
+                        // get_width_from_typespec defaults that to 1, which
+                        // TRUNCATED the cast -- scr1_pipe_tdu's
+                        // `ALLTRIG_W'(ALLTRIG_NUM)` became a 1-bit 1 instead
+                        // of 2'd3, so the trigger-select compare was wrong.
+                        // A type cast (`byte'(x)`, `my_t'(x)`) names no
+                        // parameter, so it falls through untouched.
+                        if (target_width <= 0 && !ts->VpiName().empty()) {
+                            std::string tn = std::string(ts->VpiName());
+                            int w = 0;
+                            RTLIL::IdString pid = RTLIL::escape_id(tn);
+                            if (module && module->parameter_default_values.count(pid)) {
+                                RTLIL::Const& pv = module->parameter_default_values.at(pid);
+                                if (pv.size() > 0) w = pv.as_int();
+                            }
+                            if (w <= 0) {
+                                auto pit = package_parameter_map.find(tn);
+                                if (pit != package_parameter_map.end() && pit->second.size() > 0)
+                                    w = pit->second.as_int();
+                            }
+                            if (w > 0) {
+                                target_width = w;
+                                is_size_cast = true;
+                                if (mode_debug)
+                                    log("    cast width from parameter '%s' = %d\n",
+                                        tn.c_str(), w);
+                            }
+                        }
                         if (target_width <= 0 &&
                             ts->UhdmType() != uhdmvoid_typespec) {
                             int w = get_width_from_typespec(ts, current_instance);
@@ -10235,13 +10266,41 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 }
             }
             
+            // An EMPTY value is not a value: the parameter object a $unit
+            // declaration leaves behind carries only a typespec (Surelog does
+            // not fold `SCR1_TDU_ALLTRIG_NUM = SCR1_TDU_MTRIG_NUM + 1'b1`),
+            // and returning it made the whole reference an empty SigSpec that
+            // every caller then read as a constant 0 -- or crashed on, casting
+            // it.  Fall through to the $unit/package map below instead.
+            if (param_value.size() > 0) {
+                if (mode_debug)
+                    log("UHDM: ref_obj %s refers to parameter with value %s\n",
+                        ref_name.c_str(), param_value.as_string().c_str());
+                return RTLIL::SigSpec(param_value);
+            }
             if (mode_debug)
-                log("UHDM: ref_obj %s refers to parameter with value %s\n",
-                    ref_name.c_str(), param_value.as_string().c_str());
-            return RTLIL::SigSpec(param_value);
+                log("UHDM: ref_obj %s refers to a parameter with no value — "
+                    "trying the $unit/package map\n", ref_name.c_str());
         }
     }
     
+    // A package or $unit ("compilation unit") parameter referenced by its bare
+    // name, whose ref_obj carries no vpiActual: a compile-time constant, not a
+    // signal, and resolvable with no module at all -- so this must come BEFORE
+    // the no-module guard below, which used to return empty for it.  scr1's
+    // include files declare every width this way; unresolved, each became a
+    // fabricated 1-bit wire (so a 22-bit slice read one X bit) or an empty
+    // SigSpec that zero-extended to a wrong 0.
+    {
+        auto upit = package_parameter_map.find(ref_name);
+        if (upit != package_parameter_map.end()) {
+            if (mode_debug)
+                log("    ref_obj '%s' resolved as $unit/package parameter = %s\n",
+                    ref_name.c_str(), upit->second.as_string().c_str());
+            return RTLIL::SigSpec(upit->second);
+        }
+    }
+
     // No RTLIL module context: we are resolving a reference inside a PACKAGE
     // parameter's value expression (import_package runs before any module is
     // created).  None of the module-based lookups below — parameter_default_
@@ -10730,6 +10789,21 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 // `ariane_pkg::SMODE_STATUS_WRITE_MASK[CVA6Cfg.XLEN-1:0]` — the
                 // base is a compile-time package constant, not a signal.
                 base = RTLIL::SigSpec(package_parameter_map.at(base_signal_name));
+                // A parameter declared over a NON-zero-based range
+                // (`parameter bit [31:SCR1_CSR_MTVEC_BASE_ZERO_BITS] X`) is
+                // selected with source bit NUMBERS, which sit that much
+                // above the constant's own bit 0.  Pad the bottom so index
+                // N means bit N and the 0-based index math below needs no
+                // special case; the pad bits are below the declared range
+                // and no valid select can reach them.
+                {
+                    auto lit = package_parameter_lsb.find(base_signal_name);
+                    if (lit != package_parameter_lsb.end() && lit->second > 0) {
+                        RTLIL::SigSpec padded(RTLIL::Const(0, lit->second));
+                        padded.append(base);
+                        base = padded;
+                    }
+                }
                 log("      Resolved '%s' as package parameter for part select (width=%d)\n",
                     base_signal_name.c_str(), base.size());
             } else if (RTLIL::Wire* e0 =
@@ -12639,6 +12713,21 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                     // Package localparam sliced with a dynamic/indexed range,
                     // e.g. `ariane_pkg::SMODE_STATUS_WRITE_MASK[XLEN-1:0]`.
                     base = RTLIL::SigSpec(package_parameter_map.at(base_signal_name));
+                    // A parameter declared over a NON-zero-based range
+                    // (`parameter bit [31:SCR1_CSR_MTVEC_BASE_ZERO_BITS] X`) is
+                    // selected with source bit NUMBERS, which sit that much
+                    // above the constant's own bit 0.  Pad the bottom so index
+                    // N means bit N and the 0-based index math below needs no
+                    // special case; the pad bits are below the declared range
+                    // and no valid select can reach them.
+                    {
+                        auto lit = package_parameter_lsb.find(base_signal_name);
+                        if (lit != package_parameter_lsb.end() && lit->second > 0) {
+                            RTLIL::SigSpec padded(RTLIL::Const(0, lit->second));
+                            padded.append(base);
+                            base = padded;
+                        }
+                    }
                 } else {
                     std::string gen_scope = get_current_gen_scope();
                     log_warning("Base signal '%s' not found in module or generate scope %s\n",

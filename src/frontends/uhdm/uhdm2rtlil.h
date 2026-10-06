@@ -338,6 +338,10 @@ struct UhdmImporter {
     // Track package parameters
     // Key: fully qualified name (package::param), Value: constant value
     std::map<std::string, RTLIL::Const> package_parameter_map;
+    // Declared LSB of a package / $unit parameter whose range is not
+    // zero-based (`parameter bit [31:6] X`): a select writes bit NUMBERS,
+    // which are that much above the constant's own bit 0.
+    std::map<std::string, int> package_parameter_lsb;
     // Design-wide enum-constant name -> value, for a bare ref to a gen-scope/
     // local enum constant whose ref_obj has no Actual_group (ibex_multdiv's
     // gen-scope-local `typedef enum {MULL,MULH}` used as `mult_state_d = MULL`).
@@ -979,6 +983,7 @@ struct UhdmImporter {
 
     // Package support
     void import_package(const UHDM::package* uhdm_package);
+    void import_unit_parameters(const UHDM::design* uhdm_design);
     
     // Interface support
     void import_interface(const UHDM::interface_inst* uhdm_interface);

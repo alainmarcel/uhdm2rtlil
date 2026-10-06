@@ -404,6 +404,10 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         for (auto top_mod : *uhdm_design->TopModules()) walk(top_mod);
     }
 
+    // Compilation-unit ($unit) parameters first: a package of the same name
+    // must win, and import_unit_parameters never overwrites an existing entry.
+    import_unit_parameters(uhdm_design);
+
     // First, import all packages (prefer TopPackages for resolved values)
     auto* packages = uhdm_design->TopPackages();
     if (!packages) packages = uhdm_design->AllPackages();
