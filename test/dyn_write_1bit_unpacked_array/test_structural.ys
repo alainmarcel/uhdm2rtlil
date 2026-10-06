@@ -1,0 +1,10 @@
+# The dynamic write must land on the array's own wire, not on the $shiftx the
+# read path builds: two drivers on one wire make `check` complain and
+# `opt_muxtree` hard-error.  `check -assert` right after proc is the gate
+# (opt would hide it by resolving the conflict to a constant).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+check -assert
+opt -fast
+check -assert
