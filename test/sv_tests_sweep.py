@@ -260,7 +260,14 @@ def run_test(args, rel, path, p):
         for fe in ("uhdm", "verilog", "slang"):
             res[fe] = "SKIP"; res[fe + "_err"] = "unsynthesizable" if int(p["unsynthesizable"]) else "no supported mode"
         return res
-    work = os.path.join(args.out, "work", rel.replace("/", "__"))
+    # ABSOLUTE.  netlist_cosim.py is run with cwd=work and resolves the
+    # `--uhdm-il` / `--srcs` / `--incs` paths against ITS cwd, so a relative
+    # --out (CI passes `--out ../build/sv_tests`) made every one of those
+    # point one level below the work dir: all 526 rows reported
+    # `skip (netlist gen failed)` in CI while an absolute --out worked
+    # locally, which is why the co-sim columns looked broken only on the
+    # nightly.
+    work = os.path.abspath(os.path.join(args.out, "work", rel.replace("/", "__")))
     os.makedirs(work, exist_ok=True)
     timeout = max(int(p["timeout"]) * 4, 120)
     incs = p["incdirs"].split()
