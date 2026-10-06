@@ -99,6 +99,12 @@ jobs:
           echo
           sed -n '/^| frontend /,/^$/p' ../sv-tests-sweep.md
           echo
+          # The per-row table, in the same format every other sweep puts on its
+          # run page (core_sweep.py appends its whole table to the step
+          # summary).  Publishing only the frontend tally made the job page far
+          # more succinct than any other sweep's.
+          sed -n '/^## sv-tests sweep — formal/,/^Most rows co-sim as/p' ../sv-tests-sweep.md | sed '$d'
+          echo
           sed -n '/^## Misses, by cause/,/^### /p' ../sv-tests-sweep.md | sed '$d'
         } >> "$GITHUB_STEP_SUMMARY"
 
