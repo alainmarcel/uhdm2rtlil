@@ -12213,6 +12213,33 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
             cur = current_comb_values.at(ename);
         else
             cur = RTLIL::SigSpec(ew);
+        // TWO dynamic writes to the same array in ONE always_ff arm
+        // (scr1_pipe_ifu's full-word queue write does it with q_data):
+        // in_flight tracking is suppressed for non-blocking semantics, so
+        // `cur` is the REGISTERED element for both writes -- and since the
+        // emission below removes any earlier action for the same target,
+        // only the LAST write survived and the other element kept its old
+        // value.  A DYNAMIC index touches every element (one hold-mux each),
+        // so both writes target the same per-element temps.  Start from the
+        // pending action's value instead, the same chaining
+        // emit_dynamic_packed_select_write and
+        // emit_dynamic_array_elem_field_write do.
+        if (nb_mode && case_rule) {
+            RTLIL::SigSpec want;
+            if (use_flat)
+                want = RTLIL::SigSpec(flat_tw).extract(off, elem_w);
+            else {
+                RTLIL::Wire* tw0 = module->wire("$0\\" + ename);
+                want = tw0 ? RTLIL::SigSpec(tw0) : RTLIL::SigSpec(ew);
+            }
+            for (int ai = (int)case_rule->actions.size() - 1; ai >= 0; ai--) {
+                if (case_rule->actions[ai].first == want &&
+                    case_rule->actions[ai].second.size() == want.size()) {
+                    cur = case_rule->actions[ai].second;
+                    break;
+                }
+            }
+        }
         // sel = (idx == k);  new = sel ? rhs : cur  (Mux: Y = S ? B : A)
         // For a PARTIAL write only the addressed slice takes part: the rest of
         // the element must keep its current value, so mux the slice and splice
@@ -14301,6 +14328,28 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                           current_comb_values.count(base_name))
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
+    // TWO dynamic writes to the same array in ONE always_ff arm
+    // (scr1_pipe_ifu's full-word queue write: `q_err[i] <= e;
+    //  q_err[i+1] <= e;`): current_comb_values is suppressed for
+    // non-blocking semantics, so `cur` would be the REGISTERED value for both
+    // and the action pushed below -- after remove_target_from_switches drops
+    // the earlier one -- would keep only the LAST element.  Both elements
+    // belong in the next state, so start from the pending action's RHS, the
+    // same way emit_dynamic_array_elem_field_write does.
+    if (in_always_ff_body_mode && case_rule) {
+        RTLIL::Wire* tw0 = find_own_temp_wire(base_name);
+        RTLIL::SigSpec want = tw0 ? RTLIL::SigSpec(tw0) : RTLIL::SigSpec(base_wire);
+        for (int ai = (int)case_rule->actions.size() - 1; ai >= 0; ai--) {
+            if (case_rule->actions[ai].first == want &&
+                case_rule->actions[ai].second.size() == base_w) {
+                cur = case_rule->actions[ai].second;
+                if (mode_debug)
+                    log("    dyn_packed_select_write: chaining onto the pending "
+                        "write of '%s' in this arm\n", base_name.c_str());
+                break;
+            }
+        }
+    }
     if (mode_debug)
         log("    dyn_packed_select_write: base='%s' ccv_hit=%d base_w=%d elem_w=%d write_w=%d elem_shift=%s inner_shift=%s\n", base_name.c_str(),
             (!in_always_ff_body_mode && current_comb_values.count(base_name)) ? 1 : 0,
