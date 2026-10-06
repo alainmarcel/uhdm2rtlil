@@ -124,10 +124,32 @@ def _cosim_cells(log, cycles):
     if not m:
         if "no outputs to compare" in log or "no clocks found" in log:
             return "— (comb/no clk)", "— (comb/no clk)"
-        if "NO_RUN" in log or "netlist generation FAILED" in log:
-            return "skip (no run)", "skip (no run)"
+        # Say WHY, don't collapse four different reasons into one opaque
+        # "skip (no run)".  For this corpus the answer is almost always
+        # structural and worth stating: an LRM snippet is usually a
+        # self-contained module with NO PORTS and an `initial` block, so there
+        # is nothing for a testbench to drive or compare -- that is the corpus,
+        # not a defect.  Reading `skip (no run)` on 526 rows told nobody that.
+        nr = re.search(r"NO_RUN \(([^)]*)\)", log)
+        if nr:
+            why = nr.group(1)
+            if "no ports parsed" in why:
+                cell = "— (top has no ports)"
+            elif "has no outputs" in why:
+                cell = "— (top has no outputs)"
+            elif "escaped port names" in why:
+                cell = "— (interface ports)"
+            elif "netlist generation failed" in why:
+                cell = "skip (netlist gen failed)"
+            else:
+                cell = f"— ({why[:40]})"
+            return cell, cell
+        if "netlist generation FAILED" in log:
+            return "skip (netlist gen failed)", "skip (netlist gen failed)"
         if "both simulators failed" in log or "build FAILED" in log:
             return "skip (sim build)", "skip (sim build)"
+        if "verilator: not found" in log or "No such file or directory: 'verilator'" in log:
+            return "skip (no verilator)", "skip (no verilator)"
         return "— (no run)", "— (no run)"
     if "VERDICT RTL_INERT" in log:
         return "— (RTL inert: no oracle)", "— (RTL inert: no oracle)"
