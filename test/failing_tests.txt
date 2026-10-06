@@ -79,10 +79,13 @@ verilog/mem_bounds.sv
 # reference undefined primitives / built-in cells and have no synthesizable
 # output, so the UHDM flow (read_uhdm -> synth) cannot produce a netlist.
 arch/fabulous/custom_map.v
-# arith/ff/io/regfile_map are the same class: `_TECHMAP_REPLACE_` /
+# ff/io/regfile_map are the same class: `_TECHMAP_REPLACE_` /
 # `techmap_celltype` rule files that instantiate undefined FaBuLoUs primitives
 # (LUTFF, IO_1_bidirectional_frame_config_pass, …), no synthesizable top.
-arch/fabulous/arith_map.v
+# arith_map is NOT in that class and now passes: it declares both its modules
+# inside `ifdef ARITH_ha` / `ifdef ARITH_fa`, so with no defines the
+# preprocessed source holds no modules at all and BOTH frontends correctly
+# produce an empty design.
 arch/fabulous/ff_map.v
 arch/fabulous/io_map.v
 arch/fabulous/regfile_map.v

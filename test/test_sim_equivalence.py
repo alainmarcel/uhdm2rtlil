@@ -354,7 +354,23 @@ def synth_to_netlist(yosys: Path, read_lines: str, plugin_args: list,
         f"write_verilog -noattr {out_v}.expr\n"
         f"write_verilog -noattr -noexpr {out_v}.noexpr\n"
     )
-    sh([str(yosys), "-q", *plugin_args, "-p", script])
+    p = subprocess.run([str(yosys), "-q", *plugin_args, "-p", script],
+                       check=False, text=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if p.returncode != 0:
+        out = p.stdout + p.stderr
+        # A design with NO MODULES is legal and imports to nothing: every
+        # module in yosys/tests/arch/fabulous/*_map.v sits inside an `ifdef`
+        # (ARITH_ha / ARITH_fa ...), so with no defines the preprocessed
+        # source is empty and `synth -auto-top` reports "No top module
+        # found".  That is not a divergence -- there is nothing to
+        # co-simulate -- so skip (autotools 77), like the self-checking and
+        # unbuildable cases.
+        if "No modules found in UHDM design" in out or "No top module found" in out:
+            print("⏭  design has no modules — nothing to co-simulate (skipping)")
+            sys.exit(77)
+        sys.stderr.write(f"$ yosys -p <synth_to_netlist>\n{p.stdout}\n{p.stderr}\n")
+        sys.exit(p.returncode)
     # Pick the netlist form.  An async-edge FF shows up in expression mode as
     # a sensitivity list with two or more edges, e.g.
     #   always @(posedge clk, posedge rst)
