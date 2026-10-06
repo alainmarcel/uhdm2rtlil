@@ -2,10 +2,14 @@
 """Run chipsalliance/sv-tests through read_uhdm, read_verilog and read_slang.
 
 sv-tests (https://github.com/chipsalliance/sv-tests) is the LRM-chapter test
-corpus every SystemVerilog tool is scored on.  This runs every test the corpus
-does not mark `:unsynthesizable: 1` (its synthesis set -- what its Yosys /
-Synlig / yosys-slang columns run) through three frontends with sv-tests' own
-rules:
+corpus every SystemVerilog tool is scored on.  This runs sv-tests' OWN local
+tests -- the `tests/chapter-*` trees, `tests/generic` and `tests/sanity.sv` --
+that the corpus does not mark `:unsynthesizable: 1` (its synthesis set, what
+its Yosys / Synlig / yosys-slang columns run) through three frontends with
+sv-tests' own rules.  The CORE tests sv-tests also defines (ariane/CVA6, ibex,
+VeeR, black-parrot, scr1, ...) are NOT swept here: its generators/* build them
+from the third_party/cores submodules, and each core gets its own sweep.
+Rules:
 
   mode      first of simulation, simulation_without_run, elaboration, parsing,
             preprocessing listed in the test's `:type:` (default "parsing
@@ -165,10 +169,25 @@ def main():
     ap.add_argument("--out", default=os.path.join(ROOT, "build", "sv_tests"))
     ap.add_argument("--filter", help="regex on the test path")
     a = ap.parse_args()
+    # sv-tests' OWN tests only: the LRM chapter trees, `generic`, and
+    # sanity.sv.  Everything else under tests/ is out of scope here --
+    # `uvm/` and `testbenches/` are simulation-only, and sv-tests' CORE
+    # tests (ariane/CVA6, ibex, VeeR, black-parrot, scr1, rsd, tnoc, rggen,
+    # fx68k) do not exist in a clone at all: its generators/* write them
+    # into tests/<subdir> from the third_party/cores submodules.  Each of
+    # those cores gets its own per-core sweep instead (scr1 is the first),
+    # where a module list, parameters and a co-simulation make sense.
+    def is_local_test_dir(rel_dir):
+        head = rel_dir.split(os.sep)
+        if len(head) < 2:
+            return True                      # tests/ itself (sanity.sv)
+        return head[1].startswith("chapter-") or head[1] == "generic"
+
     tests = []
     for dp, dn, fn in os.walk(os.path.join(a.repo, "tests")):
         rel_dir = os.path.relpath(dp, a.repo)
-        if rel_dir.startswith(("tests/uvm", "tests/testbenches")):
+        if not is_local_test_dir(rel_dir):
+            dn[:] = []                       # do not descend
             continue
         for f in sorted(fn):
             if not f.endswith((".sv", ".v")):
