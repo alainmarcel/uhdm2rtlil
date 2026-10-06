@@ -67,8 +67,8 @@ tests that produce no RTLIL under any frontend).
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1719 | 1172 | 547 |
-| Functional | 1673 (97%) | 1164 | 509 |
+| Tests | 1720 | 1173 | 547 |
+| Functional | 1674 (97%) | 1165 | 509 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
