@@ -11775,8 +11775,31 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
-    // Regular bit select on a wire
-    RTLIL::Wire* wire = find_wire_in_scope(signal_name, "bit select");
+    // Regular bit select on a wire.
+    //
+    // A function FORMAL (or function-local) SHADOWS a module signal of the
+    // same name, so it has to win the lookup.  This searched the module
+    // FIRST and only consulted input_mapping when nothing was found, so
+    // `case (haddr[1])` inside a function whose formal is `haddr` switched on
+    // the MODULE's 32-bit `haddr` instead of the 2-bit formal.  A plain
+    // `case (haddr)` was already correct (it does not come through here),
+    // which is what made this so selective: in scr1_dmem_ahb's
+    // scr1_conv_ahb2mem_rdata the 8-bit arm read the formal and the 16-bit
+    // arm read the AHB address output, so a halfword load returned the wrong
+    // half of the bus word (dmem_rdata 0x2001 instead of 0x0001).
+    // input_mapping is ALSO the in-flight combinational value map
+    // (current_comb_values), whose keys are MODULE signals -- preferring it
+    // unconditionally changed how every comb bit-select reads and broke
+    // scr1_dm.  Require that the name really is a formal / local of the
+    // enclosing task or function, which is what find_enclosing_tf_decl
+    // answers (it returns null once the walk reaches an instance, so a
+    // module-level always_comb is unaffected).
+    bool shadowed_by_tf_scope =
+        input_mapping && input_mapping->count(signal_name) > 0 &&
+        find_enclosing_tf_decl(uhdm_bit, signal_name) != nullptr;
+    RTLIL::Wire* wire = shadowed_by_tf_scope
+                            ? nullptr
+                            : find_wire_in_scope(signal_name, "bit select");
 
     // If wire not found, check if this is a shift register array element
     if (!wire) {
