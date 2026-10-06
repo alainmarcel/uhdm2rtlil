@@ -118,20 +118,31 @@ struct ReadUHDMPass : public Frontend {
         // chipsalliance/sv-tests' 707 synthesis tests for no reason (every
         // chapter-18 randomization test is a class and a program block).
         if (!uhdm_design->AllModules() || uhdm_design->AllModules()->empty()) {
-            // Only when the design holds SOMETHING.  A UHDM with no modules,
-            // packages, classes or interfaces at all is a file Surelog parsed
-            // to nothing (yosys/tests/arch/fabulous/arith_map.v: a techmap
-            // library whose every module carries `(* techmap_celltype *)`),
-            // and reading that as an empty design made the regression score
-            // the test as a vacuous pass -- keep refusing it.
+            // A design with no modules is LEGAL and imports to nothing.  Both
+            // other frontends accept it, and refusing it failed 46 of
+            // chipsalliance/sv-tests' 707 synthesis tests -- the whole of
+            // chapter-22 (`\`pragma`, `\`line`, `\`celldefine`, `\`define`),
+            // where the file under test holds preprocessor directives and no
+            // design content whatsoever, so there are no packages or classes
+            // to key off either.
+            //
+            // This used to be an ERROR unless the design held a package,
+            // class or interface, to stop yosys/tests/arch/fabulous/*_map.v
+            // from scoring as a pass.  That was the wrong lever: those files
+            // declare every module inside an `ifdef` (ARITH_ha / ARITH_fa
+            // ...), so with no defines the preprocessed source genuinely
+            // contains no modules and an empty design is the CORRECT result --
+            // read_verilog produces nothing from them either.  The only real
+            // effect of the error was that the tests stayed in
+            // failing_tests.txt; they are removed in this commit instead.
             auto nonempty = [](auto* v) { return v && !v->empty(); };
             if (nonempty(uhdm_design->AllPackages()) || nonempty(uhdm_design->TopPackages()) ||
-                nonempty(uhdm_design->AllClasses()) || nonempty(uhdm_design->AllInterfaces())) {
+                nonempty(uhdm_design->AllClasses()) || nonempty(uhdm_design->AllInterfaces()))
                 log_warning("No modules found in UHDM design (packages, classes or "
                             "$unit declarations only) -- nothing to import.\n");
-                return;
-            }
-            log_error("No modules found in UHDM design.\n");
+            else
+                log_warning("No modules found in UHDM design -- nothing to import.\n");
+            return;
         }
 
         // Create importer and import design

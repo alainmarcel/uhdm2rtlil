@@ -1,0 +1,4 @@
+# The gate: reading a module-less design must SUCCEED and yield no modules.
+# Before the fix this errored out, so yosys exited non-zero here.
+read_uhdm slpp_all/surelog.uhdm
+select -assert-count 0 N:*
