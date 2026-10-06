@@ -10194,6 +10194,14 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
                     rngs = lt->Ranges();
                 else if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(a))
                     rngs = pat->Ranges();
+                // An UNPACKED array local (`logic [1:0] tbl [3:0]`) keeps its
+                // unpacked dimension on an array_typespec, and an array_var
+                // carries no Ranges() of its own, so this returned false and
+                // every `tbl[i] = <elem>` write fell back to ONE BIT at bit i.
+                // Arrays of one-bit elements were right by coincidence; wider
+                // ones lost every element past the first few.
+                else if (auto ats = dynamic_cast<const UHDM::array_typespec*>(a))
+                    rngs = ats->Ranges();
             }
     }
     if (!rngs || rngs->empty()) return false;
