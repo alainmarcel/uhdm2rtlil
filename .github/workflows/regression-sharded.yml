@@ -103,7 +103,6 @@ jobs:
       run: |
         echo "CC=ccache gcc" >> $GITHUB_ENV
         echo "CXX=ccache g++" >> $GITHUB_ENV
-        ccache --set-config=cache_dir=$HOME/.ccache
         ccache --set-config=max_size=2G
         ccache --set-config=compression=true
         ccache --zero-stats
