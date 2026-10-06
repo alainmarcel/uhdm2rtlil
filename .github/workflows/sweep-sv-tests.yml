@@ -6,9 +6,11 @@
 # rejects them).
 #
 # Its own workflow rather than a core-sweep family: the corpus is not a design
-# closure (no module list, no co-simulation, no Verilator), the row schema is
-# per-TEST rather than per-module, and the report names the three frontends
-# side by side -- docs/sv_tests_coverage.md.
+# closure (no module list), the row schema is per-TEST rather than per-module,
+# and the report names the three frontends side by side --
+# docs/sv_tests_coverage.md.  It DOES co-simulate, since #1065 gave each row
+# the same formal / undriven / conflict / co-sim columns the other sweeps
+# report, so this job needs Verilator like they do.
 name: Sweep sv-tests
 
 on:
@@ -54,6 +56,33 @@ jobs:
         sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
         sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
         sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
+
+    # Verilator, so the co-sim columns actually measure something.  Without it
+    # netlist_cosim.py cannot build a model and EVERY row reported
+    # `skip (no run)` -- 526 of 526, with a 0/0 co-sim pass rate and a 0/0
+    # read_slang baseline, which reads as "nothing to see" rather than
+    # "not measured".  Same version, cache key and PATH handling as
+    # core-sweep.yml uses for every other sweep.
+    - name: Cache Verilator build
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get install -y autoconf
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
+    - name: Put Verilator on PATH
+      run: echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
 
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
