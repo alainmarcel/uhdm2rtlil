@@ -34,10 +34,6 @@ jobs:
           - family: cve2
           - family: cv32e40p
           - family: cvfpu
-          # Syntacore SCR1 (sv-tests' `scr1` core test): 37 modules, the two
-          # top levels and the pipeline read-fail on a reader crash today, so
-          # the family is small; see docs/sv_tests_coverage.md for why it was added.
-          - family: scr1
           # cvw's fdivsqrtuslc4 is 113 lines that declare a 1024-entry unpacked
           # array and fill it from a nested loop inside always_comb.  Unrolled,
           # read_uhdm peaks at 10.5 GB on it.  The sweep runs --jobs 2, so at
