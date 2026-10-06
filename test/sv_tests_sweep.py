@@ -41,6 +41,12 @@ ROOT = os.path.dirname(HERE)
 YOSYS = os.path.join(ROOT, "out", "current", "bin", "yosys")
 PLUGIN = os.path.join(ROOT, "build", "uhdm2rtlil.so")
 SURELOG = os.path.join(ROOT, "build", "third_party", "Surelog", "bin", "surelog")
+
+# The other sweeps' structural probes (undriven nets, driver conflicts,
+# unresolved reads), reused verbatim so sv-tests rows are measured the same
+# way core / ext / pavona rows are.
+sys.path.insert(0, HERE)
+import core_sweep
 MODES = ["simulation", "simulation_without_run", "elaboration", "parsing", "preprocessing"]
 
 def parse_header(path):
@@ -102,6 +108,129 @@ def mode_script(p, mode):
         s += "sim -assert\n"
     return s
 
+def _netlist(work, scr_name, script, timeout):
+    """Run a yosys script in `work`; return (rc, log)."""
+    open(os.path.join(work, scr_name), "w").write(script)
+    rc, log, _ = run([YOSYS, "-Q", "-T", "-s", scr_name], work, timeout)
+    open(os.path.join(work, scr_name.replace(".ys", ".log")), "w").write(log)
+    return rc, log
+
+
+def _cosim_cells(log, cycles):
+    """Render the co-sim columns the way every other sweep does."""
+    act = re.search(r"ACTIVITY (\d+) cycles", log)
+    a = f" ({cycles + 1} cycles, {act.group(1)} active)" if act else ""
+    m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+)(?:\s+slang_vs_rtl=(\d+))?", log)
+    if not m:
+        if "no outputs to compare" in log or "no clocks found" in log:
+            return "— (comb/no clk)", "— (comb/no clk)"
+        if "NO_RUN" in log or "netlist generation FAILED" in log:
+            return "skip (no run)", "skip (no run)"
+        if "both simulators failed" in log or "build FAILED" in log:
+            return "skip (sim build)", "skip (sim build)"
+        return "— (no run)", "— (no run)"
+    if "VERDICT RTL_INERT" in log:
+        return "— (RTL inert: no oracle)", "— (RTL inert: no oracle)"
+    u = int(m.group(1))
+    ours = ("✅ PASS" + a) if u == 0 else f"❌ {u} div"
+    if m.group(2) is None:
+        return ours, "— (no slang netlist)"
+    sv = int(m.group(2))
+    return ours, (("✅ PASS" + a) if sv == 0 else f"❌ {sv} div")
+
+
+def deep_check(args, rel, work, p, files, incs, defs, sl_args, timeout):
+    """The checks every other sweep reports, for one sv-tests test.
+
+    sv-tests' own verdict is only "did the frontend read it".  That says
+    nothing about whether what we built is RIGHT, which is what the core /
+    ext / pavona sweeps measure per module.  This adds the same columns:
+    formal equivalence against read_slang, the structural opt-check for
+    dropped drivers (undriven nets) and driver conflicts, and the Verilator
+    co-simulation of both netlists against the original RTL.
+    """
+    out = dict(formal="—", undriven="—", conflicts="—", unresolved="—",
+               cosim="—", slang_cosim="—")
+    # Only 4 of the ~1000 sv-tests declare `:top_module:`, so keying these
+    # columns off that header would leave every other row unmeasured.  Let
+    # yosys pick, exactly as mode_script does, and read back the name it
+    # chose -- `hierarchy -auto-top` prints "Automatically selected <top> as
+    # design top module."
+    top = p["top_module"].strip()
+    if not top:
+        rc, log = _netlist(work, "deep_top.ys",
+                           f"plugin -i {PLUGIN}\nread_uhdm slpp_all/surelog.uhdm\n"
+                           f"hierarchy -auto-top\n", timeout)
+        m = re.search(r"Automatically selected (\S+) as design top module", log or "")
+        if rc != 0 or not m:
+            out["formal"] = "— (no top)"
+            return out
+        top = m.group(1).lstrip("\\")
+
+    rc, _ = _netlist(work, "deep_uhdm.ys",
+                     f"plugin -i {PLUGIN}\nread_uhdm slpp_all/surelog.uhdm\n"
+                     f"hierarchy -check -top {top}\nwrite_rtlil uhdm_hier.il\n", timeout)
+    if rc != 0:
+        out["formal"] = "— (uhdm netlist failed)"
+        return out
+    rc, _ = _netlist(work, "deep_slang.ys",
+                     "read_slang " + " ".join(sl_args + files) +
+                     f"\nhierarchy -check -top {top}\nwrite_rtlil slang_hier.il\n", timeout)
+    have_slang = rc == 0
+
+    try:
+        out["undriven"] = core_sweep._undriven_check(work, top)
+        out["conflicts"] = core_sweep._conflict_cell(work)
+        out["unresolved"] = core_sweep._unresolved_cell(work)
+    except Exception as e:                     # never fail the sweep on a probe
+        out["undriven"] = f"error ({type(e).__name__})"
+
+    if not have_slang:
+        out["formal"] = "no reference (read_slang fails)"
+    else:
+        rc, log = _netlist(work, "deep_miter.ys", f"""\
+read_rtlil uhdm_hier.il
+hierarchy -top {top}
+flatten; proc; opt; memory; async2sync
+rename {top} gold; design -stash gold
+read_rtlil slang_hier.il
+hierarchy -top {top}
+flatten; proc; opt; memory; async2sync
+rename {top} gate; design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
+""", timeout)
+        if rc == 0:
+            out["formal"] = "✅ equivalent"
+        elif rc == 124 or "Interrupted" in log:
+            out["formal"] = "❓ SAT timeout"
+        elif "Can't find module" in log:
+            out["formal"] = "— (not comparable)"
+        else:
+            out["formal"] = "❌ differs"
+
+    if args.cycles > 0:
+        cw = os.path.join(work, "cosim")
+        os.makedirs(cw, exist_ok=True)
+        open(os.path.join(work, "srcs.txt"), "w").write("\n".join(files) + "\n")
+        open(os.path.join(work, "incs.txt"), "w").write("\n".join(incs) + "\n")
+        ccmd = [sys.executable, os.path.join(ROOT, "test", "netlist_cosim.py"),
+                "--work", cw, "--uhdm-il", os.path.join(work, "uhdm_hier.il"),
+                "--top", top, "--rtl-top", top,
+                "--srcs", os.path.join(work, "srcs.txt"),
+                "--incs", os.path.join(work, "incs.txt"),
+                "--cycles", str(args.cycles)]
+        if have_slang:
+            ccmd += ["--slang-il", os.path.join(work, "slang_hier.il")]
+        rc, log, _ = run(ccmd, work, max(timeout, 600))
+        open(os.path.join(cw, "cosim.log"), "w").write(log or "")
+        out["cosim"], out["slang_cosim"] = _cosim_cells(log or "", args.cycles)
+    return out
+
+
 def run_test(args, rel, path, p):
     mode = mode_for(p)
     res = dict(test=rel, mode=mode or "-", should_fail=p["should_fail"])
@@ -160,6 +289,14 @@ def run_test(args, rel, path, p):
     rc, log, dt = run([YOSYS, "-Q", "-T", "-s", "uhdm.ys"], work, max(timeout - int(dt), 60))
     open(os.path.join(work, "uhdm.log"), "w").write(log)
     res["uhdm"] = verdict(rc, log); res["uhdm_err"] = first_error(log, "uhdm") if rc else ""
+    # The columns every other sweep reports.  Only where a netlist exists:
+    # `parsing` / `preprocessing` tests never elaborate, and a read failure
+    # has nothing to measure.
+    if args.deep and mode not in ("parsing", "preprocessing") and res["uhdm"] == "PASS":
+        try:
+            res.update(deep_check(args, rel, work, p, files, incs, defs, sl, timeout))
+        except Exception as e:
+            res["formal"] = f"error ({type(e).__name__})"
     return res
 
 def main():
@@ -168,6 +305,11 @@ def main():
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--out", default=os.path.join(ROOT, "build", "sv_tests"))
     ap.add_argument("--filter", help="regex on the test path")
+    ap.add_argument("--cycles", type=int, default=300,
+                    help="co-sim cycles per test; 0 disables the co-sim columns")
+    ap.add_argument("--no-deep", dest="deep", action="store_false",
+                    help="only sv-tests' own read verdict -- skip formal / undriven / co-sim")
+    ap.set_defaults(deep=True)
     a = ap.parse_args()
     # sv-tests' OWN tests only: the LRM chapter trees, `generic`, and
     # sanity.sv.  Everything else under tests/ is out of scope here --
@@ -207,7 +349,9 @@ def main():
             r = fut.result(); rows.append(r)
             if i % 50 == 0: print(f"  {i}/{len(tests)}", flush=True)
     rows.sort(key=lambda r: r["test"])
-    cols = ["test", "mode", "should_fail", "uhdm", "verilog", "slang", "uhdm_err", "verilog_err", "slang_err"]
+    cols = ["test", "mode", "should_fail", "uhdm", "verilog", "slang",
+            "slang_cosim", "formal", "conflicts", "undriven", "unresolved", "cosim",
+            "uhdm_err", "verilog_err", "slang_err"]
     with open(os.path.join(a.out, "results.tsv"), "w") as f:
         f.write("\t".join(cols) + "\n")
         for r in rows:
