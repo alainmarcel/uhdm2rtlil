@@ -1,0 +1,125 @@
+# Sweep chipsalliance/sv-tests: the LRM-chapter corpus every SystemVerilog tool
+# is scored on, run through read_uhdm, read_verilog and read_slang with
+# sv-tests' OWN rules (test/sv_tests_sweep.py mirrors its Yosys and yosys_slang
+# runners: the mode from each test's `:type:`, the per-mode script, `sim -assert`
+# for simulation tests, and `:should_fail_because:` tests passing when the tool
+# rejects them).
+#
+# Its own workflow rather than a core-sweep family: the corpus is not a design
+# closure (no module list, no co-simulation, no Verilator), the row schema is
+# per-TEST rather than per-module, and the report names the three frontends
+# side by side -- docs/sv_tests_coverage.md.
+name: Sweep sv-tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "Concurrent tests"
+        required: false
+        default: "8"
+      sv_tests_ref:
+        description: "sv-tests commit/branch to sweep (default: its master)"
+        required: false
+        default: "master"
+  schedule:
+    - cron: "41 3 * * *"   # nightly 03:41 UTC, after the core sweeps
+
+concurrency:
+  group: sweep-sv-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential cmake git python3 python3-pip pkg-config \
+          libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+          libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+          libgoogle-perftools-dev ccache help2man
+
+    - name: Setup GCC-13
+      run: |
+        sudo apt install -y g++-13
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: uhdm2rtlil-build-${{ runner.os }}
+        restore-keys: |
+          uhdm2rtlil-build-
+        max-size: 2G
+
+    - name: Build project
+      run: |
+        pip3 install orderedmultidict
+        ccache --set-config=cache_dir=$HOME/.ccache
+        ccache --set-config=max_size=2G
+        ccache --set-config=compression=true
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    # Shallow clone: the sweep reads the tests' own headers (`:files:`,
+    # `:type:`, `:unsynthesizable:`), nothing from sv-tests' submodules or
+    # its runners.
+    - name: Clone sv-tests
+      run: |
+        git clone --depth=1 -b "${{ github.event.inputs.sv_tests_ref || 'master' }}" \
+          https://github.com/chipsalliance/sv-tests.git "$HOME/sv-tests"
+        echo "SV_TESTS_SHA=$(git -C "$HOME/sv-tests" rev-parse HEAD)" >> $GITHUB_ENV
+
+    - name: Sweep
+      run: |
+        cd test
+        python3 sv_tests_sweep.py \
+          --repo "$HOME/sv-tests" \
+          --jobs "${{ github.event.inputs.jobs || '8' }}" \
+          --out ../build/sv_tests | tee ../build/sv_tests_sweep.log
+
+    - name: Report
+      run: |
+        cd test
+        python3 sv_tests_report.py \
+          --results ../build/sv_tests/results.tsv \
+          --repo "$HOME/sv-tests" \
+          --commit "$SV_TESTS_SHA" > ../sv-tests-sweep.md
+        {
+          echo "## sv-tests sweep — \`${SV_TESTS_SHA:0:9}\`"
+          echo
+          sed -n '/^| frontend /,/^$/p' ../sv-tests-sweep.md
+          echo
+          sed -n '/^## Misses, by cause/,/^### /p' ../sv-tests-sweep.md | sed '$d'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    # The full report (every failing test, its diagnostic and its recipe) is
+    # the artifact; docs/sv_tests_coverage.md in the repo is refreshed from it.
+    - name: Upload sweep report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sv-tests-sweep-report
+        path: |
+          sv-tests-sweep.md
+          build/sv_tests/results.tsv
+          build/sv_tests_sweep.log
+
+    # A tool crash is a defect worth failing the nightly for; a test slang or
+    # read_verilog merely declines is not (the report tracks those counts).
+    - name: Fail on a read_uhdm crash
+      run: |
+        crashes=$(awk -F'\t' 'NR>1 && $4=="FAIL" && ($7 ~ /Assert|Internal|Abort|terminate|Segmentation/)' \
+                    build/sv_tests/results.tsv | wc -l)
+        echo "read_uhdm crash rows: $crashes"
+        test "$crashes" -eq 0

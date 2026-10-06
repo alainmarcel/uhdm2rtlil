@@ -1,7 +1,11 @@
 # chipsalliance/sv-tests: what our frontend misses
 
 [sv-tests](https://github.com/chipsalliance/sv-tests) at `c4229f3bd` is the LRM-chapter corpus every SystemVerilog tool is
-scored on. `test/sv_tests_sweep.py` runs its synthesis set -- every test not marked
+scored on. The nightly **Sweep sv-tests** action (`.github/workflows/sweep-sv-tests.yml`) runs `test/sv_tests_sweep.py` over
+sv-tests' OWN local tests -- the `tests/chapter-*` trees, `tests/generic` and
+`tests/sanity.sv` -- and publishes this report as its artifact; the CORE tests
+sv-tests also defines (ariane/CVA6, ibex, VeeR, black-parrot, scr1, ...) are swept
+per core instead. Of those local tests, every one not marked
 `:unsynthesizable: 1` outside `uvm/` and `testbenches/`, 707 of 1015 -- through three
 frontends with sv-tests' own rules: the test's mode (simulation > elaboration > parsing >
 preprocessing from its `:type:`), the Yosys runner's script per mode (`hierarchy; proc;
@@ -10,12 +14,12 @@ tests), and `:should_fail_because:` tests PASS when the tool rejects them.
 
 | frontend | PASS | FAIL | what the column means |
 |---|---|---|---|
-| read_uhdm (Surelog + our frontend) | 598 | 109 | Surelog parse + read_uhdm + the mode script |
+| read_uhdm (Surelog + our frontend) | 642 | 65 | Surelog parse + read_uhdm + the mode script |
 | read_verilog (yosys, sv-tests' own Yosys runner) | 364 | 343 | the same mode script |
 | read_slang (sv-tests' yosys_slang runner flags) | 682 | 25 | read only -- that runner never elaborates further, so this is "slang reads it" |
 
-**106** tests pass under read_verilog or read_slang and not under read_uhdm (the misses
-below); **285** pass under read_uhdm and not under read_verilog; **3** fail under all three.
+**62** tests pass under read_verilog or read_slang and not under read_uhdm (the misses
+below); **323** pass under read_uhdm and not under read_verilog; **3** fail under all three.
 
 ## How to reproduce
 
@@ -31,53 +35,14 @@ python3 sv_tests_report.py --results ../build/sv_tests/results.tsv --commit <sha
 
 | cause | tests | kind |
 |---|---|---|
-| a file with no module (class / package / `$unit` declarations only): read_uhdm errors "No modules found", the other frontends accept an empty design | 82 | reader behaviour |
+| a file with no module (class / package / `$unit` declarations only): read_uhdm errors "No modules found", the other frontends accept an empty design | 46 | reader behaviour |
 | should-fail test accepted: Surelog elaborates code the LRM forbids (every row lists the rule) | 15 | Surelog leniency |
-| several blocking assignments to one variable inside `initial` taken as conflicting init values | 6 | reader bug |
-| sized decimal `?`/`z` literal (`16'sd?`) not parsed | 1 | reader bug |
 | Surelog syntax error | 1 | Surelog |
-| `@(posedge clk iff cond)` event control: no clock extracted | 1 | reader bug |
 
-### a file with no module (class / package / `$unit` declarations only): read_uhdm errors "No modules found", the other frontends accept an empty design -- 82
+### a file with no module (class / package / `$unit` declarations only): read_uhdm errors "No modules found", the other frontends accept an empty design -- 46
 
 | test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |
 |---|---|---|---|---|---|
-| [`chapter-18/18.12--randomization-of-scope-variables_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.12--randomization-of-scope-variables_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.12.1--adding-constraints-to-scope-variables_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.12.1--adding-constraints-to-scope-variables_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.13.1--urandom_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.13.1--urandom_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.13.1--urandom_2.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.13.1--urandom_2.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.13.2--urandom_range_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.13.2--urandom_range_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.4.1--rand-modifier.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.4.1--rand-modifier.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.4.2--randc-modifier.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.4.2--randc-modifier.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5--constraint-blocks_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5--constraint-blocks_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.1--explicit-external-constraint_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.1--explicit-external-constraint_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.1--implicit-external-constraint_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.1--implicit-external-constraint_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.1--implicit-external-constraint_1.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.1--implicit-external-constraint_1.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.10--variable-ordering_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.10--variable-ordering_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.12--functions-in-constraint_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.12--functions-in-constraint_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.13--constraint-guards_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.13--constraint-guards_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.14--soft-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.14--soft-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.14.1--soft-constraint-priorities_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.14.1--soft-constraint-priorities_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.14.1--soft-constraint-priorities_2.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.14.1--soft-constraint-priorities_2.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.14.2--discarding-soft-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.14.2--discarding-soft-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.14.2--discarding-soft-constraints_2.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.14.2--discarding-soft-constraints_2.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.2--constraint-inheritance_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.2--constraint-inheritance_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.2--pure-constraint_3.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.2--pure-constraint_3.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.3--set-membership_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.3--set-membership_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.4--distribution_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.4--distribution_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.5--uniqueness-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.5--uniqueness-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.6--implication_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.6--implication_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.7--if-else-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.7--if-else-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.7--if-else-constraints_1.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.7--if-else-constraints_1.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.7--if-else-constraints_2.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.7--if-else-constraints_2.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.7--if-else-constraints_3.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.7--if-else-constraints_3.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.8.2--array-reduction-iterative-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.8.2--array-reduction-iterative-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.5.9--global-constraints_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.5.9--global-constraints_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.6.2--post-randomize_method_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.6.2--post-randomize_method_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.6.2--pre-randomize-method_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.6.2--pre-randomize-method_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.7--in-line-constraints--randomize_3.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.7--in-line-constraints--randomize_3.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.7--in-line-constraints--randomize_5.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.7--in-line-constraints--randomize_5.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
-| [`chapter-18/18.7.1--local-scope-resolution_0.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-18/18.7.1--local-scope-resolution_0.sv) | elaboration | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
 | [`chapter-22/22.10--celldefine-basic-1.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-22/22.10--celldefine-basic-1.sv) | preprocessing | FAIL | PASS | PASS | ERROR: No modules found in UHDM design. |
 | [`chapter-22/22.10--celldefine-basic-2.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-22/22.10--celldefine-basic-2.sv) | preprocessing | FAIL | PASS | PASS | ERROR: No modules found in UHDM design. |
 | [`chapter-22/22.11--pragma-basic.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-22/22.11--pragma-basic.sv) | preprocessing | FAIL | FAIL | PASS | ERROR: No modules found in UHDM design. |
@@ -145,34 +110,11 @@ python3 sv_tests_report.py --results ../build/sv_tests/results.tsv --commit <sha
 | [`chapter-8/8.26.6.3--diamond_relationship_parametrized.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-8/8.26.6.3--diamond_relationship_parametrized.sv) | simulation | FAIL | PASS | PASS | should fail: different specializations of an interface class are treated as unique interface class types |
 | [`generic/typedef/typedef_test_25__bad.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/generic/typedef/typedef_test_25__bad.sv) | simulation | FAIL | PASS | PASS | should fail: Using undefined parameters |
 
-### several blocking assignments to one variable inside `initial` taken as conflicting init values -- 6
-
-| test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |
-|---|---|---|---|---|---|
-| [`chapter-10/10.4.1--blocking-assignment.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-10/10.4.1--blocking-assignment.sv) | simulation | FAIL | PASS | PASS | ERROR: Conflicting init values for signal \a (\a = 1'1 != 1'0). |
-| [`chapter-9/9.3.1--sequential_block.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.3.1--sequential_block.sv) | elaboration | FAIL | PASS | PASS | ERROR: Conflicting init values for signal \a (\a = 1'1 != 1'0). |
-| [`chapter-9/9.3.4--block_names_seq.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.3.4--block_names_seq.sv) | elaboration | FAIL | PASS | PASS | ERROR: Conflicting init values for signal \a (\a = 1'1 != 1'0). |
-| [`chapter-9/9.3.5--statement_labels_seq.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.3.5--statement_labels_seq.sv) | elaboration | FAIL | FAIL | PASS | ERROR: Conflicting init values for signal \a (\a = 1'1 != 1'0). |
-| [`chapter-9/9.4.5--event_blocking_assignment_delay.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.4.5--event_blocking_assignment_delay.sv) | elaboration | FAIL | PASS | PASS | ERROR: Conflicting init values for signal \b (\a = 1'0 != 1'1). |
-| [`chapter-9/9.4.5--event_nonblocking_assignment_delay.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.4.5--event_nonblocking_assignment_delay.sv) | elaboration | FAIL | PASS | PASS | ERROR: Conflicting init values for signal \b (\a = 1'0 != 1'1). |
-
-### sized decimal `?`/`z` literal (`16'sd?`) not parsed -- 1
-
-| test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |
-|---|---|---|---|---|---|
-| [`chapter-5/5.7.1--integers-signed.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-5/5.7.1--integers-signed.sv) | elaboration | FAIL | PASS | PASS | ERROR: Failed to parse decimal constant: value='DEC:?', substr='?', error=stoll |
-
 ### Surelog syntax error -- 1
 
 | test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |
 |---|---|---|---|---|---|
 | [`chapter-6/6.23--type_op_compare.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-6/6.23--type_op_compare.sv) | elaboration | FAIL | FAIL | PASS | surelog: [SNT:PA0207] tests/chapter-6/6.23--type_op_compare.sv:18:19: Syntax error: no viable alternative at input 'module top #( parameter type T = type(logic[ |
-
-### `@(posedge clk iff cond)` event control: no clock extracted -- 1
-
-| test | mode | read_uhdm | read_verilog | read_slang | diagnostic / rule |
-|---|---|---|---|---|---|
-| [`chapter-9/9.4.2.3--event_conditional.sv`](https://github.com/chipsalliance/sv-tests/blob/c4229f3bd5220e6d3ba8f390e5d09c87e462e9c7/tests/chapter-9/9.4.2.3--event_conditional.sv) | elaboration | FAIL | FAIL | PASS | ERROR: Clock signal is empty when creating sync rule at line 3262 |
 
 ## Fails under all three frontends
 

@@ -48,7 +48,12 @@ def main():
     L = []; A = L.append
     A("# chipsalliance/sv-tests: what our frontend misses\n")
     A(f"[sv-tests]({SVT}) at `{a.commit[:9]}` is the LRM-chapter corpus every SystemVerilog tool is")
-    A("scored on. `test/sv_tests_sweep.py` runs its synthesis set -- every test not marked")
+    A("scored on. The nightly **Sweep sv-tests** action"
+      " (`.github/workflows/sweep-sv-tests.yml`) runs `test/sv_tests_sweep.py` over")
+    A("sv-tests' OWN local tests -- the `tests/chapter-*` trees, `tests/generic` and")
+    A("`tests/sanity.sv` -- and publishes this report as its artifact; the CORE tests")
+    A("sv-tests also defines (ariane/CVA6, ibex, VeeR, black-parrot, scr1, ...) are swept")
+    A("per core instead. Of those local tests, every one not marked")
     A(f"`:unsynthesizable: 1` outside `uvm/` and `testbenches/`, {len(run)} of {len(rows)} -- through three")
     A("frontends with sv-tests' own rules: the test's mode (simulation > elaboration > parsing >")
     A("preprocessing from its `:type:`), the Yosys runner's script per mode (`hierarchy; proc;")

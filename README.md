@@ -328,7 +328,7 @@ out of the README to keep this section focused on the leaderboard:
 
 - Changelog / fixes → [`docs/recent-improvements.md`](docs/recent-improvements.md)
 - Test catalog (incl. the UHDM-only list) → [`docs/test-cases.md`](docs/test-cases.md)
-- chipsalliance/sv-tests (the LRM-chapter corpus, 707 synthesis tests): read_uhdm 598 pass vs read_verilog 364 / read_slang 682; the 106 misses by cause, and which of its cores we do not sweep → [`docs/sv_tests_coverage.md`](docs/sv_tests_coverage.md)
+- chipsalliance/sv-tests (the LRM-chapter corpus, 707 synthesis tests of its own local suite, swept nightly by the **Sweep sv-tests** action): read_uhdm 642 pass vs read_verilog 364 / read_slang 682, every miss classified → [`docs/sv_tests_coverage.md`](docs/sv_tests_coverage.md)
 - Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1170 internal tests and the 576 generated upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
 
 ## Architecture & Workflow
