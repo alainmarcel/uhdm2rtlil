@@ -13961,6 +13961,19 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             // base_w / outer below.
             if (auto lv = dynamic_cast<const UHDM::logic_var*>(obj)) return lv->Ranges();
             if (auto ln = dynamic_cast<const UHDM::logic_net*>(obj)) return ln->Ranges();
+            // An UNPACKED array of ONE-BIT elements (`logic q_err [4]`) is an
+            // array_var / array_net whose Ranges() is the unpacked dimension,
+            // and import_module keeps it as ONE flat wire (1-bit elements are
+            // not worth per-element wires).  Without this the handler found no
+            // range and declined, so `q_err[dyn] <= x` fell through to the
+            // generic LHS import's READ path: the $shiftx it builds there
+            // became the process's target, and `check` reported the mux and
+            // the $shiftx as two drivers of one wire -- opt_muxtree then
+            // hard-errors ("Y port signal already driven"), which is what
+            // scr1_pipe_ifu's queue (`q_err[ADR_W'(q_wptr)] <= imem_resp_er`)
+            // did.  The element width falls out as base_w / outer_size.
+            if (auto av = dynamic_cast<const UHDM::array_var*>(obj)) return av->Ranges();
+            if (auto an = dynamic_cast<const UHDM::array_net*>(obj)) return an->Ranges();
             return nullptr;
         };
         ranges = obj_ranges(actual);
@@ -13973,6 +13986,16 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                 for (auto v0 : *current_instance->Variables())
                     if (std::string(v0->VpiName()) == bare_name)
                         if (auto r = obj_ranges(v0)) { ranges = r; break; }
+            // An array_var / array_net lives in Array_vars() / Array_nets(),
+            // NOT in Variables() / Nets().
+            if ((!ranges || ranges->empty()) && current_instance->Array_vars())
+                for (auto a0 : *current_instance->Array_vars())
+                    if (std::string(a0->VpiName()) == bare_name)
+                        if (auto r = obj_ranges(a0)) { ranges = r; break; }
+            if ((!ranges || ranges->empty()) && current_instance->Array_nets())
+                for (auto a0 : *current_instance->Array_nets())
+                    if (std::string(a0->VpiName()) == bare_name)
+                        if (auto r = obj_ranges(a0)) { ranges = r; break; }
         }
     }
     // Element width from the packed obj's Elements()[0] (the same source the
