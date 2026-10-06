@@ -1,0 +1,29 @@
+# Syntacore SCR1 (syntacore/scr1): RV32IMC core, its pipeline and the AXI/AHB
+# SoC tops -- 37 synthesizable modules.  A CORE sweep with its own action
+# (like ibex and rp32), not an external-IP family: it is one core closure, the
+# cores chipsalliance/sv-tests covers get an individual sweep each, and SCR1 is
+# the first of them.  The sources are a shallow clone pinned by
+# test/ext_ip/scr1.json (the commit sv-tests pins), which core_sweep.py fetches.
+name: Sweep scr1
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 2 * * *"   # nightly 02:33 UTC
+
+concurrency:
+  group: sweep-scr1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: scr1
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
