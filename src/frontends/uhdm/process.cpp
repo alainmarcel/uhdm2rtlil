@@ -13881,6 +13881,41 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     if (!actual && block_local_var_objs.count(bare_name))
         actual = block_local_var_objs.at(bare_name);
 
+    // DEFINITION pass -- the module is being imported as a CHILD.  The select
+    // then carries NO Actual_group at all, so every geometry probe below had
+    // nothing to measure and the handler declined: the dynamic write fell
+    // through to the generic LHS import's READ path and was assigned to the
+    // $shiftx aux, so the next-state temp never saw it.  The register then
+    // self-looped from its reset value and `opt` folded it to a constant --
+    // scr1_ipic's IER / IMR / IINVR / ISVR all died this way inside every
+    // scr1 top, while the same module read as its own top was correct.
+    //
+    // Recover the base's declaration by name.  Prefer the ELABORATED instance
+    // (an AllModules net/var cannot be trusted for widths, and for a plain
+    // `logic [15:0]` the definition object carries no range at all), and fall
+    // back to the definition's own lists.
+    if (!actual) {
+        auto by_name = [&](const UHDM::instance* inst) -> const UHDM::any* {
+            if (!inst) return nullptr;
+            if (inst->Variables())
+                for (auto v : *inst->Variables())
+                    if (std::string(v->VpiName()) == bare_name) return v;
+            if (inst->Nets())
+                for (auto n : *inst->Nets())
+                    if (std::string(n->VpiName()) == bare_name) return n;
+            if (inst->Array_vars())
+                for (auto a : *inst->Array_vars())
+                    if (std::string(a->VpiName()) == bare_name) return a;
+            if (inst->Array_nets())
+                for (auto a : *inst->Array_nets())
+                    if (std::string(a->VpiName()) == bare_name) return a;
+            return nullptr;
+        };
+        if (auto def = dynamic_cast<const UHDM::module_inst*>(current_instance))
+            actual = by_name(find_elab_instance(def));
+        if (!actual) actual = by_name(current_instance);
+    }
+
     // GEN-SCOPE array (`gen_fifo.fifo_mem_q`, hpdcache_fifo_reg's buffer
     // inside its `else if (FIFO_DEPTH > 1)` arm): the RTLIL wire and its
     // `$0\` temp carry the scope prefix — without resolving it here the
