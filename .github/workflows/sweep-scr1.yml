@@ -27,3 +27,13 @@ jobs:
       core: scr1
       cycles: ${{ github.event.inputs.cycles || '300' }}
       timeout: 180
+      # Serialise the miters.  The two SoC tops (scr1_top_ahb / scr1_top_axi)
+      # became WHOLE-CHIP proofs once #1059 stopped their dynamic writes from
+      # being dropped -- before that they died early in opt_muxtree and never
+      # reached SAT.  Each peaks around 61 GB unbudgeted; with the 12 GB
+      # `ulimit -v` one is capped safely and reports `SAT over memory cap`, but
+      # TWO at a time want 24 GB of address space on a 16 GB runner and the
+      # runner is reclaimed mid-sweep (exit 143, "runner has received a
+      # shutdown signal") -- the same failure caliptra hit and solved by
+      # sharding.
+      jobs: "1"
