@@ -14209,15 +14209,52 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         return pos;
     };
 
+    // Mirrored form for an ascending packed range: (hi - idx) * scale.
+    auto make_neg = [&](RTLIL::SigSpec s2, int scale, int hi) -> RTLIL::SigSpec {
+        s2.extend_u0(shamt_w, false);
+        RTLIL::Wire* pw = module->addWire(NEW_ID, shamt_w);
+        module->addSub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(hi, shamt_w)), s2,
+                       pw, true);
+        RTLIL::SigSpec pos(pw);
+        if (scale != 1) {
+            RTLIL::Wire* mw = module->addWire(NEW_ID, shamt_w);
+            module->addMul(NEW_ID, pos,
+                           RTLIL::SigSpec(RTLIL::Const(scale, shamt_w)), mw, true);
+            pos = RTLIL::SigSpec(mw);
+        }
+        return pos;
+    };
+
+    // An ASCENDING declared range on a PACKED array puts the FIRST element at
+    // the TOP of the word (the LRM makes `el_t [1:4] a`'s a[1] the leftmost),
+    // and the READ path mirrors the index accordingly -- `(hi - i) * elem_w`.
+    // The write subtracted the LOW bound instead, so read and write disagreed
+    // and every element landed in the wrong slot: scr1_pipe_mprf's register
+    // file (`type_scr1_mprf_v [1:31] mprf_int`) stored register n where the
+    // read expected register 32-n.
+    //
+    // ONLY for a packed base.  An UNPACKED array of one-bit elements keeps the
+    // RAW index on the read side -- that is what #1056 established, and
+    // mirroring the write there was tried and was wrong -- so it keeps
+    // `idx - low`.
+    bool base_is_unpacked = actual &&
+        (dynamic_cast<const UHDM::array_var*>(actual) ||
+         dynamic_cast<const UHDM::array_net*>(actual));
+    bool mirror_outer = (r0l < r0r) && !base_is_unpacked;
+    int outer_hi_b = std::max(r0l, r0r);
+
     // Element-level shift (bit offset of the selected element).
     RTLIL::SigSpec elem_shift;
     if (idx0.is_fully_const()) {
-        long eo = (long)(idx0.as_const().as_int() - outer_low) * elem_w;
+        long eo = mirror_outer
+            ? (long)(outer_hi_b - idx0.as_const().as_int()) * elem_w
+            : (long)(idx0.as_const().as_int() - outer_low) * elem_w;
         if (eo < 0 || eo + elem_w > base_w) return false;
         elem_shift = RTLIL::SigSpec(RTLIL::Const((int)eo, shamt_w));
     } else {
         shamt_w = std::max(shamt_w, idx0.size() + 6);
-        elem_shift = make_pos(idx0, elem_w, outer_low);
+        elem_shift = mirror_outer ? make_neg(idx0, elem_w, outer_hi_b)
+                                  : make_pos(idx0, elem_w, outer_low);
         any_dynamic = true;
     }
 
