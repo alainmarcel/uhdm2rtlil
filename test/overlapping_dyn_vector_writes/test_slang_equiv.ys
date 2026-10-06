@@ -1,0 +1,18 @@
+# Every element written in one arm must reach the next state.  Without the fix
+# the second masked write started from the registered value and dropped the
+# first, so the miter finds a state where one element kept its old value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
