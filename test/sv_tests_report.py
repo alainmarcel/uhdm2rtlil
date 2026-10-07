@@ -26,7 +26,7 @@ CORES = [  # (sv-tests core test, what sv-tests runs, our coverage)
     ("veer-el2 (`veer-el2_wrapper` synth, `tb_top` sim)", "full core, default config", "partly -- the VeeR EL2 instances inside the Caliptra chip (`sweep-caliptra.yml`), not standalone"),
     ("veer-eh1 (`veer-eh1_wrapper`, fusesoc)", "full core", "**no**"),
     ("black-parrot (`bp_default`, `bp_unicore`, `bp_multicore_1`, `_cce_ucode`, `bp_multicore_4`, `_cce_ucode_cfg`) with basejump_stl + HardFloat", "six configurations, top `wrapper`", "**no**"),
-    ("scr1 (`scr1_top_tb_axi`)", "full core + AXI top", "**no**"),
+    ("scr1 (`scr1_top_tb_axi`)", "full core + AXI top", "yes -- per-module miters + co-sim over the pipeline and both SoC tops (`sweep-scr1.yml`)"),
     ("rsd (`Core`)", "full core", "**no**"),
     ("tnoc (`tnoc`)", "network-on-chip", "**no**"),
     ("rggen (`rggen`, rggen-sv-rtl + rggen-sample)", "generated register files", "**no**"),
