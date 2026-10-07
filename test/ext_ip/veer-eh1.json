@@ -53,6 +53,10 @@
  ],
  "exclude": [
   "^ram_\\d+x\\d+$",
+  "^rvclkhdr$",
+  "^svci_to_axi4$",
+  "^ifu_iccm_mem$",
+  "^lsu_dccm_mem$",
   "_tb$",
   "^tb_"
  ]
