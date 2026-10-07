@@ -376,6 +376,28 @@ void UhdmImporter::import_unit_parameters(const UHDM::design* uhdm_design) {
                     // zero-extend to a wrong 0 (that is how
                     // SCR1_TDU_MTRIG_NUM became 0 and $clog2 collapsed a size
                     // cast to zero width); only a real value counts.
+                    // A fold NARROWER than the declared width, while other
+                    // $unit parameters are still unresolved, is a value built
+                    // over a reference that has not resolved yet -- not the
+                    // parameter's real value.  `waits_for_pending` cannot see
+                    // every such reference: scr1's
+                    // `parameter bit [31:6] SCR1_CSR_MTVEC_BASE_RST_VAL =
+                    //  SCR1_CSR_MTVEC_BASE_WR_RST_VAL` arrives as an OPERATION
+                    // whose operands do not expose the pending name, so
+                    // RST_VAL (alphabetically ahead of WR_RST_VAL) folded to a
+                    // 1-BIT 1 on the first pass and was accepted.  Widened to
+                    // the declared 26 bits that is 1, not 7: scr1_pipe_csr's
+                    // trap-vector base reset wrong and csr2exu_new_pc_o came
+                    // out 0x40 instead of 0x1c0 from cycle 0.  Defer instead;
+                    // the next pass sees WR_RST_VAL resolved and folds 26 bits
+                    // of 7.  Only while something ELSE is pending, so a
+                    // parameter genuinely narrower than its declared width
+                    // still lands.
+                    if (v.is_fully_const() && v.size() > 0 &&
+                        width > 0 && (int)v.size() < width && pending.size() > 1) {
+                        waiting = true;
+                        continue;
+                    }
                     if (v.is_fully_const() && v.size() > 0) {
                         value = v.as_const(); have = true; break;
                     }
