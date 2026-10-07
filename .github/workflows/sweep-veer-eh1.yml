@@ -1,0 +1,43 @@
+# VeeR EH1 (chipsalliance/Cores-VeeR-EH1): the RV32IMC core sv-tests builds as
+# `veer-eh1_wrapper`, its five pipeline blocks and the rv* primitive library --
+# 70 synthesizable modules.  A CORE sweep with its own action (like scr1,
+# ibex and rp32), not an external-IP family: it is one core closure, and the
+# cores chipsalliance/sv-tests covers get an individual sweep each.
+#
+# The sources are a shallow clone pinned by test/ext_ip/veer-eh1.json, which
+# core_sweep.py fetches.  VeeR ships NO defines: the manifest's "generate" step
+# runs configs/veer.config (perl) to produce config/common_defines.vh and the
+# pic_ctrl includes, and the core carries its own tools/JSON.pm so the script
+# needs nothing installed.
+name: Sweep veer-eh1
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 3 * * *"   # nightly 03:33 UTC, after scr1's 02:33
+
+concurrency:
+  group: sweep-veer-eh1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: veer-eh1
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
+      # SHARD instead of running miters concurrently.  The 71 rows take 91 min
+      # of row time measured locally, so one serial job is too slow -- but
+      # `veer_wrapper` already reports `SAT over memory cap` at the 12 GB
+      # `ulimit -v`, and a local run at --jobs 4 drove a 62 GB machine out of
+      # memory.  Two shards each serialising (jobs: "1") halve the wall clock
+      # while never putting two 12 GB address spaces on one 16 GB runner --
+      # the split caliptra and cva6 use.
+      shards: 2
+      jobs: "1"
