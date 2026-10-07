@@ -1,0 +1,59 @@
+{
+ "title": "VeeR EH1 (chipsalliance/Cores-VeeR-EH1)",
+ "url": "https://github.com/chipsalliance/Cores-VeeR-EH1",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/Cores-VeeR-EH1",
+   "commit": "d04b1c7ae675a63dc4307cacfd10547ec937b928",
+   "dir": "veer-eh1"
+  }
+ ],
+ "generate": {
+  "cwd": "veer-eh1",
+  "marker": "veer-eh1/config/common_defines.vh",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "RV_ROOT=$PWD BUILD_PATH=$PWD/config perl configs/veer.config -target=default"
+   ]
+  ],
+  "timeout": 600
+ },
+ "roots": [
+  "veer-eh1/design/*.sv",
+  "veer-eh1/design/dbg/*.sv",
+  "veer-eh1/design/dec/*.sv",
+  "veer-eh1/design/dmi/*.sv",
+  "veer-eh1/design/dmi/*.v",
+  "veer-eh1/design/exu/*.sv",
+  "veer-eh1/design/ifu/*.sv",
+  "veer-eh1/design/lib/*.sv",
+  "veer-eh1/design/lsu/*.sv"
+ ],
+ "incdirs": [
+  "veer-eh1/config",
+  "veer-eh1/design/include",
+  "veer-eh1/design/lib",
+  "veer-eh1/design/dmi"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "always_srcs": [
+  "veer-eh1/config/common_defines.vh",
+  "veer-eh1/design/include/veer_types.sv"
+ ],
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "exclude": [
+  "^ram_\\d+x\\d+$",
+  "_tb$",
+  "^tb_"
+ ]
+}
