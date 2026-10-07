@@ -15442,21 +15442,63 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
 }
 
-// Remove any action that assigns exactly `target` from every switch case
+// Remove the BITS `target` assigns from every action of every switch case
 // (recursively) of `cr`.  Used when an UNCONDITIONAL assignment to `target` is
-// emitted: an earlier conditional assignment to the same signal in this case
+// emitted: an earlier conditional assignment to the same bits in this case
 // scope is now dead (later-wins), and because RTLIL applies a case's actions
 // BEFORE its switches, the stale switch action would otherwise override the
 // correct unconditional one (firrtl_938: `if(we) q<=data; q<=ram[a];` — the
 // unconditional `q<=ram[a]` is the real driver, not `we ? data : ram[a]`).
+//
+// Matching the target EXACTLY is not enough.  A conditional WHOLE-signal write
+// followed by unconditional FIELD writes is how VeeR EH1's dec_decode_ctl
+// builds its trap packet:
+//
+//     if (exu_div_finish) dec_tlu_packet_e4 = '0;
+//     else                dec_tlu_packet_e4 = e4t;
+//     dec_tlu_packet_e4.legal      = e4t.legal | exu_div_finish;   // bit 25
+//     dec_tlu_packet_e4.i0trigger  = ...;                          // 19:16
+//     dec_tlu_packet_e4.pmu_divide = exu_div_finish;                // bit 1
+//
+// The switch actions target the whole 26-bit temp while each late write
+// targets a field, so `a.first == target` never matched and the switch
+// overwrote all three: `.legal` and `.pmu_divide` sat at 0 for good.
+// Subtracting the bits instead leaves each switch action driving exactly what
+// the later write does NOT cover, which is what the source means.  A switch
+// created AFTER the late write (dec_decode_ctl's `if (freeze_e4)` re-write of
+// the trigger fields) is untouched, because it does not exist yet when this
+// runs -- so source order is preserved in both directions.
 static void remove_target_from_switches(RTLIL::CaseRule* cr,
                                         const RTLIL::SigSpec& target) {
+    std::set<RTLIL::SigBit> kill;
+    for (const auto& b : target)
+        if (b.wire) kill.insert(b);
+    if (kill.empty())
+        return;
     for (auto sw : cr->switches) {
         for (auto cs : sw->cases) {
-            cs->actions.erase(
-                std::remove_if(cs->actions.begin(), cs->actions.end(),
-                    [&](const RTLIL::SigSig& a){ return a.first == target; }),
-                cs->actions.end());
+            std::vector<RTLIL::SigSig> keep;
+            keep.reserve(cs->actions.size());
+            for (const auto& a : cs->actions) {
+                // A malformed action (widths apart) is left exactly as it was
+                // rather than re-stitched bit by bit.
+                if (a.first.size() != a.second.size()) {
+                    keep.push_back(a);
+                    continue;
+                }
+                RTLIL::SigSpec nf, ns;
+                for (int i = 0; i < a.first.size(); i++) {
+                    RTLIL::SigBit fb = a.first[i];
+                    if (fb.wire && kill.count(fb))
+                        continue;
+                    nf.append(fb);
+                    ns.append(a.second[i]);
+                }
+                if (nf.empty())
+                    continue;              // fully superseded by the later write
+                keep.push_back(RTLIL::SigSig(nf, ns));
+            }
+            cs->actions.swap(keep);
             remove_target_from_switches(cs, target);
         }
     }
