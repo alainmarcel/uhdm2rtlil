@@ -6279,6 +6279,21 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             std::string net_name = std::string(net->VpiName());
             log("UHDM: About to import net %d/%d: '%s'\n", net_index+1, (int)uhdm_module->Nets()->size(), net_name.c_str());
             log_flush();
+            // Not a net at all: an unresolved reference to a $unit enum
+            // constant that Surelog turned into a 1-bit implicit net.
+            // Importing it leaves an undriven single bit where the reference
+            // needs the constant's full value (scr1_pipe_lsu's
+            // `SCR1_MEM_WIDTH_WORD` read 1 undriven bit instead of 2'b10, so
+            // the whole dmem width/command/exception-code path went X).
+            // Dropping the wire lets import_ref_obj fall through to the
+            // design-wide enum-constant map.
+            if (is_unit_enum_const_net(net, net_name)) {
+                log("UHDM: net '%s' is a $unit enum CONSTANT fabricated as an "
+                    "implicit net -- not importing it as a wire\n",
+                    net_name.c_str());
+                net_index++;
+                continue;
+            }
             import_net(net, uhdm_module);
             net_index++;
         }

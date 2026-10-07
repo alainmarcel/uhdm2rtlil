@@ -58,7 +58,7 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (the 1181 internal tests, ~30 min).  A PR
+`cd test && ./run_parallel.sh 6 --no-cva6` (the 1184 internal tests, ~30 min).  A PR
 lands only on a clean run.  The counts below are the regression's own summary
 (`Total tests run` / per-suite lines of the combined report), not a tally kept
 by hand; "upstream" counts the 547 generated yosys tests the suite scores, out
@@ -67,17 +67,17 @@ tests that produce no RTLIL under any frontend).
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1729 | 1182 | 547 |
-| Functional | 1683 (97%) | 1174 | 509 |
+| Tests | 1731 | 1184 | 547 |
+| Functional | 1684 (97%) | 1175 | 509 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1054** tests formally equivalent UHDM vs Verilog; **628** UHDM-only
+- **1055** tests formally equivalent UHDM vs Verilog; **628** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **227 / 228** SV-only designs also proven against `read_slang`, and **21**
+  **228 / 229** SV-only designs also proven against `read_slang`, and **23**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop or a missing `$mem` still "works" — it just returns
   constants).
@@ -111,7 +111,7 @@ proof gap is never mistaken for a bug.
 |----|--------|-------|--------|-------|
 | **Ibex** | [lowRISC/ibex](https://github.com/lowRISC/ibex) | 2-stage RV32IMC core (+PMP, ICache, lockstep); 28 modules incl. `ibex_top` | **22 / 28 proven** · 20 / 20 co-sim · 28 / 28 opt-clean · whole hierarchy 0 loops, 0 undriven | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **rp32 (R5P)** | [jeras/rp32](https://github.com/jeras/rp32) | 32-bit cores + TCB SoCs; 13 modules | **6 / 13 proven** · 3 / 3 co-sim · 13 / 13 opt-clean · both SoCs boot and run a program in functional sim | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| **Syntacore SCR1** | [syntacore/scr1](https://github.com/syntacore/scr1) @ [`ebb5e355`](https://github.com/syntacore/scr1/commit/ebb5e3551a9d93c0ee95f0b767dd878b8927e702) | RV32IMC core, pipeline and the AXI/AHB SoC tops; 37 modules | **28 / 37 proven** · 31 / 32 co-sim · 37 / 37 opt-clean · 1 `differs` co-sim-confirmed, 3 formal-only · 4 over the SAT memory cap, 1 timeout | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
+| **Syntacore SCR1** | [syntacore/scr1](https://github.com/syntacore/scr1) @ [`ebb5e355`](https://github.com/syntacore/scr1/commit/ebb5e3551a9d93c0ee95f0b767dd878b8927e702) | RV32IMC core, pipeline and the AXI/AHB SoC tops; 37 modules | **28 / 37 proven** · 32 / 32 co-sim · 37 / 37 opt-clean · 3 `differs` formal-only · 4 over the SAT memory cap, 1 timeout | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
 | **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **25 / 32 proven** · 24 / 24 co-sim · 31 / 31 opt-clean · 3 SAT timeouts (256-bit datapaths) · 4 rows carry driver conflicts, which makes their formal column unreliable | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
 | **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 300 module rows + 98 chip instances | **382 / 400 proven** · 382 / 382 co-sim · 0 undriven on every row · chips 47 / 47 + 51 / 51 instances, full-chip co-sim PASS | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules, plus the full core split into its 138 distinct instantiations (366 instances paired with `read_slang`) | **98 / 142 proven** · 125 / 125 co-sim · 0 undriven on every row · full core lowers with 0 inferred latches · per-instantiation **129 / 138** | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |

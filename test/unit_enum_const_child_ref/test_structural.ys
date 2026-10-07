@@ -1,0 +1,11 @@
+# A $unit enum CONSTANT must never show up as a wire.  Surelog fabricates a
+# 1-bit implicit net named after an enum constant it failed to resolve (it only
+# resolves one inside the file whose file-scope typedef declared it), and
+# importing that net as a wire leaves every reference to the constant reading
+# ONE UNDRIVEN BIT instead of its value -- which is how scr1_pipe_lsu's
+# SCR1_MEM_WIDTH_WORD turned the whole dmem width/command/exception-code path
+# into X.  The formal check next door catches the resulting function change;
+# this gate names the cause, and also holds for a module read on its own.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top unit_enum_const_child_ref
+select -assert-count 0 w:UWIDTH_*

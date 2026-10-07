@@ -351,6 +351,14 @@ struct UhdmImporter {
     std::set<std::string> enum_const_ambiguous_;
     bool enum_const_map_built_ = false;
     void build_enum_const_map();
+    // The subset of the above that comes from a $unit (compilation-unit)
+    // typedef, i.e. a name that is visible in EVERY file of the design and so
+    // can never legally also be a net.  Surelog resolves such a name only in
+    // the file that declared the typedef; elsewhere it fabricates a 1-bit
+    // implicit net and binds the reference to it, so the net import has to
+    // recognise and drop those.
+    std::set<std::string> unit_enum_const_names_;
+    bool is_unit_enum_const_net(const UHDM::net* n, const std::string& name);
     // Outer (unpacked/packed) element count of a package parameter that is an
     // array/table (e.g. prim_cipher_pkg::PRESENT_SBOX4 `logic [15:0][3:0]` -> 16),
     // so a `pkg::TABLE[idx]` element-select can derive its element width.
