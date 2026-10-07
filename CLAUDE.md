@@ -672,6 +672,40 @@ for this class must therefore assert the netlist SHAPE: drop a
 gate (`select -assert-count 1 t:$mem_v2`).  See `test/mem_dyn_idx_byte_write`.
 
 
+## A $unit enum constant is a FABRICATED NET outside its declaring file
+
+`typedef enum logic[1:0] {SCR1_MEM_WIDTH_BYTE, SCR1_MEM_WIDTH_HWORD,
+SCR1_MEM_WIDTH_WORD} type_scr1_mem_width_e;` at FILE scope in a shared `.svh`
+is a **$unit** (compilation-unit) typedef: the include guard means exactly one
+file actually declares it, and the compilation unit is shared, so the LRM makes
+the name visible in every other file.  Surelog resolves a reference to such an
+enum constant ONLY inside the declaring file.  Everywhere else the name does
+not resolve, Surelog FABRICATES a 1-bit implicit `logic_net` with that name on
+the module, and binds the `ref_obj`'s `Actual_group()` to it -- so the
+reference reads ONE UNDRIVEN BIT instead of the constant's value.
+
+That was the whole of `scr1_pipe_exu`'s 281-cycle co-sim divergence.  The top
+module read fine (it IS the declaring file), but its child `scr1_pipe_lsu`
+collected 35 such nets: `lsu2dmem_width_o` became a 1-bit `$mux` between
+undriven bits instead of `2'b10`, so the dmem width / command and the whole
+exception-code path went X.
+
+`import_module` drops them before `import_net`: `is_unit_enum_const_net()`
+matches a `logic_net` with NO typespec of its own whose name is an unambiguous
+enum constant collected from `design->Typespecs()` (the $unit scope), and
+`import_ref_obj` then falls through to the design-wide enum-constant map.  The
+typespec guard is what keeps a genuine declaration safe; a $unit name is
+visible in every file, so it can never legally also be a net.
+
+**Nothing structural flags this class.**  The sweep's row stayed
+`✅ 0 undriven` and the formal column is a SAT timeout on that module, so the
+only thing that caught it was the Verilator co-sim.  A test for it must assert
+the netlist CONSTANT -- `select -assert-count 0 w:<ENUM_PREFIX>*` -- or compare
+against `read_verilog`, which resolves $unit typedefs across files correctly.
+See `test/unit_enum_const_child_ref` (two files, typedef in the first, the
+reference in the second; both its `test_structural.ys` and its formal check
+fail without the fix).
+
 ## A type-parameter typespec is a CLONE with unbound parameters
 
 Surelog does not hand a `parameter type` binding over by reference: it COPIES

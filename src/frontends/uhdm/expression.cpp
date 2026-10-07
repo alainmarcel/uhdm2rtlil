@@ -9763,6 +9763,50 @@ void UhdmImporter::build_enum_const_map() {
     if (uhdm_design->AllPackages())
         for (auto p : *uhdm_design->AllPackages())
             col.listenAny(p);
+    // $unit-scope typedefs hang off the DESIGN, not off any module or package
+    // (`typedef enum logic[1:0] {...} type_scr1_mem_width_e;` at file scope in
+    // a .svh that every scr1 file includes -- the include guard means exactly
+    // one file actually declares it, and the compilation unit is shared, so the
+    // LRM makes the name visible everywhere).  Surelog binds a reference to one
+    // of these enum constants to the enum_const only inside the file that
+    // declared the typedef; in every other file the name does not resolve and
+    // Surelog FABRICATES a 1-bit implicit `logic_net` on the module, binding the
+    // reference to THAT.  Collect the names so import can tell them apart from
+    // real nets.
+    if (uhdm_design->Typespecs())
+        for (auto ts : *uhdm_design->Typespecs()) {
+            auto ets = dynamic_cast<const UHDM::enum_typespec*>(ts);
+            if (!ets || !ets->Enum_consts()) continue;
+            for (auto ec : *ets->Enum_consts()) {
+                std::string nm(ec->VpiName());
+                if (nm.empty()) continue;
+                int w = ec->VpiSize() > 0 ? ec->VpiSize() : 32;
+                RTLIL::Const c(parse_vpi_value_to_int(std::string(ec->VpiValue())), w);
+                auto it = enum_const_values_.find(nm);
+                if (it == enum_const_values_.end()) enum_const_values_[nm] = c;
+                else if (it->second != c) enum_const_ambiguous_.insert(nm);
+                unit_enum_const_names_.insert(nm);
+            }
+        }
+}
+
+// True for a net Surelog fabricated out of an unresolved reference to a $unit
+// enum constant (see build_enum_const_map).  A $unit name is visible in every
+// file of the design, so it can never legally also be a net; require the net to
+// carry no typespec of its own so a genuine declaration (which would have one)
+// is never dropped.
+bool UhdmImporter::is_unit_enum_const_net(const UHDM::net* n, const std::string& name) {
+    if (name.empty() || !n) return false;
+    build_enum_const_map();
+    if (!unit_enum_const_names_.count(name)) return false;
+    if (enum_const_ambiguous_.count(name)) return false;
+    if (!enum_const_values_.count(name)) return false;
+    if (auto ln = dynamic_cast<const UHDM::logic_net*>(n)) {
+        if (ln->Typespec()) return false;
+    } else {
+        return false;
+    }
+    return true;
 }
 
 // Import reference to object
