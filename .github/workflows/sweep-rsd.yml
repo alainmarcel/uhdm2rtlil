@@ -39,5 +39,5 @@ jobs:
       # closure): shard it rather than widening the per-shard concurrency, so
       # no runner ever holds two 12 GB miters at once.  Same split caliptra,
       # cva6 and veer-eh1 use.
-      shards: 4
+      shards: 8
       jobs: "1"
