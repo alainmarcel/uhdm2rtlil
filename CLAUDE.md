@@ -672,6 +672,42 @@ for this class must therefore assert the netlist SHAPE: drop a
 gate (`select -assert-count 1 t:$mem_v2`).  See `test/mem_dyn_idx_byte_write`.
 
 
+## A memwr aux wire and its priority mask are MODULE- and SYNC-scoped, not emitter-scoped
+
+Two memory-write emitters feed the same process when one always block writes a
+memory from more than one place -- verilog-ethernet's `axis_srl_register`:
+
+```verilog
+initial for (i = 0; i < 2; i = i + 1) data_reg[i] <= 0;        // emitter 1
+always @(posedge clk) begin
+    data_reg[0] <= s_axis;                                     // emitter 2
+    for (i = 0; i < 1; i = i + 1) data_reg[i+1] <= data_reg[i];
+end
+```
+
+Both are wrong in the same way: they number things from THEIR OWN counter.
+
+* The aux wires were named `$memwr$<mem>$<i>` with `i` restarting at 0 on
+  every `emit_pending_memory_writes` call, so the second call asked yosys for
+  `$memwr$\data_reg$0_ADDR` again and the read ABORTED on
+  `Assert count_id(wire->name) == 0 failed (rtlil.cc:2872)`.  The name now
+  carries `incr_autoidx()`, the module-unique counter the Verilog frontend
+  uses for the same wires.
+* `MemWriteAction::priority_mask` has one bit per EARLIER action already in
+  the same sync -- every memory, because proc_memwr indexes it through
+  `prev_port_ids[i]` -- set where that earlier action writes the SAME memory.
+  Three of the four emitters sized it by their own loop index instead, which
+  is only right when they are the sole emitter in the sync.  Once the name
+  clash was gone the mixed sync had masks `0'x / 1'0 / 0'x` for three actions
+  and proc_memwr SEGFAULTED (exit 139).  `memwr_priority_over_prior()` sizes
+  the mask from `sync->mem_write_actions` itself; the fourth emitter already
+  did.
+
+The first bug HID the second: the assert fired before proc ever ran.  A
+reader crash fixed in one place is worth re-running to the end before calling
+the row fixed.  test/memwr_two_writes_one_block carries the shape; it is
+formally equivalent to read_verilog with the fix and aborts without it.
+
 ## A $unit enum constant is a FABRICATED NET outside its declaring file
 
 `typedef enum logic[1:0] {SCR1_MEM_WIDTH_BYTE, SCR1_MEM_WIDTH_HWORD,
