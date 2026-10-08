@@ -66,11 +66,21 @@ def paths(fname):
 
 def run(cmd, log, timeout=None):
     t0 = time.time()
-    # Cap the elaboration / read steps at 15 GB of address space when a
-    # memory limit is configured (16 GB runners): an over-budget read then
-    # reports "elaboration failed" instead of the runner being shut down.
+    # Cap the elaboration / read steps' ADDRESS SPACE when a memory limit is
+    # configured (16 GB runners): an over-budget read then reports
+    # "elaboration failed" instead of the runner being shut down.
+    #
+    # 15,900,000 kB, not 15,000,000.  The dragonfly whole-chip read_uhdm peaks
+    # at VmPeak 15,029,944 kB (VmHWM 14,988,160 kB) -- 30 MB OVER the old cap
+    # -- and died there every night from 10-06 with `uhdm_read.log: exit -6`
+    # (std::bad_alloc -> abort) and `❌ read_uhdm FAILED — 0 instances`.  That
+    # is not a reader regression: the last-good plugin (60c563e80) measured
+    # MAXRSS 14,996,776 kB on the same read, so the chip simply sits AT the
+    # cap and whether a given night clears it is allocator noise.  The
+    # resident peak is ~15.0 GB, which the 16 GB runner holds; the cap only
+    # has to stop a runaway, not a known-good read.
     if MEM_LIMIT_KB > 0:
-        cmd = ["bash", "-c", "ulimit -v 15000000; exec \"$@\"", "--"] + list(cmd)
+        cmd = ["bash", "-c", "ulimit -v 15900000; exec \"$@\"", "--"] + list(cmd)
     with open(W / log, "w") as fh:
         r = subprocess.run(cmd, cwd=W, stdout=fh, stderr=subprocess.STDOUT,
                            timeout=timeout)
