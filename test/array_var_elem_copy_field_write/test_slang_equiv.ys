@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang, from reset.  The defect is a field write
+# that lands in the COPY'S SOURCE array (two drivers per bit after proc), so
+# the miter must disagree on mul2_o / en_o without the fix.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top array_var_elem_copy_field_write
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename array_var_elem_copy_field_write gold
+design -stash gold
+read_slang dut.sv --top array_var_elem_copy_field_write
+hierarchy -check -top array_var_elem_copy_field_write
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename array_var_elem_copy_field_write gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 6 -set-init-zero miter

@@ -1,0 +1,9 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top array_var_elem_copy_field_write
+# The field write must land on predec_mod[k] and never on the copy's SOURCE:
+# with the leak, proc leaves two drivers on every written bit of predec_mul /
+# elem_idx_mod / predec_multi and check reports them.  (The SAT miter alone is
+# NOT a gate here -- a doubly-driven wire over-constrains it into a vacuous
+# pass.)
+proc; opt_clean
+check -assert

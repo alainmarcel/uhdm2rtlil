@@ -13447,6 +13447,25 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                     take_packed_obj(v0);
                     if (auto v = dynamic_cast<const UHDM::variables*>(v0))
                         if (!st && v->Typespec()) take_ats(v->Typespec()->Actual_typespec());
+                    // An unpacked array of structs whose element has an ENUM
+                    // member is a VARIABLE to Surelog (array_var over a
+                    // struct_var; the all-logic struct is an array_net over a
+                    // struct_net).  Its own typespec is the bare
+                    // array_typespec; the element struct sits on the inner
+                    // struct_var, as it sits on the inner struct_net below.
+                    // Without this the helper declined, the write fell
+                    // through to import_hier_path's READ path, and the LHS
+                    // became the element's IN-FLIGHT value -- for an element
+                    // just COPIED from another array, that is the source's
+                    // aux wire (OTBN otbn_mac_bignum_fsm's
+                    // `predec_mod[cycle].op_a_qw_sel = ...` after
+                    // `predec_mod[cycle] = predec_mod_mul[cycle % 3]` wrote
+                    // predec_mod_mul; 18 driver conflicts).
+                    if (!st)
+                        if (auto av = dynamic_cast<const UHDM::array_var*>(v0))
+                            if (av->Variables() && !av->Variables()->empty())
+                                if (auto ev = (*av->Variables())[0]; ev && ev->Typespec())
+                                    take_ats(ev->Typespec()->Actual_typespec());
                     break;
                 }
         // Unpacked array of structs in the elaborated instance: an array_net
