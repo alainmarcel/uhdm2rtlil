@@ -174,6 +174,20 @@ void UhdmImporter::import_package(const package* uhdm_package) {
             
             // Also store without package prefix for import * cases
             package_typespec_map[type_name] = ts;
+
+            // ...and when Surelog reports VpiName ALREADY QUALIFIED
+            // ("BasicTypes::DataPath"), neither key above is the BARE name an
+            // `import BasicTypes::*` reference actually uses: full_name comes
+            // out doubled ("BasicTypes::BasicTypes::DataPath") and type_name
+            // keeps the prefix.  RSD hits this -- its IntAdderResult member
+            // `DataPath data` could not be looked up at all.  Register the
+            // tail too, first-wins so a genuinely bare registration from
+            // another package is never clobbered.
+            if (auto cpos = type_name.rfind("::"); cpos != std::string::npos) {
+                std::string bare = type_name.substr(cpos + 2);
+                if (!bare.empty())
+                    package_typespec_map.emplace(bare, ts);
+            }
         }
     }
     

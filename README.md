@@ -58,7 +58,7 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (the 1185 internal tests, ~30 min).  A PR
+`cd test && ./run_parallel.sh 6 --no-cva6` (the 1186 internal tests, ~30 min).  A PR
 lands only on a clean run.  The counts below are the regression's own summary
 (`Total tests run` / per-suite lines of the combined report), not a tally kept
 by hand; "upstream" counts the 547 generated yosys tests the suite scores, out
@@ -67,17 +67,17 @@ tests that produce no RTLIL under any frontend).
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1732 | 1185 | 547 |
-| Functional | 1685 (97%) | 1176 | 509 |
+| Tests | 1733 | 1186 | 547 |
+| Functional | 1686 (97%) | 1177 | 509 |
 | True failures | 10 | **0** | 10 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1055** tests formally equivalent UHDM vs Verilog; **628** UHDM-only
+- **1055** tests formally equivalent UHDM vs Verilog; **629** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **229 / 230** SV-only designs also proven against `read_slang`, and **23**
+  **230 / 231** SV-only designs also proven against `read_slang`, and **23**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop or a missing `$mem` still "works" — it just returns
   constants).
