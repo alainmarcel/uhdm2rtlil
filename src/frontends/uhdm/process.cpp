@@ -51,6 +51,20 @@ static RTLIL::Const memwr_priority_over_prior(const RTLIL::SyncRule* sync,
     return RTLIL::Const(m);
 }
 
+// A $mux select is ONE bit.  The enclosing `if` condition arrives as imported,
+// and an `if` over a vector -- `if ({xgmii_term[3:0], swap_rxc_term} & (1 << i))`
+// in a for loop, verilog-ethernet's axis_xgmii_rx_64 -- is a 64-bit value.
+// Every site that turns `current_condition` into a hold mux must reduce it
+// to a boolean first, as read_verilog does; connecting the vector straight
+// to S built malformed $mux cells that yosys's design check rejected -- and
+// its error reporter re-enters itself on that path, so read_uhdm SEGFAULTED
+// with no message (axis_xgmii_rx_64, eth_mac_10g, eth_mac_10g_fifo).
+static RTLIL::SigSpec cond_as_bool(RTLIL::Module* module, const RTLIL::SigSpec& cond) {
+    if (cond.size() == 1) return cond;
+    return module->ReduceBool(NEW_ID, cond);
+}
+
+
 bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
     // LRM 11.8.1: a bit-select or part-select result is ALWAYS unsigned,
@@ -6199,8 +6213,19 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                             ? pending_sync_assignments[lhs_spec]
                             : pending_inflight(lhs_spec);   // slice-aware
                     RTLIL::Wire* mux_w = module->addWire(NEW_ID, lhs_spec.size());
+                    // A $mux select is ONE bit.  `current_condition` is the
+                    // enclosing `if`'s expression as imported, and an `if`
+                    // over a vector (`if (xgmii_rxc_d0 & mask)` -- 64 bits in
+                    // verilog-ethernet's axis_xgmii_rx_64) must be reduced to
+                    // a boolean first, as the non-loop path and read_verilog
+                    // do.  Connecting the vector straight to S built a $mux
+                    // with a 64-bit select; yosys's design check then found
+                    // the malformed port and -- because its error reporter
+                    // re-enters itself on that path -- SEGFAULTED read_uhdm
+                    // with no message at all (axis_xgmii_rx_64, eth_mac_10g,
+                    // eth_mac_10g_fifo: `read-fail (uhdm) (read_uhdm failed)`).
                     module->addMux(NEW_ID, else_val, rhs_spec,
-                                   current_condition, mux_w);
+                                   cond_as_bool(module, current_condition), mux_w);
                     pending_sync_assignments[lhs_spec] = RTLIL::SigSpec(mux_w);
                     note_pending_sync(lhs_spec);
                 } else {
@@ -6348,9 +6373,11 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             // Save current condition
             RTLIL::SigSpec prev_condition = current_condition;
             
-            // For nested if statements, AND the conditions
+            // For nested if statements, AND the conditions.  Both sides are
+            // BOOLEANS: a bitwise $and of the 1-bit guard with a vector
+            // condition keeps only bit 0 of the vector.
             if (!prev_condition.empty()) {
-                current_condition = module->And(NEW_ID, prev_condition, cond);
+                current_condition = module->And(NEW_ID, cond_as_bool(module, prev_condition), cond_as_bool(module, cond));
             } else {
                 current_condition = cond;
             }
@@ -6369,12 +6396,12 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             if (else_stmt) {
                 // Invert condition for else branch
                 const any* src_obj = if_st ? any_cast<const any*>(if_st) : any_cast<const any*>(if_el);
+                RTLIL::SigSpec not_cond = create_not_cell(cond_as_bool(module, cond), src_obj);
                 if (!prev_condition.empty()) {
                     // For nested if-else, AND the previous condition with NOT of current
-                    RTLIL::SigSpec not_cond = create_not_cell(cond, src_obj);
-                    current_condition = create_and_cell(prev_condition, not_cond, src_obj);
+                    current_condition = create_and_cell(cond_as_bool(module, prev_condition), not_cond, src_obj);
                 } else {
-                    current_condition = create_not_cell(cond, src_obj);
+                    current_condition = not_cond;
                 }
                 import_statement_with_loop_vars(else_stmt, sync, is_reset, var_substitutions);
             }
@@ -11322,7 +11349,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     RTLIL::SigSpec else_val = pending_sync_assignments.count(full_lhs)
                         ? pending_sync_assignments[full_lhs] : full_lhs;
                     RTLIL::Wire* mux_w = module->addWire(NEW_ID, base_width);
-                    module->addMux(NEW_ID, else_val, final_rhs, current_condition, mux_w);
+                    module->addMux(NEW_ID, else_val, final_rhs, cond_as_bool(module, current_condition), mux_w);
                     final_rhs = RTLIL::SigSpec(mux_w);
                 }
                 pending_sync_assignments[full_lhs] = final_rhs;
@@ -11567,7 +11594,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         pending_sync_assignments.count(base_lhs)
                             ? pending_sync_assignments.at(base_lhs) : base_lhs;
                     RTLIL::Wire* mux_out = module->addWire(NEW_ID, base_wire->width);
-                    module->addMux(NEW_ID, else_val, new_val, current_condition, mux_out);
+                    module->addMux(NEW_ID, else_val, new_val, cond_as_bool(module, current_condition), mux_out);
                     next = RTLIL::SigSpec(mux_out);
                 } else {
                     next = new_val;
@@ -11625,7 +11652,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         RTLIL::SigSpec next = new_val;
                         if (!current_condition.empty()) {
                             RTLIL::Wire* mux_out = module->addWire(NEW_ID, W);
-                            module->addMux(NEW_ID, cur, new_val, current_condition, mux_out);
+                            module->addMux(NEW_ID, cur, new_val, cond_as_bool(module, current_condition), mux_out);
                             next = RTLIL::SigSpec(mux_out);
                         }
                         pending_sync_assignments[base_lhs] = next;
@@ -11742,7 +11769,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Create wire and cell separately to add source attributes
         RTLIL::Wire* mux_wire = module->addWire(NEW_ID, lhs.size());
         if (uhdm_assign) add_src_attribute(mux_wire->attributes, uhdm_assign);
-        RTLIL::Cell* mux_cell = module->addMux(NEW_ID, else_value, rhs, current_condition, mux_wire);
+        RTLIL::Cell* mux_cell = module->addMux(NEW_ID, else_value, rhs, cond_as_bool(module, current_condition), mux_wire);
         if (uhdm_assign) add_src_attribute(mux_cell->attributes, uhdm_assign);
         RTLIL::SigSpec mux_result = mux_wire;
         
