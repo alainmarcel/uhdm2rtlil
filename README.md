@@ -131,31 +131,39 @@ proof gap is never mistaken for a bug.
 
 Every sweep row co-simulates **both** netlists against the same RTL under the
 same random stimulus, so the reference frontend is measured by the same yardstick
-as this one.  *pass* counts rows whose netlist tracks the RTL for the whole run;
-**diverge** counts rows where it does not; *(adjudicated)* are `read_uhdm`
-divergences a SAT miter proved to be simulation artefacts (X-semantics, unique/
-priority-case violation stimulus), not reader defects.  Rows neither frontend
-can co-simulate (no buildable testbench, no default elaboration, no ports — 508
-of the 526 sv-tests snippets) are in neither column.  Instantiation rows (CVA6, chips) have no `read_slang` co-sim by design —
-their parameters are struct/type actuals Verilator's `-G` cannot take.
+as this one.  The columns are disjoint counts and the arithmetic holds on every
+line and in the total:
 
-| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** | `read_uhdm` co-sim: pass / **diverge** (adjudicated) | Undriven | Sweep |
-|---|---:|---:|---:|---:|---:|---|
-| Ibex | 28 | 21 | 8 / **3** | 20 / 0 (4) | 0 | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
-| rp32 (R5P) | 13 | 6 | 2 / **3** | 3 / 0 (4) | 0 | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| Syntacore SCR1 | 37 | 28 | 32 / 0 | 32 / 0 (0) | 0 | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
-| VeeR EH1 | 67 | 55 | 66 / 0 | 66 / 0 (0) | 0 | [veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml) |
-| RSD (partial run) | 43 | 18 | 19 / 0 | 17 / **2** (0) | 0 | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
-| OpenTitan OTBN | 32 | 25 | 23 / **2** | 24 / 0 (1) | 0 | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
-| Pavona (modules) | 300 | 284 | 291 / **4** | 293 / 0 (2) | 0 | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
-| Pavona chips (instances) | 100 | 98 | 90 / **7** | 90 / 0 (7) | 0 | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
-| Ariane CVA6 (modules) | 142 | 99 | 124 / **11** | 126 / 0 (9) | 0 | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
-| Ariane CVA6 (core instantiations) | 138 | 129 | — | — | 0 | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
-| Caliptra (instances) | 22 | 20 | 21 / 0 | 21 / 0 (0) | 0 | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
-| XiangShan core | 2002 | 1594 | 1941 / **3** | 1944 / 0 (0) | 0 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| External IP (11 repos) | 1073 | 877 | 884 / **30** | 908 / **1** (21) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
-| chipsalliance/sv-tests | 526 | 474 | 11 / 0 | 11 / **1** (0) | 0 | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) |
-| **All sweeps** | **4523** | **3728** | **3512 / 63** | **3555 / 4** (48) | 0 | 12 workflows |
+- *co-simulated* = rows whose netlist got a Verilator run at all;
+  **Rows − co-simulated** = rows with no co-sim for that netlist (no ports — 508
+  of the 526 sv-tests snippets — no buildable testbench, no default
+  elaboration, or a formal-only instantiation row).
+- `read_slang`: **co-simulated = pass + diverge**.
+- `read_uhdm`: **co-simulated = pass + diverge + artefact**, where *artefact* is
+  a divergence a SAT miter proved to be a simulation artefact (X-semantics,
+  unique/priority-case violation stimulus), not a reader defect, and
+  **diverge** is a real one.
+- The rows are the rows of the Supported Core IP table above, in its order
+  (the sweep links are there); the XiangShan library has its own row, so the
+  External IP row is the other 10 repos and every column sums to its total.
+  The script asserts both identities before printing.
+
+| Core | Rows | Formal proven | `read_slang` co-simulated | pass | **diverge** | `read_uhdm` co-simulated | pass | **diverge** | artefact | Undriven |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Ibex** | 28 | 21 | 11 | 8 | **3** | 24 | 20 | 0 | 4 | 0 |
+| **rp32 (R5P)** | 13 | 6 | 5 | 2 | **3** | 7 | 3 | 0 | 4 | 0 |
+| **Syntacore SCR1** | 37 | 28 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
+| **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
+| **RSD** (partial run) | 43 | 18 | 19 | 19 | 0 | 19 | 17 | **2** | 0 | 0 |
+| **OpenTitan** (upstream) | 32 | 25 | 25 | 23 | **2** | 25 | 24 | 0 | 1 | 0 |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 392 | 381 | **11** | 392 | 383 | 0 | 9 | 0 |
+| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
+| **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **XiangShan core** (香山) | 2002 | 1594 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1052 | 858 | 893 | 863 | **30** | 909 | 887 | **1** | 21 | 0 |
+| **chipsalliance/sv-tests** | 526 | 474 | 11 | 11 | 0 | 12 | 11 | **1** | 0 | 0 |
+| **All sweeps** (12 workflows) | **4523** | **3728** | **3575** | **3512** | **63** | **3607** | **3555** | **4** | **48** | **0** |
 
 The four `read_uhdm` divergences are RSD's `ControlQueue` and `FMAStage3`,
 verilog-pcie's `pcie_tlp_mux` (a dynamic element read that took the end-of-block

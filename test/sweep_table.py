@@ -38,36 +38,48 @@ def count(f):
 rep={}
 for f in glob.glob(os.path.join(root,'*','*-sweep-report','*.md')):
     rep[os.path.basename(f).replace('-sweep.md','')]=count(f)
+W='https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/'
+# One row per row of README's "Supported Core IP" table, same names, same order.
 groups=[
- ('Ibex',['ibex'],'[ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml)'),
- ('rp32 (R5P)',['rp32'],'[rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml)'),
- ('Syntacore SCR1',['scr1'],'[scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml)'),
- ('VeeR EH1',['veer-eh1'],'[veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml)'),
- ('RSD',['rsd'],'[rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml)'),
- ('OpenTitan OTBN',['opentitan'],'[opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml)'),
- ('Pavona (modules)',['acc','aes','csrng','edn','entropy_src','hmac','keymgr','kmac','pavona','periph','periph2','periph3','periph4','periph5','tlul'],'[pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml)'),
- ('Pavona chips (instances)',['dragonfly','egret'],'[pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml)'),
- ('Ariane CVA6 (modules)',['cva6'],'[cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml)'),
- ('Ariane CVA6 (core instantiations)',['cva6-chip'],'[cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml)'),
- ('Caliptra (instances)',['caliptra'],'[caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml)'),
- ('XiangShan core',['xiangshan-core-full'],'[xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml)'),
- ('External IP (11 repos)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','xiangshan'],'[ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml)'),
- ('chipsalliance/sv-tests',['sv-tests'],'[sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml)'),
+ ('**Ibex**',['ibex'],'[ibex]('+W+'sweep-ibex.yml)'),
+ ('**rp32 (R5P)**',['rp32'],'[rp32]('+W+'sweep-rp32.yml)'),
+ ('**Syntacore SCR1**',['scr1'],'[scr1]('+W+'sweep-scr1.yml)'),
+ ('**VeeR EH1**',['veer-eh1'],'[veer-eh1]('+W+'sweep-veer-eh1.yml)'),
+ ('**RSD**',['rsd'],'[rsd]('+W+'sweep-rsd.yml)'),
+ ('**OpenTitan** (upstream)',['opentitan'],'[opentitan]('+W+'sweep-opentitan.yml)'),
+ ('**Pavona** (300 modules + 100 chip instances)',['acc','aes','csrng','edn','entropy_src','hmac','keymgr','kmac','pavona','periph','periph2','periph3','periph4','periph5','tlul','dragonfly','egret'],'[pavona]('+W+'sweep-pavona.yml)'),
+ ('**Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only)',['cva6','cva6-chip'],'[cva6]('+W+'sweep-cva6.yml)'),
+ ('**Caliptra**',['caliptra'],'[caliptra]('+W+'sweep-caliptra.yml)'),
+ ('**XiangShan** (香山)',['xiangshan'],'[ext]('+W+'sweep-ext.yml)'),
+ ('**XiangShan core** (香山)',['xiangshan-core-full'],'[xiangshan]('+W+'sweep-xiangshan.yml)'),
+ ('**External IP** (the other 10 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie'],'[ext]('+W+'sweep-ext.yml)'),
+ ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
-tot=collections.Counter()
-print('| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** | `read_uhdm` co-sim: pass / **diverge** (adjudicated) | Undriven | Sweep |')
-print('|---|---:|---:|---:|---:|---:|---|')
+tot=collections.Counter(); seen=set()
+hdrs=['Core','Rows','Formal proven','`read_slang` co-simulated','pass','**diverge**','`read_uhdm` co-simulated','pass','**diverge**','artefact','Undriven']
+print('| '+' | '.join(hdrs)+' |'); print('|---|'+'---:|'*(len(hdrs)-1))
+def row(name,n,bold=False):
+    # every co-sim block partitions the rows it ran on: ran = pass + diverge (+ artefact); Rows - ran = no co-sim
+    assert n['s_pass']+n['s_div']+n['s_nc']==n['rows'], (name,'slang',dict(n))
+    assert n['u_pass']+n['u_div']+n['u_adj']+n['u_nc']==n['rows'], (name,'uhdm',dict(n))
+    s_ran=n['s_pass']+n['s_div']; u_ran=n['u_pass']+n['u_div']+n['u_adj']
+    v=[n['rows'],n['proven'],s_ran,n['s_pass'],n['s_div'],u_ran,n['u_pass'],n['u_div'],n['u_adj'],n['undriven']]
+    cells=[(f"**{x}**" if (bold or (i in (4,7) and x)) else str(x)) for i,x in enumerate(v)]
+    print('| '+name+' | '+' | '.join(cells)+' |')
 for name,fams,link in groups:
     n=collections.Counter()
     for f in fams:
         if f not in rep: print(f'MISSING {f}'); continue
         n.update(rep[f])
-    tot.update(n)
-    sdiv=f"**{n['s_div']}**" if n['s_div'] else '0'
-    udiv=f"**{n['u_div']}**" if n['u_div'] else '0'
-    print(f"| {name} | {n['rows']} | {n['proven']} | {n['s_pass']} / {sdiv} | {n['u_pass']} / {udiv} ({n['u_adj']}) | {n['undriven']} | {link} |")
-n=tot
-print(f"| **All sweeps** | **{n['rows']}** | **{n['proven']}** | **{n['s_pass']} / {n['s_div']}** | **{n['u_pass']} / {n['u_div']}** ({n['u_adj']}) | {n['undriven']} | 12 workflows |")
+        if f not in seen: tot.update(rep[f]); seen.add(f)
+    row(name,n)
+# the rows partition the reports, so every column sums to its total -- assert it
+colsum=collections.Counter()
+for name,fams,link in groups:
+    for f in fams: colsum.update(rep[f])
+for k in ('rows','proven','s_pass','s_div','s_nc','u_pass','u_div','u_adj','u_nc','undriven'):
+    assert colsum[k]==tot[k], (k, colsum[k], tot[k])
+row('**All sweeps** (12 workflows)',tot,bold=True)
 print()
 print('# per-report triples (Formal proven/rows, co-sim pass/comparable, opt-clean/opt-rows, differs, budget, err):')
 for k in sorted(rep):
