@@ -29,6 +29,28 @@ using namespace UHDM;
 // For constants, the 's' sigil in the decompile string (e.g. "1'sb1", "2'sb11") is
 // authoritative.  For references, we walk to the underlying variable/parameter/net
 // and consult VpiSigned() and the typespec.
+
+// Priority mask for a memwr action that the caller has JUST pushed onto
+// `sync`: one bit per EARLIER action already in this sync -- every memory,
+// which is how proc_memwr indexes it (`prev_port_ids[i]`) -- set only where
+// that earlier action writes the SAME memory (last-wins).  Sized by the
+// sync's own action list, never by an emitter's local counter: one sync can
+// collect actions from more than one emitter (verilog-ethernet's
+// axis_srl_register writes `data_reg[0]` directly and `data_reg[i+1]` from an
+// unrolled loop in one always block), and an emitter-local index then names
+// the wrong prior port -- a mask longer than the prior-action list makes
+// proc_memwr read past prev_port_ids and SEGFAULT, a shorter one silently
+// drops the last-wins priority.
+static RTLIL::Const memwr_priority_over_prior(const RTLIL::SyncRule* sync,
+                                              const RTLIL::IdString& memid) {
+    int n = (int)sync->mem_write_actions.size() - 1;
+    std::vector<RTLIL::State> m(std::max(n, 0), RTLIL::State::S0);
+    for (int k = 0; k < n; k++)
+        if (sync->mem_write_actions[k].memid == memid)
+            m[k] = RTLIL::State::S1;
+    return RTLIL::Const(m);
+}
+
 bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
     // LRM 11.8.1: a bit-select or part-select result is ALWAYS unsigned,
@@ -2250,11 +2272,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // mask makes proc_memwr write past this memory's per-memid
                     // port range and SEGFAULT when the sync mixes several
                     // many-port memories (ibex RVFI rvfi_ext_stage_*).
-                    std::vector<RTLIL::State> pmask((int)pi, RTLIL::State::S0);
-                    for (size_t j = 0; j < pi; j++)
-                        if (ff_ordered_memwrites[j].mem_id == info.mem_id)
-                            pmask[j] = RTLIL::State::S1;
-                    action.priority_mask = RTLIL::Const(pmask);
+                    action.priority_mask = memwr_priority_over_prior(sync_clk, action.memid);
                     action.enable = RTLIL::SigSpec(info.en_wire);
                     log("      Added memory write action for %s on clock edge\n",
                         info.mem_id.c_str());
@@ -3207,11 +3225,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         // port id, writing past this memory's mask and
                         // SEGFAULTing (ibex RVFI's rvfi_ext_stage_mhpmcounters
                         // shares a sync with several other 30+-port stage arrays).
-                        std::vector<RTLIL::State> pmask((int)pi, RTLIL::State::S0);
-                        for (size_t j = 0; j < pi; j++)
-                            if (ordered_memwrites[j].mem_id == info.mem_id)
-                                pmask[j] = RTLIL::State::S1;
-                        action.priority_mask = RTLIL::Const(pmask);
+                        action.priority_mask = memwr_priority_over_prior(sync, action.memid);
 
                         // Per-bit enable wire is already memory-width.
                         action.enable = RTLIL::SigSpec(info.en_wire);
@@ -5711,8 +5725,17 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
         for (size_t i = 0; i < pending_memory_writes.size(); i++) {
             const auto& mem_write = pending_memory_writes[i];
         
-            // Create wires for this memory write
-            std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
+            // Create wires for this memory write.  The name has to be unique
+            // across the MODULE, not just across this call: `i` restarts at 0
+            // every time emit_pending_memory_writes runs, so a process that
+            // writes the same memory from two places -- verilog-ethernet's
+            // axis_srl_register, `data_reg[0] <= s_axis` plus the unrolled
+            // `data_reg[i+1] <= data_reg[i]` in one always block -- asked for
+            // `$memwr$\data_reg$0_ADDR` twice and yosys aborted the read on
+            // `Assert count_id(wire->name) == 0` (rtlil.cc:2872).  autoidx is
+            // the module-unique counter the Verilog frontend uses for the same
+            // wires.
+            std::string base_name = stringf("$memwr$%s$%zu$%d", mem_write.mem_id.c_str(), i, incr_autoidx());
         
             // Widths come from the MEMORY.  They used to be hard-coded 10 /
             // 4 / 4 ("for this test" — asym_ram_sdp_read_wider), which is why
@@ -5798,13 +5821,7 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
                     // range and SEGFAULT when the sync mixes
                     // several many-port memories (ibex RVFI
                     // rvfi_ext_stage_* arrays, >32 ports).
-                    std::vector<RTLIL::State> pmask(
-                        i, RTLIL::State::S0);
-                    for (size_t j = 0; j < i; j++)
-                        if (pending_memory_writes[j].mem_id ==
-                            mem_write.mem_id)
-                            pmask[j] = RTLIL::State::S1;
-                    action.priority_mask = RTLIL::Const(pmask);
+                    action.priority_mask = memwr_priority_over_prior(sync, action.memid);
                 }
             
                 // Clear pending memory writes
