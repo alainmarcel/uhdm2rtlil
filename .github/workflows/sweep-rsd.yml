@@ -1,0 +1,43 @@
+# RSD (rsd-devel/rsd): the out-of-order superscalar RV32 core sv-tests builds
+# as top `Core` -- 171 synthesizable modules across its fetch / rename /
+# scheduler / exec / LSU / cache blocks.  A CORE sweep with its own action
+# (like veer-eh1, scr1, ibex and rp32), not an external-IP family: it is one
+# core closure, and the cores chipsalliance/sv-tests covers get an individual
+# sweep each.
+#
+# The sources are a shallow clone pinned by test/ext_ip/rsd.json.  RSD's
+# microarchitecture configuration is NOT passed as -D: it is compiled as a
+# source (test/ext_ip/stubs/rsd_config.sv, a "harness_srcs" entry) so that the
+# Verilator RTL reference is built with the same configuration as the two
+# netlists -- netlist_cosim.py hardcodes -DSYNTHESIS and takes no other
+# defines, so a -D-shaped configuration makes BOTH netlists diverge from the
+# RTL and the co-sim column says nothing.
+name: Sweep rsd
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 4 * * *"   # nightly 04:33 UTC, after veer-eh1's 03:33
+
+concurrency:
+  group: sweep-rsd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: rsd
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 300
+      # 171 rows, and `Core` is the whole out-of-order core (a 100-file
+      # closure): shard it rather than widening the per-shard concurrency, so
+      # no runner ever holds two 12 GB miters at once.  Same split caliptra,
+      # cva6 and veer-eh1 use.
+      shards: 4
+      jobs: "1"
