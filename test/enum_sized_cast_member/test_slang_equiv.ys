@@ -1,0 +1,21 @@
+# SAT miter, read_uhdm vs read_slang.  Surelog folded every enum member whose
+# value is a SIZE CAST -- `(W+1)'('d4)`, even `3'('d2)` -- to 0 (ExprBuilder has
+# no cast and its invalid result was forced valid), so read_uhdm drove
+# ABS_ERR_CMD / ABS_ERR_NOHALT / ABS_ERR_EXCEPTION as ABS_ERR_NONE in SCR1's
+# scr1_dm.  read_slang evaluates the members; the miter disagrees without the
+# Surelog fix.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top enum_sized_cast_member
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename enum_sized_cast_member gold
+design -stash gold
+read_slang dut.sv --top enum_sized_cast_member
+hierarchy -check -top enum_sized_cast_member
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename enum_sized_cast_member gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter
