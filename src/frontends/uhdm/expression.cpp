@@ -12345,7 +12345,24 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             // Convert from HDL index to RTLIL index
             int rtlil_idx = wire->from_hdl_index(idx);
             if (rtlil_idx == INT_MIN) {
-                log_error("Bit select index %d is out of range for wire '%s'\n", idx, signal_name.c_str());
+                // NOT fatal.  The two sibling branches below return X with a
+                // warning for an out-of-range index; this one aborted the
+                // whole read.  It fires on a DEGENERATE range -- `[-1:0]`
+                // from a parameter left at a zero default (hdmi's
+                // packet_picker: `parameter int AUDIO_BIT_WIDTH = 0`, declared
+                // `[AUDIO_BIT_WIDTH-1:0] ... [1:0]`) or at NO default at all
+                // (cvw's gshare: `parameter XLEN` with `[XLEN-1:0] PCNextF`).
+                // In the AllModules DEFINITION pass that is noise: the
+                // elaborated instance of packet_picker inside `hdmi` has
+                // AUDIO_BIT_WIDTH=16 and reads fine, yet the definition
+                // pass's error killed the read of hdmi and six cvw
+                // predictors.  Return X exactly as the other branches do and
+                // let the elaborated pass carry the real widths.
+                log_warning("Bit select index %d is out of range for wire '%s' "
+                            "(upto=%d, start_offset=%d, width=%d), returning undefined\n",
+                            idx, signal_name.c_str(), wire->upto ? 1 : 0,
+                            wire->start_offset, base.size());
+                return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
             if (mode_debug)
                 log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n",
