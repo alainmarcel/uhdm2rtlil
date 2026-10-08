@@ -139,8 +139,8 @@ can co-simulate (no buildable testbench, no default elaboration, no ports — 50
 of the 526 sv-tests snippets) are in neither column.  The rows are the rows of the Supported Core IP table above, in its
 order; CVA6's 138 core instantiations have no co-sim on either side by design
 (their parameters are struct/type actuals Verilator's `-G` cannot take), and the
-External IP row includes the XiangShan library row, so the total counts each
-report once.
+XiangShan library has its own row, so the External IP row is the other 10 repos
+and every column sums to its total.
 
 | Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** | `read_uhdm` co-sim: pass / **diverge** (adjudicated) | Undriven | Sweep |
 |---|---:|---:|---:|---:|---:|---|
@@ -155,9 +155,9 @@ report once.
 | **Caliptra** | 22 | 20 | 21 / 0 | 21 / 0 (0) | 0 | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | 21 | 19 | 21 / 0 | 21 / 0 (0) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **XiangShan core** (香山) | 2002 | 1594 | 1941 / **3** | 1944 / 0 (0) | 0 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| **External IP** (11 repos, incl. the XiangShan library row above) | 1073 | 877 | 884 / **30** | 908 / **1** (21) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1052 | 858 | 863 / **30** | 887 / **1** (21) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **chipsalliance/sv-tests** | 526 | 474 | 11 / 0 | 11 / **1** (0) | 0 | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) |
-| **All sweeps** | **4523** | **3728** | **3512 / 63** | **3555 / 4** (48) | 0 | 12 workflows, each report counted once |
+| **All sweeps** | **4523** | **3728** | **3512 / 63** | **3555 / 4** (48) | 0 | 12 workflows |
 
 The four `read_uhdm` divergences are RSD's `ControlQueue` and `FMAStage3`,
 verilog-pcie's `pcie_tlp_mux` (a dynamic element read that took the end-of-block

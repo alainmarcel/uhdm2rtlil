@@ -52,7 +52,7 @@ groups=[
  ('**Caliptra**',['caliptra'],'[caliptra]('+W+'sweep-caliptra.yml)'),
  ('**XiangShan** (香山)',['xiangshan'],'[ext]('+W+'sweep-ext.yml)'),
  ('**XiangShan core** (香山)',['xiangshan-core-full'],'[xiangshan]('+W+'sweep-xiangshan.yml)'),
- ('**External IP** (11 repos, incl. the XiangShan library row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','xiangshan'],'[ext]('+W+'sweep-ext.yml)'),
+ ('**External IP** (the other 10 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie'],'[ext]('+W+'sweep-ext.yml)'),
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()
@@ -68,7 +68,13 @@ for name,fams,link in groups:
     udiv=f"**{n['u_div']}**" if n['u_div'] else '0'
     print(f"| {name} | {n['rows']} | {n['proven']} | {n['s_pass']} / {sdiv} | {n['u_pass']} / {udiv} ({n['u_adj']}) | {n['undriven']} | {link} |")
 n=tot
-print(f"| **All sweeps** | **{n['rows']}** | **{n['proven']}** | **{n['s_pass']} / {n['s_div']}** | **{n['u_pass']} / {n['u_div']}** ({n['u_adj']}) | {n['undriven']} | 12 workflows, each report counted once |")
+# the rows partition the reports, so every column sums to its total -- assert it
+colsum=collections.Counter()
+for name,fams,link in groups:
+    for f in fams: colsum.update(rep[f])
+for k in ('rows','proven','s_pass','s_div','u_pass','u_div','u_adj','undriven'):
+    assert colsum[k]==tot[k], (k, colsum[k], tot[k])
+print(f"| **All sweeps** | **{n['rows']}** | **{n['proven']}** | **{n['s_pass']} / {n['s_div']}** | **{n['u_pass']} / {n['u_div']}** ({n['u_adj']}) | {n['undriven']} | 12 workflows |")
 print()
 print('# per-report triples (Formal proven/rows, co-sim pass/comparable, opt-clean/opt-rows, differs, budget, err):')
 for k in sorted(rep):
