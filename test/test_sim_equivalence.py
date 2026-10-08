@@ -171,6 +171,18 @@ def parse_project_f(test_dir: Path) -> dict:
             if p.exists():
                 out["srcs"].append(p)
                 break
+    # The read_slang reference leg (--frontend slang) took its arguments ONLY
+    # from a `# slang:` line.  Every imported-core project.f (ibex, rp32) has a
+    # `# surelog: -I...` line and no `# slang:` one, so read_slang ran with no
+    # include dirs, failed with "Design elaboration failed", and every one of
+    # those rows reported `error` in the slang co-sim column -- 14 ibex rows
+    # and all of rp32's, with no reference at all rather than a bad one.
+    # Mirror the surelog include dirs (already absolutised above, as they are
+    # for Verilator) and the declared top when nothing slang-specific is given.
+    if not out["slang"]:
+        out["slang"] = [f"-I{d}" for d in out["incdirs"]]
+        if out.get("top"):
+            out["slang"] += ["--top", out["top"]]
     return out
 
 

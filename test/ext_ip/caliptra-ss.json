@@ -160,7 +160,9 @@
   "_sva$",
   "_assert",
   "^ai3c",
-  "_uvm$"
+  "_uvm$",
+  "^ast$",
+  "^rglts_pdm_3p3v$"
  ],
  "seq": 3,
  "timeout": 600,
@@ -186,5 +188,9 @@
  ],
  "unit_imports": [
   "caliptra_prim_mubi_pkg"
- ]
+ ],
+ "exclude_notes": {
+  "^ast$": "OpenTitan analog sensor top (vendored): an always_ff resets vcc_pok_str_no_scan_h to a NON-CONSTANT under vcc_pok_rst_h_n; yosys proc_arst rejects it (`Async reset ... yields non-constant value 4'mmm0`) -- a behavioural analog model, not synthesizable RTL",
+  "^rglts_pdm_3p3v$": "same analog AST model, same proc_arst rejection"
+ }
 }

@@ -24,7 +24,8 @@
  "exclude": [
   "_tb$",
   "^tb_",
-  "^test"
+  "^test",
+  "^(ram1p1rwbe|ram2p1r1wbe|rom1p1r)_\\d+x\\d+$"
  ],
  "seq": 3,
  "timeout": 300,
@@ -67,5 +68,8 @@
   "bind.values: parameters WITHOUT a default that a standalone read cannot",
   "supply -- busfsm's READ_ONLY, packetizer's MAX_CSRS, uartPC16550D's",
   "UART_PRESCALE; the values are the ones wallypipelinedsoc / the testbenches use."
- ]
+ ],
+ "exclude_notes": {
+  "^(ram1p1rwbe|ram2p1r1wbe|rom1p1r)_\\d+x\\d+$": "per-size SRAM/ROM wrappers that instantiate TSMC 28nm macros by name (ram1p1rwbe_64x128.sv:40 `TS1N28HPCPSVTB64X128M4SW sramIP(...)`): vendor IP the repository does not ship, so read_uhdm refuses the row with `no definition for TS1N28...`; the behavioural ram1p1rwbe / ram2p1r1wbe / rom1p1r generics are the rows that matter and are swept"
+ }
 }
