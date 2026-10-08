@@ -10,11 +10,19 @@ root = sys.argv[1] if len(sys.argv) > 1 else 'build/sweeps'
 def count(f):
     hdr=None; n=collections.Counter()
     for line in open(f):
-        if line.startswith('| slang co-sim'): hdr=1; continue
+        if line.startswith('| slang co-sim'):
+            # Columns by NAME: sv-tests carries two extra ones (driver
+            # conflicts, unresolved reads), so a fixed position read its
+            # opt-check column as the co-sim column (526 "passing" co-sims).
+            names=[x.strip() for x in line.strip().strip('|').split('|')]
+            hdr={k:i for i,k in enumerate(names)}
+            continue
         if hdr is None or not line.startswith('| ') or line.startswith('|---'): continue
         c=[x.strip() for x in line.strip().strip('|').split('|')]
-        if len(c)<5: continue
-        s,mod,formal,opt,u=c[:5]; n['rows']+=1
+        if len(c)<len(hdr): continue
+        s=c[hdr['slang co-sim vs RTL']]; mod=c[hdr['module']]; formal=c[hdr['formal vs slang']]
+        opt=c[hdr['opt check (undriven)']]; u=c[hdr['co-sim vs RTL']]
+        n['rows']+=1
         n['s_pass' if s.startswith('✅') else 's_div' if s.startswith('❌') else 's_nc']+=1
         n['u_pass' if u.startswith('✅') else 'u_div' if u.startswith('❌') else 'u_adj' if u.startswith('⚠') else 'u_nc']+=1
         if '✅ equivalent' in formal: n['proven']+=1
