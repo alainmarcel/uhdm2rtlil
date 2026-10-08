@@ -1,0 +1,25 @@
+# SAT miter, read_uhdm vs read_slang.
+#
+# Without the fix `ops` has NO DRIVER AT ALL -- the CaseRule statement
+# dispatcher had no vpiFuncCall case, so the call in each arm was dropped
+# silently (its `default` arm only logged under -debug).  An undriven output is
+# not something the undriven check can flag either: a signal written ONLY
+# through a dropped call never gets its `uhdm_src_lhs` marker, so it is
+# reported as "never assigned in the source" instead of as a dropped driver.
+# That is exactly how RSD's Decoder showed `✅ 0 undriven` with 228 bits of
+# output carrying nothing.  The miter is the gate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_output_arg_in_case_arm
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename func_output_arg_in_case_arm gold
+design -stash gold
+read_slang dut.sv --top func_output_arg_in_case_arm
+hierarchy -check -top func_output_arg_in_case_arm
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename func_output_arg_in_case_arm gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

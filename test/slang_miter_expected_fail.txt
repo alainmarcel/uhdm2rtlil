@@ -13,3 +13,29 @@
 # output identical.
 ibex_ex_block
 
+
+# func_output_arg_in_case_arm: a task or `void function` called as a STATEMENT
+# inside an `if` / `case` arm has its OUTPUT-ARGUMENT writes dropped entirely —
+# `ops` has no driver at all.  The Process* overload of import_statement_comb
+# has handled vpiFuncCall / vpiTaskCall since synlig#554; the CaseRule*
+# overload never did, and its `default` arm only logs under -debug, so the drop
+# is silent.  RSD's Decoder is the real-world case: it calls nine decode
+# functions from the arms of `case (isf.opCode)`, leaving its 228-bit
+# `microOps` output undriven and every micro-op reading zero.
+#
+# NOT fixable by adding the dispatch cases alone.  Measured, in order:
+#   * dispatch cases + a CaseRule target threaded through import_tf_call_comb /
+#     inline_task_body_comb makes THIS test pass, but on Decoder only moves
+#     228 -> 227 unassigned bits: the output-argument COPY-BACK is emitted at
+#     ROOT level, so with one call per arm the LAST arm wins unconditionally.
+#   * routing the copy-back into the arm too does move it there, but Decoder
+#     still diverges on all 301 cycles and never-assigned goes 227 -> 3859.
+#   * routing the body's nested if/case to the generic CaseRule dispatcher
+#     LOSES THE TASK CONTEXT — task_mapping and vpiReturn are handled by
+#     inline_task_body_comb, not by import_statement_comb — and a `return`
+#     inside an arm then drops too (surfaced on ibex_tracer).  It also
+#     segfaulted until every proc-> deref on the path was guarded, because
+#     current_comb_process is NULL for an arm outside a comb always block.
+# The real fix is for inline_task_body_comb to handle nested control flow
+# against a case target itself, keeping task_mapping and return semantics.
+func_output_arg_in_case_arm
