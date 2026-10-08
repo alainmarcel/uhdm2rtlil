@@ -131,33 +131,35 @@ proof gap is never mistaken for a bug.
 
 Every sweep row co-simulates **both** netlists against the same RTL under the
 same random stimulus, so the reference frontend is measured by the same yardstick
-as this one.  *pass* counts rows whose netlist tracks the RTL for the whole run;
-**diverge** counts rows where it does not; *(adjudicated)* are `read_uhdm`
-divergences a SAT miter proved to be simulation artefacts (X-semantics, unique/
-priority-case violation stimulus), not reader defects.  Rows neither frontend
-can co-simulate (no buildable testbench, no default elaboration, no ports — 508
-of the 526 sv-tests snippets) are in neither column.  The rows are the rows of the Supported Core IP table above, in its
+as this one.  Each co-sim cell partitions the row count: *pass* = the netlist
+tracks the RTL for the whole run; **diverge** = it does not; *artefact* =
+`read_uhdm` divergences a SAT miter proved to be simulation artefacts
+(X-semantics, unique/priority-case violation stimulus), not reader defects;
+*no run* = no co-sim was possible for that netlist (no ports — 508 of the 526
+sv-tests snippets — no buildable testbench, no default elaboration, or a
+formal-only instantiation row).  pass + diverge (+ artefact) + no run = Rows on
+every line, and the script asserts it.  The rows are the rows of the Supported Core IP table above, in its
 order; CVA6's 138 core instantiations have no co-sim on either side by design
 (their parameters are struct/type actuals Verilator's `-G` cannot take), and the
 XiangShan library has its own row, so the External IP row is the other 10 repos
 and every column sums to its total.
 
-| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** | `read_uhdm` co-sim: pass / **diverge** (adjudicated) | Undriven | Sweep |
+| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** / no run | `read_uhdm` co-sim: pass / **diverge** / artefact / no run | Undriven | Sweep |
 |---|---:|---:|---:|---:|---:|---|
-| **Ibex** | 28 | 21 | 8 / **3** | 20 / 0 (4) | 0 | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
-| **rp32 (R5P)** | 13 | 6 | 2 / **3** | 3 / 0 (4) | 0 | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
-| **Syntacore SCR1** | 37 | 28 | 32 / 0 | 32 / 0 (0) | 0 | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
-| **VeeR EH1** | 67 | 55 | 66 / 0 | 66 / 0 (0) | 0 | [veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml) |
-| **RSD** (partial run) | 43 | 18 | 19 / 0 | 17 / **2** (0) | 0 | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
-| **OpenTitan** (upstream) | 32 | 25 | 23 / **2** | 24 / 0 (1) | 0 | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 381 / **11** | 383 / 0 (9) | 0 | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
-| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 124 / **11** | 126 / 0 (9) | 0 | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
-| **Caliptra** | 22 | 20 | 21 / 0 | 21 / 0 (0) | 0 | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
-| **XiangShan** (香山) | 21 | 19 | 21 / 0 | 21 / 0 (0) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
-| **XiangShan core** (香山) | 2002 | 1594 | 1941 / **3** | 1944 / 0 (0) | 0 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1052 | 858 | 863 / **30** | 887 / **1** (21) | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
-| **chipsalliance/sv-tests** | 526 | 474 | 11 / 0 | 11 / **1** (0) | 0 | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) |
-| **All sweeps** | **4523** | **3728** | **3512 / 63** | **3555 / 4** (48) | 0 | 12 workflows |
+| **Ibex** | 28 | 21 | 8 / **3** / 17 | 20 / 0 / 4 / 4 | 0 | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
+| **rp32 (R5P)** | 13 | 6 | 2 / **3** / 8 | 3 / 0 / 4 / 6 | 0 | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
+| **Syntacore SCR1** | 37 | 28 | 32 / 0 / 5 | 32 / 0 / 0 / 5 | 0 | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
+| **VeeR EH1** | 67 | 55 | 66 / 0 / 1 | 66 / 0 / 0 / 1 | 0 | [veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml) |
+| **RSD** (partial run) | 43 | 18 | 19 / 0 / 24 | 17 / **2** / 0 / 24 | 0 | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
+| **OpenTitan** (upstream) | 32 | 25 | 23 / **2** / 7 | 24 / 0 / 1 / 7 | 0 | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 381 / **11** / 8 | 383 / 0 / 9 / 8 | 0 | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) |
+| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 124 / **11** / 145 | 126 / 0 / 9 / 145 | 0 | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **Caliptra** | 22 | 20 | 21 / 0 / 1 | 21 / 0 / 0 / 1 | 0 | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
+| **XiangShan** (香山) | 21 | 19 | 21 / 0 / 0 | 21 / 0 / 0 / 0 | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **XiangShan core** (香山) | 2002 | 1594 | 1941 / **3** / 58 | 1944 / 0 / 0 / 58 | 0 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1052 | 858 | 863 / **30** / 159 | 887 / **1** / 21 / 143 | 0 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **chipsalliance/sv-tests** | 526 | 474 | 11 / 0 / 515 | 11 / **1** / 0 / 514 | 0 | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) |
+| **All sweeps** | **4523** | **3728** | **3512 / 63** / 948 | **3555 / 4** / 48 / 916 | 0 | 12 workflows |
 
 The four `read_uhdm` divergences are RSD's `ControlQueue` and `FMAStage3`,
 verilog-pcie's `pcie_tlp_mux` (a dynamic element read that took the end-of-block

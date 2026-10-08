@@ -56,7 +56,7 @@ groups=[
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()
-print('| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** | `read_uhdm` co-sim: pass / **diverge** (adjudicated) | Undriven | Sweep |')
+print('| Core | Rows | Formal proven | `read_slang` co-sim: pass / **diverge** / no run | `read_uhdm` co-sim: pass / **diverge** / artefact / no run | Undriven | Sweep |')
 print('|---|---:|---:|---:|---:|---:|---|')
 for name,fams,link in groups:
     n=collections.Counter()
@@ -64,17 +64,20 @@ for name,fams,link in groups:
         if f not in rep: print(f'MISSING {f}'); continue
         n.update(rep[f])
         if f not in seen: tot.update(rep[f]); seen.add(f)
+    # every co-sim cell partitions the row count: pass + diverge (+ artefact) + no run == rows
+    assert n['s_pass']+n['s_div']+n['s_nc']==n['rows'], (name,'slang',dict(n))
+    assert n['u_pass']+n['u_div']+n['u_adj']+n['u_nc']==n['rows'], (name,'uhdm',dict(n))
     sdiv=f"**{n['s_div']}**" if n['s_div'] else '0'
     udiv=f"**{n['u_div']}**" if n['u_div'] else '0'
-    print(f"| {name} | {n['rows']} | {n['proven']} | {n['s_pass']} / {sdiv} | {n['u_pass']} / {udiv} ({n['u_adj']}) | {n['undriven']} | {link} |")
+    print(f"| {name} | {n['rows']} | {n['proven']} | {n['s_pass']} / {sdiv} / {n['s_nc']} | {n['u_pass']} / {udiv} / {n['u_adj']} / {n['u_nc']} | {n['undriven']} | {link} |")
 n=tot
 # the rows partition the reports, so every column sums to its total -- assert it
 colsum=collections.Counter()
 for name,fams,link in groups:
     for f in fams: colsum.update(rep[f])
-for k in ('rows','proven','s_pass','s_div','u_pass','u_div','u_adj','undriven'):
+for k in ('rows','proven','s_pass','s_div','s_nc','u_pass','u_div','u_adj','u_nc','undriven'):
     assert colsum[k]==tot[k], (k, colsum[k], tot[k])
-print(f"| **All sweeps** | **{n['rows']}** | **{n['proven']}** | **{n['s_pass']} / {n['s_div']}** | **{n['u_pass']} / {n['u_div']}** ({n['u_adj']}) | {n['undriven']} | 12 workflows |")
+print(f"| **All sweeps** | **{n['rows']}** | **{n['proven']}** | **{n['s_pass']} / {n['s_div']}** / {n['s_nc']} | **{n['u_pass']} / {n['u_div']}** / {n['u_adj']} / {n['u_nc']} | {n['undriven']} | 12 workflows |")
 print()
 print('# per-report triples (Formal proven/rows, co-sim pass/comparable, opt-clean/opt-rows, differs, budget, err):')
 for k in sorted(rep):
