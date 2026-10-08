@@ -935,6 +935,15 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
              "memlimit": "❓ SAT over memory cap", "error": "error"}
     row = {"module": m, "formal": label[got], "formal_raw": got, "check": check,
            "cosim": "—", "slang_cosim": "—", "want": want}
+    # A miter that ended in neither a verdict nor a budget stop is an `error`
+    # row -- and until now one with NO note, so xiangshan-core-full's seven
+    # DataStorage / GatedSplittedSRAM rows said `error` and nothing else, in
+    # the report and in the shard JSON alike.  Carry the last ERROR line (or
+    # the last line yosys printed) so the row says what went wrong.
+    if got == "error":
+        err = [l for l in (out3 or "").splitlines() if "ERROR" in l or "Assert" in l]
+        last = (err[-1] if err else ((out3 or "").strip().splitlines() or [""])[-1])
+        row["note"] = (last.strip()[:220] if last else f"miter exit {rc3}, no verdict")
     # --- co-sim
     if do_cosim and cycles > 0:
         for tag in ("uhdm", "slang"):

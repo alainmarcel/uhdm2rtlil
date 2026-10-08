@@ -31,7 +31,13 @@
   "_tb$",
   "^tb_",
   "^cc_addr_decode$",
-  "^tc_sram_impl$"
+  "^tc_sram_impl$",
+  "^tc_clk_delay$",
+  "^cc_stream_dv$",
+  "^cc_clk_or_tree$",
+  "^cc_unread$",
+  "^tc_sram_blackbox$",
+  "^tc_sram$"
  ],
  "seq": 4,
  "timeout": 300,
@@ -43,5 +49,13 @@
     3
    ]
   ]
+ },
+ "exclude_notes": {
+  "^tc_clk_delay$": "tech_cells_generic/src/rtl/tc_clk.sv declares it inside `ifndef SYNTHESIS and the manifest defines SYNTHESIS: not part of the design, the closure's text scan finds it anyway (read_uhdm: Module `tc_clk_delay' not found)",
+  "^cc_stream_dv$": "an INTERFACE (common_cells/src/cc_stream_intf.sv), not a module; the bound-wrapper retry has nothing to bind and reports Module `cc_stream_dv' not found",
+  "^cc_clk_or_tree$": "instantiates ITSELF three times (a recursive clock OR tree); yosys cannot flatten a design with recursive instantiations, so the miter's `flatten` refuses it on both frontends -- not a reader defect",
+  "^cc_unread$": "a sink with an input and NO output (common_cells/src/cc_unread.sv, body only under `ifdef TARGET_VIVADO); both frontends read it to an empty module that opt deletes, and the miter reports `Can't find gold module`",
+  "^tc_sram_blackbox$": "an empty BLACKBOX shell for a technology SRAM; no body to compare (`Can't find gold module`)",
+  "^tc_sram$": "instantiates tc_sram_blackbox, so the miter has `No SAT model available` for the blackbox cell; the behavioural tc_sram_wrapper row covers the SRAM model"
  }
 }
