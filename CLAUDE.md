@@ -839,3 +839,20 @@ valgrind is not installed).  See `test/eval_module_stale_wire`.
 3. **Compare paths**: Script runs both UHDM and Verilog frontends
 4. **Check equivalence**: Formal verification with Yosys SAT solver
 5. **Debug differences**: Use diff tools on IL files and debug mode
+## A struct array with an ENUM member is an `array_var`, an all-logic one an `array_net`
+
+Surelog keys the representation of `predec_t predec_mod [N];` on the element
+type: all-logic members -> `array_net` whose inner `struct_net` carries the
+struct typespec; any ENUM member -> `array_var` over a `struct_var`, whose
+OWN typespec is a bare `array_typespec`.  A handler that discovers the element
+struct only through `Nets()` / `Array_nets()` / the variable's own typespec
+silently declines the array_var shape -- `emit_dynamic_array_elem_field_write`
+did, and `arr[cycle].field = rhs` fell through to import_hier_path's READ path
+whose LHS is the element's IN-FLIGHT value (after `arr[cycle] = src[cycle % 3]`
+that is the SOURCE element; OTBN otbn_mac_bignum_fsm, 18 driver conflicts).
+Take it from `array_var->Variables()[0]->Typespec()` as well.
+
+Two traps for a test of this class: the same shape without the enum member
+reads clean (three minimal repros missed it), and the SAT miter is VACUOUS on
+a doubly-driven wire -- gate on `proc; opt_clean; check -assert`
+(test/array_var_elem_copy_field_write/test_structural.ys).
