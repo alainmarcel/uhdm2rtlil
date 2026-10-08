@@ -3881,6 +3881,36 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
                 }
             }
         }
+        // Not a type parameter: a $unit-scope typedef whose MEMBER TYPE names a
+        // package type imported into $unit.  RSD's IntALU.sv is
+        //
+        //     import BasicTypes::*;                    // DataPath = logic[31:0]
+        //     typedef struct packed { logic carry; DataPath data; } IntAdderResult;
+        //
+        // at FILE scope, and Surelog leaves the `data` member's
+        // Actual_typespec an `unsupported_typespec` named `DataPath` -- the
+        // design-level typedef it DID resolve is registered under the
+        // qualified name `BasicTypes::DataPath`, which the unqualified
+        // reference never matched.  Measured as one bit, IntAdderResult came
+        // out 2 bits instead of 33 and IntALU's `aluDataOut` kept bit 0 and
+        // zero-filled the other 31 (rtl=00006036 uhdm=00000000).
+        // package_typespec_map already carries both spellings, so look the
+        // name up there -- bare, and tail-of-qualified for a `pkg::type`
+        // reference Surelog also failed to bind.
+        {
+            auto pit = package_typespec_map.find(want);
+            if (pit == package_typespec_map.end()) {
+                auto cpos = want.rfind("::");
+                if (cpos != std::string::npos)
+                    pit = package_typespec_map.find(want.substr(cpos + 2));
+            }
+            if (pit != package_typespec_map.end() && pit->second &&
+                pit->second != ts_c) {
+                log("UHDM: unsupported typespec '%s' resolved to package type %s\n",
+                    want.c_str(), UhdmName(pit->second->UhdmType()).c_str());
+                return pit->second;
+            }
+        }
         return ts_c;
     }
     mi = dynamic_cast<const UHDM::module_inst*>(

@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang.  The defect is a WIDTH: the struct
+# measures 2 bits instead of 33, so `sum` keeps bit 0 of the adder and
+# zero-fills the other 31.  `select` counts objects, not widths, so there is no
+# honest structural assertion for this -- the miter is the gate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unit_struct_member_pkg_type
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename unit_struct_member_pkg_type gold
+design -stash gold
+read_slang pkg.sv dut.sv --top unit_struct_member_pkg_type
+hierarchy -check -top unit_struct_member_pkg_type
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename unit_struct_member_pkg_type gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
