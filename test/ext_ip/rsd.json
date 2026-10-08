@@ -1,0 +1,37 @@
+{
+ "title": "RSD (rsd-devel/rsd)",
+ "url": "https://github.com/rsd-devel/rsd",
+ "repos": [
+  {
+   "url": "https://github.com/rsd-devel/rsd",
+   "commit": "7b65f6ba0bce58d4d859082660123b7100aae975",
+   "dir": "rsd"
+  }
+ ],
+ "roots": [
+  "rsd/Processor/Src/*.sv",
+  "rsd/Processor/Src/*/*.sv"
+ ],
+ "incdirs": [
+  "rsd/Processor/Src"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^Test",
+  "Verilator"
+ ],
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "harness_srcs": [
+  "stubs/rsd_config.sv"
+ ]
+}

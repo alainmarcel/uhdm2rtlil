@@ -27,7 +27,7 @@ CORES = [  # (sv-tests core test, what sv-tests runs, our coverage)
     ("veer-eh1 (`veer-eh1_wrapper`, fusesoc)", "full core", "yes -- per-module miters + co-sim over the core, its pipeline blocks and the rv* library (`sweep-veer-eh1.yml`)"),
     ("black-parrot (`bp_default`, `bp_unicore`, `bp_multicore_1`, `_cce_ucode`, `bp_multicore_4`, `_cce_ucode_cfg`) with basejump_stl + HardFloat", "six configurations, top `wrapper`", "**no**"),
     ("scr1 (`scr1_top_tb_axi`)", "full core + AXI top", "yes -- per-module miters + co-sim over the pipeline and both SoC tops (`sweep-scr1.yml`)"),
-    ("rsd (`Core`)", "full core", "**no**"),
+    ("rsd (`Core`)", "full core", "yes -- per-module miters + co-sim over the out-of-order core and its blocks (`sweep-rsd.yml`)"),
     ("tnoc (`tnoc`)", "network-on-chip", "**no**"),
     ("rggen (`rggen`, rggen-sv-rtl + rggen-sample)", "generated register files", "**no**"),
     ("fx68k", "68000 core (needs `--allow-dup-initial-drivers` under slang)", "**no**"),
