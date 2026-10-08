@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang, bounded from reset.  The defect was a
+# malformed $mux (a 32-bit SELECT) that crashed the read outright, so any
+# netlist at all is progress -- but the gate count differed 2 vs 21 against
+# read_verilog while equiv_induct still passed, so the miter is the gate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top loop_if_vector_condition
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename loop_if_vector_condition gold
+design -stash gold
+read_slang dut.sv --top loop_if_vector_condition
+hierarchy -check -top loop_if_vector_condition
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename loop_if_vector_condition gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 6 -set-init-zero miter
