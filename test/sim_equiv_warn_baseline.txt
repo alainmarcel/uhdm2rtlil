@@ -11,6 +11,7 @@ EscapedIdentifiersInHierPath
 Fork
 ForkJoinTypes
 FunctionCallsFunctionWithIndexedPartSelectAsArgument
+func_output_arg_in_case_arm
 genvar_async_reset_array
 GetC
 ibex_register_file_ff
