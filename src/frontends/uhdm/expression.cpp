@@ -4356,12 +4356,29 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         if (ewid > 0) {
                             RTLIL::SigSpec acc(RTLIL::State::Sx, ewid);
                             for (int i = 0; i < cnt; i++) {
-                                RTLIL::Wire* w0 = find_wire_in_scope(
-                                    base_name + "[" + std::to_string(lo + i) + "]", "");
+                                std::string en = base_name + "[" + std::to_string(lo + i) + "]";
+                                RTLIL::Wire* w0 = find_wire_in_scope(en, "");
                                 if (!w0) continue;
+                                // The element's IN-FLIGHT blocking value, as the
+                                // constant-index branch above reads it.  The
+                                // raw wire is the value at the END of the block:
+                                // verilog-pcie pcie_tlp_mux computes
+                                // `port_seg_valid[port] = ...` then reads
+                                // `port_seg_valid[port_cyc][0]` and shifts the
+                                // element afterwards -- the read saw the
+                                // already-shifted word and selected a port
+                                // with no valid segment (53 co-sim divergences).
+                                RTLIL::SigSpec ev(w0);
+                                if (!in_always_ff_body_mode && !comb_lhs_keep_base) {
+                                    auto cv = current_comb_values.find(en);
+                                    if (cv == current_comb_values.end())
+                                        cv = current_comb_values.find(w0->name.str().substr(1));
+                                    if (cv != current_comb_values.end() && cv->second.size() == w0->width)
+                                        ev = cv->second;
+                                }
                                 RTLIL::SigSpec sel = module->Eq(NEW_ID, idx_sig,
                                     RTLIL::Const(lo + i, idx_sig.size()));
-                                acc = module->Mux(NEW_ID, acc, RTLIL::SigSpec(w0), sel);
+                                acc = module->Mux(NEW_ID, acc, ev, sel);
                             }
                             element_sig = acc;
                         }
