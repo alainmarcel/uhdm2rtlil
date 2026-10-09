@@ -1,0 +1,12 @@
+# valid = 00: the first iteration breaks before the second check, nothing is
+# seen and no flag; valid = 01, taken = 10: iteration 0 is seen (not taken),
+# iteration 1 breaks on valid; valid = 11, taken = 01: lane 0 flags and
+# iteration 1 is never reached.  Unpatched read_uhdm flags on the first two.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_loop_break_same_iteration
+proc; flatten; opt_clean
+check -assert
+sat -verify -set valid 2'b00 -set taken 2'b11 -prove flag 1'b0 -prove seen 2'b00
+sat -verify -set valid 2'b01 -set taken 2'b10 -prove flag 1'b0 -prove seen 2'b01
+sat -verify -set valid 2'b11 -set taken 2'b01 -prove flag 1'b1 -prove lane 2'd0 -prove seen 2'b01
+sat -verify -set valid 2'b11 -set taken 2'b10 -prove flag 1'b1 -prove lane 2'd1 -prove seen 2'b11

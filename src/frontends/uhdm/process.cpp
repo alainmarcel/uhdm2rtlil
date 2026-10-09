@@ -9136,6 +9136,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                           RTLIL::SigSpec(RTLIL::State::S0)));
                         RTLIL::SigSpec saved_bf = current_break_flag;
                         current_break_flag = RTLIL::SigSpec(bw);
+                        auto saved_sites = current_break_sites;
+                        current_break_sites.clear();
                         bool live_const1 =
                             live.is_fully_const() && live.as_bool();
                         RTLIL::SigSpec bf_eff = RTLIL::SigSpec(bw);
@@ -9162,6 +9164,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                                  RTLIL::SigSpec(bw));
                         }
                         current_break_flag = saved_bf;
+                        current_break_sites = saved_sites;
                         brk_flags.push_back({(int)i, bf_eff});
                         RTLIL::SigSpec nb =
                             module->Not(NEW_ID, RTLIL::SigSpec(bw));
@@ -9239,9 +9242,19 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             // iteration terminated the loop, so the post-loop value of the
             // loop variable can be built as a priority mux (CVA6 pmp.sv).
             // Unconditional here means the branch reaching it always breaks.
-            if (!current_break_flag.empty())
+            if (!current_break_flag.empty()) {
                 proc->root_case.actions.push_back(
                     RTLIL::SigSig(current_break_flag, RTLIL::SigSpec(RTLIL::State::S1)));
+            }
+                // Per-site flag (see current_break_sites).
+                if (!current_break_flag.empty() && proc) {
+                    RTLIL::Wire* bs = module->addWire(NEW_ID, 1);
+                    proc->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S0)));
+                    proc->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S1)));
+                    current_break_sites.push_back(RTLIL::SigSpec(bs));
+                }
             break;
         case vpiContinue:
             break;
@@ -9441,9 +9454,35 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
     VectorOfany* stmts = begin_block_stmts(uhdm_begin);
     if (stmts) {
         log("    Begin block has %d statements\n", (int)stmts->size());
+        bool brk_seen = false;
         for (auto stmt : *stmts) {
             log("    Processing statement type %d in begin block\n", stmt->VpiType());
-            import_statement_comb(stmt, proc);
+            if (brk_seen && !current_break_flag.empty() && !current_break_sites.empty()) {
+                // After a statement that can `break` this iteration: run the
+                // rest of the block only if no break site so far fired
+                // (DecodedBranchResolver's `if (!insnValidIn[i]) break;`
+                // followed by the branch checks of the same iteration).
+                RTLIL::SigSpec taken = current_break_sites[0];
+                for (size_t k = 1; k < current_break_sites.size(); k++)
+                    taken = module->Or(NEW_ID, taken, current_break_sites[k]);
+                RTLIL::SigSpec live = module->Not(NEW_ID, taken);
+                RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                sw->signal = live;
+                RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
+                live_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                auto saved_ccv = current_comb_values;
+                import_statement_comb(stmt, live_case);
+                auto then_ccv = current_comb_values;
+                current_comb_values = saved_ccv;
+                sw->cases.push_back(live_case);
+                RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
+                sw->cases.push_back(dead_case);
+                thread_comb_if(live, live_case, nullptr, &saved_ccv, &then_ccv, nullptr);
+                proc->root_case.switches.push_back(sw);
+            } else {
+                import_statement_comb(stmt, proc);
+            }
+            if (stmt_contains_break(stmt)) brk_seen = true;
         }
     } else {
         log("    Begin block has no statements\n");
@@ -18251,9 +18290,35 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
             if (stmts) {
                 log("        Begin has %d statements\n", (int)stmts->size());
+                bool brk_seen = false;
                 for (auto stmt : *stmts) {
                     log("        Processing statement type %d in begin\n", stmt->VpiType());
-                    import_statement_comb(stmt, case_rule);
+                    if (brk_seen && !current_break_flag.empty() && !current_break_sites.empty()) {
+                        // After a statement that can `break` this iteration: run the
+                        // rest of the block only if no break site so far fired
+                        // (DecodedBranchResolver's `if (!insnValidIn[i]) break;`
+                        // followed by the branch checks of the same iteration).
+                        RTLIL::SigSpec taken = current_break_sites[0];
+                        for (size_t k = 1; k < current_break_sites.size(); k++)
+                            taken = module->Or(NEW_ID, taken, current_break_sites[k]);
+                        RTLIL::SigSpec live = module->Not(NEW_ID, taken);
+                        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                        sw->signal = live;
+                        RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
+                        live_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                        auto saved_ccv = current_comb_values;
+                        import_statement_comb(stmt, live_case);
+                        auto then_ccv = current_comb_values;
+                        current_comb_values = saved_ccv;
+                        sw->cases.push_back(live_case);
+                        RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
+                        sw->cases.push_back(dead_case);
+                        thread_comb_if(live, live_case, nullptr, &saved_ccv, &then_ccv, nullptr);
+                        case_rule->switches.push_back(sw);
+                    } else {
+                        import_statement_comb(stmt, case_rule);
+                    }
+                    if (stmt_contains_break(stmt)) brk_seen = true;
                 }
             } else {
                 log("        Begin has no statements\n");
@@ -18386,6 +18451,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                           RTLIL::SigSpec(RTLIL::State::S0)));
                         RTLIL::SigSpec saved_bf = current_break_flag;
                         current_break_flag = RTLIL::SigSpec(bw);
+                        auto saved_sites = current_break_sites;
+                        current_break_sites.clear();
                         bool live_const1 =
                             live.is_fully_const() && live.as_bool();
                         RTLIL::SigSpec bf_eff = RTLIL::SigSpec(bw);
@@ -18411,6 +18478,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                  RTLIL::SigSpec(bw));
                         }
                         current_break_flag = saved_bf;
+                        current_break_sites = saved_sites;
                         cr_brk_flags.push_back({(int)i, bf_eff});
                         RTLIL::SigSpec nb =
                             module->Not(NEW_ID, RTLIL::SigSpec(bw));
@@ -18919,9 +18987,19 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiBreak:
             // See the Process* overload: drive this iteration's break flag
             // under the enclosing branch conditions.
-            if (!current_break_flag.empty())
+            if (!current_break_flag.empty()) {
                 case_rule->actions.push_back(
                     RTLIL::SigSig(current_break_flag, RTLIL::SigSpec(RTLIL::State::S1)));
+            }
+                // Per-site flag (see current_break_sites).
+                if (!current_break_flag.empty() && current_comb_process) {
+                    RTLIL::Wire* bs = module->addWire(NEW_ID, 1);
+                    current_comb_process->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S0)));
+                    case_rule->actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S1)));
+                    current_break_sites.push_back(RTLIL::SigSpec(bs));
+                }
             break;
         case vpiContinue:
             break;

@@ -509,6 +509,13 @@ struct UhdmImporter {
     // of the loop variable can be built as a priority mux (CVA6 pmp.sv
     // `for (i…) … break;  if (i == NrPMPEntries) …`).
     RTLIL::SigSpec current_break_flag;
+    // One flag wire per `break` SITE met so far in the current iteration
+    // (default 0 in the root case, 1 only in the site's own arm, so its
+    // final value is exactly "this site fired").  The statements that follow
+    // a break-containing statement in the same block run behind the
+    // negation of their OR; the shared flag above cannot serve there, since
+    // its final value also includes breaks inside the guarded statements.
+    std::vector<RTLIL::SigSpec> current_break_sites;
 
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
