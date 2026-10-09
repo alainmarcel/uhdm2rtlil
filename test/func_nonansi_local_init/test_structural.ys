@@ -1,0 +1,14 @@
+# Every local must be driven (with the pre-#4212 Surelog th12 / th01 are
+# undriven module wires), and the SRT table must follow its thresholds:
+# div 3 -> th12 8, th01 3; rem 5 -> 1; rem 20 (div 7: th12 11) -> 2;
+# rem -9 (6'b110111, div 0: th12 6) -> -2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_nonansi_local_init
+proc; flatten; opt_clean
+check -assert
+sat -verify -set div 4'd3 -prove t12 6'd8 -prove t01 6'd3
+sat -verify -set div 4'd7 -prove t12 6'd11 -prove t01 6'd4
+sat -verify -set rem 6'd5 -set div 4'd3 -prove q 3'b001
+sat -verify -set rem 6'd20 -set div 4'd7 -prove q 3'b010
+sat -verify -set rem 6'b110111 -set div 4'd0 -prove q 3'b110
+sat -verify -set rem 6'd2 -set div 4'd5 -prove q2 3'b001
