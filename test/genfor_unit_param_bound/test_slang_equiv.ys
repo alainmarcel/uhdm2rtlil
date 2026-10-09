@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang, both reading the two files.  With the
+# pre-#4213 Surelog read_uhdm leaves o_flat and lane undriven and the miter
+# finds a counterexample.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genfor_unit_param_bound
+proc; flatten; opt_clean; setundef -undriven -zero
+rename genfor_unit_param_bound gate
+design -stash gate
+read_slang --single-unit unit_params.sv dut.sv --top genfor_unit_param_bound
+hierarchy -check -top genfor_unit_param_bound
+proc; flatten; opt_clean
+rename genfor_unit_param_bound gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
