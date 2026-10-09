@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched, read_uhdm leaves every element of `q` a
+# combinational loop (test_structural.ys is the gate for that); with the fix the two
+# netlists must agree.  `memory` because read_slang infers a $mem for the array.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top always_ff_dyn_elem_field_write
+flatten; proc; opt -fast; memory; async2sync; setundef -undriven -zero
+rename always_ff_dyn_elem_field_write gold
+design -stash gold
+read_slang dut.sv --top always_ff_dyn_elem_field_write
+hierarchy -check -top always_ff_dyn_elem_field_write
+flatten; proc; opt -fast; memory; async2sync; setundef -undriven -zero
+rename always_ff_dyn_elem_field_write gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 6 -set-init-zero miter

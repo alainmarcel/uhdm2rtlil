@@ -13741,9 +13741,23 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 emit_comb_assign(RTLIL::SigSpec(ew).extract(tgt_off, tgt_w),
                                  nv, proc);
             } else if (case_rule) {
-                RTLIL::Wire* tw = module->wire("$0\\" + ename);
-                RTLIL::SigSpec tgt = (tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew))
-                                         .extract(tgt_off, tgt_w);
+                // Resolve the element's per-process temp through the registry
+                // (find_own_temp_wire), not by guessing its name: the always_ff
+                // temps are `$0\arr[k][W-1:0]`, so the bare `$0\arr[k]` lookup
+                // never found one, the write landed on the REGISTER wire itself,
+                // and with the hold input of the RMW mux reading that same wire
+                // every element closed a combinational loop -- RSD's BTB
+                // (`btbQueue[headPtr].btbWA <= ...` under `else if` in an
+                // always_ff) sent proc_dlatch into a 268k-frame recursion and
+                // read_uhdm died with a bare segfault; Core and the Main_Zynq
+                // tops, which contain it, with it.  (map_to_temp_wire returns
+                // the raw wire here: it bails when current_temp_wires is empty,
+                // which it is for this always_ff path.)
+                RTLIL::Wire* tw = find_own_temp_wire(ename);
+                RTLIL::SigSpec tgt =
+                    (tw && tw->width == ew->width ? RTLIL::SigSpec(tw)
+                                                  : map_to_temp_wire(RTLIL::SigSpec(ew)))
+                        .extract(tgt_off, tgt_w);
                 remove_target_from_switches(case_rule, tgt);
                 case_rule->actions.push_back(RTLIL::SigSig(tgt, nv));
             }
