@@ -1,0 +1,9 @@
+# The two $unit-bounded generate loops must exist: every output driven, and
+# the flattening / lane values right.  With the pre-#4213 Surelog o_flat and
+# lane have no driver at all (check -assert fails); o_lit was always fine.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genfor_unit_param_bound
+proc; flatten; opt_clean
+check -assert
+sat -verify -set a 1 -prove o_flat 2'b01 -prove lane 3'b101 -prove o_lit 2'b01
+sat -verify -set a 0 -prove o_flat 2'b10 -prove lane 3'b010 -prove o_lit 2'b10
