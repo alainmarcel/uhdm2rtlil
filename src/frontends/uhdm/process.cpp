@@ -10212,6 +10212,28 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 
             if (!assigned_to_temp) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
+                // Thread the value under the local's `$0\` temp name as well:
+                // a loop body unrolled by the comb path (vpiFor below) reads the
+                // local through mapped_inflight(), and without this entry the
+                // first lane of RSD CommitStage's DecideCommit read `!trig_o`
+                // from the WIRE -- the process's own final value, a
+                // combinational loop.
+                if (lhs.is_wire()) {
+                    std::string tn = lhs.as_wire()->name.str();
+                    if (tn.compare(0, 3, "$0\\") == 0 && tn.find("$func$") != std::string::npos)
+                        current_comb_values[tn] = rhs;
+                } else if (lhs.chunks().size() == 1 && lhs.chunks().begin()->wire) {
+                    const RTLIL::SigChunk ch = *lhs.chunks().begin();
+                    std::string tn = ch.wire->name.str();
+                    if (tn.compare(0, 3, "$0\\") == 0 && tn.find("$func$") != std::string::npos) {
+                        auto cit = current_comb_values.find(tn);
+                        RTLIL::SigSpec cur = (cit != current_comb_values.end() &&
+                                              cit->second.size() == ch.wire->width)
+                                                 ? cit->second : RTLIL::SigSpec(ch.wire);
+                        cur.replace(ch.offset, rhs.extract(0, std::min(rhs.size(), ch.width)));
+                        current_comb_values[tn] = cur;
+                    }
+                }
                 if (!lhs_name.empty()) {
                     // Don't clobber a `$0\` task-temp mapping with `rhs` —
                     // subsequent partial writes in the same body
@@ -10450,6 +10472,55 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
 // The declaration (formal io_decl or local variable) named `name` of the
 // function / task enclosing `node`.  A select on a formal inside a PACKAGE
 // function carries no Actual_group, so element geometry was lost.
+// `arr[i] = rhs` / `x = rhs` where `arr` / `x` is a LOCAL or formal of an
+// inlined task or void function body and the statement runs through the comb path (the body's for
+// loop is unrolled by import_statement_comb with the body's mapping bridged
+// into current_comb_values).  `arr` is then no module wire: it maps to the
+// local's `$0\` temp, one flat vector of all elements, and the generic LHS
+// import died on "Could not find wire 'arr' for bit select" -- RSD
+// CommitStage's GetInsnPtr (`headOfThisInsn[i] = j + 1`).  Resolve the element
+// slice from the declaration's geometry, as the read path already does.
+bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out) {
+    if (!lhs_expr) return false;
+    int lt = lhs_expr->VpiType();
+    if (lt != vpiRefObj && lt != vpiBitSelect) return false;
+    std::string nm = std::string(lhs_expr->VpiName());
+    if (nm.empty()) return false;
+    const UHDM::any* decl = find_enclosing_tf_decl(lhs_expr, nm);
+    auto it = current_comb_values.find(nm);
+    // Only a task / void-function temp (`$0\<task>$func$...`): a block-local
+    // of an always_comb loop is promoted to its own wire and keeps the
+    // existing comb path.
+    if (it != current_comb_values.end() && it->second.chunks().size() == 1 &&
+        it->second.chunks().begin()->wire &&
+        it->second.chunks().begin()->wire->name.str().find("$func$") == std::string::npos)
+        return false;
+    if (mode_debug)
+        log("    tf_local_lhs: %s decl=%s mapped=%s\n", nm.c_str(), decl ? "yes" : "no",
+            it == current_comb_values.end() ? "no" : log_signal(it->second));
+    if (!decl) return false;
+    if (it == current_comb_values.end() || it->second.empty()) return false;
+    RTLIL::SigSpec cur = it->second;
+    if (lt == vpiRefObj) {
+        // Whole local / formal (`trig_o = 1` under an `if` in the loop body):
+        // the temp itself; emit_comb_assign then threads the value the way it
+        // does for a module signal.
+        if (!cur.is_wire()) return false;
+        lhs_out = cur;
+        return true;
+    }
+    auto bs = any_cast<const UHDM::bit_select*>(lhs_expr);
+    RTLIL::SigSpec idx = import_expression(bs->VpiIndex(), &current_comb_values);
+    if (idx.empty() || !idx.is_fully_const()) return false;
+    int elem_w = 1, outer_lo = 0;
+    bitselect_outer_dim(decl, cur.size(), elem_w, outer_lo);
+    if (elem_w <= 0) return false;
+    int off = (idx.as_const().as_int() - outer_lo) * elem_w;
+    if (off < 0 || off + elem_w > cur.size()) return false;
+    lhs_out = cur.extract(off, elem_w);
+    return true;
+}
+
 const UHDM::any* UhdmImporter::find_enclosing_tf_decl(const UHDM::any* node,
                                                       const std::string& name) {
     for (const UHDM::any* p = node; p; p = p->VpiParent()) {
@@ -15414,7 +15485,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                      lt == vpiIndexedPartSelect || lt == vpiVarSelect);
         bool saved_keep = comb_lhs_keep_base;
         if (keep) comb_lhs_keep_base = true;
-        lhs = import_expression(lhs_expr);
+        if (!tf_local_lhs(lhs_expr, lhs))
+            lhs = import_expression(lhs_expr);
         comb_lhs_keep_base = saved_keep;
     }
 
@@ -15939,7 +16011,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
-        lhs = import_expression(lhs_expr);
+        if (!tf_local_lhs(lhs_expr, lhs))
+            lhs = import_expression(lhs_expr);
     }
 
     // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing
@@ -17663,7 +17736,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // conflicting driver on the module input).
                             comb_lhs_keep_base = (lhs_map_ != nullptr) || llt_ == vpiVarSelect ||
                                                  llt_ == vpiHierPath;
-                            RTLIL::SigSpec lhs_sig = import_expression(lhs, lhs_map_);
+                            RTLIL::SigSpec lhs_sig;
+                            if (!tf_local_lhs(lhs, lhs_sig))
+                                lhs_sig = import_expression(lhs, lhs_map_);
                             comb_lhs_keep_base = false;
                             // Declaration initializer (`automatic logic [3:0]
                             // index = addr - BASE;` in a case arm): the Lhs is
@@ -18239,8 +18314,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             if (current_comb_process && !in_always_ff_body_mode &&
                                     !in_always_ff_context && lhs_sig.is_wire()) {
                                 std::string bn = lhs_sig.as_wire()->name.str();
+                                // A task / void-function local's `$0\` temp
+                                // (no leading backslash) must be threaded too:
+                                // the loop body of RSD CommitStage's
+                                // DecideCommit sets `trig_o = 1` under an `if`
+                                // and the next lane reads `!trig_o` -- unthreaded,
+                                // that read saw the wire's final value.
                                 if (!bn.empty() && bn[0] == '\\')
                                     current_comb_values[bn.substr(1)] = rhs_sig;
+                                else if (bn.compare(0, 3, "$0\\") == 0 &&
+                                         bn.find("$func$") != std::string::npos)
+                                    current_comb_values[bn] = rhs_sig;
                                 seed_alias_elems_inflight(lhs_sig.as_wire(), rhs_sig);
                                 splice_alias_elem_inflight(lhs_sig.as_wire(), 0, rhs_sig);
                                 // A block-local `automatic` temp has a PRIVATE

@@ -10082,7 +10082,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             log("UHDM: Function parameter %s mapped to signal %s\n",
                 ref_name.c_str(), it->second.is_wire() ?
                 it->second.as_wire()->name.c_str() : "const/temp");
-            return it->second;
+            return mapped_inflight(it->second);
         }
     }
 
@@ -12074,7 +12074,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
                     int off = (idx - outer_lo) * elem_w;
                     if (off >= 0 && off + elem_w <= it->second.size()) {
-                        return it->second.extract(off, elem_w);
+                        return mapped_inflight(it->second.extract(off, elem_w));
                     }
                 }
                 // DYNAMIC index into a function formal: the whole mapped
@@ -12101,7 +12101,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     RTLIL::SigSpec off = elem_w == 1 ? slot
                         : module->Mul(NEW_ID, slot, RTLIL::SigSpec(RTLIL::Const(elem_w, iw)));
                     RTLIL::Wire* out = module->addWire(NEW_ID, elem_w);
-                    module->addShiftx(NEW_ID, it->second, off, out);
+                    module->addShiftx(NEW_ID, mapped_inflight(it->second), off, out);
                     if (mode_debug)
                         log("    Dynamic bit-select on function formal %s: $shiftx elem_w=%d\n",
                             signal_name.c_str(), elem_w);
@@ -13769,6 +13769,27 @@ bool UhdmImporter::iface_signal_packed_geometry(const std::string& full, int wir
     if (ew <= 0 || (long long)n_outer * ew != wire_width) return false;
     elem_w = (int)ew;
     return true;
+}
+
+// A task / void-function local read through its mapping resolves to the
+// local's `$0\` temp WIRE.  Inside a loop body that the comb path unrolls
+// (inline_task_body_comb's vpiFor bridging) assignments to that local are
+// SSA-threaded under the temp's name (emit_comb_assign,
+// record_comb_partial_write), so a read must return the IN-FLIGHT value,
+// not the wire: `if (!trig_o) begin trig_o = 1; idx_o = i; end` over the
+// lanes of RSD CommitStage's DecideCommit read the wire's FINAL value
+// (feedback through the process output) and the first-match priority
+// collapsed.  `mapped` may be a slice of the temp (an array element).
+RTLIL::SigSpec UhdmImporter::mapped_inflight(const RTLIL::SigSpec& mapped) {
+    if (mapped.chunks().size() != 1) return mapped;
+    const RTLIL::SigChunk ch = *mapped.chunks().begin();
+    if (!ch.wire) return mapped;
+    std::string wn = ch.wire->name.str();
+    if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+    if (wn.compare(0, 3, "$0\\") != 0 || wn.find("$func$") == std::string::npos) return mapped;
+    auto f = current_comb_values.find(wn);
+    if (f == current_comb_values.end() || f->second.size() != ch.wire->width) return mapped;
+    return f->second.extract(ch.offset, ch.width);
 }
 
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
