@@ -101,15 +101,21 @@ def main():
     def rewrite(m):
         dirn, typ, name, dims = m.group("dir"), " ".join(m.group("type").split()), m.group("name"), m.group("dims")
         dl = re.findall(r"\[[^\]]*\]", dims)
-        if len(dl) != 1:
-            return m.group(0)              # multi-dimensional unpacked: leave as is
+        # A multi-dimensional unpacked port (`x [DW][SRC]`, RSD SourceCAM's
+        # dispatchedSrcRegNum) is flattened too, row-major with the FIRST
+        # dimension slowest: element [i][j] at ((i*C)+j)*ew.  Left as is, the
+        # two frontends ordered its elements differently and the miter fed
+        # the DUT different operands -- SourceCAM, ReadyBitTable and
+        # DecodedBranchResolver all `differs` on nothing.
         # an `ifdef line glued in front of the direction keyword stays put: the
         # regex anchors on the direction keyword, so `typ` is the type only.
         toks = [t for t in typ.split() if t not in NETKW]
         elem = " ".join(toks) if toks else "logic"
         if re.match(r"^\[", elem):         # `logic [31:0]` -> `logic [31:0]`
             elem = "logic " + elem
-        cnt, lo = dim_count(dl[0])
+        cls = [dim_count(d) for d in dl]          # (count, low) per dimension
+        cnt = "*".join(f"({c})" for c, _ in cls) if len(cls) > 1 else cls[0][0]
+        lo = cls[0][1]
         # Element width: `$bits(T)` for a named type; for a plain vector
         # (`logic [31:0]`, `logic`) the product of its packed ranges instead --
         # read_uhdm evaluates `$bits(logic [31:0])` as 1 (a reader bug tracked
@@ -120,7 +126,7 @@ def main():
             ew = "*".join(dim_count(d)[0] for d in pk) if pk else "1"
         else:
             ew = f"$bits({elem})"
-        arrays.append((dirn, elem, name, dl[0], cnt, lo, ew))
+        arrays.append((dirn, elem, name, "".join(dl), cnt, lo, ew, cls))
         return f"{dirn} logic [({ew})*{cnt}-1:0] {name}_flat"
     new_ports = PORT_RE.sub(rewrite, ports)
     # A port initialiser (`output logic [4:0] counter = 5'd0`, hdmi
@@ -152,20 +158,31 @@ def main():
          f"// its unpacked-array ports become one vector each, element 0 at the LSBs,",
          f"// so read_uhdm, read_slang and the Verilator co-sim see the same port list.",
          f"module {a.module}_flat{pre.rstrip()}{(' ' + params) if params else ''} ({new_ports});"]
-    for dirn, elem, name, dim, cnt, lo, ew in arrays:
+    for dirn, elem, name, dim, cnt, lo, ew, cls in arrays:
         L.append(f"  {elem} {name} {dim};")
-    for dirn, elem, name, dim, cnt, lo, ew in arrays:
-        L.append(f"  for (genvar gi = 0; gi < {cnt}; gi++) begin : g_flat_{name}")
+    for dirn, elem, name, dim, cnt, lo, ew, cls in arrays:
+        # One genvar per dimension; the flat index is row-major over them.
+        gv = [f"g{k}" for k in range(len(cls))]
+        for k, (c, l) in enumerate(cls):
+            ind = "  " * (k + 1)
+            blk = f"g_flat_{name}" if k == 0 else f"g_flat_{name}_{k}"
+            L.append(f"{ind}for (genvar {gv[k]} = 0; {gv[k]} < {c}; {gv[k]}++) begin : {blk}")
+        sel = "".join(f"[{l} + {gv[k]}]" for k, (c, l) in enumerate(cls))
+        idx = gv[0]
+        for k in range(1, len(cls)):
+            idx = f"({idx})*({cls[k][0]}) + {gv[k]}"
+        ind = "  " * (len(cls) + 1)
         if dirn == "input":
-            L.append(f"    assign {name}[{lo} + gi] = {name}_flat[gi*({ew}) +: ({ew})];")
+            L.append(f"{ind}assign {name}{sel} = {name}_flat[({idx})*({ew}) +: ({ew})];")
         else:
-            L.append(f"    assign {name}_flat[gi*({ew}) +: ({ew})] = {name}[{lo} + gi];")
-        L.append("  end")
+            L.append(f"{ind}assign {name}_flat[({idx})*({ew}) +: ({ew})] = {name}{sel};")
+        for k in range(len(cls) - 1, -1, -1):
+            L.append("  " * (k + 1) + "end")
     L.append(f"  {a.module} u_dut (.*);")
     L.append("endmodule")
     Path(a.out).write_text("\n".join(L) + "\n")
     print(f"# gen_flat_wrapper: {a.module}_flat with {len(arrays)} flattened array port(s): "
-          + ", ".join(n for _, _, n, _, _, _, _ in arrays))
+          + ", ".join(n for _, _, n, _, _, _, _, _ in arrays))
 
 
 if __name__ == "__main__":
