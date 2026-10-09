@@ -1,0 +1,21 @@
+# read_slang needs --single-unit for the $unit localparams of unit_params.sv to be
+# visible in dut.sv (one compilation unit, the way the RSD manifest reads it).
+# SAT miter, read_uhdm vs read_slang, both reading the two files.  The unpacked
+# PORT `x` stays 1-D: the two frontends flatten a multi-dimensional unpacked
+# port in different element orders, which is a harness matter (the sweeps' flat
+# shim), not this defect -- the 2-D array lives inside.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unit_param_unpacked_port_dim
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename unit_param_unpacked_port_dim gold
+design -stash gold
+read_slang --single-unit unit_params.sv dut.sv --top unit_param_unpacked_port_dim
+hierarchy -check -top unit_param_unpacked_port_dim
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename unit_param_unpacked_port_dim gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 2 -set-init-zero miter

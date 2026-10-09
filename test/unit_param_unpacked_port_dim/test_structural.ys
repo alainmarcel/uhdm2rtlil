@@ -1,0 +1,9 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unit_param_unpacked_port_dim
+# The port x and the local array y keep their $unit-sized unpacked dimensions:
+# x is W = 3 bits and y is W*K*2 = 12, so `s = y[0][0] + y[W-1][K-1]` is a
+# 2-bit $add on two real element slices.  With the dimension mis-classified as associative the read
+# itself aborts (a 1,953,068,646-bit wire), so reaching this is half the gate.
+select -assert-count 1 w:x
+select -assert-count 1 w:y
+select -assert-count 1 t:$add r:A_WIDTH=2 %i
