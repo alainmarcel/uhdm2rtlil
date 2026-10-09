@@ -17928,6 +17928,58 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 log("    Detected nested struct member access: base_path='%s', final_member='%s'\n", 
                     base_path.c_str(), final_member.c_str());
             
+            // `p.arr[idx].field` on an interface UNPACKED-array member
+            // (RSD DCacheMemoryReqPortMultiplexer: `port.mshrMemMuxIn[portIn]
+            // .addr`): the member is one flat wire (element-major, element 0
+            // at the LSBs) with its element struct type and element width
+            // recorded by the modport / instance flattening.  Nothing below
+            // knows that shape -- the base `p` is an interface port with no
+            // struct typespec -- and the read came back as a constant X
+            // (memAddr / memData / memWE of the real row).  Select the
+            // element, then the member inside it.
+            if (dot_count == 2 && base_path.back() == ']') {
+                size_t br = base_path.find('[');
+                std::string pfx = br == std::string::npos ? "" : base_path.substr(0, br);
+                auto wit = name_map.find(pfx);
+                auto ewi = iface_array_elem_width_.find(pfx);
+                auto tsi = iface_signal_struct_ts_.find(pfx);
+                auto pes = uhdm_hier->Path_elems();
+                if (!pfx.empty() && wit != name_map.end() && wit->second &&
+                    ewi != iface_array_elem_width_.end() && ewi->second > 1 &&
+                    tsi != iface_signal_struct_ts_.end() && tsi->second &&
+                    pes && pes->size() == 3 && (*pes)[1]->UhdmType() == uhdmbit_select) {
+                    RTLIL::Wire* fw = wit->second;
+                    int ew = ewi->second;
+                    RTLIL::SigSpec idx = import_expression(
+                        any_cast<const bit_select*>((*pes)[1])->VpiIndex(), input_mapping);
+                    int off = 0, mw = 0;
+                    if (!idx.empty() && fw->width % ew == 0 &&
+                        calculate_struct_member_offset(tsi->second, final_member, inst, off, mw) &&
+                        mw > 0 && off + mw <= ew) {
+                        if (idx.is_fully_const()) {
+                            int i = idx.as_const().as_int();
+                            if (i >= 0 && (i + 1) * ew <= fw->width) {
+                                if (mode_debug)
+                                    log("    hier_path: iface array elem field %s -> \\%s[%d+:%d]\n",
+                                        path_name.c_str(), pfx.c_str(), i * ew + off, mw);
+                                return RTLIL::SigSpec(fw).extract(i * ew + off, mw);
+                            }
+                        } else {
+                            RTLIL::Wire* mulw = module->addWire(NEW_ID, std::max(idx.size(), 32));
+                            module->addMul(NEW_ID, idx, RTLIL::Const(ew, 32), mulw);
+                            RTLIL::Wire* posw = module->addWire(NEW_ID, mulw->width);
+                            module->addAdd(NEW_ID, RTLIL::SigSpec(mulw), RTLIL::Const(off, 32), posw);
+                            RTLIL::Wire* ow = module->addWire(NEW_ID, mw);
+                            module->addShiftx(NEW_ID, RTLIL::SigSpec(fw), RTLIL::SigSpec(posw), ow);
+                            if (mode_debug)
+                                log("    hier_path: iface array elem field %s -> $shiftx(\\%s, idx*%d+%d) %d bits\n",
+                                    path_name.c_str(), pfx.c_str(), ew, off, mw);
+                            return RTLIL::SigSpec(ow);
+                        }
+                    }
+                }
+            }
+
             // First, find the first-level struct and member
             size_t first_dot = path_name.find('.');
             std::string struct_name = path_name.substr(0, first_dot);  // e.g., "in_struct"
