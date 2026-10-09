@@ -1,0 +1,17 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched read_uhdm writes column
+# 1 - j of the unpacked arrays and the miter finds a counterexample at once.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_2d_comb_dyn_row
+proc; flatten; opt_clean
+rename unpacked_2d_comb_dyn_row gate
+design -stash gate
+read_slang dut.sv --top unpacked_2d_comb_dyn_row
+hierarchy -check -top unpacked_2d_comb_dyn_row
+proc; flatten; opt_clean
+rename unpacked_2d_comb_dyn_row gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
