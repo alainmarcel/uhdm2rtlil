@@ -3007,12 +3007,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         RTLIL::Memory* memory = module->memories.at(mem_id);
                         const expr* addr_expr = nullptr;
                         int psel_lo = 0, psel_hi = 0;
+                        RTLIL::SigSpec lin_addr;
                         bool have_psel = parse_mem_partial_select(vs, addr_expr, psel_lo, psel_hi,
-                                                                  memory->width);
+                                                                  memory->width, &lin_addr, input_mapping);
                         if (!addr_expr && !exprs->empty())
                             addr_expr = (*exprs)[0];   // plain `mem[addr]` read (no slice)
                         if (addr_expr) {
-                            RTLIL::SigSpec addr = import_expression(addr_expr, input_mapping);
+                            RTLIL::SigSpec addr = lin_addr.empty() ? import_expression(addr_expr, input_mapping) : lin_addr;
                             RTLIL::Cell* memrd_cell = module->addCell(new_id("memrd_" + base_name), ID($memrd));
                             memrd_cell->setParam(ID::MEMID, RTLIL::Const(mem_id.str()));
                             memrd_cell->setParam(ID::ABITS, GetSize(addr));

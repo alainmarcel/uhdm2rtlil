@@ -1189,6 +1189,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         // Get packed dimension (width) and unpacked dimension (size).
         int width = 1;
         int size = 1;
+        std::vector<int> net_dim_sizes, net_dim_los;
         if (uhdm_net->Typespec()) {
             auto ref_typespec = uhdm_net->Typespec();
             const UHDM::typespec* typespec = nullptr;
@@ -1214,8 +1215,11 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                             if (r->Left_expr() && r->Right_expr()) {
                                 RTLIL::SigSpec lspec = import_expression(r->Left_expr());
                                 RTLIL::SigSpec rspec = import_expression(r->Right_expr());
-                                if (lspec.is_fully_const() && rspec.is_fully_const())
+                                if (lspec.is_fully_const() && rspec.is_fully_const()) {
                                     range_total *= std::abs(lspec.as_int() - rspec.as_int()) + 1;
+                                    net_dim_sizes.push_back(std::abs(lspec.as_int() - rspec.as_int()) + 1);
+                                    net_dim_los.push_back(std::min(lspec.as_int(), rspec.as_int()));
+                                }
                             }
                         }
                     }
@@ -1233,6 +1237,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         memory->width = width;
         memory->size = size;
         memory->start_offset = 0;
+        stamp_mem_unpacked_dims(memory, net_dim_sizes, net_dim_los);
         
         // Add source attribute
         add_src_attribute(memory->attributes, uhdm_net);

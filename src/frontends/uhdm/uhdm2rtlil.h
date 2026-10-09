@@ -744,6 +744,11 @@ struct UhdmImporter {
         RTLIL::SigSpec data;
         RTLIL::SigSpec condition;  // Enable condition
         int iteration;  // For unrolled loops
+        // A write to PART of the word (`mem[i][j][b]` on a multi-dimensional
+        // memory): data is placed at slice_lo and only those bits are enabled.
+        // slice_w == 0 means the whole word.
+        int slice_lo = 0;
+        int slice_w = 0;
     };
     std::vector<ProcessMemoryWrite> pending_memory_writes;
     
@@ -1386,9 +1391,28 @@ struct UhdmImporter {
     // `[base-:w]`).  Returns false if there is no selector or it isn't constant.
     // `mem_word_width` lets the parser fold a MIDDLE index (`mem[addr][j][sel]`,
     // where the word is a packed array) into lo/hi; pass 0 when unknown.
+    // `lin_addr` (when given) receives the LINEARIZED address of a memory
+    // with two or more unpacked dimensions (`a[i][j]` on `logic [W-1:0]
+    // a[R][C]` -> (i-lo0)*C + (j-lo1)); the callers use it instead of
+    // importing `addr_expr`.  Empty for a one-dimensional memory.
     bool parse_mem_partial_select(const UHDM::var_select* vs,
                                   const UHDM::expr*& addr_expr, int& lo, int& hi,
-                                  int mem_word_width = 0);
+                                  int mem_word_width,
+                                  RTLIL::SigSpec* lin_addr = nullptr,
+                                  const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
+    // Number of unpacked dimensions recorded on a memory (1 when none recorded).
+    int mem_unpacked_dims(const RTLIL::Memory* mem);
+    // Row-major address of `idx` (one expression per unpacked dimension).
+    bool mem_linear_address(RTLIL::Memory* mem, const std::vector<const UHDM::any*>& idx,
+                            RTLIL::SigSpec& addr,
+                            const std::map<std::string, RTLIL::SigSpec>* input_mapping);
+    // Same, from already-imported index values.
+    bool mem_linear_address_specs(RTLIL::Memory* mem, const std::vector<RTLIL::SigSpec>& idx,
+                                  RTLIL::SigSpec& addr);
+    // Stamp the per-dimension geometry of a multi-dimensional unpacked array
+    // on its memory (attributes read back by mem_unpacked_dims / mem_linear_address).
+    void stamp_mem_unpacked_dims(RTLIL::Memory* mem, const std::vector<int>& sizes,
+                                 const std::vector<int>& los);
     void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);
     bool has_for_loop(const any* stmt);
     bool needs_sync_path(const any* stmt, bool inside_conditional = false);
