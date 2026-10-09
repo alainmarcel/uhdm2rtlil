@@ -1,0 +1,12 @@
+# The typedef-element ports keep their packed dimension: DW = 2 elements of
+# 5 bits, S5 = {a[3:0], b}, so isf[1].a is isf[9:6] and isf[0].a is isf[4:1].
+# With the pre-#4211 Surelog isf, isg and og read 5 bits each and the
+# 10-bit -set values below do not even fit.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ansi_grouped_typedef_port_dims
+proc; flatten; opt_clean
+check -assert
+sat -verify -set sel 1 -set isf 10'b0011000100 -set isg 10'b0 -prove o 4'b0001
+sat -verify -set sel 0 -set isf 10'b0 -set isg 10'b0111001100 -prove o 4'b0110
+sat -verify -set en 2'b11 -set isf 10'b1010101010 -set isg 10'b0 -prove og 10'b1010101010
+sat -verify -set en 2'b00 -set isf 10'b1010101010 -set isg 10'b0101010101 -prove og 10'b0101010101

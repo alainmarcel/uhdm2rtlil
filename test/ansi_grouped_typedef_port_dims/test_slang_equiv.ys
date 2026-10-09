@@ -1,0 +1,17 @@
+# SAT miter, read_uhdm vs read_slang.  With the pre-#4211 Surelog read_uhdm
+# gives isf, isg and og 5 bits each and the miter stops at "No matching port".
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ansi_grouped_typedef_port_dims
+proc; flatten; opt_clean
+rename ansi_grouped_typedef_port_dims gate
+design -stash gate
+read_slang dut.sv --top ansi_grouped_typedef_port_dims
+hierarchy -check -top ansi_grouped_typedef_port_dims
+proc; flatten; opt_clean
+rename ansi_grouped_typedef_port_dims gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
