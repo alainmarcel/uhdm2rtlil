@@ -1,0 +1,17 @@
+# SAT miter, read_uhdm vs read_slang.  With the pre-#4212 Surelog q is a
+# function of two undriven wires and the miter finds a counterexample.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_nonansi_local_init
+proc; flatten; opt_clean; setundef -undriven -zero
+rename func_nonansi_local_init gate
+design -stash gate
+read_slang dut.sv --top func_nonansi_local_init
+hierarchy -check -top func_nonansi_local_init
+proc; flatten; opt_clean
+rename func_nonansi_local_init gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
