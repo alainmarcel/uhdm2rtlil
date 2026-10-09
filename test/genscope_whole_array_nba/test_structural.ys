@@ -1,0 +1,9 @@
+# The generate-scope array written whole by the always_ff must be registers,
+# not a writer-less $memory: unpatched read_uhdm leaves one $mem_v2 / $memrd
+# with no write port and the outputs are X.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top genscope_whole_array_nba
+proc; flatten; memory_collect; opt_clean
+select -assert-count 0 t:$mem_v2
+select -assert-count 0 t:$memrd
+select -assert-count 0 t:$memrd_v2

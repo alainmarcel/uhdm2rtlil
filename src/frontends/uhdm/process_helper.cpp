@@ -618,7 +618,24 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Expand to per-element so the async-ff temp-wire path
                         // finds them (tcb_dev_gpio_cdc; else "Signal arr not
                         // found in module").  lhs_expr stays the whole-array LHS.
-                        if (int alow; !module->wire(RTLIL::escape_id(nm)) &&
+                        // Inside a generate scope the flat wire of a
+                        // whole-accessed array declared there is
+                        // `<scope>.<name>` (module.cpp's gen-scope flat
+                        // path).  The bare lookup misses it, and the
+                        // per-element expansion below probes BARE element
+                        // names too, so it registered NOTHING: no temp, no
+                        // sync update, and the NBA landed on the raw wire in
+                        // the root case -- RSD BlockMultiPortRAM's
+                        // `raReg <= ra` (WRITE_NUM > 1 arm) became a
+                        // combinational assign, one cycle early.
+                        RTLIL::Wire* scoped_flat = nullptr;
+                        if (!module->wire(RTLIL::escape_id(nm)) && !gen_scope_stack.empty())
+                            scoped_flat = scoped_wire(nm);
+                        if (scoped_flat) {
+                            sig.name = RTLIL::unescape_id(scoped_flat->name);
+                            sig.is_part_select = false;
+                            signals.push_back(sig);
+                        } else if (int alow; !module->wire(RTLIL::escape_id(nm)) &&
                             (alow = expanded_array_low(nm)) >= 0) {
                             for (int i = alow; module->wire(RTLIL::escape_id(
                                      nm + "[" + std::to_string(i) + "]")); i++) {

@@ -4987,9 +4987,28 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     // undriven wires and the module was EMPTY (verilog-pcie dma_ram_demux:
     // 4096 undriven, dma_if_pcie_us: 19968).
     std::set<std::string> gen_scope_dyn_indexed;
+    // Arrays an always block of THIS scope reads or writes AS A WHOLE
+    // (`raReg <= ra` in RSD BlockMultiPortRAM's `if (WRITE_NUM > 1)` arm):
+    // the scope-whole check below looked at the scope's cont_assigns and
+    // instance actuals only, so the array became a $memory that the
+    // whole-array write could not drive (a stray 1-bit `genblk1.raReg`
+    // wire took the write, every $memrd of it returned X).  The exact
+    // ref_obj is the whole-array use; a bit_select / var_select / part_select
+    // is an element access and is skipped here (they derive from ref_obj).
+    // Only CLOCKED processes count: an always_comb that writes the array
+    // whole (`acc = '{default: '0}` + per-element chaining, ibex_alu's
+    // bitcnt tree in test/genscope_comb_arrays) keeps the comb-only
+    // per-element path, which the whole-accessed flat wire would break.
+    std::set<std::string> gen_scope_whole_in_proc;
+    bool scan_in_clocked = false;
     {
         std::function<void(const UHDM::any*)> scan_dyn = [&](const UHDM::any* n) {
             if (!n) return;
+            if (n->UhdmType() == uhdmref_obj) {
+                std::string b = std::string(any_cast<const UHDM::ref_obj*>(n)->VpiName());
+                if (!b.empty() && scan_in_clocked) gen_scope_whole_in_proc.insert(b);
+                return;
+            }
             if (n->VpiType() == vpiBitSelect) {
                 auto bs = any_cast<const bit_select*>(n);
                 if (bs->VpiIndex() && offset_is_dynamic(bs->VpiIndex())) {
@@ -5051,8 +5070,26 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         };
         if (uhdm_scope->Process())
             for (auto pr : *uhdm_scope->Process())
-                if (auto ps = dynamic_cast<const UHDM::process_stmt*>(pr))
+                if (auto ps = dynamic_cast<const UHDM::process_stmt*>(pr)) {
+                    scan_in_clocked = false;
+                    if (auto al = dynamic_cast<const UHDM::always*>(ps)) {
+                        if (al->VpiAlwaysType() == vpiAlwaysFF) scan_in_clocked = true;
+                        else if (auto ec = dynamic_cast<const UHDM::event_control*>(ps->Stmt()))
+                            if (auto cond = dynamic_cast<const UHDM::operation*>(ec->VpiCondition())) {
+                                std::function<bool(const UHDM::operation*)> edged =
+                                    [&](const UHDM::operation* o) -> bool {
+                                    if (!o) return false;
+                                    if (o->VpiOpType() == vpiPosedgeOp || o->VpiOpType() == vpiNegedgeOp) return true;
+                                    if (o->Operands())
+                                        for (auto x : *o->Operands())
+                                            if (edged(dynamic_cast<const UHDM::operation*>(x))) return true;
+                                    return false;
+                                };
+                                scan_in_clocked = edged(cond);
+                            }
+                    }
                     scan_dyn(ps->Stmt());
+                }
     }
 
     // Unpacked-array NETS declared in the generate scope (`pmp_cfg_t
@@ -5296,6 +5333,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                     scope_whole = true;
                                     break;
                                 }
+                        if (!scope_whole && gen_scope_whole_in_proc.count(var_name))
+                            scope_whole = true;
                         if (!scope_whole && uhdm_scope->Modules())
                             for (auto mi2 : *uhdm_scope->Modules()) {
                                 if (!mi2->Ports()) continue;
