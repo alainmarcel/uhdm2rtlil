@@ -14557,7 +14557,9 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             if (dim2_size > 0) {
                 // The range spans sub-elements of the second packed dim.
                 int sub_w = elem_w / dim2_size;
-                int pos = (dim2_l < dim2_r)
+                // An ascending PACKED second range mirrors; an UNPACKED one
+                // never does (`logic a[4][2]`: column j is at j).
+                int pos = (dim2_l < dim2_r && !base_is_unpacked)
                               ? (std::max(dim2_l, dim2_r) - std::max(l, r))
                               : (lo - std::min(dim2_l, dim2_r));
                 if (pos < 0) return false;
@@ -14577,7 +14579,11 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                 // and direction).
                 int sub_w = elem_w / dim2_size;
                 write_w = sub_w;
-                bool asc2 = dim2_l < dim2_r;
+                // Same as the first dimension (mirror_outer): only a PACKED
+                // ascending range mirrors.  RSD SourceCAM's
+                // `nextSrcReady[dispatchPtr[i]][j]` on `logic x[N][SRC]` wrote
+                // column 1 - j and swapped the two operands' ready bits.
+                bool asc2 = (dim2_l < dim2_r) && !base_is_unpacked;
                 if (i1.is_fully_const()) {
                     int k = i1.as_const().as_int();
                     int pos = asc2 ? (std::max(dim2_l, dim2_r) - k)

@@ -1,0 +1,9 @@
+# Row r = 2: a[2][1] is flat bit 5, b[2][0..1] bits 4..5; unpatched read_uhdm
+# puts a[2][1] at bit 4 and b's columns swapped.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_2d_comb_dyn_row
+proc; flatten; opt_clean
+check -assert
+sat -verify -set r 2'd2 -set v 1 -set base_p 8'h00 -prove o_p 8'b00100000 -prove q_p 8'b00010000
+sat -verify -set r 2'd0 -set v 1 -set base_p 8'hff -prove o_p 8'hff -prove q_p 8'b11111101
+sat -verify -set r 2'd1 -set v 0 -set base_p 8'hff -prove o_p 8'b11110111
