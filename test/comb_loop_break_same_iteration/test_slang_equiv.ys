@@ -1,0 +1,16 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched the miter finds valid = 00.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_loop_break_same_iteration
+proc; flatten; opt_clean
+rename comb_loop_break_same_iteration gate
+design -stash gate
+read_slang dut.sv --top comb_loop_break_same_iteration
+hierarchy -check -top comb_loop_break_same_iteration
+proc; flatten; opt_clean
+rename comb_loop_break_same_iteration gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
