@@ -1143,6 +1143,7 @@ struct UhdmImporter {
     void import_assignment_sync(const UHDM::assignment* uhdm_assign, RTLIL::SyncRule* sync);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::CaseRule* case_rule);
+    bool emit_dynamic_expanded_elem_write_sync(const assignment* uhdm_assign);
     bool emit_dynamic_indexed_part_select_write(
         const UHDM::indexed_part_select* ips,
         const UHDM::any* rhs_any,
