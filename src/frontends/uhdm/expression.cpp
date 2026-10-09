@@ -2482,7 +2482,25 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (is_accumulative && !current_accumulator.empty()) {
                         auto it = input_mapping.find(accumulator_var);
                         if (it != input_mapping.end()) {
-                            case_rule->actions.push_back(RTLIL::SigSig(it->second, current_accumulator));
+                            // Size the accumulated value to the variable, as
+                            // every other assignment site in this inliner does.
+                            // `evicted = (evicted << 1) + (state[...] ? 0 : 1)`
+                            // in RSD's TreeLRU_CalcEvictedWay accumulates in
+                            // 64-bit integer arithmetic while `evicted` is a
+                            // 1-bit DCacheWayPath at DCACHE_WAY_NUM == 1, and an
+                            // action whose sides differ in width is illegal RTLIL
+                            // that aborts the next pass removing a wire
+                            // (`Assert size() == other->size()' through
+                            // CaseRule::rewrite_sigspecs2) -- for read_uhdm the
+                            // interface cleanup, so the whole read died.
+                            RTLIL::SigSpec acc_val = current_accumulator;
+                            if (acc_val.size() != it->second.size()) {
+                                if (acc_val.size() < it->second.size())
+                                    acc_val.extend_u0(it->second.size());
+                                else
+                                    acc_val = acc_val.extract(0, it->second.size());
+                            }
+                            case_rule->actions.push_back(RTLIL::SigSig(it->second, acc_val));
                             log("UHDM: Created final accumulator assignment for '%s'\n", accumulator_var.c_str());
                         }
                     }
