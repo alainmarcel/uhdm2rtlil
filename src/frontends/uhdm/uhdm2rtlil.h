@@ -1233,7 +1233,8 @@ struct UhdmImporter {
     // `import_statement_comb` (a `void function` used procedurally).
     void import_tf_call_comb(const UHDM::tf_call* tc,
                              const UHDM::task_func* task_def,
-                             RTLIL::Process* proc);
+                             RTLIL::Process* proc,
+                             const std::map<std::string, RTLIL::SigSpec>* outer_mapping = nullptr);
     void inline_task_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
                                std::map<std::string, RTLIL::SigSpec>& task_mapping,
                                const std::string& context, const std::string& block_prefix,

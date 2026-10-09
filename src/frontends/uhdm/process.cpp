@@ -9559,9 +9559,15 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
 // The two callers differ only in which accessor returns the callee
 // definition; everything past that point reads from the common
 // `task_func` base.
+// `outer_mapping` is set for a call made from INSIDE an inlined task /
+// void-function body (inline_task_body_comb): the actuals are then that
+// body's locals and must resolve through its mapping -- RSD CommitStage's
+// `DecideCommit` calls `GetInsnPtr(headOfThisInsn, tailOfThisInsn, last)`
+// on its own locals.
 void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                                        const UHDM::task_func* task_def,
-                                       RTLIL::Process* proc) {
+                                       RTLIL::Process* proc,
+                                       const std::map<std::string, RTLIL::SigSpec>* outer_mapping) {
     if (!task_def) {
         log_warning("Tf-call has no callee definition\n");
         return;
@@ -9626,7 +9632,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 auto arg = (*args)[arg_idx];
                 RTLIL::SigSpec arg_val;
                 if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
-                    arg_val = import_expression(arg_expr);
+                    arg_val = import_expression(arg_expr, outer_mapping);
                 }
                 // Process action: assign caller arg to task input temp wire
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_val));
@@ -9637,7 +9643,10 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 task_mapping[param_name] = RTLIL::SigSpec(temp_wire);
                 auto arg = (*args)[arg_idx];
                 if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
-                    RTLIL::SigSpec caller_out = import_expression(arg_expr);
+                    // Through the outer body's mapping a local actual is its
+                    // `$0\` temp wire; the write-back below then lands on
+                    // that temp like an assignment in the body would.
+                    RTLIL::SigSpec caller_out = import_expression(arg_expr, outer_mapping);
                     output_targets[param_name] = caller_out;
                 }
             }
@@ -10270,6 +10279,24 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                 else
                     current_comb_values.erase(name);
             }
+            break;
+        }
+        case vpiFuncCall:
+        case vpiTaskCall: {
+            // A void-function / task call STATEMENT inside the body
+            // (`GetInsnPtr(headOfThisInsn, tailOfThisInsn, last);` inside
+            // RSD CommitStage's DecideCommit): inline the callee with this
+            // body's locals as its actuals.  Unhandled, its outputs were
+            // never assigned -- "Reference to unknown signal" warnings, then
+            // `Assert size() == other->size()` in rtlil.cc and a read-fail.
+            const UHDM::task_func* callee = nullptr;
+            if (auto fc = dynamic_cast<const UHDM::func_call*>(stmt)) callee = fc->Function();
+            else if (auto tk = dynamic_cast<const UHDM::task_call*>(stmt)) callee = tk->Task();
+            auto tcall = dynamic_cast<const UHDM::tf_call*>(stmt);
+            if (callee && tcall)
+                import_tf_call_comb(tcall, callee, proc, &task_mapping);
+            else
+                log_warning("Call statement in task body has no callee definition\n");
             break;
         }
         case vpiReturn:
