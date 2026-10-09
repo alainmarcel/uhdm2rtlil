@@ -10134,10 +10134,43 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                     if (!task_temp.empty()) {
                         RTLIL::SigSpec idx_sig = import_expression(
                             bs->VpiIndex(), &task_mapping);
+                        // Element geometry of an UNPACKED-array local / formal
+                        // (`logic [1:0] t[4]` -> 2-bit elements of the 8-bit
+                        // temp): `t[1] = ...` wrote ONE BIT at bit 1 before
+                        // (RSD CommitStage's per-lane `recovery[i]` /
+                        // `opRefetchType[i]` writes in DecideCommit).
+                        int elem_w = 1, outer_lo = 0;
+                        if (const UHDM::any* d = find_enclosing_tf_decl(bs, base))
+                            bitselect_outer_dim(d, task_temp.size(), elem_w, outer_lo);
+                        if (elem_w <= 0 || elem_w > task_temp.size()) elem_w = 1;
                         if (idx_sig.is_fully_const()) {
                             int idx = idx_sig.as_const().as_int();
-                            if (idx >= 0 && idx < task_temp.size())
-                                lhs = task_temp.extract(idx, 1);
+                            int off = (idx - outer_lo) * elem_w;
+                            if (off >= 0 && off + elem_w <= task_temp.size())
+                                lhs = task_temp.extract(off, elem_w);
+                        } else if (!rhs.empty() && elem_w > 1) {
+                            // Dynamic element index: one case per element.
+                            int n = task_temp.size() / elem_w;
+                            int idx_w = idx_sig.size();
+                            int max_cases = n;
+                            if (idx_w > 0 && idx_w < 31)
+                                max_cases = std::min(n, 1 << idx_w);
+                            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                            sw->signal = idx_sig;
+                            add_src_attribute(sw->attributes, a_src);
+                            RTLIL::SigSpec rhs_elem = rhs;
+                            if (rhs_elem.size() < elem_w) rhs_elem.extend_u0(elem_w);
+                            else if (rhs_elem.size() > elem_w) rhs_elem = rhs_elem.extract(0, elem_w);
+                            for (int i = 0; i < max_cases; i++) {
+                                RTLIL::CaseRule* cr = new RTLIL::CaseRule;
+                                cr->compare.push_back(
+                                    RTLIL::SigSpec(RTLIL::Const(i + outer_lo, idx_w)));
+                                cr->actions.push_back(RTLIL::SigSig(
+                                    task_temp.extract(i * elem_w, elem_w), rhs_elem));
+                                sw->cases.push_back(cr);
+                            }
+                            proc->root_case.switches.push_back(sw);
+                            dyn_bit_select_handled = true;
                         } else if (!rhs.empty()) {
                             // Dynamic index: emit a switch on `idx_sig` with
                             // one case per valid bit position, each writing
