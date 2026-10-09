@@ -1,0 +1,49 @@
+# VeeR EL2 (chipsalliance/Cores-VeeR-EL2): the RV32IMC core sv-tests builds as
+# `veer-el2_wrapper` -- the core, its IFU/DEC/EXU/LSU/DBG/PIC/PMP/DMA blocks,
+# the lockstep shadow and the rv* primitive library, 92 synthesizable modules.
+# A CORE sweep with its own action (like scr1, ibex, rp32, veer-eh1 and rsd),
+# not an external-IP family: it is one core closure, and the cores
+# chipsalliance/sv-tests covers get an individual sweep each.
+#
+# EL2 was only PARTLY covered before this sweep: its instances inside the
+# Caliptra chip (sweep-caliptra.yml) were swept, never the standalone core at
+# its own default configuration.
+#
+# The sources are a shallow clone pinned by test/ext_ip/veer-el2.json (the
+# commit chipsalliance/sv-tests itself pins), which core_sweep.py fetches.  As
+# with EH1 the core ships NO defines: the manifest's "generate" step runs
+# configs/veer.config (perl) to produce config/common_defines.vh and the
+# el2_param / pdef headers.  EL2's copy of that script `use`s Bit::Vector
+# without ever calling it, so the step writes a stub onto PERL5LIB rather than
+# requiring a perl module no runner has.
+name: Sweep veer-el2
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 5 * * *"   # nightly 05:33 UTC, after rsd's 04:33
+
+concurrency:
+  group: sweep-veer-el2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: veer-el2
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 240
+      # SHARD instead of running miters concurrently, the split veer-eh1,
+      # caliptra and cva6 use: the heavy rows are whole-core (el2_veer_wrapper,
+      # el2_veer, el2_veer_lockstep) and one of those at the 12 GB `ulimit -v`
+      # must never share a 16 GB runner with another.  92 rows at ~2 h of row
+      # time measured locally (el2_dec_gpr_ctl alone is 267 s), so three shards
+      # each serialising keep a shard well inside its job timeout.
+      shards: 3
+      jobs: "1"

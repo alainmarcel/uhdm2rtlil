@@ -1,0 +1,74 @@
+{
+ "title": "VeeR EL2 (chipsalliance/Cores-VeeR-EL2)",
+ "url": "https://github.com/chipsalliance/Cores-VeeR-EL2",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/Cores-VeeR-EL2",
+   "commit": "c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e",
+   "dir": "veer-el2"
+  }
+ ],
+ "generate": {
+  "cwd": "veer-el2",
+  "marker": "veer-el2/config/common_defines.vh",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "mkdir -p tools/Bit && printf 'package Bit::Vector;\\n1;\\n' > tools/Bit/Vector.pm && PERL5LIB=$PWD/tools RV_ROOT=$PWD BUILD_PATH=$PWD/config perl configs/veer.config -target=default"
+   ]
+  ],
+  "timeout": 600
+ },
+ "roots": [
+  "veer-el2/design/*.sv",
+  "veer-el2/design/dbg/*.sv",
+  "veer-el2/design/dec/*.sv",
+  "veer-el2/design/dmi/*.sv",
+  "veer-el2/design/dmi/*.v",
+  "veer-el2/design/exu/*.sv",
+  "veer-el2/design/ifu/*.sv",
+  "veer-el2/design/lib/*.sv",
+  "veer-el2/design/lsu/*.sv"
+ ],
+ "incdirs": [
+  "veer-el2/config",
+  "veer-el2/design/include",
+  "veer-el2/design/lib",
+  "veer-el2/design/dmi"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "always_srcs": [
+  "veer-el2/config/common_defines.vh",
+  "veer-el2/design/include/el2_def.sv",
+  "veer-el2/design/el2_mubi_pkg.sv"
+ ],
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^el2_ifu_tb_memread$",
+  "^el2_mem_if$",
+  "^el2_regfile_if$",
+  "^ram_$",
+  "^ram_be_$"
+ ],
+ "harness_srcs": [
+  "stubs/veer_el2_macros.sv"
+ ],
+ "exclude_notes": {
+  "^el2_ifu_tb_memread$": "a testbench helper that reads the ICCM through a hierarchical path (design/ifu/el2_ifu_mem_ctl.sv, inside `ifdef RV_ICCM_ENABLE ... testbench); not part of the synthesizable core",
+  "^el2_mem_if$": "an INTERFACE (design/lib/el2_mem_if.sv), not a module",
+  "^el2_regfile_if$": "an INTERFACE (design/lib/el2_regfile_if.sv), not a module",
+  "^ram_$": "the closure's identifier scan reading the `RV_*_DATA_CELL macro bodies in config/common_defines.vh as a module name; the SRAM wrappers are generated per size and have no such module",
+  "^ram_be_$": "same as ram_ -- a macro body, not a module"
+ }
+}
