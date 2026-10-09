@@ -1,0 +1,8 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ansi_grouped_port_dims
+# Every port of the grouped list keeps its declared width: `d = a ^ b ^ c[3:0]`
+# only makes a 4-bit $xor when b is 4 bits, and `f = c + ...` a 16-bit $add
+# only when c and f are 16; with 1-bit b/c/f the netlist is a 1-bit $xor and
+# a 1-bit $add.
+select -assert-count 1 t:$add r:Y_WIDTH=16 %i
+select -assert-count 0 t:$add r:Y_WIDTH=1 %i
