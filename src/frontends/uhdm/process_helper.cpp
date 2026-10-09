@@ -1772,13 +1772,112 @@ void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std
 }
 
 // Helper function to check if an assignment is a memory write
+void UhdmImporter::stamp_mem_unpacked_dims(RTLIL::Memory* mem, const std::vector<int>& sizes,
+                                           const std::vector<int>& los) {
+    if (!mem || sizes.size() < 2) return;
+    mem->attributes[ID(uhdm_unpacked_dims)] = RTLIL::Const((int)sizes.size());
+    for (size_t k = 0; k < sizes.size(); k++) {
+        mem->attributes[RTLIL::escape_id(stringf("uhdm_dim_size_%d", (int)k))] = RTLIL::Const(sizes[k]);
+        mem->attributes[RTLIL::escape_id(stringf("uhdm_dim_lo_%d", (int)k))] = RTLIL::Const(los[k]);
+    }
+}
+
+int UhdmImporter::mem_unpacked_dims(const RTLIL::Memory* mem) {
+    if (!mem) return 1;
+    auto it = mem->attributes.find(ID(uhdm_unpacked_dims));
+    if (it == mem->attributes.end()) return 1;
+    int n = it->second.as_int();
+    return n >= 1 ? n : 1;
+}
+
+// A memory built from `logic [W-1:0] a[R][C]` holds R*C words in row-major
+// order (the FIRST unpacked dimension is the slowest): the word of `a[i][j]`
+// is (i - lo0) * C + (j - lo1).  Before this, create_memory_from_array sized
+// the memory from the first range ONLY and every access used the first index
+// as the word address -- the column then landed as a BIT of the word on a
+// write and was ignored on a read (RSD's SourceCAM `srcRegNum[N][SRC]`,
+// written at `[dispatchPtr[i]][j]`, read back the wrong register numbers).
+bool UhdmImporter::mem_linear_address_specs(RTLIL::Memory* mem, const std::vector<RTLIL::SigSpec>& idx,
+                                            RTLIL::SigSpec& addr) {
+    int nd = mem_unpacked_dims(mem);
+    if (nd < 2 || (int)idx.size() < nd) return false;
+    std::vector<int> sizes(nd), los(nd);
+    for (int k = 0; k < nd; k++) {
+        auto si = mem->attributes.find(RTLIL::escape_id(stringf("uhdm_dim_size_%d", k)));
+        auto li = mem->attributes.find(RTLIL::escape_id(stringf("uhdm_dim_lo_%d", k)));
+        if (si == mem->attributes.end() || li == mem->attributes.end()) return false;
+        sizes[k] = si->second.as_int();
+        los[k] = li->second.as_int();
+        if (sizes[k] <= 0) return false;
+    }
+    int abits = 1;
+    while ((1 << abits) < mem->size) abits++;
+    const int W = 32;
+    RTLIL::SigSpec acc(RTLIL::Const(0, W));
+    bool all_const = true;
+    long long cval = 0;
+    for (int k = 0; k < nd; k++) {
+        int stride = 1;
+        for (int m2 = k + 1; m2 < nd; m2++) stride *= sizes[m2];
+        RTLIL::SigSpec v = idx[k];
+        if (v.empty()) return false;
+        if (v.is_fully_const()) {
+            long long iv = v.as_int();
+            cval += (iv - los[k]) * stride;
+            continue;
+        }
+        all_const = false;
+        if (v.size() < W) v.extend_u0(W, false);
+        else if (v.size() > W) v = v.extract(0, W);
+        if (los[k] != 0) v = module->Sub(NEW_ID, v, RTLIL::SigSpec(RTLIL::Const(los[k], W)));
+        if (stride != 1) v = module->Mul(NEW_ID, v, RTLIL::SigSpec(RTLIL::Const(stride, W)));
+        acc = module->Add(NEW_ID, acc, v);
+    }
+    if (all_const) {
+        addr = RTLIL::SigSpec(RTLIL::Const((int)cval, abits));
+        return true;
+    }
+    if (cval != 0) acc = module->Add(NEW_ID, acc, RTLIL::SigSpec(RTLIL::Const((int)cval, W)));
+    addr = acc.extract(0, abits);
+    return true;
+}
+
+bool UhdmImporter::mem_linear_address(RTLIL::Memory* mem, const std::vector<const UHDM::any*>& idx,
+                                      RTLIL::SigSpec& addr,
+                                      const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    int nd = mem_unpacked_dims(mem);
+    if (nd < 2 || (int)idx.size() < nd) return false;
+    std::vector<RTLIL::SigSpec> specs;
+    for (int k = 0; k < nd; k++) {
+        const UHDM::expr* e = any_cast<const UHDM::expr*>(idx[k]);
+        if (!e) return false;
+        RTLIL::SigSpec v;
+        if (e->VpiType() == vpiOperation && !current_loop_substitutions.empty())
+            v = import_operation_with_substitution(any_cast<const UHDM::operation*>(e),
+                                                   current_loop_substitutions);
+        else
+            v = import_expression(e, input_mapping);
+        if (v.empty()) return false;
+        specs.push_back(v);
+    }
+    return mem_linear_address_specs(mem, specs, addr);
+}
+
 bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
                                             const UHDM::expr*& addr_expr, int& lo, int& hi,
-                                            int mem_word_width) {
+                                            int mem_word_width,
+                                            RTLIL::SigSpec* lin_addr,
+                                            const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     addr_expr = nullptr;
+    if (lin_addr) *lin_addr = RTLIL::SigSpec();
     const UHDM::any* sel = nullptr;
     const UHDM::expr* second = nullptr;
     if (!vs->Exprs()) return false;
+    RTLIL::Memory* memp = nullptr;
+    {
+        RTLIL::IdString mid = resolve_mem_id(std::string(vs->VpiName()));
+        if (module->memories.count(mid)) memp = module->memories.at(mid);
+    }
     // Exprs() = [address, (element index,) selector], POSITIONALLY.  The
     // address is always the first entry and may itself be a part-select
     // (`mem_reg[wr_cmd_addr[SEG_ADDR_WIDTH*n +: W]][i*8 +: 8]`, verilog-pcie
@@ -1791,7 +1890,33 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
         auto& ex = *vs->Exprs();
         if (ex.empty()) return false;
         addr_expr = any_cast<const UHDM::expr*>(ex[0]);
-        if (ex.size() >= 2) {
+        int nd = mem_unpacked_dims(memp);
+        if (nd >= 2) {
+            // Multi-dimensional memory: the first nd entries are the word
+            // address (linearized by mem_linear_address); whatever follows
+            // selects within the word exactly as the second index / the
+            // trailing part-select does on a one-dimensional memory.
+            if (!lin_addr || (int)ex.size() < nd) return false;
+            std::vector<const UHDM::any*> idx(ex.begin(), ex.begin() + nd);
+            for (auto a : idx) {
+                int t = a->VpiType();
+                if (t == vpiPartSelect || t == vpiIndexedPartSelect) return false;
+            }
+            if (!mem_linear_address(memp, idx, *lin_addr, input_mapping)) return false;
+            if ((int)ex.size() == nd) {
+                lo = 0;
+                hi = mem_word_width - 1;
+                return true;
+            }
+            auto last = ex.back();
+            int t = last->VpiType();
+            if (t == vpiPartSelect || t == vpiIndexedPartSelect) {
+                sel = last;
+                if ((int)ex.size() >= nd + 2) second = any_cast<const UHDM::expr*>(ex[nd]);
+            } else {
+                second = any_cast<const UHDM::expr*>(ex[nd]);
+            }
+        } else if (ex.size() >= 2) {
             auto last = ex.back();
             int t = last->VpiType();
             if (t == vpiPartSelect || t == vpiIndexedPartSelect) {

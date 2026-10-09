@@ -1,0 +1,9 @@
+# The 2-D array is ONE memory of 4*2 = 8 words of 3 bits (unpatched: 4 words),
+# with no undriven net after the reset loop and the dynamic writes.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_2d_dyn_row_mem
+proc; memory_collect; opt_clean
+select -assert-count 1 t:$mem_v2
+select -assert-count 1 t:$mem_v2 r:SIZE=8 %i
+select -assert-count 1 t:$mem_v2 r:WIDTH=3 %i
+check -assert

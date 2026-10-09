@@ -535,21 +535,31 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
     force_const_fold = true;
     
     // Get unpacked dimension (array size) from array_net ranges
+    // Every unpacked range: a multi-dimensional array is one memory of
+    // size(0)*size(1)*... words in row-major order, addressed by
+    // mem_linear_address (its geometry is stamped below); a one-dimensional
+    // array keeps its own range as before.
+    std::vector<int> dim_sizes, dim_los;
     if (uhdm_array->Ranges() && !uhdm_array->Ranges()->empty()) {
-        auto range = (*uhdm_array->Ranges())[0];
-        if (range->Left_expr() && range->Right_expr()) {
+        for (auto range : *uhdm_array->Ranges()) {
+            if (!(range->Left_expr() && range->Right_expr())) { dim_sizes.clear(); break; }
             RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
             RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-            
-            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                int left = left_spec.as_int();
-                int right = right_spec.as_int();
-                size = std::abs(left - right) + 1;
-                start_offset = std::min(left, right);
-                
-                if (mode_debug)
-                    log("    Array range: [%d:%d], size=%d\n", left, right, size);
-            }
+            if (!(left_spec.is_fully_const() && right_spec.is_fully_const())) { dim_sizes.clear(); break; }
+            int left = left_spec.as_int();
+            int right = right_spec.as_int();
+            dim_sizes.push_back(std::abs(left - right) + 1);
+            dim_los.push_back(std::min(left, right));
+            if (mode_debug)
+                log("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
+        }
+        if (dim_sizes.size() == 1) {
+            size = dim_sizes[0];
+            start_offset = dim_los[0];
+        } else if (dim_sizes.size() >= 2) {
+            size = 1;
+            for (int d : dim_sizes) size *= d;
+            start_offset = 0;
         }
     }
     
@@ -676,6 +686,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
+    stamp_mem_unpacked_dims(memory, dim_sizes, dim_los);
     // Record the OUTER packed dimension when the word is itself a packed array
     // (`logic [NDATA-1:0][DATA_SIZE-1:0]`).  A write of the form
     // `mem[addr][j][sel]` needs it to place element j at j*(width/NDATA);
@@ -717,21 +728,31 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     force_const_fold = true;
     
     // Get unpacked dimension (array size) from array_var ranges
+    // Every unpacked range: a multi-dimensional array is one memory of
+    // size(0)*size(1)*... words in row-major order, addressed by
+    // mem_linear_address (its geometry is stamped below); a one-dimensional
+    // array keeps its own range as before.
+    std::vector<int> dim_sizes, dim_los;
     if (uhdm_array->Ranges() && !uhdm_array->Ranges()->empty()) {
-        auto range = (*uhdm_array->Ranges())[0];
-        if (range->Left_expr() && range->Right_expr()) {
+        for (auto range : *uhdm_array->Ranges()) {
+            if (!(range->Left_expr() && range->Right_expr())) { dim_sizes.clear(); break; }
             RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
             RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-            
-            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                int left = left_spec.as_int();
-                int right = right_spec.as_int();
-                size = std::abs(left - right) + 1;
-                start_offset = std::min(left, right);
-                
-                if (mode_debug)
-                    log("    Array range: [%d:%d], size=%d\n", left, right, size);
-            }
+            if (!(left_spec.is_fully_const() && right_spec.is_fully_const())) { dim_sizes.clear(); break; }
+            int left = left_spec.as_int();
+            int right = right_spec.as_int();
+            dim_sizes.push_back(std::abs(left - right) + 1);
+            dim_los.push_back(std::min(left, right));
+            if (mode_debug)
+                log("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
+        }
+        if (dim_sizes.size() == 1) {
+            size = dim_sizes[0];
+            start_offset = dim_los[0];
+        } else if (dim_sizes.size() >= 2) {
+            size = 1;
+            for (int d : dim_sizes) size *= d;
+            start_offset = 0;
         }
     }
     
@@ -869,6 +890,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
+    stamp_mem_unpacked_dims(memory, dim_sizes, dim_los);
     // Record the OUTER packed dimension when the word is itself a packed array
     // (`logic [NDATA-1:0][DATA_SIZE-1:0]`).  A write of the form
     // `mem[addr][j][sel]` needs it to place element j at j*(width/NDATA);
