@@ -10329,11 +10329,15 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
 
     // Import arguments using current_comb_values for correct intermediate value resolution
     std::vector<RTLIL::SigSpec> arg_values;
+    // Kept alongside the values so a narrow actual can be widened with the
+    // right sign when it is bound to its formal below.
+    std::vector<const UHDM::expr*> arg_exprs;
     if (fc->Tf_call_args()) {
         for (auto arg : *fc->Tf_call_args()) {
             if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
                 RTLIL::SigSpec arg_val = import_expression(arg_expr, &current_comb_values);
                 arg_values.push_back(arg_val);
+                arg_exprs.push_back(arg_expr);
             }
         }
     }
@@ -10374,9 +10378,31 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
 
             // Map parameter name to arg VALUE (not temp wire) for cell chaining
             if (arg_idx < (int)arg_values.size()) {
-                func_mapping[param_name] = arg_values[arg_idx];
+                // Size the ACTUAL to the FORMAL, which is what the LRM's
+                // argument passing does and what this action requires: an
+                // action whose two sides differ in width is illegal RTLIL and
+                // does not fail where it is made -- it fails in the next pass
+                // that removes a wire, because `Module::remove(wires)` walks
+                // every process action through CaseRule::rewrite_sigspecs2 and
+                // SigSpec::remove2 asserts `size() == other->size()'.  Inside
+                // read_uhdm that pass is the interface cleanup, so the read
+                // died with a yosys assertion naming no signal at all.
+                //
+                // RSD's Gshare calls `ToPHT_Index_Global(pcIn + i*INSN_BYTE_WIDTH,
+                // nextBrGlobalHistory)` -- a 19-bit sum into a 32-bit `AddrPath`
+                // formal -- and that one narrow actual took down the whole read.
+                RTLIL::SigSpec av = arg_values[arg_idx];
+                if (av.size() != width) {
+                    if (av.size() < width)
+                        av.extend_u0(width,
+                                     arg_idx < (int)arg_exprs.size()
+                                         && is_expr_signed(arg_exprs[arg_idx]));
+                    else
+                        av = av.extract(0, width);
+                }
+                func_mapping[param_name] = av;
                 // Process action: temp_wire = arg_value (for sync rule)
-                proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_values[arg_idx]));
+                proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), av));
             }
 
             // Sync: nosync wire = X
@@ -17219,6 +17245,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 } else {
                                     data = data.extract(0, info.width);
                                 }
+                            }
+
+                            // Size the address to the memory's ADDR port, as the two
+                            // always-block memory-write paths already do.  A constant
+                            // index imports at its natural width -- an unrolled
+                            // `mem[i] <= ...` loop hands over a 64-bit integer constant
+                            // for a 7-bit address -- and an action whose two sides differ
+                            // in width is illegal RTLIL that does NOT fail where it is
+                            // made: it fails in the next pass that removes a wire
+                            // (`Assert size() == other->size()' in SigSpec::remove2,
+                            // reached through CaseRule::rewrite_sigspecs2), which inside
+                            // read_uhdm is the interface cleanup -- so the whole read died
+                            // with a yosys assertion naming no signal at all.  That was 17
+                            // of RSD's 144 rows, every one a module with an interface port
+                            // AND a memory written from a case arm.
+                            if (addr.size() != info.addr_wire->width) {
+                                if (addr.size() < info.addr_wire->width)
+                                    addr.extend_u0(info.addr_wire->width);
+                                else
+                                    addr = addr.extract(0, info.addr_wire->width);
                             }
 
                             // Assign to temp wires (whole-word write: enable all bits)
