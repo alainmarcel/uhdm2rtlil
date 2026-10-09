@@ -1,0 +1,11 @@
+# Every output must be driven, and the leading-zeros count of 23'h088000
+# (bit 19 is the highest set bit) is 3 at every call site; an all-zero
+# mantissa runs the loop to its natural exit, 23.  Unpatched the two fa()
+# outputs evaluate to 0 and lzc_int has no driver (check -assert fails).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_loop_break_return_var
+proc; flatten; opt_clean
+check -assert
+sat -verify -set x 23'h088000 -prove lzc 10'd3 -prove lzc_int 10'd3 -prove neg_lzc 10'h3fd -prove lzc_ret 5'd3
+sat -verify -set x 23'h000001 -prove lzc 10'd22 -prove lzc_int 10'd22 -prove lzc_ret 5'd22
+sat -verify -set x 23'h000000 -prove lzc 10'd23 -prove lzc_int 10'd23 -prove neg_lzc 10'h3e9 -prove lzc_ret 5'd25
