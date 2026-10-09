@@ -45,6 +45,7 @@ groups=[
  ('**rp32 (R5P)**',['rp32'],'[rp32]('+W+'sweep-rp32.yml)'),
  ('**Syntacore SCR1**',['scr1'],'[scr1]('+W+'sweep-scr1.yml)'),
  ('**VeeR EH1**',['veer-eh1'],'[veer-eh1]('+W+'sweep-veer-eh1.yml)'),
+ ('**VeeR EL2**',['veer-el2'],'[veer-el2]('+W+'sweep-veer-el2.yml)'),
  ('**RSD**',['rsd'],'[rsd]('+W+'sweep-rsd.yml)'),
  ('**OpenTitan** (upstream)',['opentitan'],'[opentitan]('+W+'sweep-opentitan.yml)'),
  ('**Pavona** (300 modules + 100 chip instances)',['acc','aes','csrng','edn','entropy_src','hmac','keymgr','kmac','pavona','periph','periph2','periph3','periph4','periph5','tlul','dragonfly','egret'],'[pavona]('+W+'sweep-pavona.yml)'),
