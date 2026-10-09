@@ -1,0 +1,8 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top always_ff_dyn_elem_field_write
+# The element writes must reach the next-state temps and become flops: with the
+# bare `$0\arr[k]` lookup every element was a combinational loop and read_uhdm
+# itself crashed in proc_dlatch.  proc must survive and leave no logic loop.
+proc
+check -assert
+select -assert-count 4 t:$dff t:$dffe t:$sdff t:$sdffe %u
