@@ -1,0 +1,10 @@
+# Each element read is the full 5-bit element at its row-major position:
+# x_flat = {x[1][1], x[1][0], x[0][1], x[0][0]} = 20'h9A5C3 ->
+# x[0][0] = 5'h03, x[0][1] = 5'h0E, x[1][0] = 5'h09, x[1][1] = 5'h13.
+# Unpatched every read is one bit (bit j of element i).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_2d_port_elem_read_flat
+proc; flatten; opt_clean
+check -assert
+sat -verify -set x_flat 20'h9A5C3 -prove o00 5'h03 -prove o01 5'h0E -prove o10 5'h09 -prove o11 5'h13
+sat -verify -set x_flat 20'hFFFFF -prove ra_sum 5'd28

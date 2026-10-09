@@ -682,6 +682,8 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     // `Array_nets()` / `Variables()` for an `array_net`/`array_var` of
     // the same name and using its dimensions to size the port wire.
     int unpacked_count = 0;
+    // (size, low) of every unpacked range of the port, in declaration order.
+    std::vector<std::pair<int,int>> port_dims;
     // Outer unpacked dim declared ASCENDING (`[0:N-1]`, or the `[N]`
     // shorthand)?  Then its LEFT index -- element 0 -- takes the MOST
     // significant bits of the flat port wire, the way read_slang and the
@@ -706,7 +708,9 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                     if (r == (*an->Ranges())[0])
                                         unpacked_ascending = ls.as_int() < rs.as_int();
                                     total *= std::abs(ls.as_int() - rs.as_int()) + 1;
-                                } else { total = 0; break; }
+                                    port_dims.push_back({std::abs(ls.as_int() - rs.as_int()) + 1,
+                                                         std::min(ls.as_int(), rs.as_int())});
+                                } else { total = 0; port_dims.clear(); break; }
                             }
                         }
                     }
@@ -755,7 +759,9 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 if (r == (*av->Ranges())[0])
                                     unpacked_ascending = ls.as_int() < rs.as_int();
                                 total *= std::abs(ls.as_int() - rs.as_int()) + 1;
-                            } else { total = 0; break; }
+                                port_dims.push_back({std::abs(ls.as_int() - rs.as_int()) + 1,
+                                                     std::min(ls.as_int(), rs.as_int())});
+                            } else { total = 0; port_dims.clear(); break; }
                         }
                     }
                     force_const_fold = saved_fcf;
@@ -890,6 +896,19 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 RTLIL::Const(unpacked_count);
             w->attributes[RTLIL::escape_id("unpacked_elem_width")] =
                 RTLIL::Const(unpacked_elem_w);
+        }
+        // A 2-D unpacked port (`input logic [4:0] x [2][2]`): the same
+        // geometry the internal 2-D flat arrays carry (uhdm2rtlil.cpp), so
+        // the var_select read of `x[i][j]` lands on element i*C+j.  Without
+        // it the read took the first index as the element and the second
+        // as a BIT of it -- one bit of each 5-bit register number in RSD's
+        // ReadyBitTable (`readyRA[i*SRC_OP_NUM + j] = dispatchedSrcRegNum[i][j]`).
+        if (port_dims.size() == 2 && port_dims[1].first > 1 && unpacked_elem_w > 0) {
+            w->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(unpacked_elem_w);
+            w->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(port_dims[0].second);
+            w->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(port_dims[0].first);
+            w->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(port_dims[1].second);
+            w->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(port_dims[1].first);
         }
     }
 

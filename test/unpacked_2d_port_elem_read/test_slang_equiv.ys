@@ -1,0 +1,17 @@
+# SAT miter through the flat shim, read_uhdm vs read_slang.  Unpatched the
+# element reads are one bit wide and the miter finds a counterexample.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top unpacked_2d_port_elem_read_flat
+proc; flatten; opt_clean
+rename unpacked_2d_port_elem_read_flat gate
+design -stash gate
+read_slang dut.sv wrap.sv --top unpacked_2d_port_elem_read_flat
+hierarchy -check -top unpacked_2d_port_elem_read_flat
+proc; flatten; opt_clean
+rename unpacked_2d_port_elem_read_flat gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
