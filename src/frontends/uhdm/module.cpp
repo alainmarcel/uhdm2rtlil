@@ -521,6 +521,26 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                                 ats->UhdmType() == uhdmunion_typespec))
                                         found_struct_ts = ats;
                                 }
+                                // An UNPACKED-array member (`MemoryPortMultiplexerIn
+                                // mshrMemMuxIn[MSHR_NUM]`, RSD DCacheIF) lives in
+                                // Array_nets(), not Nets(): take the ELEMENT type.
+                                if (!found_struct_ts && ii->Array_nets())
+                                    for (auto an : *ii->Array_nets()) {
+                                        if (std::string(an->VpiName()) != sig_name) continue;
+                                        const UHDM::typespec* ats = nullptr;
+                                        if (an->Typespec()) ats = an->Typespec()->Actual_typespec();
+                                        if (ats && ats->UhdmType() == uhdmarray_typespec)
+                                            if (auto et = any_cast<const UHDM::array_typespec*>(ats)->Elem_typespec())
+                                                ats = et->Actual_typespec();
+                                        if (!(ats && (ats->UhdmType() == uhdmstruct_typespec ||
+                                                      ats->UhdmType() == uhdmunion_typespec)) &&
+                                            an->Nets() && !an->Nets()->empty())
+                                            if (auto n0 = dynamic_cast<const UHDM::net*>((*an->Nets())[0]))
+                                                if (n0->Typespec()) ats = n0->Typespec()->Actual_typespec();
+                                        if (ats && (ats->UhdmType() == uhdmstruct_typespec ||
+                                                    ats->UhdmType() == uhdmunion_typespec))
+                                            found_struct_ts = ats;
+                                    }
                                 if (found_struct_ts) break;
                             }
                         }
@@ -531,8 +551,14 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             iface_signal_struct_ts_[full_name] = found_struct_ts;
                         }
                         // Restore the unpacked-array dimension the interface
-                        // definition dropped (element width * element count).
-                        sig_w *= iface_array_count(sig_name);
+                        // definition dropped (element width * element count),
+                        // and record the ELEMENT width so `p.arr[i]` selects an
+                        // element of the flat wire, not bit i (import_hier_path).
+                        {
+                            int iac = iface_array_count(sig_name);
+                            if (iac > 1) iface_array_elem_width_[full_name] = sig_w;
+                            sig_w *= iac;
+                        }
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         if (width_obj) add_src_attribute(sw->attributes, width_obj);

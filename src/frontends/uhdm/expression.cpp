@@ -15338,6 +15338,26 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // addresses reached the SRAMs as garbage (caliptra rvtop cex).
                 int g_n = 0, g_l = 0, g_r = 0, g_ew = 1;
                 bool geom = iface_signal_packed_geometry(full, sig_wire->width, g_n, g_l, g_r, g_ew);
+                // An UNPACKED-array interface member (`T arr [N]`, RSD DCacheIF's
+                // `mshrMemMuxIn[MSHR_NUM]`) is flattened element-major, element
+                // 0 at the LSBs, and has no packed geometry: `[i]` then fell
+                // through to a single-BIT select.  Every element the RSD flat
+                // wrappers wire up in their generate loops landed on one bit
+                // (87-bit requests became bit 0 / bit 87; co-sim diverging on
+                // every cycle), and `p.arr[1]` inside the modport module read
+                // bit 1.  Use the recorded element width as the geometry.
+                if (!geom) {
+                    auto ewi = iface_array_elem_width_.find(full);
+                    if (ewi != iface_array_elem_width_.end() && ewi->second > 1 &&
+                        sig_wire->width > ewi->second &&
+                        sig_wire->width % ewi->second == 0) {
+                        g_ew = ewi->second;
+                        g_n = sig_wire->width / g_ew;
+                        g_l = g_n - 1;
+                        g_r = 0;
+                        geom = true;
+                    }
+                }
                 auto elem_pos = [&](int hdl_idx, int& pos) -> bool {
                     int lo = std::min(g_l, g_r), hi = std::max(g_l, g_r);
                     if (hdl_idx < lo || hdl_idx > hi) return false;
