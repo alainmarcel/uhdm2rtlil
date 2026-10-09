@@ -9973,6 +9973,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                     // rather than re-adding it (which asserts on the dup name).
                     RTLIL::IdString bw_id = RTLIL::escape_id(wire_name);
                     RTLIL::Wire* block_wire = module->wire(bw_id);
+                    bool block_wire_existed = block_wire != nullptr;
                     if (!block_wire) block_wire = module->addWire(bw_id, width);
                     if (var) add_src_attribute(block_wire->attributes, var);
 
@@ -9982,10 +9983,20 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 
                     task_mapping[var_name] = RTLIL::SigSpec(temp_wire);
 
-                    // Named block wires get temp wire sync (not X-init)
+                    // Named block wires get temp wire sync (not X-init).
+                    // When the caller's Variables() pass already created the
+                    // wire it also queued an `update <wire> 'x`; a SECOND
+                    // update of the same wire here makes `proc` emit two
+                    // drivers, and the driver-driver conflict is resolved to
+                    // a CONSTANT X that propagates into every cell reading the
+                    // temp chain -- a void function with any body-local
+                    // (`logic [1:0] t; t = a + b; y = t ^ 1;`) returned X on
+                    // all outputs (RSD CommitStage's DecideCommit locals).
+                    // Nothing reads the placeholder wire (the body resolves
+                    // the local through task_mapping), so skip the duplicate.
                     RTLIL::SyncRule* sync_always = nullptr;
                     if (!proc->syncs.empty()) sync_always = proc->syncs.back();
-                    if (sync_always) {
+                    if (sync_always && !block_wire_existed) {
                         sync_always->actions.push_back(
                             RTLIL::SigSig(RTLIL::SigSpec(block_wire), RTLIL::SigSpec(temp_wire))
                         );
