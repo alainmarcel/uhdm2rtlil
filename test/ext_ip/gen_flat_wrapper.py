@@ -24,7 +24,10 @@ import re, argparse, re, sys
 from pathlib import Path
 
 PORT_RE = re.compile(
-    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?P<type>[^,;()]*?)\s+(?P<name>[A-Za-z_]\w*)"
+    # The type may hold one level of balanced parentheses: `logic
+    # [$clog2(ENTRY_NUM)-1:0] wa[WRITE_NUM]` (RSD's RAM models) was skipped
+    # by a paren-free type class, so `wa` / `ra` stayed unpacked ports.
+    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?P<type>(?:[^,;()]|\([^()]*\))*?)\s+(?P<name>[A-Za-z_]\w*)"
     r"\s*(?P<dims>(?:\[[^\]]*\]\s*)+)(?=\s*(?:,|\)|$|//|/\*))", re.M)
 NETKW = {"wire", "var", "logic", "reg", "tri"}
 
@@ -57,6 +60,46 @@ def module_span(txt, name):
     ports = txt[s + 1:e - 1]
     body_end = txt.find(";", e)
     return pre, params, ports, txt[m.start():body_end + 1]
+
+
+def split_top_level(t, sep=","):
+    out, depth, cur = [], 0, []
+    for c in t:
+        if c in "([{": depth += 1
+        elif c in ")]}": depth -= 1
+        if c == sep and depth == 0:
+            out.append("".join(cur)); cur = []
+        else:
+            cur.append(c)
+    out.append("".join(cur))
+    return out
+
+
+def normalize_port_groups(ports):
+    """Rewrite a grouped ANSI port list so every declaration carries its own
+    direction and type (see the caller).  Entries holding a preprocessor
+    directive are left untouched."""
+    ent_re = re.compile(r"^(\s*)(?:(input|output|inout)\b\s*)?(.*?)\s*([A-Za-z_]\w*)\s*((?:\[[^\]]*\]\s*)*)$", re.S)
+    cur_dir, cur_type, out = None, "", []
+    for e in split_top_level(ports):
+        if "`" in e or not e.strip():
+            out.append(e); continue
+        m = ent_re.match(e)
+        if not m:
+            out.append(e); continue
+        lead, d, typ, name, dims = m.groups()
+        typ = typ.strip()
+        if d:
+            cur_dir, cur_type = d, typ
+        elif typ:
+            cur_type = typ            # its own type, the group's direction
+        else:
+            typ = cur_type            # a bare name: the group's type too
+        if cur_dir is None:
+            out.append(e); continue
+        parts = [cur_dir] + ([typ] if typ else []) + [name]
+        out.append(lead + " ".join(parts) + (" " + dims.strip() if dims.strip() else ""))
+    return ",".join(out)
 
 
 def dim_count(d):
@@ -96,6 +139,15 @@ def main():
     # bind ("could not find connection for implicit named port 'divisor_i'").
     ports = re.sub(r"/\*.*?\*/", "", ports, flags=re.S)
     ports = re.sub(r"//[^\n]*", "", ports)
+    # A GROUPED ANSI list writes the direction once for several declarations
+    # (RSD DecodedBranchResolver: `output logic insnValidOut[DW], logic
+    # insnFlushed[DW], ..., BranchPred brPredOut[DW], PC_Path recoveredPC`).
+    # PORT_RE anchors on a direction keyword, so only the first declaration
+    # of each group was flattened and the rest stayed unpacked ports that the
+    # two frontends order differently (the miter compared brPredOut's two
+    # elements swapped).  Give every declaration its group's direction, and a
+    # bare name (`logic clk, rst`) the group's type as well.
+    ports = normalize_port_groups(ports)
 
     arrays = []
     def rewrite(m):
