@@ -29,6 +29,7 @@
 #include <uhdm/scope.h>
 #include <uhdm/tagged_pattern.h>
 #include <uhdm/return_stmt.h>
+#include <uhdm/break_stmt.h>
 #include <uhdm/struct_net.h>
 #include <uhdm/modport.h>
 #include <uhdm/array_typespec.h>
@@ -195,25 +196,78 @@ bool UhdmImporter::stmt_contains_return(const UHDM::any* s, int depth) {
     }
 }
 
-// Process `stmt` under "only if the function has NOT returned yet": a
-// switch on the ret_taken SSA value with the statement in the ==0 case and a
-// default arm, phi-merging every input_mapping change so values (including
-// ret_taken itself) stay defined when the case is not taken.
-void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
+bool UhdmImporter::stmt_contains_break(const UHDM::any* s, int depth) {
+    if (!s || depth > 48) return false;
+    switch (s->UhdmType()) {
+    case uhdmbreak_stmt: return true;
+    case uhdmbegin: {
+        auto bg = any_cast<const begin*>(s);
+        if (bg && bg->Stmts())
+            for (auto c : *bg->Stmts())
+                if (stmt_contains_break(c, depth + 1)) return true;
+        return false;
+    }
+    case uhdmnamed_begin: {
+        auto nb = any_cast<const named_begin*>(s);
+        if (nb && nb->Stmts())
+            for (auto c : *nb->Stmts())
+                if (stmt_contains_break(c, depth + 1)) return true;
+        return false;
+    }
+    case uhdmif_stmt: {
+        auto is2 = any_cast<const if_stmt*>(s);
+        return is2 && stmt_contains_break(is2->VpiStmt(), depth + 1);
+    }
+    case uhdmif_else: {
+        auto ie = any_cast<const if_else*>(s);
+        return ie && (stmt_contains_break(ie->VpiStmt(), depth + 1) ||
+                      stmt_contains_break(ie->VpiElseStmt(), depth + 1));
+    }
+    case uhdmcase_stmt: {
+        auto cs = any_cast<const case_stmt*>(s);
+        if (cs && cs->Case_items())
+            for (auto ci : *cs->Case_items()) {
+                auto item = any_cast<const case_item*>(ci);
+                if (item && stmt_contains_break(item->Stmt(), depth + 1))
+                    return true;
+            }
+        return false;
+    }
+    // A nested loop's `break` leaves THAT loop, not this one.
+    default: return false;
+    }
+}
+
+// Process `stmt` under "only if none of the guards has fired": for the
+// first live guard key (the function has NOT returned yet / the enclosing
+// unrolled loop has NOT broken yet) a switch on its SSA value with the
+// statement in the ==0 case and a default arm, phi-merging every
+// input_mapping change so values (the guard itself included) stay defined
+// when the case is not taken.  Several live keys nest.
+void UhdmImporter::process_stmt_guarded(const UHDM::any* stmt,
         RTLIL::CaseRule* case_rule, RTLIL::Wire* result_wire,
         std::map<std::string, RTLIL::SigSpec>& input_mapping,
         const std::string& func_name, int& temp_counter,
         const std::string& func_call_context,
-        const std::map<std::string, int>& local_var_widths) {
-    RTLIL::SigSpec guard = input_mapping["$__ret_taken$"];
-    if (guard.is_fully_const() && guard.is_fully_zero()) {
-        // No return can have happened yet — no wrap needed.
+        const std::map<std::string, int>& local_var_widths,
+        const std::vector<std::string>& guard_keys) {
+    size_t k = 0;
+    RTLIL::SigSpec guard;
+    for (; k < guard_keys.size(); k++) {
+        auto gi = input_mapping.find(guard_keys[k]);
+        if (gi == input_mapping.end()) continue;
+        guard = gi->second;
+        if (guard.is_fully_const() && guard.is_fully_zero()) continue;  // cannot have fired yet
+        if (guard.is_fully_const()) return;  // definitely fired: dead code
+        break;
+    }
+    if (k == guard_keys.size()) {
         process_stmt_to_case(stmt, case_rule, result_wire, input_mapping,
                              func_name, temp_counter, func_call_context,
                              local_var_widths);
         return;
     }
-    if (guard.is_fully_const()) return;  // definitely returned: dead code
+    std::vector<std::string> rest(guard_keys.begin() + k + 1, guard_keys.end());
     RTLIL::SwitchRule* gsw = new RTLIL::SwitchRule;
     gsw->signal = guard;
     case_rule->switches.push_back(gsw);
@@ -225,8 +279,8 @@ void UhdmImporter::process_stmt_return_guarded(const UHDM::any* stmt,
     dflt->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
     gsw->cases.push_back(dflt);
     std::map<std::string, RTLIL::SigSpec> pre_map = input_mapping;
-    process_stmt_to_case(stmt, gcase, result_wire, input_mapping, func_name,
-                         temp_counter, func_call_context, local_var_widths);
+    process_stmt_guarded(stmt, gcase, result_wire, input_mapping, func_name,
+                         temp_counter, func_call_context, local_var_widths, rest);
     for (auto& pm : pre_map) {
         auto ci2 = input_mapping.find(pm.first);
         if (ci2 == input_mapping.end() || ci2->second == pm.second) continue;
@@ -492,13 +546,19 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // them return-guarded so a priority encoder's later
                 // iterations can't override the first return (CVA6
                 // miss_handler get_victim_cl).
-                bool guard_live = false;
+                // Likewise statements after a possibly-taken `break` of the
+                // enclosing unrolled loop (`if (x >> (22-i) != 0) break;`).
+                bool guard_live = false, brk_live = false;
                 for (auto s : *bg->Stmts()) {
-                    if (guard_live && input_mapping.count("$__ret_taken$"))
-                        process_stmt_return_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    std::vector<std::string> keys;
+                    if (guard_live && input_mapping.count("$__ret_taken$")) keys.push_back("$__ret_taken$");
+                    if (brk_live && input_mapping.count("$__brk_taken$")) keys.push_back("$__brk_taken$");
+                    if (!keys.empty())
+                        process_stmt_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths, keys);
                     else
                         process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
                     if (stmt_contains_return(s)) guard_live = true;
+                    if (stmt_contains_break(s)) brk_live = true;
                 }
             }
 
@@ -555,13 +615,19 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
 
             if (nbg->Stmts()) {
-                bool guard_live = false;
+                // Likewise statements after a possibly-taken `break` of the
+                // enclosing unrolled loop (`if (x >> (22-i) != 0) break;`).
+                bool guard_live = false, brk_live = false;
                 for (auto s : *nbg->Stmts()) {
-                    if (guard_live && input_mapping.count("$__ret_taken$"))
-                        process_stmt_return_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    std::vector<std::string> keys;
+                    if (guard_live && input_mapping.count("$__ret_taken$")) keys.push_back("$__ret_taken$");
+                    if (brk_live && input_mapping.count("$__brk_taken$")) keys.push_back("$__brk_taken$");
+                    if (!keys.empty())
+                        process_stmt_guarded(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths, keys);
                     else
                         process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
                     if (stmt_contains_return(s)) guard_live = true;
+                    if (stmt_contains_break(s)) brk_live = true;
                 }
             }
 
@@ -2397,6 +2463,22 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         if (saved_lv_map.size() > 0) lv_map_width = saved_lv_map.size();
                     }
                     bool unroll_guard_live = false;
+                    // `break` in the body: a per-loop SSA flag, 0 on entry,
+                    // set by the break_stmt case under its branch conditions
+                    // and phi-merged like ret_taken; every later iteration
+                    // runs behind `switch (brk_taken) case 0`.  Record the
+                    // flag's value after each iteration so the loop
+                    // variable's post-loop value can be built below.  An
+                    // enclosing loop's flag is shadowed, not shared.
+                    bool body_breaks = stmt_contains_break(loop_body);
+                    bool had_outer_brk = false;
+                    RTLIL::SigSpec outer_brk;
+                    std::vector<std::pair<int64_t, RTLIL::SigSpec>> brk_after;
+                    if (body_breaks) {
+                        auto ob = input_mapping.find("$__brk_taken$");
+                        if (ob != input_mapping.end()) { had_outer_brk = true; outer_brk = ob->second; }
+                        input_mapping["$__brk_taken$"] = RTLIL::SigSpec(RTLIL::State::S0, 1);
+                    }
                     for (int64_t i = start_value;
                          downward ? (i >= loop_end) : (i <= loop_end);
                          i += increment) {
@@ -2439,11 +2521,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             }
                         }
                         
-                        if (unroll_guard_live && input_mapping.count("$__ret_taken$"))
-                            process_stmt_return_guarded(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
-                        else
-                            process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        {
+                            std::vector<std::string> keys;
+                            if (unroll_guard_live && input_mapping.count("$__ret_taken$")) keys.push_back("$__ret_taken$");
+                            if (body_breaks) keys.push_back("$__brk_taken$");
+                            if (!keys.empty())
+                                process_stmt_guarded(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths, keys);
+                            else
+                                process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        }
                         if (stmt_contains_return(loop_body)) unroll_guard_live = true;
+                        if (body_breaks) brk_after.push_back({i, input_mapping["$__brk_taken$"]});
                         
                         // After processing, get the output of this iteration for chaining
                         if (is_accumulative) {
@@ -2517,6 +2605,54 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (had_outer_lv) loop_values[loop_var_name] = outer_lv;
                     else loop_values.erase(loop_var_name);
                     if (had_lv_map) input_mapping[loop_var_name] = saved_lv_map;
+                    if (body_breaks) {
+                        // The loop variable after a loop that can break is
+                        // the index of the FIRST iteration that broke, else
+                        // the natural exit value.  RSD's FP32 multiplier:
+                        //   for (lzc = 0; lzc <= 22; lzc = lzc + 1)
+                        //       if (x >> (22-lzc) != 0) break;
+                        // returned 0 for every input -- the body reads the
+                        // iteration constant, the break was ignored, and the
+                        // return variable kept its init.  Build the priority
+                        // mux from the recorded flags (cumulative, so the
+                        // earliest iteration wins) and assign it to the
+                        // variable's wire: the result chain when the loop
+                        // variable IS the function (or a `$result` alias), a
+                        // fresh SSA wire for a function local.
+                        RTLIL::SigSpec target;
+                        if (had_lv_map && saved_lv_map.is_wire() &&
+                            (saved_lv_map.as_wire() == result_wire ||
+                             saved_lv_map.as_wire()->name.str().find(".$result") != std::string::npos))
+                            target = saved_lv_map;
+                        else if (loop_var_name == func_name && result_wire)
+                            target = RTLIL::SigSpec(result_wire);
+                        int lvw = !target.empty() ? target.size() : (had_lv_map ? lv_map_width : 0);
+                        if (lvw > 0) {
+                            RTLIL::SigSpec lv(RTLIL::Const((int)(loop_end + increment), lvw));
+                            for (auto it = brk_after.rbegin(); it != brk_after.rend(); ++it) {
+                                RTLIL::SigSpec here(RTLIL::Const((int)it->first, lvw));
+                                const RTLIL::SigSpec& bf = it->second;
+                                if (bf.is_fully_const()) {
+                                    if (bf.as_bool()) lv = here;
+                                    continue;
+                                }
+                                lv = module->Mux(NEW_ID, lv, here, bf);
+                            }
+                            if (target.empty()) {
+                                RTLIL::Wire* lvwire = module->addWire(
+                                    RTLIL::escape_id(stringf("$%s$ssa_%s_%d",
+                                        func_call_context.c_str(), loop_var_name.c_str(), incr_autoidx())),
+                                    lvw);
+                                add_src_attribute(lvwire->attributes, stmt);
+                                target = RTLIL::SigSpec(lvwire);
+                                input_mapping[loop_var_name] = target;
+                            }
+                            case_rule->actions.push_back(RTLIL::SigSig(target, lv));
+                            log("UHDM: Loop variable %s after a breaking loop assigned its exit value\n", loop_var_name.c_str());
+                        }
+                        if (had_outer_brk) input_mapping["$__brk_taken$"] = outer_brk;
+                        else input_mapping.erase("$__brk_taken$");
+                    }
                     
                     // Loop has been unrolled into the case rule
                 } else {
@@ -2570,6 +2706,19 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             if (rg != input_mapping.end())
                 rg->second = RTLIL::SigSpec(RTLIL::State::S1, 1);
         }
+        break;
+    }
+
+    case uhdmbreak_stmt: {
+        // `break` inside an unrolled loop: mark the loop's flag taken (an
+        // SSA value, phi-merged by the enclosing if/else/case) so the rest
+        // of this iteration and every later one go dead, and the loop
+        // variable's post-loop value picks this iteration (see the for_stmt
+        // case).  Outside a loop that declared the flag there is nothing to
+        // do.
+        auto bg = input_mapping.find("$__brk_taken$");
+        if (bg != input_mapping.end())
+            bg->second = RTLIL::SigSpec(RTLIL::State::S1, 1);
         break;
     }
 

@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched: read_uhdm's fa() is the
+# constant 0 and fc() is undriven -- the miter finds x = 23'h088000
+# (lzc 3, neg_lzc 10'h3fd) immediately.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_loop_break_return_var
+proc; flatten; opt_clean
+rename func_loop_break_return_var gate
+design -stash gate
+read_slang dut.sv --top func_loop_break_return_var
+hierarchy -check -top func_loop_break_return_var
+proc; flatten; opt_clean
+rename func_loop_break_return_var gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -show-ports -set-init-zero miter

@@ -1405,13 +1405,20 @@ struct UhdmImporter {
     void scan_for_direct_return_assignment(const UHDM::any* stmt, const std::string& func_name, bool& found);
     bool function_body_writes_to(const UHDM::any* stmt, const std::string& var_name);
     bool stmt_contains_return(const UHDM::any* s, int depth = 0);
+    // A `break` that belongs to the loop whose body `s` is: nested loops own
+    // their own breaks and are not descended into.
+    bool stmt_contains_break(const UHDM::any* s, int depth = 0);
     bool stmt_assigns_name(const UHDM::any* s, const std::string& nm, int depth = 0);
-    void process_stmt_return_guarded(const UHDM::any* stmt,
+    // Process `stmt` only while none of the SSA guard values named by
+    // `guard_keys` ("$__ret_taken$": the function has returned;
+    // "$__brk_taken$": the enclosing unrolled loop has broken) is set.
+    void process_stmt_guarded(const UHDM::any* stmt,
         RTLIL::CaseRule* case_rule, RTLIL::Wire* result_wire,
         std::map<std::string, RTLIL::SigSpec>& input_mapping,
         const std::string& func_name, int& temp_counter,
         const std::string& func_call_context,
-        const std::map<std::string, int>& local_var_widths);
+        const std::map<std::string, int>& local_var_widths,
+        const std::vector<std::string>& guard_keys);
     const UHDM::typespec* bitselect_elem_typespec(const UHDM::bit_select* bs);
     UHDM::any* find_param_decl_typespec(std::string_view name, const UHDM::any* scope);
     bool resolve_struct_array_elem_member_lhs(const UHDM::assignment* assign,
