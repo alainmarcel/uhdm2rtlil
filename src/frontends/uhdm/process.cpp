@@ -11771,12 +11771,18 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                             full_cond = RTLIL::SigSpec(sel);
                         }
 
-                        // else_value: previous pending assignment or the wire itself
+                        // else_value: the element's IN-FLIGHT value.  An
+                        // exact-key lookup sees only an earlier WHOLE-element
+                        // write; the per-bit / per-member writes of a reset
+                        // loop (`body[i].rank[j] <= 0` in RSD's LRU_Counter)
+                        // are pending under slice keys, and taking the raw
+                        // wire here discarded them -- the LRU ranks never
+                        // reset.  pending_inflight() reconciles both.
                         RTLIL::SigSpec else_val;
                         if (pending_sync_assignments.count(elem_lhs))
                             else_val = pending_sync_assignments.at(elem_lhs);
                         else
-                            else_val = elem_lhs;
+                            else_val = pending_inflight(elem_lhs);
 
                         RTLIL::SigSpec rhs_sized = dyn_rhs;
                         if (rhs_sized.size() < ew->width) rhs_sized.extend_u0(ew->width);
