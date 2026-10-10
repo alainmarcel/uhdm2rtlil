@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched read_uhdm splices the bare RHS of
+# `idx[9:6] ^= gh` into the function local (the XOR becomes an overwrite): a
+# counterexample at the first cycle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_local_compound_partselect
+proc; flatten; opt_clean; memory; async2sync
+rename func_local_compound_partselect gate
+design -stash gate
+read_slang dut.sv --top func_local_compound_partselect
+hierarchy -check -top func_local_compound_partselect
+proc; flatten; opt_clean; memory; async2sync
+rename func_local_compound_partselect gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

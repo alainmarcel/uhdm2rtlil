@@ -11308,6 +11308,19 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         RTLIL::SigSpec r2 = rhs;
                         if (r2.size() < sel_w) r2.extend_u0(sel_w);
                         else if (r2.size() > sel_w) r2 = r2.extract(0, sel_w);
+                        // A COMPOUND operator (`phtIndex[HI:LO] ^= gh` in RSD
+                        // Gshare's ToPHT_Index_Global) folds with the slice's
+                        // in-flight value; splicing the bare RHS turned the
+                        // XOR into an overwrite, so the global history
+                        // replaced the index bits instead of hashing them and
+                        // every PHT write / read went to the wrong entry.
+                        {
+                            int cop = assign->VpiOpType();
+                            if (cop != 0 && cop != vpiAssignmentOp)
+                                r2 = create_compound_op_cell(cop, cur.extract(sel_off, sel_w), r2, assign);
+                            if (r2.size() < sel_w) r2.extend_u0(sel_w);
+                            else if (r2.size() > sel_w) r2 = r2.extract(0, sel_w);
+                        }
                         cur.replace(sel_off, r2);
                         func_mapping[base] = mask_write(base, cur);
                         log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
