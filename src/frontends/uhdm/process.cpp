@@ -10015,6 +10015,31 @@ void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mf
 }
 
 // Inline task body statements into a combinational process
+// Bridge an inlined task / void-function body's mapping into
+// current_comb_values for a statement that the generic comb path imports
+// (`if` / `case` at the top level of the body), the way the vpiFor case
+// below does for loops: the formals and locals then resolve by name to
+// their `$0\` temps (reads through mapped_inflight, writes through
+// tf_local_lhs).  Restored on scope exit; entries the mapping introduced
+// are dropped again.
+struct TaskMapBridge {
+    std::map<std::string, RTLIL::SigSpec>& ccv;
+    std::map<std::string, RTLIL::SigSpec> saved;
+    std::vector<std::string> added;
+    TaskMapBridge(std::map<std::string, RTLIL::SigSpec>& ccv_,
+                  const std::map<std::string, RTLIL::SigSpec>& task_mapping) : ccv(ccv_) {
+        for (auto& [name, sig] : task_mapping) {
+            auto it = ccv.find(name);
+            if (it != ccv.end()) saved[name] = it->second; else added.push_back(name);
+            ccv[name] = sig;
+        }
+    }
+    ~TaskMapBridge() {
+        for (auto& n : added) ccv.erase(n);
+        for (auto& kv : saved) ccv[kv.first] = kv.second;
+    }
+};
+
 void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                                           std::map<std::string, RTLIL::SigSpec>& task_mapping,
                                           const std::string& context, const std::string& block_prefix,
@@ -10372,6 +10397,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             // TODO: Full if-else support within task bodies
             auto if_st = any_cast<const if_stmt*>(stmt);
             if (if_st) {
+                TaskMapBridge bridge(current_comb_values, task_mapping);
                 import_if_stmt_comb(if_st, proc);
             }
             break;
@@ -10379,6 +10405,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
         case vpiIfElse: {
             auto ie = any_cast<const UHDM::if_else*>(stmt);
             if (ie) {
+                TaskMapBridge bridge(current_comb_values, task_mapping);
                 import_if_else_comb(ie, proc);
             }
             break;
@@ -10386,6 +10413,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
         case vpiCase: {
             auto case_st = any_cast<const case_stmt*>(stmt);
             if (case_st) {
+                TaskMapBridge bridge(current_comb_values, task_mapping);
                 import_case_stmt_comb(case_st, proc);
             }
             break;
@@ -17063,7 +17091,12 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
     if (auto condition = uhdm_case->VpiCondition()) {
         int saved_case_ctx = expression_context_width;
         expression_context_width = case_context_width(uhdm_case);
-        RTLIL::SigSpec case_sig = import_expression(condition);
+        // Read the condition through the comb process's in-flight map, as the
+    // statement dispatchers do for every other expression: inside an inlined
+    // void-function body the case expression is a FORMAL (`case (mode.size)`
+    // in RSD StoreQueue's GenerateStoreData) that only the bridged mapping
+    // knows -- imported bare it was "Reference to unknown signal: s".
+    RTLIL::SigSpec case_sig = import_expression(condition, comb_read_map());
         expression_context_width = saved_case_ctx;
         
         // Check if this is in an initial block with constant condition
@@ -17410,7 +17443,12 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
     int saved_case_ctx = expression_context_width;
     expression_context_width = case_context_width(uhdm_case);
-    RTLIL::SigSpec case_sig = import_expression(condition);
+    // Read the condition through the comb process's in-flight map, as the
+    // statement dispatchers do for every other expression: inside an inlined
+    // void-function body the case expression is a FORMAL (`case (mode.size)`
+    // in RSD StoreQueue's GenerateStoreData) that only the bridged mapping
+    // knows -- imported bare it was "Reference to unknown signal: s".
+    RTLIL::SigSpec case_sig = import_expression(condition, comb_read_map());
     expression_context_width = saved_case_ctx;
     bool case_expr_signed = is_expr_signed(condition);
 
