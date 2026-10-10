@@ -354,21 +354,61 @@ def _dim_count(dim, params):
     return v if v and v > 0 else None
 
 
+def _iface_own_ports(ihdr):
+    """[(dir, range_text, name)] of an interface's OWN ports, from its header.
+
+    A grouped list (`interface LoadStoreUnitIF( input logic clk, rst, rstStart )`,
+    every RSD interface) carries the direction and type once; the old
+    regex only saw the first name after a direction keyword, so `rst` and
+    `rstStart` were never even considered for binding.
+    """
+    i = ihdr.find("(")
+    if i < 0:
+        return []
+    inner = ihdr[i + 1:]
+    j = inner.rfind(")")
+    if j >= 0:
+        inner = inner[:j]
+    inner = re.sub(r"//.*", "", inner)
+    out, d, rng = [], None, ""
+    for tok in inner.split(","):
+        tok = " ".join(tok.split())
+        if not tok:
+            continue
+        m = re.match(r"^(?:(input|output|inout)\s+)?(?:(?:logic|wire|reg|bit)\s*)?(\[[^\]]*\]\s*)?(\w+)$", tok)
+        if not m:
+            continue
+        if m.group(1):
+            d, rng = m.group(1), ""
+        if m.group(2):
+            rng = m.group(2).strip()
+        if d:
+            out.append((d, rng, m.group(3)))
+    return out
+
+
 def _iface_port_conns(ihdr, plain):
-    """`.clk(clk_i), .rst_n(cptra_rst_b)` for an interface's OWN ports.
+    """(`.clk(clk_i), .rst_n(cptra_rst_b)`, unbound) for an interface's OWN ports.
 
     An interface declared `(input logic clk, input logic rst_n)` left
     unconnected is unclocked, or held in reset forever, and the DUT behind it
     then does nothing at all.  The DUT rarely spells them the same way, so the
     match is by name first and by ROLE second -- the netlist path below has
     done this for a year; the decl path simply never did.
+
+    `unbound` lists the interface inputs no DUT port matches: a module whose
+    ports are ALL interfaces (every RSD pipeline stage: `LoadStoreUnit(
+    LoadStoreUnitIF.LoadStoreUnit port, ControllerIF.LoadStoreUnit ctrl)`) has
+    nothing to tie `clk` / `rst` to, and the wrapper left them undriven --
+    every register inside clocked from a free variable, the miter and the
+    co-sim comparing two unclocked netlists.  The caller exposes them as
+    wrapper ports instead.
     """
-    iports = re.findall(r"(?:input|output|inout)\s+(?:logic|wire|reg|bit)?\s*(\w+)\s*(?:,|$|\))",
-                        ihdr)
+    iports = _iface_own_ports(ihdr)
     names = [n for d, rng, n in plain]
     scalars = [n for d, rng, n in plain if d == "input" and not rng]
-    conn = []
-    for ip in iports:
+    conn, unbound = [], []
+    for ipd, iprng, ip in iports:
         if ip in names:
             conn.append(f".{ip}({ip})")
             continue
@@ -381,7 +421,10 @@ def _iface_port_conns(ihdr, plain):
             cand = [n for n in cand if bool(LOW_RE.search(n)) == lo] or cand
         if cand:
             conn.append(f".{ip}({cand[0]})")
-    return ", ".join(conn)
+        elif ipd == "input":
+            conn.append(f".{ip}({ip})")
+            unbound.append((iprng, ip))
+    return ", ".join(conn), unbound
 
 
 def iface_body(txt, iface):
@@ -674,6 +717,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
     # `(input logic clk, input logic rst_n)` has to be tied to the DUT's clock
     # and reset, and those are among these.
     plain = []
+    exposed_iface_ports = set()
     mhdr = module_header(txt, rtl_top)
     for line in (mhdr or "").splitlines():
         # `.rstrip(",")` alone leaves the SPACES that PULP puts before the
@@ -778,7 +822,15 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         # clean.  That is the same trap the cvw configuration wrapper hit.
         pv = ", ".join(f".{n}({param_vals.get(n, n)})" for n in my_param)
         pfx = f"#({pv}) " if pv else ""
-        iports = _iface_port_conns(hdr, plain)
+        iports, unbound = _iface_port_conns(hdr, plain)
+        # Interface inputs no DUT port binds (RSD's all-interface modules):
+        # one wrapper input each, shared by name across the interfaces
+        # (`clk` of ControllerIF and of LoadStoreUnitIF are the same clock).
+        for urng, uname in unbound:
+            if uname in exposed_iface_ports:
+                continue
+            exposed_iface_ports.add(uname)
+            decls.insert(len(exposed_iface_ports) - 1, f"  input logic {urng + ' ' if urng else ''}{uname}")
         # An interface ARRAY port (`AXI_BUS.Master mst [NO_MST_PORTS-1:0]`,
         # PULP's axi_demux_intf / axi_mux_intf / axi_xbar_intf) needs an ARRAY
         # of interface instances and one set of flat ports per element.  With a
