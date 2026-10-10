@@ -389,10 +389,12 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     // bit/part-selects on a packed wire (else d is 1-bit and the
                     // internal assigns / reads of d[i>0] are undriven).
                     int av_n_elem = 1, av_elem_w = 0;
+                    std::vector<std::pair<int,int>> av_dims_rec;
                     const UHDM::typespec* av_elem_ts = nullptr;
                     if (var->UhdmType() == uhdmarray_var) {
                         auto av = any_cast<const UHDM::array_var*>(var);
                         int n_elem = 1;
+                        std::vector<std::pair<int,int>> av_dims;
                         if (av->Ranges())
                             for (auto r : *av->Ranges()) {
                                 int l = 0, rr = 0;
@@ -405,6 +407,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                                     if (s.is_fully_const()) rr = s.as_const().as_int();
                                 }
                                 n_elem *= std::abs(l - rr) + 1;
+                                av_dims.push_back({std::min(l, rr), std::abs(l - rr) + 1});
                             }
                         int elem_w = 1;
                         if (av->Variables() && !av->Variables()->empty()) {
@@ -416,6 +419,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         if (n_elem * elem_w > 0) width = n_elem * elem_w;
                         av_n_elem = n_elem;
                         av_elem_w = elem_w;
+                        av_dims_rec = av_dims;
                     }
 
                     if (mode_debug)
@@ -431,6 +435,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     // wrapper).  Same record the Array_nets path below makes.
                     if (av_n_elem >= 1 && av_elem_w > 0) {
                         iface_array_elem_width_[full_name] = av_elem_w;
+                        if (av_dims_rec.size() >= 2) iface_array_dims_[full_name] = av_dims_rec;
                         if (av_elem_ts && (av_elem_ts->UhdmType() == uhdmstruct_typespec ||
                                            av_elem_ts->UhdmType() == uhdmunion_typespec))
                             iface_signal_struct_ts_[full_name] = av_elem_ts;
@@ -545,14 +550,18 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     }
                     // element count from the array ranges
                     int count = 1;
+                    std::vector<std::pair<int,int>> an_dims;
                     if (an->Ranges())
                         for (auto r : *an->Ranges()) {
-                            if (!r->Left_expr() || !r->Right_expr()) { count = 1; break; }
+                            if (!r->Left_expr() || !r->Right_expr()) { count = 1; an_dims.clear(); break; }
                             RTLIL::SigSpec ls = import_expression(r->Left_expr());
                             RTLIL::SigSpec rs = import_expression(r->Right_expr());
-                            if (ls.is_fully_const() && rs.is_fully_const())
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
                                 count *= std::abs(ls.as_int() - rs.as_int()) + 1;
-                            else { count = 1; break; }
+                                an_dims.push_back({std::min(ls.as_int(), rs.as_int()),
+                                                   std::abs(ls.as_int() - rs.as_int()) + 1});
+                            }
+                            else { count = 1; an_dims.clear(); break; }
                         }
                     // element width from the array's element net (struct/logic)
                     int elem_w = 1;
@@ -582,6 +591,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                                     elem_ts->UhdmType() == uhdmunion_typespec))
                         iface_signal_struct_ts_[full_name] = elem_ts;
                     iface_array_elem_width_[full_name] = elem_w;
+                    if (an_dims.size() >= 2) iface_array_dims_[full_name] = an_dims;
                     if (mode_debug)
                         log("UHDM: Materialized interface array signal %s "
                             "(elem_w=%d count=%d total=%d)\n",

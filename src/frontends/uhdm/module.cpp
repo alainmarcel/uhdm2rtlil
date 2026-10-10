@@ -516,6 +516,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         // modport module read ONE BIT (RSD LoadStoreUnit's
                         // `port.dcReadData[i]` / `port.forwardedLoadData[i]`).
                         int found_elem_w = 0, found_count = 0;
+                        std::vector<std::pair<int,int>> found_dims;
                         if (!found_struct_ts && !search_def.empty() && uhdm_design &&
                             uhdm_design->AllInterfaces()) {
                             for (auto ii : *uhdm_design->AllInterfaces()) {
@@ -560,16 +561,20 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                                     ats->UhdmType() == uhdmunion_typespec))
                                             found_struct_ts = ats;
                                         int cnt = 1;
+                                        std::vector<std::pair<int,int>> dims_here;
                                         if (an->Ranges())
                                             for (auto r : *an->Ranges()) {
                                                 if (!r->Left_expr() || !r->Right_expr()) { cnt = 0; break; }
                                                 RTLIL::SigSpec ls = import_expression(r->Left_expr());
                                                 RTLIL::SigSpec rs = import_expression(r->Right_expr());
-                                                if (ls.is_fully_const() && rs.is_fully_const())
+                                                if (ls.is_fully_const() && rs.is_fully_const()) {
                                                     cnt *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                                    dims_here.push_back({std::min(ls.as_int(), rs.as_int()),
+                                                                         std::abs(ls.as_int() - rs.as_int()) + 1});
+                                                }
                                                 else { cnt = 0; break; }
                                             }
-                                        if (cnt > 0) found_count = cnt;
+                                        if (cnt > 0) { found_count = cnt; found_dims = dims_here; }
                                         if (ats && !found_struct_ts) {
                                             int ew = get_width_from_typespec(ats, current_instance);
                                             if (ew > 0) found_elem_w = ew;
@@ -599,7 +604,10 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             // with LOAD_ISSUE_WIDTH = 1 in RSD's single-lane config) is
                             // still an array: `[i]` must select the whole element, so
                             // the geometry is recorded for count 1 too.
-                            if (iac > 1 || found_count >= 1) iface_array_elem_width_[full_name] = sig_w;
+                            if (iac > 1 || found_count >= 1) {
+                                iface_array_elem_width_[full_name] = sig_w;
+                                if (found_dims.size() >= 2) iface_array_dims_[full_name] = found_dims;
+                            }
                             if (mode_debug)
                                 log("UHDM: modport member geometry %s: iac=%d found_count=%d found_elem_w=%d struct=%s sig_w=%d\n",
                                     full_name.c_str(), iac, found_count, found_elem_w,

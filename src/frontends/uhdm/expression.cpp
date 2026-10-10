@@ -18041,6 +18041,52 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (mode_debug)
             log("    hier_path has %zu dots\n", dot_count);
         
+        // `p.m[i][j]` -- a MULTI-DIM unpacked interface array member selected
+        // with every index constant (RSD DCacheArray writes
+        // `port.tagArrayDataOut[way][p]` / `port.tagArrayValidOut[way][p]`,
+        // `DCacheTagPath tagArrayDataOut[WAYS][PORTS]` in DCacheIF).  The
+        // member is one flat wire, row-major, element 0 at the LSBs; nothing
+        // below handled a var_select on it and the writes were DROPPED
+        // ("Could not resolve struct member access") -- the cache's tag
+        // outputs never reached the interface, no lookup ever hit.
+        if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+            (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmref_obj &&
+            (*uhdm_hier->Path_elems())[1]->UhdmType() == uhdmvar_select) {
+            auto vs = any_cast<const var_select*>((*uhdm_hier->Path_elems())[1]);
+            std::string pfx = std::string((*uhdm_hier->Path_elems())[0]->VpiName()) + "." +
+                              std::string(vs->VpiName());
+            auto wit = name_map.find(pfx);
+            auto dit = iface_array_dims_.find(pfx);
+            auto ewi = iface_array_elem_width_.find(pfx);
+            if (wit != name_map.end() && wit->second && dit != iface_array_dims_.end() &&
+                ewi != iface_array_elem_width_.end() && ewi->second > 0 &&
+                vs->Exprs() && vs->Exprs()->size() <= dit->second.size()) {
+                const auto& dims = dit->second;
+                RTLIL::Wire* fw = wit->second;
+                int ew = ewi->second;
+                // Width of the sub-array below each index position.
+                std::vector<long> stride(dims.size(), (long)ew);
+                for (int d = (int)dims.size() - 2; d >= 0; d--)
+                    stride[d] = stride[d + 1] * dims[d + 1].second;
+                long off = 0; bool ok = true; size_t nidx = vs->Exprs()->size();
+                for (size_t d = 0; d < nidx; d++) {
+                    RTLIL::SigSpec ix = import_expression(
+                        any_cast<const expr*>((*vs->Exprs())[d]), input_mapping);
+                    if (!ix.is_fully_const()) { ok = false; break; }
+                    int k = ix.as_const().as_int() - dims[d].first;
+                    if (k < 0 || k >= dims[d].second) { ok = false; break; }
+                    off += (long)k * stride[d];
+                }
+                long w = stride[nidx - 1];
+                if (ok && w > 0 && off >= 0 && off + w <= fw->width) {
+                    if (mode_debug)
+                        log("    hier_path: iface %zu-D array elem %s -> \\%s[%ld+:%ld]\n",
+                            dims.size(), path_name.c_str(), pfx.c_str(), off, w);
+                    return RTLIL::SigSpec(fw).extract((int)off, (int)w);
+                }
+            }
+        }
+
         if (dot_count > 1) {
             // Nested struct member access
             // Find the last dot to separate the final member from the rest
