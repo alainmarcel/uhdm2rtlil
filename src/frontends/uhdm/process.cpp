@@ -5892,8 +5892,13 @@ void UhdmImporter::flush_pending_sync(RTLIL::SyncRule* sync) {
     std::vector<RTLIL::SigSig> misc;
     for (const auto& [lhs, rhs] : pending_sync_assignments) {
         bool any_wire = false;
-        for (const auto& ch : lhs.chunks())
-            if (ch.wire) { any_wire = true; if (seen.insert(ch.wire).second) bases.push_back(ch.wire); }
+        // Group by the CANONICAL wire: a write keyed on an element wire of
+        // an expanded array is flushed onto the flat wire it aliases (or
+        // the other way round), together with the whole-array write.
+        for (int b = 0; b < lhs.size(); b++) {
+            RTLIL::SigBit cb = sync_canon(lhs[b]);
+            if (cb.wire) { any_wire = true; if (seen.insert(cb.wire).second) bases.push_back(cb.wire); }
+        }
         if (!any_wire) misc.push_back(RTLIL::SigSig(lhs, rhs));
     }
     for (RTLIL::Wire* w : bases) {
@@ -5903,6 +5908,38 @@ void UhdmImporter::flush_pending_sync(RTLIL::SyncRule* sync) {
         if (ls.size()) sync->actions.push_back(RTLIL::SigSig(ls, rs));
     }
     for (auto& a : misc) sync->actions.push_back(a);
+}
+
+RTLIL::SigBit UhdmImporter::sync_canon(const RTLIL::SigBit& bit) {
+    if (!bit.wire || !module) return bit;
+    if (sync_canon_mod_ != module || sync_canon_nconn_ != module->connections().size()) {
+        sync_canon_mod_ = module;
+        sync_canon_nconn_ = module->connections().size();
+        sync_canon_map_.clear();
+        auto base_of = [](const std::string& n) {
+            // `\arr[3]` -> `\arr`; anything else -> "".
+            if (n.empty() || n.back() != ']') return std::string();
+            size_t lb = n.rfind('[');
+            if (lb == std::string::npos || lb + 1 >= n.size() - 1) return std::string();
+            for (size_t i = lb + 1; i + 1 < n.size(); i++)
+                if (!isdigit((unsigned char)n[i])) return std::string();
+            return n.substr(0, lb);
+        };
+        for (const auto& conn : module->connections()) {
+            const RTLIL::SigSpec& tgt = conn.first;
+            const RTLIL::SigSpec& src = conn.second;
+            if (tgt.size() != src.size() || !tgt.is_wire() || !src.is_chunk() || !src.as_chunk().wire)
+                continue;
+            RTLIL::Wire* tw = tgt.as_wire();
+            RTLIL::Wire* sw = src.as_chunk().wire;
+            std::string tn = tw->name.str(), sn = sw->name.str();
+            if (base_of(tn) != sn && base_of(sn) != tn) continue;
+            for (int i = 0; i < tgt.size(); i++)
+                sync_canon_map_[tgt[i]] = src[i];
+        }
+    }
+    auto it = sync_canon_map_.find(bit);
+    return it == sync_canon_map_.end() ? bit : it->second;
 }
 
 void UhdmImporter::note_pending_sync(const RTLIL::SigSpec& lhs) {
@@ -5918,11 +5955,12 @@ RTLIL::SigSpec UhdmImporter::pending_inflight(const RTLIL::SigSpec& lhs) {
     for (int b = 0; b < lhs.size(); b++) {
         RTLIL::SigBit bit = lhs[b];
         if (!bit.wire) continue;
+        RTLIL::SigBit cbit = sync_canon(bit);
         uint64_t best = 0; RTLIL::SigBit val = bit; bool found = false;
         for (const auto& [k, v] : pending_sync_assignments) {
             if (k.size() != v.size()) continue;
             for (int i = 0; i < k.size(); i++) {
-                if (k[i] == bit) {
+                if (k[i] == bit || (k[i].wire && sync_canon(k[i]) == cbit)) {
                     auto it = pending_sync_seq.find(k);
                     uint64_t sq = it == pending_sync_seq.end() ? 0 : it->second;
                     if (!found || sq > best) { best = sq; val = v[i]; found = true; }

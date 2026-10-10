@@ -849,6 +849,19 @@ struct UhdmImporter {
     bool param_assign_is_override(const UHDM::module_inst* inst, const std::string& pname, const UHDM::any* rhs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
+    // Canonical bits for overlap detection between pending sync writes: an
+    // expanded unpacked array has one flat wire `\arr` and per-element wires
+    // `\arr[k]` tied together by a `connect` (element <- flat, or flat <-
+    // element when the elements are driven individually).  A field write
+    // `arr[k].f <= 0` keys the element wire and `arr <= next` keys the flat
+    // one; bit identity never sees them overlap, and both end up as separate
+    // $dff drivers of the same bits (RSD DCacheMissHandler.mshr: 18 driver
+    // conflicts).  Every bit of the alias TARGET maps to its SOURCE bit, so
+    // both writes compare -- and are flushed -- on the same bits.
+    RTLIL::SigBit sync_canon(const RTLIL::SigBit& bit);
+    RTLIL::Module* sync_canon_mod_ = nullptr;
+    size_t sync_canon_nconn_ = 0;
+    dict<RTLIL::SigBit, RTLIL::SigBit> sync_canon_map_;
     
     // Current loop variable substitutions for unrolling
     std::map<std::string, int64_t> current_loop_substitutions;
