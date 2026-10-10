@@ -1151,6 +1151,15 @@ struct UhdmImporter {
     // `arr[idx].field <= rhs` with a DYNAMIC index on an EXPANDED array of
     // packed structs, under the always_ff loop path (RSD StoreQueue).
     bool emit_dynamic_expanded_elem_field_write_sync(const assignment* uhdm_assign);
+    // A bare net / variable actual the module cannot name (the elaborated view
+    // of `port.clk` handed to an instance: a logic_net named `clk`), resolved
+    // through its DECLARATION location -- the interface definition that owns
+    // the net -- to `<the module's unique port of that interface>.<member>`.
+    // Empty when no unique port exists.  Shared by the interface-instance
+    // and module-instance port paths.
+    RTLIL::SigSpec resolve_bare_iface_member_actual(const UHDM::any* hc,
+                                                   const UHDM::module_inst* source,
+                                                   const std::string& what);
     bool emit_dynamic_indexed_part_select_write(
         const UHDM::indexed_part_select* ips,
         const UHDM::any* rhs_any,

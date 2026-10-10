@@ -3220,9 +3220,21 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                     // port carries that member.  (Ambiguous cases, e.g.
                     // `.psel(s_axi_w_if.awvalid | s_axi_r_if.arvalid)` under
                     // two AXI ports, still fall through.)
+                    // ...and a bare interface-member NET the same way: inside a
+                    // GENERATE scope the elaborated actual of `.clk(port.clk)`
+                    // is a logic_net `clk`, in one view spelled
+                    // `<inst>.<this port>.clk` (RSD DCacheArray's nested way /
+                    // byte loops: every cache RAM lost its clock, "Port clk
+                    // has empty connection").
+                    std::string hc_full, hc_vn;
                     if (auto hv = dynamic_cast<const UHDM::variables*>(high_conn)) {
-                        std::string full = std::string(hv->VpiFullName());
-                        std::string vn = std::string(hv->VpiName());
+                        hc_full = std::string(hv->VpiFullName()); hc_vn = std::string(hv->VpiName());
+                    } else if (auto hn = dynamic_cast<const UHDM::net*>(high_conn)) {
+                        hc_full = std::string(hn->VpiFullName()); hc_vn = std::string(hn->VpiName());
+                    }
+                    if (!hc_vn.empty()) {
+                        std::string full = hc_full;
+                        std::string vn = hc_vn;
                         std::string tail = "." + port_name + "." + vn;
                         if (!vn.empty() && full.size() > tail.size() &&
                             full.compare(full.size() - tail.size(), tail.size(), tail) == 0) {
@@ -3244,6 +3256,25 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                                     port_name.c_str(), vn.c_str(), only->name.c_str());
                             }
                         }
+                    }
+                    // The other spelling of the same actual: the member
+                    // resolved THROUGH the interface's own port binding, i.e.
+                    // the top module's `clk` net (`work@top.clk`) -- no port
+                    // in the name at all, and the definition-view lookup only
+                    // covers top-level instances.  The interface definition
+                    // that declares the member (by location, else by name)
+                    // and the module's unique port of that type pin the wire.
+                    if (actual_sig.empty() && high_conn &&
+                        (high_conn->VpiType() == vpiNet || high_conn->VpiType() == vpiLogicVar)) {
+                        // Inside a generate scope current_instance is the
+                        // scope; the ports live on the enclosing module
+                        // instance, so walk up to it.
+                        const UHDM::any* cur_any = current_instance;
+                        const UHDM::module_inst* src_inst = nullptr;
+                        while (cur_any && !(src_inst = dynamic_cast<const UHDM::module_inst*>(cur_any)))
+                            cur_any = cur_any->VpiParent();
+                        actual_sig = resolve_bare_iface_member_actual(
+                            high_conn, src_inst, "instance " + inst_name + " port " + port_name);
                     }
                     if (actual_sig.empty()) {
                         // An unbased-unsized fill actual (`.be_i('1)`) takes

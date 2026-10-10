@@ -1,0 +1,9 @@
+# Netlist gate: every cache RAM inside the nested generate loops must have its
+# clock connected.  The SAT miter is VACUOUS here (an undriven clock reads as
+# constant 0 on the gate side and the proof still passes), so gate on
+# `check -assert` of the flattened design: without the fix the four RAM cells
+# report "Port clk has empty connection" and check finds 4 undriven clk wires.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top gen_scope_iface_member_clk_actual
+proc; flatten; opt_clean
+check -assert
