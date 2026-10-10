@@ -506,6 +506,16 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             search_def = std::string(iface_inst->VpiDefName());
                             if (search_def.find("work@") == 0) search_def = search_def.substr(5);
                         }
+                        // Element width / count of an unpacked-array member
+                        // whose ELEMENT is not a struct (`T din[2]` over a
+                        // logic typedef): the struct search below cannot
+                        // size it, and iface_array_count() finds nothing when
+                        // the local iface_inst lacks the array_net -- the
+                        // member then came out at its TOTAL width with no
+                        // element width recorded, and `p.din[i]` in the
+                        // modport module read ONE BIT (RSD LoadStoreUnit's
+                        // `port.dcReadData[i]` / `port.forwardedLoadData[i]`).
+                        int found_elem_w = 0, found_count = 0;
                         if (!found_struct_ts && !search_def.empty() && uhdm_design &&
                             uhdm_design->AllInterfaces()) {
                             for (auto ii : *uhdm_design->AllInterfaces()) {
@@ -540,8 +550,24 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                         if (ats && (ats->UhdmType() == uhdmstruct_typespec ||
                                                     ats->UhdmType() == uhdmunion_typespec))
                                             found_struct_ts = ats;
+                                        int cnt = 1;
+                                        if (an->Ranges())
+                                            for (auto r : *an->Ranges()) {
+                                                if (!r->Left_expr() || !r->Right_expr()) { cnt = 0; break; }
+                                                RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                                RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                                if (ls.is_fully_const() && rs.is_fully_const())
+                                                    cnt *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                                else { cnt = 0; break; }
+                                            }
+                                        if (cnt > 0) found_count = cnt;
+                                        if (ats && !found_struct_ts) {
+                                            int ew = get_width_from_typespec(ats, current_instance);
+                                            if (ew > 0) found_elem_w = ew;
+                                        }
+                                        if (found_struct_ts || found_elem_w > 0) break;
                                     }
-                                if (found_struct_ts) break;
+                                if (found_struct_ts || found_elem_w > 0) break;
                             }
                         }
                         int sig_w = width_obj ? compute_signal_width(width_obj) : 1;
@@ -556,7 +582,15 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         // element of the flat wire, not bit i (import_hier_path).
                         {
                             int iac = iface_array_count(sig_name);
-                            if (iac > 1) iface_array_elem_width_[full_name] = sig_w;
+                            if (iac <= 1 && found_count >= 1) {
+                                iac = found_count;
+                                if (!found_struct_ts && found_elem_w > 0) sig_w = found_elem_w;
+                            }
+                            // A ONE-element array (`executedLoadData[LOAD_ISSUE_WIDTH]`
+                            // with LOAD_ISSUE_WIDTH = 1 in RSD's single-lane config) is
+                            // still an array: `[i]` must select the whole element, so
+                            // the geometry is recorded for count 1 too.
+                            if (iac > 1 || found_count >= 1) iface_array_elem_width_[full_name] = sig_w;
                             sig_w *= iac;
                         }
                         RTLIL::Wire* sw = module->addWire(

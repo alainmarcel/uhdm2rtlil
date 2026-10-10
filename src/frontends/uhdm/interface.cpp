@@ -313,6 +313,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     // element_count * element_width so `d[i]` accesses resolve as
                     // bit/part-selects on a packed wire (else d is 1-bit and the
                     // internal assigns / reads of d[i>0] are undriven).
+                    int av_n_elem = 1, av_elem_w = 0;
+                    const UHDM::typespec* av_elem_ts = nullptr;
                     if (var->UhdmType() == uhdmarray_var) {
                         auto av = any_cast<const UHDM::array_var*>(var);
                         int n_elem = 1;
@@ -333,8 +335,12 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         if (av->Variables() && !av->Variables()->empty()) {
                             elem_w = get_width(av->Variables()->at(0), current_instance);
                             if (elem_w <= 0) elem_w = 1;
+                            if (auto ev = dynamic_cast<const UHDM::expr*>(av->Variables()->at(0)))
+                                if (ev->Typespec()) av_elem_ts = ev->Typespec()->Actual_typespec();
                         }
                         if (n_elem * elem_w > 0) width = n_elem * elem_w;
+                        av_n_elem = n_elem;
+                        av_elem_w = elem_w;
                     }
 
                     if (mode_debug)
@@ -343,6 +349,17 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
+                    // Element geometry of an ARRAY member declared as a variable
+                    // (`T din[2]` over a logic typedef lands in Array_vars, not
+                    // Array_nets): without it the parent's `i.din[g]` read /
+                    // wrote ONE BIT of the flat wire (RSD LoadStoreUnit's
+                    // wrapper).  Same record the Array_nets path below makes.
+                    if (av_n_elem >= 1 && av_elem_w > 0) {
+                        iface_array_elem_width_[full_name] = av_elem_w;
+                        if (av_elem_ts && (av_elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                           av_elem_ts->UhdmType() == uhdmunion_typespec))
+                            iface_signal_struct_ts_[full_name] = av_elem_ts;
+                    }
                     if (var->Typespec() && var->Typespec()->Actual_typespec())
                         iface_signal_ts_[full_name] = var->Typespec()->Actual_typespec();
                     iface_inst_vars_[interface_name].push_back(var_name);

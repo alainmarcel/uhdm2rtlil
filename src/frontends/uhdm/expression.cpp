@@ -15370,7 +15370,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (!geom) {
                     auto ewi = iface_array_elem_width_.find(full);
                     if (ewi != iface_array_elem_width_.end() && ewi->second > 1 &&
-                        sig_wire->width > ewi->second &&
+                        sig_wire->width >= ewi->second &&
                         sig_wire->width % ewi->second == 0) {
                         g_ew = ewi->second;
                         g_n = sig_wire->width / g_ew;
