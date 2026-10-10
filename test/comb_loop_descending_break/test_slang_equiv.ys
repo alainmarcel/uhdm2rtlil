@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched read_uhdm unrolls the
+# descending loop with no `break` handling, so the lowest matching index wins
+# instead of the highest: a counterexample at the first cycle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_loop_descending_break
+proc; flatten; opt_clean; memory; async2sync
+rename comb_loop_descending_break gate
+design -stash gate
+read_slang dut.sv --top comb_loop_descending_break
+hierarchy -check -top comb_loop_descending_break
+proc; flatten; opt_clean; memory; async2sync
+rename comb_loop_descending_break gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

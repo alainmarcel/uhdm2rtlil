@@ -9116,23 +9116,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     "max_iters=%lld guard=(i %s bound[%d])\n",
                     fl_var.c_str(), (long long)max_iters,
                     fl_inclusive ? "<=" : "<", fl_bound_width);
-            } else if (fl_can_unroll && fl_descending) {
-                // Descending: `for (i = HI; i >= LO (or > LO); i -= inc)`.
-                int64_t inc = fl_inc_val == 0 ? 1 : std::llabs(fl_inc_val);
-                int64_t loop_end = fl_inclusive ? fl_end : fl_end + 1;
-                for (int64_t i = fl_start; i >= loop_end; i -= inc) {
-                    loop_values[fl_var] = (int)i;
-                    import_statement_comb(fl_body, proc);
-                }
-                int64_t final_val = loop_end - inc;
-                loop_values[fl_var] = (int)final_val;
-                if (RTLIL::Wire* var_wire = find_loop_var_wire(fl_var))
-                    emit_comb_assign(RTLIL::SigSpec(var_wire),
-                                     RTLIL::Const((int)final_val, var_wire->width), proc);
-                log("    Comb for loop unrolled (descending): %s final=%lld\n",
-                    fl_var.c_str(), (long long)final_val);
             } else if (fl_can_unroll) {
-                int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
+                // Ascending `for (i = LO; i <= HI; i += inc)` and descending
+                // `for (i = HI; i >= LO; i -= inc)` share one unroller.  The
+                // descending form used to have its own plain loop with NO
+                // `break` handling, so every iteration's writes landed and the
+                // LAST one (the lowest index) won -- RSD CommitStage's
+                // GetFinishedInsnRange (`for (i = COMMIT_WIDTH-1; i >= 0; i--)
+                // if (...) begin finishedInsnRange = i + 1; break; end`)
+                // reported the FIRST finished lane instead of the last.
+                int64_t inc = fl_inc_val == 0 ? 1 : std::llabs(fl_inc_val);
+                int64_t loop_end = fl_descending ? (fl_inclusive ? fl_end : fl_end + 1)
+                                                 : (fl_inclusive ? fl_end : fl_end - 1);
+                auto fl_more = [&](int64_t i) { return fl_descending ? i >= loop_end : i <= loop_end; };
+                int64_t fl_step = fl_descending ? -inc : inc;
                 // If the body has a `break`, the SV semantics are "first
                 // iteration whose body executes wins" (priority encoder).
                 // Our static unrolling emits each iteration's writes as
@@ -9157,7 +9154,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     log("    Comb for loop body has `break` — forward "
                         "iteration with live-guarded bodies\n");
                     RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
-                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    for (int64_t i = fl_start; fl_more(i); i += fl_step) {
                         loop_values[fl_var] = (int)i;
                         // Per-iteration break flag, defaulted to 0 in the
                         // root case; the vpiBreak handlers set it to 1 under
@@ -9206,14 +9203,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                          module->And(NEW_ID, live, nb));
                     }
                 } else {
-                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    for (int64_t i = fl_start; fl_more(i); i += fl_step) {
                         loop_values[fl_var] = (int)i;
                         import_statement_comb(fl_body, proc);
                     }
                 }
                 // Keep post-loop variable value for subsequent statements in the same block
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
-                int64_t final_val = fl_inclusive ? fl_end + fl_inc_val : fl_end;
+                int64_t final_val = fl_descending ? loop_end - inc
+                                                  : (fl_inclusive ? fl_end + fl_inc_val : fl_end);
                 loop_values[fl_var] = (int)final_val;
 
                 // With a `break`, the post-loop value of the loop variable is
@@ -9230,9 +9228,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     if (var_wire) {
                         int w = var_wire->width;
                         RTLIL::SigSpec sel = RTLIL::Const((int)final_val, w);
-                        // brk_flags is in DESCENDING index order, so folding in
-                        // order leaves the LOWEST index outermost = highest
-                        // priority (first break wins).
+                        // The flags are one-hot (each is live && broke, and
+                        // live is cleared by any earlier break), so the fold
+                        // order does not matter; the constant is the no-break
+                        // fallback.
                         for (auto& bf : brk_flags)
                             sel = module->Mux(NEW_ID, sel,
                                               RTLIL::SigSpec(RTLIL::Const(bf.first, w)),
