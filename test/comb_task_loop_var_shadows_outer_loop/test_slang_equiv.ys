@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog has no packed structs in
+# unpacked arrays).  FAILS without the fix: the default arm reads `i` as the
+# inlined loop's exit value and the allocation never happens.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_task_loop_var_shadows_outer_loop
+proc; flatten; opt_clean; memory; async2sync
+rename comb_task_loop_var_shadows_outer_loop gate
+design -stash gate
+read_slang dut.sv --top comb_task_loop_var_shadows_outer_loop
+hierarchy -check -top comb_task_loop_var_shadows_outer_loop
+proc; flatten; opt_clean; memory; async2sync
+rename comb_task_loop_var_shadows_outer_loop gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

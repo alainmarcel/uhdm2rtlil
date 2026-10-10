@@ -1,0 +1,7 @@
+# Netlist gate: no out-of-range element selects.  Without the fix read_uhdm
+# warns "Bit select index 2 is out of range" 16 times and emits `assign 1'x`
+# for every write of the default arm; `check -assert` finds 32 problems.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_task_loop_var_shadows_outer_loop
+proc; opt_clean
+check -assert
