@@ -140,6 +140,87 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
         log("UHDM: Finished importing interface: %s\n", interface_name.c_str());
 }
 
+RTLIL::SigSpec UhdmImporter::resolve_bare_iface_member_actual(const UHDM::any* hc,
+                                                             const UHDM::module_inst* source,
+                                                             const std::string& what) {
+    RTLIL::SigSpec out;
+    if (!hc) return out;
+    bool bare_net = hc->VpiType() == vpiNet || hc->VpiType() == vpiLogicVar;
+    std::string member = std::string(hc->VpiName());
+    bool unresolvable = bare_net && !member.empty() &&
+                        !module->wire(RTLIL::escape_id(member)) &&
+                        !name_map.count(member);
+    if (!unresolvable || !uhdm_design || !uhdm_design->AllInterfaces() || !source) return out;
+    std::string decl_if;
+    for (auto I : *uhdm_design->AllInterfaces()) {
+        if (!I->Ports()) continue;
+        for (auto q : *I->Ports()) {
+            if (std::string(q->VpiName()) != member) continue;
+            if (q->VpiLineNo() == hc->VpiLineNo() &&
+                q->VpiColumnNo() == hc->VpiColumnNo() &&
+                std::string(q->VpiFile()) == std::string(hc->VpiFile())) {
+                decl_if = std::string(I->VpiDefName());
+                break;
+            }
+        }
+        if (!decl_if.empty()) break;
+    }
+    // Inside a GENERATE scope the elaborated actual of `.clk(p.clk)` is
+    // not the interface's own port net: Surelog resolves the member THROUGH
+    // the interface instance's port binding, so the net is the top module's
+    // `clk` (full name `work@top.clk`), carrying the USE site's location.
+    // No interface port declares that location, so match by NAME instead:
+    // every interface definition that declares `member` (as a port, net or
+    // variable) is a candidate type, and the module's unique port of one of
+    // those types pins the wire.
+    std::set<std::string> name_ifs;
+    if (decl_if.empty()) {
+        for (auto I : *uhdm_design->AllInterfaces()) {
+            bool declares = false;
+            if (I->Ports())
+                for (auto q : *I->Ports())
+                    if (std::string(q->VpiName()) == member) { declares = true; break; }
+            if (!declares && I->Nets())
+                for (auto q : *I->Nets())
+                    if (std::string(q->VpiName()) == member) { declares = true; break; }
+            if (!declares && I->Variables())
+                for (auto q : *I->Variables())
+                    if (std::string(q->VpiName()) == member) { declares = true; break; }
+            if (declares) name_ifs.insert(std::string(I->VpiDefName()));
+        }
+    }
+    if ((decl_if.empty() && name_ifs.empty()) || !source->Ports()) return out;
+    std::string cand;
+    int ncand = 0;
+    for (auto mp : *source->Ports()) {
+        const UHDM::any* act = nullptr;
+        if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->Low_conn()))
+            act = r->Actual_group();
+        if (!act)
+            if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->High_conn()))
+                act = r->Actual_group();
+        std::string def;
+        if (act && act->UhdmType() == uhdmmodport) {
+            if (auto pi = dynamic_cast<const UHDM::interface_inst*>(act->VpiParent()))
+                def = std::string(pi->VpiDefName());
+        } else if (auto ii = dynamic_cast<const UHDM::interface_inst*>(act)) {
+            def = std::string(ii->VpiDefName());
+        }
+        if (!def.empty() && (def == decl_if || name_ifs.count(def))) {
+            cand = std::string(mp->VpiName());
+            if (decl_if.empty()) decl_if = def;
+            ncand++;
+        }
+    }
+    if (ncand != 1) return out;
+    std::string full = cand + "." + member;
+    RTLIL::Wire* w = name_map.count(full) ? name_map[full] : module->wire(RTLIL::escape_id(full));
+    if (!w) return out;
+    log("UHDM: %s actual resolved to %s (declared by %s, unique port of that type)\n",
+        what.c_str(), full.c_str(), decl_if.c_str());
+    return RTLIL::SigSpec(w);
+}
+
 // Import interface instances within a module
 void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_module) {
     if (mode_debug)
@@ -271,62 +352,9 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 RTLIL::SigSpec hv;
                 const UHDM::any* hc = p->High_conn();
                 if (!hc) return hv;
-                bool bare_net = hc->VpiType() == vpiNet || hc->VpiType() == vpiLogicVar;
-                std::string member = std::string(hc->VpiName());
-                bool unresolvable = bare_net && !member.empty() &&
-                                    !module->wire(RTLIL::escape_id(member)) &&
-                                    !name_map.count(member);
-                if (unresolvable && uhdm_design && uhdm_design->AllInterfaces()) {
-                    std::string decl_if;
-                    for (auto I : *uhdm_design->AllInterfaces()) {
-                        if (!I->Ports()) continue;
-                        for (auto q : *I->Ports()) {
-                            if (std::string(q->VpiName()) != member) continue;
-                            if (q->VpiLineNo() == hc->VpiLineNo() &&
-                                q->VpiColumnNo() == hc->VpiColumnNo() &&
-                                std::string(q->VpiFile()) == std::string(hc->VpiFile())) {
-                                decl_if = std::string(I->VpiDefName());
-                                break;
-                            }
-                        }
-                        if (!decl_if.empty()) break;
-                    }
-                    std::string cand;
-                    int ncand = 0;
-                    if (!decl_if.empty() && source->Ports()) {
-                        for (auto mp : *source->Ports()) {
-                            const UHDM::any* act = nullptr;
-                            if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->Low_conn()))
-                                act = r->Actual_group();
-                            if (!act)
-                                if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->High_conn()))
-                                    act = r->Actual_group();
-                            std::string def;
-                            if (act && act->UhdmType() == uhdmmodport) {
-                                if (auto pi = dynamic_cast<const UHDM::interface_inst*>(act->VpiParent()))
-                                    def = std::string(pi->VpiDefName());
-                            } else if (auto ii = dynamic_cast<const UHDM::interface_inst*>(act)) {
-                                def = std::string(ii->VpiDefName());
-                            }
-                            if (!def.empty() && def == decl_if) {
-                                cand = std::string(mp->VpiName());
-                                ncand++;
-                            }
-                        }
-                    }
-                    if (ncand == 1) {
-                        std::string full = cand + "." + member;
-                        RTLIL::Wire* w = name_map.count(full) ? name_map[full]
-                                                              : module->wire(RTLIL::escape_id(full));
-                        if (w) {
-                            log("UHDM: interface instance %s port %s actual resolved to %s "
-                                "(declared by %s, unique port of that type)\n",
-                                interface_name.c_str(), std::string(p->VpiName()).c_str(),
-                                full.c_str(), decl_if.c_str());
-                            return RTLIL::SigSpec(w);
-                        }
-                    }
-                }
+                hv = resolve_bare_iface_member_actual(
+                    hc, source, "interface instance " + interface_name + " port " + std::string(p->VpiName()));
+                if (!hv.empty()) return hv;
                 if (auto he = dynamic_cast<const UHDM::expr*>(hc)) hv = import_expression(he);
                 return hv;
             };
