@@ -534,7 +534,16 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 // An UNPACKED-array member (`MemoryPortMultiplexerIn
                                 // mshrMemMuxIn[MSHR_NUM]`, RSD DCacheIF) lives in
                                 // Array_nets(), not Nets(): take the ELEMENT type.
-                                if (!found_struct_ts && ii->Array_nets())
+                                // Run this for a struct-typed member too: the
+                                // element COUNT of an array member is needed
+                                // whatever its element type.  It used to run only
+                                // when no struct type was known, so a ONE-element
+                                // array of packed structs (RSD LoadStoreUnitIF's
+                                // `PhyAddrPath executedLoadAddr[LOAD_ISSUE_WIDTH]`,
+                                // LOAD_ISSUE_WIDTH = 1 -- iface_array_count()
+                                // cannot tell "array of one" from "not an array")
+                                // had no geometry and `[i]` read bit i.
+                                if (ii->Array_nets())
                                     for (auto an : *ii->Array_nets()) {
                                         if (std::string(an->VpiName()) != sig_name) continue;
                                         const UHDM::typespec* ats = nullptr;
@@ -565,9 +574,9 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                             int ew = get_width_from_typespec(ats, current_instance);
                                             if (ew > 0) found_elem_w = ew;
                                         }
-                                        if (found_struct_ts || found_elem_w > 0) break;
+                                        break;
                                     }
-                                if (found_struct_ts || found_elem_w > 0) break;
+                                if (found_struct_ts || found_elem_w > 0 || found_count >= 1) break;
                             }
                         }
                         int sig_w = width_obj ? compute_signal_width(width_obj) : 1;
@@ -591,6 +600,10 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             // still an array: `[i]` must select the whole element, so
                             // the geometry is recorded for count 1 too.
                             if (iac > 1 || found_count >= 1) iface_array_elem_width_[full_name] = sig_w;
+                            if (mode_debug)
+                                log("UHDM: modport member geometry %s: iac=%d found_count=%d found_elem_w=%d struct=%s sig_w=%d\n",
+                                    full_name.c_str(), iac, found_count, found_elem_w,
+                                    found_struct_ts ? std::string(found_struct_ts->VpiName()).c_str() : "-", sig_w);
                             sig_w *= iac;
                         }
                         RTLIL::Wire* sw = module->addWire(
