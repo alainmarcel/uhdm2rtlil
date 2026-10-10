@@ -15178,8 +15178,34 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         }
                                     }
                                 } else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(mts)) {
-                                    if (lts->Ranges() && lts->Ranges()->size() >= 2) {
+                                    // `logic [A:B][C:D] f` (two ranges) or the typedef
+                                    // alias form `elem_t [A:B] f` (one range over an
+                                    // element typespec).
+                                    bool alias = lts->Ranges() && lts->Ranges()->size() == 1 &&
+                                                 lts->Elem_typespec() != nullptr;
+                                    if (lts->Ranges() && (lts->Ranges()->size() >= 2 || alias)) {
                                         auto rg = (*lts->Ranges())[0];
+                                        RTLIL::SigSpec l = import_expression(rg->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(rg->Right_expr(), input_mapping);
+                                        if (l.is_fully_const() && r.is_fully_const()) {
+                                            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                                            fe_cnt = std::abs(li - ri) + 1;
+                                            fe_lo = std::min(li, ri);
+                                            fe_desc = li >= ri;
+                                            if (fe_cnt > 0 && mw % fe_cnt == 0) fe_w = mw / fe_cnt;
+                                            else fe_cnt = 0;
+                                        }
+                                    }
+                                } else if (auto pts = dynamic_cast<const UHDM::packed_array_typespec*>(mts)) {
+                                    // A PACKED array of structs as the field
+                                    // (`OpInfo [MICRO_OP_MAX_NUM-1:0] microOps` in RSD's
+                                    // DecodeStageRegPath): `pipeReg[i].microOps[j]`
+                                    // selects one 12-bit... element, not bit j.  The
+                                    // decode stage's every micro-op came out as its
+                                    // valid bit (280 co-sim divergences, read_slang
+                                    // clean).
+                                    if (pts->Ranges() && pts->Ranges()->size() >= 1) {
+                                        auto rg = (*pts->Ranges())[0];
                                         RTLIL::SigSpec l = import_expression(rg->Left_expr(), input_mapping);
                                         RTLIL::SigSpec r = import_expression(rg->Right_expr(), input_mapping);
                                         if (l.is_fully_const() && r.is_fully_const()) {
