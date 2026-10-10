@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the struct).
+# Unpatched read_uhdm selects one bit per element: a counterexample at the first
+# cycle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top iface_member_in_instance_actual_expr
+proc; flatten; opt_clean; memory; async2sync
+rename iface_member_in_instance_actual_expr gate
+design -stash gate
+read_slang dut.sv --top iface_member_in_instance_actual_expr
+hierarchy -check -top iface_member_in_instance_actual_expr
+proc; flatten; opt_clean; memory; async2sync
+rename iface_member_in_instance_actual_expr gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 3 -set-init-zero miter
