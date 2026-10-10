@@ -5031,6 +5031,35 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(cand)))
                                 return RTLIL::SigSpec(w);
                         }
+                        // Inside an EXPRESSION actual (`.popHead(port.popHeadNum
+                        // > 0)`, RSD ActiveList's queue pointer; StoreQueue's
+                        // `setTail(port.toRecoveryPhase)`) the var's full name
+                        // carries the CHILD port (`...ptr.popHeadCount.popHeadNum`),
+                        // not the parent's interface port, so the lookup above
+                        // misses and the comparison got an EMPTY operand: the
+                        // pointer never popped and the active list read empty
+                        // forever.  The member lives in this module as
+                        // `<iface port>.<member>`: take it when exactly one
+                        // interface-port wire carries that member name.
+                        RTLIL::Wire* only = nullptr;
+                        int nfound = 0;
+                        std::string suffix = "." + vname;
+                        for (auto& kv : module->wires_) {
+                            std::string wn = kv.first.str();
+                            if (wn.empty() || wn[0] != '\\') continue;
+                            wn = wn.substr(1);
+                            if (wn.size() <= suffix.size() ||
+                                wn.compare(wn.size() - suffix.size(), suffix.size(), suffix) != 0)
+                                continue;
+                            std::string pfx = wn.substr(0, wn.size() - suffix.size());
+                            if (pfx.find('.') != std::string::npos || pfx.find('[') != std::string::npos) continue;
+                            if (!iface_signal_ts_.count(wn) && !iface_signal_struct_ts_.count(wn) &&
+                                !kv.second->attributes.count(RTLIL::escape_id("modport_direction")))
+                                continue;
+                            only = kv.second; nfound++;
+                        }
+                        if (nfound == 1)
+                            return RTLIL::SigSpec(only);
                     }
                     // No plain-name lookup here: a bare `haddr` var would hit
                     // the module's own 608-bit `haddr` array instead of the
