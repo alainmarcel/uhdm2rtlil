@@ -9723,6 +9723,31 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 } else {
                     proc->root_case.actions.push_back(RTLIL::SigSig(caller_out, it->second));
                 }
+            } else if (!caller_out.empty()) {
+                // An UNPACKED-array actual (`DecideCommit(.commit(commit), ...)`
+                // on `logic commit[COMMIT_WIDTH]`, RSD CommitStage) imports as
+                // the concat of its element wires, element 0 at the LSBs --
+                // the same order the formal's flat temp uses.  It was skipped
+                // here (not a single wire) and the array was never written.
+                // Land each element on its own `$0\` temp when the process
+                // registered one, else on the wire itself.
+                RTLIL::SigSpec val = it->second;
+                if (val.size() < caller_out.size()) val.extend_u0(caller_out.size());
+                int off = 0;
+                for (const auto& ch : caller_out.chunks()) {
+                    if (ch.wire && off + ch.width <= val.size()) {
+                        RTLIL::SigSpec part = val.extract(off, ch.width);
+                        std::string sig_name = ch.wire->name.str();
+                        if (sig_name[0] == '\\') sig_name = sig_name.substr(1);
+                        RTLIL::Wire* caller_temp = module->wire("$0\\" + sig_name);
+                        RTLIL::SigSpec dst = caller_temp ? RTLIL::SigSpec(caller_temp).extract(ch.offset, ch.width)
+                                                         : RTLIL::SigSpec(ch);
+                        proc->root_case.actions.push_back(RTLIL::SigSig(dst, part));
+                        if (ch.offset == 0 && ch.width == ch.wire->width)
+                            current_comb_values[sig_name] = part;
+                    }
+                    off += ch.width;
+                }
             }
         }
     }
