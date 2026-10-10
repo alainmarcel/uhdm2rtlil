@@ -200,6 +200,7 @@ bool UhdmImporter::stmt_contains_break(const UHDM::any* s, int depth) {
     if (!s || depth > 48) return false;
     switch (s->UhdmType()) {
     case uhdmbreak_stmt: return true;
+    case uhdmcontinue_stmt: return true;   // guards the rest of the iteration too
     case uhdmbegin: {
         auto bg = any_cast<const begin*>(s);
         if (bg && bg->Stmts())

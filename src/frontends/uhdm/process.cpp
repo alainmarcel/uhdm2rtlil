@@ -4513,7 +4513,10 @@ static bool body_has_break(const any* stmt) {
     int type = stmt->VpiType();
     // vpiBreak is the VPI tag for `break` statements; in UHDM the object's
     // UhdmType() is uhdmbreak_stmt.
-    if (stmt->UhdmType() == uhdmbreak_stmt) return true;
+    // `continue` needs the same live-guarded unroll: the rest of ITS
+    // iteration must be skipped (the per-site flags do that), while later
+    // iterations still run (it never sets the iteration's break flag).
+    if (stmt->UhdmType() == uhdmbreak_stmt || stmt->UhdmType() == uhdmcontinue_stmt) return true;
     if (type == vpiBegin) {
         auto b = any_cast<const UHDM::begin*>(stmt);
         if (b->Stmts())
@@ -9286,6 +9289,21 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             break;
         case vpiContinue:
+            // `continue` inside an unrolled comb for-loop: skip the REST of
+            // this iteration only.  It was a no-op, so the statements after
+            // it still ran -- RSD LoadQueue's violation scan
+            // (`if (!port.executeLoad[li]) continue; if (addr != ...)
+            // continue; ... violation[si] = TRUE;`) flagged a conflict for
+            // every lane (153 co-sim divergences, read_slang clean).  Same
+            // per-site flag as `break`, without the iteration's break flag.
+            if (!current_break_flag.empty() && proc) {
+                RTLIL::Wire* bs = module->addWire(NEW_ID, 1);
+                proc->root_case.actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S0)));
+                proc->root_case.actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S1)));
+                current_break_sites.push_back(RTLIL::SigSpec(bs));
+            }
             break;
         case vpiForeachStmt: {
             // `foreach (arr[i]) body` — unroll over the array dimension, the
@@ -19253,6 +19271,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
             break;
         case vpiContinue:
+            // See the Process* overload: a per-site flag under the enclosing
+            // branch conditions, no iteration break flag.
+            if (!current_break_flag.empty() && current_comb_process) {
+                RTLIL::Wire* bs = module->addWire(NEW_ID, 1);
+                current_comb_process->root_case.actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S0)));
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(bs), RTLIL::SigSpec(RTLIL::State::S1)));
+                current_break_sites.push_back(RTLIL::SigSpec(bs));
+            }
             break;
         case vpiForeachStmt: {
             // `foreach (arr[i]) body` inside an if/case branch — unroll over the
