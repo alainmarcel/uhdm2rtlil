@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the interface).
+# Unpatched read_uhdm handled only the exact `p.arr[i].field` shape on an
+# interface unpacked-array member; the fourth path element (`regTag[j].num`)
+# left every read a constant X: a counterexample at the first cycle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top iface_array_member_nested_elem_field
+proc; flatten; opt_clean; memory; async2sync
+rename iface_array_member_nested_elem_field gate
+design -stash gate
+read_slang dut.sv --top iface_array_member_nested_elem_field
+hierarchy -check -top iface_array_member_nested_elem_field
+proc; flatten; opt_clean; memory; async2sync
+rename iface_array_member_nested_elem_field gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
