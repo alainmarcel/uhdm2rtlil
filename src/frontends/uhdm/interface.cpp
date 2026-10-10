@@ -254,14 +254,89 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             // the port's actual value rather than a stray undriven placeholder.
             // The port wires themselves are connected later (Ports loop below),
             // but the init must see the value now.
+            // An interface instance's own port bound to a member of one of
+            // THIS module's interface ports -- RSD DCache's
+            // `DCacheIF port(lsu.clk, lsu.rst, lsu.rstStart);` -- arrives in
+            // the elaborated view as a bare logic_net named after the member
+            // (`clk`, full name `...port.clk.clk`) with no trace of `lsu`,
+            // and nothing in the definition view keeps the written
+            // `lsu.clk` either.  The net does carry its DECLARATION
+            // location, which pins the interface definition it belongs to
+            // (LoadStoreUnitIF's `clk`); when this module has exactly one
+            // port of that interface type, the actual is `<port>.<member>`.
+            // Without this port.clk / port.rst / port.rstStart of the inner
+            // interface were undriven and every DCache sub-block ran on a
+            // floating clock (the row's miter diverged at step 1).
+            auto iface_inst_port_actual = [&](const UHDM::port* p) -> RTLIL::SigSpec {
+                RTLIL::SigSpec hv;
+                const UHDM::any* hc = p->High_conn();
+                if (!hc) return hv;
+                bool bare_net = hc->VpiType() == vpiNet || hc->VpiType() == vpiLogicVar;
+                std::string member = std::string(hc->VpiName());
+                bool unresolvable = bare_net && !member.empty() &&
+                                    !module->wire(RTLIL::escape_id(member)) &&
+                                    !name_map.count(member);
+                if (unresolvable && uhdm_design && uhdm_design->AllInterfaces()) {
+                    std::string decl_if;
+                    for (auto I : *uhdm_design->AllInterfaces()) {
+                        if (!I->Ports()) continue;
+                        for (auto q : *I->Ports()) {
+                            if (std::string(q->VpiName()) != member) continue;
+                            if (q->VpiLineNo() == hc->VpiLineNo() &&
+                                q->VpiColumnNo() == hc->VpiColumnNo() &&
+                                std::string(q->VpiFile()) == std::string(hc->VpiFile())) {
+                                decl_if = std::string(I->VpiDefName());
+                                break;
+                            }
+                        }
+                        if (!decl_if.empty()) break;
+                    }
+                    std::string cand;
+                    int ncand = 0;
+                    if (!decl_if.empty() && source->Ports()) {
+                        for (auto mp : *source->Ports()) {
+                            const UHDM::any* act = nullptr;
+                            if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->Low_conn()))
+                                act = r->Actual_group();
+                            if (!act)
+                                if (auto r = dynamic_cast<const UHDM::ref_obj*>(mp->High_conn()))
+                                    act = r->Actual_group();
+                            std::string def;
+                            if (act && act->UhdmType() == uhdmmodport) {
+                                if (auto pi = dynamic_cast<const UHDM::interface_inst*>(act->VpiParent()))
+                                    def = std::string(pi->VpiDefName());
+                            } else if (auto ii = dynamic_cast<const UHDM::interface_inst*>(act)) {
+                                def = std::string(ii->VpiDefName());
+                            }
+                            if (!def.empty() && def == decl_if) {
+                                cand = std::string(mp->VpiName());
+                                ncand++;
+                            }
+                        }
+                    }
+                    if (ncand == 1) {
+                        std::string full = cand + "." + member;
+                        RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                                              : module->wire(RTLIL::escape_id(full));
+                        if (w) {
+                            log("UHDM: interface instance %s port %s actual resolved to %s "
+                                "(declared by %s, unique port of that type)\n",
+                                interface_name.c_str(), std::string(p->VpiName()).c_str(),
+                                full.c_str(), decl_if.c_str());
+                            return RTLIL::SigSpec(w);
+                        }
+                    }
+                }
+                if (auto he = dynamic_cast<const UHDM::expr*>(hc)) hv = import_expression(he);
+                return hv;
+            };
             std::map<std::string, RTLIL::SigSpec> port_conn_map;
             if (interface->Ports()) {
                 for (auto p : *interface->Ports()) {
                     if (!p->High_conn()) continue;
                     std::string pn = std::string(p->VpiName());
                     if (pn.empty()) continue;
-                    RTLIL::SigSpec hv = import_expression(
-                        any_cast<const UHDM::expr*>(p->High_conn()));
+                    RTLIL::SigSpec hv = iface_inst_port_actual(p);
                     if (hv.size() > 0) port_conn_map[pn] = hv;
                 }
             }
@@ -891,8 +966,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     std::string full = interface_name + "." + port_name;
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full]
                                        : module->wire(RTLIL::escape_id(full));
-                    RTLIL::SigSpec hi = import_expression(
-                        any_cast<const UHDM::expr*>(p->High_conn()));
+                    RTLIL::SigSpec hi = iface_inst_port_actual(p);
                     if (hi.size() == 0) continue;
                     if (!lw) {
                         // Create the per-signal wire for this port,

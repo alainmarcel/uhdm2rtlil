@@ -1,0 +1,20 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the interfaces).
+# Unpatched read_uhdm cannot name the elaborated actual of the inner interface
+# instance's ports (`B port(lsu.clk, lsu.rst, lsu.rstStart)`): port.clk /
+# port.rst / port.rstStart stay undriven and the leaf's counter runs on a
+# floating clock -- a counterexample within 4 steps.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top iface_inst_port_from_iface_port_member
+proc; flatten; opt_clean; memory; async2sync
+rename iface_inst_port_from_iface_port_member gate
+design -stash gate
+read_slang dut.sv --top iface_inst_port_from_iface_port_member
+hierarchy -check -top iface_inst_port_from_iface_port_member
+proc; flatten; opt_clean; memory; async2sync
+rename iface_inst_port_from_iface_port_member gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
