@@ -856,6 +856,16 @@ def run_verilator(work: Path, paths: dict[str, Path],
         # (e.g. rp32's riscv_isa_pkg RV*GC aliases) — illegal-strict SV that
         # Surelog/slang tolerate; relax it so the co-sim can build the design.
         "-Wno-ENUMVALUE",
+        # A read_uhdm netlist can carry a packed register whose bits are
+        # driven partly by `$dff` cells written back as `assign <slices> =
+        # <reg>` and partly by an always block's non-blocking writes (RSD
+        # DCache's per-field reset loop over `mshr[i]` next to the
+        # whole-array `mshr <= nextMSHR`).  Verilator refuses that mix with
+        # BLKANDNBLK ("blocking and non-blocking assignments to potentially
+        # overlapping bits of same packed variable"); the construct is legal
+        # and simulates correctly, the check only guards simulation speed,
+        # so waive it -- otherwise the row has no co-sim at all.
+        "-Wno-BLKANDNBLK",
         # `--timing` lets Verilator parse SVA constructs (`##N`, `|=>`,
         # `until`, ...) and event controls that are otherwise rejected
         # with NEEDTIMINGOPT.  Required for the SV-side simulation of
