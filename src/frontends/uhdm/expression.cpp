@@ -18014,24 +18014,69 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // struct typespec -- and the read came back as a constant X
             // (memAddr / memData / memWE of the real row).  Select the
             // element, then the member inside it.
-            if (dot_count == 2 && base_path.back() == ']') {
-                size_t br = base_path.find('[');
-                std::string pfx = br == std::string::npos ? "" : base_path.substr(0, br);
+            // The path may continue INSIDE the element: `p.arr[i].regTag[j]
+            // .num` (RSD WakeupLogic's `port.writeSrcTag[i].regTag[j].num`,
+            // a packed array of structs as the field, then its member) --
+            // only the exact `p.arr[i].field` shape was handled and every
+            // source register number read as a 1-bit X, so the ready-bit
+            // table was read at address x.  Walk the remaining elements with
+            // the element struct typespec: member offset, then a constant
+            // packed-array slot, then the next member.
+            if (dot_count >= 2 && base_path.find('[') != std::string::npos) {
+                auto pes = uhdm_hier->Path_elems();
+                std::string pfx;
+                if (pes && pes->size() >= 3 && (*pes)[0]->UhdmType() == uhdmref_obj &&
+                    (*pes)[1]->UhdmType() == uhdmbit_select)
+                    pfx = std::string((*pes)[0]->VpiName()) + "." + std::string((*pes)[1]->VpiName());
                 auto wit = name_map.find(pfx);
                 auto ewi = iface_array_elem_width_.find(pfx);
                 auto tsi = iface_signal_struct_ts_.find(pfx);
-                auto pes = uhdm_hier->Path_elems();
                 if (!pfx.empty() && wit != name_map.end() && wit->second &&
                     ewi != iface_array_elem_width_.end() && ewi->second > 1 &&
-                    tsi != iface_signal_struct_ts_.end() && tsi->second &&
-                    pes && pes->size() == 3 && (*pes)[1]->UhdmType() == uhdmbit_select) {
+                    tsi != iface_signal_struct_ts_.end() && tsi->second) {
                     RTLIL::Wire* fw = wit->second;
                     int ew = ewi->second;
                     RTLIL::SigSpec idx = import_expression(
                         any_cast<const bit_select*>((*pes)[1])->VpiIndex(), input_mapping);
                     int off = 0, mw = 0;
-                    if (!idx.empty() && fw->width % ew == 0 &&
-                        calculate_struct_member_offset(tsi->second, final_member, inst, off, mw) &&
+                    const UHDM::typespec* cur_ts = tsi->second;
+                    bool walk_ok = true;
+                    for (size_t k = 2; k < pes->size() && walk_ok; k++) {
+                        const UHDM::any* pk = (*pes)[k];
+                        std::string mname = std::string(pk->VpiName());
+                        int moff = 0, mw2 = 0;
+                        const UHDM::typespec* mts = nullptr;
+                        if (mname.empty() || !cur_ts ||
+                            !calculate_struct_member_offset(cur_ts, mname, inst, moff, mw2, &mts) ||
+                            mw2 <= 0) { walk_ok = false; break; }
+                        off += moff; mw = mw2; cur_ts = mts;
+                        if (pk->UhdmType() == uhdmbit_select) {
+                            RTLIL::SigSpec bi = import_expression(
+                                any_cast<const bit_select*>(pk)->VpiIndex(), input_mapping);
+                            if (!bi.is_fully_const()) { walk_ok = false; break; }
+                            int kidx = bi.as_const().as_int();
+                            const UHDM::VectorOfrange* rg = nullptr;
+                            const UHDM::typespec* ets = nullptr;
+                            if (auto pts = dynamic_cast<const UHDM::packed_array_typespec*>(mts)) {
+                                rg = pts->Ranges();
+                                if (pts->Elem_typespec()) ets = pts->Elem_typespec()->Actual_typespec();
+                            } else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(mts)) {
+                                rg = lts->Ranges();
+                            }
+                            if (!rg || rg->empty()) { walk_ok = false; break; }
+                            RTLIL::SigSpec l = import_expression((*rg)[0]->Left_expr(), input_mapping);
+                            RTLIL::SigSpec r = import_expression((*rg)[0]->Right_expr(), input_mapping);
+                            if (!l.is_fully_const() || !r.is_fully_const()) { walk_ok = false; break; }
+                            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                            int cnt = std::abs(li - ri) + 1, lo = std::min(li, ri);
+                            if (cnt <= 0 || mw % cnt != 0) { walk_ok = false; break; }
+                            int sw = mw / cnt;
+                            int slot = (li >= ri) ? (kidx - lo) : (lo + cnt - 1 - kidx);
+                            if (slot < 0 || slot >= cnt) { walk_ok = false; break; }
+                            off += slot * sw; mw = sw; cur_ts = ets;
+                        } else if (pk->UhdmType() != uhdmref_obj) { walk_ok = false; break; }
+                    }
+                    if (walk_ok && !idx.empty() && fw->width % ew == 0 &&
                         mw > 0 && off + mw <= ew) {
                         if (idx.is_fully_const()) {
                             int i = idx.as_const().as_int();
