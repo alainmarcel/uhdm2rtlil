@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the struct).
+# Unpatched read_uhdm pushes the 128-bit actual unsized against the 32-bit
+# formal's temp and aborts on `Assert size() == other->size()` (rtlil.cc) when
+# the process is rewritten.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top void_func_actual_wider_than_formal
+proc; flatten; opt_clean; memory; async2sync
+rename void_func_actual_wider_than_formal gate
+design -stash gate
+read_slang dut.sv --top void_func_actual_wider_than_formal
+hierarchy -check -top void_func_actual_wider_than_formal
+proc; flatten; opt_clean; memory; async2sync
+rename void_func_actual_wider_than_formal gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

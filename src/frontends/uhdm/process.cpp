@@ -9673,6 +9673,19 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
                     arg_val = import_expression(arg_expr, outer_mapping);
                 }
+                // Size the actual to the FORMAL, as the implicit assignment
+                // does in SV: RSD StoreQueue hands the 128-bit
+                // `port.executedStoreVectorData[i]` to the 32-bit
+                // `LSQ_BlockDataPath blockDataIn` of GenerateStoreData, and the
+                // unsized `temp = actual` action tripped `Assert size() ==
+                // other->size()` when the interface expansion's wire removal
+                // rewrote the process (the row was a read-fail).
+                if (!arg_val.empty() && arg_val.size() != width) {
+                    if (arg_val.size() < width)
+                        arg_val.extend_u0(width, arg_val.is_wire() && arg_val.as_wire()->is_signed);
+                    else
+                        arg_val = arg_val.extract(0, width);
+                }
                 // Process action: assign caller arg to task input temp wire
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_val));
                 // Map task param to the caller's arg value for expression evaluation
@@ -9749,6 +9762,14 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
     for (auto& [param_name, caller_out] : output_targets) {
         auto it = task_mapping.find(param_name);
         if (it != task_mapping.end()) {
+            // The formal's value sized to the caller's target, as the output
+            // assignment would size it.
+            RTLIL::SigSpec outv = it->second;
+            if (!outv.empty() && !caller_out.empty() && caller_out.is_wire() &&
+                outv.size() != caller_out.size()) {
+                if (outv.size() < caller_out.size()) outv.extend_u0(caller_out.size());
+                else outv = outv.extract(0, caller_out.size());
+            }
             // Find the caller's temp wire
             if (caller_out.is_wire()) {
                 RTLIL::Wire* target_wire = caller_out.as_wire();
@@ -9757,10 +9778,10 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 std::string temp_name = "$0\\" + sig_name;
                 RTLIL::Wire* caller_temp = module->wire(temp_name);
                 if (caller_temp) {
-                    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(caller_temp), it->second));
-                    current_comb_values[sig_name] = it->second;
+                    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(caller_temp), outv));
+                    current_comb_values[sig_name] = outv;
                 } else {
-                    proc->root_case.actions.push_back(RTLIL::SigSig(caller_out, it->second));
+                    proc->root_case.actions.push_back(RTLIL::SigSig(caller_out, outv));
                 }
             } else if (!caller_out.empty()) {
                 // An UNPACKED-array actual (`DecideCommit(.commit(commit), ...)`
