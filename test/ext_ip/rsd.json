@@ -10,7 +10,8 @@
  ],
  "roots": [
   "rsd/Processor/Src/*.sv",
-  "rsd/Processor/Src/*/*.sv"
+  "rsd/Processor/Src/*/*.sv",
+  "rsd/Processor/Src/*/*/*.sv"
  ],
  "incdirs": [
   "rsd/Processor/Src"
