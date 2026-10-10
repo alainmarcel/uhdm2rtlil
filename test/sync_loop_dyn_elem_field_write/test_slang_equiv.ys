@@ -1,0 +1,20 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the struct).
+# Unpatched read_uhdm imports the `q[ptr[i]].field <= rhs` LHS under the
+# always_ff loop as a READ mux and the update lands on that anonymous wire:
+# the entries are never written and `out_addr` stays 0 (counterexample at
+# the first write).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top sync_loop_dyn_elem_field_write
+proc; flatten; opt_clean; memory; async2sync
+rename sync_loop_dyn_elem_field_write gate
+design -stash gate
+read_slang dut.sv --top sync_loop_dyn_elem_field_write
+hierarchy -check -top sync_loop_dyn_elem_field_write
+proc; flatten; opt_clean; memory; async2sync
+rename sync_loop_dyn_elem_field_write gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
