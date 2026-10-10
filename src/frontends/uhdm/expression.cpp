@@ -12506,6 +12506,30 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
+    // A flat MULTI-DIM UNPACKED array (`logic dataArrayWE[WAYS][PORTS]`,
+    // stamped with the unpacked_* geometry by import_module): ONE index
+    // selects a ROW -- `width / outer_size` bits, element 0 at the LSB, the
+    // layout the two-index var_select handler uses.  Every branch above is
+    // about packed dims or interface arrays, so this fell to bit `idx`:
+    // RSD DCacheArray handed its RAMs `{1'b0, dataArrayWE[way][0]}` as the
+    // two port enables and the second port never wrote (dcReadData 0
+    // instead of the reset fill, 293 diverging co-sim cycles).
+    if (packed_elem_w <= 1 && wire) {
+        auto& wa = wire->attributes;
+        auto has = [&](const char* k) { return wa.count(RTLIL::escape_id(k)) > 0; };
+        if (has("unpacked_outer_size") && has("unpacked_outer_low") && has("unpacked_inner_size")) {
+            int osz = wa.at(RTLIL::escape_id("unpacked_outer_size")).as_int();
+            int olow = wa.at(RTLIL::escape_id("unpacked_outer_low")).as_int();
+            if (osz > 0 && base.size() % osz == 0 && base.size() / osz > 1) {
+                packed_elem_w = base.size() / osz;
+                packed_outer_l = olow + osz - 1;
+                packed_outer_r = olow;
+                if (mode_debug)
+                    log("    bit select on a flat %d-D unpacked array: row of %d bits\n", 2, packed_elem_w);
+            }
+        }
+    }
+
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
         if (mode_debug)

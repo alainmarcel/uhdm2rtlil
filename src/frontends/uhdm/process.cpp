@@ -10640,6 +10640,14 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
     else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
     else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
     else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(ag)) rngs = pv->Ranges();
+    // An all-logic unpacked array is an array_NET (Surelog keys the
+    // representation on the element type) with no typespec of its own; its
+    // dims live on the net.  Missing it here made `dataArrayWE[way]` on
+    // `logic dataArrayWE[WAYS][PORTS]` (RSD DCacheArray, handed to a RAM as
+    // its two port enables) ONE bit instead of the 2-bit row -- the RAM's
+    // second port never wrote.
+    else if (auto an = dynamic_cast<const UHDM::array_net*>(ag)) rngs = an->Ranges();
+    else if (auto ln = dynamic_cast<const UHDM::logic_net*>(ag)) rngs = ln->Ranges();
     // A TYPEDEF'd multi-dim type (plane_t/box_t): the var carries no ranges of
     // its own — the dimensions live on its typespec's logic_typespec Ranges().
     // A packed array of a TYPEDEF'd element (`sp2v_e [N-1:0] out` — aes_ctr's
