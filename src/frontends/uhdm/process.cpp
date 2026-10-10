@@ -8954,14 +8954,35 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             int fl_bound_width = 0;
             if (fl_can_unroll && fl_cond->VpiType() == vpiOperation) {
                 const operation* co = any_cast<const operation*>(fl_cond);
-                if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
-                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false;
-                else if (co->VpiOpType() == vpiGeOp) { fl_inclusive = true; fl_descending = true; }
-                else if (co->VpiOpType() == vpiGtOp) { fl_inclusive = false; fl_descending = true; }
+                // `0 <= j` (RSD CommitStage's GetInsnPtr `for (int j = i - 1;
+                // 0 <= j; j--)`): the bound is on the LEFT.  Read it as the
+                // mirrored `j >= 0` -- taken literally it was an ASCENDING loop
+                // bounded by `j`, which is not a constant, and the body ran
+                // with `j` dynamic ("Reference to unknown signal: j").
+                int cond_op = co->VpiOpType();
+                const any* bound_e = (co->Operands() && co->Operands()->size() == 2)
+                                         ? co->Operands()->at(1) : nullptr;
+                if (co->Operands() && co->Operands()->size() == 2 && !fl_var.empty()) {
+                    const any* l = co->Operands()->at(0);
+                    const any* r = co->Operands()->at(1);
+                    bool l_is_var = (l->VpiType() == vpiRefObj || l->VpiType() == vpiRefVar) &&
+                                    std::string(l->VpiName()) == fl_var;
+                    bool r_is_var = (r->VpiType() == vpiRefObj || r->VpiType() == vpiRefVar) &&
+                                    std::string(r->VpiName()) == fl_var;
+                    if (!l_is_var && r_is_var) {
+                        bound_e = l;
+                        cond_op = cond_op == vpiLeOp ? vpiGeOp : cond_op == vpiLtOp ? vpiGtOp
+                                : cond_op == vpiGeOp ? vpiLeOp : cond_op == vpiGtOp ? vpiLtOp : cond_op;
+                    }
+                }
+                if (cond_op == vpiLeOp) fl_inclusive = true;
+                else if (cond_op == vpiLtOp) fl_inclusive = false;
+                else if (cond_op == vpiGeOp) { fl_inclusive = true; fl_descending = true; }
+                else if (cond_op == vpiGtOp) { fl_inclusive = false; fl_descending = true; }
                 else fl_can_unroll = false;
 
-                if (fl_can_unroll && co->Operands() && co->Operands()->size() == 2) {
-                    const any* rhs = co->Operands()->at(1);
+                if (fl_can_unroll && bound_e) {
+                    const any* rhs = bound_e;
                     if (rhs->VpiType() == vpiConstant) {
                         RTLIL::SigSpec s = import_constant(any_cast<const constant*>(rhs));
                         if (s.is_fully_const()) fl_end = s.as_const().as_int();
@@ -18595,13 +18616,31 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // the stat frame bytes were never emitted (85 co-sim
                 // divergences).  The Process-level unroller already handles
                 // them (fl_descending); mirror it here.
-                if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
-                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false;
-                else if (co->VpiOpType() == vpiGeOp) { fl_inclusive = true; cr_descending = true; }
-                else if (co->VpiOpType() == vpiGtOp) { fl_inclusive = false; cr_descending = true; }
+                // Bound on the LEFT (`0 <= j`): mirror, as the Process-level
+                // parser above does.
+                int cond_op = co->VpiOpType();
+                const any* bound_e = (co->Operands() && co->Operands()->size() == 2)
+                                         ? co->Operands()->at(1) : nullptr;
+                if (co->Operands() && co->Operands()->size() == 2 && !fl_var.empty()) {
+                    const any* l = co->Operands()->at(0);
+                    const any* r = co->Operands()->at(1);
+                    bool l_is_var = (l->VpiType() == vpiRefObj || l->VpiType() == vpiRefVar) &&
+                                    std::string(l->VpiName()) == fl_var;
+                    bool r_is_var = (r->VpiType() == vpiRefObj || r->VpiType() == vpiRefVar) &&
+                                    std::string(r->VpiName()) == fl_var;
+                    if (!l_is_var && r_is_var) {
+                        bound_e = l;
+                        cond_op = cond_op == vpiLeOp ? vpiGeOp : cond_op == vpiLtOp ? vpiGtOp
+                                : cond_op == vpiGeOp ? vpiLeOp : cond_op == vpiGtOp ? vpiLtOp : cond_op;
+                    }
+                }
+                if (cond_op == vpiLeOp) fl_inclusive = true;
+                else if (cond_op == vpiLtOp) fl_inclusive = false;
+                else if (cond_op == vpiGeOp) { fl_inclusive = true; cr_descending = true; }
+                else if (cond_op == vpiGtOp) { fl_inclusive = false; cr_descending = true; }
                 else ok = false;
-                if (ok && co->Operands() && co->Operands()->size() == 2) {
-                    RTLIL::SigSpec s = import_expression(any_cast<const expr*>(co->Operands()->at(1)));
+                if (ok && bound_e) {
+                    RTLIL::SigSpec s = import_expression(any_cast<const expr*>(bound_e));
                     if (!s.empty() && s.is_fully_const()) fl_end = s.as_const().as_int(); else ok = false;
                 } else ok = false;
             } else ok = false;
