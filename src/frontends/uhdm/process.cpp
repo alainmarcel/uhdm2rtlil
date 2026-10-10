@@ -8812,7 +8812,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiTaskCall: {
             const task_call* tc = any_cast<const task_call*>(uhdm_stmt);
             if (tc) {
-                import_task_call_comb(tc, proc);
+                if (bridged_task_mapping_ && tc->Task())
+                    import_tf_call_comb(tc, tc->Task(), proc, bridged_task_mapping_);
+                else
+                    import_task_call_comb(tc, proc);
             }
             break;
         }
@@ -8824,7 +8827,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             // function-as-RHS expression evaluator.
             auto fc = any_cast<const UHDM::func_call*>(uhdm_stmt);
             if (fc) {
-                import_tf_call_comb(fc, fc->Function(), proc);
+                import_tf_call_comb(fc, fc->Function(), proc, bridged_task_mapping_);
             }
             break;
         }
@@ -9617,11 +9620,53 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
 void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                                        const UHDM::task_func* task_def,
                                        RTLIL::Process* proc,
-                                       const std::map<std::string, RTLIL::SigSpec>* outer_mapping) {
+                                       const std::map<std::string, RTLIL::SigSpec>* outer_mapping,
+                                       RTLIL::CaseRule* target_case) {
     if (!task_def) {
         log_warning("Tf-call has no callee definition\n");
         return;
     }
+    // Where the call's visible effects (the output write-backs) go: the
+    // enclosing case arm when the statement sits in one, else the root.
+    auto out_actions = [&]() -> std::vector<RTLIL::SigSig>& {
+        return target_case ? target_case->actions : proc->root_case.actions;
+    };
+    // An actual that SELECTS from a name of the enclosing body's mapping --
+    // `EmitInvalidOp(microOps[i])` where `microOps` is the enclosing
+    // function's output formal (and ALSO the module's output port of the
+    // same name): the slice must come from the formal's in-flight value,
+    // not the module wire the name lookup finds.  Constant index / range
+    // only (loop variables are substituted by then).
+    auto mapped_select_actual = [&](const UHDM::expr* e) -> RTLIL::SigSpec {
+        if (!e || !outer_mapping) return RTLIL::SigSpec();
+        std::string bn;
+        if (e->VpiType() == vpiBitSelect || e->VpiType() == vpiPartSelect)
+            bn = std::string(e->VpiName());
+        if (bn.empty()) return RTLIL::SigSpec();
+        auto mit = outer_mapping->find(bn);
+        if (mit == outer_mapping->end() || mit->second.empty()) return RTLIL::SigSpec();
+        RTLIL::SigSpec base = mit->second;
+        if (e->VpiType() == vpiBitSelect) {
+            auto bs = any_cast<const bit_select*>(e);
+            if (!bs->VpiIndex()) return RTLIL::SigSpec();
+            RTLIL::SigSpec ix = import_expression(bs->VpiIndex(), outer_mapping);
+            if (!ix.is_fully_const()) return RTLIL::SigSpec();
+            int elem_w = 1, outer_lo = 0;
+            if (auto ag = bs->Actual_group()) bitselect_outer_dim(ag, base.size(), elem_w, outer_lo);
+            int off = (ix.as_const().as_int() - outer_lo) * elem_w;
+            if (off < 0 || off + elem_w > base.size()) return RTLIL::SigSpec();
+            return base.extract(off, elem_w);
+        }
+        auto ps = any_cast<const part_select*>(e);
+        if (!ps->Left_range() || !ps->Right_range()) return RTLIL::SigSpec();
+        RTLIL::SigSpec l = import_expression(any_cast<const expr*>(ps->Left_range()), outer_mapping);
+        RTLIL::SigSpec r = import_expression(any_cast<const expr*>(ps->Right_range()), outer_mapping);
+        if (!l.is_fully_const() || !r.is_fully_const()) return RTLIL::SigSpec();
+        int li = l.as_const().as_int(), ri = r.as_const().as_int();
+        int lo = std::min(li, ri), w = std::abs(li - ri) + 1;
+        if (lo < 0 || lo + w > base.size()) return RTLIL::SigSpec();
+        return base.extract(lo, w);
+    };
 
     std::string task_name = std::string(tc->VpiName());
     int call_line = tc->VpiLineNo();
@@ -9682,7 +9727,8 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 auto arg = (*args)[arg_idx];
                 RTLIL::SigSpec arg_val;
                 if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
-                    arg_val = import_expression(arg_expr, outer_mapping);
+                    arg_val = mapped_select_actual(arg_expr);
+                    if (arg_val.empty()) arg_val = import_expression(arg_expr, outer_mapping);
                 }
                 // Size the actual to the FORMAL, as the implicit assignment
                 // does in SV: RSD StoreQueue hands the 128-bit
@@ -9709,7 +9755,8 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                     // Through the outer body's mapping a local actual is its
                     // `$0\` temp wire; the write-back below then lands on
                     // that temp like an assignment in the body would.
-                    RTLIL::SigSpec caller_out = import_expression(arg_expr, outer_mapping);
+                    RTLIL::SigSpec caller_out = mapped_select_actual(arg_expr);
+                    if (caller_out.empty()) caller_out = import_expression(arg_expr, outer_mapping);
                     output_targets[param_name] = caller_out;
                 }
             }
@@ -9789,10 +9836,10 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 std::string temp_name = "$0\\" + sig_name;
                 RTLIL::Wire* caller_temp = module->wire(temp_name);
                 if (caller_temp) {
-                    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(caller_temp), outv));
+                    out_actions().push_back(RTLIL::SigSig(RTLIL::SigSpec(caller_temp), outv));
                     current_comb_values[sig_name] = outv;
                 } else {
-                    proc->root_case.actions.push_back(RTLIL::SigSig(caller_out, outv));
+                    out_actions().push_back(RTLIL::SigSig(caller_out, outv));
                 }
             } else if (!caller_out.empty()) {
                 // An UNPACKED-array actual (`DecideCommit(.commit(commit), ...)`
@@ -9813,7 +9860,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                         RTLIL::Wire* caller_temp = module->wire("$0\\" + sig_name);
                         RTLIL::SigSpec dst = caller_temp ? RTLIL::SigSpec(caller_temp).extract(ch.offset, ch.width)
                                                          : RTLIL::SigSpec(ch);
-                        proc->root_case.actions.push_back(RTLIL::SigSig(dst, part));
+                        out_actions().push_back(RTLIL::SigSig(dst, part));
                         if (ch.offset == 0 && ch.width == ch.wire->width)
                             current_comb_values[sig_name] = part;
                     }
@@ -10409,7 +10456,9 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             auto if_st = any_cast<const if_stmt*>(stmt);
             if (if_st) {
                 TaskMapBridge bridge(current_comb_values, task_mapping);
+                auto saved_btm_ = bridged_task_mapping_; bridged_task_mapping_ = &task_mapping;
                 import_if_stmt_comb(if_st, proc);
+                bridged_task_mapping_ = saved_btm_;
             }
             break;
         }
@@ -10417,7 +10466,9 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             auto ie = any_cast<const UHDM::if_else*>(stmt);
             if (ie) {
                 TaskMapBridge bridge(current_comb_values, task_mapping);
+                auto saved_btm_ = bridged_task_mapping_; bridged_task_mapping_ = &task_mapping;
                 import_if_else_comb(ie, proc);
+                bridged_task_mapping_ = saved_btm_;
             }
             break;
         }
@@ -10425,7 +10476,9 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             auto case_st = any_cast<const case_stmt*>(stmt);
             if (case_st) {
                 TaskMapBridge bridge(current_comb_values, task_mapping);
+                auto saved_btm_ = bridged_task_mapping_; bridged_task_mapping_ = &task_mapping;
                 import_case_stmt_comb(case_st, proc);
+                bridged_task_mapping_ = saved_btm_;
             }
             break;
         }
@@ -10448,7 +10501,12 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                     saved[name] = it->second;
                 current_comb_values[name] = sig;
             }
-            import_statement_comb(stmt, proc);
+            {
+                auto saved_btm = bridged_task_mapping_;
+                bridged_task_mapping_ = &task_mapping;
+                import_statement_comb(stmt, proc);
+                bridged_task_mapping_ = saved_btm;
+            }
             // Restore previous comb-value bindings; anything newly
             // introduced via task_mapping is dropped on exit.
             for (auto& [name, sig] : task_mapping) {
@@ -19359,6 +19417,29 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         }
 
+        case vpiTaskCall:
+        case vpiFuncCall: {
+            // A task / void-function call as a statement INSIDE a case arm
+            // or if branch -- RSD Decoder's `case (isf.opCode) ...
+            // RISCV_DecodeOpImm(microOps, insnInfo, insn);` -- was
+            // "Unsupported statement type in case" and dropped: the decode
+            // never ran and the `microOps` output (a packed array of
+            // structs) had no driver at all, which PreDecodeStage and
+            // everything above it inherited.  Same inliner as the
+            // Process-level dispatcher, with the output write-backs landing
+            // in this case rule so the call stays conditional.
+            auto tcall = any_cast<const UHDM::tf_call*>(uhdm_stmt);
+            const UHDM::task_func* callee = nullptr;
+            if (uhdm_stmt->VpiType() == vpiFuncCall)
+                callee = any_cast<const UHDM::func_call*>(uhdm_stmt)->Function();
+            else
+                callee = any_cast<const UHDM::task_call*>(uhdm_stmt)->Task();
+            if (tcall && callee && current_comb_process)
+                import_tf_call_comb(tcall, callee, current_comb_process, bridged_task_mapping_, case_rule);
+            else if (mode_debug)
+                log("        tf-call in case context without callee / process, dropped\n");
+            break;
+        }
         case vpiSysFuncCall: {
             const sys_func_call* call = any_cast<const sys_func_call*>(uhdm_stmt);
             if (call) {
