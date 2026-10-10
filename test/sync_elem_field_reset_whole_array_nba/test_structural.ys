@@ -1,0 +1,9 @@
+# Netlist gate: the per-field reset writes (`mshr[i].valid <= 0` in a loop,
+# keyed on the ELEMENT wires) and the else-branch whole-array NBA
+# (`mshr <= nxt`, keyed on the FLAT wire) must land in ONE update of the
+# register.  Without the fix they are two $dff drivers of the same bits and
+# `check` reports 8 driver conflicts (RSD DCacheMissHandler.mshr: 18).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top sync_elem_field_reset_whole_array_nba
+proc; opt_clean
+check -assert
