@@ -6116,6 +6116,18 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 // write branch below.
                 lhs_spec = RTLIL::SigSpec();
             } else {
+                // `arr[idx[i]].field <= rhs` on an EXPANDED array of structs
+                // (RSD StoreQueue's `storeQueue[executedStoreQueuePtrByStore[i]]
+                // .address <= ...`): importing the hier_path LHS hands back the
+                // element-field READ mux and the write lands on that temp --
+                // the entries were never written (261 co-sim divergences).
+                // Per-element conditional field write, like the whole-element
+                // helper above.
+                if (lhs && lhs->VpiType() == vpiHierPath &&
+                    emit_dynamic_expanded_elem_field_write_sync(uhdm_assign)) {
+                    current_loop_substitutions = saved_substitutions;
+                    return;
+                }
                 lhs_spec = import_expression(any_cast<const expr*>(lhs));
             }
             
@@ -11689,6 +11701,80 @@ bool UhdmImporter::emit_dynamic_expanded_elem_write_sync(const assignment* uhdm_
     }
 
     return false;
+}
+
+// `arr[idx].field <= rhs` where `arr` is an EXPANDED unpacked array of packed
+// structs (`\arr[k]` element wires) and `idx` is dynamic: the always_ff loop
+// path (import_statement_with_loop_vars) imported the hier_path LHS as an
+// expression, which is the element-field READ (a mux tree over the elements
+// on an anonymous wire), so the update landed on that wire and the array
+// never changed.  Same per-element `(idx == k) && cond` mux as
+// emit_dynamic_expanded_elem_write_sync, on the FIELD slice of each element.
+bool UhdmImporter::emit_dynamic_expanded_elem_field_write_sync(const assignment* uhdm_assign) {
+    if (!uhdm_assign || !uhdm_assign->Lhs() ||
+        uhdm_assign->Lhs()->VpiType() != vpiHierPath) return false;
+    auto hp = any_cast<const hier_path*>(uhdm_assign->Lhs());
+    if (!hp->Path_elems() || hp->Path_elems()->size() != 2) return false;
+    const any* pe0 = (*hp->Path_elems())[0];
+    const any* pe1 = (*hp->Path_elems())[1];
+    if (pe0->UhdmType() != uhdmbit_select) return false;
+    // A bare member reference only: `field[k]` / `field[a:b]` selects a
+    // sub-slice and is left to the existing paths.
+    if (pe1->UhdmType() != uhdmref_obj) return false;
+    const bit_select* bs = any_cast<const bit_select*>(pe0);
+    if (!bs->VpiIndex()) return false;
+    std::string base_name = std::string(bs->VpiName());
+    std::string field_name = std::string(pe1->VpiName());
+    if (base_name.empty() || field_name.empty()) return false;
+    if (module->memories.count(resolve_mem_id(base_name))) return false;
+    if (module->wire(RTLIL::escape_id(base_name))) return false;   // flat form: other paths
+    int low = expanded_array_low(base_name);
+    if (low < 0) return false;
+    RTLIL::Wire* elem0 = module->wire(RTLIL::escape_id(base_name + "[" + std::to_string(low) + "]"));
+    if (!elem0) return false;
+    int n = 0;
+    while (module->wire(RTLIL::escape_id(base_name + "[" + std::to_string(low + n) + "]"))) n++;
+    if (n <= 0) return false;
+
+    RTLIL::SigSpec dyn_idx = import_expression(any_cast<const expr*>(bs->VpiIndex()));
+    if (dyn_idx.empty() || dyn_idx.is_fully_const()) return false;   // constant index: generic path
+
+    const UHDM::typespec* ets = unpacked_array_elem_struct_ts(
+        base_name, bs->Actual_group(), current_instance, elem0);
+    if (!ets) return false;
+    int off = 0, w = 0;
+    if (!calculate_struct_member_offset(ets, field_name, current_instance, off, w)) return false;
+    if (w <= 0 || off < 0 || off + w > elem0->width) return false;
+
+    RTLIL::SigSpec rhs;
+    if (auto rhs_e = dynamic_cast<const expr*>(uhdm_assign->Rhs())) rhs = import_expression(rhs_e);
+    if (rhs.empty()) return false;
+    if (rhs.size() < w) rhs.extend_u0(w, rhs.is_wire() && rhs.as_wire()->is_signed);
+    else if (rhs.size() > w) rhs = rhs.extract(0, w);
+
+    for (int k = 0; k < n; k++) {
+        RTLIL::Wire* ew = module->wire(RTLIL::escape_id(base_name + "[" + std::to_string(low + k) + "]"));
+        if (!ew || ew->width != elem0->width) return false;
+        RTLIL::SigSpec elem_lhs = RTLIL::SigSpec(ew).extract(off, w);
+        RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+        module->addEq(NEW_ID, dyn_idx, RTLIL::SigSpec(RTLIL::Const(low + k, GetSize(dyn_idx))), sel);
+        RTLIL::SigSpec full_cond = RTLIL::SigSpec(sel);
+        if (!current_condition.empty()) {
+            RTLIL::Wire* both = module->addWire(NEW_ID, 1);
+            module->addAnd(NEW_ID, current_condition, RTLIL::SigSpec(sel), both);
+            full_cond = RTLIL::SigSpec(both);
+        }
+        RTLIL::SigSpec else_val = pending_sync_assignments.count(elem_lhs)
+                                      ? pending_sync_assignments.at(elem_lhs)
+                                      : pending_inflight(elem_lhs);
+        RTLIL::Wire* mux_out = module->addWire(NEW_ID, w);
+        module->addMux(NEW_ID, else_val, rhs, full_cond, mux_out);
+        pending_sync_assignments[elem_lhs] = RTLIL::SigSpec(mux_out);
+        note_pending_sync(elem_lhs);
+    }
+    log("            dynamic expanded element FIELD write: %s[dyn].%s (%d elements, bits [%d+:%d])\n",
+        base_name.c_str(), field_name.c_str(), n, off, w);
+    return true;
 }
 
 void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::SyncRule* sync) {
