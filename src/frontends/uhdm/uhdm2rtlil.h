@@ -1236,10 +1236,20 @@ struct UhdmImporter {
     // Shared task/function-as-statement inliner — called from
     // `import_task_call_comb` and from the `vpiFuncCall` dispatch in
     // `import_statement_comb` (a `void function` used procedurally).
+    // The task / void-function body mapping in force while a body statement
+    // (`for`, `if`, `case`) is delegated to the generic comb dispatchers:
+    // a nested call statement met there must resolve its actuals against
+    // it (RSD Decoder's `EmitInvalidOp(microOps[i])` inside the decode
+    // functions' loops), not against the module's same-named wires.
+    const std::map<std::string, RTLIL::SigSpec>* bridged_task_mapping_ = nullptr;
+    // `target_case`: the case rule the call statement sits in (an arm of a
+    // comb `case` / `if`), where the output write-backs must land so the
+    // call stays conditional; nullptr = the process root.
     void import_tf_call_comb(const UHDM::tf_call* tc,
                              const UHDM::task_func* task_def,
                              RTLIL::Process* proc,
-                             const std::map<std::string, RTLIL::SigSpec>* outer_mapping = nullptr);
+                             const std::map<std::string, RTLIL::SigSpec>* outer_mapping = nullptr,
+                             RTLIL::CaseRule* target_case = nullptr);
     void inline_task_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
                                std::map<std::string, RTLIL::SigSpec>& task_mapping,
                                const std::string& context, const std::string& block_prefix,

@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang (read_verilog cannot parse the packed struct
+# arrays).  Unpatched read_uhdm drops the void-function call statements in the
+# case arms ("Unsupported statement type in case: func_call"), so microOps has
+# no driver and insnInfo misses the decode: a counterexample at the first cycle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top void_func_call_in_case_arm
+proc; flatten; opt_clean; memory; async2sync
+rename void_func_call_in_case_arm gate
+design -stash gate
+read_slang dut.sv --top void_func_call_in_case_arm
+hierarchy -check -top void_func_call_in_case_arm
+proc; flatten; opt_clean; memory; async2sync
+rename void_func_call_in_case_arm gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

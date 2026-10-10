@@ -1,0 +1,8 @@
+# Netlist gate: every bit of the packed struct-array output must have a driver.
+# The miter can be vacuous on undriven bits (sat reads them as 0), and the
+# second half of the fix (a nested call writing an ELEMENT of the output formal
+# from inside the body's loop) only shows up here.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top void_func_call_in_case_arm
+proc; flatten; opt_clean
+check -assert
