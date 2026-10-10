@@ -266,6 +266,10 @@ struct UhdmImporter {
     // recorded when the interface port's field wires are created so a struct
     // field access (`s.req.adr`) in import_hier_path can slice the member.
     std::map<std::string, const UHDM::typespec*> iface_signal_struct_ts_;
+    // Per-dimension (low, size) of a MULTI-DIM unpacked interface array member
+    // (`DCacheTagPath tagArrayDataOut[WAYS][PORTS]`), row-major, element 0 at
+    // the LSBs of the flat wire -- so `p.m[i][j]` can select its element.
+    std::map<std::string, std::vector<std::pair<int,int>>> iface_array_dims_;
     // Every interface signal wire's own typespec (`\<port>.<sig>` -> typespec),
     // recorded when the wire is created, so an element/part select on a PACKED
     // multi-dimensional or non-zero-LSB interface member (`iccm_mem_export.
