@@ -3799,6 +3799,29 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 int outer_low  = a.at(RTLIL::escape_id("unpacked_outer_low")).as_int();
                                 int inner_low  = a.at(RTLIL::escape_id("unpacked_inner_low")).as_int();
                                 int inner_size = a.at(RTLIL::escape_id("unpacked_inner_size")).as_int();
+                                // Two indices into an array with MORE than two
+                                // unpacked dims select a SUB-ARRAY (RSD
+                                // DCacheArray's `.we( dataArrayByteWE[i][way] )`
+                                // on `logic dataArrayByteWE[BYTES][WAYS][PORTS]`,
+                                // handing the RAM its two port enables): the
+                                // stamped geometry only describes the outer two
+                                // dims, so the element here is everything below
+                                // them -- the wire's width over outer*inner.
+                                // Taking the stamped innermost element width
+                                // returned ONE bit, and the RAM's second write
+                                // port was tied to 0.
+                                if (have("unpacked_outer_size")) {
+                                    int outer_size = a.at(RTLIL::escape_id("unpacked_outer_size")).as_int();
+                                    long cells = (long)outer_size * inner_size;
+                                    if (cells > 0 && base_wire->width % cells == 0 &&
+                                        base_wire->width / cells > elem_w) {
+                                        if (mode_debug)
+                                            log("  vpiVarSelect: 2 indices on a %d-bit %zu+D array %s: sub-array of %ld bits\n",
+                                                base_wire->width, (size_t)3, base_name.c_str(),
+                                                (long)(base_wire->width / cells));
+                                        elem_w = base_wire->width / cells;
+                                    }
+                                }
                                 int oi = i0.as_int(), ii = i1.as_int();
                                 int off = ((oi - outer_low) * inner_size + (ii - inner_low)) * elem_w;
                                 if (off >= 0 && off + elem_w <= base_wire->width) {
