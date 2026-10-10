@@ -3027,7 +3027,76 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 continue;
                             }
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
-                            RTLIL::SigSpec conn = import_expression(high_conn);
+                            // An actual EXPRESSION over an interface member
+                            // (`.rst(port.rst || freeListReset)`, RSD IssueQueue's
+                            // free list; `.popHead(port.popHeadNum > 0)`): the
+                            // elaborated view spells the member as a bare
+                            // logic_net / logic_var named after the CHILD port
+                            // (`...c.rst.rst`), which names nothing in this module,
+                            // and when more than one interface port carries that
+                            // member name (`pa.rst` / `pb.rst`) no name lookup can
+                            // tell them apart -- the operand came out EMPTY and
+                            // the free-list pointer never reset.  The AllModules
+                            // definition view carries the expression as written
+                            // (`pa.rst`, a hier_path that resolves here): import
+                            // that one instead whenever both are operations.
+                            // Only when the elaborated expression has a leaf
+                            // this module cannot name: a bare net / variable
+                            // whose plain name is neither a wire nor mapped
+                            // (ibex_lockstep's plain `(a & b)` actuals resolve
+                            // fine in the elaborated view, and the definition
+                            // view must not be preferred over them -- its names
+                            // are written without the generate-scope context
+                            // the elaborated view carries).
+                            std::function<bool(const UHDM::any*)> has_unresolved_leaf =
+                                [&](const UHDM::any* e) -> bool {
+                                if (!e) return false;
+                                int t = e->VpiType();
+                                if (t == vpiOperation) {
+                                    auto op = any_cast<const operation*>(e);
+                                    if (op && op->Operands())
+                                        for (auto o : *op->Operands())
+                                            if (has_unresolved_leaf(o)) return true;
+                                    return false;
+                                }
+                                if (t == vpiNet || t == vpiLogicVar || t == vpiBitVar) {
+                                    std::string nm = std::string(e->VpiName());
+                                    if (nm.empty()) return false;
+                                    if (module->wire(RTLIL::escape_id(nm)) || name_map.count(nm)) return false;
+                                    return true;
+                                }
+                                return false;
+                            };
+                            RTLIL::SigSpec conn;
+                            if (high_conn && high_conn->UhdmType() == uhdmoperation &&
+                                has_unresolved_leaf(high_conn) &&
+                                uhdm_design && uhdm_design->AllModules()) {
+                                std::string inst_nm0 = std::string(uhdm_module->VpiName());
+                                std::string par_def0;
+                                if (auto par = uhdm_module->VpiParent())
+                                    par_def0 = std::string(par->VpiDefName());
+                                const UHDM::any* def_expr = nullptr;
+                                for (auto m : *uhdm_design->AllModules()) {
+                                    if (!par_def0.empty() && std::string(m->VpiDefName()) != par_def0)
+                                        continue;
+                                    if (!m->Ref_modules()) continue;
+                                    for (auto rm : *m->Ref_modules()) {
+                                        if (std::string(rm->VpiName()) != inst_nm0 || !rm->Ports()) continue;
+                                        for (auto dp : *rm->Ports())
+                                            if (std::string(dp->VpiName()) == port_name && dp->High_conn())
+                                                def_expr = dp->High_conn();
+                                    }
+                                    if (def_expr) break;
+                                }
+                                if (def_expr && def_expr->UhdmType() == uhdmoperation) {
+                                    conn = import_expression(any_cast<const expr*>(def_expr));
+                                    if (!conn.empty())
+                                        log_debug("UHDM: port %s actual expression taken from the definition view\n",
+                                                  port_name.c_str());
+                                }
+                            }
+                            if (conn.empty())
+                                conn = import_expression(high_conn);
 
                             // Interface-signal connection (`.clk(sub.clk)`):
                             // Surelog resolves the High_conn through the interface
