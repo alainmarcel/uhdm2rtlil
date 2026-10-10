@@ -82,7 +82,9 @@ _NOT_A_TYPE = {"typedef", "modport", "localparam", "parameter", "endinterface",
                "initial", "generate", "endgenerate", "if", "else", "for"}
 # The type may be package-qualified (`axi_pkg::len_t aw_len;`), which the
 # wrapper can name verbatim as long as it reads the same package.
-MEMBER = re.compile(r"^\s*((?:[A-Za-z_]\w*::)?[A-Za-z_]\w*)\s*(\[[^;]*?\])?\s*([A-Za-z_]\w*)\s*;")
+# ... and the member may carry UNPACKED dimensions after its name
+# (`MemoryPortMultiplexerIn mshrMemMuxIn[MSHR_NUM];`, RSD's DCacheIF): group 4.
+MEMBER = re.compile(r"^\s*((?:[A-Za-z_]\w*::)?[A-Za-z_]\w*)\s*(\[[^;]*?\])?\s*([A-Za-z_]\w*)\s*((?:\[[^\]]*\]\s*)*);")
 TYPEDEF = re.compile(r"^\s*(typedef\s[^;]+;)\s*$", re.M)
 IFPARAM = re.compile(r"parameter\s+(?:type\s+)?(?:[\w:]+\s+)*?(\w+)\s*=\s*([^,)]+)")
 LOCALP = re.compile(r"^\s*(localparam\s[^;]+;)\s*$", re.M)
@@ -401,14 +403,37 @@ def iface_body(txt, iface):
 
 
 def iface_members(body):
-    """[(type, range_text_or_None, name)] in declaration order."""
+    """[(type, range_text_or_None, name)] in declaration order -- the
+    members WITHOUT unpacked dimensions (the netlist-side wrapper has no
+    flat spelling for an array member; iface_members_full has them)."""
+    return [(t, r, n) for t, r, n, u in iface_members_full(body) if not u]
+
+
+def iface_members_full(body):
+    """[(type, range_text_or_None, name, unpacked_dims_text)] in declaration
+    order; unpacked_dims_text is "" for a plain member."""
     out = []
     for line in body.splitlines():
         line = re.sub(r"//.*", "", line)
         mm = MEMBER.match(line)
         if mm and mm.group(1) not in _NOT_A_TYPE:
-            out.append((mm.group(1), mm.group(2), mm.group(3)))
+            out.append((mm.group(1), mm.group(2), mm.group(3),
+                        re.sub(r"\s+", "", mm.group(4) or "")))
     return out
+
+
+def _unpacked_dim_exprs(dims):
+    """`[N][A:B]` -> [(count_expr, low_expr), ...] as SV expressions."""
+    res = []
+    for d in re.findall(r"\[([^\]]*)\]", dims):
+        d = d.strip()
+        if ":" in d:
+            a, b = (x.strip() for x in d.split(":", 1))
+            res.append((f"((({a})>({b}))?(({a})-({b})+1):(({b})-({a})+1))",
+                        f"((({a})<({b}))?({a}):({b}))"))
+        else:
+            res.append((f"({d})", "0"))
+    return res
 
 
 def iface_typedefs(body):
@@ -776,11 +801,40 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         for e in range(count):
             sel = f"[{e}]" if count > 1 else ""
             tag = f"_{e}" if count > 1 else ""
-            for ty, rng, mem in iface_members(body):
+            for ty, rng, mem, udims in iface_members_full(body):
                 d = dirs.get(mem)
                 if not d:                  # not in this modport
                     continue
                 flat = f"{base}{tag}__{mem}"
+                if udims:
+                    # An UNPACKED-array member (`MemoryPortMultiplexerIn
+                    # mshrMemMuxIn[MSHR_NUM]` in RSD's DCacheIF) used to be
+                    # dropped by the member regex, so the DUT's main inputs
+                    # were never driven: every DCache* / Rename* / Decode*
+                    # row of RSD was "differs" on an undriven interface
+                    # member, with nothing measured.  Flatten it the way
+                    # gen_flat_wrapper.py flattens an unpacked PORT: one
+                    # vector, row-major, element 0 at the LSBs.
+                    ew = f"$bits({ty}{' ' + rng if rng else ''})"
+                    dl = _unpacked_dim_exprs(udims)
+                    total = "*".join(c for c, _ in dl)
+                    decls.append(f"  {d} logic [({total})*({ew})-1:0] {flat}")
+                    idx = "0"
+                    for k, (c, _) in enumerate(dl):
+                        idx = f"(({idx})*{c}+g{k})"
+                    elem = "".join(f"[{lo} + g{k}]" for k, (_, lo) in enumerate(dl))
+                    heads = "".join(f"  for (genvar g{k} = 0; g{k} < {c}; g{k}++) "
+                                    f"begin : g_flat_{flat}_{k}\n"
+                                    for k, (c, _) in enumerate(dl))
+                    tails = "  end\n" * len(dl)
+                    if d == "input":
+                        body_ = (f"    assign {base}_i{sel}.{mem}{elem} = "
+                                 f"{flat}[({idx})*({ew}) +: ({ew})];\n")
+                    else:
+                        body_ = (f"    assign {flat}[({idx})*({ew}) +: ({ew})] = "
+                                 f"{base}_i{sel}.{mem}{elem};\n")
+                    conns.append((heads + body_ + tails).rstrip("\n"))
+                    continue
                 decls.append(f"  {d} {ty} {rng + ' ' if rng else ''}{flat}")
                 if d == "input":
                     conns.append(f"  assign {base}_i{sel}.{mem} = {flat};")
