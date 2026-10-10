@@ -415,7 +415,13 @@ rtl_inst = (f"  {TOP} #({povr}) dut (\n    {conns}\n  );" if povr else plain)
 
 # ---------------------------------------------------------------- build + run
 VFLAGS = ["--binary", "-j", "0", "--timing", "--no-assert", "-Wno-fatal", "-Wno-lint",
-          "-Wno-style", "-Wno-ENUMVALUE", "--x-assign", "0", "--x-initial", "0", "-DSYNTHESIS",
+          "-Wno-style", "-Wno-ENUMVALUE",
+          # A read_uhdm netlist can drive one packed register partly through
+          # `assign <slices> = <$dff reg>` and partly through an always block's
+          # non-blocking writes (RSD DCache missHandler.mshr); Verilator refuses
+          # the mix with BLKANDNBLK although it simulates correctly -- the check
+          # only guards simulation speed.  Waive it, else the row has no co-sim.
+          "-Wno-BLKANDNBLK", "--x-assign", "0", "--x-initial", "0", "-DSYNTHESIS",
           "--top-module", "tb", "-O1"]
 incs = [f"+incdir+{d}" for d in paths(args.incs)]
 srcs = paths(args.srcs) + list(args.extra_src)
