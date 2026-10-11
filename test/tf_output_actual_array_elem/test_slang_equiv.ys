@@ -1,0 +1,16 @@
+# SAT miter, read_uhdm vs read_slang: FAILS without the fix (y[15:8] stays 0).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top tf_output_actual_array_elem
+proc; flatten; opt_clean
+rename tf_output_actual_array_elem gate
+design -stash gate
+read_slang dut.sv --top tf_output_actual_array_elem
+hierarchy -check -top tf_output_actual_array_elem
+proc; flatten; opt_clean
+rename tf_output_actual_array_elem gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

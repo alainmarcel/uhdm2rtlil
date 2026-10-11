@@ -9812,6 +9812,38 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                     // `$0\` temp wire; the write-back below then lands on
                     // that temp like an assignment in the body would.
                     RTLIL::SigSpec caller_out = mapped_select_actual(arg_expr);
+                    // An unpacked-array ELEMENT as the output actual
+                    // (`MergeStoreDataToLine(mergedLine[i], ...)`, RSD
+                    // DCacheMissHandler): import_expression returns the
+                    // element's current comb VALUE (`mergedLine[i] = '0`
+                    // just before the call made it a constant), so the
+                    // write-back below landed on 8'0 and the merged line
+                    // never reached the MSHR.  The actual is a TARGET:
+                    // resolve a constant-index select of an expanded array
+                    // to its element wire `\arr[k]`.
+                    if (caller_out.empty() && arg_expr->VpiType() == vpiBitSelect) {
+                        auto bs = any_cast<const bit_select*>(arg_expr);
+                        std::string bn = std::string(bs->VpiName());
+                        RTLIL::SigSpec ix = bs->VpiIndex()
+                            ? import_expression(bs->VpiIndex(), outer_mapping) : RTLIL::SigSpec();
+                        if (!bn.empty() && !ix.empty() && ix.is_fully_const()) {
+                            std::string en = bn + "[" + std::to_string(ix.as_const().as_int()) + "]";
+                            std::string gs = get_current_gen_scope();
+                            RTLIL::Wire* ew = nullptr;
+                            while (true) {
+                                std::string q = gs.empty() ? en : gs + "." + en;
+                                ew = name_map.count(q) ? name_map[q] : module->wire(RTLIL::escape_id(q));
+                                if (ew || gs.empty()) break;
+                                size_t d = gs.rfind('.');
+                                gs = (d == std::string::npos) ? "" : gs.substr(0, d);
+                            }
+                            if (ew) {
+                                caller_out = RTLIL::SigSpec(ew);
+                                log("    import_tf_call_comb: output actual %s -> element wire %s\n",
+                                    en.c_str(), log_id(ew->name));
+                            }
+                        }
+                    }
                     if (caller_out.empty()) caller_out = import_expression(arg_expr, outer_mapping);
                     output_targets[param_name] = caller_out;
                 }
