@@ -8996,6 +8996,21 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             }
 
+            // An ENCLOSING unrolled loop may be iterating a variable of the
+            // SAME name: a void function with its own `for (int i ...)`
+            // inlined from the body of a process loop over `i` (RSD
+            // DCacheMissHandler: MergeStoreDataToLine's byte loop, called
+            // from one arm of the `case (mshr[i].phase)` inside `for (i)`).
+            // The inner loop's variable is a shadowing LOCAL, so its
+            // post-loop value must not leak out: every statement of the
+            // enclosing iteration imported after the call -- the whole
+            // `default:` arm, emitted last -- otherwise read `i` as the inner
+            // loop's exit value, selected element 8 of a 2-entry array and
+            // produced `assign 1'x 1'1`: the MSHR never allocated.  Restore
+            // the outer value after the loop instead of publishing ours.
+            bool fl_had_outer = !fl_var.empty() && loop_values.count(fl_var) > 0;
+            int fl_outer_val = fl_had_outer ? loop_values[fl_var] : 0;
+
             // Extract condition: k < N or k <= N.  When N is a constant we
             // unroll the loop statically.  When N is a *runtime* signal
             // (synlig#581 — orv64's `for (int i = 0; i < rff_lvl; i++)`),
@@ -9164,7 +9179,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // after running through `max_iters` iterations; downstream
                 // statements rarely reference it after a dynamic-bound
                 // loop, so leaving it at the last iterated value is fine.
-                loop_values[fl_var] = (int)loop_end;
+                if (fl_had_outer) loop_values[fl_var] = fl_outer_val;
+                else loop_values[fl_var] = (int)loop_end;
                 log("    Comb for loop unrolled with dynamic bound: %s "
                     "max_iters=%lld guard=(i %s bound[%d])\n",
                     fl_var.c_str(), (long long)max_iters,
@@ -9265,7 +9281,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
                 int64_t final_val = fl_descending ? loop_end - inc
                                                   : (fl_inclusive ? fl_end + fl_inc_val : fl_end);
-                loop_values[fl_var] = (int)final_val;
+                if (fl_had_outer) loop_values[fl_var] = fl_outer_val;
+                else loop_values[fl_var] = (int)final_val;
 
                 // With a `break`, the post-loop value of the loop variable is
                 // NOT the static final value: it is the index of the FIRST
@@ -9289,7 +9306,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                             sel = module->Mux(NEW_ID, sel,
                                               RTLIL::SigSpec(RTLIL::Const(bf.first, w)),
                                               bf.second);
-                        loop_values.erase(fl_var);
+                        if (fl_had_outer) loop_values[fl_var] = fl_outer_val;
+                        else loop_values.erase(fl_var);
                         emit_comb_assign(RTLIL::SigSpec(var_wire), sel, proc);
                         brk_idx_emitted = true;
                         log("    Comb for loop `break`: %s = first-break index "
@@ -18886,6 +18904,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 if (fl_var.empty() || s.empty() || !s.is_fully_const()) ok = false;
                 else fl_start = s.as_const().as_int();
             } else ok = false;
+            // Same shadowing rule as the Process-level unroller: an enclosing
+            // unrolled loop's value of this name is restored after the loop.
+            bool cr_had_outer = !fl_var.empty() && loop_values.count(fl_var) > 0;
+            int cr_outer_val = cr_had_outer ? loop_values[fl_var] : 0;
             if (ok && fl_cond->VpiType() == vpiOperation) {
                 auto co = any_cast<const operation*>(fl_cond);
                 // Descending loops (`for (i = N-1; i >= 0; i = i - 1)`,
@@ -19025,7 +19047,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
                 int64_t cr_final = cr_descending ? (fl_inclusive ? fl_end - fl_inc_val : fl_end)
                                                  : (fl_inclusive ? fl_end + fl_inc_val : fl_end);
-                loop_values[fl_var] = (int)cr_final;
+                if (cr_had_outer) loop_values[fl_var] = cr_outer_val;
+                else loop_values[fl_var] = (int)cr_final;
                 // Post-loop value of the loop variable with `break`: the index
                 // of the first iteration that broke, else N (one-hot flags, so
                 // fold order is immaterial).  Mirrors the Process handler.
@@ -19040,7 +19063,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             sel = module->Mux(NEW_ID, sel,
                                               RTLIL::SigSpec(RTLIL::Const(bf.first, w)),
                                               bf.second);
-                        loop_values.erase(fl_var);
+                        if (cr_had_outer) loop_values[fl_var] = cr_outer_val;
+                        else loop_values.erase(fl_var);
                         RTLIL::SigSpec tgt =
                             map_to_temp_wire(RTLIL::SigSpec(var_wire));
                         remove_target_from_switches(case_rule, tgt);
