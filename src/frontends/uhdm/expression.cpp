@@ -13758,7 +13758,13 @@ const UHDM::typespec* UhdmImporter::unpacked_array_elem_struct_ts(
             ts = pa->Elem_typespec() ? pa->Elem_typespec()->Actual_typespec() : nullptr;
         }
         if (ts) ts = resolve_type_param_typespec(ts, inst);
-        return (ts && ts->UhdmType() == uhdmstruct_typespec) ? ts : nullptr;
+        // A packed UNION element is as addressable as a packed struct one:
+        // calculate_struct_member_offset handles unions (every member at
+        // offset 0) and get_width_from_typespec measures them (widest
+        // member).  Declining them here dropped every `arr[i].member` read
+        // on a union-typed array element (RSD ComplexIntegerExecutionStage).
+        return (ts && (ts->UhdmType() == uhdmstruct_typespec ||
+                       ts->UhdmType() == uhdmunion_typespec)) ? ts : nullptr;
     };
     const UHDM::typespec* ets = nullptr;
     if (actual) {
