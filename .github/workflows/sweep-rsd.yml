@@ -41,16 +41,25 @@ jobs:
       # cva6 and veer-eh1 use.
       shards: 8
       jobs: "1"
-      # Surelog needs more ADDRESS SPACE than the 12 GB default on this core.
-      # Every module with an interface port pulls the whole-core closure (143
-      # files, ~1 MB of source) and RSD's parameterisation explodes it into a
-      # 1.65 GB UHDM database; writing that database peaks at 12.2 GB of VSZ
-      # (measured VmPeak 12473 MB) against the default cap of 11.7 GB, so
-      # capnproto's calloc fails, Surelog aborts MID-WRITE and leaves a
-      # ZERO-BYTE surelog.uhdm behind.  56 rows that had results in the
-      # 10-10 nightly -- DCache, DispatchStage, Scheduler, LoadQueue,
-      # RenameStage, ... -- then reported `read-fail (uhdm)`, which is not a
-      # reader failure at all.  RSS stays at 7.5 GB and the shard runs one
-      # row at a time (jobs: 1), so 14.5 GB of VSZ is safe on a 16 GB runner
-      # -- the same budget caliptra's sharded miters use.
-      mem_limit_kb: "14500000"
+      # DO NOT RAISE mem_limit_kb ON THIS CORE.  It was set to 14500000 and
+      # that LOST EVERY SHARD, twice: with 14.5 GB of address space allowed,
+      # Surelog stops failing its 1.65 GB UHDM serialisation gracefully and
+      # instead grows into real memory until the kernel takes the runner
+      # agent down -- "The runner has received a shutdown signal", exit 143,
+      # every shard ~15 min in, no rows at all (runs 38125027389 and
+      # 38133880734).  At the 12 GB default the same rows fail ONE AT A TIME
+      # (capnproto `calloc(...): Cannot allocate memory`) and the shard keeps
+      # going, so the other 48 rows still get measured (run 38108782534).
+      # Other cores' sweeps ran fine at 12 GB in the same window, so this is
+      # the cap, not the infrastructure.
+      #
+      # The underlying problem is RSD's footprint, not the budget: every
+      # module with an interface port pulls the whole-core closure (143
+      # files, ~1 MB of source) which its parameterisation explodes into a
+      # 1.65 GB UHDM database, peaking at 12.2 GB of VSZ (measured VmPeak
+      # 12473 MB) against the 11.7 GB the default allows.  Fixing those rows
+      # needs a smaller closure or a smaller UHDM, not more address space on
+      # a 16 GB runner.  ext_flow now at least reports them honestly, as
+      # `elab-fail` quoting Surelog's own abort, instead of blaming
+      # read_uhdm.
+      mem_limit_kb: "12000000"
