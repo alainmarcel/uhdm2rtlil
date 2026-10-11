@@ -1,0 +1,9 @@
+# Netlist gate: every field of the pipeline register must have a driver.  The
+# write that FOLLOWS the zero-trip inner loop was dropped because the body was
+# handed to the compile-time interpreter, which emits no sync writes: `check`
+# reports 20 undriven bits (ptr + activeListPtr of both elements), and the
+# output that reads `ptr` goes undriven with them.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top sync_nested_zero_trip_loop_write
+proc; opt_clean
+check -assert
