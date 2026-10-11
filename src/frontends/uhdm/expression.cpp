@@ -2544,6 +2544,27 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             }
                         }
                         
+                        // The chaining re-import below evaluates the
+                        // accumulator's RHS a SECOND time, to get this
+                        // iteration's value.  It must see the locals as they
+                        // were at the START of the iteration: the body has by
+                        // then executed the statements AFTER the accumulator
+                        // assignment, and any of them that writes a local the
+                        // RHS reads has already advanced input_mapping to a
+                        // later SSA wire.  RSD's TreeLRU_CalcEvictedWay is
+                        // exactly that shape --
+                        //     evicted = (evicted << 1) + (state[pos] ? 0 : 1);
+                        //     pos += (1 << i);
+                        // -- so the re-import read `pos` AFTER the increment
+                        // and indexed state[1] instead of state[0].  With the
+                        // sweep's 2-way D-cache the state vector is ONE bit,
+                        // so that out-of-range $shiftx folded the evicted way
+                        // to constant X: DCacheArray's replArrayDataOut had a
+                        // constant-X driver (which `check` does not report as
+                        // undriven) and the row diverged from cycle 0 on every
+                        // port bit (290 co-sim divergences, read_slang clean).
+                        std::map<std::string, RTLIL::SigSpec> iter_entry_mapping;
+                        if (is_accumulative) iter_entry_mapping = input_mapping;
                         {
                             std::vector<std::string> keys;
                             if (unroll_guard_live && input_mapping.count("$__ret_taken$")) keys.push_back("$__ret_taken$");
@@ -2570,8 +2591,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             if (assign_stmt && assign_stmt->UhdmType() == uhdmassignment) {
                                 const assignment* assign = any_cast<const assignment*>(assign_stmt);
                                 if (assign && assign->Rhs()) {
-                                    // Import the RHS expression to get the output wire
-                                    RTLIL::SigSpec iter_result = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
+                                    // Import the RHS expression to get the output wire,
+                                    // against the ITERATION-ENTRY mapping (see above).
+                                    RTLIL::SigSpec iter_result = import_expression(any_cast<const expr*>(assign->Rhs()), &iter_entry_mapping);
                                     if (!iter_result.empty()) {
                                         current_accumulator = iter_result;
                                         log("UHDM: Updated accumulator to iteration %lld result\n", (long long)i);
