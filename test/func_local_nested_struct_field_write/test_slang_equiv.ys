@@ -1,0 +1,16 @@
+# SAT miter, read_uhdm vs read_slang: FAILS without the fix (o is the constant 0).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_local_nested_struct_field_write
+proc; flatten; opt_clean
+rename func_local_nested_struct_field_write gate
+design -stash gate
+read_slang dut.sv --top func_local_nested_struct_field_write
+hierarchy -check -top func_local_nested_struct_field_write
+proc; flatten; opt_clean
+rename func_local_nested_struct_field_write gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

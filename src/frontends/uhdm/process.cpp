@@ -11522,6 +11522,49 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                 assign->Lhs()->UhdmType() == uhdmhier_path) {
                 auto hp = any_cast<const hier_path*>(assign->Lhs());
                 auto pe = hp ? hp->Path_elems() : nullptr;
+                // ...and a NESTED member (`ret.lane.intLane = i`, RSD
+                // BypassController's SelectReg: BypassSelect.lane is itself a
+                // struct).  Only the two-element `local.field` form was
+                // handled; the three-element write fell through every
+                // handler and was DROPPED without a warning, so the function
+                // returned its `ret = '0` default -- no bypass lane was ever
+                // selected.  Resolve the whole dotted member path against
+                // the local's struct typespec.
+                bool nested_ok = pe && pe->size() > 2 && (*pe)[0]->UhdmType() == uhdmref_obj;
+                for (size_t k = 1; nested_ok && k < pe->size(); k++)
+                    if ((*pe)[k]->UhdmType() != uhdmref_obj) nested_ok = false;
+                if (nested_ok) {
+                    std::string sm_base = std::string((*pe)[0]->VpiName());
+                    std::string member_path;
+                    for (size_t k = 1; k < pe->size(); k++) {
+                        if (k > 1) member_path += ".";
+                        member_path += std::string((*pe)[k]->VpiName());
+                    }
+                    auto bit = func_mapping.find(sm_base);
+                    const UHDM::typespec* st = nullptr;
+                    if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0])) {
+                        if (auto bts = bref->Typespec()) st = bts->Actual_typespec();
+                        if (!st)
+                            if (auto ag = bref->Actual_group())
+                                if (auto ex = dynamic_cast<const UHDM::expr*>(ag))
+                                    if (auto ets = ex->Typespec()) st = ets->Actual_typespec();
+                    }
+                    if (!st && sm_base == func_name) st = current_func_return_struct_ts;
+                    int sm_off = 0, sm_w = 0;
+                    if (bit != func_mapping.end() && bit->second.size() > 0 && st &&
+                        calculate_struct_member_offset(st, member_path, current_instance, sm_off, sm_w) &&
+                        sm_w > 0 && sm_off >= 0 && sm_off + sm_w <= bit->second.size()) {
+                        RTLIL::SigSpec cur = bit->second;
+                        RTLIL::SigSpec r2 = rhs;
+                        if (r2.size() < sm_w) r2.extend_u0(sm_w);
+                        else if (r2.size() > sm_w) r2 = r2.extract(0, sm_w);
+                        cur.replace(sm_off, r2);
+                        func_mapping[sm_base] = mask_write(sm_base, cur);
+                        log("      inline_func_body_comb: %s.%s [%d+:%d] = %s (nested member)\n",
+                            sm_base.c_str(), member_path.c_str(), sm_off, sm_w, log_signal(r2).c_str());
+                        break;
+                    }
+                }
                 if (pe && pe->size() == 2 && (*pe)[0]->UhdmType() == uhdmref_obj) {
                     std::string sm_base = std::string((*pe)[0]->VpiName());
                     std::string sm_field = std::string((*pe)[1]->VpiName());
