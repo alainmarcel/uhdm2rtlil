@@ -4423,6 +4423,24 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                     }
                 }
+                // The same for an unpacked-array FORMAL (`arr[1][6:3]` on
+                // `input logic [7:0] arr [2]`): the staged value may be a
+                // bare WIRE with no geometry stamp or, when the caller hands
+                // over a whole unpacked array, the CONCAT of its element
+                // wires (no wire at all).  Surelog binds no Actual_group on
+                // the select, so take the enclosing function's declaration.
+                RTLIL::SigSpec mapped_base_sig;
+                if (!base_wire && input_mapping) {
+                    auto mit2 = input_mapping->find(base_name);
+                    if (mit2 != input_mapping->end() && !mit2->second.empty())
+                        mapped_base_sig = mit2->second;
+                }
+                if (elem_w == 0 && (mapped_base_wire || !mapped_base_sig.empty())) {
+                    const UHDM::any* decl = vs->Actual_group();
+                    if (!decl) decl = find_enclosing_tf_decl(vs, base_name);
+                    int tw = base_wire ? base_wire->width : mapped_base_sig.size();
+                    if (decl) bitselect_outer_dim(decl, tw, elem_w, array_low);
+                }
                 // Multi-dim packed PORT net: Actual_group() resolves into
                 // the shared AllModules net, which Surelog leaves
                 // typespec-less for ports, so both derivations above come up
@@ -4500,6 +4518,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         int off = (array_idx - array_low) * elem_w;
                         if (off >= 0 && off + elem_w <= base_wire->width)
                             element_sig = RTLIL::SigSpec(base_wire).extract(off, elem_w);
+                    } else if (elem_w > 0 && !mapped_base_sig.empty()) {
+                        // Element of a staged formal handed over as a concat.
+                        int off = (array_idx - array_low) * elem_w;
+                        if (off >= 0 && off + elem_w <= mapped_base_sig.size())
+                            element_sig = mapped_base_sig.extract(off, elem_w);
                     }
                     if (element_sig.empty()) {
                         log_warning("vpiVarSelect: element '%s' not found\n", element_name.c_str());
@@ -13881,6 +13904,61 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // this path during name computation).
     if (!module)
         return RTLIL::SigSpec();
+
+    // `formal[k].member` inside a function or task body, where `formal` is an
+    // UNPACKED array of packed structs (`input BypassCtrlOperand intEX
+    // [INT_ISSUE_WIDTH]`, RSD BypassController's SelectReg reading
+    // `intEX[i].writeReg` / `intEX[i].dstRegNum`).  The formal is no module
+    // wire: it is staged in `input_mapping` as ONE flat vector of all
+    // elements (element 0 at the LSBs), and Surelog binds neither the
+    // bit_select nor the member (no Actual_group), so every name-driven
+    // lookup below missed and the access resolved to X -- SelectReg never
+    // saw a matching destination register and no operand was ever
+    // bypassed (5 co-sim divergences, read_slang clean).  Slice the element
+    // from the staged vector with the declaration's geometry and the member
+    // from the element with the declaration's struct typespec.
+    if (input_mapping && uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        const UHDM::any* pe0 = (*uhdm_hier->Path_elems())[0];
+        if (pe0->UhdmType() == uhdmbit_select) {
+            auto bs0 = any_cast<const bit_select*>(pe0);
+            std::string bn(bs0->VpiName());
+            auto mit = input_mapping->find(bn);
+            if (!bn.empty() && mit != input_mapping->end() && !mit->second.empty() && bs0->VpiIndex()) {
+                const UHDM::any* decl = bs0->Actual_group();
+                if (!decl) decl = find_enclosing_tf_decl(uhdm_hier, bn);
+                int elem_w = 0, outer_lo = 0;
+                if (decl && bitselect_outer_dim(decl, mit->second.size(), elem_w, outer_lo) && elem_w > 0) {
+                    RTLIL::SigSpec ix = import_expression(bs0->VpiIndex(), input_mapping);
+                    std::string member_path;
+                    bool simple = true;
+                    for (size_t k = 1; k < uhdm_hier->Path_elems()->size(); k++) {
+                        const UHDM::any* pe = (*uhdm_hier->Path_elems())[k];
+                        if (pe->UhdmType() != uhdmref_obj) { simple = false; break; }
+                        if (!member_path.empty()) member_path += ".";
+                        member_path += std::string(pe->VpiName());
+                    }
+                    const UHDM::ref_typespec* rt = nullptr;
+                    if (auto io = dynamic_cast<const UHDM::io_decl*>(decl)) rt = io->Typespec();
+                    else if (auto e = dynamic_cast<const UHDM::expr*>(decl)) rt = e->Typespec();
+                    const UHDM::typespec* ts = rt ? rt->Actual_typespec() : nullptr;
+                    if (auto ats = dynamic_cast<const UHDM::array_typespec*>(ts))
+                        if (ats->Elem_typespec()) ts = ats->Elem_typespec()->Actual_typespec();
+                    int off = 0, mw = 0;
+                    if (simple && ix.is_fully_const() && ts &&
+                        calculate_struct_member_offset(ts, member_path, inst, off, mw) && mw > 0) {
+                        int eo = (ix.as_const().as_int() - outer_lo) * elem_w;
+                        if (eo >= 0 && eo + elem_w <= mit->second.size() && off >= 0 && off + mw <= elem_w) {
+                            RTLIL::SigSpec out = mit->second.extract(eo + off, mw);
+                            log("    hier_path '%s' -> element %d of staged formal %s, member %s [%d +: %d]\n",
+                                std::string(uhdm_hier->VpiName()).c_str(), ix.as_const().as_int(),
+                                bn.c_str(), member_path.c_str(), off, mw);
+                            return out;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // `gen_blk.Param` — a localparam declared in another NAMED generate block
     // of this module, used as a value (acc_alu_bignum indexes its ISPR read
