@@ -41,3 +41,16 @@ jobs:
       # cva6 and veer-eh1 use.
       shards: 8
       jobs: "1"
+      # Surelog needs more ADDRESS SPACE than the 12 GB default on this core.
+      # Every module with an interface port pulls the whole-core closure (143
+      # files, ~1 MB of source) and RSD's parameterisation explodes it into a
+      # 1.65 GB UHDM database; writing that database peaks at 12.2 GB of VSZ
+      # (measured VmPeak 12473 MB) against the default cap of 11.7 GB, so
+      # capnproto's calloc fails, Surelog aborts MID-WRITE and leaves a
+      # ZERO-BYTE surelog.uhdm behind.  56 rows that had results in the
+      # 10-10 nightly -- DCache, DispatchStage, Scheduler, LoadQueue,
+      # RenameStage, ... -- then reported `read-fail (uhdm)`, which is not a
+      # reader failure at all.  RSS stays at 7.5 GB and the shard runs one
+      # row at a time (jobs: 1), so 14.5 GB of VSZ is safe on a 16 GB runner
+      # -- the same budget caliptra's sharded miters use.
+      mem_limit_kb: "14500000"
