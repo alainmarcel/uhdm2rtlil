@@ -15143,7 +15143,17 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     if (idx1_e) {
         // Second selector: a bit inside the element (width 1), or an
         // indexed part select `base +: W` (vpiIndexedPartSelectType 1).
-        if (idx1_e->VpiType() == vpiIndexedPartSelect) {
+        // A part-select that names ANOTHER SIGNAL is neither: it is the
+        // index VALUE (RSD ProducerMatrix's
+        // `dispatchVector[i][dispatchedSrcRegPtr[i][j]] = TRUE`, whose index
+        // is `srcRegPtr[j*W +: W]`).  Read as a slice of the element it is
+        // fully constant, so this emitter declined ("fully static") and the
+        // generic LHS path wrote the index's own base/width as a FIXED
+        // 2-bit field instead of the addressed one-hot bit.  A genuine
+        // slice of the element names the array itself.
+        std::string s1_nm = std::string(idx1_e->VpiName());
+        bool s1_is_slice = s1_nm.empty() || s1_nm == bare_name;
+        if (s1_is_slice && idx1_e->VpiType() == vpiIndexedPartSelect) {
             auto ips = any_cast<const indexed_part_select*>(idx1_e);
             if (ips->VpiIndexedPartSelectType() != 1) return false;  // -: unsupported
             RTLIL::SigSpec wexpr;
@@ -15159,7 +15169,7 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             if (b.is_fully_const())
                 inner_shift = RTLIL::SigSpec(RTLIL::Const(b.as_const().as_int(), shamt_w));
             else { inner_shift = make_pos(b, 1, 0); any_dynamic = true; }
-        } else if (idx1_e->VpiType() == vpiPartSelect) {
+        } else if (s1_is_slice && idx1_e->VpiType() == vpiPartSelect) {
             // Range select on the element (`val[ifmt][INT_WIDTH-1:0] = ...`,
             // fpnew_cast_multi's sign-extend overlay): the plain-expr
             // fallback below would import the part_select's VALUE and use it

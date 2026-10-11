@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang.  Without the fix the two part-select
+# indices are read as slices of the array itself: the read returns a fixed
+# field and the dynamic one-hot write lands on a fixed pair of bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top packed_dim_index_is_part_select
+proc; flatten; opt_clean; memory; async2sync
+rename packed_dim_index_is_part_select gate
+design -stash gate
+read_slang dut.sv --top packed_dim_index_is_part_select
+hierarchy -check -top packed_dim_index_is_part_select
+proc; flatten; opt_clean; memory; async2sync
+rename packed_dim_index_is_part_select gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter

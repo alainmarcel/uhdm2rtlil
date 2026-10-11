@@ -3660,16 +3660,31 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         if (idx_ok)
                             for (size_t ei = 0; ei < exprs->size(); ei++) {
                                 int t = (*exprs)[ei]->VpiType();
-                                if (t == vpiIndexedPartSelect &&
-                                    ei == exprs->size() - 1) {
-                                    trail_ips = any_cast<const UHDM::indexed_part_select*>((*exprs)[ei]);
+                                if (t != vpiPartSelect && t != vpiIndexedPartSelect)
+                                    continue;
+                                // A part-select among the indices that names
+                                // ANOTHER SIGNAL is an index VALUE, not a slice
+                                // of this array: RSD ProducerMatrix writes
+                                //   dispatchVector[i][dispatchedSrcRegPtr[i][j]] = TRUE;
+                                // whose inner index is `srcRegPtr[j*W +: W]`.
+                                // Taken as a trailing slice, its own base/width
+                                // became the slice position, so the write landed
+                                // on a FIXED pair of bits instead of the
+                                // addressed one-hot bit and no operand ever
+                                // became ready (6 co-sim divergences).  A
+                                // genuine slice of the array names the array
+                                // (`arr[1][3:0]` -> part_select `arr`), so
+                                // compare the names.
+                                std::string sel_nm = std::string((*exprs)[ei]->VpiName());
+                                if (!sel_nm.empty() && sel_nm != base_name)
+                                    continue;
+                                if (ei == exprs->size() - 1) {
+                                    if (t == vpiIndexedPartSelect)
+                                        trail_ips = any_cast<const UHDM::indexed_part_select*>((*exprs)[ei]);
+                                    else
+                                        trail_ps = any_cast<const UHDM::part_select*>((*exprs)[ei]);
                                     n_idx = ei;
-                                } else if (t == vpiPartSelect &&
-                                           ei == exprs->size() - 1) {
-                                    trail_ps = any_cast<const UHDM::part_select*>((*exprs)[ei]);
-                                    n_idx = ei;
-                                } else if (t == vpiPartSelect ||
-                                           t == vpiIndexedPartSelect) {
+                                } else {
                                     idx_ok = false; break;
                                 }
                             }
@@ -4145,8 +4160,14 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 // lanes of rho were zero; the keccak_round seq=4
                                 // miter and the random co-sim never reached a
                                 // completed round and missed it).
+                                // Same discriminator as the multi-dim path
+                                // above: an indexed part-select that names
+                                // another signal is an index VALUE, not a
+                                // trailing slice of this array.
                                 if (k == K - 1 &&
-                                    (*exprs)[k]->UhdmType() == uhdmindexed_part_select) {
+                                    (*exprs)[k]->UhdmType() == uhdmindexed_part_select &&
+                                    (std::string((*exprs)[k]->VpiName()).empty() ||
+                                     std::string((*exprs)[k]->VpiName()) == base_name)) {
                                     auto ipx = any_cast<const UHDM::indexed_part_select*>((*exprs)[k]);
                                     RTLIL::SigSpec b = import_expression(ipx->Base_expr(), input_mapping);
                                     RTLIL::SigSpec wd = import_expression(ipx->Width_expr(), input_mapping);
