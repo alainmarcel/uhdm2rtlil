@@ -6142,6 +6142,12 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         current_loop_substitutions = saved_substitutions;
                         return;
                     }
+                    // ...and the same write on a PACKED vector, which has no
+                    // element wires to iterate: per-bit instead.
+                    if (emit_dynamic_packed_bit_write_sync(uhdm_assign)) {
+                        current_loop_substitutions = saved_substitutions;
+                        return;
+                    }
                     lhs_spec = import_expression(any_cast<const expr*>(lhs));
                 }
             } else if (lhs && lhs->VpiType() == vpiVarSelect &&
@@ -11837,6 +11843,72 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
 // `for (i) if (we[i]) body[index[i]] <= writeEntry[i]` never updated body.
 // Returns false when the LHS is not such a write (constant index, a $mem,
 // not a bit-select), leaving it to the caller.
+// `vec[dyn] <= value` where `vec` is a PACKED vector (one flat wire, no
+// per-element wires and no $memory) and the index is dynamic, reached through
+// the always_ff LOOP path (import_statement_with_loop_vars).  That path
+// imported the LHS as an expression -- which for a dynamic bit select is the
+// $shiftx READ -- so the update landed on the anonymous read wire and the
+// vector kept NO driver at all: RSD Scheduler's
+//     for (i) if (port.write[i]) begin
+//         notIssued[port.writePtr[i]] <= TRUE;
+//         if (...) begin isStore[port.writePtr[i]] <= TRUE; ... end
+// left isInt / isComplex / isDiv / isLoad / isStore / isFP / isFPDivSqrt
+// undriven -- the 112 bits the sweep reported as "never assigned in the
+// source" -- and the row diverged.
+//
+// Write it per BIT, exactly as the expanded-array sibling below writes per
+// ELEMENT: `sel = (idx == k) && <enclosing condition>` and a mux against the
+// bit's in-flight value.  Per-bit keys are what make repeated writes compose:
+// pending_inflight() reconciles them, so two iterations addressing different
+// bits both survive, and two addressing the same bit resolve in order.
+bool UhdmImporter::emit_dynamic_packed_bit_write_sync(const assignment* uhdm_assign) {
+    if (!uhdm_assign || !uhdm_assign->Lhs()) return false;
+    if (uhdm_assign->Lhs()->VpiType() != vpiBitSelect) return false;
+    auto bs = any_cast<const bit_select*>(uhdm_assign->Lhs());
+    std::string nm = std::string(bs->VpiName());
+    if (nm.empty() || !bs->VpiIndex()) return false;
+    // Not a memory and not an expanded array -- those have their own paths.
+    if (module->memories.count(resolve_mem_id(nm))) return false;
+    if (module->wire(RTLIL::escape_id(nm + "[0]"))) return false;
+    RTLIL::Wire* w = find_wire_in_scope(nm);
+    if (!w) w = name_map.count(nm) ? name_map[nm] : module->wire(RTLIL::escape_id(nm));
+    // A plain zero-based vector only: a non-zero / descending base would need
+    // the index mirrored, and those shapes have their own handling.
+    if (!w || w->width < 2 || w->start_offset != 0 || w->upto) return false;
+    RTLIL::SigSpec idx = import_expression(bs->VpiIndex());
+    if (idx.empty() || idx.is_fully_const()) return false;
+    RTLIL::SigSpec rhs;
+    if (auto rhs_e = dynamic_cast<const expr*>(uhdm_assign->Rhs()))
+        rhs = import_expression(rhs_e);
+    if (rhs.empty()) return false;
+    RTLIL::SigSpec rbit = rhs.extract(0, 1);
+    RTLIL::SigSpec cond_base;
+    if (!current_condition.empty())
+        cond_base = RTLIL::SigSpec(cond_as_bool(module, current_condition));
+    for (int k = 0; k < w->width; k++) {
+        RTLIL::SigSpec bit_lhs(w, k, 1);
+        RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+        module->addEq(NEW_ID, idx,
+                      RTLIL::SigSpec(RTLIL::Const(k, GetSize(idx))), sel);
+        RTLIL::SigSpec full_cond(sel);
+        if (!cond_base.empty()) {
+            RTLIL::Wire* both = module->addWire(NEW_ID, 1);
+            module->addAnd(NEW_ID, cond_base, full_cond, both);
+            full_cond = RTLIL::SigSpec(both);
+        }
+        RTLIL::SigSpec else_val = pending_sync_assignments.count(bit_lhs)
+                                      ? pending_sync_assignments.at(bit_lhs)
+                                      : pending_inflight(bit_lhs);
+        RTLIL::Wire* mo = module->addWire(NEW_ID, 1);
+        module->addMux(NEW_ID, else_val, rbit, full_cond, mo);
+        pending_sync_assignments[bit_lhs] = RTLIL::SigSpec(mo);
+        note_pending_sync(bit_lhs);
+    }
+    log("    dyn_packed_bit_write_sync: %s[dyn] <= %s (%d bits)\n",
+        nm.c_str(), log_signal(rbit), w->width);
+    return true;
+}
+
 bool UhdmImporter::emit_dynamic_expanded_elem_write_sync(const assignment* uhdm_assign) {
     if (!uhdm_assign) return false;
     // Check for dynamic write to an expanded array (individual element wires, not $memory).

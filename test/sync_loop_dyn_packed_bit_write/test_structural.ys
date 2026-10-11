@@ -1,0 +1,7 @@
+# Netlist gate: every bit of both vectors must have a driver.  Without the fix
+# the dynamic writes land on an anonymous $shiftx read wire and `check` finds
+# 8 undriven bits -- the shape of RSD Scheduler's 112 "never assigned" bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top sync_loop_dyn_packed_bit_write
+proc; opt_clean
+check -assert

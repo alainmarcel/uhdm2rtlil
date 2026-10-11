@@ -1161,6 +1161,10 @@ struct UhdmImporter {
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::CaseRule* case_rule);
     bool emit_dynamic_expanded_elem_write_sync(const assignment* uhdm_assign);
+    // `vec[dyn] <= bit` on a PACKED vector under the always_ff loop path:
+    // per-BIT conditional writes keyed into pending_sync_assignments, so
+    // repeated writes accumulate through pending_inflight().
+    bool emit_dynamic_packed_bit_write_sync(const assignment* uhdm_assign);
     // `arr[idx].field <= rhs` with a DYNAMIC index on an EXPANDED array of
     // packed structs, under the always_ff loop path (RSD StoreQueue).
     bool emit_dynamic_expanded_elem_field_write_sync(const assignment* uhdm_assign);
