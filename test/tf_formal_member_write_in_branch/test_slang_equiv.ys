@@ -1,0 +1,16 @@
+# SAT miter, read_uhdm vs read_slang: FAILS without the fix.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top tf_formal_member_write_in_branch
+proc; flatten; opt_clean; memory; async2sync
+rename tf_formal_member_write_in_branch gate
+design -stash gate
+read_slang dut.sv --top tf_formal_member_write_in_branch
+hierarchy -check -top tf_formal_member_write_in_branch
+proc; flatten; opt_clean; memory; async2sync
+rename tf_formal_member_write_in_branch gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

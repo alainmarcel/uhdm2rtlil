@@ -10800,8 +10800,29 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
 bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out) {
     if (!lhs_expr) return false;
     int lt = lhs_expr->VpiType();
-    if (lt != vpiRefObj && lt != vpiBitSelect) return false;
-    std::string nm = std::string(lhs_expr->VpiName());
+    if (lt != vpiRefObj && lt != vpiBitSelect && lt != vpiHierPath) return false;
+    // `formal.member = ...` on a task / void-function formal, reached from an
+    // if/else or case ARM of the inlined body: the arm is walked by the
+    // ordinary comb path (import_if_else_comb), where the formal is no module
+    // wire, so the member access ended in "Could not resolve struct member
+    // access" and the write was DROPPED.  RSD Decoder's RISCV_EmitMiscMemOp
+    // sets `opInfo.undefined` in both arms of an `if (miscMemOp.fence)` and
+    // nowhere else, so that bit had no driver -- Decoder's 31 "never assigned"
+    // bits, and twice that in PreDecodeStage, which holds two decoders.  The
+    // function's unconditional member writes all landed, which is what made
+    // the gap so narrow.
+    std::string nm;
+    const UHDM::hier_path* mem_hp = nullptr;
+    if (lt == vpiHierPath) {
+        mem_hp = any_cast<const UHDM::hier_path*>(lhs_expr);
+        auto pe = mem_hp ? mem_hp->Path_elems() : nullptr;
+        if (!pe || pe->size() < 2) return false;
+        for (auto el : *pe)
+            if (el->UhdmType() != uhdmref_obj) return false;
+        nm = std::string((*pe)[0]->VpiName());
+    } else {
+        nm = std::string(lhs_expr->VpiName());
+    }
     if (nm.empty()) return false;
     const UHDM::any* decl = find_enclosing_tf_decl(lhs_expr, nm);
     auto it = current_comb_values.find(nm);
@@ -10818,6 +10839,28 @@ bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_o
     if (!decl) return false;
     if (it == current_comb_values.end() || it->second.empty()) return false;
     RTLIL::SigSpec cur = it->second;
+    if (mem_hp) {
+        auto& pe = *mem_hp->Path_elems();
+        std::string member_path;
+        for (size_t k = 1; k < pe.size(); k++) {
+            if (k > 1) member_path += ".";
+            member_path += std::string(pe[k]->VpiName());
+        }
+        const UHDM::ref_typespec* rt = nullptr;
+        if (auto io = dynamic_cast<const UHDM::io_decl*>(decl)) rt = io->Typespec();
+        else if (auto e = dynamic_cast<const UHDM::expr*>(decl)) rt = e->Typespec();
+        const UHDM::typespec* ts = rt ? rt->Actual_typespec() : nullptr;
+        int off = 0, w = 0;
+        if (!ts || member_path.empty() ||
+            !calculate_struct_member_offset(ts, member_path, current_instance, off, w) ||
+            w <= 0 || off < 0 || off + w > cur.size())
+            return false;
+        lhs_out = cur.extract(off, w);
+        if (mode_debug)
+            log("    tf_local_lhs: %s.%s -> [%d+:%d] of the mapped formal\n",
+                nm.c_str(), member_path.c_str(), off, w);
+        return true;
+    }
     if (lt == vpiRefObj) {
         // Whole local / formal (`trig_o = 1` under an `if` in the loop body):
         // the temp itself; emit_comb_assign then threads the value the way it
