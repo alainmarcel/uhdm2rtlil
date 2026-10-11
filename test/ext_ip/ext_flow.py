@@ -750,12 +750,27 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
                               "-top", top, *files]),
                      cwd=w, timeout=_sl_timeout(src_bytes))
         (w / "surelog.log").write_text(out or "")
-    if not uhdm.exists():
+    # An EMPTY surelog.uhdm counts as no elaboration.  Surelog creates the
+    # file before serialising into it, so a crash while WRITING the database
+    # -- capnproto's `calloc(...): Cannot allocate memory` when the address
+    # space runs out -- leaves a zero-byte file behind.  `exists()` alone was
+    # therefore true, the row went on to read_uhdm, and capnproto aborted it
+    # with "Premature EOF": the report blamed the READER ("read-fail (uhdm)
+    # (read_uhdm failed)") for an out-of-memory elaboration.  That cost a
+    # session's debugging on the RSD sweep, where it hit 56 rows at once.
+    if not uhdm.exists() or uhdm.stat().st_size == 0:
         err = ""
         try:
             log = (w / "surelog.log").read_text()
             m2 = re.search(r"\[(?:FATAL|ERROR)\][^\n]*", log)
             err = m2.group(0)[:120] if m2 else ""
+            # Surelog's own abort does not use the [FATAL]/[ERROR] tags.
+            if not err:
+                m3 = re.search(r"what\(\):[^\n]*", log)
+                if m3:
+                    err = "surelog aborted: " + m3.group(0)[8:112].strip()
+                elif uhdm.exists():
+                    err = "surelog wrote an empty UHDM database"
         except OSError:
             pass
         return {"module": m, "formal": "elab-fail", "formal_raw": "elabfail",
