@@ -1,0 +1,18 @@
+# SAT miter, read_uhdm vs read_slang: FAILS without the fix (one of the two
+# bits is lost when both enables are high).  `check` is clean either way, so
+# the miter is the only gate for this half.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ff_dyn_packed_write_inflight_chain
+proc; flatten; opt_clean; memory; async2sync
+rename ff_dyn_packed_write_inflight_chain gate
+design -stash gate
+read_slang dut.sv --top ff_dyn_packed_write_inflight_chain
+hierarchy -check -top ff_dyn_packed_write_inflight_chain
+proc; flatten; opt_clean; memory; async2sync
+rename ff_dyn_packed_write_inflight_chain gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

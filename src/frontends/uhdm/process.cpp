@@ -14799,6 +14799,60 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
 // Lowered as a mask/shift/or RMW of the flat wire.  Without this the LHS
 // import took the READ path and the $shiftx output wire became the write
 // target — the write was dropped and the temp latched.
+// The value a process has already assigned to `tgt`, reconstructed from what
+// it has emitted so far.  A DYNAMIC packed write assigns the WHOLE flat wire
+// (the written bits are not a static range), so when an unrolled loop puts
+// each iteration in its own `switch`, a later switch's assignment DISCARDS
+// the bits an earlier one set:
+//     always_ff @(posedge clk)
+//         for (i) if (wr[i]) isStore[ptr[i]] <= TRUE;
+// kept only the last iteration's bit (RSD Scheduler's isInt / isLoad /
+// isStore / isDiv / isFP / isFPDivSqrt / isComplex).  In an always_ff body
+// current_comb_values is empty -- non-blocking reads must see the registered
+// value -- so there is no threaded in-flight value to chain onto, and
+// chaining onto the previous write UNCONDITIONALLY is wrong too: iteration 1
+// must start from `wr[0] ? v0 : raw`, not from v0.  Fold the emitted
+// structure instead, which carries exactly those conditions.
+RTLIL::SigSpec UhdmImporter::case_inflight_value(RTLIL::CaseRule* root,
+                                                 const RTLIL::SigSpec& tgt) {
+    RTLIL::SigSpec acc = tgt;
+    if (!root) return acc;
+    std::function<void(RTLIL::CaseRule*, RTLIL::SigSpec&)> walk =
+        [&](RTLIL::CaseRule* c, RTLIL::SigSpec& cur) {
+        for (auto& a : c->actions)
+            if (a.first == tgt && a.second.size() == tgt.size())
+                cur = a.second;
+        for (auto sw : c->switches) {
+            // `proc` takes the FIRST matching case, so build the chain from
+            // the last case backwards; a case with no compare is the default.
+            RTLIL::SigSpec before = cur, out = cur;
+            bool have_default = false;
+            std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>> arms;
+            for (auto cs : sw->cases) {
+                RTLIL::SigSpec branch = before;
+                walk(cs, branch);
+                if (cs->compare.empty()) {
+                    if (!have_default) { out = branch; have_default = true; }
+                    continue;
+                }
+                RTLIL::SigSpec sel;
+                for (auto& cmp : cs->compare) {
+                    if (cmp.size() != sw->signal.size()) { sel = RTLIL::SigSpec(); break; }
+                    RTLIL::SigSpec e = module->Eq(NEW_ID, sw->signal, cmp);
+                    sel = sel.empty() ? e : RTLIL::SigSpec(module->Or(NEW_ID, sel, e));
+                }
+                if (sel.empty()) return;   // unmodelled shape: keep `cur`
+                arms.push_back({sel, branch});
+            }
+            for (auto it = arms.rbegin(); it != arms.rend(); ++it)
+                out = module->Mux(NEW_ID, out, it->second, it->first);
+            cur = out;
+        }
+    };
+    walk(root, acc);
+    return acc;
+}
+
 bool UhdmImporter::emit_dynamic_packed_select_write(
         const UHDM::any* lhs_e,
         const UHDM::any* rhs_any,
@@ -15376,6 +15430,24 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                           current_comb_values.count(base_name))
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
+    // In an always_ff body the in-flight value is not in current_comb_values
+    // (see case_inflight_value): reconstruct it from the process's own
+    // emitted actions and switches, so repeated DYNAMIC writes to one signal
+    // accumulate under their respective conditions.
+    if (in_always_ff_body_mode && case_rule && current_comb_process) {
+        RTLIL::Wire* tw_i = find_own_temp_wire(base_name);
+        RTLIL::SigSpec tgt_i = tw_i ? RTLIL::SigSpec(tw_i) : RTLIL::SigSpec(base_wire);
+        if (tgt_i.size() == base_w) {
+            RTLIL::SigSpec fold = case_inflight_value(&current_comb_process->root_case, tgt_i);
+            if (fold.size() == base_w && fold != tgt_i) {
+                cur = fold;
+                if (mode_debug)
+                    log("    dyn_packed_select_write: in-flight value of '%s' "
+                        "folded from the process's switches\n", base_name.c_str());
+            }
+        }
+    }
+
     // TWO dynamic writes to the same array in ONE always_ff arm
     // (scr1_pipe_ifu's full-word queue write: `q_err[i] <= e;
     //  q_err[i+1] <= e;`): current_comb_values is suppressed for

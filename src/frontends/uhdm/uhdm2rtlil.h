@@ -1221,6 +1221,13 @@ struct UhdmImporter {
     RTLIL::SigSpec mapped_inflight(const RTLIL::SigSpec& mapped);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
     // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
+    // The value a process has assigned to `tgt` SO FAR: the actions and
+    // switches already emitted into `root`, folded in order into a mux chain
+    // (first matching case of a switch wins, as `proc` lowers it).  Used as
+    // the read-modify-write base of a DYNAMIC packed write inside an
+    // always_ff body, where current_comb_values is empty by design.
+    RTLIL::SigSpec case_inflight_value(RTLIL::CaseRule* root,
+                                       const RTLIL::SigSpec& tgt);
     bool emit_dynamic_packed_select_write(
         const UHDM::any* lhs_e,
         const UHDM::any* rhs_any,
