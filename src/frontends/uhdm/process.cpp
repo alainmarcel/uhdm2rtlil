@@ -7580,9 +7580,36 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     // that require interpreter execution
                     bool use_interpreter = false;
                     
-                    // Check if the body contains nested for loops
+                    // Check if the body contains nested for loops.
+                    //
+                    // The interpreter EVALUATES the body at compile time, which
+                    // is what an initial block's array initialisation needs but
+                    // is wrong in a CLOCKED process: it produces no sync writes,
+                    // so every assignment in the body is silently dropped.  RSD
+                    // WakeupPipelineRegister's
+                    //     for (i) begin
+                    //         for (j = 1; j < LATENCY; j++)        // LATENCY==1:
+                    //             intPipeReg[i][j-1] <= intPipeReg[i][j];  // ZERO trips
+                    //         intPipeReg[i][LATENCY-1] <= nextIntPipeReg[i];
+                    //     end
+                    // lost the whole-element write that FOLLOWS the empty inner
+                    // loop: `ptr` and `activeListPtr` of every element had no
+                    // driver (20 bits in the replica, 54 in the module, and the
+                    // output reading `ptr` went undriven with them).  The same
+                    // nested shape in the reset arm unrolls correctly, which is
+                    // what made the loss look field-selective.
+                    //
+                    // So only an INITIAL block takes the interpreter here; a
+                    // clocked body is unrolled, which the per-statement recursion
+                    // below already handles.
+                    bool initial_ctx = !sync || sync->type == RTLIL::SyncType::STi;
                     for (auto stmt : *stmts) {
                         if (stmt->VpiType() == vpiFor) {
+                            if (!initial_ctx) {
+                                log("        Nested for loop in a clocked body - "
+                                    "unrolling (not interpreting)\n");
+                                break;
+                            }
                             // Nested for loop detected - use interpreter
                             use_interpreter = true;
                             log("        Detected nested for loop - using interpreter\n");
