@@ -15196,7 +15196,15 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // the index can fall outside the array, like the plain `arr[idx]` read) or
     // a $shiftx over the flat wire.  Elements written earlier in the same comb
     // block are read at their in-flight value.
-    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+    // ...and a NESTED member through the element (`opInfo[i].operand.intOp
+    // .shiftIn`, RSD DispatchStage: `operand` is a packed union inside the
+    // OpInfo struct): only the two-element `arr[k].field` form was accepted,
+    // so every deeper read fell to the generic walker and ended in "Could not
+    // resolve struct member access" -> X -- the scheduler's intWriteData /
+    // memWriteData carried no operand at all (280 co-sim divergences).  An
+    // all-ref_obj tail is one dotted member path for
+    // calculate_struct_member_offset; a trailing select stays two-element.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
         (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmbit_select) {
         auto& pe_ef = *uhdm_hier->Path_elems();
         auto bs0 = any_cast<const bit_select*>(pe_ef[0]);
@@ -15204,7 +15212,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         std::string field;
         const bit_select*  fbit  = nullptr;
         const part_select* fpart = nullptr;
-        if (pe_ef[1]->UhdmType() == uhdmref_obj)
+        if (pe_ef.size() > 2) {
+            bool all_ref = true;
+            for (size_t t = 1; t < pe_ef.size(); t++)
+                if (pe_ef[t]->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+            if (all_ref)
+                for (size_t t = 1; t < pe_ef.size(); t++) {
+                    if (t > 1) field += ".";
+                    field += std::string(pe_ef[t]->VpiName());
+                }
+        } else if (pe_ef[1]->UhdmType() == uhdmref_obj)
             field = std::string(any_cast<const ref_obj*>(pe_ef[1])->VpiName());
         else if (pe_ef[1]->UhdmType() == uhdmbit_select) {
             fbit = any_cast<const bit_select*>(pe_ef[1]);
