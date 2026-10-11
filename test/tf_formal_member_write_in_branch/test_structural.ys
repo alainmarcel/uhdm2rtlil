@@ -1,0 +1,8 @@
+# Netlist gate: every bit of the struct the void function fills must have a
+# driver.  Without the fix the member write inside the if/else arms is dropped
+# (the arm is walked by the ordinary comb path, where the formal is no module
+# wire) and `check` reports the `undefined` bit as undriven.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top tf_formal_member_write_in_branch
+proc; opt_clean
+check -assert
