@@ -193,6 +193,16 @@ class Closure:
             return self._tcache[f]
         txt = re.sub(r"//[^\n]*", "", open(f, errors="replace").read())
         txt = re.sub(r"/\*.*?\*/", "", txt, flags=re.S)
+        # A `modport <name>` LABEL is not a dependency.  RSD names every client
+        # module as a modport of the interface it talks to -- FetchStageIF
+        # declares `modport BranchPredictor(...)` -- so the identifier scan read
+        # the label as an instantiation of that module, pulled its file, pulled
+        # the interfaces IT talks to, and so on: every RSD module's closure was
+        # the WHOLE core (141 files, 1.02 MB), which is why Surelog needed
+        # ~12 GB and 165 s per row.  Dropping just the label leaves a real
+        # instantiation of the same name untouched (it is a separate token
+        # occurrence) and takes the median closure to 20 files / 158 KB.
+        txt = re.sub(r"\bmodport\s+\w+", "modport", txt)
         toks = set(re.findall(r"[A-Za-z_]\w*", txt))
         r = toks & set(self.defs)
         for mname in toks & set(self.macros):
@@ -1013,6 +1023,9 @@ def main():
     ap.add_argument("--survey", action="store_true")
     ap.add_argument("--out", type=Path)
     ap.add_argument("--list", action="store_true", help="print the module list and exit")
+    ap.add_argument("--closure", action="store_true",
+                    help="print each module's source closure (files, bytes) and exit -- "
+                         "the measurement that shows whether a row can be elaborated at all")
     # Intermixed: a sharded caller may put the module names after the options.
     args = ap.parse_intermixed_args()
     man = json.loads((HERE / f"{args.family}.json").read_text())
@@ -1065,6 +1078,22 @@ def main():
         mods = [x for x in mods if re.search(args.filter, x["name"])]
     if args.list:
         print("\n".join(x["name"] for x in mods))
+        return
+    if args.closure:
+        # Surelog's peak memory tracks the SOURCE CLOSURE, not the module: the
+        # whole closure is compiled and serialised whatever the top is.  Print
+        # it so a row that cannot elaborate under the sweep's address-space cap
+        # can be told from a module that is genuinely unreadable.
+        tf = tb = 0
+        for x in mods:
+            files = cl.closure(x["name"])
+            files = files[0] if isinstance(files, tuple) else files
+            nb = sum(os.path.getsize(f) for f in files if os.path.isfile(f))
+            tf += len(files); tb += nb
+            print("%-40s %4d files %9d bytes" % (x["name"], len(files), nb))
+        if len(mods) > 1:
+            print("%-40s %4d files %9d bytes (summed over %d modules)"
+                  % ("TOTAL", tf, tb, len(mods)))
         return
     seq0, tmo0, want0 = man.get("seq", 4), man.get("timeout", 300), man.get("want", "proven")
     ties = man.get("ties", {})
