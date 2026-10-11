@@ -1,0 +1,16 @@
+# SAT miter, read_uhdm vs read_slang: FAILS without the fix (y1 and y2 are X).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top array_elem_nested_struct_member_read
+proc; flatten; opt_clean
+rename array_elem_nested_struct_member_read gate
+design -stash gate
+read_slang dut.sv --top array_elem_nested_struct_member_read
+hierarchy -check -top array_elem_nested_struct_member_read
+proc; flatten; opt_clean
+rename array_elem_nested_struct_member_read gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -set-init-zero miter
