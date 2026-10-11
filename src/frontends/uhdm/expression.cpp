@@ -1857,7 +1857,20 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         elem_member_done = true;
                     }
                 }
-                if (!elem_member_done && pe && pe->size() == 2) {
+                // ...and a NESTED member (`ret.lane.intLane = i`, RSD
+                // BypassController's SelectReg under a loop with `break`,
+                // which comes through this path): only the two-element
+                // form was handled, the three-element write fell through
+                // and was dropped.  Any all-ref_obj tail is a dotted member
+                // path for calculate_struct_member_offset.
+                bool nested_path_ok = pe && pe->size() >= 2;
+                std::string member_path;
+                for (size_t t = 1; nested_path_ok && t < pe->size(); t++) {
+                    if ((*pe)[t]->UhdmType() != uhdmref_obj) { nested_path_ok = false; break; }
+                    if (t > 1) member_path += ".";
+                    member_path += std::string((*pe)[t]->VpiName());
+                }
+                if (!elem_member_done && nested_path_ok) {
                     std::string base_name = std::string((*pe)[0]->VpiName());
                     std::string field_name = std::string((*pe)[1]->VpiName());
                     // Base signal: a mapped local/param, or the return wire.
@@ -1896,7 +1909,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // ref_obj carries no typespec, so the field writes were
                     // dropped and the D-channel integrity ECC saw all-zero.)
                     if (!st) st = current_func_return_struct_ts;
-                    if (!base_sig.empty() && st && st->Members()) {
+                    if (!base_sig.empty() && st && st->Members() && pe->size() > 2) {
+                        int off = 0, w = 0;
+                        if (calculate_struct_member_offset(st, member_path, current_instance, off, w) &&
+                            w > 0 && off >= 0 && off + w <= base_sig.size()) {
+                            lhs_sig = base_sig.extract(off, w);
+                            if (mode_debug)
+                                log("UHDM: nested struct-field write %s.%s -> [%d+:%d]\n",
+                                    base_name.c_str(), member_path.c_str(), off, w);
+                        }
+                    } else if (!base_sig.empty() && st && st->Members()) {
                         // LSB-first iteration: the struct's last member is the LSB.
                         int field_off = 0, field_w = 0;
                         bool found = false;
