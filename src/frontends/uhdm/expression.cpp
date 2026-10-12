@@ -2241,6 +2241,36 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                         log("DEBUG: Operation result not constant (invalidValue=%d)\n", invalidValue);
                                     }
                                 }
+                                // ExprEval knows parameters but NOT the value
+                                // an enclosing unrolled loop currently has, so
+                                // an inner loop bounded by the OUTER loop's
+                                // variable -- `for (j = 0; j < (1 << i); j++)`
+                                // inside `for (i ...)` -- was declined and the
+                                // whole inner body DROPPED (with a warning).
+                                // RSD's TreeLRU_CalcUpdatedState (DCache.sv:112)
+                                // writes the LRU state only in that inner loop,
+                                // so the function returned its `'0` initializer:
+                                // every tree-LRU update wrote state 0, the
+                                // evicted way went stale and DCacheArray
+                                // diverged from the RTL from cycle 43 on.
+                                // import_expression DOES substitute loop_values
+                                // and the function's local mapping, exactly as
+                                // the struct-param bound below already relies
+                                // on; use it when ExprEval comes back
+                                // non-constant.  Any cells a failed attempt
+                                // leaves behind are unused and opt_clean drops
+                                // them.
+                                if (!can_unroll) {
+                                    RTLIL::SigSpec bv = import_expression(
+                                        any_cast<const expr*>(right_op),
+                                        &input_mapping);
+                                    if (bv.is_fully_const() && bv.is_fully_def()) {
+                                        end_value = bv.as_const().as_int();
+                                        can_unroll = true;
+                                        log("UHDM: loop end value folded with the enclosing "
+                                            "loop's value: %lld\n", (long long)end_value);
+                                    }
+                                }
                             } else if (right_op->UhdmType() == uhdmhier_path) {
                                 // Struct-param field bound
                                 // (`k < Cfg.NrExecuteRegionRules` in CVA6's
