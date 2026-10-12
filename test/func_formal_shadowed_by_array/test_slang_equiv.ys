@@ -1,0 +1,21 @@
+# `read_verilog` cannot be the gold here: the function lives in a PACKAGE and
+# read_verilog produces no logic for it (`assign o0[31:1] = 31'0`), so the
+# ordinary verilog-vs-uhdm comparison is vacuous.  read_slang resolves the
+# package function correctly, so this miter is the real gate -- it finds a
+# counterexample without the fix, because the bit-select of the formal `pc`
+# was answered by the module's same-named ARRAY and came out X.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_formal_shadowed_by_array
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename func_formal_shadowed_by_array gold
+design -stash gold
+read_slang dut.sv --top func_formal_shadowed_by_array
+hierarchy -check -top func_formal_shadowed_by_array
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename func_formal_shadowed_by_array gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
