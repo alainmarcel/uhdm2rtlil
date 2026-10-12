@@ -1009,6 +1009,16 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
             row["cosim"] = "skip (sim build)"
         else:
             row["cosim"] = "error" if rc4 else "skip"
+    # A BOUNDED proof next to a uhdm-only co-sim divergence is not a
+    # contradiction and must not read like one: the miter explores `seq`
+    # cycles from reset, and a divergence deeper than that is simply out of
+    # its reach.  RSD DCacheMissHandler printed `✅ equivalent` beside
+    # `❌ 272 div (slang clean)` -- its first divergence is at cycle 29, and
+    # the SAME miter re-run with `-seq 40` reports `model found: FAIL`.  Say
+    # the depth on the row so the next reader does not chase a harness bug.
+    if row.get("formal_raw") == "proven" and isinstance(row.get("cosim"), str) \
+       and "div (slang clean)" in row["cosim"]:
+        row["formal"] = f"✅ equivalent (only to seq {seq}; co-sim diverges deeper)"
     return row
 
 
