@@ -11670,6 +11670,78 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             }
         }
     }
+
+    // A function FORMAL (or local) bound to a WIRE must also win over a
+    // same-named MODULE signal -- the branch above only covers a formal bound
+    // to a CONSTANT.  Inside a function body the formal shadows the module
+    // name, but the bit-select fell through to the expanded-array path below
+    // and asked that array for the element at the formal's bit index.
+    //
+    // RSD: `ToAddrFromPC(PC_Path pc)` is read as `pc[PC_WIDTH-1]` in its body
+    // (MemoryMapTypes.sv:57) while IntegerExecutionStage declares
+    // `AddrPath pc [INT_ISSUE_WIDTH]` and assigns the call's result to it
+    // (IntegerExecutionStage.sv:92,153).  `pc[18]` was looked up as ELEMENT 18
+    // of that 2-element array, which does not exist, so the MSB of every
+    // ToAddrFromPC result came out X; `pc[i]` went X and the branch-target
+    // else arm diverged on all 301 co-simulated cycles (read_slang clean).
+    // The part-select path already prefers input_mapping -- this makes the
+    // bit-select agree with it.
+    // The function-inlining paths do not all set a FunctionCallContext
+    // (inline_func_body_comb does not), so the test is the UHDM node's own
+    // scope: a formal's bit_select is named `<Func>.<formal>` while an
+    // elaborated MODULE signal is `work@<Mod>.<sig>`.  Requiring a non-`work@`
+    // dotted owner keeps this away from loop variables and in-flight module
+    // values -- without it this fired on ordinary `arr[k]` reads whose base is
+    // in the comb value map and broke 11 tests (comb_local_index_fold,
+    // loopvar_partsel_after_bitsel, genscope_loop_var_final_value, ...).
+    // The owner qualifier in VpiFullName tells a FUNCTION FORMAL from a module
+    // signal, and it comes in two spellings: a file-scope function gives
+    // `ToAddrFromPC.pc`, a PACKAGE one gives
+    // `PipelineTypes::ToAddrFromPC::pc` (which is what RSD has -- a rule that
+    // only looked for '.' never fired on the real design).  An elaborated
+    // module signal is always `work@<Mod>.<sig>`, and a bare name has no
+    // qualifier at all; neither may take this path.
+    std::string bs_full = std::string(uhdm_bit->VpiFullName());
+    size_t bs_dot = bs_full.rfind('.');
+    size_t bs_cc = bs_full.rfind("::");
+    size_t bs_sep = std::string::npos;
+    size_t bs_seplen = 0;
+    if (bs_cc != std::string::npos &&
+        (bs_dot == std::string::npos || bs_cc > bs_dot)) {
+        bs_sep = bs_cc; bs_seplen = 2;
+    } else if (bs_dot != std::string::npos) {
+        bs_sep = bs_dot; bs_seplen = 1;
+    }
+    bool bs_fn_scoped = bs_sep != std::string::npos &&
+                        bs_full.compare(0, 5, "work@") != 0 &&
+                        bs_full.substr(bs_sep + bs_seplen) == signal_name;
+    if (bs_fn_scoped && input_mapping && input_mapping->count(signal_name) &&
+        uhdm_bit->VpiIndex()) {
+        RTLIL::SigSpec fbase = input_mapping->at(signal_name);
+        RTLIL::SigSpec fidx = import_expression(
+            any_cast<const expr*>(uhdm_bit->VpiIndex()), input_mapping);
+        if (fidx.is_fully_const() && fbase.size() > 0) {
+            int elem_w = 1, outer_lo = 0;
+            if (auto ag = uhdm_bit->Actual_group())
+                bitselect_outer_dim(ag, (int)fbase.size(), elem_w, outer_lo);
+            if (elem_w <= 0) elem_w = 1;
+            int idxv = fidx.as_const().as_int();
+            // Only step in where the module array cannot answer: if an element
+            // wire exists for this index the existing path stays in charge.
+            std::string en = signal_name + "[" + std::to_string(idxv) + "]";
+            bool elem_exists = module->wire(RTLIL::escape_id(en)) ||
+                               find_wire_in_scope(en);
+            int off = (idxv - outer_lo) * elem_w;
+            if (!elem_exists && off >= 0 &&
+                off + elem_w <= (int)fbase.size()) {
+                if (mode_debug)
+                    log("    formal bit-select %s[%d] from input_mapping: "
+                        "off=%d elem_w=%d of %d bits\n", signal_name.c_str(),
+                        idxv, off, elem_w, (int)fbase.size());
+                return mapped_inflight(fbase.extract(off, elem_w));
+            }
+        }
+    }
     
     // Check if this is a memory access.  A memory declared in a generate
     // scope is named `<gen path>.<name>`; resolve_mem_id tries that first.
