@@ -58,29 +58,29 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (the 1231 internal tests, ~30 min).  A PR
+`cd test && ./run_parallel.sh 6 --no-cva6` (the 1245 internal tests, ~30 min).  A PR
 lands only on a clean run.  The counts below are the regression's own summary
 (`Total tests run` / per-suite lines of the combined report), not a tally kept
 by hand; "upstream" counts the 520 generated yosys tests the suite scored in
 that run (the deliberately invalid `tests/errors` and tests that produce no RTLIL
 under any frontend are generated but not scored).  Counts are the regression of
-main at #1142 (2026-10-10, run 38078632766), split internal / upstream by the
+main at #1162 (2026-10-11, run 38183596951), split internal / upstream by the
 `run/` prefix of the shard result lists.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1776 | 1256 | 520 |
-| Functional | 1731 (97%) | 1221 | 510 |
+| Tests | 1792 | 1272 | 520 |
+| Functional | 1747 (97%) | 1237 | 510 |
 | True failures | 9 | **0** | 9 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1075** tests formally equivalent UHDM vs Verilog; **656** UHDM-only
+- **1084** tests formally equivalent UHDM vs Verilog; **663** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **270 / 272** SV-only designs also proven against `read_slang` (2 known-fail,
-  tracked in `test/slang_miter_expected_fail.txt`), and **37**
+  **285 / 287** SV-only designs also proven against `read_slang` (2 known-fail,
+  tracked in `test/slang_miter_expected_fail.txt`), and **43**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop or a missing `$mem` still "works" — it just returns
   constants).
@@ -156,7 +156,7 @@ line and in the total:
 | **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
 | **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
 | **VeeR EL2** | 92 | 69 | 80 | 80 | 0 | 81 | 81 | 0 | 0 | 0 |
-| **RSD** | 144 | 78 | 105 | 103 | **2** | 113 | 99 | **13** | 1 | 0 |
+| **RSD** | 165 | 105 | 135 | 132 | **3** | 144 | 130 | **12** | 2 | 0 |
 | **OpenTitan** (upstream) | 32 | 27 | 28 | 26 | **2** | 28 | 27 | 0 | 1 | 0 |
 | **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 383 | 372 | **11** | 390 | 374 | **7** | 9 | 0 |
 | **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
@@ -165,22 +165,30 @@ line and in the total:
 | **XiangShan core** (香山) | 2002 | 1604 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
 | **External IP** (the other 10 repos; the XiangShan library is the row above) | 1034 | 859 | 894 | 864 | **30** | 913 | 889 | 0 | 24 | 0 |
 | **chipsalliance/sv-tests** | 526 | 474 | 11 | 11 | 0 | 12 | 11 | **1** | 0 | 0 |
-| **All sweeps** (12 workflows) | **4698** | **3871** | **3748** | **3683** | **65** | **3787** | **3714** | **21** | **52** | **0** |
+| **All sweeps** (12 workflows) | **4719** | **3898** | **3778** | **3712** | **66** | **3818** | **3745** | **20** | **53** | **0** |
 
-The 21 `read_uhdm` divergences are 13 RSD rows (`DCacheArray`, `DCacheArrayPortMultiplexer`,
-`Decoder`, `DispatchStage`, `Scheduler`, `WakeupPipelineRegister`, `BlockMultiPortRAM`,
-`FP32PipelinedOther`, `RegisterMultiPortRAM` -- a racy 4-write-port RTL --, `ProducerMatrix`,
-`BypassController`, `CommitStage`, `BlockTrueDualPortRAM`; this run predates the day's
-fixes), the 7 pavona chip instances whose `read_uhdm` netlist no longer builds (7 driver
-conflicts in `sram_ctrl`, new since 2026-10-09, open) and sv-tests'
+The 20 `read_uhdm` divergences are 12 RSD rows (`BlockMultiPortRAM`,
+`BlockTrueDualPortRAM` and `RegisterMultiPortRAM` -- three racy multi-write-port RTLs, one
+`always_ff` per port with no priority, so the stimulus can collide on an address --,
+`DCacheArray`, `DCacheMissHandler`, `FP32PipelinedOther`, `FPExecutionStage`,
+`IntegerExecutionStage`, `IntegerRegisterReadStage`, `PreDecodeStage`, `ProducerMatrix`,
+`WakeupPipelineRegister`), the 7 pavona chip instances whose `read_uhdm` netlist no longer
+builds (7 driver conflicts in `sram_ctrl`, new since 2026-10-09, open) and sv-tests'
 `chapter-10/10.6.2--force-release.sv` (`force` / `release`, which has no synthesis semantics
-on either side); the 65 `read_slang` divergences are listed with their
+on either side); the 66 `read_slang` divergences are listed with their
 reasons in [docs/slang_unsupported.md](docs/slang_unsupported.md).  Counted by
 [`test/sweep_table.py`](test/sweep_table.py) over the reports of the runs below — nothing in this
 table is kept by hand.
 
 Numbers above are the 2026-10-10 nightly runs (main between #1130 and #1133 depending
-on the sweep).  The day's reader fixes #1131-#1144 -- RSD's IssueQueue free-list reset,
+on the sweep), **except RSD, which is run 38183892672 of 2026-10-11 on main at #1164**.
+That RSD run is the first one in which the core is actually sweepable: its rows used to be
+handed the WHOLE 1.02 MB core because `ext_flow`'s identifier-scan closure read a
+`modport <ClientModule>` LABEL as a dependency, and serialising that peaks at 12.2 GB --
+just over the sweep's address-space cap, so Surelog aborted mid-write.  #1161 drops the
+label (median closure 141 files -> 20, each UHDM database 1.64 GB -> 105 MB) and the
+`elab-fail` rows went from **83 to 5**, which is where the row's +21 rows and +27 proven
+come from.  The day's reader fixes #1131-#1144 -- RSD's IssueQueue free-list reset,
 StoreQueue (void-function actuals, case arms, dynamic struct-field writes), LoadQueue (now
 proven), Gshare's PHT index (now proven), Decoder's case-arm decode calls, five DCache
 causes (its inner interface clock, 3-D / 2-D sub-array actuals, 2-D interface members) and
