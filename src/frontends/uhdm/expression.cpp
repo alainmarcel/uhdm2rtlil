@@ -11852,6 +11852,26 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // `Actual_group()` to the parameter; AllModules leaves it null,
     // so we also fall back to looking the parameter up by name in the
     // current module.
+    // A FUNCTION FORMAL (or local) must WIN over a same-named parameter.
+    // Surelog elaborates a genvar into a per-generate-instance `parameter`
+    // carrying the iteration value (see CLAUDE.md, "A genvar index IS
+    // constant"), and the lookups below find a parameter BY NAME.  So a
+    // function whose formal shares a name with an enclosing module's genvar
+    // read that genvar's constant instead of the call's argument.
+    //
+    // RSD: `TreeLRU_CalcUpdatedState(DCacheWayPath way)` is read as `way[...]`
+    // in its body, and DCacheArray has
+    // `for (genvar way = 0; way < DCACHE_WAY_NUM; way++)` for its data/dirty/
+    // tag arrays -- so the function extracted a slice of the GENVAR, computed
+    // from a constant, and its result folded to 0.  The D-cache tree-LRU state
+    // written was therefore always 0, the evicted way went stale, and the row
+    // diverged from the RTL from cycle 43 on (98 of 301 co-simulated cycles,
+    // read_slang clean).  Renaming the genvar in the real file cures it, which
+    // is how this was found.
+    bool fn_formal_shadows_param =
+        input_mapping && getCurrentFunctionContext() &&
+        input_mapping->count(signal_name) > 0;
+    if (!fn_formal_shadows_param)
     {
         const UHDM::parameter* param = nullptr;
         if (auto a = uhdm_bit->Actual_group()) {
