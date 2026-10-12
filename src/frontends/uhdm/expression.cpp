@@ -1784,7 +1784,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     ctx->const_wire_values[base_name] = new_val;
                                 }
                             }
-                        } else if (!index_sig.empty() && loop_values.empty()) {
+                        } else if (!index_sig.empty() &&
+                                   (loop_values.empty() ||
+                                    !loop_accumulators.count(base_name))) {
                             // DYNAMIC bit/element write on a function local
                             // (`out[in] = 1'b1` in wt_dcache_missunit's
                             // way_bin2oh): read-modify-write the value-so-far
@@ -1792,9 +1794,23 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             // the return) see the merged value.  Without
                             // this, lhs_sig stayed empty and the write was
                             // silently DROPPED — the function returned its
-                            // initializer.  Excluded inside unrolled loops
-                            // (the accumulator machinery owns the mapping
-                            // there, and indices are constant anyway).
+                            // initializer.
+                            //
+                            // Inside an unrolled loop this used to be skipped
+                            // outright, on the assumption that indices are
+                            // constant there.  They are not when the index
+                            // reads a THREADED ACCUMULATOR, which the
+                            // accumulator machinery keeps on an SSA wire:
+                            // RSD's TreeLRU_CalcWriteEnable (DCache.sv:127)
+                            // writes `we[pos + c] = weIn` and only then
+                            // accumulates `c`, so the index was non-constant,
+                            // the write was dropped, and the function returned
+                            // its `'0` initializer -- the D-cache LRU write
+                            // enable was dead, the LRU array never updated and
+                            // DCacheArray diverged from the RTL from the first
+                            // update onwards.  Only the base being the
+                            // accumulator itself is still excluded: there the
+                            // accumulator machinery owns the mapping.
                             RTLIL::SigSpec old_sig = it->second;
                             int bw = old_sig.size();
                             RTLIL::SigSpec idx32 = index_sig;
