@@ -6312,10 +6312,23 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                             rhs_spec.is_wire() && rhs_spec.as_wire()->is_signed);
                     else if (rhs_spec.size() > lhs_spec.size())
                         rhs_spec = rhs_spec.extract(0, lhs_spec.size());
-                    RTLIL::SigSpec else_val =
-                        pending_sync_assignments.count(lhs_spec)
-                            ? pending_sync_assignments[lhs_spec]
-                            : pending_inflight(lhs_spec);   // slice-aware
+                    // The else value is the in-flight value of every bit --
+                    // the LATEST pending write covering it, whatever its key
+                    // shape.  An exact-key hit must not short-circuit this:
+                    // RSD's WakeupPipelineRegister writes one element of
+                    //   WakeupPipeReg memPipeReg[MEM_ISSUE_WIDTH][MEM_LATENCY]
+                    // by FIELD under reset (`.valid <= FALSE; .depVector <= '0`),
+                    // WHOLE in the shift arm (`memPipeReg[i][j-1] <=
+                    // memPipeReg[i][j]`), and by field again in the stall arm.
+                    // The stall arm found the reset arm's exact 1-bit/16-bit
+                    // keys and took THOSE as its else value, so the shift arm
+                    // never reached valid/depVector -- the pointer and the
+                    // activeListPtr (no field write anywhere) shifted fine
+                    // while the dependency vector stayed 0 forever, and
+                    // port.wakeupVector read all zeroes (68 co-sim
+                    // divergences).  import_assignment_sync already does this;
+                    // the loop-unrolled path did not.
+                    RTLIL::SigSpec else_val = pending_inflight(lhs_spec);
                     RTLIL::Wire* mux_w = module->addWire(NEW_ID, lhs_spec.size());
                     // A $mux select is ONE bit.  `current_condition` is the
                     // enclosing `if`'s expression as imported, and an `if`

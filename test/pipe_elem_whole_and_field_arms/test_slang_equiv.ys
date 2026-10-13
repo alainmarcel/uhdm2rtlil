@@ -1,0 +1,27 @@
+# The ONLY real gate on this test: read_verilog rejects `pipeReg[i][j].valid`
+# outright (syntax error on member access into an element of a 2-D unpacked
+# array), so the ordinary verilog-vs-uhdm comparison cannot run at all.
+# read_slang resolves the shape correctly.
+#
+# Without the fix the shift arm's `pipeReg[i][j-1] <= pipeReg[i][j]` never
+# reaches the `valid`/`dep` fields -- they hold their reset mux forever while
+# `ptr` shifts -- and this miter finds a counterexample within 5 cycles.
+# memory_map is needed because read_slang infers a $mem for the 2-D array and
+# read_uhdm expands it; satgen has no model for $mem_v2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top pipe_elem_whole_and_field_arms
+prep -top pipe_elem_whole_and_field_arms -flatten
+memory_map; opt -fast; async2sync; setundef -undriven -zero
+rename pipe_elem_whole_and_field_arms gold
+design -stash gold
+read_slang dut.sv --top pipe_elem_whole_and_field_arms
+hierarchy -check -top pipe_elem_whole_and_field_arms
+prep -top pipe_elem_whole_and_field_arms -flatten
+memory_map; opt -fast; async2sync; setundef -undriven -zero
+rename pipe_elem_whole_and_field_arms gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 5 -set-init-zero miter
