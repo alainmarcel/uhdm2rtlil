@@ -168,25 +168,33 @@ line and in the total:
 | **All sweeps** (12 workflows) | **4719** | **3901** | **3784** | **3718** | **66** | **3819** | **3754** | **13** | **52** | **0** |
 
 The 13 `read_uhdm` divergences are 6 RSD rows, 4 cvw rows, the 2 Pavona full chips and one
-sv-tests file:
+sv-tests file (the RSD count drops to 5 with #1174, and the 2 Pavona rows now build after
+#1173 -- both land in the next nightly):
 
 * RSD `BlockMultiPortRAM`, `BlockTrueDualPortRAM` and `RegisterMultiPortRAM` are three racy
   multi-write-port RTLs -- one `always_ff` per port with no priority, so the stimulus can
   collide on an address.  Not reader defects.
-* RSD `DCacheMissHandler` (272), `FPExecutionStage` (156) and `FP32PipelinedOther` (1) are
-  the only open RSD reader defects.  Their formal column reads
-  `equivalent (only to seq 4)`, but that label is an artefact of the sweep's miter not
-  running `memory_map`: `read_slang` infers a `$mem` for the arrays `read_uhdm` expands, and
-  satgen has no model for `$mem_v2`, so the bounded proof never reached the divergence.
-  With the mapping added, `DCacheMissHandler` is non-equivalent at **seq 5**.
+* RSD `FPExecutionStage` (156) and `FP32PipelinedOther` (1) are the only open RSD reader
+  defects.  `DCacheMissHandler` (272) is CLOSED by #1174: a struct-field write on an array
+  element recorded its in-flight value under the array's FLAT key while the read resolves
+  it PER ELEMENT, so the next guard in the block read a one-cycle-stale register.
+* Their formal column reads `equivalent (only to seq 4)`, which is exactly what it says: a
+  proof bounded at 4 cycles, not a claim of equivalence.  `DCacheMissHandler`'s divergence
+  first appears at **seq 5** -- one cycle past the bound.  (An earlier revision of this
+  paragraph blamed a missing `memory_map` in the sweep's miter; that was wrong.  yosys's
+  `memory` pass already runs `memory_map` unless given `-nomap`, so the miter does map
+  memories.)
 * RSD `ProducerMatrix` (was 6) and `WakeupPipelineRegister` (was 68) are CLOSED by #1170 and
   #1171 and no longer appear in this run.
 * cvw `clmul` and `zbc` (300 each -- i.e. every cycle), `bitmanipalu` (12) and `alu` (8) are
   open and new to this table; all four also read `differs` formally, so they are one
   carry-less-multiply defect seen through its three enclosing modules.
-* Pavona `top_dragonfly` and `top_egret` report `netlist unbuildable (uhdm)` for the FULL
-  CHIP only -- every one of their 51 and 47 instances is formally equivalent -- so this is a
-  whole-chip netlist/testbench limit, not a divergence in any module.
+* Pavona `top_dragonfly` and `top_egret` reported `netlist unbuildable (uhdm)` for the FULL
+  CHIP only -- every one of their 51 and 47 instances is formally equivalent.  Measured
+  (#1173): Verilator rejected the chip netlist with 3 `%Error-BLKANDNBLK` in the
+  `sram_ctrl_*` instances, an `%Error` that `-Wno-fatal` does not downgrade, because
+  `chip_cosim.py` lacked the waiver `netlist_cosim.py` has.  With the flag the netlist
+  compiles, so these rows will report a real co-sim verdict instead.
 * sv-tests `chapter-10/10.6.2--force-release.sv` uses `force` / `release`, which has no
   synthesis semantics on either side.
 
