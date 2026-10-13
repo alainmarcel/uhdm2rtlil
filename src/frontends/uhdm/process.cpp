@@ -15486,6 +15486,16 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         val_inner = RTLIL::SigSpec(vi);
     }
 
+    // A CONSTANT element index must not drag the OTHER elements through this
+    // read-modify-write (see the comment at the emit site below).
+    int ce_off = -1;
+    if (elem_shift.is_fully_const() && elem_shift.is_fully_def() &&
+        elem_w > 0 && elem_w < base_w) {
+        int o = elem_shift.as_const().as_int();
+        if (o >= 0 && o + elem_w <= base_w)
+            ce_off = o;
+    }
+
     // Widen to the flat wire and apply the element shift.
     RTLIL::SigSpec mask_wide = mask_inner; mask_wide.extend_u0(base_w, false);
     RTLIL::SigSpec val_wide  = val_inner;  val_wide.extend_u0(base_w, false);
@@ -15544,13 +15554,49 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         log("    dyn_packed_select_write: base='%s' ccv_hit=%d base_w=%d elem_w=%d write_w=%d elem_shift=%s inner_shift=%s\n", base_name.c_str(),
             (!in_always_ff_body_mode && current_comb_values.count(base_name)) ? 1 : 0,
             base_w, elem_w, write_w, log_signal(elem_shift), log_signal(inner_shift));
-    RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
-    module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
-    RTLIL::Wire* new_full = module->addWire(NEW_ID, base_w);
-    module->addOr(NEW_ID, RTLIL::SigSpec(cleared), RTLIL::SigSpec(val_sh), new_full);
+    // element-wide when ce_off >= 0, else the whole flat wire
+    RTLIL::SigSpec new_val;
+    if (ce_off >= 0) {
+        RTLIL::SigSpec cur_e = (int)cur.size() == base_w
+                                   ? cur.extract(ce_off, elem_w)
+                                   : RTLIL::SigSpec(base_wire).extract(ce_off, elem_w);
+        RTLIL::Wire* inv_e = module->addWire(NEW_ID, elem_w);
+        module->addNot(NEW_ID, mask_inner, inv_e);
+        RTLIL::Wire* cleared_e = module->addWire(NEW_ID, elem_w);
+        module->addAnd(NEW_ID, cur_e, RTLIL::SigSpec(inv_e), cleared_e);
+        RTLIL::Wire* newe = module->addWire(NEW_ID, elem_w);
+        module->addOr(NEW_ID, RTLIL::SigSpec(cleared_e), val_inner, newe);
+        new_val = RTLIL::SigSpec(newe);
+    } else {
+        RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
+        module->addAnd(NEW_ID, cur, RTLIL::SigSpec(inv_mask), cleared);
+        RTLIL::Wire* nfw = module->addWire(NEW_ID, base_w);
+        module->addOr(NEW_ID, RTLIL::SigSpec(cleared), RTLIL::SigSpec(val_sh), nfw);
+        new_val = RTLIL::SigSpec(nfw);
+    }
 
+    // A CONSTANT element index must not drag the OTHER elements through this
+    // read-modify-write.  `arr[i][dyn] = v` with a literal `i` touches only
+    // element i, but the code above rebuilds the whole flat wire: the untouched
+    // elements come from `cur`, and when one of them has not been assigned yet
+    // at this point in the block that is the RAW wire -- a comb SELF-LOOP,
+    // which `opt` resolves to X.
+    //
+    // RSD ProducerMatrix.sv:72-79 is exactly that shape:
+    //     for (i) begin
+    //         dispatchVector[i] = '0;
+    //         for (j) if (...) dispatchVector[i][dispatchedSrcRegPtr[i][j]] = TRUE;
+    //     end
+    // element 0's writes read element 1, which this block assigns only later,
+    // so `dispatchVector[0]` came out ALL X and `nextMatrix[dispatchPtr]`
+    // stored that X.  Confining the write to the element's own slice keeps the
+    // untouched elements out of it entirely.
     if (proc) {
-        emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_full), proc);
+        if (ce_off >= 0)
+            emit_comb_assign(RTLIL::SigSpec(base_wire).extract(ce_off, elem_w),
+                             new_val, proc);
+        else
+            emit_comb_assign(RTLIL::SigSpec(base_wire), new_val, proc);
     } else if (case_rule) {
         // The per-process temp for a PARTIALLY-written signal is named
         // `$0\<name>[msb:lsb]` (with the range suffix), NOT `$0\<name>` — a bare
@@ -15563,11 +15609,27 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         // the bare name) first, then falls back to `$0\<name>`.
         RTLIL::Wire* tw = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(base_wire);
-        remove_target_from_switches(case_rule, tgt);
-        case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
+        if (ce_off >= 0 && tgt.size() == base_w) {
+            RTLIL::SigSpec tgt_e = tgt.extract(ce_off, elem_w);
+            remove_target_from_switches(case_rule, tgt_e);
+            case_rule->actions.push_back(RTLIL::SigSig(tgt_e, new_val));
+        } else {
+            remove_target_from_switches(case_rule, tgt);
+            case_rule->actions.push_back(RTLIL::SigSig(tgt, new_val));
+        }
     }
-    if (!in_always_ff_body_mode)
-        current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+    if (!in_always_ff_body_mode) {
+        // Record only the element that was written: splicing it into `cur`
+        // leaves the untouched elements at whatever they already were, instead
+        // of propagating this write's self-loop read of them.
+        if (ce_off >= 0 && (int)cur.size() == base_w) {
+            RTLIL::SigSpec ccv = cur;
+            ccv.replace(ce_off, new_val);
+            current_comb_values[base_name] = ccv;
+        } else {
+            current_comb_values[base_name] = new_val;
+        }
+    }
     return true;
 }
 
@@ -17205,10 +17267,42 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
             }
             continue;
         }
-        RTLIL::Wire* m = module->addWire(NEW_ID, tv.size());
-        module->addMux(NEW_ID, ev, tv, cond, m);
-        current_comb_values[nm] = RTLIL::SigSpec(m);
-        if (alias != nm) current_comb_values[alias] = RTLIL::SigSpec(m);
+        // Mux ONLY the bits the two arms disagree on; bits that are equal pass
+        // through unchanged.  Muxing the whole signal makes the mux depend on
+        // every bit of `pre`, and for a part of the signal that this block has
+        // not assigned yet `pre` is the RAW wire -- which this very process
+        // drives, i.e. a combinational self-loop.  `opt` then resolves the
+        // whole mux to X, poisoning the bits that WERE written.
+        //
+        // RSD ProducerMatrix.sv:72-79 hit exactly that: inside
+        // `for (i) begin dispatchVector[i] = '0; for (j) if (...)
+        // dispatchVector[i][ptr] = TRUE; end`, element 0's conditional write
+        // was threaded as a 32-bit mux whose other half was the raw
+        // `dispatchVector[1]` (assigned only on the next iteration), so
+        // element 0 came out ALL X -- 6 of 301 co-simulated cycles diverged.
+        // Restricting the mux to the differing bits cannot change any value.
+        std::vector<int> dbits;
+        RTLIL::SigSpec dt, de;
+        for (int bi = 0; bi < tv.size(); bi++)
+            if (tv[bi] != ev[bi]) {
+                dbits.push_back(bi);
+                dt.append(tv[bi]);
+                de.append(ev[bi]);
+            }
+        RTLIL::SigSpec merged;
+        if (!dbits.empty() && (int)dbits.size() < tv.size()) {
+            RTLIL::Wire* md = module->addWire(NEW_ID, (int)dbits.size());
+            module->addMux(NEW_ID, de, dt, cond, md);
+            merged = ev;                       // equal bits are the same in both arms
+            for (size_t k = 0; k < dbits.size(); k++)
+                merged.replace(dbits[k], RTLIL::SigSpec(RTLIL::SigBit(md, (int)k)));
+        } else {
+            RTLIL::Wire* m = module->addWire(NEW_ID, tv.size());
+            module->addMux(NEW_ID, ev, tv, cond, m);
+            merged = RTLIL::SigSpec(m);
+        }
+        current_comb_values[nm] = merged;
+        if (alias != nm) current_comb_values[alias] = merged;
     }
 }
 

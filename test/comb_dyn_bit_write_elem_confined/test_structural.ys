@@ -1,0 +1,9 @@
+# The array must not be consumed by any mux inside its own process: that only
+# happens when element i's logic reads an element the block has not assigned
+# yet, which is a combinational self-loop and folds to X.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_dyn_bit_write_elem_confined
+proc
+opt -fast
+opt_clean
+select -assert-count 0 w:dv %co1 t:$mux %i
