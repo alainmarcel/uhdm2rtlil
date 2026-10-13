@@ -14196,8 +14196,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 tgt, RTLIL::SigSpec(new_full)));
                         }
-                        if (!in_always_ff_body_mode)
+                        if (!in_always_ff_body_mode) {
                             current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+                            // The read path for `arr[k].field` takes the element through
+                            // current_comb_values["arr[k]"] whenever the array has per-element
+                            // wires, and only falls back to the flat key for a purely flat
+                            // array.  Recording the flat value alone left the element key
+                            // holding what the whole-element prologue `nextMSHR[i] = mshr[i]`
+                            // put there -- the REGISTER -- so the next guard in the same block,
+                            // `if (nextMSHR[i].victimDirty)`, read a one-cycle-stale bit (RSD
+                            // DCacheMissHandler: 272 of 301 co-simulated cycles diverged).
+                            seed_alias_elems_inflight(module->wire(RTLIL::escape_id(base_name)),
+                                                      RTLIL::SigSpec(new_full));
+                        }
                         return true;
                     }
                 }
@@ -14306,8 +14317,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                         remove_target_from_switches(case_rule, tgt);
                         case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
                     }
-                    if (!in_always_ff_body_mode)
+                    if (!in_always_ff_body_mode) {
                         current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+                        // The read path for `arr[k].field` takes the element through
+                        // current_comb_values["arr[k]"] whenever the array has per-element
+                        // wires, and only falls back to the flat key for a purely flat
+                        // array.  Recording the flat value alone left the element key
+                        // holding what the whole-element prologue `nextMSHR[i] = mshr[i]`
+                        // put there -- the REGISTER -- so the next guard in the same block,
+                        // `if (nextMSHR[i].victimDirty)`, read a one-cycle-stale bit (RSD
+                        // DCacheMissHandler: 272 of 301 co-simulated cycles diverged).
+                        seed_alias_elems_inflight(module->wire(RTLIL::escape_id(base_name)),
+                                                  RTLIL::SigSpec(new_full));
+                    }
                     return true;
                 }
             }
@@ -14740,6 +14762,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                                      : RTLIL::SigSpec(base_wire);
             cur.replace(off, rhs);
             current_comb_values[base_name] = cur;
+            seed_alias_elems_inflight(module->wire(RTLIL::escape_id(base_name)), cur);
         }
         return true;
     }
@@ -14868,8 +14891,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         remove_target_from_switches(case_rule, tgt);
         case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(new_full)));
     }
-    if (!in_always_ff_body_mode)
+    if (!in_always_ff_body_mode) {
         current_comb_values[base_name] = RTLIL::SigSpec(new_full);
+        // The read path for `arr[k].field` takes the element through
+        // current_comb_values["arr[k]"] whenever the array has per-element
+        // wires, and only falls back to the flat key for a purely flat
+        // array.  Recording the flat value alone left the element key
+        // holding what the whole-element prologue `nextMSHR[i] = mshr[i]`
+        // put there -- the REGISTER -- so the next guard in the same block,
+        // `if (nextMSHR[i].victimDirty)`, read a one-cycle-stale bit (RSD
+        // DCacheMissHandler: 272 of 301 co-simulated cycles diverged).
+        seed_alias_elems_inflight(module->wire(RTLIL::escape_id(base_name)),
+                                  RTLIL::SigSpec(new_full));
+    }
     return true;
 }
 

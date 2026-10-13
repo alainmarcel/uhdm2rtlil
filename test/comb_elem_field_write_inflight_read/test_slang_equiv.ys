@@ -1,0 +1,29 @@
+# read_verilog cannot be the gold: it rejects `nxt[i].dirty` (member access on
+# an element of an unpacked array) with a syntax error, and the field write IS
+# the bug, so the shape cannot be rephrased away.  The read_slang miter is the
+# only real gate.
+#
+# Without the fix the second `if` is gated on the REGISTERED `dirty` instead of
+# the value assigned one line above, so `phase` is one cycle late and this
+# miter finds a counterexample within 4 cycles.  read_slang drives that select
+# straight from the input (`connect $procmux$N_CMP \src [i]`).
+#
+# memory_map: read_slang infers a $mem for the 2-element array that read_uhdm
+# expands, and satgen has no model for $mem_v2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top comb_elem_field_write_inflight_read
+prep -top comb_elem_field_write_inflight_read -flatten
+memory_map; opt -fast; async2sync; setundef -undriven -zero
+rename comb_elem_field_write_inflight_read gold
+design -stash gold
+read_slang dut.sv --top comb_elem_field_write_inflight_read
+hierarchy -check -top comb_elem_field_write_inflight_read
+prep -top comb_elem_field_write_inflight_read -flatten
+memory_map; opt -fast; async2sync; setundef -undriven -zero
+rename comb_elem_field_write_inflight_read gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter
