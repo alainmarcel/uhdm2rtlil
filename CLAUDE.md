@@ -163,6 +163,7 @@ The UHDM frontend is in `src/frontends/uhdm/` with these key files:
      - **Multi-range**: `logic [0:3][7:0]` → `logic_typespec` with `Ranges()->size() > 1`
      - **Elem_typespec**: `reg8_t [0:3]` → `logic_typespec` with `Elem_typespec()` pointing to element type and 1 Range
      - **Typedef alias**: `typedef reg8_t [0:3] reg2dim1_t` → `logic_typespec` with `Elem_typespec()` pointing to ANOTHER packed array typespec (which itself has `Elem_typespec`), and the Range is **redundant** (duplicated from the inner type)
+     - **Declared dims over a typedef leaf**: `typedef logic [3:0] Idx; Idx [1:0][1:0] p` → `logic_typespec` with `Ranges()->size() == 2` **and** an `Elem_typespec` holding the 4-bit leaf.  The element is middle×leaf = 8 bits, so a reader that multiplies the ranges alone measures it as 2; and a `p[i][j]` read needs all THREE numbers (outer, middle, leaf) — collapse middle and leaf into one dimension and the select degenerates to ONE BIT.  `import_port` therefore stamps `packed_leaf_width` next to `packed_elem_width` (RSD `dispatchedSrcRegPtr`, test/packed_typedef_elem_leaf_width)
    - For typedef aliases, detect nested `Elem_typespec` chains: if `Elem_typespec()->Actual_typespec()` is a `logic_typespec` that itself has `Elem_typespec`, the outer Range must NOT be multiplied again
    - `ExprEval::size()` returns only the outer dimension count for Elem_typespec variants (e.g., returns 4 for `reg8_t [0:3]` instead of 32), so manual `element_width * range_size` calculation is required
 

@@ -1002,6 +1002,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 auto lts = any_cast<const UHDM::logic_typespec*>(ts);
                 if (lts->Ranges() && !lts->Ranges()->empty()) {
                     int packed_elem_width = 0;
+                    int packed_leaf_width = 1;
                     int packed_outer_left = -1, packed_outer_right = -1;
 
                     auto first_range = (*lts->Ranges())[0];
@@ -1023,6 +1024,27 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 RTLIL::SigSpec rr = import_expression(rng->Right_expr());
                                 if (rl.is_fully_const() && rr.is_fully_const())
                                     packed_elem_width *= abs(rl.as_int() - rr.as_int()) + 1;
+                            }
+                        }
+                        // With a TYPEDEF element type the Ranges() hold only the
+                        // DECLARED dimensions; the leaf's own width lives in
+                        // Elem_typespec, so the product above undercounts the
+                        // element by exactly that factor.  RSD declares
+                        //   IssueQueueIndexPath [DISPATCH_WIDTH-1:0][SRC_REG_NUM-1:0]
+                        //       dispatchedSrcRegPtr
+                        // with `typedef logic [2:0] IssueQueueIndexPath`: the wire
+                        // is DISPATCH_WIDTH*SRC_REG_NUM*3 bits and the element is
+                        // SRC_REG_NUM*3, but this stamped SRC_REG_NUM.  Keep the
+                        // leaf separately -- the reader needs all three numbers
+                        // (outer, middle, leaf) to resolve `ptr[i][j]`, and with
+                        // only two it selected ONE BIT per index.
+                        if (lts->Elem_typespec() &&
+                            lts->Elem_typespec()->Actual_typespec()) {
+                            int lw = get_width_from_typespec(
+                                lts->Elem_typespec()->Actual_typespec(), nullptr);
+                            if (lw > 1) {
+                                packed_leaf_width = lw;
+                                packed_elem_width *= lw;
                             }
                         }
                     } else if (lts->Elem_typespec() != nullptr) {
@@ -1048,8 +1070,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(packed_elem_width);
                         w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(packed_outer_left);
                         w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(packed_outer_right);
-                        log("UHDM: Port '%s' packed array: elem_width=%d, outer=[%d:%d]\n",
-                            portname.c_str(), packed_elem_width, packed_outer_left, packed_outer_right);
+                        if (packed_leaf_width > 1)
+                            w->attributes[RTLIL::escape_id("packed_leaf_width")] =
+                                RTLIL::Const(packed_leaf_width);
+                        log("UHDM: Port '%s' packed array: elem_width=%d, outer=[%d:%d], leaf=%d\n",
+                            portname.c_str(), packed_elem_width, packed_outer_left, packed_outer_right,
+                            packed_leaf_width);
                     }
                 }
             }

@@ -3677,7 +3677,26 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 if (ew > 0 && bw->width % ew == 0 &&
                                     (std::abs(ol - orr) + 1) * ew == bw->width) {
                                     own_dims.push_back({ol, orr});
-                                    own_dims.push_back({ew - 1, 0});
+                                    // A TYPEDEF element type contributes a LEAF
+                                    // dimension of its own:
+                                    //   `typedef logic [3:0] Idx; Idx [1:0][1:0] p`
+                                    // is outer 2 x middle 2 x leaf 4, and `p[i][j]`
+                                    // must select the 4-bit leaf.  Collapsing the
+                                    // middle and the leaf into one `[ew-1:0]`
+                                    // dimension makes the select width the LAST
+                                    // dim's stride, i.e. ONE BIT -- RSD's
+                                    // ProducerMatrix read single bits of
+                                    // dispatchedSrcRegPtr and shifted by them.
+                                    int leaf = 1;
+                                    auto lw_id = RTLIL::escape_id("packed_leaf_width");
+                                    if (bw->attributes.count(lw_id))
+                                        leaf = bw->attributes.at(lw_id).as_int();
+                                    if (leaf > 1 && ew % leaf == 0 && ew / leaf > 1) {
+                                        own_dims.push_back({ew / leaf - 1, 0});
+                                        own_dims.push_back({leaf - 1, 0});
+                                    } else {
+                                        own_dims.push_back({ew - 1, 0});
+                                    }
                                 }
                             }
                         }
