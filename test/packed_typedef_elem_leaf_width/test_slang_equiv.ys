@@ -1,0 +1,19 @@
+# The gate on the LEAF WIDTH of `Idx [DW-1:0][SR-1:0] ptr`: without the fix
+# `ptr[i][j]` is a ONE-BIT select (`\ptr [2]`) where it must be a 4-bit slice
+# (`\ptr [11:8]`), so `elem` is zero-extended garbage and every dynamic write
+# `dv[i][ptr[i][j]]` sets bit 0 or 1 instead of the pointed element.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top packed_typedef_elem_leaf_width
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename packed_typedef_elem_leaf_width gold
+design -stash gold
+read_slang dut.sv --top packed_typedef_elem_leaf_width
+hierarchy -check -top packed_typedef_elem_leaf_width
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename packed_typedef_elem_leaf_width gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
