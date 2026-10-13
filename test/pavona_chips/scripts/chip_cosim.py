@@ -209,7 +209,19 @@ tb.append("endmodule")
 
 # ---------------------------------------------------------------- build + run
 VFLAGS = ["--binary", "-j", "0", "--timing", "--no-assert", "-Wno-fatal", "-Wno-lint",
-          "-Wno-style", "--x-assign", "0", "--x-initial", "0", "-DSYNTHESIS",
+          "-Wno-style",
+          # A read_uhdm netlist can drive one packed variable partly through
+          # `assign <slices> = ...` and partly through an always block's
+          # non-blocking writes.  Verilator REFUSES that mix with BLKANDNBLK --
+          # and BLKANDNBLK is an %Error, which `-Wno-fatal` does NOT downgrade,
+          # so the build dies.  Both Pavona chips hit it in the three
+          # `sram_ctrl_*` instances' `u_tlul*` variables and reported
+          # `❌ netlist unbuildable (uhdm)` for the WHOLE CHIP while every one of
+          # their 51 / 47 instances was formally equivalent.  netlist_cosim.py
+          # has waived it since the RSD DCacheMissHandler row needed it; this
+          # harness never did.  The mix simulates correctly -- the check guards
+          # scheduling, not semantics.
+          "-Wno-BLKANDNBLK", "--x-assign", "0", "--x-initial", "0", "-DSYNTHESIS",
           "--top-module", "tb", "-O1"]
 incs = [f"+incdir+{d}" for d in paths("incs.txt")]
 srcs = [f"{PAVONA}/hw/ip/prim/rtl/prim_assert.sv"] + paths("srcs.txt")
