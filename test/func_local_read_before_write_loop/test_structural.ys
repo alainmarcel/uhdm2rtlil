@@ -1,0 +1,21 @@
+# The gate on an inlined function LOCAL's value at call entry.
+#
+# An `automatic` function local has NO value when the call starts.  The reader
+# used the local's OWN WIRE as that entry value, and the wire is driven by the
+# very process reading it -- so a local READ BEFORE IT IS WRITTEN closed a
+# combinational cycle, and `check` reported one logic loop PER BIT: 32 here,
+# and 32 in RSD FPExecutionStage, where read_slang reports 0 (it materialises
+# the undefined entry value as a constant X, per the LRM).
+#
+# The DUT is otherwise clean, so `check -assert` is exactly this gate: it fails
+# on the 32 loops without the fix and passes with it.
+#
+# A formal miter CANNOT gate this -- the module stays equivalent either way,
+# and yosys itself labels each report "cell's internal connectivity
+# overapproximated; loop may be a false positive".  That is precisely why the
+# RSD sweep's formal column PROVED while the netlist carried 32 loops, and why
+# this test asserts on netlist SHAPE instead.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top func_local_read_before_write_loop
+flatten; proc; opt -fast
+check -assert
