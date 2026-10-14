@@ -988,7 +988,12 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
             ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in ccmd]
         rc4, out4 = sh(ccmd, cwd=w, timeout=3600)
         (cw / "cosim.log").write_text(out4 or "")
-        mm = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(\d+)", out4 or "")
+        # `slang_vs_rtl=-1` means the slang side was ABSENT (its netlist could
+        # not be lowered in time), not that it matched.  The old `(\d+)` could
+        # not match the minus sign, so a perfectly good uhdm-vs-RTL
+        # measurement was discarded as `error` -- RSD FPExecutionStage never
+        # reported a divergence count on this machine for that reason alone.
+        mm = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+) slang_vs_rtl=(-?\d+)", out4 or "")
         act = re.search(r"ACTIVITY (\d+) cycles", out4 or "")
         if mm:
             u, sl = int(mm.group(1)), int(mm.group(2))
@@ -999,8 +1004,10 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
                 row["cosim"] = "— (RTL inert under Verilator: no oracle)"
             else:
                 row["cosim"] = ("✅ PASS" + a) if u == 0 else (
-                    f"⚠ shared div (uhdm={u}, slang={sl})" if sl > 0 else f"❌ {u} div (slang clean)")
-            row["slang_cosim"] = "✅ PASS" if sl == 0 else f"❌ {sl} div"
+                    f"⚠ shared div (uhdm={u}, slang={sl})" if sl > 0 else
+                    f"❌ {u} div (slang n/a)" if sl < 0 else f"❌ {u} div (slang clean)")
+            row["slang_cosim"] = ("— (netlist not lowerable here)" if sl < 0
+                                  else "✅ PASS" if sl == 0 else f"❌ {sl} div")
         elif "no outputs to compare" in (out4 or "") or "no clocks found" in (out4 or ""):
             row["cosim"] = "— (comb/no clk)"
         elif "NO_RUN" in (out4 or "") or "netlist generation FAILED" in (out4 or ""):
@@ -1009,6 +1016,26 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
             row["cosim"] = "skip (sim build)"
         else:
             row["cosim"] = "error" if rc4 else "skip"
+        # The SLANG side alone failing must not cost us OUR measurement: the
+        # RTL is the reference, not the other frontend (same reasoning as
+        # _uhdm_only_cosim's docstring).  RSD FPExecutionStage burned three
+        # runs of 60-75 min each and reported `error` every time -- its
+        # read_slang netlist is ~12x ours and the slang Verilator build times
+        # out -- so the row never produced a divergence count at all, on a
+        # module that CI measures at 156.  Retry uhdm-vs-RTL when the slang
+        # build is what broke and ours did not.
+        if (row["cosim"] in ("error", "skip", "skip (sim build)") and
+                re.search(r"slang (Verilator build FAILED|netlist generation FAILED)",
+                          out4 or "") and
+                not re.search(r"uhdm (Verilator build FAILED|netlist generation FAILED)",
+                              out4 or "")):
+            alt = _uhdm_only_cosim(w, m, top, cycles, ties, mem)
+            if alt not in ("error", "skip", "skip (sim build)"):
+                row["cosim"] = alt
+                row["slang_cosim"] = "— (slang netlist unbuildable here)"
+                row["note"] = ((row.get("note") or "") +
+                               " co-sim measured uhdm-vs-RTL only: the read_slang"
+                               " netlist did not build").strip()
     # A BOUNDED proof next to a uhdm-only co-sim divergence is not a
     # contradiction and must not read like one: the miter explores `seq`
     # cycles from reset, and a divergence deeper than that is simply out of
