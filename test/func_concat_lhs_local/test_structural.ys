@@ -1,0 +1,19 @@
+# Two things no verilog-vs-uhdm comparison here can gate: read_verilog cannot
+# tell X from a value, and a combinational loop makes the netlist unevaluatable
+# rather than wrong.  Assert both directly.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+# No combinational loop: without the in-flight threading of the concatenation
+# write, `lsb = int_result[0]` takes bit 0 of the raw temp wire -- whose final
+# value includes the later `int_result = int_result + round_up` -- so round_up
+# feeds back into itself.
+check -assert
+# The conversion must produce the right VALUE, not X: expo = 0x96 = 150 is in
+# the `else if (expo <= 157)` arm, the one that writes the concatenation.  A
+# miter against read_verilog cannot gate this -- it cannot tell X from a value
+# (CLAUDE.md), so prove the value itself.
+sat -verify -set lhs 32'hcb6006b3 -prove result 32'd14681779
+select -assert-count 0 w:int_result
+select -assert-count 0 w:lower_bits

@@ -762,6 +762,60 @@ must assert the PORT ORDER: see `test/memwr_multi_block_port_order`, whose
 `test_structural.ys` pins port i to the i-th always_ff by intersecting each
 `$memwr_v2`'s ADDR cone with that block's address input.
 
+## A CONCATENATION target over an inlined function's LOCALS is written in three places
+
+```systemverilog
+{int_result, lower_bits} = {1'b1, mant, 31'h0} >> shift_amount;
+lsb = int_result[0];
+...
+if (expo <= 157) int_result = int_result + {31'h0, round_up};
+```
+
+RSD's `FP32CVT_F2I` (FloatingPointUnit/FP32PipelinedOther.sv) needed THREE
+fixes for this one statement, each of which hid the next:
+
+* **The LHS.**  `tf_local_lhs` knew `vpiRefObj` / `vpiBitSelect` /
+  `vpiHierPath` and not a concatenation, so each element fell through to
+  `import_ref_obj`'s unknown-signal path, which FABRICATED a 1-bit module wire
+  (`wire \int_result`) -- the RHS was truncated to those bits and the real SSA
+  temps were never written.  Its concat branch is ALL OR NOTHING: a partially
+  mapped concat would write the right bits to the wrong place.  Operands are
+  MSB-first and `SigSpec::append` adds at the MSB end, so walk them backwards.
+* **The arm merge.**  `thread_comb_if` scans a branch's actions through
+  `comb_blocking_base`, which names only a SINGLE-WIRE target, so a concat
+  action was invisible to it and the arm kept the local's X-at-call-entry
+  value.  A multi-chunk action is now split per chunk and keyed the way
+  `emit_comb_assign` records `current_comb_values` (whole wire name, only a
+  leading backslash stripped) -- NOT the way `comb_blocking_base` spells it:
+  the other arm's plain write reaches the merge through the ccv snapshot diff
+  under that spelling, and the two arms have to meet on ONE key.
+* **The in-flight value.**  Every write to an inlined local must be threaded
+  under its `$0\<fn>$func$<file>:<line>$<id>.<name>` temp name, because that is
+  the key `mapped_inflight()` consults on a later read or select.  Only the
+  single-wire and single-chunk shapes were; `record_concat_tf_local_inflight()`
+  now covers a concatenation, called from `inline_task_body_comb` (an
+  unconditional write) and `process_stmt_to_case` (a write inside an arm).
+  Without it `lsb = int_result[0]` took bit 0 of the RAW TEMP WIRE, whose final
+  value already includes the LATER `int_result = int_result + round_up`, so
+  `round_up` fed back into itself: one combinational loop at
+  FP32PipelinedOther.sv:108 and a netlist `eval` could not evaluate at all.
+
+**Finding it needed the harness stimulus, not random vectors.**  400 random
+`eval` vectors found nothing: the arm needs `fpuCode` in
+`{FC_FCVT_WS, FC_FCVT_WUS}` (2 of 32) AND `127 < expo <= 157` (31 of 256),
+about 0.8% per vector.  `test/netlist_cosim.py`'s testbench is a deterministic
+64-bit xorshift (`x^=x<<13; x^=x>>7; x^=x<<17`) shifted into a 4096-bit
+register, 4 draws per cycle, so replaying it in Python gives the exact inputs
+of any cycle -- and for a PIPELINE_DEPTH=5 module the output at cycle N comes
+from the stimulus of cycle N-3.  One `eval` on that vector showed `32'x`
+against read_slang's `ff1ff94d`.
+
+**Neither half is gateable by a miter**: it cannot tell X from a value, and a
+combinational loop makes the netlist unevaluatable rather than wrong.
+`test/func_concat_lhs_local` therefore asserts `check -assert` for the loop,
+`sat -verify -prove result <value>` for the value, and
+`select -assert-count 0 w:int_result` for the fabricated wires.
+
 ## A $unit enum constant is a FABRICATED NET outside its declaring file
 
 `typedef enum logic[1:0] {SCR1_MEM_WIDTH_BYTE, SCR1_MEM_WIDTH_HWORD,
