@@ -9247,8 +9247,42 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             // loop's exit value, selected element 8 of a 2-entry array and
             // produced `assign 1'x 1'1`: the MSHR never allocated.  Restore
             // the outer value after the loop instead of publishing ours.
-            bool fl_had_outer = !fl_var.empty() && loop_values.count(fl_var) > 0;
+            // ...but only when the entry belongs to a loop that is ACTUALLY
+            // ITERATING around this one.  A MODULE-LEVEL loop variable keeps
+            // its entry after its own loop ends, so a SIBLING loop over the
+            // same name looked like an enclosing one and its post-loop value
+            // was restored instead of published.  cvw's clmul does
+            //     integer i, j;
+            //     for (i=0;i<WIDTH;i++) begin
+            //       S[WIDTH*i] = X[0] & Y[i];
+            //       for (j=1;j<=i;j++) S[WIDTH*i+j] = (X[j] & Y[i-j]) ^ S[WIDTH*i+j-1];
+            //       ClmulResult[i] = S[WIDTH*i+j-1];   // j's POST-LOOP value, i+1
+            //     end
+            // and from outer iteration 1 on, `loop_values["j"]` was restored
+            // to the 1 left behind by iteration 0's inner loop -- so every
+            // `ClmulResult[i]` read `S[WIDTH*i]`, the FIRST partial product.
+            // 620 co-simulated cycles diverged across clmul / zbc /
+            // bitmanipalu / alu, the same multiplier through three enclosing
+            // modules.  `unrolling_loop_vars_` is the stack of variables whose
+            // loops are mid-unroll, so a genuine shadowing nest still
+            // restores (RSD DCacheMissHandler's inlined `for (int i)` inside
+            // a process loop over `i`, below) and a sibling's leftover does
+            // not.
+            bool fl_had_outer = !fl_var.empty() && loop_values.count(fl_var) > 0 &&
+                                std::find(unrolling_loop_vars_.begin(),
+                                          unrolling_loop_vars_.end(),
+                                          fl_var) != unrolling_loop_vars_.end();
             int fl_outer_val = fl_had_outer ? loop_values[fl_var] : 0;
+            // Mark this variable as mid-unroll for the whole case, so a
+            // NESTED loop over the same name sees it (and so every exit path
+            // pops it).
+            struct UnrollVarGuard {
+                std::vector<std::string>& st; bool pushed = false;
+                UnrollVarGuard(std::vector<std::string>& s, const std::string& v) : st(s) {
+                    if (!v.empty()) { st.push_back(v); pushed = true; }
+                }
+                ~UnrollVarGuard() { if (pushed) st.pop_back(); }
+            } fl_unroll_guard(unrolling_loop_vars_, fl_var);
 
             // Extract condition: k < N or k <= N.  When N is a constant we
             // unroll the loop statically.  When N is a *runtime* signal

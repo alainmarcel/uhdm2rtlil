@@ -1219,6 +1219,13 @@ struct UhdmImporter {
                              int& elem_w, int& outer_lo, int* outer_hi = nullptr);
     const UHDM::any* find_enclosing_tf_decl(const UHDM::any* node, const std::string& name);
     bool tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out);
+    // Loop variables whose comb for-loop is CURRENTLY being unrolled, outermost
+    // first.  Distinguishes an enclosing loop's variable (restore its value
+    // after a nested loop over the same name) from a SIBLING loop's leftover
+    // `loop_values` entry (publish the post-loop value instead) -- see the
+    // comment at the `fl_had_outer` computation in process.cpp.
+    std::vector<std::string> unrolling_loop_vars_;
+
     void record_concat_tf_local_inflight(const RTLIL::SigSpec& lhs,
                                          const RTLIL::SigSpec& rhs);
     RTLIL::SigSpec mapped_inflight(const RTLIL::SigSpec& mapped);

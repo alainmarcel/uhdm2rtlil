@@ -1,0 +1,12 @@
+# The carry-less product itself is the gate: without the fix every result bit
+# reads the FIRST partial product, which is a wrong VALUE rather than a wrong
+# shape, so prove the arithmetic.
+#   clmul(3,7) = 3 ^ (3<<1) ^ (3<<2) = 0b0011 ^ 0b0110 ^ 0b1100 = 0b1001
+#   clmul(ff,ff) = 0b01010101
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set X 8'h03 -set Y 8'h07 -prove R 8'h09
+sat -verify -set X 8'hff -set Y 8'hff -prove R 8'h55
+sat -verify -set X 8'ha5 -set Y 8'h3c -prove R 8'h4c
