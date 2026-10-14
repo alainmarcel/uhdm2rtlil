@@ -60,6 +60,14 @@ args.srcs, args.incs = str(Path(args.srcs).resolve()), str(Path(args.incs).resol
 ROOT = Path(__file__).resolve().parent.parent
 YOSYS = os.environ.get("YOSYS", str(ROOT / "out/current/bin/yosys"))
 VERILATOR = os.environ.get("VERILATOR", "verilator")
+# Per-SIDE build/run budget.  `--timeout` is the budget for the WHOLE co-sim,
+# and the caller (ext_flow.py) enforces the same number on this process, so
+# spending it all on one side's Verilator build means the caller kills us
+# before anything is reported.  RSD FPExecutionStage did exactly that three
+# times, 75 min each: its read_slang netlist is ~12x ours, the slang build
+# never finished, and the row printed `error` even though the uhdm side had
+# already BUILT and the RTL reference had already RUN.
+SIDE_TIMEOUT = int(os.environ.get("SIDE_TIMEOUT_S", "1200"))
 WORK = Path(args.work).resolve()
 WORK.mkdir(parents=True, exist_ok=True)
 TOP = args.rtl_top
@@ -466,11 +474,19 @@ for tag, flags in builds.items():
     exe = WORK / f"obj_{tag}" / f"sim_{tag}"
     stamp = [slang_nl if tag == "slang" else nl, WORK / "tb.sv", WORK / "tb_rtl.sv"]
     if True:   # object dirs are deleted after every run, so always build
+        timed_out = False
         for attempt in range(4):
             try:
-                r = sh([VERILATOR] + flags, log=f"build_{tag}.log", timeout=args.timeout)
+                r = sh([VERILATOR] + flags, log=f"build_{tag}.log",
+                       timeout=min(SIDE_TIMEOUT, args.timeout))
             except subprocess.TimeoutExpired:
                 print(f"{tag_name}: {tag} Verilator build FAILED: timeout")
+                # `slang` is the OPTIONAL reference: drop it and keep going, so
+                # the uhdm-vs-RTL comparison this harness exists to make still
+                # happens (ADJUDICATION then reports slang_vs_rtl=-1).
+                if tag == "slang":
+                    timed_out = True
+                    break
                 sys.exit(1)
             # The paramod name also carries LOCALPARAMS (derived values such
             # as NumAlerts / BlockAw); Verilator refuses to override those —
@@ -482,15 +498,25 @@ for tag, flags in builds.items():
             povr = ", ".join(f".{p.split('=', 1)[0]}({p.split('=', 1)[1]})" for p in args.param)
             rtl_inst = (f"  {TOP} #({povr}) dut (\n    {conns}\n  );" if povr else plain)
             (WORK / "tb_rtl.sv").write_text(text.replace(DUT_MARK, rtl_inst))
+        if timed_out:
+            have_slang = False
+            continue
         if r.returncode or not exe.exists():
             errs = [l for l in (r.stdout + r.stderr).splitlines() if "%Error" in l]
             last = errs[:1] or (r.stdout + r.stderr).strip().splitlines()[-1:] or [""]
             print(f"{tag_name}: {tag} Verilator build FAILED: {last[0][:200]}")
+            if tag == "slang":
+                have_slang = False
+                continue
             sys.exit(1)
     try:
-        r = sh([str(exe)], log=f"run_{tag}.log", timeout=args.timeout)
+        r = sh([str(exe)], log=f"run_{tag}.log",
+               timeout=min(SIDE_TIMEOUT, args.timeout))
     except subprocess.TimeoutExpired:
         print(f"{tag_name}: {tag} simulation FAILED: timeout")
+        if tag == "slang":
+            have_slang = False
+            continue
         sys.exit(1)
     traces[tag] = [l for l in (r.stdout or "").splitlines() if l.startswith("C")]
     if not traces[tag]:
