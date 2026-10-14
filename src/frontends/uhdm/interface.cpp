@@ -206,7 +206,31 @@ RTLIL::SigSpec UhdmImporter::resolve_bare_iface_member_actual(const UHDM::any* h
         } else if (auto ii = dynamic_cast<const UHDM::interface_inst*>(act)) {
             def = std::string(ii->VpiDefName());
         }
-        if (!def.empty() && (def == decl_if || name_ifs.count(def))) {
+        // A member is reachable through a port only if the MODPORT bound to
+        // that port EXPOSES it (LRM 25.5).  Without this test every interface
+        // that merely DECLARES a member of that name counted as a candidate,
+        // and `clk` is declared by every interface in a codebase that writes
+        // `interface FooIF(input logic clk, rst);` -- so RSD MulDivUnit, whose
+        // ports are `MulDivUnitIF.MulDivUnit port` and
+        // `RecoveryManagerIF.MulDivUnit recovery`, had ncand=2 for `clk` and
+        // the resolution gave up: both its multiplier and its divider lost
+        // `.clk(port.clk)` entirely ("Port clk has empty connection"), their
+        // pipeline registers never advanced, and `port.mulDataOut` stayed 0
+        // from cycle 7 on -- 294 diverging co-simulated cycles, read_slang
+        // clean.  RecoveryManagerIF's MulDivUnit modport lists only
+        // toRecoveryPhase / flushRange* / flushAllInsns, so it is not a
+        // candidate for `clk` at all.  This only ever NARROWS the candidate
+        // set: a port that already resolved uniquely must expose the member,
+        // or the source would not compile.
+        bool exposes = true;
+        if (act && act->UhdmType() == uhdmmodport) {
+            exposes = false;
+            if (auto mpo = dynamic_cast<const UHDM::modport*>(act))
+                if (mpo->Io_decls())
+                    for (auto io : *mpo->Io_decls())
+                        if (std::string(io->VpiName()) == member) { exposes = true; break; }
+        }
+        if (exposes && !def.empty() && (def == decl_if || name_ifs.count(def))) {
             cand = std::string(mp->VpiName());
             if (decl_if.empty()) decl_if = def;
             ncand++;

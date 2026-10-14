@@ -1,0 +1,16 @@
+# The defect DROPS a port connection, which no value comparison can see on its
+# own (the netlist still builds, the register just never clocks).  Assert the
+# connection itself: the child's `clk` input must have a driver.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+# Exactly one child instance, and its clk input must be driven by the
+# interface port's flattened `clk` member.  Without the fix the fan-in cone of
+# that input holds the cell ALONE -- the connection is missing entirely.
+select -assert-count 1 t:child
+select -assert-count 1 t:child %ci:+[clk] w:port.clk %i
+# After flattening, the register's clock must come from the top-level clk --
+# an unconnected formal would leave it undriven instead.
+flatten
+opt_clean
+select -assert-count 0 t:$check
+check -assert
