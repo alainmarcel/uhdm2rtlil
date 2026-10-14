@@ -666,15 +666,57 @@ def module_header(txt, name):
     return None
 
 
+def _is_enum_type(txt, ty):
+    """True when `ty` is a typedef'd ENUM anywhere in the collected sources.
+
+    Only an ENUM needs an explicit cast: SystemVerilog has no implicit
+    conversion TO an enum, so read_slang rejects
+    `assign port_i.rm[g] = port__rm[...]` with "no implicit conversion from
+    'logic[2:0]' to 'Rounding_Mode'" while Verilator accepts it.  A typedef'd
+    vector or packed struct converts implicitly and must be left alone -- a
+    blanket cast would rewrite hundreds of assigns in ~69 existing wrappers
+    for no reason.
+    """
+    if not ty or ty in ("logic", "bit", "reg", "wire", "int", "integer", "byte"):
+        return False
+    pat = re.compile(r"\btypedef\s+enum\b[^;]*?\b" + re.escape(ty) + r"\s*;", re.S)
+    for body in txt.values():
+        if pat.search(body):
+            return True
+    return False
+
+
 def iface_ports_of(txt, top):
     """{port: (iface_type, modport)} declared by module `top`."""
     hdr = module_header(txt, top)
     if hdr is None:
         return {}
     found = {}
-    for line in hdr.splitlines():
-        line = re.sub(r"//.*", "", line)
-        m = IFACE_PORT.match(line)
+    # Split on the commas that SEPARATE PORTS, not on newlines: a module may
+    # declare every interface port on ONE line --
+    #     module FPDivSqrtUnit(FPDivSqrtUnitIF.FPDivSqrtUnit port,
+    #                          RecoveryManagerIF.FPDivSqrtUnit recovery);
+    # written without the line break (RSD FPDivSqrtUnit) -- and IFACE_PORT is
+    # anchored at both ends, so a line holding two declarations matched
+    # NEITHER and the module was reported as declaring no interface ports at
+    # all.  read_slang then refused it ("top-level module has unconnected
+    # interface port") and the row had no reference and no co-sim run.
+    # Commas inside a range or a parameter expression do not separate ports,
+    # so only depth-0 commas count.
+    hdr = re.sub(r"//.*", "", hdr)
+    parts, depth, cur = [], 0, []
+    for c in hdr:
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        if c == "," and depth == 0:
+            parts.append("".join(cur)); cur = []
+            continue
+        cur.append(c)
+    parts.append("".join(cur))
+    for part in parts:
+        m = IFACE_PORT.match(part.strip())
         if m and not re.match(r"^(input|output|inout|logic|wire|reg|bit|parameter|localparam|import)$", m.group(1)):
             found[m.group(3)] = (m.group(1), m.group(2), (m.group(4) or "").strip())
     return found
@@ -880,8 +922,23 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                                     for k, (c, _) in enumerate(dl))
                     tails = "  end\n" * len(dl)
                     if d == "input":
+                        # The flat port is plain `logic [...]`, the member may
+                        # be an ENUM -- and there is no implicit conversion to
+                        # an enum, so read_slang rejects the wrapper
+                        # ("no implicit conversion from 'logic[2:0]' to
+                        # 'Rounding_Mode'; explicit conversion exists") while
+                        # Verilator accepts it, leaving the row with a co-sim
+                        # but NO reference (RSD FPDivSqrtUnit's
+                        # `Rounding_Mode rm [FP_DIVSQRT_ISSUE_WIDTH]`).  Cast
+                        # to the member's declared type whenever that is a
+                        # NAMED type: `logic`/`bit`/`reg`/`wire` must not be
+                        # cast (`logic'(x)` would narrow it to one bit), and a
+                        # typedef'd packed struct or enum casts cleanly.
+                        slice_ = f"{flat}[({idx})*({ew}) +: ({ew})]"
+                        if not rng and _is_enum_type(txt, ty):
+                            slice_ = f"{ty}'({slice_})"
                         body_ = (f"    assign {base}_i{sel}.{mem}{elem} = "
-                                 f"{flat}[({idx})*({ew}) +: ({ew})];\n")
+                                 f"{slice_};\n")
                     else:
                         body_ = (f"    assign {flat}[({idx})*({ew}) +: ({ew})] = "
                                  f"{base}_i{sel}.{mem}{elem};\n")
