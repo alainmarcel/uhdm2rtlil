@@ -8503,6 +8503,43 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
                                         const RTLIL::SigSpec& target);
 
 // Emit an assignment in a comb process, mapping LHS to its $0\ temp wire
+// `{int_result, lower_bits} = ...` -- a CONCATENATION target over an inlined
+// task / function's locals.  Every write to such a local has to be threaded
+// under its `$0\<fn>$func$<file>:<line>$<id>.<name>` temp name, because that is
+// the key mapped_inflight() consults when a later statement READS or SELECTS
+// from the local; the single-wire and single-chunk shapes were threaded and a
+// concatenation was not, so the next read fell back on the RAW TEMP WIRE --
+// whose final value already includes writes made LATER in the body.  RSD's
+// FP32CVT_F2I does
+//     {int_result, lower_bits} = {1'b1, mant, 31'h0} >> shift_amount;
+//     lsb = int_result[0];
+//     ...
+//     if (expo <= 157) int_result = int_result + {31'h0, round_up};
+// so `lsb` read bit 0 of the POST-ADD value and `round_up` fed back into
+// itself: one combinational loop at FP32PipelinedOther.sv:108, and the
+// conversion result could not be evaluated at all.  Chunks run LSB-first,
+// which is how the RHS bits line up.
+void UhdmImporter::record_concat_tf_local_inflight(const RTLIL::SigSpec& lhs,
+                                                   const RTLIL::SigSpec& rhs) {
+    if (in_always_ff_body_mode) return;
+    if (lhs.chunks().size() < 2 || rhs.size() != lhs.size()) return;
+    int off = 0;
+    for (const auto& ch : lhs.chunks()) {
+        if (!ch.wire) { off += ch.width; continue; }
+        std::string tn = ch.wire->name.str();
+        if (tn.compare(0, 3, "$0\\") == 0 &&
+            tn.find("$func$") != std::string::npos) {
+            auto cit = current_comb_values.find(tn);
+            RTLIL::SigSpec cur = (cit != current_comb_values.end() &&
+                                  cit->second.size() == ch.wire->width)
+                                     ? cit->second : RTLIL::SigSpec(ch.wire);
+            cur.replace(ch.offset, rhs.extract(off, ch.width));
+            current_comb_values[tn] = cur;
+        }
+        off += ch.width;
+    }
+}
+
 void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc) {
     // Size match
     if (rhs.size() != lhs.size()) {
@@ -10764,6 +10801,8 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                         cur.replace(ch.offset, rhs.extract(0, std::min(rhs.size(), ch.width)));
                         current_comb_values[tn] = cur;
                     }
+                } else {
+                    record_concat_tf_local_inflight(lhs, rhs);
                 }
                 if (!lhs_name.empty()) {
                     // Don't clobber a `$0\` task-temp mapping with `rhs` —
@@ -11036,6 +11075,33 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
 bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out) {
     if (!lhs_expr) return false;
     int lt = lhs_expr->VpiType();
+    // `{int_result, lower_bits} = ...` -- a CONCATENATION of task / function
+    // locals.  Each operand has to go through this mapping too: the generic
+    // LHS import has no notion of an inlined body's SSA temps, so it fell back
+    // on import_ref_obj's unknown-signal path and FABRICATED a 1-bit module
+    // wire per element (`wire \int_result`), truncating the RHS to those bits
+    // and leaving the real temp unwritten.  RSD's FP32CVT_F2I does exactly
+    // this inside an `else if (expo <= 157)` arm, so the temp kept the arm's X
+    // default and every float-to-int conversion came out X (FP32PipelinedOther
+    // and, through it, FPExecutionStage).  All or nothing: a partially mapped
+    // concat would write the right bits to the wrong place.
+    if (lt == vpiOperation) {
+        auto op = any_cast<const UHDM::operation*>(lhs_expr);
+        if (!op || op->VpiOpType() != vpiConcatOp || !op->Operands() ||
+            op->Operands()->empty())
+            return false;
+        // Concat operands are MSB-first and SigSpec::append adds at the MSB
+        // end, so walk the operands backwards.
+        auto& ops = *op->Operands();
+        RTLIL::SigSpec acc;
+        for (int i = (int)ops.size() - 1; i >= 0; i--) {
+            RTLIL::SigSpec part;
+            if (!tf_local_lhs(ops[i], part) || part.empty()) return false;
+            acc.append(part);
+        }
+        lhs_out = acc;
+        return true;
+    }
     if (lt != vpiRefObj && lt != vpiBitSelect && lt != vpiHierPath) return false;
     // `formal.member = ...` on a task / void-function formal, reached from an
     // if/else or case ARM of the inlined body: the arm is walked by the
@@ -17447,17 +17513,44 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                                   const std::map<std::string, RTLIL::SigSpec>* else_ccv) {
     if (in_always_ff_body_mode) return;
     // Last write wins within each branch.
+    //
+    // A CONCATENATION target (`{int_result, lower_bits} = ...`) is one action
+    // over several wires, and comb_blocking_base only names a single-wire
+    // target -- so such a write was INVISIBLE here and the arm got the pre-if
+    // value (X, for an inlined function's local).  RSD's FP32CVT_F2I writes
+    // `{int_result, lower_bits}` in the `else if (expo <= 157)` arm and
+    // nowhere else, so every float-to-int conversion came out X.  Split the
+    // action per chunk when all of them are whole wires; the chunks run
+    // LSB-first, which is also how the RHS bits line up.
     std::map<std::string, RTLIL::SigSpec> then_vals, else_vals;
-    if (then_case)
-        for (auto& a : then_case->actions) {
+    auto scan = [&](RTLIL::CaseRule* cs, std::map<std::string, RTLIL::SigSpec>& vals) {
+        if (!cs) return;
+        for (auto& a : cs->actions) {
             std::string b = comb_blocking_base(a.first);
-            if (!b.empty()) then_vals[b] = a.second;
+            if (!b.empty()) { vals[b] = a.second; continue; }
+            auto chunks = a.first.chunks();
+            if (chunks.size() < 2 || a.second.size() != a.first.size()) continue;
+            bool whole = true;
+            for (auto& c : chunks)
+                if (!c.wire || c.offset != 0 || c.width != c.wire->width) { whole = false; break; }
+            if (!whole) continue;
+            // Key the chunks the way emit_comb_assign records
+            // current_comb_values (the whole wire name, only a leading
+            // backslash stripped), NOT the way comb_blocking_base names a
+            // single-wire target: a plain write to the same temp in the other
+            // arm reaches this merge through the ccv snapshot diff below,
+            // under that spelling, and the two arms have to meet on one key.
+            int off = 0;
+            for (auto& c : chunks) {
+                std::string n = c.wire->name.str();
+                if (!n.empty() && n[0] == '\\') n = n.substr(1);
+                if (!n.empty()) vals[n] = a.second.extract(off, c.width);
+                off += c.width;
+            }
         }
-    if (else_case)
-        for (auto& a : else_case->actions) {
-            std::string b = comb_blocking_base(a.first);
-            if (!b.empty()) else_vals[b] = a.second;
-        }
+    };
+    scan(then_case, then_vals);
+    scan(else_case, else_vals);
     // Snapshot-diff capture: any name whose in-flight value CHANGED during a
     // branch import (vs the pre-branch snapshot) was written in that branch —
     // possibly deep inside nested constructs.  Overrides the action scan
@@ -19338,6 +19431,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 // Partial blocking write inside a branch: splice
                                 // into the in-flight value (see helper).
                                 record_comb_partial_write(lhs_sig, rhs_sig);
+                                record_concat_tf_local_inflight(lhs_sig, rhs_sig);
                             }
                             if (current_comb_process && !in_always_ff_body_mode &&
                                     !in_always_ff_context && lhs_sig.is_wire()) {

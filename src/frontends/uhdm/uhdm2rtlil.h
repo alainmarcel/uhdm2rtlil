@@ -1219,6 +1219,8 @@ struct UhdmImporter {
                              int& elem_w, int& outer_lo, int* outer_hi = nullptr);
     const UHDM::any* find_enclosing_tf_decl(const UHDM::any* node, const std::string& name);
     bool tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out);
+    void record_concat_tf_local_inflight(const RTLIL::SigSpec& lhs,
+                                         const RTLIL::SigSpec& rhs);
     RTLIL::SigSpec mapped_inflight(const RTLIL::SigSpec& mapped);
     // Dynamic element / bit(-range) writes into a PACKED array (flat wire):
     // `mem_n[wptr] = data`, `wr_be[0][idx] = '1`, `wr_be[0][idx+:W] = '1`.
