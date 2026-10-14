@@ -908,6 +908,7 @@ struct UhdmImporter {
     // Design-wide final pass: size-match every process action's RHS to its LHS
     // so an unresolved-signal short/empty RHS can't crash yosys proc_prune.
     void finalize_process_action_widths();
+    void merge_memwr_syncs();
     void finalize_dead_selfhold_defaults();
     // Per-module comb signals PROVEN write-before-read on every path of
     // their always_comb (definite-assignment prescan) — their held value is

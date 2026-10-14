@@ -1,0 +1,17 @@
+# The point of this test is the ORDER of the memory write ports, which no
+# formal check can see: the four always_ff blocks compute the same function and
+# have no priority between them, so a miter is satisfied by any numbering.  Only
+# the same-address collision winner differs, and that is decided by the port
+# order -- write_verilog emits one `always` block per write port, in port order,
+# and the last one wins.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+# Write port i must be the i-th always_ff in SOURCE order.  Without the fix the
+# ports come out numbered backwards (port 0 is the LAST block), because
+# proc_memwr numbers them by walking module->processes and yosys's `dict`
+# iterates in reverse insertion order.
+select -assert-count 1 t:$memwr_v2 r:PORTID=0 %i %ci:+[ADDR] %ci* w:wa0 %i
+select -assert-count 1 t:$memwr_v2 r:PORTID=1 %i %ci:+[ADDR] %ci* w:wa1 %i
+select -assert-count 1 t:$memwr_v2 r:PORTID=2 %i %ci:+[ADDR] %ci* w:wa2 %i
+select -assert-count 1 t:$memwr_v2 r:PORTID=3 %i %ci:+[ADDR] %ci* w:wa3 %i

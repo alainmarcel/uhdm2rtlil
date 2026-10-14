@@ -709,6 +709,59 @@ reader crash fixed in one place is worth re-running to the end before calling
 the row fixed.  test/memwr_two_writes_one_block carries the shape; it is
 formally equivalent to read_verilog with the fix and aborts without it.
 
+## Memory write PORTS are numbered by walking a dict, and yosys dicts run BACKWARDS
+
+`proc_memwr` numbers a memory's write ports by walking `module->processes` --
+and yosys's `dict` iterates in REVERSE insertion order (hashlib.h: `begin()` is
+the LAST entry and `operator++` DECREMENTS it).  So a memory written from more
+than one always block gets its write ports numbered backwards, and that is not
+cosmetic: `write_verilog` emits one `always` block per write port IN PORT ORDER,
+so the LAST port is the one that takes a same-address collision.
+
+RSD's `RegisterMultiPortRAM` / `BlockMultiPortRAM` / `BlockTrueDualPortRAM`
+write their array from a generate-for over the write ports, which is one
+SEPARATE always_ff per port:
+
+```systemverilog
+for (genvar i = 0; i < WRITE_NUM; i++)
+    always_ff @(posedge clk)
+        if (we[i]) array[ wa[i] ] <= wv[i];
+```
+
+so genvar 0 won every collision in our netlist where the RTL simulator and
+`read_slang` let genvar WRITE_NUM-1 win -- 54 co-simulated cycles on
+BlockMultiPortRAM, 15 on RegisterMultiPortRAM, 2 on BlockTrueDualPortRAM.
+`read_slang` is immune because it emits `$memwr_v2` CELLS itself with explicit
+PORTIDs and never consults the dict; `read_verilog` has the same shape we did
+and is backwards in the same way.
+
+Separate always_ff blocks are a race in the LANGUAGE but not in a SIMULATOR:
+the blocks are evaluated in source order, so the last one in the source takes
+the location.  `merge_memwr_syncs()` (a module-level post-pass next to
+`finalize_dead_selfhold_defaults()`) therefore gathers, per (clock edge, clock
+signal), the memory-write actions of every sync that writes a memory another
+sync writes too, and puts them in ONE sync in SOURCE order -- recovered by
+sorting the processes on `name.index_` (IdString interning order == creation
+order), the one thing dict iteration does not give.  Only the actions move;
+each donor process keeps its root_case, which drives that port's addr/data/en
+wires.  Priority masks are reindexed so each action keeps exactly the priority
+it had over its OWN original sync's actions and takes none over the others --
+`0'x / 1'0 / 2'00 / 3'000`, bit-identical to read_slang.
+
+Two guards that matter: a process with an async-reset (ST0/ST1) sync is left
+alone, because `proc_memwr` builds the write enable by scanning the OWNING
+process for those syncs and moving the action elsewhere would drop the gating;
+and a donor moves ALL of its actions or none, because a priority mask is
+indexed by position within its own sync.
+
+**No formal check can see this.**  The blocks compute the same function and
+have no priority between them, so the miter is satisfied by any numbering and
+the sweep row read `✅ equivalent` beside its co-sim divergences for weeks (and
+was written off here as "racy RTL, not a reader defect").  A test for this class
+must assert the PORT ORDER: see `test/memwr_multi_block_port_order`, whose
+`test_structural.ys` pins port i to the i-th always_ff by intersecting each
+`$memwr_v2`'s ADDR cone with that block's address input.
+
 ## A $unit enum constant is a FABRICATED NET outside its declaring file
 
 `typedef enum logic[1:0] {SCR1_MEM_WIDTH_BYTE, SCR1_MEM_WIDTH_HWORD,
