@@ -1000,6 +1000,162 @@ static void collect_case_uses(const RTLIL::CaseRule* cs,
     }
 }
 
+
+// A memory written from SEVERAL always_ff blocks gets its write PORTS NUMBERED
+// BACKWARDS, and the last port is the one that wins a same-address collision.
+//
+// RSD's RegisterMultiPortRAM / BlockMultiPortRAM / BlockTrueDualPortRAM write
+// their array from a generate-for loop, which is one SEPARATE always_ff per
+// write port:
+//
+//     for (genvar i = 0; i < WRITE_NUM; i++)
+//         always_ff @(posedge clk)
+//             if (we[i]) array[ wa[i] ] <= wv[i];
+//
+// so the reader makes one process per port, each with its own
+// `sync posedge \clk` holding a single memory-write action.  `proc_memwr` then
+// numbers the ports by walking `module->processes` -- and yosys's `dict`
+// iterates in REVERSE insertion order (hashlib.h: `begin()` is the LAST entry
+// and `operator++` DECREMENTS), so port 0 became genvar WRITE_NUM-1 and port
+// WRITE_NUM-1 became genvar 0.  Nothing downstream repairs that: `write_verilog`
+// emits one `always` block per write port in port order, and in a simulator the
+// LAST of those blocks wins, so our netlist let genvar 0 win where the RTL (and
+// read_slang, which emits `$memwr_v2` cells itself with explicit PORTIDs and so
+// never consults the dict) let genvar WRITE_NUM-1 win.  54 co-simulated cycles
+// diverged on BlockMultiPortRAM, 15 on RegisterMultiPortRAM, 2 on
+// BlockTrueDualPortRAM.
+//
+// Separate always_ff blocks are a race in the language, but they are NOT a race
+// in a simulator: the blocks are evaluated in source order, so the last one
+// written in the source takes the location, and that is the order read_slang
+// reproduces and the RTL simulator agrees with.
+//
+// So gather, per (clock edge, clock signal), the memory-write actions of every
+// sync that writes a memory some other sync writes too, and put them in ONE
+// sync in SOURCE order.  Only the actions move; each donor process keeps its
+// root_case, which is what drives that port's addr/data/en wires.  Priority
+// masks are reindexed so each action keeps exactly the priority it had over the
+// actions of its OWN original sync and takes none over the others -- which is
+// what read_slang emits for this shape (PRIORITY_MASK 1'0, 2'00, 3'000) and what
+// the language says: within one always_ff a later write wins, between two of
+// them nothing is promised beyond the order they are evaluated in.
+void UhdmImporter::merge_memwr_syncs()
+{
+    for (auto* mod : design->modules()) {
+        // Source order == creation order == IdString interning order, which is
+        // the one thing `dict` iteration does NOT give us here.
+        std::vector<RTLIL::Process*> procs;
+        for (auto& pit : mod->processes)
+            procs.push_back(pit.second);
+        std::sort(procs.begin(), procs.end(),
+                  [](RTLIL::Process* a, RTLIL::Process* b) {
+                      return a->name.index_ < b->name.index_;
+                  });
+
+        // A process with an async-reset sync has its memory-write enables gated
+        // by that sync (proc_memwr scans the OWNING process for ST0/ST1), so
+        // moving its actions elsewhere would drop the gating.  Leave it alone.
+        auto movable = [](RTLIL::Process* p) {
+            for (auto* sr : p->syncs)
+                if (sr->type == RTLIL::ST0 || sr->type == RTLIL::ST1)
+                    return false;
+            return true;
+        };
+
+        struct Donor { RTLIL::Process* proc; RTLIL::SyncRule* sync; };
+        std::map<std::pair<int, std::string>, std::vector<Donor>> groups;
+        std::vector<std::pair<int, std::string>> group_order;
+        for (auto* proc : procs) {
+            if (!movable(proc)) continue;
+            for (auto* sync : proc->syncs) {
+                if (sync->mem_write_actions.empty()) continue;
+                if (sync->type != RTLIL::STp && sync->type != RTLIL::STn) continue;
+                auto key = std::make_pair((int)sync->type, std::string(log_signal(sync->signal)));
+                if (!groups.count(key)) group_order.push_back(key);
+                groups[key].push_back({proc, sync});
+            }
+        }
+
+        for (auto& key : group_order) {
+            auto& donors = groups[key];
+            if (donors.size() < 2) continue;
+
+            // Which memories are written by more than one of these syncs?
+            std::map<RTLIL::IdString, int> syncs_per_mem;
+            for (auto& d : donors) {
+                std::set<RTLIL::IdString> seen;
+                for (auto& a : d.sync->mem_write_actions) seen.insert(a.memid);
+                for (auto& m : seen) syncs_per_mem[m]++;
+            }
+            std::set<RTLIL::IdString> shared;
+            for (auto& it : syncs_per_mem)
+                if (it.second > 1) shared.insert(it.first);
+            if (shared.empty()) continue;
+
+            RTLIL::SyncRule* dst = donors.front().sync;
+            // Collect in source order, remembering which original sync each
+            // action came from so its priority mask can be reindexed.  A donor
+            // moves ALL of its actions or none: a mask is indexed by position
+            // within its own sync, so leaving some actions behind would leave
+            // their masks pointing at actions that are no longer there.
+            std::vector<RTLIL::MemWriteAction> merged;
+            std::vector<int> origin;
+            std::vector<std::vector<int>> origin_index;  // per donor: old idx -> new idx
+            int moved = 0;
+            for (size_t di = 0; di < donors.size(); di++) {
+                auto& acts = donors[di].sync->mem_write_actions;
+                origin_index.push_back({});
+                if (di != 0) {
+                    bool all_shared = true;
+                    for (auto& a : acts)
+                        if (!shared.count(a.memid)) { all_shared = false; break; }
+                    if (!all_shared) continue;
+                }
+                for (size_t ai = 0; ai < acts.size(); ai++) {
+                    origin_index[di].push_back((int)merged.size());
+                    merged.push_back(acts[ai]);
+                    origin.push_back((int)di);
+                    if (di != 0) moved++;
+                }
+                if (di != 0) acts.clear();
+            }
+            if (!moved) continue;
+
+            // Reindex: bit k of action i is set only if action k came from the
+            // SAME original sync and was marked there.
+            for (size_t i = 0; i < merged.size(); i++) {
+                std::vector<RTLIL::State> m(i, RTLIL::State::S0);
+                const RTLIL::Const& old = merged[i].priority_mask;
+                auto& idx = origin_index[origin[i]];
+                for (size_t oldk = 0; oldk < idx.size(); oldk++) {
+                    if (idx[oldk] < 0 || idx[oldk] >= (int)i) continue;
+                    if ((int)oldk < old.size() && old[oldk] == RTLIL::State::S1)
+                        m[idx[oldk]] = RTLIL::State::S1;
+                }
+                merged[i].priority_mask = RTLIL::Const(m);
+            }
+            dst->mem_write_actions.swap(merged);
+
+            log("UHDM: %s: %d memory-write action(s) from %d separate `%s` "
+                "sync(s) merged into one in source order (write ports were "
+                "numbered backwards)\n", log_id(mod->name), moved,
+                (int)donors.size(), key.second.c_str());
+        }
+
+        // Drop the syncs we emptied.
+        for (auto& pit : mod->processes) {
+            auto& sv = pit.second->syncs;
+            for (size_t i = 0; i < sv.size();) {
+                if (sv[i]->mem_write_actions.empty() && sv[i]->actions.empty() &&
+                    (sv[i]->type == RTLIL::STp || sv[i]->type == RTLIL::STn)) {
+                    delete sv[i];
+                    sv.erase(sv.begin() + i);
+                } else i++;
+            }
+        }
+    }
+}
+
 void UhdmImporter::finalize_dead_selfhold_defaults()
 {
     for (auto* mod : design->modules()) {

@@ -807,6 +807,11 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // Replace comb self-hold defaults whose held value is provably
     // unobservable (write-before-read arm-local style temps, CVA6 csr
     // `mask`) with X so proc_dlatch doesn't infer dead latches.
+    // An unrolled loop's per-iteration memory writes land in separate syncs,
+    // where RTLIL cannot express priority between them; merge them so the
+    // later iteration wins, as SystemVerilog requires.
+    merge_memwr_syncs();
+
     finalize_dead_selfhold_defaults();
 
     log("UHDM: Finished import_design\n");
