@@ -1,0 +1,11 @@
+# Every output of this DUT is legitimately X: the whole point of the test is a
+# function LOCAL that is read before it is ever written, whose value at call
+# entry is undefined (an `automatic` variable has none), so `result` and
+# `fflags` are X by construction.  A value-comparing Verilator co-sim therefore
+# has nothing to compare and reports a divergence on every cycle.
+#
+# The real gate is test_structural.ys: without the fix the reader seeds the
+# local from its own wire and `check` finds one logic loop per bit (32 here, 32
+# in RSD FPExecutionStage where read_slang finds 0); with it, `check -assert`
+# passes.
+SKIP_SIM_EQUIV=1

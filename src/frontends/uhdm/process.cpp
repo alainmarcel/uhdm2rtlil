@@ -9928,6 +9928,27 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
 
             task_mapping[var_name] = RTLIL::SigSpec(temp_wire);
 
+            // Seed the temp with X in the ROOT case.  An inlined function's
+            // local is an `automatic` variable: it has no value at call entry,
+            // and one temp is materialised per call site.  Without a root-case
+            // default the temp is assigned only on the paths the body writes
+            // it, so `proc` closes every other path through the temp ITSELF --
+            // a combinational cycle when the local is READ BEFORE it is
+            // written.  RSD's FP32PipelinedOther does exactly that,
+            //     logic [31:0] int_result;        // never initialised
+            //     if (expo <= 126) int_result = int_result + {31'h0, round_up};
+            // and read_uhdm built 32 logic loops (one per bit: the `$add`'s
+            // output returning to its own input through the `if`'s mux) where
+            // read_slang builds none -- it materialises the undefined entry
+            // value as a constant X.  X is also what the `sync always` below
+            // already gives the local's own wire, so this just makes the
+            // in-process default agree with it.  Same reasoning as the
+            // promoted block-local seeding in import_always_comb.
+            if (proc)
+                proc->root_case.actions.push_back(RTLIL::SigSig(
+                    RTLIL::SigSpec(temp_wire),
+                    RTLIL::SigSpec(RTLIL::State::Sx, width)));
+
             if (sync_always) {
                 RTLIL::SigSpec x_val = RTLIL::SigSpec(RTLIL::State::Sx, width);
                 sync_always->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(task_wire), x_val));
@@ -10293,6 +10314,25 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                     if (process_src) add_src_attribute(temp_wire->attributes, process_src);
 
                     task_mapping[var_name] = RTLIL::SigSpec(temp_wire);
+
+                    // Seed THIS temp with X in the root case too.  When the
+                    // caller's Variables() pass already made a temp for the
+                    // same local it seeded that one, but the mapping now
+                    // points HERE, so the body reads and writes this temp --
+                    // and without a root-case default it is assigned only on
+                    // the paths the body writes it, leaving `proc` to close
+                    // every other path through the temp ITSELF.  For a local
+                    // READ BEFORE it is written that cycle is combinational:
+                    // RSD's FP32PipelinedOther
+                    //     logic [31:0] int_result;        // never initialised
+                    //     if (expo <= 126) int_result = int_result + ...;
+                    // produced 32 logic loops (one per bit) where read_slang
+                    // produces none, because an `automatic` local has no value
+                    // at call entry and slang materialises that as constant X.
+                    if (proc)
+                        proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(temp_wire),
+                            RTLIL::SigSpec(RTLIL::State::Sx, width)));
 
                     // Named block wires get temp wire sync (not X-init).
                     // When the caller's Variables() pass already created the
@@ -17294,7 +17334,23 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
             pre = it->second;
         else if (auto it2 = current_comb_values.find(nm); it2 != current_comb_values.end())
             pre = it2->second;
-        else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm))) pre = RTLIL::SigSpec(w);
+        else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm))) {
+            // An inlined function's local (`<fn>$func$<file>:<line>$<id>.<name>`)
+            // has NO value at call entry, and its wire is driven by THIS
+            // process -- so using the raw wire as the pre-if value closes a
+            // combinational cycle whenever the local is read on a path where
+            // the threading recorded nothing.  RSD's FP32PipelinedOther
+            //     if (expo <= 157) int_result = int_result + {31'h0, round_up};
+            // built 32 logic loops that way (one per bit: the `$add` back to
+            // its own input through this mux and the `if`'s) where read_slang
+            // builds none -- it materialises the undefined entry value as a
+            // constant X.  Use X for such a local; every other signal keeps
+            // the wire, which for a module signal is its value before the
+            // block and not a cycle.
+            pre = (nm.find("$func$") != std::string::npos)
+                      ? RTLIL::SigSpec(RTLIL::State::Sx, w->width)
+                      : RTLIL::SigSpec(w);
+        }
         else continue;
         RTLIL::SigSpec tv = then_vals.count(nm) ? then_vals[nm] : pre;
         RTLIL::SigSpec ev = else_vals.count(nm) ? else_vals[nm] : pre;
