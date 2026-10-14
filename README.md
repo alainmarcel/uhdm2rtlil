@@ -118,9 +118,9 @@ proof gap is never mistaken for a bug.
 | **Syntacore SCR1** | [syntacore/scr1](https://github.com/syntacore/scr1) @ [`ebb5e355`](https://github.com/syntacore/scr1/commit/ebb5e3551a9d93c0ee95f0b767dd878b8927e702) | RV32IMC core, pipeline and the AXI/AHB SoC tops; 37 modules | **29 / 37 proven** · 32 / 32 co-sim · 37 / 37 opt-clean · 2 `differs` formal-only (`scr1_dm`'s Surelog enum-value fold is fixed, #4208 / #1091) · 6 over the SAT budget | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
 | **VeeR EH1** | [chipsalliance/Cores-VeeR-EH1](https://github.com/chipsalliance/Cores-VeeR-EH1) @ [`d04b1c7a`](https://github.com/chipsalliance/Cores-VeeR-EH1/commit/d04b1c7ae675a63dc4307cacfd10547ec937b928) | RV32IMC core (`veer` / `veer_wrapper`), its IFU/DEC/EXU/LSU/DBG blocks, the `rv*` primitive library and the AHB/AXI4 bridges; 66 modules | **55 / 67 proven** · 66 / 66 co-sim · 67 / 67 opt-clean · whole core `veer` equivalent + co-sim PASS · 0 undriven, 0 read errors, 0 divergences · 9 SAT timeouts, 2 over the memory cap · `rvdffe` not comparable at its own defaults (its `$error` wants WIDTH >= 8) | [veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml) |
 | **VeeR EL2** | [chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2) @ [`c2ea3a73`](https://github.com/chipsalliance/Cores-VeeR-EL2/commit/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e) (the commit chipsalliance/sv-tests pins) | RV32IMC core (`el2_veer_wrapper` / `el2_veer`), its IFU/DEC/EXU/LSU/DBG/PIC/PMP/DMA blocks, the lockstep shadow and the rv* primitive library; 92 modules | **69 / 92 proven** · **81 / 81 co-sim (100%)** · 84 / 84 opt-clean, 0 undriven · **0 `differs`, 0 divergences, 0 counterexamples** · 11 over the SAT budget (`el2_veer`, the lockstep shadow and every big block — all 10 co-sim PASS with 270–300 active cycles) · 6 rows do not elaborate because the ICCM / DCCM SRAMs come from a macro whose body lives in a `.vh` the closure does not scan (`el2_veer_wrapper`, `el2_mem`, the three memories, `EL2_IC_TAG`) · `rvclkhdr` is outside this configuration and 4 rows have no `read_slang` reference | [veer-el2](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-el2.yml) |
-| **RSD** | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) @ [`7b65f6ba`](https://github.com/rsd-devel/rsd/commit/7b65f6ba) | Out-of-order superscalar RISC-V core (RV32IMF) — the `Core` sv-tests builds, its front end, rename / issue / commit stages, FP pipelines and cache hierarchy; 165 rows after its interfaces and test benches are set aside | **107 / 165 proven** · 137 / 144 co-sim (**6** `read_uhdm` divergences, 1 adjudicated artefact) · 150 / 150 opt-clean · 8 `differs` formal-only, 22 over the SAT budget, 28 no `read_slang` reference · three of the six divergences are racy multi-write-port RTLs (`BlockMultiPortRAM`, `BlockTrueDualPortRAM`, `RegisterMultiPortRAM` — one `always_ff` per write port with no priority, so the stimulus can collide on an address), leaving `DCacheMissHandler`, `FPExecutionStage` and `FP32PipelinedOther` as the only open reader defects | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
+| **RSD** | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) @ [`7b65f6ba`](https://github.com/rsd-devel/rsd/commit/7b65f6ba) | Out-of-order superscalar RISC-V core (RV32IMF) — the `Core` sv-tests builds, its front end, rename / issue / commit stages, FP pipelines and cache hierarchy; 165 rows after its interfaces and test benches are set aside | **108 / 165 proven** · 138 / 144 co-sim (**5** `read_uhdm` divergences, 1 adjudicated artefact) · 150 / 150 opt-clean · 8 `differs` formal-only, 22 over the SAT budget, 28 no `read_slang` reference · the 5 divergences are the three multi-write-port RAMs (`read_slang` matches the RTL on all three, so a matching resolution order exists) plus `FPExecutionStage` and `FP32PipelinedOther`, which are two distinct defects | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
 | **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **27 / 32 proven** · 27 / 27 co-sim (1 adjudicated artefact) · 31 / 31 opt-clean · 4 SAT timeouts (256-bit datapaths) · 3 `differs` + 1 miter error are the `otbn_mac_bignum_fsm` driver-conflict rows, fixed in #1089 (next nightly) | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
-| **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 300 module rows + 98 chip instances | **382 / 400 proven** (modules 284 / 300, chip instances 98 / 100) · 379 / 390 co-sim (9 adjudicated artefacts; **the 2 FULL-CHIP rows do not build** -- `top_dragonfly` and `top_egret` report `netlist unbuildable (uhdm)` for the whole chip, while all 51 and 47 of their instances are formally equivalent, so this is a whole-chip netlist limit, not a module divergence) · 0 undriven | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
+| **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 300 module rows + 98 chip instances | **382 / 400 proven** (modules 284 / 300, chip instances 98 / 100) · 381 / 390 co-sim (9 adjudicated artefacts; both full chips build and co-simulate since #1173)` for the whole chip, while all 51 and 47 of their instances are formally equivalent, so this is a whole-chip netlist limit, not a module divergence) · 0 undriven | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
 | **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules, plus the full core split into its 138 distinct instantiations (366 instances paired with `read_slang`) | **99 / 142 proven** · 126 / 126 co-sim (9 adjudicated artefacts) · 0 undriven on every row · full core lowers with 0 inferred latches · per-instantiation **129 / 138** (formal only: struct/type actuals Verilator cannot take) | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **20 / 22 instances proven** · 21 / 21 co-sim · 0 undriven, 0 driver conflicts · full-chip co-sim NO_DIVERGENCE over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | the project's **hand-written** SystemVerilog arithmetic library — SRT dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**, which is Chisel | **18 / 21 proven** · 21 / 21 co-sim · 21 / 21 opt-clean · 3 SAT timeouts (64-bit divide datapaths) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
@@ -155,75 +155,59 @@ line and in the total:
 | **rp32 (R5P)** | 13 | 6 | 5 | 2 | **3** | 7 | 3 | 0 | 4 | 0 |
 | **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
 | **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
-| **VeeR EL2** | 92 | 70 | 80 | 80 | 0 | 81 | 81 | 0 | 0 | 0 |
-| **RSD** | 165 | 107 | 135 | 132 | **3** | 144 | 137 | **6** | 1 | 0 |
+| **VeeR EL2** | 92 | 69 | 80 | 80 | 0 | 81 | 81 | 0 | 0 | 0 |
+| **RSD** | 165 | 108 | 135 | 132 | **3** | 144 | 138 | **5** | 1 | 0 |
 | **OpenTitan** (upstream) | 32 | 27 | 28 | 26 | **2** | 28 | 27 | 0 | 1 | 0 |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 388 | 377 | **11** | 390 | 379 | **2** | 9 | 0 |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 390 | 379 | **11** | 390 | 381 | 0 | 9 | 0 |
 | **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
 | **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan** (香山) | 21 | 18 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan core** (香山) | 2002 | 1602 | 1945 | 1942 | **3** | 1945 | 1945 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1034 | 861 | 894 | 864 | **30** | 913 | 885 | **4** | 24 | 0 |
+| **XiangShan core** (香山) | 2002 | 1600 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1034 | 858 | 894 | 864 | **30** | 913 | 885 | **4** | 24 | 0 |
 | **chipsalliance/sv-tests** | 526 | 474 | 11 | 11 | 0 | 12 | 11 | **1** | 0 | 0 |
-| **All sweeps** (12 workflows) | **4719** | **3901** | **3784** | **3718** | **66** | **3819** | **3754** | **13** | **52** | **0** |
+| **All sweeps** (12 workflows) | **4719** | **3895** | **3785** | **3719** | **66** | **3818** | **3756** | **10** | **52** | **0** |
 
-The 13 `read_uhdm` divergences are 6 RSD rows, 4 cvw rows, the 2 Pavona full chips and one
-sv-tests file (the RSD count drops to 5 with #1174, and the 2 Pavona rows now build after
-#1173 -- both land in the next nightly):
+The 10 `read_uhdm` divergences are 5 RSD rows, 4 cvw rows and one sv-tests file.
+**read_slang passes every one of them**, so each is a place where our netlist
+disagrees with BOTH the RTL simulator and the other frontend:
 
-* RSD `BlockMultiPortRAM`, `BlockTrueDualPortRAM` and `RegisterMultiPortRAM` are three racy
-  multi-write-port RTLs -- one `always_ff` per port with no priority, so the stimulus can
-  collide on an address.  Not reader defects.
-* RSD `FPExecutionStage` (156) and `FP32PipelinedOther` (1) are the only open RSD reader
-  defects.  `DCacheMissHandler` (272) is CLOSED by #1174: a struct-field write on an array
-  element recorded its in-flight value under the array's FLAT key while the read resolves
-  it PER ELEMENT, so the next guard in the block read a one-cycle-stale register.
-* Their formal column reads `equivalent (only to seq 4)`, which is exactly what it says: a
-  proof bounded at 4 cycles, not a claim of equivalence.  `DCacheMissHandler`'s divergence
-  first appears at **seq 5** -- one cycle past the bound.  (An earlier revision of this
-  paragraph blamed a missing `memory_map` in the sweep's miter; that was wrong.  yosys's
-  `memory` pass already runs `memory_map` unless given `-nomap`, so the miter does map
-  memories.)
-* RSD `ProducerMatrix` (was 6) and `WakeupPipelineRegister` (was 68) are CLOSED by #1170 and
-  #1171 and no longer appear in this run.
-* cvw `clmul` and `zbc` (300 each -- i.e. every cycle), `bitmanipalu` (12) and `alu` (8) are
-  open and new to this table; all four also read `differs` formally, so they are one
-  carry-less-multiply defect seen through its three enclosing modules.
-* Pavona `top_dragonfly` and `top_egret` reported `netlist unbuildable (uhdm)` for the FULL
-  CHIP only -- every one of their 51 and 47 instances is formally equivalent.  Measured
-  (#1173): Verilator rejected the chip netlist with 3 `%Error-BLKANDNBLK` in the
-  `sram_ctrl_*` instances, an `%Error` that `-Wno-fatal` does not downgrade, because
-  `chip_cosim.py` lacked the waiver `netlist_cosim.py` has.  With the flag the netlist
-  compiles, so these rows will report a real co-sim verdict instead.
-* sv-tests `chapter-10/10.6.2--force-release.sv` uses `force` / `release`, which has no
-  synthesis semantics on either side.
+* RSD `BlockMultiPortRAM` (54), `RegisterMultiPortRAM` (15) and
+  `BlockTrueDualPortRAM` (2) are the multi-write-port RAMs.  These were long
+  recorded here as "racy RTL, not a reader defect": four write ports arrive as
+  SEPARATE `always_ff` blocks with no priority, so a same-cycle same-address
+  collision has no winner defined by the language.  That dismissal does not
+  survive the evidence -- `read_slang` matches the RTL simulator on all three,
+  deterministically, nightly after nightly.  A resolution order that agrees
+  with the RTL therefore EXISTS and read_slang picks it; we pick another.  The
+  task is to match it, not to call the source racy.
+* RSD `FPExecutionStage` (156) and `FP32PipelinedOther` (1) are two DISTINCT
+  defects, not one cause: temporarily splitting the concat LHS that produces
+  FP32PipelinedOther's divergence
+  (`{int_result, lower_bits} = {1'b1, mant, 31'h0} >> shift_amount`, whose
+  elements resolve to fabricated bare wires instead of the inlined function's
+  locals) leaves FPExecutionStage at 156 unchanged.  FPExecutionStage's first
+  divergence is `bypass__fpDstRegDataOut` at cycle 25.
+* cvw `clmul` and `zbc` (300 each -- i.e. every cycle), `bitmanipalu` (12) and
+  `alu` (8) all read `differs` formally too, so they are one carry-less-multiply
+  defect seen through its three enclosing modules.
+* sv-tests `chapter-10/10.6.2--force-release.sv` uses `force` / `release`, which
+  has no synthesis semantics on either side.
+
+Pavona's two full chips are no longer in this list: #1173 gave `chip_cosim.py`
+the `-Wno-BLKANDNBLK` waiver that `netlist_cosim.py` always had, and both chips
+now lower and co-simulate.
 
 The 66 `read_slang` divergences are listed with their
 reasons in [docs/slang_unsupported.md](docs/slang_unsupported.md).  Counted by
 [`test/sweep_table.py`](test/sweep_table.py) over the reports of the runs below — nothing in this
 table is kept by hand.
 
-Numbers above are the 2026-10-12 nightly runs (main between #1166 and #1168 depending
-on the sweep), **except RSD, which is run 38394776797 of 2026-10-13 12:05Z on main at
-#1171** -- the first RSD run that carries both #1170 (packed typedef leaf width) and #1171
-(whole-vs-field arm else value).  Those two fixes are what took the row's `read_uhdm`
-divergences from 12 to 6.
-The RSD core only became sweepable at all with #1161: its rows used to be
-handed the WHOLE 1.02 MB core because `ext_flow`'s identifier-scan closure read a
-`modport <ClientModule>` LABEL as a dependency, and serialising that peaks at 12.2 GB --
-just over the sweep's address-space cap, so Surelog aborted mid-write.  #1161 drops the
-label (median closure 141 files -> 20, each UHDM database 1.64 GB -> 105 MB) and the
-`elab-fail` rows went from **83 to 5**, which is where the row's +21 rows and +27 proven
-come from.  The day's reader fixes #1131-#1144 -- RSD's IssueQueue free-list reset,
-StoreQueue (void-function actuals, case arms, dynamic struct-field writes), LoadQueue (now
-proven), Gshare's PHT index (now proven), Decoder's case-arm decode calls, five DCache
-causes (its inner interface clock, 3-D / 2-D sub-array actuals, 2-D interface members) and
-WakeupLogic's four-level interface path -- plus the Verilator BLKANDNBLK waiver and the RSD
-third-level source root (six FetchStage rows now real) land in the next nightlies.  Still
-open after them, measured locally on the landed tree: RSD `DCache` (293 diverging cycles, a
-further cause), `WakeupLogic` (both frontends diverge), `PreDecodeStage`, `FetchStage` and a
-5-cycle `Decoder` residual.  What the Result column no longer
-spells out:
+Numbers above are the 2026-10-14 nightly runs, one per sweep workflow, all 13
+measured on main at #1175 (`0011c1b18`) -- so every fix of 2026-10-13 (#1170
+packed typedef leaf width, #1171 whole-vs-field arm else value, #1173 the
+Pavona BLKANDNBLK waiver, #1174 element-field in-flight keys, #1175 the
+function-local entry value) is included.  RSD's `read_uhdm` divergences went
+12 -> 5 across that day and Pavona's 2 unbuildable chips went to 0.
 
 - **CVA6's 5 `differs` rows are adjudicated non-defects** — unique/priority-case
   violation stimulus (`csr_regfile`, `hpdcache_cmo`, `hpdcache_uncached`),
