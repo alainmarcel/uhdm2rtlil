@@ -628,6 +628,42 @@ TRAILING SPACE that terminates the enclosing escaped identifier, yielding
 `...$0gen_normal_fifo_under_rst;`.  Verilator then reports a syntax error
 hundreds of lines from the cause.
 
+Two ways the generator silently produced NO reference at all, both fixed:
+
+* **Interface ports declared on ONE line were not seen.**  `IFACE_PORT` is
+  anchored at both ends and was matched per LINE, so
+  `module FPDivSqrtUnit(FPDivSqrtUnitIF.FPDivSqrtUnit port,
+  RecoveryManagerIF.FPDivSqrtUnit recovery);` written without the line break
+  matched NEITHER declaration.  The generator reported "declares no interface
+  ports", wrote no wrapper, and read_slang refused the bare module
+  ("top-level module has unconnected interface port") -- the row read
+  `⏭ no reference / skip (no run)` and nothing was ever measured.
+  `iface_ports_of` now splits the header on DEPTH-0 commas.
+* **No cast to an ENUM-typed member.**  The flat port is plain `logic [...]`,
+  and SystemVerilog has no implicit conversion TO an enum, so
+  `assign port_i.rm[g] = port__rm[...]` for
+  `Rounding_Mode rm [FP_DIVSQRT_ISSUE_WIDTH]` drew
+  "no implicit conversion from 'logic[2:0]' to 'Rounding_Mode'" from
+  read_slang while Verilator accepted it -- a co-sim with no reference, so its
+  divergences could not be adjudicated.  The unpacked-input branch now emits
+  `ty'(slice)`, gated on `_is_enum_type()`: ONLY an enum needs it.  Do not cast
+  more widely -- the 69 existing wrappers hold hundreds of input assigns into
+  typedef'd vectors and packed structs (`PRegDataPath`, `MemAccessMode`, which
+  is a struct CONTAINING an enum), all of which convert implicitly and would be
+  rewritten for nothing.
+
+Check the blast radius of a change here OFFLINE rather than by re-running the
+sweeps: run the old and new `iface_ports_of` over every `work/*/*/srcs.txt` and
+diff.  That found exactly 2 intended changes out of 295 modules -- plus one
+apparent regression (`veer-el2 el2_dec_gpr_ctl`'s `regfile`) that turned out to
+be a port inside `` `ifdef RV_LOCKSTEP_REGFILE_ENABLE ``, which the live flow
+already excluded both before and after.
+
+Two RSD rows became measurable that way, both genuine reader defects that no
+sweep had ever reported: `FPDivSqrtUnit` `❌ 33 div (slang clean)` and
+`MulDivUnit` `❌ 294 div (slang clean)`.  A harness fix that makes rows FAIL is
+the right direction -- they were failing all along, unmeasured.
+
 Results on caliptra instances that had never co-simulated at all:
 
 | instance | before | after |
