@@ -762,6 +762,63 @@ must assert the PORT ORDER: see `test/memwr_multi_block_port_order`, whose
 `test_structural.ys` pins port i to the i-th always_ff by intersecting each
 `$memwr_v2`'s ADDR cone with that block's address input.
 
+## A MODULE-LEVEL loop variable keeps its `loop_values` entry after its loop
+
+The comb for-loop unroller publishes the loop variable's post-loop value into
+`loop_values` so a later statement can read it -- `for (j=1;j<=i;j++) ...;
+x = S[j-1]` must see `j == i+1`, which is what the LRM says (the init runs,
+then the condition fails).  But it only publishes when the variable does not
+ALREADY have an entry, because an inlined function's own `for (int i)` must not
+leak its exit value over the enclosing process loop's `i` (RSD
+DCacheMissHandler's MergeStoreDataToLine, whose leak selected element 8 of a
+2-entry array and stopped the MSHR allocating).
+
+A MODULE-LEVEL loop variable breaks that test, because its entry SURVIVES its
+own loop.  cvw's carry-less multiplier (`src/ieu/bmu/clmul.sv`) is
+
+```systemverilog
+integer i, j;
+always_comb
+  for (i=0;i<WIDTH;i++) begin : outer
+    S[WIDTH*i] = X[0] & Y[i];
+    for (j=1;j<=i;j++) begin : inner
+      S[WIDTH*i+j] = (X[j] & Y[i-j]) ^ S[WIDTH*i+j-1];
+    end
+    ClmulResult[i] = S[WIDTH*i+j-1];     // j's post-loop value, i+1
+  end
+```
+
+and from outer iteration 1 on, the `loop_values["j"] = 1` left behind by
+iteration 0's inner loop made that loop look NESTED inside an enclosing loop
+over `j`, so its post-loop value was RESTORED to 1.  Every `ClmulResult[i]`
+then read `S[WIDTH*i]`, the FIRST partial product: 620 diverging co-simulated
+cycles across `clmul` (300), `zbc` (300), `bitmanipalu` (12) and `alu` (8) --
+one multiplier seen through three enclosing modules.
+
+`unrolling_loop_vars_` is the stack of variables whose comb for-loops are
+MID-UNROLL (pushed and popped by an RAII guard, so every exit path of the
+`vpiFor` case is covered), and the restore now also requires the variable to be
+on it.  A genuine shadowing nest still restores; a sibling's leftover does not.
+
+Two traps when working on this:
+
+* **Rewriting the index proves where the bug is.**  Replacing only the read
+  with the arithmetically identical `S[WIDTH*i+i]` made read_uhdm match
+  read_slang on every vector, which localised the defect to the `j` FOLD -- the
+  unroll log already printed the right `final=` values and `assign \j <i+1>`
+  was emitted.  Do not sed the pattern blindly: `S[WIDTH*i+j-1]` also appears
+  on the RHS of the inner loop, and replacing both breaks the accumulation and
+  makes read_slang fail too.
+* **The miter column moves for an unrelated reason.**  `zbc` / `bitmanipalu` /
+  `alu` went from `❌ differs` to `❓ SAT timeout`: with the counterexample gone
+  the solver runs to its budget on a 64-bit clmul (alu's miter 29s -> 328s).
+  That is not a regression -- `clmul` itself became `✅ equivalent` -- but it
+  can only be told apart by measuring the CONTROL.
+
+A test for this class must assert the VALUE (it is wrong arithmetic, not a
+wrong shape): `test/loopvar_postloop_sibling` proves three carry-less products
+with `sat -verify -prove`.
+
 ## A CONCATENATION target over an inlined function's LOCALS is written in three places
 
 ```systemverilog
