@@ -374,6 +374,16 @@ def main():
     A("A document that can only record another tool's mistakes is not a measurement.")
     A("These sweep rows co-simulate clean with the `read_slang` netlist and diverge with")
     A("ours; they are OUR defects, tracked in the sweeps, listed here in the same format.\n")
+    # This section gets its OWN vintage stamp.  It is the one most likely to be
+    # read in isolation (someone follows a link straight to the anchor) and the
+    # one where being a day stale does the most damage: it lists OUR defects, so
+    # a stale row claims a bug that may already be fixed.  The file-level
+    # provenance note above is not enough for a reader who never saw it.
+    if _sw_when:
+        A(f"Measured {_sw_when}, from the sweep artifacts named at the top of this file.")
+        A("A row fixed after that date is still listed here until the sweeps are")
+        A("re-downloaded and this report regenerated -- check the row before trusting it")
+        A(f"(`{sorted({r['rid'] for r in ours})[0] if ours else 'R3'}`-style recipe per row below re-measures it in minutes).\n")
     A(f"**{len(ours)}** rows.\n")
     A("| set | test | verdicts | recipe |")
     A("|---|---|---|---|")
