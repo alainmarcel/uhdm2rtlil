@@ -332,3 +332,40 @@ genscope_two_procs_same_reg
 # vacuous; we produce 5 and read_slang agrees.  test_slang_equiv.ys is the
 # gate (it fails 0/1 without the fix in the function-body case paths).
 func_casez_wildcard_items
+
+# ---------------------------------------------------------------------------
+# Yosys 0.70 (#1186).  Three UPSTREAM tests the bump moved.  All three were
+# scored under v0.69; their sources are byte-identical at v0.69 and v0.70
+# (checked with `git cat-file`), so what changed is Yosys, not the test.
+# ---------------------------------------------------------------------------
+
+# techmap/mem_simple_4x1_map: a TECHMAP test whose design legitimately holds
+# `$__`-prefixed generator cells mid-flow (`$__mem_4x1_generator`).  v0.69's
+# hierarchy `get_module()` skipped every `$`-prefixed cell type as a black
+# box; v0.70 requires it to be a KNOWN internal cell type under `-check`, so
+# the harness's `hierarchy -check` now hard-errors.  BOTH frontends fail, and
+# differently -- read_uhdm on `$__mem_4x1_generator` itself, read_verilog one
+# level deeper on `\MEM4X1` inside the generator's paramod -- so this is not a
+# reader defect and no reader change can fix it.  Upstream runs this test
+# through its own runtest.sh, which never calls `hierarchy -check` on the
+# intermediate design.
+techmap/mem_simple_4x1_map.v
+
+# asicworld/code_hdl_models_uart and arch/quicklogic/qlf_k6n10f/meminit: both
+# reach the equivalence stage and abort in satgen, not in either frontend --
+#   No SAT model available for async FF cell rx_d2_reg_gate ($_DFF_PP1_).
+#     Consider running `async2sync` or `clk2fflogic`
+#   No SAT model available for cell gate.tx_reg_reg[0] (\$_DFFE_PP0P_)
+#   No SAT model available for cell _6692__gate (\$check)
+# v0.70's synth retains async-reset-with-enable FFs (`$_DFFE_<clk><rst><val>
+# <en>_`) and `$check` cells where v0.69 did not.  test_equivalence.sh ALREADY
+# builds exactly the needed `chtype -map` list plus `async2sync` /
+# `chformal -lower` / `delete t:$check`, but only for tests that opt in with
+# `formal: 1` -- and the comment there records why it is not global: the DFFE
+# remappings break non-formal tests like subbytes, where equiv_make pairs the
+# public-typed cells by structure.  Widening the opt-in would trade three
+# upstream tests for a known regression elsewhere, so these are recorded
+# instead.  Neither is a reader defect: read_uhdm and read_verilog both read
+# them with 0 errors.
+asicworld/code_hdl_models_uart.v
+arch/quicklogic/qlf_k6n10f/meminit.v
