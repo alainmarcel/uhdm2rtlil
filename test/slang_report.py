@@ -35,6 +35,15 @@ EXT_ROOT = os.environ.get("EXT_IP_ROOT", os.path.expanduser("~/ext"))
 
 # ---------------------------------------------------------------- classes
 CLASSES = [  # (kind, label, regex) -- first match wins; "incomplete" rows leave the report
+    # An error located in a file WE GENERATE is a harness defect, never a slang
+    # verdict: the sweep handed slang an input this project built.  Both kinds
+    # seen so far were ours -- an enum-typed interface member assigned without
+    # a cast (fixed by giving gen_iface_wrapper.py the cast), and an interface
+    # port the wrapper declares but never connects (caliptra-ss
+    # css_mcu0_el2_veer_wrapper's `el2_mem_export`, still open).  Must come
+    # FIRST: these otherwise match the generic "strict" type rules and would be
+    # reported as slang limitations.
+    ("incomplete", "our generated interface wrapper is incomplete -- not a slang verdict", r"_ifc\.sv:\d+:\d+: error:"),
     ("incomplete", "test invalid on purpose (yosys `tests/errors`)", r"^run/errors/"),
     ("incomplete", "a module no file of the test defines", r"unknown module|unknown class or package"),
     ("incomplete", "a file the test does not ship", r"No such file or directory|failed to open file"),
