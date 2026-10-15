@@ -61,31 +61,35 @@ workflow (every PR + nightly).  Local developer run:
 `cd test && ./run_parallel.sh 6 --no-cva6` (the 1258 internal tests, ~26 min).  A PR
 lands only on a clean run.  The counts below are the regression's own summary
 (`Total tests run` / per-suite lines of the combined report), not a tally kept
-by hand; "upstream" counts the 520 generated yosys tests the suite scored in
+by hand; "upstream" counts the 514 generated yosys tests the suite scored in
 that run (the deliberately invalid `tests/errors` and tests that produce no RTLIL
 under any frontend are generated but not scored).  Counts are the regression of
-main at #1182 (2026-10-15, run 38655113014 -- the PR run, whose tree is
-byte-identical to the squashed main commit), split internal / upstream by the
-`run/` prefix of the shard result lists.
+main at #1186 -- the **Yosys 0.70** bump -- (2026-10-15, run 38749250595, the
+PR run whose tree is what the squashed main commit holds), split internal /
+upstream by the `run/` prefix of the shard result lists.  Against 0.69 the bump
+costs three upstream tests (recorded in `failing_tests.txt`: a techmap test
+whose generator cells `hierarchy -check` now rejects, and two whose async-reset
+FFs / `$check` cells satgen has no model for) and gains the `opt/opt_rmdff`
+crash -- **crashes are now 0**.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1805 | 1285 | 520 |
-| Functional | 1760 (98%) | 1250 | 510 |
-| True failures | 9 | **0** | 9 |
-| Crashes | 1 | **0** | 1 |
+| Tests | 1801 | 1287 | 514 |
+| Functional | 1753 (97%) | 1250 | 503 |
+| True failures | 11 | **0** | 11 |
+| Crashes | **0** | **0** | **0** |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1094** tests formally equivalent UHDM vs Verilog; **666** UHDM-only
+- **1083** tests formally equivalent UHDM vs Verilog; **670** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
   **289 / 291** SV-only designs also proven against `read_slang` (2 known-fail,
   tracked in `test/slang_miter_expected_fail.txt`), and **49**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
   can see (a dropped flop, a missing `$mem` or a dropped clock connection still
   "works" — it just returns constants).
-- **14 equivalence failures**, each with a recorded verdict in
+- **16 equivalence failures**, each with a recorded verdict in
   `test/failing_tests.txt`.  In several the *reference* is the wrong side
   (`read_verilog` mis-lowers the construct) — a SAT miter against `read_slang`
   proves UHDM correct.
@@ -503,10 +507,10 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 
 ## Quick Start
 
-**Version.** The project version tracks the Yosys release it is built against — `project(uhdm2rtlil VERSION 0.69)` for Yosys 0.69.  A plugin is only ever loaded by the Yosys it was compiled for, so a single number names the pairing.
+**Version.** The project version tracks the Yosys release it is built against — `project(uhdm2rtlil VERSION 0.70)` for Yosys 0.70.  A plugin is only ever loaded by the Yosys it was compiled for, so a single number names the pairing.
 
 ### Prerequisites
-- GCC ≥ 11 (C++20; the bundled Yosys v0.69 and its built-in `read_slang` frontend require it)
+- GCC ≥ 11 (C++20; the bundled Yosys v0.70 and its built-in `read_slang` frontend require it)
 - CMake **3.28 – 3.31** (≥ 3.28 for the bundled slang library; CMake 4.x is rejected by
   Surelog/UHDM's capnproto — `pip install 'cmake==3.31.6'` on ubuntu-22.04)
 - Python 3.8+
@@ -807,7 +811,7 @@ uhdm2rtlil/
 ├── docs/                        # Sub-tables and changelogs (pavona_sweep.md, test-cases.md, ...)
 ├── third_party/                # External dependencies
 │   ├── Surelog/               # SystemVerilog parser (includes UHDM)
-│   └── yosys/                 # Synthesis framework (v0.69 + one fork patch, built with read_slang)
+│   └── yosys/                 # Synthesis framework (v0.70 + one fork patch, built with read_slang)
 ├── .github/workflows/         # ci.yml (PR gate), regression-sharded.yml, frontend-matrix.yml, sweep-*.yml
 ├── build/                     # Build artifacts
 ├── CMakeLists.txt            # CMake build configuration
