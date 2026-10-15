@@ -6,17 +6,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
-The Yosys submodule is pinned at **YosysHQ tag v0.69 + one fork patch**
+The Yosys submodule is pinned at **YosysHQ tag v0.70 + one fork patch**
 (`third_party/yosys`, tracking alainmarcel/yosys branch
-`v0.69-proc-dlatch-memo`): the proc_dlatch memoization of the
+`v0.70-proc-dlatch-memo`): the proc_dlatch memoization of the
 find_mux_feedback/find_mux_constant DAG walks, which are exponential on
-shared mux subtrees without it (CVA6 cva6_tlb).  The patch is not yet
-upstreamed — when YosysHQ merges it, repoint `.gitmodules` to
-https://github.com/YosysHQ/yosys.git.  v0.69 requires **C++20**
+shared mux subtrees without it (CVA6 cva6_tlb).  The patch is STILL not
+upstreamed as of v0.70 — when YosysHQ merges it, repoint `.gitmodules` to
+https://github.com/YosysHQ/yosys.git.  **Rebasing it onto a new tag is a real
+merge, not a fast-forward:** v0.70 added `active_bits` cycle detection to the
+same two functions (`enter_mux_bit()` hard-errors on a logic loop, with
+`active_bits.erase()` on the way out), so keep BOTH — the memo lookup must stay
+BEFORE `enter_mux_bit` (a memo hit then neither skips the erase nor masks a real
+loop, because a bit on the active stack has not been memoized yet) and the
+erase must stay on every exit path.  The shared `feedback_memo` is safe because
+each `_rec` recurses only into itself, `make_inner` calls neither, and each
+top-level wrapper clears it.  v0.70 requires **C++20**
 (kernel/yosys_common.h hard-errors otherwise), so the plugin's
-`CMAKE_CXX_STANDARD` is 20.  (v0.69, released 2026-09-09, is the latest
-stable release as of 2026-09-28; Yosys has no "stable" branch — releases are
-tags.  0.68 → 0.69 removed nothing this project uses: coolrunner2/greenpak4
+`CMAKE_CXX_STANDARD` is 20.  (v0.70 is the latest stable release as of
+2026-10-14; Yosys has no "stable" branch — releases are tags.  0.69 → 0.70 removes only `read_xaiger2`, which this project never
+  referenced, and `YOSYS_ENABLE_SLANG` survives — but THREE things the
+  changelog does not mention cost real work, all three caught only by the full
+  regression:
+    * `VerilogFmtArg` lost `filename` / `first_line` for one
+      `LogSourceLocation src` (one site, the `$display`/`$write` → `$print`
+      path).  A kernel API change with no changelog entry at all.
+    * `hierarchy`'s `get_module()` no longer skips every `$`-prefixed cell type
+      as a black box: under `-check` it must be a KNOWN internal cell type.
+      That exposed OUR latent bug -- `interface.cpp` emitted a "representative
+      cell" for an interface instance typed `$paramod\<iface>\<params>` whose
+      module is never created, an entirely empty cell (the interface's members
+      are flattened into `\<inst>.<member>` wires and wired to the submodule
+      directly).  0.69 silently ignored it; 0.70 hard-errors.  Six interface
+      tests.  The cell is now emitted only when its type resolves to a module.
+    * **0.70's read_verilog no longer parses `bind`** (`frontends/ast/ast_binding.h`
+      deleted, genrtlil.cc -112 lines): `read_verilog -sv` now fails with
+      `syntax error, unexpected TOK_ID` on a `bind` directive.  read_uhdm still
+      reads it, so `bind_hier`, `BindModule`, `BindModuleWithInputPorts`,
+      `BindModuleWithOutputPorts` and `bind_toplevel` moved from "formally
+      equivalent vs read_verilog" to UHDM-only (still covered by the Verilator
+      co-sim) -- which is exactly the regression's `Passing 654 -> 649` /
+      `UHDM-only 595 -> 600` shift.  An UPSTREAM capability regression, not
+      ours; their `*_from_verilog.il` artifacts can no longer be generated.
+    * `build/extract_clocks_resets.so` was NOT rebuilt by the bump, because its
+      CMake rule depended on the `yosys` TARGET (already built ⇒ no retrigger)
+      rather than the installed binary.  It kept resolving against the old ABI
+      until 0.70 changed `LogManager::formatted_string`'s signature, and then
+      EVERY Verilator co-sim died with a `symbol lookup error` that the suite
+      reported only as "1112 NEW sim-equiv warnings".  A plugin dlopened into
+      yosys must depend on `${INSTALL_DIR}/bin/yosys`.
+  0.68 → 0.69 removed nothing this project uses: coolrunner2/greenpak4
 synth, nlutmap, `abc -retime/-noabc9/-abc2`, `logger -stderr`.)
 
 **v0.69 is CMake-only** (since v0.68) — the top-level Makefile is gone.  Our CMakeLists builds

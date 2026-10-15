@@ -1121,9 +1121,28 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 // interface-instance cell of the same name would collide
                 // (rtlil count_id assert).  Only add the representative cell
                 // when nothing with that name exists yet.
-                if (!module->wire(cell_name) && !module->cell(cell_name)) {
+                // ...and only when the type RESOLVES to a module.  This
+                // representative cell carries nothing -- the interface's
+                // signals are flattened into `\<inst>.<member>` wires and
+                // connected to the submodule directly, so the cell has no
+                // ports and no connections at all -- and when the
+                // parameterized interface module was never created, its type
+                // dangles.  Yosys 0.69 silently skipped any `$`-prefixed cell
+                // type as a black box; 0.70 tightened get_module() to
+                // "internal cell types must at least be KNOWN cell types"
+                // under `hierarchy -check`, so a dangling
+                // `$paramod\MyInterface\WIDTH=4` became a hard
+                // "neither a known internal cell type nor part of the design"
+                // error on six interface tests.  A cell nothing can resolve
+                // and nothing reads is better not emitted.
+                if (!module->wire(cell_name) && !module->cell(cell_name) &&
+                    design->module(RTLIL::escape_id(param_interface_type))) {
                     module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
                     log("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
+                } else if (!module->wire(cell_name) && !module->cell(cell_name)) {
+                    log("UHDM: Interface '%s': type %s is not a module in the design "
+                        "— no representative cell (its members are flattened wires)\n",
+                        interface_name.c_str(), param_interface_type.c_str());
                 } else {
                     log("UHDM: Interface '%s' already represented (wire/cell exists) — skipping instance cell\n", interface_name.c_str());
                 }

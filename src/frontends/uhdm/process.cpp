@@ -8944,8 +8944,11 @@ void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
     if (auto args = call->Tf_call_args()) {
         for (auto* arg_any : *args) {
             VerilogFmtArg vfa = {};
-            vfa.filename = "";
-            vfa.first_line = (unsigned)call->VpiLineNo();
+            // Yosys 0.70 replaced VerilogFmtArg's `filename` + `first_line`
+            // with one `LogSourceLocation src`.  Same two values, same
+            // meaning; 0.70 also carries start/end columns, which nothing
+            // here needs yet.
+            vfa.src = LogSourceLocation("", (int)call->VpiLineNo());
             // Try to get a SigSpec for the argument
             if (auto arg_expr = any_cast<const UHDM::expr*>(arg_any)) {
                 RTLIL::SigSpec sig = import_expression(arg_expr);

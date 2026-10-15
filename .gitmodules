@@ -4,8 +4,12 @@
 [submodule "third_party/yosys"]
 	path = third_party/yosys
 	url = https://github.com/alainmarcel/yosys.git
-	# Tracking the alainmarcel fork: v0.69 + the proc_dlatch memoization patch
-	# (branch v0.69-proc-dlatch-memo, PR alainmarcel/yosys#4).  Without the
+	# Tracking the alainmarcel fork: v0.70 + the proc_dlatch memoization patch
+	# (branch v0.70-proc-dlatch-memo).  Still NOT upstream as of v0.70, and
+	# v0.70 touched the same functions (it added `active_bits` cycle detection
+	# in find_mux_feedback / find_mux_constant), so the rebase was a real merge:
+	# the memo lookup must stay BEFORE enter_mux_bit and the
+	# active_bits.erase() must stay on every exit path.  Without the
 	# patch, proc_dlatch's un-memoized find_mux_feedback/find_mux_constant DAG
 	# walks are exponential on shared mux subtrees (CVA6 cva6_tlb update_flush
 	# kept proc_dlatch spinning >9h; patched: full-core proc in ~45s).  Also a

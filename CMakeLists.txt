@@ -208,10 +208,21 @@ set(EXTRACT_CR_SO ${CMAKE_CURRENT_BINARY_DIR}/extract_clocks_resets.so)
 # (it knows where its own include/lib live).  The `yosys` dependency below
 # guarantees the install has run before this command.
 set(YOSYS_CONFIG ${INSTALL_DIR}/bin/yosys-config)
+# DEPEND ON THE INSTALLED YOSYS BINARY, not just the `yosys` target: a target
+# that is already built does not retrigger this command, so a YOSYS VERSION
+# BUMP left the .so untouched and it kept resolving against the old ABI.  That
+# rotted silently for as long as the symbols happened to still match -- the
+# 0.70 bump changed `LogManager::formatted_string`'s signature and every
+# Verilator co-simulation then died with
+#   yosys: symbol lookup error: build/extract_clocks_resets.so:
+#          undefined symbol: ..LogManager16formatted_string..
+# which the suite counted as 1112 NEW sim-equiv warnings (one per test that
+# runs a co-sim) with no other symptom.  A plugin dlopened into yosys must be
+# rebuilt whenever the yosys it loads into changes.
 add_custom_command(
     OUTPUT ${EXTRACT_CR_SO}
     COMMAND ${YOSYS_CONFIG} --build ${EXTRACT_CR_SO} ${EXTRACT_CR_SRC}
-    DEPENDS ${EXTRACT_CR_SRC} yosys
+    DEPENDS ${EXTRACT_CR_SRC} yosys ${INSTALL_DIR}/bin/yosys
     COMMENT "Building extract_clocks_resets Yosys plugin"
 )
 add_custom_target(extract_clocks_resets ALL DEPENDS ${EXTRACT_CR_SO})
