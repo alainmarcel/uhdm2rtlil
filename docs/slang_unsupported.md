@@ -14,7 +14,7 @@ downloaded nightly sweep reports; regenerate after a regression + sweep cycle.
 
 Inputs, with their vintages -- the two halves are NOT measured at the same time:
 the **test** rows (internal + yosys) come from `slang_coverage.tsv` (2026-10-14), measured against the tree it
-was run on; the **sweep** rows come from 39 downloaded report(s) under `build/sweeps/2026-10-15` (2026-10-14), so they
+was run on; the **sweep** rows come from 39 downloaded report(s) under `build/sweeps/merged-2026-10-15` (2026-10-14), so they
 are only as current as that download and do not reflect anything merged since.
 
 ## How to reproduce
@@ -36,7 +36,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | yosys tests | 576 | 166 | 132 | 34 |
 | sweep aes | 1 rows read | 1 | 1 | 0 |
 | sweep axi | 12 rows read | 12 | 5 | 7 |
-| sweep caliptra-ss | 16 rows read | 16 | 12 | 4 |
+| sweep caliptra-ss | 17 rows read | 17 | 12 | 5 |
 | sweep common_cells | 1 rows read | 1 | 0 | 1 |
 | sweep cv32e40p | 5 rows read | 5 | 1 | 4 |
 | sweep cva6 | 14 rows read | 14 | 2 | 12 |
@@ -53,11 +53,11 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep periph | 1 rows read | 1 | 0 | 1 |
 | sweep periph5 | 1 rows read | 1 | 0 | 1 |
 | sweep rp32 | 11 rows read | 11 | 3 | 8 |
-| sweep rsd | 22 rows read | 22 | 12 | 10 |
+| sweep rsd | 15 rows read | 15 | 5 | 10 |
 | sweep tlul | 2 rows read | 2 | 0 | 2 |
 | sweep veer-eh1 | 1 rows read | 1 | 1 | 0 |
 | sweep veer-el2 | 11 rows read | 11 | 4 | 7 |
-| sweep verilog-ethernet | 17 rows read | 17 | 15 | 2 |
+| sweep verilog-ethernet | 21 rows read | 21 | 19 | 2 |
 | sweep verilog-pcie | 19 rows read | 19 | 6 | 13 |
 | sweep xiangshan-core-full | 3 rows read | 3 | 3 | 0 |
 
@@ -78,10 +78,10 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | strict | syntax slang rejects (`expected ...`, macro, binary digit) | 10 | 20 | 1 |
 | strict | type rule (packed dims on int type, port initializer, member access, argument count, ...) | 18 | 9 | 2 |
 | strict | out-of-range select or index | 3 | 6 | 8 |
-| strict | implicit conversion needs a cast (enum / struct) | 8 | 0 | 8 |
 | strict | non-ANSI port declaration in an ANSI module | 0 | 12 | 2 |
 | strict | generate-block reference or generate function in a constant expression | 5 | 7 | 0 |
-| strict | top-level interface port left unconnected | 8 | 2 | 2 |
+| strict | implicit conversion needs a cast (enum / struct) | 8 | 0 | 2 |
+| strict | top-level interface port left unconnected | 8 | 2 | 0 |
 | strict | name used before declaration / undeclared | 4 | 4 | 1 |
 | strict | redefinition / duplicate definition | 1 | 7 | 1 |
 | strict | assignment to a net in a procedural block | 4 | 5 | 0 |
@@ -89,12 +89,12 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | strict | `$fatal` / `$error` raised at elaboration -- the design refuses this configuration | 0 | 0 | 7 |
 | strict | hierarchical reference inside a constant function call (`$bits(inst.sig)`) | 0 | 0 | 6 |
 | synth-limit | `unsupported language feature` | 9 | 3 | 0 |
+| synth-limit | read_slang did not finish within the sweep's time budget | 0 | 1 | 8 |
 | synth-limit | flip-flop with multiple / non-canonical asynchronous loads | 2 | 4 | 0 |
 | synth-limit | net declaration initializer / `$readmemh` (sv-elab) | 0 | 0 | 6 |
-| synth-limit | read_slang did not finish within the sweep's time budget | 0 | 1 | 4 |
 | synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 1 | 4 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 6 | 7 | 5 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 16 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 17 |
 | bug | `Feature unimplemented` | 5 | 1 | 1 |
 
 ## sim-only
@@ -316,27 +316,6 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | yosys test | [`run/svtypes/struct_array`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/struct_array) | dut.sv:15:21: error: cannot refer to element -1 of 'bit[5:0][7:0]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/svtypes/struct_array` |
 | yosys test | [`run/verilog/mem_bounds`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/mem_bounds) | dut.sv:7:20: error: cannot refer to element -1 of 'reg[0:7]$[3]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/verilog/mem_bounds` |
 
-### implicit conversion needs a cast (enum / struct) -- 16
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| internal test | [`DpiChandle`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/DpiChandle) | dut.sv:12:11: error: invalid operands to binary expression ('chandle' and 'int') | R1 `./slang_coverage_sweep.sh --one DpiChandle` |
-| internal test | [`EnumBases`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumBases) | dut.sv:10:40: error: expression width of 2 does not exactly match declared enum type width of 32 | R1 `./slang_coverage_sweep.sh --one EnumBases` |
-| internal test | [`EnumMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumMultirange) | dut.sv:39:30: error: no implicit conversion from 'int' to 'dec_lc_state_e'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumMultirange` |
-| internal test | [`EnumParameterInNestedModules`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumParameterInNestedModules) | dut.sv:26:15: error: no implicit conversion from 'top.enum_t' to 'prim_subreg_shadow.enum_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumParameterInNestedModules` |
-| internal test | [`EnumVariantInPackage`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumVariantInPackage) | dut.sv:15:38: error: no implicit conversion from 'logic' to 'lc_tx_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumVariantInPackage` |
-| internal test | [`EscapedIdentifiersInHierPath`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EscapedIdentifiersInHierPath) | dut.sv:19:40: error: no implicit conversion from 'int' to 'fie_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EscapedIdentifiersInHierPath` |
-| internal test | [`TypedefAlias`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TypedefAlias) | dut.sv:25:13: error: no implicit conversion from 'third_alias_t' (aka 'logic[7:0]') to 'alias_t' (aka 'enum_t'); explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one TypedefAlias` |
-| internal test | [`rp32_r5p_csr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_csr) | r5p32_csr_pkg.sv:324:16: error: no implicit conversion from 'bit[0:0]' to 'csr_vector_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one rp32_r5p_csr` |
-| sweep cve2 | [`cve2_pmp`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_pmp.sv#L9) | cve2_pmp_flat.sv:40:32: error: no implicit conversion from 'logic[1:0]' to 'priv_lvl_e'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py cve2 cve2_pmp` |
-| sweep rsd | [`CommitStage`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Pipeline/CommitStage.sv#L223) | CommitStage_ifc.sv:66:47: error: no implicit conversion from 'logic[3:0]' to 'ExecutionState'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd CommitStage` |
-| sweep rsd | [`DCacheArrayPortMultiplexer`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Cache/DCache.sv#L382) | DCacheArrayPortMultiplexer_ifc.sv:154:37: error: no implicit conversion from 'logic[4:0]' to 'MSHR_Phase'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd DCacheArrayPortMultiplexer` |
-| sweep rsd | [`DCacheController`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Cache/DCache.sv#L144) | DCacheController_ifc.sv:32:37: error: no implicit conversion from 'logic[4:0]' to 'MSHR_Phase'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd DCacheController` |
-| sweep rsd | [`ReplayQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ReplayQueue.sv#L17) | ReplayQueue_ifc.sv:71:37: error: no implicit conversion from 'logic[4:0]' to 'MSHR_Phase'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd ReplayQueue` |
-| sweep rsd | [`StoreCommitter`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreCommitter.sv#L18) | StoreCommitter_ifc.sv:104:37: error: no implicit conversion from 'logic[4:0]' to 'MSHR_Phase'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd StoreCommitter` |
-| sweep rsd | [`StoreQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreQueue.sv#L19) | StoreQueue_ifc.sv:68:50: error: no implicit conversion from 'logic[1:0]' to 'MemoryMapType'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py rsd StoreQueue` |
-| sweep veer-el2 | [`el2_pmp`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_pmp.sv#L17) | el2_pmp_flat.sv:48:34: error: no implicit conversion from 'logic[2:0]' to 'el2_pmp_type_pkt_t'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py veer-el2 el2_pmp` |
-
 ### non-ANSI port declaration in an ANSI module -- 14
 
 | set | test | diagnostic | recipe |
@@ -373,7 +352,22 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | yosys test | [`run/various/gen_if_null`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/gen_if_null) | dut.v:14:16: error: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R2 `./slang_coverage_sweep.sh --one run/various/gen_if_null` |
 | yosys test | [`run/verilog/genvar_loop_decl_1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/genvar_loop_decl_1) | dut.sv:8:27: error: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R2 `./slang_coverage_sweep.sh --one run/verilog/genvar_loop_decl_1` |
 
-### top-level interface port left unconnected -- 12
+### implicit conversion needs a cast (enum / struct) -- 10
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`DpiChandle`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/DpiChandle) | dut.sv:12:11: error: invalid operands to binary expression ('chandle' and 'int') | R1 `./slang_coverage_sweep.sh --one DpiChandle` |
+| internal test | [`EnumBases`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumBases) | dut.sv:10:40: error: expression width of 2 does not exactly match declared enum type width of 32 | R1 `./slang_coverage_sweep.sh --one EnumBases` |
+| internal test | [`EnumMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumMultirange) | dut.sv:39:30: error: no implicit conversion from 'int' to 'dec_lc_state_e'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumMultirange` |
+| internal test | [`EnumParameterInNestedModules`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumParameterInNestedModules) | dut.sv:26:15: error: no implicit conversion from 'top.enum_t' to 'prim_subreg_shadow.enum_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumParameterInNestedModules` |
+| internal test | [`EnumVariantInPackage`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumVariantInPackage) | dut.sv:15:38: error: no implicit conversion from 'logic' to 'lc_tx_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumVariantInPackage` |
+| internal test | [`EscapedIdentifiersInHierPath`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EscapedIdentifiersInHierPath) | dut.sv:19:40: error: no implicit conversion from 'int' to 'fie_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EscapedIdentifiersInHierPath` |
+| internal test | [`TypedefAlias`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TypedefAlias) | dut.sv:25:13: error: no implicit conversion from 'third_alias_t' (aka 'logic[7:0]') to 'alias_t' (aka 'enum_t'); explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one TypedefAlias` |
+| internal test | [`rp32_r5p_csr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_csr) | r5p32_csr_pkg.sv:324:16: error: no implicit conversion from 'bit[0:0]' to 'csr_vector_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one rp32_r5p_csr` |
+| sweep cve2 | [`cve2_pmp`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_pmp.sv#L9) | cve2_pmp_flat.sv:40:32: error: no implicit conversion from 'logic[1:0]' to 'priv_lvl_e'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py cve2 cve2_pmp` |
+| sweep veer-el2 | [`el2_pmp`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_pmp.sv#L17) | el2_pmp_flat.sv:48:34: error: no implicit conversion from 'logic[2:0]' to 'el2_pmp_type_pkt_t'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py veer-el2 el2_pmp` |
+
+### top-level interface port left unconnected -- 10
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -385,8 +379,6 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | internal test | [`rp32_soc_vfriendly`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_soc_vfriendly) | tcb_lite_lib_passthrough.sv:23:21: error: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub' | R1 `./slang_coverage_sweep.sh --one rp32_soc_vfriendly` |
 | internal test | [`svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface1) | dut.sv:83:26: error: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2' | R1 `./slang_coverage_sweep.sh --one svinterface1` |
 | internal test | [`svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface_at_top) | dut.sv:10:28: error: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop' | R1 `./slang_coverage_sweep.sh --one svinterface_at_top` |
-| sweep rsd | [`FPDivSqrtUnit`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/FloatingPointUnit/FPDivSqrtUnit.sv#L9) | rsd/Processor/Src/FloatingPointUnit/FPDivSqrtUnit.sv:9:52: error: top-level module 'FPDivSqrtUnit' has unconnected interface port 'port' | R3 `python3 ext_flow.py rsd FPDivSqrtUnit` |
-| sweep rsd | [`MulDivUnit`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/MulDivUnit/MulDivUnit.sv#L17) | rsd/Processor/Src/MulDivUnit/MulDivUnit.sv:17:43: error: top-level module 'MulDivUnit' has unconnected interface port 'port' | R3 `python3 ext_flow.py rsd MulDivUnit` |
 | yosys test | [`run/svinterfaces/svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface1) | dut.sv:83:26: error: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2' | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface1` |
 | yosys test | [`run/svinterfaces/svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top) | dut.sv:10:28: error: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop' | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top` |
 
@@ -488,6 +480,20 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 | yosys test | [`run/memlib/memlib_block_sp_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp_full) | dut.v:78:17: error: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp_full` |
 | yosys test | [`run/sat/counters-repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/counters-repeat) | dut.v:29:17: error: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/sat/counters-repeat` |
 
+### read_slang did not finish within the sweep's time budget -- 9
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| sweep verilog-ethernet | [`axis_eth_fcs_insert_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_eth_fcs_insert_64.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet axis_eth_fcs_insert_64` |
+| sweep verilog-ethernet | [`axis_xgmii_tx_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_xgmii_tx_64.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet axis_xgmii_tx_64` |
+| sweep verilog-ethernet | [`eth_mac_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_tx` |
+| sweep verilog-ethernet | [`eth_phy_10g`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g` |
+| sweep verilog-ethernet | [`eth_phy_10g_rx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_rx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_rx` |
+| sweep verilog-ethernet | [`eth_phy_10g_rx_if`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_rx_if.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_rx_if` |
+| sweep verilog-ethernet | [`eth_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_tx` |
+| sweep verilog-ethernet | [`eth_phy_10g_tx_if`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_tx_if.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_tx_if` |
+| yosys test | [`run/simple/case_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/case_large) |  | R2 `./slang_coverage_sweep.sh --one run/simple/case_large` |
+
 ### flip-flop with multiple / non-canonical asynchronous loads -- 6
 
 | set | test | diagnostic | recipe |
@@ -509,16 +515,6 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 | sweep rp32 | [`rp32_r5p_degu_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | — (no miter: slang $readmemh) | R4 `python3 core_sweep.py rp32 --filter '^rp32_r5p_degu_soc_top$'` |
 | sweep rp32 | [`rp32_r5p_mouse_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | — (no miter: slang $readmemh) | R4 `python3 core_sweep.py rp32 --filter '^rp32_r5p_mouse_soc_top$'` |
 | sweep rp32 | [`rp32_soc_vfriendly`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | — (no miter: slang $readmemh) | R4 `python3 core_sweep.py rp32 --filter '^rp32_soc_vfriendly$'` |
-
-### read_slang did not finish within the sweep's time budget -- 5
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep verilog-ethernet | [`eth_mac_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_tx` |
-| sweep verilog-ethernet | [`eth_phy_10g`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g` |
-| sweep verilog-ethernet | [`eth_phy_10g_rx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_rx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_rx` |
-| sweep verilog-ethernet | [`eth_phy_10g_tx_if`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_tx_if.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_tx_if` |
-| yosys test | [`run/simple/case_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/case_large) |  | R2 `./slang_coverage_sweep.sh --one run/simple/case_large` |
 
 ### mixed blocking / non-blocking assignment to one variable -- 5
 
@@ -557,7 +553,7 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | yosys test | [`run/simple/repwhile`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/repwhile) | ERROR: Assert `vbit.variable.kind == Variable::Static' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:515. | R2 `./slang_coverage_sweep.sh --one run/simple/repwhile` |
 | yosys test | [`run/svinterfaces/svinterface1_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface1_tb) | ERROR: Assert `vbit.variable.kind == Variable::Static' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:515. | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface1_tb` |
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 16
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 17
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -571,6 +567,7 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep kmac | [`kmac_reduced`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/pavona_kmac_equiv/rtl/kmac/kmac_reduced.sv#L10) | ❌ 62 div; read_uhdm ✅ PASS (300 cycles, 56 active) | R4 `python3 core_sweep.py kmac --filter '^kmac_reduced$'` |
 | sweep opentitan | [`otbn_rnd`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/opentitan_equiv/rtl/otbn/otbn_rnd.sv#L26) | ❌ 296 div; read_uhdm ✅ PASS (300 cycles, 295 active) | R4 `python3 core_sweep.py opentitan --filter '^otbn_rnd$'` |
 | sweep rsd | [`ReadyBitTable`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ReadyBitTable.sv#L20) | ❌ 40 div; read_uhdm ✅ PASS (301 cycles, 227 active) | R3 `python3 ext_flow.py rsd ReadyBitTable` |
+| sweep rsd | [`StoreQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreQueue.sv#L19) | ❌ 29 div; read_uhdm ✅ PASS (301 cycles, 294 active) | R3 `python3 ext_flow.py rsd StoreQueue` |
 | sweep rsd | [`WakeupLogic`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/WakeupLogic.sv#L15) | ❌ 5 div; read_uhdm ✅ PASS (301 cycles, 18 active) | R3 `python3 ext_flow.py rsd WakeupLogic` |
 | sweep verilog-pcie | [`pcie_axil_master`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/pcie_axil_master.v#L34) | ❌ 219 div; read_uhdm ✅ PASS (301 cycles, 205 active) | R3 `python3 ext_flow.py verilog-pcie pcie_axil_master` |
 | sweep verilog-pcie | [`pcie_s10_cfg`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/pcie_s10_cfg.v#L34) | ❌ 103 div; read_uhdm ✅ PASS (301 cycles, 24 active) | R3 `python3 ext_flow.py verilog-pcie pcie_s10_cfg` |
@@ -601,17 +598,8 @@ A row fixed after that date is still listed here until the sweeps are
 re-downloaded and this report regenerated -- check the row before trusting it
 (`R3`-style recipe per row below re-measures it in minutes).
 
-**9** rows.
+**0** rows.
 
 | set | test | verdicts | recipe |
 |---|---|---|---|
-| sweep cvw | [`alu`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/alu.sv#L31) | read_slang ✅ PASS; read_uhdm ❌ 8 div (slang clean) | R3 `python3 ext_flow.py cvw alu` |
-| sweep cvw | [`bitmanipalu`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/bmu/bitmanipalu.sv#L31) | read_slang ✅ PASS; read_uhdm ❌ 12 div (slang clean) | R3 `python3 ext_flow.py cvw bitmanipalu` |
-| sweep cvw | [`clmul`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/bmu/clmul.sv#L31) | read_slang ✅ PASS; read_uhdm ❌ 300 div (slang clean) | R3 `python3 ext_flow.py cvw clmul` |
-| sweep cvw | [`zbc`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/bmu/zbc.sv#L31) | read_slang ✅ PASS; read_uhdm ❌ 300 div (slang clean) | R3 `python3 ext_flow.py cvw zbc` |
-| sweep rsd | [`BlockMultiPortRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Primitives/RAM_Vivado.sv#L112) | read_slang ✅ PASS; read_uhdm ❌ 54 div (slang clean) | R3 `python3 ext_flow.py rsd BlockMultiPortRAM` |
-| sweep rsd | [`BlockTrueDualPortRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Primitives/RAM_Vivado.sv#L49) | read_slang ✅ PASS; read_uhdm ❌ 2 div (slang clean) | R3 `python3 ext_flow.py rsd BlockTrueDualPortRAM` |
-| sweep rsd | [`FP32PipelinedOther`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/FloatingPointUnit/FP32PipelinedOther.sv#L137) | read_slang ✅ PASS; read_uhdm ❌ 1 div (slang clean) | R3 `python3 ext_flow.py rsd FP32PipelinedOther` |
-| sweep rsd | [`FPExecutionStage`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Pipeline/FPBackEnd/FPExecutionStage.sv#L23) | read_slang ✅ PASS; read_uhdm ❌ 156 div (slang clean) | R3 `python3 ext_flow.py rsd FPExecutionStage` |
-| sweep rsd | [`RegisterMultiPortRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Primitives/RAM_Vivado.sv#L1014) | read_slang ✅ PASS; read_uhdm ❌ 15 div (slang clean) | R3 `python3 ext_flow.py rsd RegisterMultiPortRAM` |
 
