@@ -855,6 +855,42 @@ A test for this class must assert the VALUE (it is wrong arithmetic, not a
 wrong shape): `test/loopvar_postloop_sibling` proves three carry-less products
 with `sat -verify -prove`.
 
+## An inlined body's FORMAL must never resolve to a same-named MODULE WIRE
+
+A task / `void function` called as a STATEMENT from an `if` / `case` arm
+(`case (sel) 1'b1: EmitOps(ops, src);`) has its output argument staged in a
+temp -- `$0\<fn>$func$<file>:<line>$<id>.ops` -- and the arm copies that temp
+back to the real signal.  Any resolver that finds the BASE of a write by name
+must therefore prefer the formal's temp over a module wire of the same name, or
+the body writes the module wire while the arm's copy-back selects a temp
+nothing ever wrote:
+
+```
+assign \ops [8] 1'1                                      <- body, real wire
+switch \sel
+  case 1'1: assign \ops $0\EmitOps$func$dut.sv:24$2.ops[17:0]$3   <- no driver
+```
+
+`import_hier_path`'s elem-array struct-field branch resolved its base with
+`find_wire_in_scope(base)` and did exactly that (`ops[0].valid = 1'b1` on an
+`output op_t [1:0] ops` formal).  The mapping lives in TWO places and both have
+to be consulted: `input_mapping` (the `task_mapping` a straight-line body
+statement passes down) and `current_comb_values` (where `TaskMapBridge` puts it
+for an `if` / `case` INSIDE the body).  Guard on the mapped value being a wire
+whose name carries `$func$`, so a module signal is never displaced.
+
+**Re-measure before implementing a recorded plan.**  The expected-fail entry
+for this prescribed a 473-line refactor of `inline_task_body_comb` to carry a
+`CaseRule` target, from a time when `ops` had NO driver at all and three
+attempts had failed (each passing the unit test and then breaking RSD's
+`Decoder`, once to 3859 never-assigned bits).  By the time it was fixed the
+netlist had changed: `ops` was driven, the bodies at root level were harmless
+(two independent temps, one selected per arm -- the correct lowering for a pure
+function), and one guarded lookup was the whole fix.  `Decoder` and
+`PreDecodeStage` measured BYTE-IDENTICAL against a control with only
+`expression.cpp` reverted, which is the only way to know that trap was avoided
+rather than merely unobserved.
+
 ## A CONCATENATION target over an inlined function's LOCALS is written in three places
 
 ```systemverilog

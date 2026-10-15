@@ -15447,6 +15447,37 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     elems.push_back(ew);
                 }
             RTLIL::Wire* flat = elems.empty() ? find_wire_in_scope(base) : nullptr;
+            // Inside an INLINED task / void-function body the base may be a
+            // FORMAL, mapped to the call's `$0\<fn>$func$...` temp.  Resolving
+            // it to the module wire of the same name instead sends the body's
+            // writes to the WRONG signal and leaves the call's output temp --
+            // which the caller's copy-back reads -- never written.  A void
+            // function called from a case arm then produced
+            //     assign \ops [8] 1'1          (body, at root, real wire)
+            //     switch \sel
+            //       case 1'1: assign \ops $0\EmitOps$func$...ops[17:0]$3
+            // where that temp has no driver at all: the arm selected an
+            // unwritten temp and the module's output was wrong on every arm
+            // (test/func_output_arg_in_case_arm, and RSD's Decoder, which
+            // calls nine decode functions from the arms of `case (isf.opCode)`).
+            // The mapping lives in the task_mapping handed in as input_mapping
+            // for a straight-line body statement, and in current_comb_values
+            // once TaskMapBridge has bridged it (an if / case inside the body).
+            {
+                RTLIL::Wire* tfw = nullptr;
+                auto take = [&](const RTLIL::SigSpec& v) {
+                    if (v.is_wire() &&
+                        v.as_wire()->name.str().find("$func$") != std::string::npos)
+                        tfw = v.as_wire();
+                };
+                if (input_mapping)
+                    if (auto it = input_mapping->find(base); it != input_mapping->end())
+                        take(it->second);
+                if (!tfw)
+                    if (auto it = current_comb_values.find(base); it != current_comb_values.end())
+                        take(it->second);
+                if (tfw) { flat = tfw; elems.clear(); }
+            }
             const UHDM::typespec* ets = unpacked_array_elem_struct_ts(
                 base, bs0->Actual_group(), inst, elems.empty() ? nullptr : elems[0]);
             int ew = ets ? get_width_from_typespec(ets, inst) : 0;
