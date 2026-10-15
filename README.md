@@ -58,32 +58,33 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Yosys suite, and is the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
 workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (the 1245 internal tests, ~30 min).  A PR
+`cd test && ./run_parallel.sh 6 --no-cva6` (the 1258 internal tests, ~26 min).  A PR
 lands only on a clean run.  The counts below are the regression's own summary
 (`Total tests run` / per-suite lines of the combined report), not a tally kept
 by hand; "upstream" counts the 520 generated yosys tests the suite scored in
 that run (the deliberately invalid `tests/errors` and tests that produce no RTLIL
 under any frontend are generated but not scored).  Counts are the regression of
-main at #1162 (2026-10-11, run 38183596951), split internal / upstream by the
+main at #1182 (2026-10-15, run 38655113014 -- the PR run, whose tree is
+byte-identical to the squashed main commit), split internal / upstream by the
 `run/` prefix of the shard result lists.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1792 | 1272 | 520 |
-| Functional | 1747 (97%) | 1237 | 510 |
+| Tests | 1805 | 1285 | 520 |
+| Functional | 1760 (98%) | 1250 | 510 |
 | True failures | 9 | **0** | 9 |
 | Crashes | 1 | **0** | 1 |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1084** tests formally equivalent UHDM vs Verilog; **663** UHDM-only
+- **1094** tests formally equivalent UHDM vs Verilog; **666** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **285 / 287** SV-only designs also proven against `read_slang` (2 known-fail,
-  tracked in `test/slang_miter_expected_fail.txt`), and **43**
+  **289 / 291** SV-only designs also proven against `read_slang` (2 known-fail,
+  tracked in `test/slang_miter_expected_fail.txt`), and **49**
   carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
-  can see (a dropped flop or a missing `$mem` still "works" — it just returns
-  constants).
+  can see (a dropped flop, a missing `$mem` or a dropped clock connection still
+  "works" — it just returns constants).
 - **14 equivalence failures**, each with a recorded verdict in
   `test/failing_tests.txt`.  In several the *reference* is the wrong side
   (`read_verilog` mis-lowers the construct) — a SAT miter against `read_slang`
@@ -416,7 +417,7 @@ out of the README to keep this section focused on the leaderboard:
 - Changelog / fixes → [`docs/recent-improvements.md`](docs/recent-improvements.md)
 - Test catalog (incl. the UHDM-only list) → [`docs/test-cases.md`](docs/test-cases.md)
 - chipsalliance/sv-tests (the LRM-chapter corpus, 707 synthesis tests of its own local suite, swept nightly by the **Sweep sv-tests** action): read_uhdm 688 pass vs read_verilog 364 / read_slang 682, every miss classified → [`docs/sv_tests_coverage.md`](docs/sv_tests_coverage.md)
-- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1181 internal tests and the 576 generated upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
+- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1258 internal tests and the 576 generated upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
 
 ## Architecture & Workflow
 

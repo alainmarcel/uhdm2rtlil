@@ -85,6 +85,7 @@
 - **function_loop** - Loop-based bit reversal function
 - **function_nested** - Nested if-else maximum finder
 - **function_mixed** - Mixed arithmetic, bit manipulation, and conditional modes
+- **func_concat_lhs_local** - A CONCATENATION target over an inlined function's LOCALS (`{int_result, lower_bits} = {1'b1, mant, 31'h0} >> shift_amount`) written inside one arm of an if/else, read straight back with `int_result[0]` and again after the arms. Gates all three halves of the defect at once: the fabricated 1-bit wires, the arm merge that could not see a multi-wire write, and the in-flight threading whose absence closed a combinational loop. Asserts `check -assert` for the loop and `sat -verify -prove` for the value, since a miter cannot tell X from a value (`test_structural.ys`)
 - **function_output** - Function with output parameter assignments
 - **many_functions** - Multiple function types: arithmetic, boolean, case, nested, loop, mixed
 - **fib** - Recursive Fibonacci with wrapper function and output parameters
@@ -116,6 +117,8 @@
 - **sp_read_first** - Single port RAM with read-first semantics
 - **sp_read_or_write** - Single port RAM with read-or-write semantics
 - **sp_write_first** - Single port RAM with write-first semantics
+- **memwr_two_writes_one_block** - One always block writing a memory from TWO places (an `initial` loop plus a clocked `data_reg[0] <= s_axis` and a shift loop): the aux wires and the priority mask are MODULE- and SYNC-scoped, not per-emitter
+- **memwr_multi_block_port_order** - Four SEPARATE `always_ff` blocks writing one memory (the shape a generate-for over the write ports makes): asserts the write PORTS are numbered in SOURCE order, because `proc_memwr` numbers them by walking `module->processes` and yosys dicts iterate in reverse — and the LAST port is the one that takes a same-address collision. No formal check can see this: the blocks compute the same function, so the miter is satisfied by any numbering (`test_structural.ys`)
 
 #### Data Types & Structs
 - **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
@@ -139,6 +142,7 @@
 - **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
 - **simple_generate** - Generate loop with AND gates clocked per-bit
 - **forgen01** - Generate block with nested loops computing prime LUT
+- **loopvar_postloop_sibling** - A MODULE-LEVEL loop variable read AFTER its loop, where that loop is a SIBLING of itself across the iterations of an enclosing loop (cvw's carry-less multiplier: `for (j=1;j<=i;j++) ...; R[i] = S[W*i+j-1]`). The leftover `loop_values` entry made the inner loop look NESTED inside an enclosing loop over `j`, so its post-loop value was restored instead of published. Proves three carry-less products with `sat -verify -prove` — it is wrong arithmetic, not a wrong shape (`test_structural.ys`)
 - **forgen02** - Generate block implementing parameterized ripple adder
 - **gen_test1** - Nested generate loops with if-then conditional blocks and sequential always blocks
 - **gen_test2** - For-loop in always block with casez carry propagation
@@ -161,6 +165,7 @@
 #### Module Hierarchy & Interfaces
 - **simple_hierarchy** - Module instantiation and port connections
 - **simple_interface** - Interface-based connections
+- **iface_own_port_modport_clk** - `.clk(port.clk)` where `clk` is one of the INTERFACE'S OWN PORTS, in a module with TWO interface ports whose types both declare it: the elaborated actual is a bare net, so the member is matched back to a port by TYPE, and `clk` is declared by every interface — the bound MODPORT is what disambiguates (LRM 25.5). Asserts the CONNECTION, not a value: a dropped port connection still builds a netlist, the register merely never clocks (`test_structural.ys`)
 - **simple_instance_array** - Primitive gate arrays (and, or, xor, nand, not with array instances) *(UHDM-only)*
 - **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
 - **custom_map_incomp** - Custom technology mapping with `_TECHMAP_REPLACE_` cell and string parameters
