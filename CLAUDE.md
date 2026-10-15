@@ -909,6 +909,67 @@ combinational loop makes the netlist unevaluatable rather than wrong.
 `sat -verify -prove result <value>` for the value, and
 `select -assert-count 0 w:int_result` for the fabricated wires.
 
+## An interface's OWN PORT as an instance actual: the MODPORT is what disambiguates
+
+`.clk(port.clk)` where `clk` comes from
+`interface MulDivUnitIF(input logic clk, rst);` -- an interface's own PORT, not
+a member declared in its body -- reaches `import_instance` in the ELABORATED
+view as a BARE NET named `clk`, with the USE site's location and no interface
+port anywhere in its name.  `resolve_bare_iface_member_actual()`
+(interface.cpp) matches such an actual back to one of the module's interface
+ports by TYPE: every interface definition that declares a member of that name
+is a candidate type, and the module's UNIQUE port of such a type pins the wire
+`\<ifport>.<member>`.
+
+That type test alone is ambiguous for `clk` and `rst`, because a codebase that
+writes `interface FooIF(input logic clk, rst);` declares them in EVERY
+interface.  RSD's `MulDivUnit(MulDivUnitIF.MulDivUnit port,
+RecoveryManagerIF.MulDivUnit recovery)` therefore had two candidates for `clk`
+(`ncand=2`) and the resolution gave up -- so BOTH its multiplier and its
+divider instances lost `.clk(port.clk)` entirely:
+
+    Warning: Logic_net 'clk' not found as wire in module (generate scope: BlockMulUnit[0])
+    Warning: Port clk has empty connection
+    Warning: Wire ...BlockMulUnit[0].mulUnit.clk is used but has no driver.
+
+With no clock the pipeline registers never advanced and `port.mulDataOut` sat
+at 0 from cycle 7 on -- 294 diverging co-simulated cycles on `MulDivUnit` and
+33 on `FPDivSqrtUnit`, both `slang clean`.
+
+**The missing test is the MODPORT** (LRM 25.5): a member is reachable through a
+port only if the modport BOUND to that port exposes it.
+`RecoveryManagerIF`'s `MulDivUnit` modport lists only `toRecoveryPhase` /
+`flushRange*` / `flushAllInsns`, so it is not a candidate for `clk` at all and
+`port` wins uniquely.  The candidate loop now checks the bound `modport`'s
+`Io_decls()`; a whole-interface port (no modport) still exposes everything.
+This only ever NARROWS the candidate set, so a port that already resolved
+uniquely cannot break -- it must expose the member or the source would not
+compile.
+
+Three things not to repeat here:
+
+* **The actual is a BARE NET, not the hier_path you see in the dump.**  The
+  DEFINITION view shows `vpiHighConn: \_hier_path: (port.clk)`, which invites a
+  fix in `import_hier_path` or a hier_path branch at the connection site.  Both
+  were written and thrown away: the elaborated high_conn is `VpiType=36`
+  (vpiNet), so the hier_path branch never fires, and a late catch-all in
+  `import_hier_path` changed `connect \clk` counts ELSEWHERE without fixing
+  the target.  Probe the high_conn's type before choosing a site.
+* **`\<ifport>` has a placeholder wire** at import time carrying only `\src`,
+  removed later -- so neither "the base has no wire" nor an `interface_port`
+  attribute can be used to recognise an interface base.
+* **Five synthetic repros failed** (own port as an actual; + a generate loop;
+  + a paramod child; + a parent `always_ff @(posedge port.clk)`; + a `_flat`
+  wrapper top).  What they all missed was a SECOND interface port whose type
+  also declares `clk`.  The probe that cracked it printed `ncand` from the
+  resolver on the real module.
+
+A test must assert the CONNECTION, not a value: a dropped port connection still
+builds a netlist, the register merely never clocks.  See
+`test/iface_own_port_modport_clk`, whose
+`select -assert-count 1 t:child %ci:+[clk] w:port.clk %i` finds the cell alone
+without the fix.
+
 ## A $unit enum constant is a FABRICATED NET outside its declaring file
 
 `typedef enum logic[1:0] {SCR1_MEM_WIDTH_BYTE, SCR1_MEM_WIDTH_HWORD,
