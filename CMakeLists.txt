@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
-project(uhdm2rtlil VERSION 0.69)
+project(uhdm2rtlil VERSION 0.70)
 
 # Set C++ standard.  Keep the TREE at C++17: third_party/Surelog (and its
 # bundled antlr4) is added below via add_subdirectory and does NOT build under
@@ -98,7 +98,7 @@ else()
     add_custom_target(yosys DEPENDS ${INSTALL_DIR}/bin/yosys)
     add_custom_command(
       OUTPUT ${INSTALL_DIR}/bin/yosys
-      COMMAND ${CMAKE_COMMAND} -E echo "Compiling Yosys v0.69 via CMake, slang=${UHDM2RTLIL_ENABLE_SLANG}"
+      COMMAND ${CMAKE_COMMAND} -E echo "Compiling Yosys v0.70 via CMake, slang=${UHDM2RTLIL_ENABLE_SLANG}"
       COMMAND ${CMAKE_COMMAND} -B ${YOSYS_BUILD_DIR} -S ${YOSYS_SRC_DIR}
               -DCMAKE_BUILD_TYPE=Release
               -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
