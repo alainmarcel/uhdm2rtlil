@@ -596,6 +596,11 @@ A document that can only record another tool's mistakes is not a measurement.
 These sweep rows co-simulate clean with the `read_slang` netlist and diverge with
 ours; they are OUR defects, tracked in the sweeps, listed here in the same format.
 
+Measured 2026-10-14, from the sweep artifacts named at the top of this file.
+A row fixed after that date is still listed here until the sweeps are
+re-downloaded and this report regenerated -- check the row before trusting it
+(`R3`-style recipe per row below re-measures it in minutes).
+
 **9** rows.
 
 | set | test | verdicts | recipe |
