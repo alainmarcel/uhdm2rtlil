@@ -1,0 +1,17 @@
+# The read itself is the primary ratchet: without the fix this dies with
+#   ERROR: Could not find wire 'j' for bit select
+# and the test fails outright.  This file additionally pins the VALUE, because
+# a loop-variable base could regress to the wrong constant (or to a stray
+# narrow `\j` wire, which would silently drop every bit above bit 0) while
+# still reading successfully.
+#
+# get_index converts a one-hot select into a binary index by testing bit i of
+# each candidate index j, so each one-hot input must produce its own position.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt -full
+sat -verify -set i_select 4'b0001 -prove o_index 2'b00
+sat -verify -set i_select 4'b0010 -prove o_index 2'b01
+sat -verify -set i_select 4'b0100 -prove o_index 2'b10
+sat -verify -set i_select 4'b1000 -prove o_index 2'b11
