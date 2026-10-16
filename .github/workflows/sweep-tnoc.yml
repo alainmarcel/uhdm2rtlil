@@ -1,0 +1,51 @@
+# TNoC (taichi-ishitani/tnoc): the network-on-chip chipsalliance/sv-tests builds
+# as `tnoc`.  43 synthesizable modules -- the fabric and its routers, the
+# input/output blocks and switches, the virtual-channel arbiter/merger/mux/
+# splitter, the packet serializer/deserializer, the AXI master and slave
+# adapters, and the tbcm_* basic-component library underneath.
+#
+# A CORE sweep with its own action, not an external-IP family: the cores
+# sv-tests covers get an individual sweep each.
+#
+# The sources are a shallow clone pinned by test/ext_ip/tnoc.json (the commit
+# chipsalliance/sv-tests itself pins), which core_sweep.py fetches.  `rtl/bcm`
+# is a SUBMODULE (taichi-ishitani/tbcm), hence "submodules": true in the
+# manifest: without it rtl/bcm/compile.f does not exist and the closure loses
+# every tbcm_* dependency -- which is most of the leaf logic.  sv-tests drives
+# the core through four compile.f lists (rtl/bcm, rtl/common, rtl/router,
+# rtl/fabric); the manifest's roots cover those plus rtl/axi_adapter.
+#
+# The 16 interfaces are excluded by name: the closure's identifier scan puts
+# `interface` declarations in the same name map as modules, and tnoc is
+# interface-heavy (tnoc_types, tnoc_flit_if, tnoc_packet_if and friends are how
+# the fabric is wired).
+name: Sweep tnoc
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 8 * * *"   # nightly 08:33 UTC, after rggen's 08:17
+
+concurrency:
+  group: sweep-tnoc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: tnoc
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
+      # Two shards: 43 rows, more than fx68k/rggen, and `tnoc_fabric` is a
+      # whole-core row (a 3x3 mesh with 2 virtual channels at the sv-tests
+      # configuration).  The leaf rows probed locally took 3 s each, so two
+      # shards each serialising keep a shard well inside its job timeout
+      # without letting two heavy rows share a runner.
+      shards: 2
+      jobs: "1"

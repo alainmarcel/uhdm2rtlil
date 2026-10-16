@@ -1,0 +1,69 @@
+{
+  "title": "TNoC",
+  "url": "https://github.com/taichi-ishitani/tnoc",
+  "_note": "The chipsalliance/sv-tests core (generators/tnoc), pinned at the commit sv-tests pins.  `rtl/bcm` is a SUBMODULE (taichi-ishitani/tbcm, the basic-component library every block builds on), so `submodules: true`; without it rtl/bcm/compile.f does not exist and the closure loses every tbcm_* dependency.  sv-tests drives the core through four compile.f lists (rtl/bcm, rtl/common, rtl/router, rtl/fabric); the roots below cover those plus rtl/axi_adapter.  No include directories: the tree uses packages, not `include.",
+  "repos": [
+    {
+      "url": "https://github.com/taichi-ishitani/tnoc",
+      "commit": "7e9841ff775ea22fba3f222f7bdfe35668345e00",
+      "dir": "tnoc",
+      "submodules": true
+    }
+  ],
+  "roots": [
+    "tnoc/rtl/axi_adapter/*.sv",
+    "tnoc/rtl/bcm/*.sv",
+    "tnoc/rtl/common/*.sv",
+    "tnoc/rtl/fabric/*.sv",
+    "tnoc/rtl/router/*.sv"
+  ],
+  "incdirs": [],
+  "defines": [
+    "SYNTHESIS"
+  ],
+  "modules": "auto",
+  "seq": 4,
+  "timeout": 300,
+  "want": "proven",
+  "slang_flags": [
+    "--single-unit"
+  ],
+  "exclude": [
+    "^tbcm_crc$",
+    "^tbcm_onehot$",
+    "^tbcm_selector$",
+    "^tnoc_address_decoder_if$",
+    "^tnoc_axi_byte_counter$",
+    "^tnoc_axi_id_generator$",
+    "^tnoc_axi_id_locker$",
+    "^tnoc_axi_if$",
+    "^tnoc_axi_request_info_buffer$",
+    "^tnoc_axi_types$",
+    "^tnoc_axi_utils$",
+    "^tnoc_bfm_flit_if$",
+    "^tnoc_flit_if$",
+    "^tnoc_packet_if$",
+    "^tnoc_port_control_if$",
+    "^tnoc_types$",
+    "^tnoc_utils$"
+  ],
+  "exclude_notes": {
+    "tbcm_crc": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tbcm_onehot": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tbcm_selector": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_address_decoder_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_byte_counter": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_id_generator": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_id_locker": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_request_info_buffer": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_types": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_axi_utils": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_bfm_flit_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_flit_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_packet_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_port_control_if": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_types": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules",
+    "tnoc_utils": "SystemVerilog interface, not a synthesizable module -- the closure's identifier scan puts interfaces in the same name map as modules"
+  }
+}

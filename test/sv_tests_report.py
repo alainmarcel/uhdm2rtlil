@@ -28,7 +28,7 @@ CORES = [  # (sv-tests core test, what sv-tests runs, our coverage)
     ("black-parrot (`bp_default`, `bp_unicore`, `bp_multicore_1`, `_cce_ucode`, `bp_multicore_4`, `_cce_ucode_cfg`) with basejump_stl + HardFloat", "six configurations, top `wrapper`", "yes -- per-module miters + co-sim over the FE/BE/ME complexes, the CCE/LCE coherence engines and the bedrock network (`sweep-black-parrot.yml`), at the `bp_unicore` configuration"),
     ("scr1 (`scr1_top_tb_axi`)", "full core + AXI top", "yes -- per-module miters + co-sim over the pipeline and both SoC tops (`sweep-scr1.yml`)"),
     ("rsd (`Core`)", "full core", "yes -- per-module miters + co-sim over the out-of-order core and its blocks (`sweep-rsd.yml`)"),
-    ("tnoc (`tnoc`)", "network-on-chip", "**no**"),
+    ("tnoc (`tnoc`)", "network-on-chip", "yes -- per-module miters + co-sim over the fabric, its routers, the virtual-channel logic, the packet serializers and the AXI adapters (`sweep-tnoc.yml`)"),
     ("rggen (`rggen`, rggen-sv-rtl + rggen-sample)", "generated register files", "**no**"),
     ("fx68k", "68000 core (needs `--allow-dup-initial-drivers` under slang)", "**no**"),
     ("yosys tests (`yosys_hana`)", "the upstream yosys test files", "yes -- the 576 generated `test/run/**` tests in the regression"),
