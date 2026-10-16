@@ -12321,6 +12321,50 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // enclosing task or function, which is what find_enclosing_tf_decl
     // answers (it returns null once the walk reaches an instance, so a
     // module-level always_comb is unaffected).
+    // A for-loop variable used as the BASE of a bit-select: substitute its
+    // current constant value, exactly as import_part_select does for `k[1:0]`.
+    // `j[i]` arrives as a vpiBitSelect carrying VpiName="j", not a reference,
+    // so without this the lookup goes hunting for a wire named `j` and the
+    // read DIES -- losing the whole module:
+    //     ERROR: Could not find wire 'j' for bit select
+    // tnoc's tbcm_mux (rtl/bcm/tbcm_mux.sv) is the real case; its get_index
+    // turns a one-hot select into a binary index by testing bit i of each
+    // candidate index j:
+    //     for (int i = 0;i < INDEX_WIDTH;++i)
+    //       for (int j = 0;j < ENTRIES;++j)
+    //         temp[j] = select[j] & j[i];
+    //
+    // Size the constant to at least an int (32), NEVER to a `\j` wire that
+    // happens to exist: the same lesson as the part-select path, where
+    // trusting a stray narrow wire -- one gets materialised when the loop var
+    // is also used as a bit-select INDEX earlier in the block -- collapsed the
+    // base to 1 bit and silently dropped every upper bit.  A wider constant is
+    // always safe here, since its upper bits are 0.
+    if (loop_values.count(signal_name)) {
+        int lv = loop_values.at(signal_name);
+        RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
+        if (idx.is_fully_const()) {
+            int bit = idx.as_const().as_int();
+            int val = (bit >= 0 && bit < 32) ? ((lv >> bit) & 1) : 0;
+            uhdm_trace("    BitSelect: loop var '%s' = %d, bit %d -> %d\n",
+                       signal_name.c_str(), lv, bit, val);
+            return RTLIL::SigSpec(val ? RTLIL::State::S1 : RTLIL::State::S0);
+        }
+        // Dynamic index into the loop variable's constant value: hand the
+        // constant to the ordinary select machinery below as the base.
+        RTLIL::Wire* lw = find_wire_in_scope(signal_name, "bit select width");
+        int bw = std::max(lw ? lw->width : 32, 32);
+        RTLIL::SigSpec cbase(RTLIL::Const(lv, bw));
+        int iw = std::max(GetSize(idx), 32);
+        RTLIL::SigSpec idx_ext = idx;
+        idx_ext.extend_u0(iw, false);
+        RTLIL::Wire* out = module->addWire(NEW_ID, 1);
+        module->addShiftx(NEW_ID, cbase, idx_ext, out);
+        uhdm_trace("    BitSelect: loop var '%s' = %d with dynamic index -> $shiftx\n",
+                   signal_name.c_str(), lv);
+        return RTLIL::SigSpec(out);
+    }
+
     bool shadowed_by_tf_scope =
         input_mapping && input_mapping->count(signal_name) > 0 &&
         find_enclosing_tf_decl(uhdm_bit, signal_name) != nullptr;
