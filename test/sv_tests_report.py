@@ -30,7 +30,7 @@ CORES = [  # (sv-tests core test, what sv-tests runs, our coverage)
     ("rsd (`Core`)", "full core", "yes -- per-module miters + co-sim over the out-of-order core and its blocks (`sweep-rsd.yml`)"),
     ("tnoc (`tnoc`)", "network-on-chip", "yes -- per-module miters + co-sim over the fabric, its routers, the virtual-channel logic, the packet serializers and the AXI adapters (`sweep-tnoc.yml`)"),
     ("rggen (`rggen`, rggen-sv-rtl + rggen-sample)", "generated register files", "**no**"),
-    ("fx68k", "68000 core (needs `--allow-dup-initial-drivers` under slang)", "**no**"),
+    ("fx68k", "68000 core (needs `--allow-dup-initial-drivers` under slang)", "yes -- per-module miters + co-sim over the sequencer, the microcode/nanocode ROMs, the ALU and the bus controller (`sweep-fx68k.yml`); the slang flag is passed by the manifest"),
     ("yosys tests (`yosys_hana`)", "the upstream yosys test files", "yes -- the 576 generated `test/run/**` tests in the regression"),
     ("ivtest (Icarus tests)", "the Icarus Verilog test suite", "**no**"),
 ]
