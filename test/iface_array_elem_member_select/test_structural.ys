@@ -1,0 +1,14 @@
+# UHDM-only (read_verilog has no interfaces).  Pins the VALUES: without the
+# fix every selected read is dropped and the outputs are not functions of the
+# inputs.  test_slang_equiv.ys proves the whole module against read_slang.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+flatten
+opt_clean
+check -assert
+opt -full
+sat -verify -set i_v5 32'h0000_0080 -prove o_match 1'b0
+sat -verify -set i_v5 32'h0000_0000 -prove o_match 1'b1
+sat -verify -set i_v3 32'h0000_0a00 -prove o_nib 4'ha
+sat -verify -set i_s2 8'h40 -prove o_bit 1'b1
