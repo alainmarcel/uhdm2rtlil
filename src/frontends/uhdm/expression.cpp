@@ -14407,6 +14407,98 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // field chain.  This is robust regardless of where the interface instance
     // sits in the hierarchy (an array element, a parent's port), replacing the
     // fragile name/parent-chain search below.
+    // `iface_inst.member[sel]` -- a bit / part / indexed-part select of an
+    // INTERFACE INSTANCE's member.  rggen's `rggen_connect_bit_field_if`
+    // macro is exactly that, in an always_comb inside a generate block:
+    //   FIF.mask                  = RIF.mask[LSB+:WIDTH];
+    //   RIF.read_data[LSB+:WIDTH] = FIF.read_data;
+    // and its tie-off writes `RIF.read_data[__i] = '0` per genvar.  The PLAIN
+    // member (`RIF.valid`) resolves through the scope-qualified wire
+    // (`g_rbr.bit_field_if.valid`); the selected form fell to the struct-member
+    // decoder, which has no struct to decode, and the access was dropped
+    // ("Could not resolve struct member access 'bit_field_if.mask[0+:8]'") --
+    // every rggen register block's read data came back undriven.  Resolve the
+    // member wire the way the plain form does and hand it to the select
+    // importer as the base.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        const any* e0 = (*uhdm_hier->Path_elems())[0];
+        const any* e1 = (*uhdm_hier->Path_elems())[1];
+        int t1 = e1->UhdmType();
+        if (e0->UhdmType() == uhdmref_obj &&
+            (t1 == uhdmbit_select || t1 == uhdmpart_select ||
+             t1 == uhdmindexed_part_select)) {
+            auto r0 = any_cast<const ref_obj*>(e0);
+            if (r0->Actual_group() &&
+                r0->Actual_group()->UhdmType() == uhdminterface_inst) {
+                std::string mem = std::string(e1->VpiName());
+                std::string mw = std::string(r0->VpiName()) + "." + mem;
+                auto ii = any_cast<const interface_inst*>(r0->Actual_group());
+                // The instance's scope-qualified name (`g_rbr.bit_field_if`),
+                // from its elaborated full name relative to this module.
+                std::string scoped = mw;
+                {
+                    std::string ifn = std::string(ii->VpiFullName());
+                    std::string ip = current_instance
+                        ? std::string(current_instance->VpiFullName()) + "." : "";
+                    if (!ip.empty() && ifn.compare(0, ip.size(), ip) == 0)
+                        scoped = ifn.substr(ip.size()) + "." + mem;
+                }
+                // Not for a member that is itself an UNPACKED ARRAY (`p.arr[1]`,
+                // `p.q[i]`, `p.arr[s].a`): its elements have their own geometry
+                // (iface_array_elem_width_) and the branches further down
+                // select an ELEMENT, not a bit of the flat member wire.
+                bool array_member = iface_array_elem_width_.count(scoped) ||
+                                    iface_array_elem_width_.count(mw);
+                if (!array_member && ii->Array_vars())
+                    for (auto av : *ii->Array_vars())
+                        if (std::string(av->VpiName()) == mem) { array_member = true; break; }
+                if (!array_member && ii->Array_nets())
+                    for (auto an : *ii->Array_nets())
+                        if (std::string(an->VpiName()) == mem) { array_member = true; break; }
+                RTLIL::Wire* w = nullptr;
+                if (array_member) {
+                    uhdm_trace("    hier_path: %s is an unpacked-array member; element geometry path\n", mw.c_str());
+                } else {
+                if (name_map.count(scoped)) w = name_map[scoped];
+                if (!w) w = module->wire(RTLIL::escape_id(scoped));
+                if (!w) w = find_wire_in_scope(mw, "interface member select");
+                }
+                if (!w && !array_member) {
+                    // Not referenced in plain form anywhere yet: create it
+                    // from the instance's own member declaration, as the
+                    // plain form's first reference would.
+                    const any* mobj = nullptr;
+                    if (ii->Nets())
+                        for (auto n : *ii->Nets())
+                            if (std::string(n->VpiName()) == mem) { mobj = n; break; }
+                    if (!mobj && ii->Variables())
+                        for (auto v : *ii->Variables())
+                            if (std::string(v->VpiName()) == mem) { mobj = v; break; }
+                    if (mobj) {
+                        int mwid = get_width(const_cast<any*>(mobj), current_instance);
+                        if (mwid <= 0) mwid = 1;
+                        w = create_wire(scoped, mwid);
+                        name_map[scoped] = w;
+                        uhdm_trace("    hier_path: created interface member wire %s (width %d)\n",
+                            scoped.c_str(), mwid);
+                    }
+                }
+                if (w) {
+                    std::map<std::string, RTLIL::SigSpec> base_map;
+                    if (input_mapping) base_map = *input_mapping;
+                    base_map[mem] = RTLIL::SigSpec(w);
+                    uhdm_trace("    hier_path: interface member select %s -> base wire %s\n",
+                        path_name.c_str(), w->name.c_str());
+                    if (t1 == uhdmbit_select)
+                        return import_bit_select(any_cast<const bit_select*>(e1), inst, &base_map);
+                    if (t1 == uhdmpart_select)
+                        return import_part_select(any_cast<const part_select*>(e1), inst, &base_map);
+                    return import_indexed_part_select(
+                        any_cast<const indexed_part_select*>(e1), inst, &base_map);
+                }
+            }
+        }
+    }
     if (auto fs = fold_iface_param_via_chain(uhdm_hier); fs.size() > 0) {
         if (mode_debug)
             uhdm_trace("    hier_path: %s -> %d-bit constant via Actual_group chain\n",
