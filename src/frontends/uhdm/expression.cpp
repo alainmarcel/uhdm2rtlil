@@ -14424,6 +14424,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         const any* e0 = (*uhdm_hier->Path_elems())[0];
         const any* e1 = (*uhdm_hier->Path_elems())[1];
         int t1 = e1->UhdmType();
+        // Same for an interface-ARRAY ELEMENT's member, `register_if[5].value[7+:1]`
+        // (rggen's indirect-register match): the element instance's member
+        // wire is `register_if[5].value`, already created by the array's
+        // import; the path is [bit_select(register_if, 5), select(value)].
+        if (e0->UhdmType() == uhdmbit_select &&
+            (t1 == uhdmbit_select || t1 == uhdmpart_select ||
+             t1 == uhdmindexed_part_select)) {
+            auto b0 = any_cast<const bit_select*>(e0);
+            RTLIL::SigSpec bi = b0->VpiIndex() ? import_expression(b0->VpiIndex()) : RTLIL::SigSpec();
+            if (bi.size() > 0 && bi.is_fully_const()) {
+                std::string mem = std::string(e1->VpiName());
+                std::string elem = std::string(b0->VpiName()) + "[" + std::to_string(bi.as_int()) + "]";
+                std::string mw = elem + "." + mem;
+                RTLIL::Wire* w = find_wire_in_scope(mw, "interface-array element member select");
+                if (w && (iface_inst_vars_.count(elem) ||
+                          w->attributes.count(RTLIL::escape_id("interface_member")) ||
+                          (b0->Actual_group() &&
+                           (b0->Actual_group()->UhdmType() == uhdminterface_array ||
+                            b0->Actual_group()->UhdmType() == uhdminterface_inst)) ||
+                          !b0->Actual_group())) {
+                    std::map<std::string, RTLIL::SigSpec> base_map;
+                    if (input_mapping) base_map = *input_mapping;
+                    base_map[mem] = RTLIL::SigSpec(w);
+                    uhdm_trace("    hier_path: interface-array element member select %s -> base wire %s\n",
+                        path_name.c_str(), w->name.c_str());
+                    if (t1 == uhdmbit_select)
+                        return import_bit_select(any_cast<const bit_select*>(e1), inst, &base_map);
+                    if (t1 == uhdmpart_select)
+                        return import_part_select(any_cast<const part_select*>(e1), inst, &base_map);
+                    return import_indexed_part_select(
+                        any_cast<const indexed_part_select*>(e1), inst, &base_map);
+                }
+            }
+        }
         if (e0->UhdmType() == uhdmref_obj &&
             (t1 == uhdmbit_select || t1 == uhdmpart_select ||
              t1 == uhdmindexed_part_select)) {
