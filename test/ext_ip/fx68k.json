@@ -1,0 +1,27 @@
+{
+  "title": "fx68k",
+  "url": "https://github.com/ijor/fx68k",
+  "_note": "The chipsalliance/sv-tests core (generators/fx68k), pinned at the commit sv-tests pins.  A cycle-accurate Motorola 68000 -- the one NON-RISC-V CPU core in the sv-tests list.  sv-tests compiles exactly three files (fx68k.sv, fx68kAlu.sv, uaddrPla.sv) and names no top module, so every module is swept on its own.  No packages and no include directories.  sv-tests' own coverage note says this core \"needs --allow-dup-initial-drivers under slang\", so that flag is passed to read_slang here too: without it slang refuses a module whose `initial` blocks drive the same variable more than once, and the row would lose its reference.",
+  "repos": [
+    {
+      "url": "https://github.com/ijor/fx68k",
+      "commit": "0602ee4627b10f301298f2673d826cdd6baa9327",
+      "dir": "fx68k"
+    }
+  ],
+  "roots": [
+    "fx68k/*.sv"
+  ],
+  "incdirs": [],
+  "defines": [],
+  "modules": "auto",
+  "seq": 4,
+  "timeout": 300,
+  "want": "proven",
+  "slang_flags": [
+    "--single-unit",
+    "--allow-dup-initial-drivers"
+  ],
+  "exclude": [],
+  "exclude_notes": {}
+}

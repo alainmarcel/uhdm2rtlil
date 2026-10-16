@@ -1,0 +1,42 @@
+# fx68k (ijor/fx68k): a cycle-accurate Motorola 68000 -- the one NON-RISC-V CPU
+# core in the chipsalliance/sv-tests list, and the smallest.  22 synthesizable
+# modules out of three files (fx68k.sv, fx68kAlu.sv, uaddrPla.sv): the
+# sequencer, the microcode/nanocode ROMs and their address PLA, the ALU and its
+# shifter, the bus arbiter/controller and the exception unit.
+#
+# A CORE sweep with its own action (like scr1, ibex, rp32, veer-eh1/el2, rsd and
+# black-parrot), not an external-IP family: the cores sv-tests covers get an
+# individual sweep each.
+#
+# The sources are a shallow clone pinned by test/ext_ip/fx68k.json (the commit
+# chipsalliance/sv-tests itself pins), which core_sweep.py fetches.  sv-tests
+# names NO top module for this core, so every module is swept on its own; there
+# are no packages, no include directories and no defines.
+name: Sweep fx68k
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "47 7 * * *"   # nightly 07:47 UTC, after black-parrot's 07:33
+
+concurrency:
+  group: sweep-fx68k-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: fx68k
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 120
+      # One shard with concurrent miters: 22 rows over three small files, and
+      # the two probed locally took 6 s and 5 s.  Nothing here is a whole-core
+      # row at the memory cap, so there is no reason to serialise.
+      shards: 1
+      jobs: "2"
