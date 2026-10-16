@@ -1,0 +1,8 @@
+# Pins the folded VALUE: with the unbound-N bug the loop never runs and
+# stepped(1) returns 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt -full
+sat -verify -prove o_val 16'd11

@@ -951,7 +951,6 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             if (block_variables) {
                 for (auto var : *block_variables) {
                     std::string var_name = std::string(var->VpiName());
-
                     int width = declare_function_local(var, block_vars);
 
                     // Initialize the local variable to 0
@@ -1015,6 +1014,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         cond_value = evaluate_single_operand(fs->VpiCondition(), local_vars);
                     }
                 }
+                uhdm_trace("    for cond = %s\n", cond_value.as_string().c_str());
                 if (cond_value.size() == 0 || cond_value.is_fully_zero()) break;
                 if (fs->VpiStmt())
                     last_result = evaluate_function_stmt(fs->VpiStmt(), local_vars, func_name);
@@ -1231,6 +1231,16 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
                     }
                 }
             }
+        } else if (module && !ref->Actual_group() &&
+                   module->parameter_default_values.count(RTLIL::escape_id(var_name)) &&
+                   module->parameter_default_values.at(RTLIL::escape_id(var_name)).size() > 0) {
+            // A reference to a MODULE parameter from inside the function
+            // body that Surelog left UNBOUND (no vpiActual): `for (int i =
+            // 0; i < N; ++i)` in rggen_or_reducer's get_offset_list, where N
+            // is the module's own parameter.  The condition folded to 0 and
+            // the loop never ran.  The module's imported value is the
+            // answer, exactly as for a bound parameter above.
+            val = module->parameter_default_values.at(RTLIL::escape_id(var_name));
         }
     } else if (operand->VpiType() == vpiOperation) {
         const operation* sub_op = any_cast<const operation*>(operand);
