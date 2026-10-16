@@ -21,7 +21,7 @@ void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
     
     // Import primitive gates from module
     if (uhdm_module->Primitives()) {
-        log("UHDM: Found %d primitive gates\n", (int)uhdm_module->Primitives()->size());
+        uhdm_trace("UHDM: Found %d primitive gates\n", (int)uhdm_module->Primitives()->size());
         for (auto prim : *uhdm_module->Primitives()) {
             if (auto gate = dynamic_cast<const UHDM::gate*>(prim)) {
                 std::string instance_name(gate->VpiName());
@@ -37,7 +37,7 @@ void UhdmImporter::import_primitive_arrays(const module_inst* uhdm_module) {
     
     // Check for Primitive_arrays() which should contain gate arrays
     if (uhdm_module->Primitive_arrays()) {
-        log("UHDM: Found %d primitive arrays\n", (int)uhdm_module->Primitive_arrays()->size());
+        uhdm_trace("UHDM: Found %d primitive arrays\n", (int)uhdm_module->Primitive_arrays()->size());
         for (auto prim_array : *uhdm_module->Primitive_arrays()) {
             if (auto gate_array = dynamic_cast<const UHDM::gate_array*>(prim_array)) {
                 import_gate_array(gate_array);
@@ -100,7 +100,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
         inst_name = gate_type_str + "_gate";
     }
     
-    log("UHDM: Importing %s gate '%s'\n", gate_type_str.c_str(), inst_name.c_str());
+    uhdm_trace("UHDM: Importing %s gate '%s'\n", gate_type_str.c_str(), inst_name.c_str());
     
     // Get terminals (ports)
     if (!uhdm_gate->Prim_terms()) {
@@ -194,7 +194,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
         }
     }
     
-    log("UHDM: Gate '%s' has %d outputs and %d inputs\n", 
+    uhdm_trace("UHDM: Gate '%s' has %d outputs and %d inputs\n", 
         inst_name.c_str(), (int)outputs.size(), (int)inputs.size());
     
     // Import gate attributes helper
@@ -278,7 +278,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
                 }
                 // Don't need the original cell
                 module->remove(cell);
-                log("UHDM: Created %d-input %s as XOR-reduce%s\n",
+                uhdm_trace("UHDM: Created %d-input %s as XOR-reduce%s\n",
                     (int)inputs.size(), gate_type_str.c_str(),
                     prim_type == vpiXnorPrim ? " + NOT" : "");
                 return;
@@ -315,7 +315,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
                     module->connect(outputs[0], result);
                 }
                 module->remove(cell);
-                log("UHDM: Created %d-input %s as reduce%s\n",
+                uhdm_trace("UHDM: Created %d-input %s as reduce%s\n",
                     (int)inputs.size(), gate_type_str.c_str(),
                     invert ? " + NOT" : "");
                 return;
@@ -330,7 +330,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
         return;
     }
     
-    log("UHDM: Successfully imported %s gate\n", gate_type_str.c_str());
+    uhdm_trace("UHDM: Successfully imported %s gate\n", gate_type_str.c_str());
 }
 
 // Import a gate array
@@ -338,7 +338,7 @@ void UhdmImporter::import_gate_array(const gate_array* uhdm_gate_array) {
     if (!uhdm_gate_array) return;
     
     std::string array_name = std::string(uhdm_gate_array->VpiName());
-    log("UHDM: Importing gate array '%s'\n", array_name.c_str());
+    uhdm_trace("UHDM: Importing gate array '%s'\n", array_name.c_str());
     
     // Get array bounds from Ranges()
     int array_left = 0;
@@ -375,7 +375,7 @@ void UhdmImporter::import_gate_array(const gate_array* uhdm_gate_array) {
         }
     }
     
-    log("UHDM: Gate array has %d elements (range [%d:%d])\n", array_size, array_left, array_right);
+    uhdm_trace("UHDM: Gate array has %d elements (range [%d:%d])\n", array_size, array_left, array_right);
     
     // Get the primitive template
     if (!uhdm_gate_array->Primitives() || uhdm_gate_array->Primitives()->empty()) {
@@ -465,7 +465,7 @@ void UhdmImporter::import_gate_array_element(const gate* gate_template, const st
             return;
     }
     
-    log("UHDM: Creating %s gate '%s' (bit %d)\n", gate_type_str.c_str(), instance_name.c_str(), bit_index);
+    uhdm_trace("UHDM: Creating %s gate '%s' (bit %d)\n", gate_type_str.c_str(), instance_name.c_str(), bit_index);
     
     // Get terminals (ports)
     if (!gate_template->Prim_terms()) {
@@ -572,7 +572,7 @@ void UhdmImporter::import_gate_array_element(const gate* gate_template, const st
         cell->setPort(ID::B, input_b);
     }
     
-    log("UHDM: Successfully created %s gate element\n", gate_type_str.c_str());
+    uhdm_trace("UHDM: Successfully created %s gate element\n", gate_type_str.c_str());
 }
 
 YOSYS_NAMESPACE_END

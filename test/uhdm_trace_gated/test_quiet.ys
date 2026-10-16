@@ -1,0 +1,6 @@
+# No -debug: read_uhdm must print no "UHDM:"/indented importer trace at all.
+# run_all_tests.sh's run_quietcheck hook greps this run's output and fails on
+# any such line.  (yosys's `logger -expect` cannot express this: it rejects an
+# expected count of 0, see passes/cmds/logger.cc.)
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut

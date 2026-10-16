@@ -42,6 +42,25 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// read_uhdm's debug TRACE, printed only under `read_uhdm -debug`.
+//
+// The frontend carries ~1300 of these.  They used to call `log()` directly,
+// with no `mode_debug` guard -- against this project's own rule ("Check
+// `mode_debug` before logging") -- so EVERY read printed them: 99 lines on
+// `test/simple_counter`, the smallest test in the suite, and 292 MB in the
+// first 7 minutes of BlackParrot's bp_unicore (~640 KB/s), which alone makes a
+// 125-row sweep unusable in CI.
+//
+// This is a MACRO, not a member function, for two reasons: ~40 of the call
+// sites are in file-scope `static` helpers that have no `this` to reach
+// `mode_debug` through, and Yosys 0.70's `log()` is a variadic TEMPLATE over
+// `FmtString` (compile-time format checking) rather than a C varargs function,
+// so a va_list forwarder is not available.  The macro keeps the format
+// checking and costs nothing when tracing is off.
+extern bool uhdm_trace_enabled;
+#define uhdm_trace(...) \
+    do { if (YOSYS_NAMESPACE_PREFIX uhdm_trace_enabled) log(__VA_ARGS__); } while (0)
+
 // Cast a statement that a case-label assumes is a `vpiAssignment` to `assignment*`.
 //
 // IMPORTANT: `vpiAssignment` (UHDM class `assignment`) and `vpiAssignStmt` (UHDM

@@ -250,7 +250,7 @@ void UhdmMemoryAnalyzer::analyze_assignment_for_memory(const assignment* assign,
     if (!assign->Lhs() || !assign->Rhs()) return;
     
     if (parent->mode_debug) {
-        log("    Analyzing assignment for memory patterns (context: %s)\n", context.c_str());
+        uhdm_trace("    Analyzing assignment for memory patterns (context: %s)\n", context.c_str());
     }
     
     // Check if LHS is memory access (write operation)
@@ -266,7 +266,7 @@ void UhdmMemoryAnalyzer::analyze_assignment_for_memory(const assignment* assign,
     // Check for indexed references which indicate memory access
     if (assign->Rhs()->VpiType() == vpiIndexedPartSelect || assign->Rhs()->VpiType() == vpiPartSelect) {
         if (parent->mode_debug) {
-            log("      Found indexed part select - potential memory read\n");
+            uhdm_trace("      Found indexed part select - potential memory read\n");
         }
         // This could be memory[addr] access - cast to expr*
         if (auto rhs_expr = dynamic_cast<const expr*>(assign->Rhs())) {
@@ -295,7 +295,7 @@ void UhdmMemoryAnalyzer::analyze_hierarchical_access(const ref_obj* hier_ref, co
         memory_accesses.push_back(access);
         
         if (parent->mode_debug) {
-            log("    Found %s access to memory %s\n", 
+            uhdm_trace("    Found %s access to memory %s\n", 
                 (access.type == MemoryAccess::WRITE) ? "write" : "read",
                 ref_name.c_str());
         }
@@ -307,7 +307,7 @@ void UhdmMemoryAnalyzer::analyze_memory_usage_in_expressions(const expr* express
     if (!expression) return;
     
     if (parent->mode_debug) {
-        log("      Analyzing expression for memory usage (VpiType=%d, context=%s)\n", 
+        uhdm_trace("      Analyzing expression for memory usage (VpiType=%d, context=%s)\n", 
             expression->VpiType(), context.c_str());
     }
     
@@ -320,7 +320,7 @@ void UhdmMemoryAnalyzer::analyze_memory_usage_in_expressions(const expr* express
     int expr_type = expression->VpiType();
     if (expr_type == vpiPartSelect || expr_type == vpiIndexedPartSelect || expr_type == vpiBitSelect) {
         if (parent->mode_debug) {
-            log("        Found select operation - checking if it's memory access\n");
+            uhdm_trace("        Found select operation - checking if it's memory access\n");
         }
         
         // Try to extract the base object and index
@@ -337,7 +337,7 @@ void UhdmMemoryAnalyzer::analyze_memory_usage_in_expressions(const expr* express
             memory_accesses.push_back(access);
             
             if (parent->mode_debug) {
-                log("        Detected %s access to memory %s\n", 
+                uhdm_trace("        Detected %s access to memory %s\n", 
                     (access.type == MemoryAccess::WRITE) ? "write" : "read",
                     expr_name.c_str());
             }
@@ -380,7 +380,7 @@ void UhdmMemoryAnalyzer::generate_memory_block(const MemoryInfo& mem_info) {
     module->memories[mem_id] = memory;
     
     if (parent->mode_debug)
-        log("    Created memory %s: width=%d, size=%d\n", 
+        uhdm_trace("    Created memory %s: width=%d, size=%d\n", 
             mem_info.name.c_str(), mem_info.width, mem_info.size);
 }
 
@@ -451,7 +451,7 @@ void UhdmMemoryAnalyzer::generate_memory_read_cell(const MemoryAccess& access) {
     }
     
     if (parent->mode_debug)
-        log("    Generated $memrd cell %s for memory %s\n", cell_name.c_str(), access.memory_name.c_str());
+        uhdm_trace("    Generated $memrd cell %s for memory %s\n", cell_name.c_str(), access.memory_name.c_str());
 }
 
 // Generate memory write process (simplified)
@@ -461,7 +461,7 @@ void UhdmMemoryAnalyzer::generate_memory_write_process(const std::vector<MemoryA
     const auto& first_write = writes[0];
     
     if (parent->mode_debug)
-        log("    Generating write process for memory %s\n", first_write.memory_name.c_str());
+        uhdm_trace("    Generating write process for memory %s\n", first_write.memory_name.c_str());
     
     // This is a simplified implementation
     // In practice, this would need to integrate with the existing process generation
@@ -551,7 +551,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
             dim_sizes.push_back(std::abs(left - right) + 1);
             dim_los.push_back(std::min(left, right));
             if (mode_debug)
-                log("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
+                uhdm_trace("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
         }
         if (dim_sizes.size() == 1) {
             size = dim_sizes[0];
@@ -611,7 +611,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
                         if (outer_dim == 0) outer_dim = dim;   // first = outermost
                         packed_total *= dim;
                         if (mode_debug)
-                            log("    Packed range: [%d:%d]\n", left, right);
+                            uhdm_trace("    Packed range: [%d:%d]\n", left, right);
                     }
                     force_const_fold = saved_fcf;
                     if (all_const && packed_total > 0) {
@@ -619,7 +619,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
                         if (logic_typespec->Ranges()->size() > 1)
                             packed_outer_dim = outer_dim;
                         if (mode_debug)
-                            log("    Packed width=%d (%d dims)\n", width,
+                            uhdm_trace("    Packed width=%d (%d dims)\n", width,
                                 (int)logic_typespec->Ranges()->size());
                     }
                 }
@@ -674,7 +674,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
             }
         }
         if (mode_debug)
-            log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
+            uhdm_trace("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
                 width, size, start_offset);
     }
 
@@ -702,7 +702,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
     module->memories[mem_id] = memory;
 
     if (mode_debug)
-        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
+        uhdm_trace("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
             array_name.c_str(), width, size, start_offset);
 }
 
@@ -744,7 +744,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
             dim_sizes.push_back(std::abs(left - right) + 1);
             dim_los.push_back(std::min(left, right));
             if (mode_debug)
-                log("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
+                uhdm_trace("    Array range: [%d:%d], size=%d\n", left, right, std::abs(left - right) + 1);
         }
         if (dim_sizes.size() == 1) {
             size = dim_sizes[0];
@@ -815,7 +815,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                         if (outer_dim == 0) outer_dim = dim;   // first = outermost
                         packed_total *= dim;
                         if (mode_debug)
-                            log("    Packed range: [%d:%d]\n", left, right);
+                            uhdm_trace("    Packed range: [%d:%d]\n", left, right);
                     }
                     force_const_fold = saved_fcf;
                     if (all_const && packed_total > 0) {
@@ -823,7 +823,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                         if (logic_typespec->Ranges()->size() > 1)
                             packed_outer_dim = outer_dim;
                         if (mode_debug)
-                            log("    Packed width=%d (%d dims)\n", width,
+                            uhdm_trace("    Packed width=%d (%d dims)\n", width,
                                 (int)logic_typespec->Ranges()->size());
                     }
                 }
@@ -878,7 +878,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
             }
         }
         if (mode_debug)
-            log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
+            uhdm_trace("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
                 width, size, start_offset);
     }
 
@@ -951,7 +951,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                         cell->setPort(ID::ADDR, RTLIL::Const(start_offset, 32));
                         cell->setPort(ID::DATA, RTLIL::Const(data));
                         cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, width));
-                        log("    Added $meminit for %s: %d words = default\n",
+                        uhdm_trace("    Added $meminit for %s: %d words = default\n",
                             array_name.c_str(), size);
                     }
                 }
@@ -960,7 +960,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     }
 
     if (mode_debug)
-        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
+        uhdm_trace("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
             array_name.c_str(), width, size, start_offset);
 }
 

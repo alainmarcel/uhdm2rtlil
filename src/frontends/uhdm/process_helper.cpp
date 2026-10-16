@@ -1404,7 +1404,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                                    std::string& clock_signal, std::string& reset_signal,
                                                    std::vector<int>& slice_offsets, std::vector<int>& slice_widths) {
     
-    log("UHDM: Extracting signal names from process statement\n");
+    uhdm_trace("UHDM: Extracting signal names from process statement\n");
     
     // Handle event_control wrapper (for always_ff @(...))
     if (stmt->VpiType() == vpiEventControl) {
@@ -1412,7 +1412,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
         if (auto controlled_stmt = event_ctrl->Stmt()) {
             // Extract the actual statement from event control
             stmt = controlled_stmt;
-            log("UHDM: Unwrapped event_control, found inner statement type: %s (vpiType=%d)\n", 
+            uhdm_trace("UHDM: Unwrapped event_control, found inner statement type: %s (vpiType=%d)\n", 
                 UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
         }
     }
@@ -1422,13 +1422,13 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
     if (stmts) {
         // Get first statement from begin block
         stmt = stmts->at(0);
-        log("UHDM: Unwrapped begin block, found inner statement type: %s (vpiType=%d)\n",
+        uhdm_trace("UHDM: Unwrapped begin block, found inner statement type: %s (vpiType=%d)\n",
             UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
     }
     
     // For simple_counter, we need to extract from the if statement structure
     if (stmt->VpiType() == vpiIf || stmt->VpiType() == vpiIfElse) {
-        log("UHDM: Found if statement, VpiType=%d, UhdmType=%s\n", stmt->VpiType(), UhdmName(stmt->UhdmType()).c_str());
+        uhdm_trace("UHDM: Found if statement, VpiType=%d, UhdmType=%s\n", stmt->VpiType(), UhdmName(stmt->UhdmType()).c_str());
         
         // Check if this is an if_else or just if_stmt
         if (stmt->UhdmType() == uhdmif_else) {
@@ -1439,7 +1439,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             
             // Check then statement for reset assignment
             if (auto then_stmt = if_else_stmt->VpiStmt()) {
-                log("UHDM: Then statement type: %s (vpiType=%d)\n", UhdmName(then_stmt->UhdmType()).c_str(), then_stmt->VpiType());
+                uhdm_trace("UHDM: Then statement type: %s (vpiType=%d)\n", UhdmName(then_stmt->UhdmType()).c_str(), then_stmt->VpiType());
                 // Handle begin blocks
                 if (then_stmt->VpiType() == vpiBegin || then_stmt->VpiType() == vpiNamedBegin) {
                     VectorOfany* stmts = begin_block_stmts(then_stmt);
@@ -1460,7 +1460,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                         if (lhs->VpiType() == vpiRefObj) {
                             const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(lhs);
                             output_signal = std::string(ref->VpiName());
-                            log("UHDM: Found output signal from reset assignment: %s\n", output_signal.c_str());
+                            uhdm_trace("UHDM: Found output signal from reset assignment: %s\n", output_signal.c_str());
                         } else if (lhs->VpiType() == vpiIndexedPartSelect) {
                             // For indexed part selects like result[i*8 +: 8], we need to extract the base signal
                             const UHDM::indexed_part_select* ips = any_cast<const UHDM::indexed_part_select*>(lhs);
@@ -1476,7 +1476,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                     output_signal = std::string(parent->VpiName());
                                 }
                             }
-                            log("UHDM: Found output signal from indexed part select: %s\n", output_signal.c_str());
+                            uhdm_trace("UHDM: Found output signal from indexed part select: %s\n", output_signal.c_str());
                             
                             // Extract slice information from indexed part select
                             if (ips->Base_expr()) {
@@ -1484,7 +1484,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                 if (base_expr.is_fully_const()) {
                                     int offset = base_expr.as_const().as_int();
                                     slice_offsets.push_back(offset);
-                                    log("UHDM: Indexed part select offset: %d\n", offset);
+                                    uhdm_trace("UHDM: Indexed part select offset: %d\n", offset);
                                 }
                             }
                             if (ips->Width_expr()) {
@@ -1492,7 +1492,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                 if (width_expr.is_fully_const()) {
                                     int width = width_expr.as_const().as_int();
                                     slice_widths.push_back(width);
-                                    log("UHDM: Indexed part select width: %d\n", width);
+                                    uhdm_trace("UHDM: Indexed part select width: %d\n", width);
                                 }
                             }
                         }
@@ -1502,7 +1502,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             
             // Check else statement for normal assignment  
             if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
-                log("UHDM: Found else statement, type: %s (vpiType=%d)\n", 
+                uhdm_trace("UHDM: Found else statement, type: %s (vpiType=%d)\n", 
                     UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
                 // Handle begin blocks
                 if (else_stmt->VpiType() == vpiBegin || else_stmt->VpiType() == vpiNamedBegin) {
@@ -1520,14 +1520,14 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                 
                 if (else_stmt->VpiType() == vpiAssignment) {
                     const UHDM::assignment* assign = any_cast<const UHDM::assignment*>(else_stmt);
-                    log("UHDM: Processing else assignment\n");
+                    uhdm_trace("UHDM: Processing else assignment\n");
                     if (auto rhs = assign->Rhs()) {
-                        log("UHDM: RHS type: %s (vpiType=%d)\n", UhdmName(rhs->UhdmType()).c_str(), rhs->VpiType());
+                        uhdm_trace("UHDM: RHS type: %s (vpiType=%d)\n", UhdmName(rhs->UhdmType()).c_str(), rhs->VpiType());
                         // For simple ref like "unit_result"
                         if (rhs->VpiType() == vpiRefObj) {
                             const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                             input_signal = std::string(ref->VpiName());
-                            log("UHDM: Found input signal from else assignment: %s\n", input_signal.c_str());
+                            uhdm_trace("UHDM: Found input signal from else assignment: %s\n", input_signal.c_str());
                         }
                         // For expressions like "count + 1", we want to extract "count" as input
                         else if (rhs->VpiType() == vpiOperation) {
@@ -1537,7 +1537,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                     if (operand->VpiType() == vpiRefObj) {
                                         const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(operand);
                                         input_signal = std::string(ref->VpiName());
-                                        log("UHDM: Found input signal from operation: %s\n", input_signal.c_str());
+                                        uhdm_trace("UHDM: Found input signal from operation: %s\n", input_signal.c_str());
                                         break;
                                     }
                                 }
@@ -1559,7 +1559,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                         // Only update output_signal if it's empty (priority to first-level assignment)
                                         if (output_signal.empty()) {
                                             output_signal = std::string(ref->VpiName());
-                                            log("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
+                                            uhdm_trace("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
                                         }
                                     }
                                 }
@@ -1567,7 +1567,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                     if (rhs->VpiType() == vpiRefObj) {
                                         const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                                         input_signal = std::string(ref->VpiName());
-                                        log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
+                                        uhdm_trace("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
                                     }
                                 }
                             }
@@ -1584,7 +1584,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                         // Only update output_signal if it's empty (priority to first-level assignment)
                                         if (output_signal.empty()) {
                                             output_signal = std::string(ref->VpiName());
-                                            log("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
+                                            uhdm_trace("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
                                         }
                                     }
                                 }
@@ -1592,7 +1592,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                     if (rhs->VpiType() == vpiRefObj) {
                                         const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                                         input_signal = std::string(ref->VpiName());
-                                        log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
+                                        uhdm_trace("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
                                     }
                                 }
                             }
@@ -1610,7 +1610,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                             if (operand->VpiType() == vpiRefObj) {
                                 const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(operand);
                                 reset_signal = std::string(ref->VpiName());
-                                log("UHDM: Found reset signal from condition: %s\n", reset_signal.c_str());
+                                uhdm_trace("UHDM: Found reset signal from condition: %s\n", reset_signal.c_str());
                                 break;
                             }
                         }
@@ -1619,7 +1619,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             }
         } else {
             // Handle simple if_stmt without else
-            log("UHDM: Processing simple if_stmt (no else clause)\n");
+            uhdm_trace("UHDM: Processing simple if_stmt (no else clause)\n");
         }
     }
     
@@ -1634,7 +1634,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
     
     // Return true if we found at least an output signal
     bool success = !output_signal.empty();
-    log("UHDM: Signal extraction %s: output=%s, input=%s, clock=%s, reset=%s\n",
+    uhdm_trace("UHDM: Signal extraction %s: output=%s, input=%s, clock=%s, reset=%s\n",
         success ? "succeeded" : "failed",
         output_signal.c_str(), input_signal.c_str(), 
         clock_signal.c_str(), reset_signal.c_str());
@@ -2435,10 +2435,10 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
     }
 
     // Always log this for debugging array issues
-    log("UHDM: Checking array accesses for '%s' in %d module-level processes\n",
+    uhdm_trace("UHDM: Checking array accesses for '%s' in %d module-level processes\n",
         array_name.c_str(),
         uhdm_module->Process() ? (int)uhdm_module->Process()->size() : 0);
-    log("      Current instance: %p, Module: %p\n", current_instance, module);
+    uhdm_trace("      Current instance: %p, Module: %p\n", current_instance, module);
     
     // Capture the module for lambda access
     auto rtlil_module = module;
@@ -2527,7 +2527,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
         
         // Debug: log statement type
         if (cur_depth <= 5) {  // Only log first few levels to avoid spam
-            log("      [Depth %d] Checking statement type: %d\n", cur_depth, stmt->VpiType());
+            uhdm_trace("      [Depth %d] Checking statement type: %d\n", cur_depth, stmt->VpiType());
         }
         
         switch (stmt->VpiType()) {
@@ -2538,7 +2538,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                     std::string parent_name = std::string(bit_sel->VpiName());
                     
                     // Debug log to see all bit selects
-                    log("      Found bit_select with name='%s'\n", parent_name.c_str());
+                    uhdm_trace("      Found bit_select with name='%s'\n", parent_name.c_str());
                     
                     // Sometimes the parent is the array reference
                     if (bit_sel->VpiParent()->VpiType() == vpiRefObj) {
@@ -2549,23 +2549,23 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                     }
                     
                     if (mode_debug) {
-                        log("      Checking bit_select: parent_name='%s', array_name='%s'\n", 
+                        uhdm_trace("      Checking bit_select: parent_name='%s', array_name='%s'\n", 
                             parent_name.c_str(), array_name.c_str());
                     }
                     
                     if (parent_name == array_name) {
                         // This is an access to our array - check if index is constant
                         if (mode_debug) {
-                            log("      Found access to array %s\n", array_name.c_str());
+                            uhdm_trace("      Found access to array %s\n", array_name.c_str());
                         }
                         if (!is_constant_expr(bit_sel->VpiIndex())) {
                             if (mode_debug) {
-                                log("      Array %s has non-constant index access!\n", array_name.c_str());
+                                uhdm_trace("      Array %s has non-constant index access!\n", array_name.c_str());
                             }
                             return false;  // Non-constant access found
                         } else {
                             if (mode_debug) {
-                                log("      Array %s access with constant index\n", array_name.c_str());
+                                uhdm_trace("      Array %s access with constant index\n", array_name.c_str());
                             }
                         }
                     }
@@ -2596,7 +2596,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                             continue;
                         if (!is_constant_expr(idx)) {
                             if (mode_debug) {
-                                log("      Array %s has non-constant var_select index!\n",
+                                uhdm_trace("      Array %s has non-constant var_select index!\n",
                                     array_name.c_str());
                             }
                             return false;
@@ -2612,11 +2612,11 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                     // Check both LHS and RHS for array accesses
                     // These might be bit_selects
                     if (assign->Lhs()) {
-                        log("        Assignment LHS type: %d\n", assign->Lhs()->VpiType());
+                        uhdm_trace("        Assignment LHS type: %d\n", assign->Lhs()->VpiType());
                         if (!check_array_access(assign->Lhs(), cur_depth + 1)) return false;
                     }
                     if (assign->Rhs()) {
-                        log("        Assignment RHS type: %d\n", assign->Rhs()->VpiType());
+                        uhdm_trace("        Assignment RHS type: %d\n", assign->Rhs()->VpiType());
                         if (!check_array_access(assign->Rhs(), cur_depth + 1)) return false;
                     }
                 }
@@ -2627,13 +2627,13 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
             case vpiNamedBegin: {
                 VectorOfany* stmts = begin_block_stmts(stmt);
                 if (stmts) {
-                    log("        Begin block has %d statements\n", (int)stmts->size());
+                    uhdm_trace("        Begin block has %d statements\n", (int)stmts->size());
                     for (auto sub_stmt : *stmts) {
-                        log("        Begin sub-statement type: %d\n", sub_stmt->VpiType());
+                        uhdm_trace("        Begin sub-statement type: %d\n", sub_stmt->VpiType());
                         if (!check_array_access(sub_stmt, cur_depth + 1)) return false;
                     }
                 } else {
-                    log("        Begin block has no statements\n");
+                    uhdm_trace("        Begin block has no statements\n");
                 }
                 break;
             }
@@ -2643,7 +2643,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 if (if_stmt) {
                     if (!check_array_access(if_stmt->VpiCondition(), cur_depth + 1)) return false;
                     if (if_stmt->VpiStmt()) {
-                        log("        IfElse statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
+                        uhdm_trace("        IfElse statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
                         if (!check_array_access(if_stmt->VpiStmt(), cur_depth + 1)) return false;
                     }
                     if (!check_array_access(if_stmt->VpiElseStmt(), cur_depth + 1)) return false;
@@ -2654,13 +2654,13 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
             case vpiIf: {
                 auto if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
                 if (if_stmt) {
-                    log("        Found if statement\n");
+                    uhdm_trace("        Found if statement\n");
                     if (!check_array_access(if_stmt->VpiCondition(), cur_depth + 1)) return false;
                     if (if_stmt->VpiStmt()) {
-                        log("        If statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
+                        uhdm_trace("        If statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
                         if (!check_array_access(if_stmt->VpiStmt(), cur_depth + 1)) return false;
                     } else {
-                        log("        If statement has no body\n");
+                        uhdm_trace("        If statement has no body\n");
                     }
                 }
                 break;
@@ -2803,7 +2803,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
     }
 
     if (mode_debug) {
-        log("    Array %s has only constant index accesses\n", array_name.c_str());
+        uhdm_trace("    Array %s has only constant index accesses\n", array_name.c_str());
     }
 
     return true;  // All accesses are constant
@@ -2846,7 +2846,7 @@ bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     // the element typespec -> infer a memory.
     if (typespec->UhdmType() == uhdmarray_typespec) {
         if (mode_debug) {
-            log("    Detected memory array: %s (logic_net with array_typespec)\n",
+            uhdm_trace("    Detected memory array: %s (logic_net with array_typespec)\n",
                 std::string(uhdm_net->VpiName()).c_str());
         }
         return true;
@@ -2866,7 +2866,7 @@ bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
         
         if (has_packed && has_unpacked) {
             if (mode_debug) {
-                log("    Detected memory array: %s (logic_net with both packed and unpacked dimensions)\n", 
+                uhdm_trace("    Detected memory array: %s (logic_net with both packed and unpacked dimensions)\n", 
                     std::string(uhdm_net->VpiName()).c_str());
             }
             return true;
@@ -2902,7 +2902,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_net* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This net has both packed (from typespec) and unpacked (from array_net) dimensions
                     if (mode_debug) {
-                        log("    Detected memory array: %s (array_net with packed dimensions)\n", 
+                        uhdm_trace("    Detected memory array: %s (array_net with packed dimensions)\n", 
                             std::string(uhdm_array->VpiName()).c_str());
                     }
                     return true;
@@ -2914,7 +2914,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_net* uhdm_array) {
                 if (one_bit_array_is_memory(std::string(uhdm_array->VpiName()),
                                             uhdm_array->Ranges() ? (int)uhdm_array->Ranges()->size() : 0)) {
                     if (mode_debug)
-                        log("    Detected memory array: %s (array_net with 1-bit element)\n",
+                        uhdm_trace("    Detected memory array: %s (array_net with 1-bit element)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     return true;
                 }
@@ -2951,7 +2951,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This var has both packed (from typespec) and unpacked (from array_var) dimensions
                     if (mode_debug) {
-                        log("    Detected memory array: %s (array_var with packed dimensions)\n",
+                        uhdm_trace("    Detected memory array: %s (array_var with packed dimensions)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     }
                     return true;
@@ -2969,7 +2969,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 if (one_bit_array_is_memory(std::string(uhdm_array->VpiName()),
                                             uhdm_array->Ranges() ? (int)uhdm_array->Ranges()->size() : 0)) {
                     if (mode_debug)
-                        log("    Detected memory array: %s (array_var with 1-bit element)\n",
+                        uhdm_trace("    Detected memory array: %s (array_var with 1-bit element)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     return true;
                 }
@@ -2984,7 +2984,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 auto bt = any_cast<const UHDM::bit_typespec*>(typespec);
                 if (bt->Ranges() && !bt->Ranges()->empty()) {
                     if (mode_debug)
-                        log("    Detected memory array: %s (array_var with bit-typed "
+                        uhdm_trace("    Detected memory array: %s (array_var with bit-typed "
                             "packed element)\n", std::string(uhdm_array->VpiName()).c_str());
                     return true;
                 }
@@ -3001,7 +3001,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 int ew = get_width(underlying_var->at(0), current_instance);
                 if (ew > 1) {
                     if (mode_debug)
-                        log("    Detected memory array: %s (array_var with enum "
+                        uhdm_trace("    Detected memory array: %s (array_var with enum "
                             "element, width=%d)\n",
                             std::string(uhdm_array->VpiName()).c_str(), ew);
                     return true;
@@ -3023,7 +3023,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 auto lt = any_cast<const UHDM::logic_typespec*>(elem);
                 if (lt->Ranges() && !lt->Ranges()->empty()) {
                     if (mode_debug) {
-                        log("    Detected memory array: %s (array_var with array_typespec)\n",
+                        uhdm_trace("    Detected memory array: %s (array_var with array_typespec)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     }
                     return true;

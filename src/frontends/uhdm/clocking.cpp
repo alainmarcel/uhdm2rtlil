@@ -17,7 +17,7 @@ UhdmClocking::UhdmClocking(UhdmImporter *importer, const any* proc_obj) {
     
     // Extract clocking information from process statement
     if (auto proc = dynamic_cast<const process_stmt*>(proc_obj)) {
-        log("    UhdmClocking: Analyzing process for clocking information\n");
+        uhdm_trace("    UhdmClocking: Analyzing process for clocking information\n");
         
         // Check if this process has any clocking characteristics
         // Look for clock/reset references in the statement structure
@@ -25,7 +25,7 @@ UhdmClocking::UhdmClocking(UhdmImporter *importer, const any* proc_obj) {
             analyze_statement_for_clocking(importer, stmt);
         }
         
-        log("    UhdmClocking: Found clock=%s, reset=%s\n", 
+        uhdm_trace("    UhdmClocking: Found clock=%s, reset=%s\n", 
             clock_sig == State::Sx ? "none" : "present",
             has_reset ? "present" : "none");
     }
@@ -43,15 +43,15 @@ void UhdmClocking::analyze_statement_for_clocking(UhdmImporter *importer, const 
         if (auto ref = dynamic_cast<const ref_obj*>(stmt)) {
             std::string name = std::string(ref->VpiName());
             
-            log("    UhdmClocking: Analyzing signal reference: %s\n", name.c_str());
+            uhdm_trace("    UhdmClocking: Analyzing signal reference: %s\n", name.c_str());
             
             if (name.find("clk") != std::string::npos || name.find("clock") != std::string::npos) {
                 clock_sig = importer->get_sig_bit(ref);
-                log("    UhdmClocking: Found potential clock signal: %s\n", name.c_str());
+                uhdm_trace("    UhdmClocking: Found potential clock signal: %s\n", name.c_str());
             } else if (name.find("rst") != std::string::npos || name.find("reset") != std::string::npos) {
                 has_reset = true;
                 reset_sig = importer->get_sig_bit(ref);
-                log("    UhdmClocking: Found potential reset signal: %s\n", name.c_str());
+                uhdm_trace("    UhdmClocking: Found potential reset signal: %s\n", name.c_str());
             }
         }
     }

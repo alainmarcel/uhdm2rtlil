@@ -485,13 +485,13 @@ void UhdmImporter::interpret_statement(const any* stmt,
                         }
                         arrays[lhs_name][array_index] = rhs_value;
                         if (mode_debug) {
-                            log("        Assign: %s[%lld] = %lld\n",
+                            uhdm_trace("        Assign: %s[%lld] = %lld\n",
                                 lhs_name.c_str(), (long long)array_index, (long long)rhs_value);
                         }
                     } else {
                         variables[lhs_name] = rhs_value;
                         if (mode_debug) {
-                            log("        Assign: %s = %lld\n", lhs_name.c_str(), (long long)rhs_value);
+                            uhdm_trace("        Assign: %s = %lld\n", lhs_name.c_str(), (long long)rhs_value);
                         }
                     }
                 }
@@ -792,7 +792,7 @@ void UhdmImporter::interpret_statement(const any* stmt,
 
         default:
             if (mode_debug) {
-                log("        Unsupported statement type %d\n", stmt_type);
+                uhdm_trace("        Unsupported statement type %d\n", stmt_type);
             }
             break;
     }

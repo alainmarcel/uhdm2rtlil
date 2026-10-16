@@ -101,7 +101,7 @@ void UhdmMemoryImporter::import_array(const array_net* uhdm_array) {
 // Import memory read operation
 void UhdmMemoryImporter::import_memory_read(const operation* uhdm_read) {
     if (parent->mode_debug)
-        log("    Importing memory read operation\n");
+        uhdm_trace("    Importing memory read operation\n");
     
     // TODO: Implement memory read operation
     // This would involve connecting the address and enabling the read
@@ -111,7 +111,7 @@ void UhdmMemoryImporter::import_memory_read(const operation* uhdm_read) {
 // Import memory write operation
 void UhdmMemoryImporter::import_memory_write(const operation* uhdm_write) {
     if (parent->mode_debug)
-        log("    Importing memory write operation\n");
+        uhdm_trace("    Importing memory write operation\n");
     
     // TODO: Implement memory write operation
     // This would involve connecting the address, data, and enabling the write
