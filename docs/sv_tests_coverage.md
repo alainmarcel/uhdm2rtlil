@@ -640,7 +640,7 @@ and co-simulate.  What they have that we do not:
 | scr1 (`scr1_top_tb_axi`) | full core + AXI top | yes -- per-module miters + co-sim over the pipeline and both SoC tops (`sweep-scr1.yml`) |
 | rsd (`Core`) | full core | yes -- per-module miters + co-sim over the out-of-order core and its blocks (`sweep-rsd.yml`) |
 | tnoc (`tnoc`) | network-on-chip | yes -- per-module miters + co-sim over the fabric, its routers, the virtual-channel logic, the packet serializers and the AXI adapters (`sweep-tnoc.yml`) |
-| rggen (`rggen`, rggen-sv-rtl + rggen-sample) | generated register files | **no** |
+| rggen (`rggen`, rggen-sv-rtl + rggen-sample) | generated register files | yes -- per-module miters + co-sim over the bit-field / register / adapter library, the four bus bridges and the generated sample blocks (`sweep-rggen.yml`) |
 | fx68k | 68000 core (needs `--allow-dup-initial-drivers` under slang) | yes -- per-module miters + co-sim over the sequencer, the microcode/nanocode ROMs, the ALU and the bus controller (`sweep-fx68k.yml`); the slang flag is passed by the manifest |
 | yosys tests (`yosys_hana`) | the upstream yosys test files | yes -- the 576 generated `test/run/**` tests in the regression |
 | ivtest (Icarus tests) | the Icarus Verilog test suite | **no** |

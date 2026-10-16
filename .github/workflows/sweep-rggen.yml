@@ -1,0 +1,48 @@
+# RgGen (rggen/rggen-sv-rtl + rggen/rggen-sample): the register-file generator
+# chipsalliance/sv-tests builds as `rggen`.  26 synthesizable modules -- the
+# hand-written library (bit fields and their counters/triggers, the register
+# and adapter commons, the APB / AXI4-Lite / Avalon / Wishbone / native bridges
+# and adapters, the address decoder, the mux and its recursive OR reducer) plus
+# the GENERATED sample blocks that instantiate it.
+#
+# A CORE sweep with its own action, not an external-IP family: the cores
+# sv-tests covers get an individual sweep each.
+#
+# TWO repos, pinned by test/ext_ip/rggen.json at the two commits sv-tests
+# itself pins: rggen-sv-rtl is the library, rggen-sample the generated blocks
+# (block_0, block_1, uart_csr).  sv-tests compiles both together and tops them
+# with a generated `rggen` wrapper; here each module is swept on its own.
+#
+# This sweep deliberately covers rggen_or_reducer: its recursive OR-reduction
+# tree was being TRUNCATED from three levels to one by the compound-assignment
+# RHS alias fixed in chipsalliance/UHDM#1162 (Surelog#4215), because
+# rggen_or_reducer's get_sub_n_list does `current_n -= list[list_index]`, whose
+# RHS is an element of the array it returns.  Surelog's own Rggen golden had
+# been recording the truncated tree.
+name: Sweep rggen
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "17 8 * * *"   # nightly 08:17 UTC, after fx68k's 07:47
+
+concurrency:
+  group: sweep-rggen-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: rggen
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 120
+      # One shard with concurrent miters: 26 small rows, the two probed took
+      # 3 s each, and no row here is a whole-core row at the memory cap.
+      shards: 1
+      jobs: "2"

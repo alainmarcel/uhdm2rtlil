@@ -1,0 +1,54 @@
+{
+  "title": "RgGen",
+  "url": "https://github.com/rggen/rggen-sv-rtl",
+  "_note": "The chipsalliance/sv-tests core (generators/rggen), pinned at the two commits sv-tests pins.  TWO repos: rggen-sv-rtl is the hand-written register-file library, rggen-sample the GENERATED blocks (block_0 / block_1) that instantiate it -- sv-tests compiles both together and tops them with a generated `rggen` wrapper.  No include directories.  NOTE rggen_or_reducer.sv is the module whose recursive OR-reduction tree was truncated by the compound-assignment RHS alias fixed in chipsalliance/UHDM#1162; this sweep exercises that path.",
+  "repos": [
+    {
+      "url": "https://github.com/rggen/rggen-sv-rtl",
+      "commit": "6b3f25a08fdbe87c6ab0bccbf83d9a16eb6974f7",
+      "dir": "rggen-sv-rtl"
+    },
+    {
+      "url": "https://github.com/rggen/rggen-sample",
+      "commit": "9458b9ffd6d9bb5b4b23a0d66b55ae6c653e8012",
+      "dir": "rggen-sample"
+    }
+  ],
+  "roots": [
+    "rggen-sv-rtl/*.sv",
+    "rggen-sample/*.sv"
+  ],
+  "incdirs": [],
+  "defines": [
+    "SYNTHESIS"
+  ],
+  "modules": "auto",
+  "seq": 4,
+  "timeout": 300,
+  "want": "proven",
+  "slang_flags": [
+    "--single-unit"
+  ],
+  "exclude": [
+    "^rggen_apb_if$",
+    "^rggen_avalon_if$",
+    "^rggen_axi4lite_if$",
+    "^rggen_backdoor_if$",
+    "^rggen_bit_field_if$",
+    "^rggen_bus_if$",
+    "^rggen_register_if$",
+    "^rggen_wishbone_if$",
+    "_ral_pkg$"
+  ],
+  "exclude_notes": {
+    "rggen_apb_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_avalon_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_axi4lite_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_backdoor_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_bit_field_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_bus_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_register_if": "SystemVerilog interface, not a synthesizable module",
+    "rggen_wishbone_if": "SystemVerilog interface, not a synthesizable module",
+    "_ral_pkg$": "UVM register-abstraction-layer packages in rggen-sample: verification constructs, not design"
+  }
+}
