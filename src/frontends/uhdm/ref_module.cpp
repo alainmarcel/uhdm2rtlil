@@ -106,7 +106,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                     RTLIL::Wire* target_port = target_module->wire(RTLIL::escape_id(port_name));
                     if (target_port && target_port->attributes.count(RTLIL::escape_id("interface_port"))) {
                         if (mode_debug)
-                            log("    Skipping interface port connection: %s (marked as interface_port)\n", port_name.c_str());
+                            uhdm_trace("    Skipping interface port connection: %s (marked as interface_port)\n", port_name.c_str());
                         continue;
                     }
                 }
@@ -116,7 +116,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                     // Interface ports don't get connected directly
                     // The individual signals within the interface are connected separately
                     if (mode_debug)
-                        log("    Skipping interface port connection: %s (hier_path type)\n", port_name.c_str());
+                        uhdm_trace("    Skipping interface port connection: %s (hier_path type)\n", port_name.c_str());
                     continue;
                 }
 
@@ -127,7 +127,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                 if (port->High_conn()->UhdmType() == uhdmoperation &&
                     any_cast<const UHDM::operation*>(port->High_conn())->VpiOpType() == vpiNullOp) {
                     if (mode_debug)
-                        log("    Port %s has an empty connection (.%s()); leaving unconnected\n",
+                        uhdm_trace("    Port %s has an empty connection (.%s()); leaving unconnected\n",
                             port_name.c_str(), port_name.c_str());
                     continue;
                 }
@@ -141,7 +141,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                 }
                 
                 if (mode_debug)
-                    log("    Connected port %s (width=%d)\n", port_name.c_str(), actual_sig.size());
+                    uhdm_trace("    Connected port %s (width=%d)\n", port_name.c_str(), actual_sig.size());
             }
         }
     }
@@ -150,7 +150,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
     if (inferred_width > 1) {
         cell->setParam(RTLIL::escape_id("WIDTH"), RTLIL::Const(inferred_width, 32));
         if (mode_debug)
-            log("    Set WIDTH parameter to %d (will create parameterized module later)\n", inferred_width);
+            uhdm_trace("    Set WIDTH parameter to %d (will create parameterized module later)\n", inferred_width);
     }
 }
 

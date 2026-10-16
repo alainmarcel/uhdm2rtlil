@@ -293,25 +293,25 @@ static RTLIL::Cell* build_check_cell(UhdmImporter* self,
 
 // Import immediate assertion as $check cell (following DRY principle)
 void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire) {
-    log("UHDM: import_immediate_assert called, in_always_ff=%d, clock_sig.empty=%d\n",
+    uhdm_trace("UHDM: import_immediate_assert called, in_always_ff=%d, clock_sig.empty=%d\n",
         in_always_ff_context ? 1 : 0, current_ff_clock_sig.empty() ? 1 : 0);
     if (!assert_stmt || !assert_stmt->Expr()) {
         return;
     }
     build_check_cell(this, assert_stmt, assert_stmt->Expr(), "assert", enable_wire);
-    log("        Created $check cell for assertion\n");
+    uhdm_trace("        Created $check cell for assertion\n");
     log_flush();
 }
 
 // Import immediate cover as $check cell (FLAVOR="cover").
 void UhdmImporter::import_immediate_cover(const UHDM::immediate_cover* cover_stmt, RTLIL::Wire*& enable_wire) {
-    log("UHDM: import_immediate_cover called, in_always_ff=%d, clock_sig.empty=%d\n",
+    uhdm_trace("UHDM: import_immediate_cover called, in_always_ff=%d, clock_sig.empty=%d\n",
         in_always_ff_context ? 1 : 0, current_ff_clock_sig.empty() ? 1 : 0);
     if (!cover_stmt || !cover_stmt->Expr()) {
         return;
     }
     build_check_cell(this, cover_stmt, cover_stmt->Expr(), "cover", enable_wire);
-    log("        Created $check cell for cover\n");
+    uhdm_trace("        Created $check cell for cover\n");
     log_flush();
 }
 
@@ -326,26 +326,26 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     // logic segfaulted yosys `proc_memwr` (ibex_top_tracing's tracer.sv:850).
     // Skip it, like a synthesis tool would.
     if (uhdm_process->UhdmType() == uhdmfinal_stmt) {
-        log("UHDM: skipping `final` block (simulation-only, not synthesizable)\n");
+        uhdm_trace("UHDM: skipping `final` block (simulation-only, not synthesizable)\n");
         return;
     }
 
-    log("UHDM: === Starting import_process ===\n");
+    uhdm_trace("UHDM: === Starting import_process ===\n");
     
     // Clear assert enable wires tracking for this process
     current_assert_enable_wires.clear();
     
     // Debug: Print process location
     std::string proc_src = get_src_attribute(uhdm_process);
-    log("UHDM: Process source location: %s\n", proc_src.c_str());
+    uhdm_trace("UHDM: Process source location: %s\n", proc_src.c_str());
     
-    log("UHDM: Process type: %d (vpiAlways=%d, vpiAlwaysFF=%d, vpiAlwaysComb=%d)\n", 
+    uhdm_trace("UHDM: Process type: %d (vpiAlways=%d, vpiAlwaysFF=%d, vpiAlwaysComb=%d)\n", 
         proc_type, vpiAlways, vpiAlwaysFF, vpiAlwaysComb);
-    log("UHDM: Current module has %d wires before process import\n", (int)module->wires().size());
+    uhdm_trace("UHDM: Current module has %d wires before process import\n", (int)module->wires().size());
     
     // List current wires for debugging
     for (auto wire : module->wires()) {
-        log("UHDM: Existing wire: %s (width=%d)\n", wire->name.c_str(), wire->width);
+        uhdm_trace("UHDM: Existing wire: %s (width=%d)\n", wire->name.c_str(), wire->width);
     }
     
     // Create process with name based on actual source location
@@ -520,7 +520,7 @@ static void drop_hold_only_temp(RTLIL::Process* proc, RTLIL::Wire* tw,
     auto& acts = proc->root_case.actions;
     for (auto it = acts.begin(); it != acts.end(); ++it)
         if (it->first == RTLIL::SigSpec(tw) && it->second == lhs) { acts.erase(it); break; }
-    log("      %s: no write in the block survives the parameter fold -- "
+    uhdm_trace("      %s: no write in the block survives the parameter fold -- "
         "no sync update\n", sig_name.c_str());
 }
 
@@ -1136,7 +1136,7 @@ void UhdmImporter::merge_memwr_syncs()
             }
             dst->mem_write_actions.swap(merged);
 
-            log("UHDM: %s: %d memory-write action(s) from %d separate `%s` "
+            uhdm_trace("UHDM: %s: %d memory-write action(s) from %d separate `%s` "
                 "sync(s) merged into one in source order (write ports were "
                 "numbered backwards)\n", log_id(mod->name), moved,
                 (int)donors.size(), key.second.c_str());
@@ -1294,7 +1294,7 @@ void UhdmImporter::finalize_dead_selfhold_defaults()
                 continue;
             }
             c.act->second = RTLIL::SigSpec(RTLIL::State::Sx, c.sig->width);
-            log("UHDM: %s.%s: self-hold default replaced with X (held value "
+            uhdm_trace("UHDM: %s.%s: self-hold default replaced with X (held value "
                 "never observed — write-before-read comb temp%s)\n",
                 log_id(mod->name), log_id(c.sig->name),
                 ssa_safe ? ", prescan-ssa" : "");
@@ -1448,7 +1448,7 @@ void UhdmImporter::ff_simple_eval(const UHDM::any* stmt,
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     current_ff_iff_cond = RTLIL::SigSpec();
-    log("    Importing always_ff block\n");
+    uhdm_trace("    Importing always_ff block\n");
     log_flush();
     
     // Set always_ff context right at the start
@@ -1466,10 +1466,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     current_comb_values.clear();
 
     // Set the always_ff attribute
-    log("      Setting always_ff attribute\n");
+    uhdm_trace("      Setting always_ff attribute\n");
     log_flush();
     yosys_proc->attributes[ID::always_ff] = RTLIL::Const(1);
-    log("      Attribute set successfully\n");
+    uhdm_trace("      Attribute set successfully\n");
     log_flush();
     
     // Get the clock signal from the event control
@@ -1482,23 +1482,23 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     std::vector<std::pair<RTLIL::SigSpec, bool>> all_edge_triggers;
     
     if (auto stmt = uhdm_process->Stmt()) {
-        log("      Got statement from process\n");
+        uhdm_trace("      Got statement from process\n");
         log_flush();
         
         // Check if wrapped in event_control
         if (stmt->VpiType() == vpiEventControl) {
-            log("      Statement is event_control\n");
+            uhdm_trace("      Statement is event_control\n");
             log_flush();
             const event_control* event_ctrl = any_cast<const event_control*>(stmt);
             
             // Extract clock signal from sensitivity
             const any* event_expr = event_ctrl->VpiCondition();
             if (event_expr) {
-                log("      Got event expression\n");
+                uhdm_trace("      Got event expression\n");
                 log_flush();
                 // Check if it's a simple edge or combined edges (or)
                 if (event_expr->VpiType() == vpiOperation) {
-                    log("      Event expression is operation\n");
+                    uhdm_trace("      Event expression is operation\n");
                     log_flush();
                     const operation* op = any_cast<const operation*>(event_expr);
                     // `@(posedge clk iff en)` (IEEE 1800 9.4.2.3): the event
@@ -1517,7 +1517,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 current_ff_iff_cond = import_expression(any_cast<const expr*>((*inner->Operands())[1]));
                                 if (current_ff_iff_cond.size() > 1)
                                     current_ff_iff_cond = module->ReduceBool(NEW_ID, current_ff_iff_cond);
-                                log("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
+                                uhdm_trace("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
                                 e = (*inner->Operands())[0];
                             }
                         }
@@ -1529,15 +1529,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             current_ff_iff_cond = module->ReduceBool(NEW_ID, current_ff_iff_cond);
                         if ((*op->Operands())[0]->VpiType() == vpiOperation)
                             op = any_cast<const operation*>((*op->Operands())[0]);
-                        log("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
+                        uhdm_trace("      Event qualifier (iff): %s\n", log_signal(current_ff_iff_cond));
                     }
-                    log("      Operation type: %d (vpiEventOrOp=%d, vpiPosedgeOp=%d, vpiNegedgeOp=%d)\n", 
+                    uhdm_trace("      Operation type: %d (vpiEventOrOp=%d, vpiPosedgeOp=%d, vpiNegedgeOp=%d)\n", 
                         op->VpiOpType(), vpiEventOrOp, vpiPosedgeOp, vpiNegedgeOp);
                     log_flush();
                     
                     // Check if it's an "or" operation (multiple sensitivity items)
                     if (op->VpiOpType() == vpiEventOrOp) {
-                        log("      Found multiple sensitivity items (or operation)\n");
+                        uhdm_trace("      Found multiple sensitivity items (or operation)\n");
                         log_flush();
                         // For always_ff with async reset, we expect posedge clk or negedge rst_n
                         // Mark this as having async reset - we'll handle it specially
@@ -1569,10 +1569,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     clock_sig = sig;
                                     clock_posedge = is_pos;
                                     current_ff_clock_sig = sig;
-                                    log("      Edge trigger %s (%s) — first, using as clock\n",
+                                    uhdm_trace("      Edge trigger %s (%s) — first, using as clock\n",
                                         log_signal(sig), is_pos ? "pos" : "neg");
                                 } else {
-                                    log("      Edge trigger %s (%s) — additional\n",
+                                    uhdm_trace("      Edge trigger %s (%s) — additional\n",
                                         log_signal(sig), is_pos ? "pos" : "neg");
                                 }
                             }
@@ -1580,7 +1580,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     } else if (op->VpiOpType() == vpiPosedgeOp) {
                         clock_posedge = true;
                         if (op->Operands() && !op->Operands()->empty()) {
-                            log("      Importing clock signal from posedge\n");
+                            uhdm_trace("      Importing clock signal from posedge\n");
                             log_flush();
                             clock_sig = edge_signal(op);
                             // An edge expression triggers on its LSB (IEEE 1800);
@@ -1591,13 +1591,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (clock_sig.size() > 1) clock_sig = clock_sig.extract(0, 1);
                             current_ff_clock_sig = clock_sig; // Store for assertions
                             current_ff_edges = {{clock_sig, clock_posedge}};
-                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                            uhdm_trace("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
                     } else if (op->VpiOpType() == vpiNegedgeOp) {
                         clock_posedge = false;
                         if (op->Operands() && !op->Operands()->empty()) {
-                            log("      Importing clock signal from negedge\n");
+                            uhdm_trace("      Importing clock signal from negedge\n");
                             log_flush();
                             clock_sig = edge_signal(op);
                             // Edge triggers on the LSB — reduce a mis-sized
@@ -1606,12 +1606,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (clock_sig.size() > 1) clock_sig = clock_sig.extract(0, 1);
                             current_ff_clock_sig = clock_sig; // Store for assertions
                             current_ff_edges = {{clock_sig, clock_posedge}};
-                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                            uhdm_trace("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
                     } else if (op->VpiOpType() == vpiListOp) {
                         // Handle list operation (e.g., sensitivity list with multiple items)
-                        log("      Found list operation\n");
+                        uhdm_trace("      Found list operation\n");
                         log_flush();
                         if (op->Operands() && !op->Operands()->empty()) {
                             // If we have multiple edge triggers in a list, it's an async reset pattern
@@ -1626,7 +1626,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             }
                             
                             if (edge_trigger_count > 1) {
-                                log("      List contains %d edge triggers - marking as async reset\n", edge_trigger_count);
+                                uhdm_trace("      List contains %d edge triggers - marking as async reset\n", edge_trigger_count);
                                 yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
 
                                 // Extract clock and reset signals from the list
@@ -1647,12 +1647,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                     clock_sig = sig;
                                                     clock_posedge = is_posedge;
                                                     found_clock = true;
-                                                    log("      Found clock signal in list: %s (%s edge)\n",
+                                                    uhdm_trace("      Found clock signal in list: %s (%s edge)\n",
                                                         log_signal(clock_sig), clock_posedge ? "pos" : "neg");
                                                 } else {
                                                     reset_sig = sig;
                                                     reset_posedge = is_posedge;
-                                                    log("      Found reset signal in list: %s (%s edge)\n",
+                                                    uhdm_trace("      Found reset signal in list: %s (%s edge)\n",
                                                         log_signal(reset_sig), reset_posedge ? "pos" : "neg");
                                                 }
                                             }
@@ -1677,12 +1677,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                     auto sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                                     bool is_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
                                                     all_edge_signals.push_back({sig, is_posedge});
-                                                    log("      Found edge trigger: %s (%s edge)\n", 
+                                                    uhdm_trace("      Found edge trigger: %s (%s edge)\n", 
                                                         log_signal(sig), is_posedge ? "pos" : "neg");
                                                 }
                                             } else if (edge_op->VpiOpType() == vpiListOp) {
                                                 // Nested list - recurse
-                                                log("      Found nested list, recursing to collect edge triggers\n");
+                                                uhdm_trace("      Found nested list, recursing to collect edge triggers\n");
                                                 if (edge_op->Operands()) {
                                                     collect_edge_triggers(edge_op->Operands());
                                                 }
@@ -1703,24 +1703,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     // First edge trigger is the clock
                                     clock_sig = all_edge_signals[0].first;
                                     clock_posedge = all_edge_signals[0].second;
-                                    log("      Using first edge trigger as clock: %s (%s edge)\n", 
+                                    uhdm_trace("      Using first edge trigger as clock: %s (%s edge)\n", 
                                         log_signal(clock_sig), clock_posedge ? "pos" : "neg");
                                     
                                     if (all_edge_signals.size() > 1) {
                                         // Multiple edge triggers - mark as async reset
-                                        log("      Found %zu edge triggers total - marking as async reset\n", all_edge_signals.size());
+                                        uhdm_trace("      Found %zu edge triggers total - marking as async reset\n", all_edge_signals.size());
                                         yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
                                         
                                         // Use second edge trigger as primary reset
                                         // Note: For SR flip-flops with 3+ edge triggers, we need special handling
                                         reset_sig = all_edge_signals[1].first;
                                         reset_posedge = all_edge_signals[1].second;
-                                        log("      Using second edge trigger as reset: %s (%s edge)\n", 
+                                        uhdm_trace("      Using second edge trigger as reset: %s (%s edge)\n", 
                                             log_signal(reset_sig), reset_posedge ? "pos" : "neg");
                                         
                                         // Store all edge triggers for SR flip-flop handling
                                         if (all_edge_signals.size() > 2) {
-                                            log("      Warning: Found %zu edge triggers (SR flip-flop pattern)\n", all_edge_signals.size());
+                                            uhdm_trace("      Warning: Found %zu edge triggers (SR flip-flop pattern)\n", all_edge_signals.size());
                                             // For SR flip-flops, we need to create sync rules for ALL edge triggers
                                             // This will be handled in a separate code path
                                             yosys_proc->attributes[ID("is_sr_ff")] = RTLIL::Const(1);
@@ -1734,14 +1734,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             }
             
             // Get the actual statement
-            log("      Getting actual statement from event control\n");
+            uhdm_trace("      Getting actual statement from event control\n");
             log_flush();
             stmt = event_ctrl->Stmt();
         }
         
         // Check if we have async reset pattern
         if (yosys_proc->attributes.count(ID("has_async_reset"))) {
-            log("      Processing always_ff with async reset\n");
+            uhdm_trace("      Processing always_ff with async reset\n");
             log_flush();
             
             // For async reset, we don't import into sync rules
@@ -1830,7 +1830,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 collect_live_assigned_signals(stmt, true, all_signals,
                                               /*fold_guards=*/false);
                 if (mode_debug) {
-                    log("    ff dead-guard prune: live={");
+                    uhdm_trace("    ff dead-guard prune: live={");
                     for (auto& n : live_signals) log(" %s", n.c_str());
                     log(" } all={");
                     for (auto& n : all_signals) log(" %s", n.c_str());
@@ -2108,7 +2108,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         part_slice[sig.name] = {off, w};
                         yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(temp_wire), signal_spec));
-                        log("      Created temp wire %s for part-select %s[%d +: %d]\n",
+                        uhdm_trace("      Created temp wire %s for part-select %s[%d +: %d]\n",
                             temp_name.c_str(), sig.name.c_str(), off, w);
                     }
                     continue;
@@ -2160,7 +2160,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                     RTLIL::SigSpec(temp_wire), signal_spec));
 
-                log("      Created temp wire %s (width=%d) for full signal\n",
+                uhdm_trace("      Created temp wire %s (width=%d) for full signal\n",
                     temp_name.c_str(), signal_spec.size());
             }
             
@@ -2243,7 +2243,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // Set always_ff context for assert handling
                                 in_always_ff_context = true;
                                 current_ff_clock_sig = clock_sig;
-                                log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
+                                uhdm_trace("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
 
                                 import_statement_comb(then_stmt, case_true);
 
@@ -2274,7 +2274,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // Set always_ff context for assert handling
                                 in_always_ff_context = true;
                                 current_ff_clock_sig = clock_sig;
-                                log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
+                                uhdm_trace("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
                                 
                                 // Non-blocking semantics for the clocked
                                 // branch, as the synchronous always_ff path
@@ -2300,7 +2300,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Create sync rules that update from temp wires
             if (yosys_proc->attributes.count(ID("is_sr_ff"))) {
                 // SR flip-flop: create sync rules for ALL edge triggers
-                log("      Creating sync rules for SR flip-flop with %zu edge triggers\n", all_edge_triggers.size());
+                uhdm_trace("      Creating sync rules for SR flip-flop with %zu edge triggers\n", all_edge_triggers.size());
                 
                 for (const auto& [sig, is_posedge] : all_edge_triggers) {
                     RTLIL::SyncRule* sync = new RTLIL::SyncRule;
@@ -2317,11 +2317,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                     
                     yosys_proc->syncs.push_back(sync);
-                    log("      Created sync rule for %s (%s edge)\n", 
+                    uhdm_trace("      Created sync rule for %s (%s edge)\n", 
                         log_signal(sig), is_posedge ? "pos" : "neg");
                 }
                 
-                log("      Created %zu sync rules for SR flip-flop\n", all_edge_triggers.size());
+                uhdm_trace("      Created %zu sync rules for SR flip-flop\n", all_edge_triggers.size());
             } else {
                 // Normal async reset: create sync rules for clock and reset only
                 if (clock_sig.empty()) {
@@ -2388,7 +2388,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             rhs = rhs.extract(ps->second.first, ps->second.second);
                             sync_clk->actions.push_back(RTLIL::SigSig(lhs, rhs));
                             sync_rst->actions.push_back(RTLIL::SigSig(lhs, rhs));
-                            log("      Added sync update for %s\n", sig_name.c_str());
+                            uhdm_trace("      Added sync update for %s\n", sig_name.c_str());
                             continue;
                         }
                         std::set<int> wb;
@@ -2415,14 +2415,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             }
                             sync_clk->actions.push_back(RTLIL::SigSig(l, r));
                             sync_rst->actions.push_back(RTLIL::SigSig(l, r));
-                            log("      Added sync update (written bits only) for %s: %s\n",
+                            uhdm_trace("      Added sync update (written bits only) for %s: %s\n",
                                 sig_name.c_str(), log_signal(l));
                             continue;
                         }
                         sync_clk->actions.push_back(RTLIL::SigSig(lhs, rhs));
                         sync_rst->actions.push_back(RTLIL::SigSig(lhs, rhs));
 
-                        log("      Added sync update for %s\n", sig_name.c_str());
+                        uhdm_trace("      Added sync update for %s\n", sig_name.c_str());
                     }
                 }
 
@@ -2444,14 +2444,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // many-port memories (ibex RVFI rvfi_ext_stage_*).
                     action.priority_mask = memwr_priority_over_prior(sync_clk, action.memid);
                     action.enable = RTLIL::SigSpec(info.en_wire);
-                    log("      Added memory write action for %s on clock edge\n",
+                    uhdm_trace("      Added memory write action for %s on clock edge\n",
                         info.mem_id.c_str());
                 }
 
                 yosys_proc->syncs.push_back(sync_clk);
                 yosys_proc->syncs.push_back(sync_rst);
                 
-                log("      Created sync rules for clock and reset\n");
+                uhdm_trace("      Created sync rules for clock and reset\n");
             }
             log_flush();
             
@@ -2464,8 +2464,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
-            log("      No async reset detected\n");
-            log("      Clock signal at this point: %s (empty: %d)\n", log_signal(clock_sig), clock_sig.empty());
+            uhdm_trace("      No async reset detected\n");
+            uhdm_trace("      Clock signal at this point: %s (empty: %d)\n", log_signal(clock_sig), clock_sig.empty());
             log_flush();
             
             // Check if the statement is a simple if-else pattern
@@ -2474,15 +2474,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             std::set<std::string> assigned_signals;
             
             if (stmt) {
-                log("      Statement type: %d (vpiIf=%d, vpiIfElse=%d, vpiBegin=%d)\n", 
+                uhdm_trace("      Statement type: %d (vpiIf=%d, vpiIfElse=%d, vpiBegin=%d)\n", 
                     stmt->VpiType(), vpiIf, vpiIfElse, vpiBegin);
                 // Check for direct if, if-else, or if-else inside begin block
                 if (stmt->VpiType() == vpiIfElse) {
-                    log("      Detected vpiIfElse, setting is_simple_if_else = true\n");
+                    uhdm_trace("      Detected vpiIfElse, setting is_simple_if_else = true\n");
                     simple_if_stmt = any_cast<const if_else*>(stmt);
                     is_simple_if_else = true;
                 } else if (stmt->VpiType() == vpiIf) {
-                    log("      Detected vpiIf, setting is_simple_if_else = true\n");
+                    uhdm_trace("      Detected vpiIf, setting is_simple_if_else = true\n");
                     simple_if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
                     is_simple_if_else = true;
                 } else if (stmt->VpiType() == vpiBegin || stmt->VpiType() == vpiNamedBegin) {
@@ -2501,7 +2501,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
                 // If we found an if-else, check if both branches assign to same signals
                 if (is_simple_if_else && simple_if_stmt) {
-                    log("      Found if/if-else statement, checking if it's simple\n");
+                    uhdm_trace("      Found if/if-else statement, checking if it's simple\n");
                     
                     // Get the then statement and else statement (if exists)
                     const any* then_stmt = nullptr;
@@ -2520,7 +2520,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // First check if the if-else contains complex constructs
                     if ((then_stmt && contains_complex_constructs(then_stmt)) ||
                         (else_stmt && contains_complex_constructs(else_stmt))) {
-                        log("      If-else contains complex constructs (for loops, memory writes) - skipping simple if-else optimization\n");
+                        uhdm_trace("      If-else contains complex constructs (for loops, memory writes) - skipping simple if-else optimization\n");
                         is_simple_if_else = false;
                     } else {
                         std::set<std::string> then_signals, else_signals;
@@ -2537,7 +2537,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // Has else branch - check if both branches assign same signals
                                 if (then_signals == else_signals) {
                                     assigned_signals = then_signals;
-                                    log("      Detected simple if-else pattern assigning to: ");
+                                    uhdm_trace("      Detected simple if-else pattern assigning to: ");
                                     for (const auto& sig : assigned_signals) {
                                         log("%s ", sig.c_str());
                                     }
@@ -2549,7 +2549,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // No else branch - simple if statement
                                 assigned_signals = then_signals;
                                 is_simple_if_else = true;  // Ensure flag is true for simple if
-                                log("      Detected simple if pattern (no else) assigning to: ");
+                                uhdm_trace("      Detected simple if pattern (no else) assigning to: ");
                                 for (const auto& sig : assigned_signals) {
                                     log("%s ", sig.c_str());
                                 }
@@ -2561,12 +2561,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
             } else {
-                log("      No statement found for simple if detection\n");
+                uhdm_trace("      No statement found for simple if detection\n");
             }
             
             if (is_simple_if_else && simple_if_stmt) {
                 // Handle simple if-else with proper switch statement
-                log("      Creating switch statement for simple if-else\n");
+                uhdm_trace("      Creating switch statement for simple if-else\n");
                 log_flush();
                 
                 // Check if any of the assigned signals are memories
@@ -2576,7 +2576,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     RTLIL::IdString sig_id = RTLIL::escape_id(sig_name);
                     if (module->memories.count(sig_id)) {
                         memory_signals.insert(sig_name);
-                        log("      Signal %s is a memory\n", sig_name.c_str());
+                        uhdm_trace("      Signal %s is a memory\n", sig_name.c_str());
                     } else {
                         regular_signals.insert(sig_name);
                     }
@@ -2584,7 +2584,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
                 // If we have memory writes, we need special handling
                 if (!memory_signals.empty()) {
-                    log("      Detected memory writes in simple if-else pattern\n");
+                    uhdm_trace("      Detected memory writes in simple if-else pattern\n");
                     
                     // For memory writes, we need to create temp wires for the memory control signals
                     // (address, data, enable) and handle them specially
@@ -2632,7 +2632,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(addr_wire), RTLIL::SigSpec(RTLIL::State::S0, addr_wire->width)));
                         
-                        log("      Created memory write control wires for %s\n", mem_name.c_str());
+                        uhdm_trace("      Created memory write control wires for %s\n", mem_name.c_str());
                     }
                     
                     // Create temporary wires for regular (non-memory) signals
@@ -2660,7 +2660,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire)));
                         
-                        log("      Created temp wire %s for signal %s\n", 
+                        uhdm_trace("      Created temp wire %s for signal %s\n", 
                             temp_name.c_str(), sig_name.c_str());
                     }
                     
@@ -2668,7 +2668,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // and assign to the memory control wires instead of directly creating memwr
                     // For now, fall back to the original behavior
                     is_simple_if_else = false;
-                    log("      Memory write handling not fully implemented, falling back to original behavior\n");
+                    uhdm_trace("      Memory write handling not fully implemented, falling back to original behavior\n");
                 } else {
                     // No memory signals, handle regular signals only
                 }
@@ -2730,7 +2730,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                         RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire)));
                     
-                    log("      Created temp wire %s for signal %s\n", 
+                    uhdm_trace("      Created temp wire %s for signal %s\n", 
                         temp_name.c_str(), sig_name.c_str());
                 }
                 
@@ -2910,7 +2910,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
                 
                 yosys_proc->syncs.push_back(sync);
-                log("      Switch statement and sync rule created\n");
+                uhdm_trace("      Switch statement and sync rule created\n");
                 log_flush();
                 
             } else {
@@ -2937,7 +2937,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                         if (!lhs_bs->VpiName().empty() && lhs_bs->VpiName() == rhs_bs->VpiName()) {
                                             has_shift_register = true;
                                             shift_register_arrays.insert(std::string(lhs_bs->VpiName()));
-                                            log("      Detected shift register pattern for array '%s'\n", 
+                                            uhdm_trace("      Detected shift register pattern for array '%s'\n", 
                                                 std::string(lhs_bs->VpiName()).c_str());
                                         }
                                     }
@@ -2947,7 +2947,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
                 
-                log("      Checking for memory writes in process\n");
+                uhdm_trace("      Checking for memory writes in process\n");
                 log_flush();
                 
                 // Scan for memory writes in the statement (excluding shift registers)
@@ -2964,7 +2964,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 std::map<std::string, RTLIL::Wire*> register_temp_wires;
                 
                 if (has_shift_register) {
-                    log("      Creating temp wires for shift register unrolling\n");
+                    uhdm_trace("      Creating temp wires for shift register unrolling\n");
                     
                     // First create temp wires for regular registers (rA, rB)
                     // We'll scan the begin block for non-for-loop assignments
@@ -2986,7 +2986,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                 add_src_attribute(temp_wire->attributes, uhdm_process);
                                             }
                                             register_temp_wires[sig_name] = temp_wire;
-                                            log("        Created temp wire %s for register %s\n", temp_name.c_str(), sig_name.c_str());
+                                            uhdm_trace("        Created temp wire %s for register %s\n", temp_name.c_str(), sig_name.c_str());
                                         }
                                     }
                                 }
@@ -3022,7 +3022,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 }
                                 
                                 register_temp_wires[elem_name] = temp_wire;
-                                log("        Created temp wire %s for shift register element %s\n", temp_name.c_str(), elem_name.c_str());
+                                uhdm_trace("        Created temp wire %s for shift register element %s\n", temp_name.c_str(), elem_name.c_str());
                             }
                         }
                     }
@@ -3039,7 +3039,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             yosys_proc->root_case.actions.push_back(
                                 RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire))
                             );
-                            log("        Initial assignment: %s = %s\n", temp_wire->name.c_str(), orig_wire->name.c_str());
+                            uhdm_trace("        Initial assignment: %s = %s\n", temp_wire->name.c_str(), orig_wire->name.c_str());
                         }
                     }
                     
@@ -3060,7 +3060,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                             yosys_proc->root_case.actions.push_back(
                                                 RTLIL::SigSig(RTLIL::SigSpec(register_temp_wires[sig_name]), rhs)
                                             );
-                                            log("        Assignment: %s = %s\n", 
+                                            uhdm_trace("        Assignment: %s = %s\n", 
                                                 register_temp_wires[sig_name]->name.c_str(), 
                                                 log_signal(rhs).c_str());
                                         }
@@ -3088,7 +3088,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                 yosys_proc->root_case.actions.push_back(
                                                     RTLIL::SigSig(RTLIL::SigSpec(register_temp_wires[elem_name]), rhs)
                                                 );
-                                                log("        Assignment: %s = %s\n", 
+                                                uhdm_trace("        Assignment: %s = %s\n", 
                                                     register_temp_wires[elem_name]->name.c_str(), 
                                                     log_signal(rhs).c_str());
                                             }
@@ -3121,7 +3121,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                     RTLIL::SigSpec(src_reg)
                                                 )
                                             );
-                                            log("        Shift assignment: %s = %s\n",
+                                            uhdm_trace("        Shift assignment: %s = %s\n",
                                                 register_temp_wires[dst_elem]->name.c_str(),
                                                 src_reg->name.c_str());
                                         }
@@ -3147,12 +3147,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             sync->actions.push_back(
                                 RTLIL::SigSig(RTLIL::SigSpec(orig_wire), RTLIL::SigSpec(temp_wire))
                             );
-                            log("        Sync update: %s <= %s\n", orig_wire->name.c_str(), temp_wire->name.c_str());
+                            uhdm_trace("        Sync update: %s <= %s\n", orig_wire->name.c_str(), temp_wire->name.c_str());
                         }
                     }
                     
                     yosys_proc->syncs.push_back(sync);
-                    log("      Shift register processing complete\n");
+                    uhdm_trace("      Shift register processing complete\n");
                     
                     // Don't continue to memory write handling
                     return;
@@ -3196,7 +3196,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Memory writes inside for loops: the custom CaseRule* memory-write
                     // path cannot handle for-loop unrolling.  Fall back to import_statement_sync
                     // which processes them correctly via import_statement_with_loop_vars.
-                    log("      Found memory writes inside for loop, using sync path\n");
+                    uhdm_trace("      Found memory writes inside for loop, using sync path\n");
                     log_flush();
 
                     if (clock_sig.empty())
@@ -3215,10 +3215,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     pending_sync_seq.clear(); sync_blocking_values.clear();
 
                     yosys_proc->syncs.push_back(sync);
-                    log("      Sync rule created (memory-in-for-loop fallback)\n");
+                    uhdm_trace("      Sync rule created (memory-in-for-loop fallback)\n");
                     log_flush();
                 } else if (!memory_names.empty()) {
-                    log("      Found memory writes to: ");
+                    uhdm_trace("      Found memory writes to: ");
                     for (const auto& mem_name : memory_names) {
                         log("%s ", mem_name.c_str());
                     }
@@ -3294,7 +3294,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(addr_wire), RTLIL::SigSpec(RTLIL::State::S0, addr_wire->width)));
 
-                            log("      Created memory control wires for %s[port %d]: addr=%s, data=%s, en=%s\n",
+                            uhdm_trace("      Created memory control wires for %s[port %d]: addr=%s, data=%s, en=%s\n",
                                 mem_name.c_str(), w, addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
                         }
                     }
@@ -3371,10 +3371,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                     // Import the statement into the process body (root_case)
                     // This will generate assignments to the temp wires
-                    log("      Importing statement into process body for memory write handling\n");
+                    uhdm_trace("      Importing statement into process body for memory write handling\n");
                     log_flush();
                     import_statement_comb(stmt, &yosys_proc->root_case);
-                    log("      Statement imported to process body\n");
+                    uhdm_trace("      Statement imported to process body\n");
                     log_flush();
                     current_temp_wires.clear();
     comb_signal_temp_map.clear();
@@ -3414,7 +3414,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         // Per-bit enable wire is already memory-width.
                         action.enable = RTLIL::SigSpec(info.en_wire);
 
-                        log("      Added memory write action for %s\n", info.mem_id.c_str());
+                        uhdm_trace("      Added memory write action for %s\n", info.mem_id.c_str());
                     }
 
                     // Latch the registered non-memory signals on the clock
@@ -3439,16 +3439,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 i = j;
                             }
                             sync->actions.push_back(RTLIL::SigSig(l, r));
-                            log("      Added sync update (written bits only) for %s\n", sig_name.c_str());
+                            uhdm_trace("      Added sync update (written bits only) for %s\n", sig_name.c_str());
                         } else {
                             sync->actions.push_back(
                                 RTLIL::SigSig(lhs, RTLIL::SigSpec(temp_wire)));
-                            log("      Added sync update for registered signal %s\n", sig_name.c_str());
+                            uhdm_trace("      Added sync update for registered signal %s\n", sig_name.c_str());
                         }
                     }
 
                     yosys_proc->syncs.push_back(sync);
-                    log("      Sync rule with memory writes created\n");
+                    uhdm_trace("      Sync rule with memory writes created\n");
                     log_flush();
                     
                     // Clear memory write tracking
@@ -3458,7 +3458,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Body contains a repeat loop or a for loop nested inside a conditional.
                     // These are not handled by import_statement_comb; fall back to the old
                     // import_statement_sync path which handles them correctly.
-                    log("      No memory writes but body needs sync path (repeat/nested for), using sync path\n");
+                    uhdm_trace("      No memory writes but body needs sync path (repeat/nested for), using sync path\n");
                     log_flush();
 
                     if (clock_sig.empty())
@@ -3477,7 +3477,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     pending_sync_seq.clear(); sync_blocking_values.clear();
 
                     yosys_proc->syncs.push_back(sync);
-                    log("      Sync rule created (blocking-assignment fallback)\n");
+                    uhdm_trace("      Sync rule created (blocking-assignment fallback)\n");
                     log_flush();
                 } else if (gen_scope_stack.empty() && ff_body_is_simple(stmt)) {
                     // SSA cv-threading path: full-wire scalar blocking/non-
@@ -3486,7 +3486,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // and a later blocking read sees the registered value of NB
                     // targets — the genrtlil semantics the switch model can't
                     // express (always03).
-                    log("      Simple always_ff body: using SSA cv-threading\n");
+                    uhdm_trace("      Simple always_ff body: using SSA cv-threading\n");
                     log_flush();
                     if (clock_sig.empty())
                         log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
@@ -3512,16 +3512,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (d.size() < w->width) d.extend_u0(w->width);
                         else if (d.size() > w->width) d = d.extract(0, w->width);
                         sync->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(w), d));
-                        log("    SSA sync update: %s <= %s\n", w->name.c_str(), log_signal(d));
+                        uhdm_trace("    SSA sync update: %s <= %s\n", w->name.c_str(), log_signal(d));
                     }
                     yosys_proc->syncs.push_back(sync);
-                    log("      Simple always_ff SSA sync rule created\n");
+                    uhdm_trace("      Simple always_ff SSA sync rule created\n");
                     log_flush();
                 } else {
                     // No memory writes and no blocking assignments: use comb-style
                     // implementation to produce a proper switch/case structure inside
                     // the process body (matching Verilog frontend output).
-                    log("      No memory writes detected, using comb-style switch structure\n");
+                    uhdm_trace("      No memory writes detected, using comb-style switch structure\n");
                     log_flush();
 
                     if (clock_sig.empty())
@@ -3661,7 +3661,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             signal_temp_wires[dedup_key] = temp_wire;
                             signal_specs[dedup_key] = spec_for_signal;
                             temp_wires_map[sig.lhs_expr] = temp_wire;
-                            log("    Created FF temp wire %s for signal %s (width=%d)\n",
+                            uhdm_trace("    Created FF temp wire %s for signal %s (width=%d)\n",
                                 temp_wire->name.c_str(), sig.name.c_str(), tmp_width);
                         }
                     }
@@ -3689,7 +3689,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
                             yosys_proc->root_case.actions.push_back(
                                 RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec));
-                            log("    Added hold default: %s = %s\n",
+                            uhdm_trace("    Added hold default: %s = %s\n",
                                 temp_wire->name.c_str(), log_signal(lhs_spec));
                         }
                     }
@@ -3703,9 +3703,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     in_always_ff_body_mode = true;
 
                     // Import the body using comb-style statement handling (produces switch/case structure)
-                    log("      Importing FF body with comb-style switch structure\n");
+                    uhdm_trace("      Importing FF body with comb-style switch structure\n");
                     import_statement_comb(stmt, yosys_proc);
-                    log("      FF body imported\n");
+                    uhdm_trace("      FF body imported\n");
 
                     // Clear comb context
                     in_always_ff_body_mode = false;
@@ -3747,18 +3747,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 i = j;
                             }
                             sync->actions.push_back(RTLIL::SigSig(l, r));
-                            log("    Added sync update (written bits only): %s <= %s\n",
+                            uhdm_trace("    Added sync update (written bits only): %s <= %s\n",
                                 log_signal(l), temp_wire->name.c_str());
                         } else {
                             sync->actions.push_back(
                                 RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire)));
-                            log("    Added sync update: %s <= %s\n",
+                            uhdm_trace("    Added sync update: %s <= %s\n",
                                 log_signal(lhs_spec), temp_wire->name.c_str());
                         }
                     }
 
                     yosys_proc->syncs.push_back(sync);
-                    log("      Sync rule with comb-style switch structure created\n");
+                    uhdm_trace("      Sync rule with comb-style switch structure created\n");
                     log_flush();
                 }
             }
@@ -3821,7 +3821,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 // Import always_comb block
 void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
-        log("    Importing always_comb block\n");
+        uhdm_trace("    Importing always_comb block\n");
     
     // Don't set always_comb attribute - let Yosys infer latch behavior
     // yosys_proc->attributes[ID::always_comb] = RTLIL::Const(1);
@@ -3871,7 +3871,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 if (sig.lhs_expr) sig.loop_lhs_exprs.push_back(sig.lhs_expr);
                 sig.lhs_expr = nullptr;
                 sig.is_part_select = false;
-                log("    always_comb: '%s' also written per-element by a "
+                uhdm_trace("    always_comb: '%s' also written per-element by a "
                     "dynamic index - full-width temp\n", sig.name.c_str());
             }
         }
@@ -4015,7 +4015,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             s = import_expression(sig.lhs_expr);
         }
         if (mode_debug)
-            log("    always_comb: whole-write scan %s -> %s\n", sig.name.c_str(), log_signal(s));
+            uhdm_trace("    always_comb: whole-write scan %s -> %s\n", sig.name.c_str(), log_signal(s));
         if (!s.is_wire()) continue;
         std::string wn = s.as_wire()->name.str();
         if (!wn.empty() && wn[0] == '\\' && expanded_array_low(wn.substr(1)) >= 0)
@@ -4107,7 +4107,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             }
             if (all) {
                 if (mode_debug)
-                    log("    always_comb: element write %s of flat-written array "
+                    uhdm_trace("    always_comb: element write %s of flat-written array "
                         "retargeted to %s\n", log_signal(lhs_spec), log_signal(re));
                 lhs_spec = re;
                 retargeted_to_flat = true;
@@ -4188,7 +4188,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 signal_specs[dedup_key] = RTLIL::SigSpec(first_chunk.wire);
             else
                 signal_specs[dedup_key] = lhs_spec;
-            log("    Created temp wire %s for signal %s (width=%d)\n",
+            uhdm_trace("    Created temp wire %s for signal %s (width=%d)\n",
                 temp_wire->name.c_str(), sig.name.c_str(), tmp_width);
         }
 
@@ -4234,7 +4234,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             yosys_proc->root_case.actions.push_back(
                 RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec)
             );
-            log("    Added initialization: %s = %s\n", temp_wire->name.c_str(), log_signal(lhs_spec));
+            uhdm_trace("    Added initialization: %s = %s\n", temp_wire->name.c_str(), log_signal(lhs_spec));
         }
     }
     
@@ -4302,7 +4302,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
         for (int b = 0; b < w; b++) comb_written_bits[wn].insert(off + b);
         if (mode_debug)
-            log("    comb_written loop member: %s.%s -> [%d+:%d]\n", base.c_str(), mp.c_str(), off, w);
+            uhdm_trace("    comb_written loop member: %s.%s -> [%d+:%d]\n", base.c_str(), mp.c_str(), off, w);
         return true;
     };
     for (const auto& s : assigned_signals) {
@@ -4335,7 +4335,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         if (s.lhs_expr->VpiType() == vpiHierPath && !touches_base)
             comb_written_unreliable.insert(s.name);
         if (mode_debug)
-            log("    comb_written probe: name=%s type=%d ls=%s touches=%d\n",
+            uhdm_trace("    comb_written probe: name=%s type=%d ls=%s touches=%d\n",
                 s.name.c_str(), s.lhs_expr->VpiType(),
                 log_signal(ls), touches_base ? 1 : 0);
     }
@@ -4377,14 +4377,14 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                     i = j;
                 }
                 sync_always->actions.push_back(RTLIL::SigSig(l, r));
-                log("    Added partial update: %s <= %s (%d/%d bits)\n",
+                uhdm_trace("    Added partial update: %s <= %s (%d/%d bits)\n",
                     sig_name.c_str(), temp_wire->name.c_str(),
                     (int)wb->second.size(), base_w->width);
             } else {
                 sync_always->actions.push_back(
                     RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
                 );
-                log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
+                uhdm_trace("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
             }
         }
     }
@@ -4469,7 +4469,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             const event_control* event_ctrl = any_cast<const event_control*>(stmt);
             if (event_ctrl->Stmt()) {
                 actual_stmt = event_ctrl->Stmt();
-                log("    Unwrapped event_control for combinational block\n");
+                uhdm_trace("    Unwrapped event_control for combinational block\n");
             }
         }
         import_statement_comb(actual_stmt, yosys_proc);
@@ -4488,7 +4488,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
 
 // Import always block
 void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
-    log("    Importing always block\n");
+    uhdm_trace("    Importing always block\n");
     
     // For SystemVerilog always_ff is a different process type, but for regular always,
     // we need to analyze the sensitivity list to determine if it's clocked or combinational
@@ -4505,7 +4505,7 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
         // empty" (yosys/tests/fmt/display_lm.v).
         if (stmt->VpiType() != vpiEventControl) {
             is_combinational = true;
-            log("    Detected combinational always block (no event control)\n");
+            uhdm_trace("    Detected combinational always block (no event control)\n");
         } else
         // Check if wrapped in event_control
         if (stmt->VpiType() == vpiEventControl) {
@@ -4517,34 +4517,34 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
                 // Let's check if we have any edge-triggered signals
                 bool has_edge_trigger = false;
                 
-                log("    Event expression type: %s (vpiType=%d)\n", 
+                uhdm_trace("    Event expression type: %s (vpiType=%d)\n", 
                     UhdmName(event_expr->UhdmType()).c_str(), event_expr->VpiType());
                 
                 if (event_expr->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(event_expr);
-                    log("    Operation type: %d (vpiPosedgeOp=%d, vpiNegedgeOp=%d, vpiEventOrOp=%d)\n", 
+                    uhdm_trace("    Operation type: %d (vpiPosedgeOp=%d, vpiNegedgeOp=%d, vpiEventOrOp=%d)\n", 
                         op->VpiOpType(), vpiPosedgeOp, vpiNegedgeOp, vpiEventOrOp);
                     
                     // Check for posedge/negedge operations
                     if (op->VpiOpType() == vpiPosedgeOp || op->VpiOpType() == vpiNegedgeOp) {
                         has_edge_trigger = true;
-                        log("    Found edge trigger at top level\n");
+                        uhdm_trace("    Found edge trigger at top level\n");
                     } else if (op->VpiOpType() == vpiEventOrOp || op->VpiOpType() == vpiListOp) {
                         // Check operands for edge triggers
                         // vpiEventOrOp is used for comma-separated events
                         // vpiListOp (37) is also used for sensitivity lists
                         if (op->Operands()) {
-                            log("    Checking %zu operands of %s\n", op->Operands()->size(), 
+                            uhdm_trace("    Checking %zu operands of %s\n", op->Operands()->size(), 
                                 op->VpiOpType() == vpiEventOrOp ? "EventOr" : "ListOp");
                             for (auto operand : *op->Operands()) {
-                                log("      Operand type: %s (vpiType=%d)\n", 
+                                uhdm_trace("      Operand type: %s (vpiType=%d)\n", 
                                     UhdmName(operand->UhdmType()).c_str(), operand->VpiType());
                                 if (operand->VpiType() == vpiOperation) {
                                     const operation* sub_op = any_cast<const operation*>(operand);
-                                    log("      Sub-operation type: %d\n", sub_op->VpiOpType());
+                                    uhdm_trace("      Sub-operation type: %d\n", sub_op->VpiOpType());
                                     if (sub_op->VpiOpType() == vpiPosedgeOp || sub_op->VpiOpType() == vpiNegedgeOp) {
                                         has_edge_trigger = true;
-                                        log("      Found edge trigger in operand\n");
+                                        uhdm_trace("      Found edge trigger in operand\n");
                                         break;
                                     }
                                 }
@@ -4557,21 +4557,21 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
                 is_combinational = !has_edge_trigger;
                 
                 if (is_combinational) {
-                    log("    Detected combinational always block (no edge triggers)\n");
+                    uhdm_trace("    Detected combinational always block (no edge triggers)\n");
                 }
             } else {
                 // No condition typically means always @*
                 is_combinational = true;
-                log("    Detected combinational always block (empty sensitivity list)\n");
+                uhdm_trace("    Detected combinational always block (empty sensitivity list)\n");
             }
         }
     }
     
     if (!is_combinational) {
-        log("    Handling as clocked always block\n");
+        uhdm_trace("    Handling as clocked always block\n");
         import_always_ff(uhdm_process, yosys_proc);
     } else {
-        log("    Handling as combinational always block\n");
+        uhdm_trace("    Handling as combinational always block\n");
         import_always_comb(uhdm_process, yosys_proc);
     }
 }
@@ -4970,7 +4970,7 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
                 block_local_var_objs[alias] = v;
             }
             if (mode_debug)
-                log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
+                uhdm_trace("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
                     wire_name.c_str(), w, wire->is_signed);
         }
     }
@@ -5178,7 +5178,7 @@ bool UhdmImporter::emit_initial_readmem(const any* stmt) {
                     cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, width));
                     it = run;
                 }
-                log("        $readmem%s: initialised memory %s from '%s' (%d words)\n",
+                uhdm_trace("        $readmem%s: initialised memory %s from '%s' (%d words)\n",
                     is_bin ? "b" : "h", memname.c_str(), fname.c_str(),
                     (int)memmap.size());
                 handled = true;
@@ -5350,7 +5350,7 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
         cell->setPort(ID::ADDR, RTLIL::Const(addr, 32));
         cell->setPort(ID::DATA, val);
         cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, w));
-        log("        Added $meminit for %s[%d] = %s\n",
+        uhdm_trace("        Added $meminit for %s[%d] = %s\n",
             mem.c_str(), addr, val.as_string().c_str());
     }
     return true;
@@ -5358,7 +5358,7 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
 
 void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
-        log("    Importing initial block\n");
+        uhdm_trace("    Importing initial block\n");
 
     // Set flag to indicate we're in an initial block
     in_initial_block = true;
@@ -5434,7 +5434,7 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
 
 // Import initial block using sync approach (handles for loops via import_statement_sync)
 void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
-    log("    Importing initial block (sync approach - has for loops)\n");
+    uhdm_trace("    Importing initial block (sync approach - has for loops)\n");
 
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
@@ -5585,7 +5585,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
 
 // Import initial block using comb approach (handles complex case/if via switch rules)
 void UhdmImporter::import_initial_comb(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
-    log("    Importing initial block (comb approach - complex control flow)\n");
+    uhdm_trace("    Importing initial block (comb approach - complex control flow)\n");
 
     // Extract signals that will be assigned in this process
     std::vector<AssignedSignal> assigned_signals;
@@ -5806,16 +5806,16 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
                                                                           const std::map<std::string, int64_t>& var_substitutions) {
     if (!ips) return RTLIL::SigSpec();
     
-    log("      Importing indexed part select with substitution\n");
+    uhdm_trace("      Importing indexed part select with substitution\n");
     
     // Get the base signal name (similar to import_indexed_part_select)
     std::string base_signal_name;
     if (!ips->VpiDefName().empty()) {
         base_signal_name = std::string(ips->VpiDefName());
-        log("        IndexedPartSelect VpiDefName: %s\n", base_signal_name.c_str());
+        uhdm_trace("        IndexedPartSelect VpiDefName: %s\n", base_signal_name.c_str());
     } else if (!ips->VpiName().empty()) {
         base_signal_name = std::string(ips->VpiName());
-        log("        IndexedPartSelect VpiName: %s\n", base_signal_name.c_str());
+        uhdm_trace("        IndexedPartSelect VpiName: %s\n", base_signal_name.c_str());
     }
     
     // Look up the wire in the current module
@@ -5824,7 +5824,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
         RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
         if (module->wire(wire_id)) {
             base_signal = RTLIL::SigSpec(module->wire(wire_id));
-            log("        Found wire %s in module (width=%d)\n", wire_id.c_str(), base_signal.size());
+            uhdm_trace("        Found wire %s in module (width=%d)\n", wire_id.c_str(), base_signal.size());
         } else {
             log_warning("Wire %s not found in module\n", base_signal_name.c_str());
             return RTLIL::SigSpec();
@@ -5846,7 +5846,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
         auto it = var_substitutions.find(ref_name);
         if (it != var_substitutions.end()) {
             base_spec = RTLIL::Const(it->second, 32);
-            log("        Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
+            uhdm_trace("        Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
         } else {
             base_spec = import_expression(any_cast<const expr*>(base_expr));
         }
@@ -5863,7 +5863,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
             width = width_spec.as_int();
         }
     }
-    log("        Width: %d\n", width);
+    uhdm_trace("        Width: %d\n", width);
     
     // If base is constant, we can extract the slice directly
     if (base_spec.is_fully_const()) {
@@ -5874,12 +5874,12 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
         // For upto indexing [base +: width], extract from base to (base + width - 1)  
         int start_idx = indexed_up ? base_idx : base_idx - width + 1;
         
-        log("        Base index: %d, indexed_up: %d, start_idx: %d\n", base_idx, indexed_up, start_idx);
+        uhdm_trace("        Base index: %d, indexed_up: %d, start_idx: %d\n", base_idx, indexed_up, start_idx);
         
         // Extract the slice
         if (start_idx >= 0 && start_idx + width <= base_signal.size()) {
             RTLIL::SigSpec result = base_signal.extract(start_idx, width);
-            log("        Extracted bits [%d:%d] from signal\n", start_idx + width - 1, start_idx);
+            uhdm_trace("        Extracted bits [%d:%d] from signal\n", start_idx + width - 1, start_idx);
             return result;
         } else {
             log_warning("Indexed part select out of bounds (start=%d, width=%d, signal_size=%d)\n",
@@ -5901,7 +5901,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
 void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
     // Process pending memory writes to generate proper structure
     if (!pending_memory_writes.empty()) {
-        log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
+        uhdm_trace("        Processing %zu pending memory writes\n", pending_memory_writes.size());
     
         // Create temporary wires for each memory write (like Verilog frontend)
         // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
@@ -5996,7 +5996,7 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
                     }
                     module->connect(RTLIL::SigSpec(memwr_en_wires[i]), enable);
                 
-                    log("        Generated memory write %zu: addr=%s, data=%s, en=%s\n",
+                    uhdm_trace("        Generated memory write %zu: addr=%s, data=%s, en=%s\n",
                         i, log_signal(mem_write.address), log_signal(mem_write.data),
                         mem_write.condition.empty() ? "1111" : log_signal(mem_write.condition));
                 }
@@ -6179,7 +6179,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             
             // Log LHS type for debugging
             if (lhs) {
-                log("        LHS type: %d (vpiBitSelect=%d, vpiIndexedPartSelect=%d)\n", 
+                uhdm_trace("        LHS type: %d (vpiBitSelect=%d, vpiIndexedPartSelect=%d)\n", 
                     lhs->VpiType(), vpiBitSelect, vpiIndexedPartSelect);
             }
             
@@ -6199,7 +6199,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 if (it != var_substitutions.end()) {
                     // Track this variable for substitution
                     var_substitutions[lhs_name] = it->second;
-                    log("        Variable %s gets value %lld (from %s)\n",
+                    uhdm_trace("        Variable %s gets value %lld (from %s)\n",
                         lhs_name.c_str(), (long long)it->second, rhs_name.c_str());
                     // Skip generating the assignment but continue to process other statements
                     // by returning without adding to pending_sync_assignments
@@ -6209,21 +6209,21 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             
             // Handle indexed part select in LHS with substitution
             if (lhs && lhs->VpiType() == vpiIndexedPartSelect) {
-                log("        Processing indexed part select on LHS\n");
+                uhdm_trace("        Processing indexed part select on LHS\n");
                 lhs_spec = import_indexed_part_select_with_substitution(
                     any_cast<const indexed_part_select*>(lhs), var_substitutions);
-                log("        LHS indexed part select result: %s (empty=%d)\n", 
+                uhdm_trace("        LHS indexed part select result: %s (empty=%d)\n", 
                     log_signal(lhs_spec), lhs_spec.empty());
             } else if (lhs && lhs->VpiType() == vpiBitSelect) {
                 // Handle bit select LHS - might be a memory write with concatenated index
                 const bit_select* bs = any_cast<const bit_select*>(lhs);
                 std::string signal_name = std::string(bs->VpiName());
-                log("        LHS is bit select of %s\n", signal_name.c_str());
+                uhdm_trace("        LHS is bit select of %s\n", signal_name.c_str());
                 
                 // Check if this is a memory
                 RTLIL::IdString mem_id = resolve_mem_id(signal_name);  // scoped: generate-scope memory
                 if (module->memories.count(mem_id) > 0) {
-                    log("        This is a memory write to %s\n", signal_name.c_str());
+                    uhdm_trace("        This is a memory write to %s\n", signal_name.c_str());
                     
                     // Get the index expression
                     auto index_expr = bs->VpiIndex();
@@ -6232,7 +6232,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         
                         // Check if it's a concatenation
                         if (idx_op->VpiOpType() == vpiConcatOp) {
-                            log("        Memory index is concatenation\n");
+                            uhdm_trace("        Memory index is concatenation\n");
                             
                             // Process the concatenation with variable substitution
                             auto operands = idx_op->Operands();
@@ -6252,7 +6252,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                     auto it = var_substitutions.find(ref_name);
                                     if (it != var_substitutions.end()) {
                                         low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
-                                        log("          Substituted %s with %lld in memory index\n", 
+                                        uhdm_trace("          Substituted %s with %lld in memory index\n", 
                                             ref_name.c_str(), (long long)it->second);
                                     } else {
                                         low_spec = import_expression(any_cast<const expr*>(low_part));
@@ -6339,7 +6339,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 if (it != var_substitutions.end()) {
                     // Replace with constant value
                     rhs_spec = RTLIL::Const(it->second, 32);
-                    log("        Substituted variable %s with value %lld\n", 
+                    uhdm_trace("        Substituted variable %s with value %lld\n", 
                         ref_name.c_str(), (long long)it->second);
                 } else {
                     rhs_spec = import_expression(any_cast<const expr*>(rhs));
@@ -6351,9 +6351,9 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             } else if (rhs && rhs->VpiType() == vpiIndexedPartSelect) {
                 // Handle indexed part select on RHS with variable substitution
                 const indexed_part_select* ips = any_cast<const indexed_part_select*>(rhs);
-                log("        RHS is indexed part select, calling substitution function\n");
+                uhdm_trace("        RHS is indexed part select, calling substitution function\n");
                 rhs_spec = import_indexed_part_select_with_substitution(ips, var_substitutions);
-                log("        RHS indexed part select result: %s (empty=%d)\n", 
+                uhdm_trace("        RHS indexed part select result: %s (empty=%d)\n", 
                     log_signal(rhs_spec), rhs_spec.empty());
             } else if (rhs && rhs->VpiType() == vpiBitSelect) {
                 // Handle bit select that might reference an array with loop variable in index
@@ -6363,7 +6363,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 // Check if index contains concatenation with loop variable
                 if (index_expr && index_expr->VpiType() == vpiOperation) {
                     const operation* idx_op = any_cast<const operation*>(index_expr);
-                    log("        Bit select index is operation type %d (vpiConcatOp=%d)\n", 
+                    uhdm_trace("        Bit select index is operation type %d (vpiConcatOp=%d)\n", 
                         idx_op->VpiOpType(), vpiConcatOp);
                     if (idx_op->VpiOpType() == vpiConcatOp) {
                         // This is likely RAM[{addrB, lsbaddr}]
@@ -6373,7 +6373,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                             // For bit_select, the parent should be the array
                             // The name is in VpiName of the bit_select itself
                             std::string mem_name = std::string(bs->VpiName());
-                            log("        Bit select of %s, checking if it's a memory (found=%d)\n", 
+                            uhdm_trace("        Bit select of %s, checking if it's a memory (found=%d)\n", 
                                 mem_name.c_str(), module->memories.count(resolve_mem_id(mem_name)));
                             if (module->memories.count(resolve_mem_id(mem_name))) {
                                 // This is a memory access
@@ -6397,11 +6397,11 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                         const ref_obj* ref = any_cast<const ref_obj*>(low_part);
                                         std::string ref_name = std::string(ref->VpiName());
                                         auto it = var_substitutions.find(ref_name);
-                                        log("          Looking for %s in substitutions (found=%d)\n",
+                                        uhdm_trace("          Looking for %s in substitutions (found=%d)\n",
                                             ref_name.c_str(), it != var_substitutions.end());
                                         if (it != var_substitutions.end()) {
                                             low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
-                                            log("          Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
+                                            uhdm_trace("          Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
                                         } else {
                                             low_spec = import_expression(any_cast<const expr*>(low_part));
                                         }
@@ -6505,7 +6505,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                     pending_sync_assignments[lhs_spec] = rhs_spec;
                     note_pending_sync(lhs_spec);
                 }
-                log("        Added assignment with substitution: %s <= %s (cond=%s)\n",
+                uhdm_trace("        Added assignment with substitution: %s <= %s (cond=%s)\n",
                     log_signal(lhs_spec), log_signal(rhs_spec),
                     current_condition.empty() ? "none" : log_signal(current_condition));
             } else if (lhs_spec.empty() && lhs && lhs->VpiType() == vpiBitSelect && !rhs_spec.empty()) {
@@ -6540,7 +6540,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                     auto it = var_substitutions.find(ref_name);
                                     if (it != var_substitutions.end()) {
                                         low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
-                                        log("          Using substituted value %lld for %s in address\n", 
+                                        uhdm_trace("          Using substituted value %lld for %s in address\n", 
                                             (long long)it->second, ref_name.c_str());
                                     } else {
                                         low_spec = import_expression(any_cast<const expr*>(low_part));
@@ -6577,7 +6577,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         
                         pending_memory_writes.push_back(mem_write);
                         
-                        log("        Collected memory write: %s[%s] <= %s (condition: %s)\n", 
+                        uhdm_trace("        Collected memory write: %s[%s] <= %s (condition: %s)\n", 
                             mem_name.c_str(), log_signal(addr_spec), log_signal(rhs_spec),
                             current_condition.empty() ? "none" : log_signal(current_condition));
                     }
@@ -6638,7 +6638,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                     static int write_counter2 = 0;
                     mem_write.iteration = write_counter2++;
                     pending_memory_writes.push_back(mem_write);
-                    log("        Collected multi-dim memory write: %s[%s] <= %s\n",
+                    uhdm_trace("        Collected multi-dim memory write: %s[%s] <= %s\n",
                         mem_name.c_str(), log_signal(addr_spec), log_signal(rhs_spec));
                 } else {
                     log_warning("UHDM: multi-dimensional memory write to '%s' with an unsupported selector was dropped\n", mem_name.c_str());
@@ -6679,7 +6679,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         // Add assignment to the slice wire
                         pending_sync_assignments[slice_wire] = rhs_spec;
                         note_pending_sync(slice_wire);
-                        log("        Added slice assignment: %s <= %s (for %s[%d -: %d])\n",
+                        uhdm_trace("        Added slice assignment: %s <= %s (for %s[%d -: %d])\n",
                             slice_wire_name.c_str(), log_signal(rhs_spec), 
                             signal_name.c_str(), base_idx, width);
                         
@@ -6771,48 +6771,48 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
 
 // Import statement for synchronous context
 void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset) {
-    log("        import_statement_sync called\n");
+    uhdm_trace("        import_statement_sync called\n");
     log_flush();
     
     if (!uhdm_stmt) {
-        log("        Statement is null, returning\n");
+        uhdm_trace("        Statement is null, returning\n");
         log_flush();
         return;
     }
     
     int stmt_type = uhdm_stmt->VpiType();
-    log("        Statement type: %d\n", stmt_type);
+    uhdm_trace("        Statement type: %d\n", stmt_type);
     log_flush();
     
     switch (stmt_type) {
         case vpiBegin:
         case vpiNamedBegin:
-            log("        Processing begin block\n");
+            uhdm_trace("        Processing begin block\n");
             log_flush();
             import_begin_block_sync(any_cast<const scope*>(uhdm_stmt), sync, is_reset);
-            log("        Begin block processed\n");
+            uhdm_trace("        Begin block processed\n");
             log_flush();
             break;
         case vpiAssignment:
-            log("        Processing assignment\n");
+            uhdm_trace("        Processing assignment\n");
             log_flush();
             import_assignment_sync(any_cast<const assignment*>(uhdm_stmt), sync);
-            log("        Assignment processed\n");
+            uhdm_trace("        Assignment processed\n");
             log_flush();
             break;
         case vpiIf:
-            log("        Processing if statement\n");
+            uhdm_trace("        Processing if statement\n");
             log_flush();
             import_if_stmt_sync(any_cast<const if_stmt*>(uhdm_stmt), sync, is_reset);
-            log("        If statement processed\n");
+            uhdm_trace("        If statement processed\n");
             log_flush();
             break;
         case vpiIfElse: {
-            log("        Processing if-else statement\n");
+            uhdm_trace("        Processing if-else statement\n");
             log_flush();
             // if_else and if_stmt are siblings, both extend atomic_stmt
             const if_else* if_else_stmt = any_cast<const if_else*>(uhdm_stmt);
-            log("        Cast to if_else successful, has else stmt: %s\n", 
+            uhdm_trace("        Cast to if_else successful, has else stmt: %s\n", 
                 if_else_stmt->VpiElseStmt() ? "yes" : "no");
             log_flush();
             
@@ -6845,7 +6845,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     if (condition.size() > 1) {
                         condition = module->ReduceBool(NEW_ID, condition);
                     }
-                    log("        If-else condition: %s\n", log_signal(condition));
+                    uhdm_trace("        If-else condition: %s\n", log_signal(condition));
                     log_flush();
                 }
 
@@ -6862,14 +6862,14 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 
                 // Import then statement
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
-                    log("        Importing then statement\n");
+                    uhdm_trace("        Importing then statement\n");
                     log_flush();
                     import_statement_sync(then_stmt, sync, is_reset);
                 }
                 
                 // Handle else statement
                 if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
-                    log("        Found else statement to import (type=%d)\n", else_stmt->VpiType());
+                    uhdm_trace("        Found else statement to import (type=%d)\n", else_stmt->VpiType());
                     log_flush();
                     // Invert condition for else branch
                     if (!condition.empty()) {
@@ -6889,19 +6889,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 current_condition = prev_condition;
             }
             
-            log("        If-else statement processed\n");
+            uhdm_trace("        If-else statement processed\n");
             log_flush();
             break;
         }
         case vpiCase:
-            log("        Processing case statement\n");
+            uhdm_trace("        Processing case statement\n");
             log_flush();
             import_case_stmt_sync(any_cast<const case_stmt*>(uhdm_stmt), sync, is_reset);
-            log("        Case statement processed\n");
+            uhdm_trace("        Case statement processed\n");
             log_flush();
             break;
         case vpiImmediateAssert: {
-            log("        Processing immediate assert - converting to $check cell\n");
+            uhdm_trace("        Processing immediate assert - converting to $check cell\n");
             log_flush();
 
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
@@ -6913,12 +6913,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate assert processed\n");
+            uhdm_trace("        Immediate assert processed\n");
             log_flush();
             break;
         }
         case vpiImmediateCover: {
-            log("        Processing immediate cover - converting to $check cell\n");
+            uhdm_trace("        Processing immediate cover - converting to $check cell\n");
             log_flush();
 
             const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
@@ -6929,12 +6929,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate cover processed\n");
+            uhdm_trace("        Immediate cover processed\n");
             log_flush();
             break;
         }
         case vpiRepeat: {
-            log("        Processing repeat loop\n");
+            uhdm_trace("        Processing repeat loop\n");
             log_flush();
             const UHDM::repeat* repeat_stmt = any_cast<const UHDM::repeat*>(uhdm_stmt);
 
@@ -6953,7 +6953,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 log_warning("Repeat count %d is out of range, skipping\n", repeat_count);
                 break;
             }
-            log("        Repeat count: %d\n", repeat_count);
+            uhdm_trace("        Repeat count: %d\n", repeat_count);
 
             // 2. Get body statements
             const any* repeat_body = repeat_stmt->VpiStmt();
@@ -7011,10 +7011,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
 
                     if (is_index_incr && index_var_name.empty()) {
                         index_var_name = lhs_name;
-                        log("        Detected loop index variable: %s\n", lhs_name.c_str());
+                        uhdm_trace("        Detected loop index variable: %s\n", lhs_name.c_str());
                     } else {
                         blocking_var_names.insert(lhs_name);
-                        log("        Detected blocking intermediate variable: %s\n", lhs_name.c_str());
+                        uhdm_trace("        Detected blocking intermediate variable: %s\n", lhs_name.c_str());
                     }
                 }
             };
@@ -7037,7 +7037,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         RTLIL::SigSpec init_val = pending_sync_assignments[idx_spec];
                         if (init_val.is_fully_const()) {
                             initial_index = init_val.as_const().as_int();
-                            log("        Initial index value: %d\n", initial_index);
+                            uhdm_trace("        Initial index value: %d\n", initial_index);
                         }
                     }
                 }
@@ -7050,20 +7050,20 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     RTLIL::SigSpec var_spec(var_wire);
                     if (pending_sync_assignments.count(var_spec)) {
                         blocking_values[var_name] = pending_sync_assignments[var_spec];
-                        log("        Initial blocking value for %s: %s\n",
+                        uhdm_trace("        Initial blocking value for %s: %s\n",
                             var_name.c_str(), log_signal(pending_sync_assignments[var_spec]));
                     }
                 }
             }
 
             // 5. Unroll the loop
-            log("        Unrolling repeat loop %d times\n", repeat_count);
+            uhdm_trace("        Unrolling repeat loop %d times\n", repeat_count);
             for (int k = 0; k < repeat_count; k++) {
                 // Set loop index in loop_values for compile-time substitution
                 if (!index_var_name.empty()) {
                     loop_values[index_var_name] = initial_index + k;
                     if (mode_debug)
-                        log("        Iteration %d: %s = %d\n", k, index_var_name.c_str(), initial_index + k);
+                        uhdm_trace("        Iteration %d: %s = %d\n", k, index_var_name.c_str(), initial_index + k);
                 }
 
                 auto process_stmts = [&](const VectorOfany* stmts) {
@@ -7101,7 +7101,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             if (!lhs_name.empty() && !rhs_spec.empty()) {
                                 blocking_values[lhs_name] = rhs_spec;
                                 if (mode_debug)
-                                    log("        Updated blocking var %s = %s\n",
+                                    uhdm_trace("        Updated blocking var %s = %s\n",
                                         lhs_name.c_str(), log_signal(rhs_spec));
                             }
                         } else {
@@ -7131,7 +7131,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 // Add to sync actions directly (non-blocking = goes to sync rule)
                                 sync->actions.push_back(RTLIL::SigSig(lhs_spec, rhs_spec));
                                 if (mode_debug)
-                                    log("        Added sync action: %s <= %s\n",
+                                    uhdm_trace("        Added sync action: %s <= %s\n",
                                         log_signal(lhs_spec), log_signal(rhs_spec));
                             }
                         }
@@ -7154,7 +7154,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 if (var_wire) {
                     pending_sync_assignments[RTLIL::SigSpec(var_wire)] = var_sig;
                     note_pending_sync(RTLIL::SigSpec(var_wire));
-                    log("        Final blocking value for %s: %s\n",
+                    uhdm_trace("        Final blocking value for %s: %s\n",
                         var_name.c_str(), log_signal(var_sig));
                 }
             }
@@ -7166,7 +7166,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     int final_index = initial_index + repeat_count;
                     pending_sync_assignments[RTLIL::SigSpec(idx_wire)] = RTLIL::Const(final_index, idx_wire->width);
                     note_pending_sync(RTLIL::SigSpec(idx_wire));
-                    log("        Final index value for %s: %d\n", index_var_name.c_str(), final_index);
+                    uhdm_trace("        Final index value for %s: %d\n", index_var_name.c_str(), final_index);
                 }
             }
 
@@ -7175,24 +7175,24 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 loop_values.erase(index_var_name);
             }
 
-            log("        Repeat loop unrolled successfully\n");
+            uhdm_trace("        Repeat loop unrolled successfully\n");
             log_flush();
             break;
         }
         case vpiFor: {
-            log("        Processing for loop in initial block\n");
+            uhdm_trace("        Processing for loop in initial block\n");
             log_flush();
             const for_stmt* for_loop = any_cast<const for_stmt*>(uhdm_stmt);
             
             // Debug: Show what we're processing
             if (mode_debug) {
-                log("          For loop components:\n");
-                log("            Has init stmts: %s\n", (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty()) ? "yes" : "no");
-                log("            Has condition: %s\n", for_loop->VpiCondition() ? "yes" : "no");
-                log("            Has inc stmts: %s\n", (for_loop->VpiForIncStmts() && !for_loop->VpiForIncStmts()->empty()) ? "yes" : "no");
-                log("            Has body: %s\n", for_loop->VpiStmt() ? "yes" : "no");
+                uhdm_trace("          For loop components:\n");
+                uhdm_trace("            Has init stmts: %s\n", (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty()) ? "yes" : "no");
+                uhdm_trace("            Has condition: %s\n", for_loop->VpiCondition() ? "yes" : "no");
+                uhdm_trace("            Has inc stmts: %s\n", (for_loop->VpiForIncStmts() && !for_loop->VpiForIncStmts()->empty()) ? "yes" : "no");
+                uhdm_trace("            Has body: %s\n", for_loop->VpiStmt() ? "yes" : "no");
                 if (for_loop->VpiStmt()) {
-                    log("            Body type: %d (vpiBegin=%d, vpiAssignment=%d)\n", 
+                    uhdm_trace("            Body type: %d (vpiBegin=%d, vpiAssignment=%d)\n", 
                         for_loop->VpiStmt()->VpiType(), vpiBegin, vpiAssignment);
                 }
             }
@@ -7284,7 +7284,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                             }
                                             
                                             initial_values[var_name] = value;
-                                            log("        Found initial value: %s = 0x%llx\n", var_name.c_str(), (unsigned long long)value);
+                                            uhdm_trace("        Found initial value: %s = 0x%llx\n", var_name.c_str(), (unsigned long long)value);
                                         }
                                     }
                                 }
@@ -7332,7 +7332,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         loop_var_name = init_name;
                         start_value = init_spec.as_const().as_int();
                         can_unroll = true;
-                        log("        Loop init: %s = %lld\n", loop_var_name.c_str(), (long long)start_value);
+                        uhdm_trace("        Loop init: %s = %lld\n", loop_var_name.c_str(), (long long)start_value);
                     }
                 }
             }
@@ -7387,19 +7387,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
 
                                 if (param_value.is_fully_const()) {
                                     end_value = param_value.as_const().as_int();
-                                    log("        Loop condition: %s %s %s (resolved to %lld)\n",
+                                    uhdm_trace("        Loop condition: %s %s %s (resolved to %lld)\n",
                                         loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"),
                                         std::string(param_ref->VpiName()).c_str(), (long long)end_value);
                                 } else {
                                     can_unroll = false;
-                                    log("        Cannot resolve parameter %s to constant\n", std::string(param_ref->VpiName()).c_str());
+                                    uhdm_trace("        Cannot resolve parameter %s to constant\n", std::string(param_ref->VpiName()).c_str());
                                 }
                             } else if (right_op->VpiType() == vpiConstant) {
                                 const constant* const_val = any_cast<const constant*>(right_op);
                                 RTLIL::SigSpec const_spec = import_constant(const_val);
                                 if (const_spec.is_fully_const()) {
                                     end_value = const_spec.as_const().as_int();
-                                    log("        Loop condition: %s %s %lld\n",
+                                    uhdm_trace("        Loop condition: %s %s %lld\n",
                                         loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
                                 } else {
                                     can_unroll = false;
@@ -7409,18 +7409,18 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 RTLIL::SigSpec func_result = import_expression(any_cast<const expr*>(right_op));
                                 if (func_result.is_fully_const()) {
                                     end_value = func_result.as_const().as_int();
-                                    log("        Loop condition: %s %s func_call (resolved to %lld)\n",
+                                    uhdm_trace("        Loop condition: %s %s func_call (resolved to %lld)\n",
                                         loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
                                 } else {
                                     can_unroll = false;
-                                    log("        Cannot resolve function call to constant for loop bound\n");
+                                    uhdm_trace("        Cannot resolve function call to constant for loop bound\n");
                                 }
                             } else if (right_op->VpiType() == vpiOperation) {
                                 // Operation as end value - evaluate it
                                 RTLIL::SigSpec op_result = import_expression(any_cast<const expr*>(right_op));
                                 if (op_result.is_fully_const()) {
                                     end_value = op_result.as_const().as_int();
-                                    log("        Loop condition: %s %s operation (resolved to %lld)\n",
+                                    uhdm_trace("        Loop condition: %s %s operation (resolved to %lld)\n",
                                         loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
                                 } else {
                                     can_unroll = false;
@@ -7437,13 +7437,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 RTLIL::SigSpec bound = import_expression(rexp);
                                 if (bound.is_fully_const()) {
                                     end_value = bound.as_const().as_int();
-                                    log("        Loop condition: %s %s expr (resolved to %lld)\n",
+                                    uhdm_trace("        Loop condition: %s %s expr (resolved to %lld)\n",
                                         loop_var_name.c_str(),
                                         is_neq_condition ? "!=" : (inclusive ? "<=" : "<"),
                                         (long long)end_value);
                                 } else {
                                     can_unroll = false;
-                                    log("        Cannot resolve loop bound to a constant\n");
+                                    uhdm_trace("        Cannot resolve loop bound to a constant\n");
                                 }
                             } else {
                                 can_unroll = false;
@@ -7462,14 +7462,14 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 const operation* inc_op = any_cast<const operation*>(inc_stmt);
                 if (inc_op->VpiOpType() == vpiPostIncOp || inc_op->VpiOpType() == vpiPreIncOp) {
                     increment = 1;
-                    log("        Loop increment: %s++\n", loop_var_name.c_str());
+                    uhdm_trace("        Loop increment: %s++\n", loop_var_name.c_str());
                 } else if (inc_op->VpiOpType() == vpiPostDecOp || inc_op->VpiOpType() == vpiPreDecOp) {
                     increment = -1;
                     descending = true;
-                    log("        Loop increment: %s--\n", loop_var_name.c_str());
+                    uhdm_trace("        Loop increment: %s--\n", loop_var_name.c_str());
                 } else {
                     can_unroll = false;
-                    log("        Unsupported loop increment operation: %d\n", inc_op->VpiOpType());
+                    uhdm_trace("        Unsupported loop increment operation: %d\n", inc_op->VpiOpType());
                 }
             } else if (can_unroll && inc_stmt->VpiType() == vpiAssignment) {
                 // Handle i = i + N form
@@ -7510,7 +7510,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             if (inc_spec.is_fully_const()) {
                                 increment = inc_spec.as_const().as_int();
                                 if (rhs_is_sub) { increment = -increment; descending = true; }
-                                log("        Loop increment: %s = %s %s %lld\n", loop_var_name.c_str(), loop_var_name.c_str(),
+                                uhdm_trace("        Loop increment: %s = %s %s %lld\n", loop_var_name.c_str(), loop_var_name.c_str(),
                                     rhs_is_sub ? "-" : "+", (long long)(increment < 0 ? -increment : increment));
                             } else {
                                 can_unroll = false;
@@ -7527,9 +7527,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             }
             
             // If we can unroll, check if it's a memory initialization pattern or shift register
-            log("        can_unroll=%d, body type=%d (vpiBegin=%d, vpiAssignment=%d)\n", 
+            uhdm_trace("        can_unroll=%d, body type=%d (vpiBegin=%d, vpiAssignment=%d)\n", 
                 can_unroll, body ? body->VpiType() : -1, vpiBegin, vpiAssignment);
-            log("        Loop parameters: var=%s, start=%lld, end=%lld, increment=%lld, inclusive=%d\n",
+            uhdm_trace("        Loop parameters: var=%s, start=%lld, end=%lld, increment=%lld, inclusive=%d\n",
                 loop_var_name.c_str(), (long long)start_value, (long long)end_value, 
                 (long long)increment, inclusive);
             
@@ -7611,7 +7611,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         }
                         loop_values[loop_var_name] =
                             (int)(inclusive ? end_value + increment : end_value);
-                        log("        always_ff memory-write for loop unrolled\n");
+                        uhdm_trace("        always_ff memory-write for loop unrolled\n");
                         break;  // done with the vpiFor case
                     }
                 }
@@ -7700,10 +7700,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 cell->setPort(ID::ADDR, RTLIL::Const(i, 32));
                                 cell->setPort(ID::DATA, mem_word);
                                 cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, mem_width));
-                                log("        Added $meminit for %s[%lld] = %s\n",
+                                uhdm_trace("        Added $meminit for %s[%lld] = %s\n",
                                     memory_name.c_str(), (long long)i, mem_word.as_string().c_str());
                             }
-                            log("        Memory initialization (single-stmt) unrolled successfully\n");
+                            uhdm_trace("        Memory initialization (single-stmt) unrolled successfully\n");
                         } else {
                             // Non-const RHS: fall back to the general sync unroll.
                             for (int64_t i = start_value;
@@ -7736,7 +7736,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 RTLIL::Const((int)final_val, loop_var_wire->width);
                             note_pending_sync(RTLIL::SigSpec(loop_var_wire));
                         }
-                        log("        General for loop body unrolled successfully\n");
+                        uhdm_trace("        General for loop body unrolled successfully\n");
                     }
                 } else if (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) {
                     // Handle both regular begin and named begin blocks
@@ -7775,13 +7775,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     for (auto stmt : *stmts) {
                         if (stmt->VpiType() == vpiFor) {
                             if (!initial_ctx) {
-                                log("        Nested for loop in a clocked body - "
+                                uhdm_trace("        Nested for loop in a clocked body - "
                                     "unrolling (not interpreting)\n");
                                 break;
                             }
                             // Nested for loop detected - use interpreter
                             use_interpreter = true;
-                            log("        Detected nested for loop - using interpreter\n");
+                            uhdm_trace("        Detected nested for loop - using interpreter\n");
                             break;
                         }
                     }
@@ -7798,7 +7798,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     op->VpiOpType() == vpiGeOp || op->VpiOpType() == vpiLeOp ||
                                     op->VpiOpType() == vpiEqOp || op->VpiOpType() == vpiNeqOp) {
                                     use_interpreter = true;
-                                    log("        Detected complex initialization pattern - using interpreter\n");
+                                    uhdm_trace("        Detected complex initialization pattern - using interpreter\n");
                                 }
                             }
                         }
@@ -7856,17 +7856,17 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             size_t array_size = wire ? wire->width : max_index;
                             if (array_size == 0) array_size = 32; // Default size if we can't determine
                             arrays[name].resize(array_size, 0);
-                            log("        Initializing array '%s' with size %zu\n", name.c_str(), array_size);
+                            uhdm_trace("        Initializing array '%s' with size %zu\n", name.c_str(), array_size);
                         }
                         
-                        log("        Starting interpreter for complex initialization\n");
+                        uhdm_trace("        Starting interpreter for complex initialization\n");
                         
                         // Execute the entire for loop using the interpreter
                         bool break_flag = false;
                         bool continue_flag = false;
                         interpret_statement(uhdm_stmt, variables, arrays, break_flag, continue_flag);
                         
-                        log("        Interpreter finished, generating RTLIL assignments\n");
+                        uhdm_trace("        Interpreter finished, generating RTLIL assignments\n");
                         
                         // Now generate RTLIL assignments for the computed values
                         for (const auto& [array_name, array_values] : arrays) {
@@ -7880,12 +7880,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     RTLIL::SigSpec rhs_val = RTLIL::Const(value ? 1 : 0, 1);
                                     sync->actions.push_back(RTLIL::SigSig(lhs_bit, rhs_val));
                                     
-                                    log("          %s[%zu] = %lld\n", array_name.c_str(), i, (long long)value);
+                                    uhdm_trace("          %s[%zu] = %lld\n", array_name.c_str(), i, (long long)value);
                                 }
                             }
                         }
                         
-                        log("        For loop interpreted successfully\n");
+                        uhdm_trace("        For loop interpreted successfully\n");
                         return; // Don't do any other processing
                     }
                     
@@ -7902,7 +7902,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             // general `for(i) mem[i]=<const>` case (svtypes/logic_rom).
                             std::string memory_name = std::string(bit_sel->VpiName());
                             if (!memory_name.empty() && memory_name == "memory") {
-                                log("        Detected memory initialization pattern for 'memory'\n");
+                                uhdm_trace("        Detected memory initialization pattern for 'memory'\n");
                                 
                                 // Get all statements in the loop body
                                 auto loop_stmts = stmts;
@@ -7938,7 +7938,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                                                 // j is declared as integer (32-bit), so truncate to 32 bits
                                                                 uint64_t full_val = val_spec.as_const().as_int();
                                                                 loop_vars[var_name] = full_val & 0xFFFFFFFF;
-                                                                log("        Found initial value for %s: 0x%llx (truncated to 0x%llx)\n", 
+                                                                uhdm_trace("        Found initial value for %s: 0x%llx (truncated to 0x%llx)\n", 
                                                                     var_name.c_str(), (unsigned long long)full_val, 
                                                                     (unsigned long long)loop_vars[var_name]);
                                                             }
@@ -7952,7 +7952,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 
                                 // If we couldn't find initial values, the loop might not be unrollable
                                 if (loop_vars.empty()) {
-                                    log("        Warning: No initial values found for variables used in loop\n");
+                                    uhdm_trace("        Warning: No initial values found for variables used in loop\n");
                                 }
                                 
                                 // Unroll the loop
@@ -7961,7 +7961,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 for (int64_t i = start_value;
                                  increment > 0 ? i <= loop_end : i >= loop_end;
                                  i += increment) {
-                                    log("        Unrolling iteration %lld\n", (long long)i);
+                                    uhdm_trace("        Unrolling iteration %lld\n", (long long)i);
                                     
                                     // Process each statement in the loop body
                                     uint64_t mem_word = 0;
@@ -7983,7 +7983,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                                         RTLIL::SigSpec rhs_value = evaluate_expression_with_vars(any_cast<const expr*>(assign->Rhs()), loop_vars, loop_var_name, i);
                                                         if (rhs_value.is_fully_const()) {
                                                             mem_word = (uint64_t)rhs_value.as_const().as_int();
-                                                            log("          %s[%lld] = 0x%llx\n", memory_name.c_str(), (long long)i, (unsigned long long)mem_word);
+                                                            uhdm_trace("          %s[%lld] = 0x%llx\n", memory_name.c_str(), (long long)i, (unsigned long long)mem_word);
                                                         } else {
                                                             log_warning("Could not evaluate memory assignment to constant\n");
                                                         }
@@ -8007,7 +8007,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                                     RTLIL::SigSpec rhs_value = evaluate_expression_with_vars(any_cast<const expr*>(assign->Rhs()), loop_vars, loop_var_name, i);
                                                     if (rhs_value.is_fully_const()) {
                                                         loop_vars[var_name] = rhs_value.as_const().as_int() & 0xFFFFFFFF; // Keep as 32-bit
-                                                        log("          %s = 0x%llx\n", var_name.c_str(), 
+                                                        uhdm_trace("          %s = 0x%llx\n", var_name.c_str(), 
                                                             (unsigned long long)loop_vars[var_name]);
                                                     }
                                                 }
@@ -8040,11 +8040,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     cell->setPort(ID::DATA, RTLIL::Const(mem_word, mem_width));
                                     cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, mem_width));
 
-                                    log("        Added $meminit for %s[%lld] = 0x%llx\n",
+                                    uhdm_trace("        Added $meminit for %s[%lld] = 0x%llx\n",
                                         memory_name.c_str(), (long long)i, (unsigned long long)mem_word);
                                 }
                                 
-                                log("        Memory initialization loop unrolled successfully\n");
+                                uhdm_trace("        Memory initialization loop unrolled successfully\n");
                                 
                                 // Store final values of loop variables after the loop
                                 // Override any previous assignments to these variables
@@ -8065,7 +8065,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                         RTLIL::SigSpec var_spec(var_wire);
                                         pending_sync_assignments[var_spec] = RTLIL::Const(final_value, var_wire->width);
                                         note_pending_sync(var_spec);
-                                        log("        Storing final value of %s = 0x%llx (overriding any previous assignment)\n", 
+                                        uhdm_trace("        Storing final value of %s = 0x%llx (overriding any previous assignment)\n", 
                                             var_name.c_str(), (unsigned long long)final_value);
                                     }
                                 }
@@ -8149,7 +8149,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         }
 
                         if (all_mem_func_assigns && !mem_func_assigns.empty()) {
-                            log("        Detected memory initialization with function calls pattern\n");
+                            uhdm_trace("        Detected memory initialization with function calls pattern\n");
 
                             // Get source file info for cell naming
                             std::string meminit_file;
@@ -8218,18 +8218,18 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     cell->setPort(ID::DATA, RTLIL::Const(result_int, mem_width));
                                     cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::S1, mem_width));
 
-                                    log("        Added $meminit for %s[%lld] = 0x%x\n",
+                                    uhdm_trace("        Added $meminit for %s[%lld] = 0x%x\n",
                                         mfa.mem_name.c_str(), (long long)i, result_int);
                                 }
                             }
 
-                            log("        Memory initialization with function calls unrolled successfully\n");
+                            uhdm_trace("        Memory initialization with function calls unrolled successfully\n");
                             return;  // Done with this pattern
                         }
                     }
 
                     // Fall through to generic unrolling for all other begin block patterns
-                    log("        Attempting to interpret for loop with %zu statements\n",
+                    uhdm_trace("        Attempting to interpret for loop with %zu statements\n",
                         stmts ? stmts->size() : 0);
                     
                     if (can_unroll && stmts) {
@@ -8249,7 +8249,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 std::string array_name = std::string(bit_sel->VpiName());
                                 if (array_name == "lut") {
                                     use_interpreter = true;
-                                    log("        Detected lut initialization pattern - using interpreter\n");
+                                    uhdm_trace("        Detected lut initialization pattern - using interpreter\n");
                                 }
                             }
                         }
@@ -8275,11 +8275,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     RTLIL::SigSpec rhs_val = RTLIL::Const(value ? 1 : 0, 1);
                                     sync->actions.push_back(RTLIL::SigSig(lhs_bit, rhs_val));
                                     
-                                    log("          lut[%zu] = %lld\n", i, (long long)value);
+                                    uhdm_trace("          lut[%zu] = %lld\n", i, (long long)value);
                                 }
                             }
                             
-                            log("        For loop interpreted successfully\n");
+                            uhdm_trace("        For loop interpreted successfully\n");
                         } else {
                             // Fall back to simple unrolling for other patterns
                             int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
@@ -8288,7 +8288,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             for (int64_t iter = start_value;
                                  increment > 0 ? iter <= loop_end : iter >= loop_end;
                                  iter += increment) {
-                                log("        Unrolling iteration %lld\n", (long long)iter);
+                                uhdm_trace("        Unrolling iteration %lld\n", (long long)iter);
                                 
                                 // Track variables that should be substituted with values
                                 std::map<std::string, int64_t> var_substitutions;
@@ -8300,7 +8300,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 }
                             }
                             
-                            log("        Generic for loop unrolled successfully\n");
+                            uhdm_trace("        Generic for loop unrolled successfully\n");
                         }
                         
                         emit_pending_memory_writes(sync);
@@ -8315,13 +8315,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     RTLIL::Wire* slice_wire = module->wire(RTLIL::escape_id(slice_name));
                                     if (slice_wire) {
                                         readB_slices.push_back(slice_wire);
-                                        log("        Found slice wire: %s\n", slice_name.c_str());
+                                        uhdm_trace("        Found slice wire: %s\n", slice_name.c_str());
                                     }
                                 }
                                 
                                 // If we have all slices, combine them into readB
                                 if (readB_slices.size() == 4) {
-                                    log("        Combining %zu slices into readB\n", readB_slices.size());
+                                    uhdm_trace("        Combining %zu slices into readB\n", readB_slices.size());
                                     
                                     // Build the concatenation from low to high
                                     // readB[3:0] is at base_idx 3, readB[7:4] at 7, etc.
@@ -8333,7 +8333,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     // Find the existing readB wire
                                     RTLIL::Wire* readB_wire = module->wire(RTLIL::escape_id("readB"));
                                     if (!readB_wire) {
-                                        log("        WARNING: Could not find readB wire, creating new one\n");
+                                        uhdm_trace("        WARNING: Could not find readB wire, creating new one\n");
                                         readB_wire = module->addWire(RTLIL::escape_id("readB"), 16);
                                         readB_wire->attributes[ID::reg] = RTLIL::Const(1);
                                     }
@@ -8341,7 +8341,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     // Add the combined assignment
                                     pending_sync_assignments[readB_wire] = readB_value;
                                     note_pending_sync(readB_wire);
-                                    log("        Added combined assignment: readB <= concatenation of slices\n");
+                                    uhdm_trace("        Added combined assignment: readB <= concatenation of slices\n");
                                 }
                             } else {
                                 log_warning("For loop unrolling not implemented for this pattern\n");
@@ -8368,19 +8368,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         // lost its shift entirely, leaving the $mem with one
                         // write port instead of two (272 of 301 co-sim cycles).
                         // Unroll as STATEMENTS, like a vpiBegin body.
-                        log("        For loop body is if/if-else - unrolling as statements\n");
+                        uhdm_trace("        For loop body is if/if-else - unrolling as statements\n");
                         int64_t loop_end = descending ? (inclusive ? end_value : end_value + 1)
                                                       : (inclusive ? end_value : end_value - 1);
                         for (int64_t iter = start_value;
                              increment > 0 ? iter <= loop_end : iter >= loop_end;
                              iter += increment) {
-                            log("        Unrolling if-body iteration %lld\n", (long long)iter);
+                            uhdm_trace("        Unrolling if-body iteration %lld\n", (long long)iter);
                             std::map<std::string, int64_t> var_substitutions;
                             var_substitutions[loop_var_name] = iter;
                             import_statement_with_loop_vars(body, sync, is_reset, var_substitutions);
                         }
                         emit_pending_memory_writes(sync);
-                        log("        For loop with if body unrolled successfully\n");
+                        uhdm_trace("        For loop with if body unrolled successfully\n");
                     } else {
                         log_warning("For loop unrolling not implemented for this statement type %d\n", body ? body->VpiType() : -1);
                     }
@@ -8392,7 +8392,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 }
             }
             
-            log("        For loop processed\n");
+            uhdm_trace("        For loop processed\n");
             log_flush();
             break;
         }
@@ -8419,7 +8419,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             break;
     }
 
-    log("        import_statement_sync returning\n");
+    uhdm_trace("        import_statement_sync returning\n");
     log_flush();
 }
 
@@ -8738,7 +8738,7 @@ void UhdmImporter::fold_whole_array_writes_onto_elements(std::vector<AssignedSig
             norm.push_back(s);
             continue;
         }
-        log("      Whole-array write to '%s' (its elements are the storage): "
+        uhdm_trace("      Whole-array write to '%s' (its elements are the storage): "
             "registering its %d elements instead of the flat alias\n", s.name.c_str(), n);
         changed = true;
         for (int k = low; k < low + n; k++) {
@@ -8974,7 +8974,7 @@ void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
     fmt.emit_rtlil(cell);
 
     if (mode_debug)
-        log("    Created $print cell '%s' for '%s' (EN=%s)\n",
+        uhdm_trace("    Created $print cell '%s' for '%s' (EN=%s)\n",
             cell_id.c_str(), task_name.c_str(), en_wire->name.c_str());
 }
 
@@ -9034,7 +9034,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         return;
     
     int stmt_type = uhdm_stmt->VpiType();
-    log("    import_statement_comb(Process*): type=%d\n", stmt_type);
+    uhdm_trace("    import_statement_comb(Process*): type=%d\n", stmt_type);
     
     switch (stmt_type) {
         case vpiBegin:
@@ -9057,7 +9057,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
             break;
         case vpiImmediateAssert: {
-            log("        Processing immediate assert in comb context - converting to $check cell\n");
+            uhdm_trace("        Processing immediate assert in comb context - converting to $check cell\n");
             log_flush();
 
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
@@ -9069,12 +9069,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate assert processed\n");
+            uhdm_trace("        Immediate assert processed\n");
             log_flush();
             break;
         }
         case vpiImmediateCover: {
-            log("        Processing immediate cover in comb context - converting to $check cell\n");
+            uhdm_trace("        Processing immediate cover in comb context - converting to $check cell\n");
             log_flush();
 
             const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
@@ -9085,7 +9085,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate cover processed\n");
+            uhdm_trace("        Immediate cover processed\n");
             log_flush();
             break;
         }
@@ -9457,7 +9457,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // loop, so leaving it at the last iterated value is fine.
                 if (fl_had_outer) loop_values[fl_var] = fl_outer_val;
                 else loop_values[fl_var] = (int)loop_end;
-                log("    Comb for loop unrolled with dynamic bound: %s "
+                uhdm_trace("    Comb for loop unrolled with dynamic bound: %s "
                     "max_iters=%lld guard=(i %s bound[%d])\n",
                     fl_var.c_str(), (long long)max_iters,
                     fl_inclusive ? "<=" : "<", fl_bound_width);
@@ -9496,7 +9496,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     // SCALAR writes win via override order, but per-bit
                     // writes like tag_cmp's `gnt_o[i] = 1'b1` target
                     // different bits and never overrode each other.)
-                    log("    Comb for loop body has `break` — forward "
+                    uhdm_trace("    Comb for loop body has `break` — forward "
                         "iteration with live-guarded bodies\n");
                     RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
                     for (int64_t i = fl_start; fl_more(i); i += fl_step) {
@@ -9586,7 +9586,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         else loop_values.erase(fl_var);
                         emit_comb_assign(RTLIL::SigSpec(var_wire), sel, proc);
                         brk_idx_emitted = true;
-                        log("    Comb for loop `break`: %s = first-break index "
+                        uhdm_trace("    Comb for loop `break`: %s = first-break index "
                             "priority mux (%zu iterations)\n",
                             fl_var.c_str(), brk_flags.size());
                     }
@@ -9609,7 +9609,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                      RTLIL::Const((int)final_val, w),
                                      proc);
                 }
-                log("    Comb for loop unrolled: %s final=%lld\n", fl_var.c_str(), (long long)final_val);
+                uhdm_trace("    Comb for loop unrolled: %s final=%lld\n", fl_var.c_str(), (long long)final_val);
             } else {
                 log_warning("Cannot unroll for loop in comb context (complex bounds)\n");
             }
@@ -9681,35 +9681,35 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
 
 // Import begin block for sync context
 void UhdmImporter::import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset) {
-    log("          import_begin_block_sync called\n");
+    uhdm_trace("          import_begin_block_sync called\n");
     log_flush();
     VectorOfany* stmts = begin_block_stmts(uhdm_begin);
     if (stmts) {
-        log("          Begin block has %zu statements\n", stmts->size());
+        uhdm_trace("          Begin block has %zu statements\n", stmts->size());
         log_flush();
         
         int stmt_idx = 0;
         for (auto stmt : *stmts) {
-            log("          Processing statement %d/%zu in begin block\n", stmt_idx + 1, stmts->size());
+            uhdm_trace("          Processing statement %d/%zu in begin block\n", stmt_idx + 1, stmts->size());
             log_flush();
             
             import_statement_sync(stmt, sync, is_reset);
-            log("          Statement %d/%zu processed\n", stmt_idx + 1, stmts->size());
+            uhdm_trace("          Statement %d/%zu processed\n", stmt_idx + 1, stmts->size());
             log_flush();
             stmt_idx++;
         }
     } else {
-        log("          Begin block has no statements\n");
+        uhdm_trace("          Begin block has no statements\n");
         log_flush();
     }
     
-    log("          import_begin_block_sync returning\n");
+    uhdm_trace("          import_begin_block_sync returning\n");
     log_flush();
 }
 
 // Import begin block for comb context
 void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL::Process* proc) {
-    log("    import_begin_block_comb (Process*): Begin block\n");
+    uhdm_trace("    import_begin_block_comb (Process*): Begin block\n");
 
     // Handle Variables() in begin blocks (both named and unnamed)
     std::map<std::string, RTLIL::Wire*> saved_name_map;
@@ -9723,7 +9723,7 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
         } else {
             block_name = "$unnamed_block$" + std::to_string(++unnamed_block_counter);
         }
-        log("    Begin block '%s' has variables\n", block_name.c_str());
+        uhdm_trace("    Begin block '%s' has variables\n", block_name.c_str());
 
         RTLIL::SyncRule* sync_always = nullptr;
         if (!proc->syncs.empty()) sync_always = proc->syncs.back();
@@ -9788,7 +9788,7 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
                            hier_name + "$" + std::to_string(n))))
                     n++;
                 hier_name += "$" + std::to_string(n);
-                log("    Begin block local '%s' collides with an earlier block "
+                uhdm_trace("    Begin block local '%s' collides with an earlier block "
                     "of the same name; using '%s'\n",
                     (block_name + "." + var_name).c_str(), hier_name.c_str());
             }
@@ -9839,17 +9839,17 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
                 );
             }
 
-            log("    Created block-local wire %s (temp: %s, width: %d)\n",
+            uhdm_trace("    Created block-local wire %s (temp: %s, width: %d)\n",
                 block_wire->name.c_str(), temp_wire->name.c_str(), width);
         }
     }
 
     VectorOfany* stmts = begin_block_stmts(uhdm_begin);
     if (stmts) {
-        log("    Begin block has %d statements\n", (int)stmts->size());
+        uhdm_trace("    Begin block has %d statements\n", (int)stmts->size());
         bool brk_seen = false;
         for (auto stmt : *stmts) {
-            log("    Processing statement type %d in begin block\n", stmt->VpiType());
+            uhdm_trace("    Processing statement type %d in begin block\n", stmt->VpiType());
             if (brk_seen && !current_break_flag.empty() && !current_break_sites.empty()) {
                 // After a statement that can `break` this iteration: run the
                 // rest of the block only if no break site so far fired
@@ -9878,7 +9878,7 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             if (stmt_contains_break(stmt)) brk_seen = true;
         }
     } else {
-        log("    Begin block has no statements\n");
+        uhdm_trace("    Begin block has no statements\n");
     }
 
     // Restore name_map
@@ -10012,7 +10012,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
     int ctx_idx = incr_autoidx();
     std::string context = stringf("%s$func$%s:%d$%d", task_name.c_str(), call_file.c_str(), call_line, ctx_idx);
 
-    log("    import_tf_call_comb: %s (context: %s)\n", task_name.c_str(), context.c_str());
+    uhdm_trace("    import_tf_call_comb: %s (context: %s)\n", task_name.c_str(), context.c_str());
 
     // Build task_mapping: maps task variable names to SigSpecs
     std::map<std::string, RTLIL::SigSpec> task_mapping;
@@ -10115,7 +10115,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                             }
                             if (ew) {
                                 caller_out = RTLIL::SigSpec(ew);
-                                log("    import_tf_call_comb: output actual %s -> element wire %s\n",
+                                uhdm_trace("    import_tf_call_comb: output actual %s -> element wire %s\n",
                                     en.c_str(), log_id(ew->name));
                             }
                         }
@@ -10255,7 +10255,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
         }
     }
 
-    log("    import_task_call_comb: done\n");
+    uhdm_trace("    import_task_call_comb: done\n");
 }
 
 // Method-function call on an interface object inlined into a
@@ -11173,7 +11173,7 @@ bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_o
         it->second.chunks().begin()->wire->name.str().find("$func$") == std::string::npos)
         return false;
     if (mode_debug)
-        log("    tf_local_lhs: %s decl=%s mapped=%s\n", nm.c_str(), decl ? "yes" : "no",
+        uhdm_trace("    tf_local_lhs: %s decl=%s mapped=%s\n", nm.c_str(), decl ? "yes" : "no",
             it == current_comb_values.end() ? "no" : log_signal(it->second));
     if (!decl) return false;
     if (it == current_comb_values.end() || it->second.empty()) return false;
@@ -11196,7 +11196,7 @@ bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_o
             return false;
         lhs_out = cur.extract(off, w);
         if (mode_debug)
-            log("    tf_local_lhs: %s.%s -> [%d+:%d] of the mapped formal\n",
+            uhdm_trace("    tf_local_lhs: %s.%s -> [%d+:%d] of the mapped formal\n",
                 nm.c_str(), member_path.c_str(), off, w);
         return true;
     }
@@ -11278,7 +11278,7 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
     int ctx_idx = incr_autoidx();
     std::string context = stringf("%s$func$%s:%d$%d", call_name.c_str(), call_file.c_str(), call_line, ctx_idx);
 
-    log("    import_func_call_comb: %s (context: %s, ret_width=%d)\n", call_name.c_str(), context.c_str(), ret_width);
+    uhdm_trace("    import_func_call_comb: %s (context: %s, ret_width=%d)\n", call_name.c_str(), context.c_str(), ret_width);
 
     // Import arguments using current_comb_values for correct intermediate value resolution
     std::vector<RTLIL::SigSpec> arg_values;
@@ -11513,7 +11513,7 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
                     } else {
                         emit_comb_assign(RTLIL::SigSpec(tw), val, proc);
                     }
-                    log("    import_func_call_comb: output arg %s -> %s\n", pn.c_str(), log_id(tw->name));
+                    uhdm_trace("    import_func_call_comb: output arg %s -> %s\n", pn.c_str(), log_id(tw->name));
                 } else if (vit != func_mapping.end()) {
                     log_warning("function %s: output argument %d is not a plain variable; its write-back was skipped\n",
                                 call_name.c_str(), k);
@@ -11527,7 +11527,7 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
     RTLIL::SigSpec final_result = func_mapping[func_name];
     proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(result_temp), final_result));
 
-    log("    import_func_call_comb: done, result = %s\n", log_signal(final_result));
+    uhdm_trace("    import_func_call_comb: done, result = %s\n", log_signal(final_result));
     return final_result;
 }
 
@@ -11865,7 +11865,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         }
                         cur.replace(sel_off, r2);
                         func_mapping[base] = mask_write(base, cur);
-                        log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
+                        uhdm_trace("      inline_func_body_comb: %s[%d+:%d] = %s\n",
                             base.c_str(), sel_off, sel_w, log_signal(r2).c_str());
                     } else if (!base.empty()) {
                         log_warning(
@@ -11892,7 +11892,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     else if (r2.size() > em_w) r2 = r2.extract(0, em_w);
                     cur.replace(em_off, r2);
                     func_mapping[em_base] = mask_write(em_base, cur);
-                    log("      inline_func_body_comb: %s[%d+:%d] = %s\n",
+                    uhdm_trace("      inline_func_body_comb: %s[%d+:%d] = %s\n",
                         em_base.c_str(), em_off, em_w, log_signal(r2).c_str());
                     break;
                 }
@@ -11948,7 +11948,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         else if (r2.size() > sm_w) r2 = r2.extract(0, sm_w);
                         cur.replace(sm_off, r2);
                         func_mapping[sm_base] = mask_write(sm_base, cur);
-                        log("      inline_func_body_comb: %s.%s [%d+:%d] = %s (nested member)\n",
+                        uhdm_trace("      inline_func_body_comb: %s.%s [%d+:%d] = %s (nested member)\n",
                             sm_base.c_str(), member_path.c_str(), sm_off, sm_w, log_signal(r2).c_str());
                         break;
                     }
@@ -11969,7 +11969,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                             else if (r2.size() > sm_w) r2 = r2.extract(0, sm_w);
                             cur.replace(sm_off, r2);
                             func_mapping[sm_base] = mask_write(sm_base, cur);
-                            log("      inline_func_body_comb: %s.%s [%d+:%d] = %s\n",
+                            uhdm_trace("      inline_func_body_comb: %s.%s [%d+:%d] = %s\n",
                                 sm_base.c_str(), sm_field.c_str(), sm_off, sm_w,
                                 log_signal(r2).c_str());
                             break;
@@ -11992,7 +11992,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
             // Update func_mapping with the new value (key for cell chaining)
             if (!lhs_name.empty() && func_mapping.count(lhs_name)) {
                 func_mapping[lhs_name] = mask_write(lhs_name, rhs);
-                log("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs).c_str());
+                uhdm_trace("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs).c_str());
             } else if (!lhs_name.empty()) {
                 // Module signal - assign to $0\ temp wire and update tracking
                 RTLIL::Wire* target = module->wire(RTLIL::escape_id(lhs_name));
@@ -12010,7 +12010,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
                         current_comb_values[lhs_name] = rhs;
                         func_mapping[lhs_name] = rhs;
-                        log("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs).c_str());
+                        uhdm_trace("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs).c_str());
                     }
                 }
             }
@@ -12052,7 +12052,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     }
                     func_mapping[func_name] = mask_write(func_name, rhs);
                     func_mapping[ret_guard_key] = RTLIL::SigSpec(RTLIL::State::S1, 1);
-                    log("      inline_func_body_comb: return %s = %s\n",
+                    uhdm_trace("      inline_func_body_comb: return %s = %s\n",
                         func_name.c_str(), log_signal(rhs).c_str());
                 }
             }
@@ -12286,7 +12286,7 @@ bool UhdmImporter::emit_dynamic_packed_bit_write_sync(const assignment* uhdm_ass
         pending_sync_assignments[bit_lhs] = RTLIL::SigSpec(mo);
         note_pending_sync(bit_lhs);
     }
-    log("    dyn_packed_bit_write_sync: %s[dyn] <= %s (%d bits)\n",
+    uhdm_trace("    dyn_packed_bit_write_sync: %s[dyn] <= %s (%d bits)\n",
         nm.c_str(), log_signal(rbit), w->width);
     return true;
 }
@@ -12436,13 +12436,13 @@ bool UhdmImporter::emit_dynamic_expanded_elem_field_write_sync(const assignment*
         pending_sync_assignments[elem_lhs] = RTLIL::SigSpec(mux_out);
         note_pending_sync(elem_lhs);
     }
-    log("            dynamic expanded element FIELD write: %s[dyn].%s (%d elements, bits [%d+:%d])\n",
+    uhdm_trace("            dynamic expanded element FIELD write: %s[dyn].%s (%d elements, bits [%d+:%d])\n",
         base_name.c_str(), field_name.c_str(), n, off, w);
     return true;
 }
 
 void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::SyncRule* sync) {
-    log("            import_assignment_sync called\n");
+    uhdm_trace("            import_assignment_sync called\n");
     log_flush();
 
     // Detect a dynamic indexed-part-select LHS (e.g. `dout[ctrl*sel +: 16] <= din`).
@@ -12503,7 +12503,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         merged = module->Mux(NEW_ID, base, merged, current_condition);
                     pending_sync_assignments[RTLIL::SigSpec(bw)] = merged;
                     note_pending_sync(RTLIL::SigSpec(bw));
-                    log("            dynamic packed row write: %s[%d-bit rows] "
+                    uhdm_trace("            dynamic packed row write: %s[%d-bit rows] "
                         "read-modify-write\n", bname.c_str(), elem_w);
                     return;
                 }
@@ -12616,7 +12616,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 pending_sync_assignments[full_lhs] = final_rhs;
                 note_pending_sync(full_lhs);
                 if (mode_debug)
-                    log("    Dynamic indexed-part-select LHS: emitted read-modify-write on '%s'\n",
+                    uhdm_trace("    Dynamic indexed-part-select LHS: emitted read-modify-write on '%s'\n",
                         base_wire->name.c_str());
                 return;
             }
@@ -12625,11 +12625,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
 
     // Check if this is a memory write (LHS is bit_select on a memory)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
-        log("            LHS expr type: %d\n", lhs_expr->VpiType());
+        uhdm_trace("            LHS expr type: %d\n", lhs_expr->VpiType());
         log_flush();
 
         if (lhs_expr->VpiType() == vpiBitSelect) {
-            log("            LHS is bit_select - checking for memory write\n");
+            uhdm_trace("            LHS is bit_select - checking for memory write\n");
             log_flush();
             const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
             std::string signal_name = std::string(bit_sel->VpiName());
@@ -12642,11 +12642,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             // fine, and the comb-style path already resolves the scope.
             RTLIL::IdString mem_id = resolve_mem_id(signal_name);
             
-            log("            Signal name: '%s', mem_id: '%s'\n", signal_name.c_str(), mem_id.c_str());
-            log("            Checking for memory in module...\n");
-            log("            Module has %d memories\n", (int)module->memories.size());
+            uhdm_trace("            Signal name: '%s', mem_id: '%s'\n", signal_name.c_str(), mem_id.c_str());
+            uhdm_trace("            Checking for memory in module...\n");
+            uhdm_trace("            Module has %d memories\n", (int)module->memories.size());
             for (auto& mem_pair : module->memories) {
-                log("              Memory: %s\n", mem_pair.first.c_str());
+                uhdm_trace("              Memory: %s\n", mem_pair.first.c_str());
             }
             log_flush();
             
@@ -12654,15 +12654,15 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 // Check if we're using temp wires for memory writes (new architecture)
                 if (!current_memory_writes.empty() && current_memory_writes.count(signal_name)) {
                     // Skip - memory writes are handled via temp wires
-                    log("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
+                    uhdm_trace("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
                     return;
                 }
                 
-                log("            Found memory '%s' - handling memory write\n", signal_name.c_str());
+                uhdm_trace("            Found memory '%s' - handling memory write\n", signal_name.c_str());
                 log_flush();
                 // This is a memory write
                 if (mode_debug)
-                    log("    Detected memory write to %s\n", signal_name.c_str());
+                    uhdm_trace("    Detected memory write to %s\n", signal_name.c_str());
                 
                 RTLIL::Memory* memory = module->memories.at(mem_id);
                 
@@ -12776,7 +12776,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             if (module->memories.count(mem_id) > 0 &&
                 mem_unpacked_dims(module->memories.at(mem_id)) >= 2) {
                 if (!current_memory_writes.empty() && current_memory_writes.count(signal_name)) {
-                    log("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
+                    uhdm_trace("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
                     return;
                 }
                 RTLIL::Memory* memory = module->memories.at(mem_id);
@@ -12823,7 +12823,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     }
     
     // Regular assignment
-    log("            Processing regular assignment (not memory write)\n");
+    uhdm_trace("            Processing regular assignment (not memory write)\n");
     log_flush();
 
     if (emit_dynamic_expanded_elem_write_sync(uhdm_assign))
@@ -12914,7 +12914,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         }
                         pending_sync_assignments[base_lhs] = next;
                         note_pending_sync(base_lhs);
-                        log("            Dynamic bit-select write folded into base %s\n", log_id(base_wire->name));
+                        uhdm_trace("            Dynamic bit-select write folded into base %s\n", log_id(base_wire->name));
                         return;
                     }
                 }
@@ -12927,10 +12927,10 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
 
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
-        log("            Importing LHS expression\n");
+        uhdm_trace("            Importing LHS expression\n");
         log_flush();
         lhs = import_expression(lhs_expr);
-        log("            LHS imported: [signal] (size=%d)\n", lhs.size());
+        uhdm_trace("            LHS imported: [signal] (size=%d)\n", lhs.size());
         log_flush();
     }
     
@@ -12943,7 +12943,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
             rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
-            log("            Importing RHS expression\n");
+            uhdm_trace("            Importing RHS expression\n");
             log_flush();
             // Propagate LHS width as context so arithmetic ops widen to it
             // (SV context-determined sizing).
@@ -12964,7 +12964,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             rhs = import_expression(rhs_expr,
                 (edge_sync && !sync_blocking_values.empty()) ? &sync_blocking_values : nullptr);
             expression_context_width = prev_ctx;
-            log("            RHS imported: [signal] (size=%d)\n", rhs.size());
+            uhdm_trace("            RHS imported: [signal] (size=%d)\n", rhs.size());
             log_flush();
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
@@ -12972,7 +12972,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     }
 
     if (lhs.size() != rhs.size()) {
-        log("            Size mismatch: LHS=%d, RHS=%d\n", lhs.size(), rhs.size());
+        uhdm_trace("            Size mismatch: LHS=%d, RHS=%d\n", lhs.size(), rhs.size());
         log_flush();
         if (rhs.size() < lhs.size()) {
             if (rhs_is_fill) {
@@ -12989,13 +12989,13 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         }
     }
 
-    log("            Adding action to sync rule (condition=%s)\n",
+    uhdm_trace("            Adding action to sync rule (condition=%s)\n",
         current_condition.empty() ? "none" : log_signal(current_condition));
     log_flush();
     
     // If there's a condition, we need to use a multiplexer
     if (!current_condition.empty()) {
-        log("            Creating conditional assignment with multiplexer\n");
+        uhdm_trace("            Creating conditional assignment with multiplexer\n");
         log_flush();
         
         // The else value is the CURRENT in-flight value of every bit -- the
@@ -13015,11 +13015,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             // `m_axis_tvalid_pipe_reg <= 0` under reset erased the per-bit
             // pipeline shifts before it and the register lost its flops.
             else_value = pending_inflight(lhs);
-            log("            Using in-flight overlapping writes as else value\n");
+            uhdm_trace("            Using in-flight overlapping writes as else value\n");
         } else {
             // Use the current value of lhs as the else value
             else_value = lhs;
-            log("            Using current signal value as else value\n");
+            uhdm_trace("            Using current signal value as else value\n");
         }
         
         // Create multiplexer: condition ? rhs : else_value
@@ -13037,7 +13037,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
                 lhs.as_wire()->name.str()[0] == '\\')
             sync_blocking_values[lhs.as_wire()->name.str().substr(1)] = mux_result;
-        log("            Stored conditional assignment: %s <= %s ? %s : %s\n", 
+        uhdm_trace("            Stored conditional assignment: %s <= %s ? %s : %s\n", 
             log_signal(lhs), log_signal(current_condition), log_signal(rhs), log_signal(else_value));
         log_flush();
     } else {
@@ -13048,12 +13048,12 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
                 lhs.as_wire()->name.str()[0] == '\\')
             sync_blocking_values[lhs.as_wire()->name.str().substr(1)] = rhs;
-        log("            Stored unconditional assignment: %s <= %s\n", 
+        uhdm_trace("            Stored unconditional assignment: %s <= %s\n", 
             log_signal(lhs), log_signal(rhs).c_str());
         log_flush();
     }
     
-    log("            Action added successfully\n");
+    uhdm_trace("            Action added successfully\n");
     log_flush();
 }
 
@@ -13969,7 +13969,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     if (mode_debug) {
         std::string tys;
         for (auto e : *hp->Path_elems()) tys += UHDM::UhdmName(e->UhdmType()) + "(" + std::string(e->VpiName()) + ") ";
-        log("    dyn_elem_field_write: '%s' (%zu elems: %s)\n",
+        uhdm_trace("    dyn_elem_field_write: '%s' (%zu elems: %s)\n",
             std::string(hp->VpiName()).c_str(), hp->Path_elems()->size(), tys.c_str());
     }
 
@@ -14051,13 +14051,13 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         RTLIL::SigSpec tail_dyn_base;
         bool tail_dyn = false, tail_dyn_neg = false;
         if (mode_debug)
-            log("    dyn_elem_field_write: last elem type=%s\n",
+            uhdm_trace("    dyn_elem_field_write: last elem type=%s\n",
                 UHDM::UhdmName(peM.back()->UhdmType()).c_str());
         if (peM.size() >= 3 &&
             peM.back()->UhdmType() == uhdmindexed_part_select) {
             auto lips = any_cast<const UHDM::indexed_part_select*>(peM.back());
             if (mode_debug)
-                log("    dyn_elem_field_write: tail base type=%s width type=%s\n",
+                uhdm_trace("    dyn_elem_field_write: tail base type=%s width type=%s\n",
                     lips->Base_expr() ? UHDM::UhdmName(lips->Base_expr()->UhdmType()).c_str() : "null",
                     lips->Width_expr() ? UHDM::UhdmName(lips->Width_expr()->UhdmType()).c_str() : "null");
             if (lips && lips->Base_expr() && lips->Width_expr()) {
@@ -14066,7 +14066,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 RTLIL::SigSpec ww = import_expression(
                     dynamic_cast<const UHDM::expr*>(lips->Width_expr()));
                 if (mode_debug)
-                    log("    dyn_elem_field_write: tail bb=%d bits const=%d ww const=%d\n",
+                    uhdm_trace("    dyn_elem_field_write: tail bb=%d bits const=%d ww const=%d\n",
                         bb.size(), bb.is_fully_const() ? 1 : 0, ww.is_fully_const() ? 1 : 0);
                 if (bb.is_fully_const() && ww.is_fully_const()) {
                     int o = bb.as_const().as_int();
@@ -14187,7 +14187,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         }
         bool has_field_idx = field_idx_any != nullptr;
         if (mode_debug)
-            log("    dyn_elem_field_write: nsel=%zu field_end=%zu frf=%d field_idx=%d tail_dyn=%d tail_w=%d\n",
+            uhdm_trace("    dyn_elem_field_write: nsel=%zu field_end=%zu frf=%d field_idx=%d tail_dyn=%d tail_w=%d\n",
                 nsel, field_end, frf ? 1 : 0, has_field_idx ? 1 : 0, tail_dyn ? 1 : 0, tail_slice_w);
         if (frf || has_field_idx) {
             const bit_select* bs0 = any_cast<const bit_select*>(peM[0]);
@@ -14205,7 +14205,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 flat_struct_array_geom(base_name, bs0->Actual_group(),
                                        current_instance, dims, &st2, &elem_w2);
             if (mode_debug)
-                log("    dyn_elem_field_write: base_wire=%d geom=%d dims=%zu elem_w=%d st2=%d\n",
+                uhdm_trace("    dyn_elem_field_write: base_wire=%d geom=%d dims=%zu elem_w=%d st2=%d\n",
                     base_wire ? 1 : 0, geom_ok ? 1 : 0, dims.size(), elem_w2, st2 ? 1 : 0);
             if (geom_ok && nsel == dims.size() && st2 && st2->Members()) {
                 int field_offset = 0, field_width = 0;
@@ -14417,7 +14417,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                                     emit_comb_assign(tgt, rv, proc);
                                 else if (case_rule)
                                     case_rule->actions.push_back(RTLIL::SigSig(tgt, rv));
-                                log("    elem_field_write: static row temp %s[%d +: %d]\n",
+                                uhdm_trace("    elem_field_write: static row temp %s[%d +: %d]\n",
                                     rtn.c_str(), off, write_w);
                                 return true;
                             }
@@ -14446,7 +14446,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                                                  ? current_comb_values[base_name]
                                                  : RTLIL::SigSpec(base_wire);
                         if (mode_debug)
-                            log("    dyn_elem_field_write: cur base='%s' ccv_hit=%d\n", base_name.c_str(),
+                            uhdm_trace("    dyn_elem_field_write: cur base='%s' ccv_hit=%d\n", base_name.c_str(),
                                 current_comb_values.count(base_name) ? 1 : 0);
                         if (!current_comb_values.count(base_name) && case_rule) {
                             // always_ff: current_comb_values is suppressed to
@@ -14547,7 +14547,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                     int write_w = ww.as_const().as_int();
                     int base_w2 = base_wire->width;
                     if (mode_debug)
-                        log("    dyn_elem_field_write: struct member dynamic slice %s.%s[dyn +: %d] at member offset %d\n",
+                        uhdm_trace("    dyn_elem_field_write: struct member dynamic slice %s.%s[dyn +: %d] at member offset %d\n",
                             base_name.c_str(), field_name.c_str(), write_w, m_off);
                     // bit position = member offset + base (`-:` counts down)
                     RTLIL::SigSpec pos = bb;
@@ -14882,7 +14882,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     }
     if (!base_wire || elems_own_temps) {
         if (mode_debug)
-            log("    dyn_elem_field_write PER-ELEMENT: base '%s' (elem %d x %d, low %d%s)\n",
+            uhdm_trace("    dyn_elem_field_write PER-ELEMENT: base '%s' (elem %d x %d, low %d%s)\n",
                 base_name.c_str(), elem_w, n_elems, array_low,
                 elems_own_temps ? ", mixed: elements own the temps" : "");
         const bool nb_mode = in_always_ff_body_mode || in_always_ff_context;
@@ -15144,7 +15144,7 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                              ? current_comb_values[base_name]
                              : RTLIL::SigSpec(base_wire);
     if (mode_debug)
-        log("    dyn_elem_field_write FLAT RMW: base '%s' (%s, %d bits, elem %d x %d) cur=%s own_temp=%s elem_temp0=%s\n",
+        uhdm_trace("    dyn_elem_field_write FLAT RMW: base '%s' (%s, %d bits, elem %d x %d) cur=%s own_temp=%s elem_temp0=%s\n",
             base_name.c_str(), base_wire->name.c_str(), base_w, elem_w, n_elems,
             current_comb_values.count(base_name) ? "in-flight" : "flat wire",
             find_own_temp_wire(base_name) ? find_own_temp_wire(base_name)->name.c_str() : "none",
@@ -15868,7 +15868,7 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             if (fold.size() == base_w && fold != tgt_i) {
                 cur = fold;
                 if (mode_debug)
-                    log("    dyn_packed_select_write: in-flight value of '%s' "
+                    uhdm_trace("    dyn_packed_select_write: in-flight value of '%s' "
                         "folded from the process's switches\n", base_name.c_str());
             }
         }
@@ -15890,14 +15890,14 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
                 case_rule->actions[ai].second.size() == base_w) {
                 cur = case_rule->actions[ai].second;
                 if (mode_debug)
-                    log("    dyn_packed_select_write: chaining onto the pending "
+                    uhdm_trace("    dyn_packed_select_write: chaining onto the pending "
                         "write of '%s' in this arm\n", base_name.c_str());
                 break;
             }
         }
     }
     if (mode_debug)
-        log("    dyn_packed_select_write: base='%s' ccv_hit=%d base_w=%d elem_w=%d write_w=%d elem_shift=%s inner_shift=%s\n", base_name.c_str(),
+        uhdm_trace("    dyn_packed_select_write: base='%s' ccv_hit=%d base_w=%d elem_w=%d write_w=%d elem_shift=%s inner_shift=%s\n", base_name.c_str(),
             (!in_always_ff_body_mode && current_comb_values.count(base_name)) ? 1 : 0,
             base_w, elem_w, write_w, log_signal(elem_shift), log_signal(inner_shift));
     // element-wide when ce_off >= 0, else the whole flat wire
@@ -16572,10 +16572,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
             rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             if (mode_debug) {
-                log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
+                uhdm_trace("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(rhs_expr);
-                    log("    Operation type: %d\n", op->VpiOpType());
+                    uhdm_trace("    Operation type: %d\n", op->VpiOpType());
                 }
             }
             // Propagate LHS width as context so arithmetic ops widen to it
@@ -16694,10 +16694,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
 
         // If we have a temp wire for this signal, assign to it
-        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
+        uhdm_trace("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
             signal_name.c_str(), current_signal_temp_wires.size());
         if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
-            log("      Found temp wire for signal '%s'\n", signal_name.c_str());
+            uhdm_trace("      Found temp wire for signal '%s'\n", signal_name.c_str());
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
 
@@ -16772,12 +16772,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 RTLIL::SigSpec part_temp = temp_spec.extract(offset, width);
                 proc->root_case.actions.push_back(RTLIL::SigSig(part_temp, rhs));
                 
-                log("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
+                uhdm_trace("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
                     signal_name.c_str(), offset + width - 1, offset);
             } else {
                 // Full signal assignment
                 proc->root_case.actions.push_back(RTLIL::SigSig(temp_spec, rhs));
-                log("      Assigned to temp wire %s <= [value]\n", signal_name.c_str());
+                uhdm_trace("      Assigned to temp wire %s <= [value]\n", signal_name.c_str());
             }
             return;
         }
@@ -17096,10 +17096,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
             rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             if (mode_debug) {
-                log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
+                uhdm_trace("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(rhs_expr);
-                    log("    Operation type: %d\n", op->VpiOpType());
+                    uhdm_trace("    Operation type: %d\n", op->VpiOpType());
                 }
             }
             // Propagate the LHS width into RHS so arithmetic ops (vpiAddOp /
@@ -17225,10 +17225,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
 
         // If we have a temp wire for this signal, assign to it
-        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
+        uhdm_trace("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
             signal_name.c_str(), current_signal_temp_wires.size());
         if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
-            log("      Found temp wire for signal '%s'\n", signal_name.c_str());
+            uhdm_trace("      Found temp wire for signal '%s'\n", signal_name.c_str());
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
 
@@ -17307,7 +17307,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 RTLIL::SigSpec part_temp = temp_spec.extract(offset, width);
                 case_rule->actions.push_back(RTLIL::SigSig(part_temp, rhs));
                 
-                log("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
+                uhdm_trace("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
                     signal_name.c_str(), offset + width - 1, offset);
             } else {
                 // Full signal assignment.  An unconditional write to the whole
@@ -17316,7 +17316,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 // this later-wins value (firrtl_938).
                 remove_target_from_switches(case_rule, temp_spec);
                 case_rule->actions.push_back(RTLIL::SigSig(temp_spec, rhs));
-                log("      Assigned to temp wire %s <= [value] (temp_wire=%s)\n",
+                uhdm_trace("      Assigned to temp wire %s <= [value] (temp_wire=%s)\n",
                     signal_name.c_str(), temp_wire->name.c_str());
             }
             return;
@@ -17367,7 +17367,7 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
         }
 
         if (mode_debug)
-            log("    If statement condition: %s\n", log_signal(condition));
+            uhdm_trace("    If statement condition: %s\n", log_signal(condition));
 
         // Compile-time-constant guard: import only the taken branch.
         if (condition.is_fully_const()) {
@@ -17393,14 +17393,14 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
     
     // Import then statement
     if (auto then_stmt = uhdm_if->VpiStmt()) {
-        log("          Importing then statement (type=%d) with condition=%s\n", 
+        uhdm_trace("          Importing then statement (type=%d) with condition=%s\n", 
             then_stmt->VpiType(), log_signal(current_condition));
         log_flush();
         import_statement_sync(then_stmt, sync, is_reset);
     }
     
     // Handle else statement if present
-    log("          Checking for else statement (UhdmType=%d, uhdmif_else=%d, VpiType=%d, vpiIfElse=%d)\n", 
+    uhdm_trace("          Checking for else statement (UhdmType=%d, uhdmif_else=%d, VpiType=%d, vpiIfElse=%d)\n", 
         uhdm_if->UhdmType(), uhdmif_else, uhdm_if->VpiType(), vpiIfElse);
     log_flush();
     
@@ -17850,7 +17850,7 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
 }
 
 void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
-    log("    import_if_else_comb: Importing if_else statement\n");
+    uhdm_trace("    import_if_else_comb: Importing if_else statement\n");
 
     // `priority if` / `unique if`: only the OUTERMOST if_else carries the
     // qualifier; propagate it down via `current_if_qualifier` so the
@@ -17882,7 +17882,7 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         }
 
         if (mode_debug)
-            log("    If_else condition: %s\n", log_signal(condition_sig));
+            uhdm_trace("    If_else condition: %s\n", log_signal(condition_sig));
 
         // Compile-time-constant condition: import only the TAKEN branch
         // (mirrors import_if_stmt_comb and the CaseRule vpiIf path) — a
@@ -17924,7 +17924,7 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         // Import then statement
         if (auto then_stmt = uhdm_if_else->VpiStmt()) {
             if (mode_debug)
-                log("    Importing then statement\n");
+                uhdm_trace("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
         // Capture the branch's final in-flight values (incl. nested-construct
@@ -17940,12 +17940,12 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             // Empty compare means default case
             add_src_attribute(else_case->attributes, uhdm_if_else);
 
-            log("    Importing else statement, type: %s (vpiType=%d)\n",
+            uhdm_trace("    Importing else statement, type: %s (vpiType=%d)\n",
                 UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
-            log("    Else case has %d actions before import\n", (int)else_case->actions.size());
+            uhdm_trace("    Else case has %d actions before import\n", (int)else_case->actions.size());
             import_statement_comb(else_stmt, else_case);
-            log("    Else case has %d actions after import\n", (int)else_case->actions.size());
-            log("    Else case has %d switches after import\n", (int)else_case->switches.size());
+            uhdm_trace("    Else case has %d actions after import\n", (int)else_case->actions.size());
+            uhdm_trace("    Else case has %d switches after import\n", (int)else_case->switches.size());
             auto else_ccv = current_comb_values;
             current_comb_values = saved_ccv;
 
@@ -17973,7 +17973,7 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
 // Import if statement for comb context
 void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc) {
     // Always log for debugging
-    log("    import_if_stmt_comb: Importing if statement (UhdmType=%d)\n", uhdm_if->UhdmType());
+    uhdm_trace("    import_if_stmt_comb: Importing if statement (UhdmType=%d)\n", uhdm_if->UhdmType());
 
     // Same qualifier-propagation logic as `import_if_else_comb`; the
     // innermost `else if (…)` in a `priority if` chain reaches here
@@ -18006,7 +18006,7 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         }
 
         if (mode_debug)
-            log("    If condition: %s\n", log_signal(condition_sig));
+            uhdm_trace("    If condition: %s\n", log_signal(condition_sig));
 
         // Compile-time-constant condition (typically a for-loop-unrolled guard
         // such as `if (i >= MHPMCOUNTER_BASE)`): fold it and import only the
@@ -18053,7 +18053,7 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         // Import then statement
         if (auto then_stmt = uhdm_if->VpiStmt()) {
             if (mode_debug)
-                log("    Importing then statement\n");
+                uhdm_trace("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
         auto then_ccv = current_comb_values;
@@ -18067,9 +18067,9 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         sw->cases.push_back(default_case);
 
         if (mode_debug) {
-            log("    If statement import complete. Switch has %d cases\n", (int)sw->cases.size());
+            uhdm_trace("    If statement import complete. Switch has %d cases\n", (int)sw->cases.size());
             for (size_t i = 0; i < sw->cases.size(); i++) {
-                log("      Case %d: %d actions\n", (int)i, (int)sw->cases[i]->actions.size());
+                uhdm_trace("      Case %d: %d actions\n", (int)i, (int)sw->cases[i]->actions.size());
             }
         }
 
@@ -18086,7 +18086,7 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
 
 // Import case statement for sync context
 void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset) {
-    log("        Processing case statement in sync context\n");
+    uhdm_trace("        Processing case statement in sync context\n");
     log_flush();
     
     // Get the case condition (the signal being switched on)
@@ -18105,15 +18105,15 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
         bool is_initial_block = (sync->type == RTLIL::SyncType::STi);
         bool is_const_condition = case_sig.is_fully_const();
         
-        log("        Case condition signal: %s\n", log_signal(case_sig));
-        log("        Is initial block: %s, Is const condition: %s\n", 
+        uhdm_trace("        Case condition signal: %s\n", log_signal(case_sig));
+        uhdm_trace("        Is initial block: %s, Is const condition: %s\n", 
             is_initial_block ? "yes" : "no", is_const_condition ? "yes" : "no");
         log_flush();
         
         // If this is an initial block with constant condition, try to evaluate it directly
         if (is_initial_block && is_const_condition && case_sig.is_fully_const()) {
             RTLIL::Const case_value = case_sig.as_const();
-            log("        Evaluating constant case in initial block: %s\n", case_value.as_string().c_str());
+            uhdm_trace("        Evaluating constant case in initial block: %s\n", case_value.as_string().c_str());
             
             // Process each case item to find a match
             if (auto case_items = uhdm_case->Case_items()) {
@@ -18143,7 +18143,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                     
                                     if (wild_match) {
                                         case_matches = true;
-                                        log("          Found matching case: %s == %s\n", 
+                                        uhdm_trace("          Found matching case: %s == %s\n", 
                                             case_value.as_string().c_str(), expr_value.as_string().c_str());
                                         break;
                                     }
@@ -18153,13 +18153,13 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                     } else {
                         // This is a default case
                         is_default = true;
-                        log("          Default case found\n");
+                        uhdm_trace("          Default case found\n");
                     }
                     
                     // Execute the matching case (or save default for later)
                     if (case_matches) {
                         if (auto stmt = case_item->Stmt()) {
-                            log("          Executing matching case body\n");
+                            uhdm_trace("          Executing matching case body\n");
                             import_statement_sync(stmt, sync, is_reset);
                         }
                         return; // Found match, done processing
@@ -18177,7 +18177,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                 for (auto case_item : *case_items) {
                     if (!case_item->VpiExprs()) { // Default case
                         if (auto stmt = case_item->Stmt()) {
-                            log("          Executing default case body\n");
+                            uhdm_trace("          Executing default case body\n");
                             import_statement_sync(stmt, sync, is_reset);
                         }
                         return;
@@ -18185,7 +18185,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                 }
             }
             
-            log("        No matching case found for constant value\n");
+            uhdm_trace("        No matching case found for constant value\n");
             return; // Exit early for constant evaluation
         }
         
@@ -18197,7 +18197,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
         
         // Process each case item
         if (auto case_items = uhdm_case->Case_items()) {
-            log("        Found %d case items\n", (int)case_items->size());
+            uhdm_trace("        Found %d case items\n", (int)case_items->size());
             log_flush();
             
             for (auto case_item : *case_items) {
@@ -18226,7 +18226,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                 case_condition = create_or_cell(case_condition, eq_sig, case_item);
                             }
                             
-                            log("          Case value: %s\n", log_signal(expr_sig));
+                            uhdm_trace("          Case value: %s\n", log_signal(expr_sig));
                             log_flush();
                         }
                     }
@@ -18243,7 +18243,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                 } else {
                     // This is a default case
                     is_default = true;
-                    log("          Default case\n");
+                    uhdm_trace("          Default case\n");
                     log_flush();
                 }
                 
@@ -18272,7 +18272,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                 // AND with existing condition
                                 current_condition = create_and_cell(current_condition, default_condition, case_item);
                             }
-                            log("          Using negation of all non-default conditions for default case\n");
+                            uhdm_trace("          Using negation of all non-default conditions for default case\n");
                         }
                     } else if (!case_condition.empty()) {
                         if (current_condition.empty()) {
@@ -18283,7 +18283,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                         }
                     }
                     
-                    log("          Importing case body statements\n");
+                    uhdm_trace("          Importing case body statements\n");
                     log_flush();
                     
                     // Import the statement(s) for this case
@@ -18295,7 +18295,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
             }
         }
         
-        log("        Case statement processed\n");
+        uhdm_trace("        Case statement processed\n");
         log_flush();
         
     } else {
@@ -18435,7 +18435,7 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
 // Import case statement for comb context
 void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc) {
     if (mode_debug)
-        log("    Importing case statement for combinational context\n");
+        uhdm_trace("    Importing case statement for combinational context\n");
 
     const UHDM::expr* condition = uhdm_case->VpiCondition();
     if (!condition) {
@@ -18455,7 +18455,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     bool case_expr_signed = is_expr_signed(condition);
 
     if (mode_debug)
-        log("    Case condition signal: %s (signed=%d)\n", log_signal(case_sig), case_expr_signed);
+        uhdm_trace("    Case condition signal: %s (signed=%d)\n", log_signal(case_sig), case_expr_signed);
 
     // --- Pass 1: compute context width and signedness (SV LRM 12.5.1) ---
     // Context width = max of case expression width and all case-item widths.
@@ -18474,7 +18474,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
     if (auto case_items = uhdm_case->Case_items()) {
         if (mode_debug)
-            log("    Found %d case items\n", (int)case_items->size());
+            uhdm_trace("    Found %d case items\n", (int)case_items->size());
         items.reserve(case_items->size());
         for (auto case_item : *case_items) {
             ItemData d;
@@ -18537,7 +18537,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     }
 
     if (mode_debug)
-        log("    Context width=%d all_signed=%d\n", ctx_width, all_signed);
+        uhdm_trace("    Context width=%d all_signed=%d\n", ctx_width, all_signed);
 
     // --- Extend switch signal to context width ---
     if (case_sig.size() < ctx_width)
@@ -18578,7 +18578,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                     sig = sig.extract(0, ctx_width);
                 d.rule->compare.push_back(sig);
                 if (mode_debug)
-                    log("      Case value: %s (width=%d)\n", log_signal(sig), sig.size());
+                    uhdm_trace("      Case value: %s (width=%d)\n", log_signal(sig), sig.size());
             }
             // Import the body from the pre-case state, then capture the result.
             current_comb_values = pre_ccv;
@@ -18590,7 +18590,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     } else {
         // No case items — create an empty default case
         if (mode_debug)
-            log("    No case items found, creating empty default case\n");
+            uhdm_trace("    No case items found, creating empty default case\n");
         RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
         add_src_attribute(default_case->attributes, uhdm_case);
         sw->cases.push_back(default_case);
@@ -18609,7 +18609,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     proc->root_case.switches.push_back(sw);
 
     if (mode_debug)
-        log("    Case statement implementation complete\n");
+        uhdm_trace("    Case statement implementation complete\n");
 }
 
 // Import statement for case rule context
@@ -18617,7 +18617,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
     if (!uhdm_stmt) {
         if (mode_debug)
-            log("        import_statement_comb: null statement\n");
+            uhdm_trace("        import_statement_comb: null statement\n");
         return;
     }
     struct ActiveCase {
@@ -18629,7 +18629,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
     int stmt_type = uhdm_stmt->VpiType();
     
     if (mode_debug) {
-        log("        import_statement_comb: Processing statement type %s (vpiType=%d)\n",
+        uhdm_trace("        import_statement_comb: Processing statement type %s (vpiType=%d)\n",
             UhdmName(uhdm_stmt->UhdmType()).c_str(), stmt_type);
     }
     
@@ -18735,7 +18735,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 int a = addr.as_const().as_int();
                                 if (a < m->start_offset ||
                                     a >= m->start_offset + m->size) {
-                                    log("        Dropped out-of-bounds memory write %s[%d] (size=%d)\n",
+                                    uhdm_trace("        Dropped out-of-bounds memory write %s[%d] (size=%d)\n",
                                         mem_name.c_str(), a, m->size);
                                     return;
                                 }
@@ -18794,7 +18794,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
 
                             if (mode_debug)
-                                log("        Memory write to %s: addr=%s, data=%s\n",
+                                uhdm_trace("        Memory write to %s: addr=%s, data=%s\n",
                                     mem_name.c_str(), log_signal(addr), log_signal(data));
                             return;
                         }
@@ -19187,7 +19187,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         target_sig = RTLIL::SigSpec(temp_wire);
                                     }
                                     if (mode_debug)
-                                        log("        Using temp wire %s for signal %s in async reset context (partial=%d)\n",
+                                        uhdm_trace("        Using temp wire %s for signal %s in async reset context (partial=%d)\n",
                                             temp_wire->name.c_str(), signal_name.c_str(), is_partial ? 1 : 0);
                                 }
                                 // UNPACKED-array whole-array / slice writes: the
@@ -19240,7 +19240,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                 mapped.append(acc);
                                                 any = true;
                                                 if (mode_debug)
-                                                    log("        Flat array LHS '%s' split onto its element temps\n", wn.c_str());
+                                                    uhdm_trace("        Flat array LHS '%s' split onto its element temps\n", wn.c_str());
                                                 continue;
                                             }
                                         }
@@ -19282,7 +19282,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 if (per_elem_ok) {
                                     target_sig = per_elem_mapped;
                                     if (mode_debug)
-                                        log("        Using per-element temp wires for concat assignment\n");
+                                        uhdm_trace("        Using per-element temp wires for concat assignment\n");
                                 } else if (current_temp_wires.count(lhs)) {
                                     RTLIL::Wire* tw = current_temp_wires[lhs];
                                     // The pointer map is keyed by the SHARED
@@ -19367,7 +19367,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         target_sig = mapped;
                                     }
                                     if (mode_debug)
-                                        log("        Using temp wire for assignment\n");
+                                        uhdm_trace("        Using temp wire for assignment\n");
                                 } else {
                                     // Pointer-based lookup misses when the same signal
                                     // is referenced from multiple UHDM ref_obj instances
@@ -19408,7 +19408,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             }
                             
                             if (mode_debug)
-                                log("        Case assignment: %s = %s\n", log_signal(target_sig), log_signal(rhs_sig));
+                                uhdm_trace("        Case assignment: %s = %s\n", log_signal(target_sig), log_signal(rhs_sig));
 
                             // An unconditional full-wire write supersedes any
                             // earlier conditional write to the same signal in
@@ -19427,7 +19427,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             remove_target_from_switches(case_rule, target_sig);
                             case_rule->actions.push_back(RTLIL::SigSig(target_sig, rhs_sig));
                             if (mode_debug)
-                                log("        Assignment added to case_rule, now has %d actions\n", (int)case_rule->actions.size());
+                                uhdm_trace("        Assignment added to case_rule, now has %d actions\n", (int)case_rule->actions.size());
 
                             // Track BLOCKING temps so a later same-cycle read in
                             // this always_ff body resolves to the in-flight
@@ -19515,7 +19515,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
         case vpiBegin:
         case vpiNamedBegin: {
-            log("        import_statement_comb(CaseRule*): Begin block\n");
+            uhdm_trace("        import_statement_comb(CaseRule*): Begin block\n");
             const scope* begin_scope = any_cast<const scope*>(uhdm_stmt);
 
             // Handle local variables in begin blocks
@@ -19529,7 +19529,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 } else {
                     block_name = "$unnamed_block$" + std::to_string(++unnamed_block_counter);
                 }
-                log("        Begin block '%s' has variables\n", block_name.c_str());
+                uhdm_trace("        Begin block '%s' has variables\n", block_name.c_str());
 
                 // Find the sync always rule for adding sync updates
                 RTLIL::SyncRule* sync_always = nullptr;
@@ -19595,17 +19595,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         );
                     }
 
-                    log("        Created block-local wire %s (temp: %s, width: %d)\n",
+                    uhdm_trace("        Created block-local wire %s (temp: %s, width: %d)\n",
                         block_wire->name.c_str(), temp_wire->name.c_str(), width);
                 }
             }
 
             VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
             if (stmts) {
-                log("        Begin has %d statements\n", (int)stmts->size());
+                uhdm_trace("        Begin has %d statements\n", (int)stmts->size());
                 bool brk_seen = false;
                 for (auto stmt : *stmts) {
-                    log("        Processing statement type %d in begin\n", stmt->VpiType());
+                    uhdm_trace("        Processing statement type %d in begin\n", stmt->VpiType());
                     if (brk_seen && !current_break_flag.empty() && !current_break_sites.empty()) {
                         // After a statement that can `break` this iteration: run the
                         // rest of the block only if no break site so far fired
@@ -19634,7 +19634,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     if (stmt_contains_break(stmt)) brk_seen = true;
                 }
             } else {
-                log("        Begin has no statements\n");
+                uhdm_trace("        Begin has no statements\n");
             }
 
             // Restore name_map
@@ -19775,7 +19775,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 bool cr_has_break = body_has_break(fl_body);
                 std::vector<std::pair<int, RTLIL::SigSpec>> cr_brk_flags;
                 if (cr_has_break) {
-                    log("        CaseRule for loop body has `break` — forward "
+                    uhdm_trace("        CaseRule for loop body has `break` — forward "
                         "iteration with live-guarded bodies\n");
                     RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
                     for (int64_t i = fl_start; cr_more(i); i += cr_step) {
@@ -19872,7 +19872,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         }
         case vpiCase: {
-            log("        import_statement_comb(CaseRule*): Case statement\n");
+            uhdm_trace("        import_statement_comb(CaseRule*): Case statement\n");
             const case_stmt* uhdm_case = any_cast<const case_stmt*>(uhdm_stmt);
 
             const UHDM::expr* cond_expr = uhdm_case->VpiCondition();
@@ -19884,7 +19884,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 case_expr = import_expression(cond_expr);
                 expression_context_width = saved_case_ctx;
                 case_expr_signed = is_expr_signed(cond_expr);
-                log("        Case expression: %s (signed=%d)\n", log_signal(case_expr), case_expr_signed);
+                uhdm_trace("        Case expression: %s (signed=%d)\n", log_signal(case_expr), case_expr_signed);
             }
 
             // Pass 1: determine context width and signedness (SV LRM 12.5.1)
@@ -19962,7 +19962,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
             }
 
-            log("        Context width=%d all_signed=%d\n", ctx_width, all_signed);
+            uhdm_trace("        Context width=%d all_signed=%d\n", ctx_width, all_signed);
 
             // Extend switch signal to context width
             if (case_expr.size() < ctx_width)
@@ -20005,11 +20005,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     else if (sig.size() > ctx_width)
                         sig = sig.extract(0, ctx_width);
                     d.rule->compare.push_back(sig);
-                    log("        Case item expression: %s\n", log_signal(sig));
+                    uhdm_trace("        Case item expression: %s\n", log_signal(sig));
                 }
                 current_comb_values = pre_ccv;
                 if (d.stmt) {
-                    log("        Importing case item body (type=%d)\n", d.stmt->VpiType());
+                    uhdm_trace("        Importing case item body (type=%d)\n", d.stmt->VpiType());
                     import_statement_comb(d.stmt, d.rule);
                 }
                 arm_ccv.push_back(current_comb_values);
@@ -20028,7 +20028,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
             // Add the switch to the current case rule
             case_rule->switches.push_back(sw);
-            log("        Case statement imported with %d cases\n", (int)sw->cases.size());
+            uhdm_trace("        Case statement imported with %d cases\n", (int)sw->cases.size());
             break;
         }
         case vpiIf: {
@@ -20068,7 +20068,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
 
                 if (mode_debug)
-                    log("        If condition in case: %s\n", log_signal(condition_sig));
+                    uhdm_trace("        If condition in case: %s\n", log_signal(condition_sig));
 
                 // Compile-time-constant condition: fold it and import only the
                 // taken branch (mirrors the Process-overload path at
@@ -20112,7 +20112,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // Import then statement
                 if (auto then_stmt = if_stmt->VpiStmt()) {
                     if (mode_debug)
-                        log("        Importing then statement in case\n");
+                        uhdm_trace("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
                 auto then_ccv = current_comb_values;
@@ -20167,7 +20167,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
 
                 if (mode_debug)
-                    log("        If_else condition in case: %s\n", log_signal(condition_sig));
+                    uhdm_trace("        If_else condition in case: %s\n", log_signal(condition_sig));
 
                 // Create a switch statement for the if
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
@@ -20196,7 +20196,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // Import then statement
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
                     if (mode_debug)
-                        log("        Importing then statement in case\n");
+                        uhdm_trace("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
 
@@ -20213,7 +20213,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     add_src_attribute(else_case->attributes, if_else_stmt);
 
                     if (mode_debug)
-                        log("        Importing else statement in case (type=%s)\n",
+                        uhdm_trace("        Importing else statement in case (type=%s)\n",
                             UhdmName(else_stmt->UhdmType()).c_str());
                     import_statement_comb(else_stmt, else_case);
                     else_ccv = current_comb_values;
@@ -20241,7 +20241,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
 
         case vpiImmediateAssert: {
-            log("        Processing immediate assert in case context - converting to $check cell\n");
+            uhdm_trace("        Processing immediate assert in case context - converting to $check cell\n");
 
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
             RTLIL::Wire* enable_wire = nullptr;
@@ -20252,11 +20252,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate assert processed in case\n");
+            uhdm_trace("        Immediate assert processed in case\n");
             break;
         }
         case vpiImmediateCover: {
-            log("        Processing immediate cover in case context - converting to $check cell\n");
+            uhdm_trace("        Processing immediate cover in case context - converting to $check cell\n");
 
             const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
             RTLIL::Wire* enable_wire = nullptr;
@@ -20266,7 +20266,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
 
-            log("        Immediate cover processed in case\n");
+            uhdm_trace("        Immediate cover processed in case\n");
             break;
         }
 
@@ -20290,7 +20290,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             if (tcall && callee && current_comb_process)
                 import_tf_call_comb(tcall, callee, current_comb_process, bridged_task_mapping_, case_rule);
             else if (mode_debug)
-                log("        tf-call in case context without callee / process, dropped\n");
+                uhdm_trace("        tf-call in case context without callee / process, dropped\n");
             break;
         }
         case vpiSysFuncCall: {
@@ -20304,7 +20304,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     import_display_stmt(call, root, case_rule);
                 } else {
                     if (mode_debug)
-                        log("        Unsupported system task '%s' in case context\n", name.c_str());
+                        uhdm_trace("        Unsupported system task '%s' in case context\n", name.c_str());
                 }
             }
             break;
@@ -20339,7 +20339,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
             } else {
                 if (mode_debug)
-                    log("        Unsupported operation type %d as statement in case\n", op_type);
+                    uhdm_trace("        Unsupported operation type %d as statement in case\n", op_type);
             }
             break;
         }
@@ -20396,7 +20396,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         default:
             if (mode_debug)
-                log("        Unsupported statement type in case: %s (vpiType=%d)\n",
+                uhdm_trace("        Unsupported statement type in case: %s (vpiType=%d)\n",
                     UhdmName(uhdm_stmt->UhdmType()).c_str(), stmt_type);
             break;
     }
@@ -20406,24 +20406,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case) {
     if (!reset_stmt || !reset_case) return;
     
-    log("    Analyzing reset block for memory for-loops (module: %s)\n", module->name.c_str());
+    uhdm_trace("    Analyzing reset block for memory for-loops (module: %s)\n", module->name.c_str());
     
     // Check if the reset statement is a begin block
     if (reset_stmt->VpiType() == vpiBegin || reset_stmt->VpiType() == vpiNamedBegin) {
         UHDM::VectorOfany* stmts = begin_block_stmts(reset_stmt);
         if (stmts) {
-            log("    Reset begin block has %zu statements\n", stmts->size()); 
+            uhdm_trace("    Reset begin block has %zu statements\n", stmts->size()); 
             
             for (auto stmt : *stmts) {
                 if (!stmt) continue;
                 
-                log("    Reset statement type: %s (vpiType=%d)\n", 
+                uhdm_trace("    Reset statement type: %s (vpiType=%d)\n", 
                     UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
                 
                 // Look for for-loop statements (vpiFor = 15)
                 if (stmt->VpiType() == vpiFor) {
-                    log("    *** FOUND FOR-LOOP IN RESET BLOCK! ***\n");
-                    log("    Processing for-loop for memory operations\n");
+                    uhdm_trace("    *** FOUND FOR-LOOP IN RESET BLOCK! ***\n");
+                    uhdm_trace("    Processing for-loop for memory operations\n");
                     
                     // Extract loop bounds - for simple_memory: for (i = 0; i < DEPTH; i++)
                     // TARGETED FIX: Use hardcoded values for simple_memory test
@@ -20431,7 +20431,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                     int loop_end = 16;    // DEPTH parameter value for simple_memory
                     int memory_width = 8; // WIDTH parameter value for simple_memory
                     
-                    log("    Unrolling memory initialization for-loop: %d to %d iterations (width=%d)\n", 
+                    uhdm_trace("    Unrolling memory initialization for-loop: %d to %d iterations (width=%d)\n", 
                         loop_start, loop_end, memory_width);
                     
                     // UNROLL THE FOR-LOOP: Create individual memory register assignments
@@ -20444,7 +20444,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                         if (!module->wire(memory_reg_id)) {
                             RTLIL::Wire* memory_reg = module->addWire(memory_reg_id, memory_width);
                             memory_reg->attributes[ID::hdlname] = RTLIL::Const(memory_reg_name);
-                            log("    Created memory register wire: %s (width=%d)\n", 
+                            uhdm_trace("    Created memory register wire: %s (width=%d)\n", 
                                 memory_reg_name.c_str(), memory_width);
                         }
                         
@@ -20453,10 +20453,10 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                         RTLIL::SigSpec rhs_sig = RTLIL::SigSpec(RTLIL::Const(0, memory_width));
                         
                         reset_case->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
-                        log("    Added reset assignment: %s <= 0\n", memory_reg_name.c_str());
+                        uhdm_trace("    Added reset assignment: %s <= 0\n", memory_reg_name.c_str());
                     }
                     
-                    log("    *** FOR-LOOP UNROLLING COMPLETED: %d memory register assignments added ***\n", loop_end);
+                    uhdm_trace("    *** FOR-LOOP UNROLLING COMPLETED: %d memory register assignments added ***\n", loop_end);
                 }
             }
         }
@@ -20465,7 +20465,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
 
 // Import initial block using interpreter approach (handles block-local variable declarations)
 void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
-    log("    Importing initial block (interpreter approach - has block-local variables or for-loops)\n");
+    uhdm_trace("    Importing initial block (interpreter approach - has block-local variables or for-loops)\n");
 
     // Create the "sync always" rule (empty, required by proc pass)
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
@@ -20523,7 +20523,7 @@ void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, 
         // Store computed init value for cross-process resolution
         interpreter_init_values[wire] = const_val;
         if (mode_debug) {
-            log("      Initial assignment: %s = %lld (width %d)\n",
+            uhdm_trace("      Initial assignment: %s = %lld (width %d)\n",
                 name.c_str(), (long long)value, wire->width);
         }
     }

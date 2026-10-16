@@ -185,7 +185,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
             int width = declare_function_local(var, local_vars);
             local_vars[var_name] = RTLIL::Const(0, width);
             if (width > 0) local_declared_widths[var_name] = width;
-            log("    Declared local variable %s in function scope (width=%d)\n",
+            uhdm_trace("    Declared local variable %s in function scope (width=%d)\n",
                 var_name.c_str(), width);
             if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                 if (v->Expr()) {
@@ -358,7 +358,7 @@ int UhdmImporter::declare_function_local(const UHDM::any* var,
         // element r — record the dims for the select sites.
         if (udims.size() >= 2)
             array_local_unpacked_dims[var_name] = udims;
-        log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
+        uhdm_trace("    array_var %s: elem_w=%d, total=%d, width=%d\n",
             var_name.c_str(), elem_w, total, width);
     } else if (var->UhdmType() == uhdmpacked_array_var) {
         // Packed array of (e.g.) enums: `sp2v_e [1:0] out` — element
@@ -372,7 +372,7 @@ int UhdmImporter::declare_function_local(const UHDM::any* var,
             if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
                 elem_w = get_width(e0, current_instance);
         if (elem_w > 0) array_local_element_widths[var_name] = elem_w;
-        log("    packed_array_var %s: elem_w=%d, width=%d\n",
+        uhdm_trace("    packed_array_var %s: elem_w=%d, width=%d\n",
             var_name.c_str(), elem_w, width);
     } else {
         width = get_width(var, current_instance);
@@ -452,7 +452,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     RTLIL::Const pval =
                         evaluate_single_operand(pa->Rhs(), local_vars);
                     local_vars[pname] = pval;
-                    log("    Declared local param %s = %s\n",
+                    uhdm_trace("    Declared local param %s = %s\n",
                         pname.c_str(),
                         pval.size() <= 32 ? std::to_string(pval.as_int()).c_str() : "<wide>");
                 }
@@ -758,7 +758,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             target.set(dst, bit);
                         }
                     }
-                    log("    Assigned %s[%d] (element @bit %d, w=%d) = %s\n",
+                    uhdm_trace("    Assigned %s[%d] (element @bit %d, w=%d) = %s\n",
                         lhs_name.c_str(), bit_index, lhs_array_offset, lhs_array_element_width,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (lhs_is_range) {
@@ -773,7 +773,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                 target.set(dst, b < (int)rhs_value.size() ? rhs_value[b] : RTLIL::S0);
                         }
                     }
-                    log("    Assigned %s [%d +: %d] = %s\n", lhs_name.c_str(),
+                    uhdm_trace("    Assigned %s [%d +: %d] = %s\n", lhs_name.c_str(),
                         lhs_range_offset, lhs_range_width,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (lhs_is_array_bit) {
@@ -784,7 +784,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             target.set(lhs_array_bit_offset,
                                        rhs_value.is_fully_zero() ? RTLIL::S0 : RTLIL::S1);
                     }
-                    log("    Assigned %s @bit %d = %s\n", lhs_name.c_str(), lhs_array_bit_offset,
+                    uhdm_trace("    Assigned %s @bit %d = %s\n", lhs_name.c_str(), lhs_array_bit_offset,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (is_bit_select) {
                     // Bit-select assignment: update specific bit of the variable
@@ -802,7 +802,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             slot.resize(bit_index + 1, -1);
                         slot[bit_index] = rhs_value.is_fully_zero() ? 0 : 1;
                     }
-                    log("    Assigned %s[%d] = %s\n", lhs_name.c_str(), bit_index,
+                    uhdm_trace("    Assigned %s[%d] = %s\n", lhs_name.c_str(), bit_index,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (rhs_value.size() > 0 || !local_vars.count(lhs_name)) {
                     // Never clobber a tracked value with an EMPTY one (a
@@ -832,7 +832,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         rhs_value = rv;
                     }
                     local_vars[lhs_name] = rhs_value;
-                    log("    Assigned %s = %s\n", lhs_name.c_str(),
+                    uhdm_trace("    Assigned %s = %s\n", lhs_name.c_str(),
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 }
             }
@@ -909,7 +909,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (nbg) {
                     block_variables = nbg->Variables();
                     if (!nbg->VpiName().empty()) {
-                        log("    Entering named block: %s\n", std::string(nbg->VpiName()).c_str());
+                        uhdm_trace("    Entering named block: %s\n", std::string(nbg->VpiName()).c_str());
                     }
                 }
             } else {
@@ -930,7 +930,7 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     block_vars[var_name] = RTLIL::Const(0, width);
                     local_only_vars.insert(var_name);
                     if (width > 0) local_declared_widths[var_name] = width;
-                    log("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n",
+                    uhdm_trace("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n",
                         var_name.c_str(), width);
                 }
             }
@@ -1667,7 +1667,7 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             if (operand_values.size() >= 2) {
                 RTLIL::Const result = wide_bitwise(RTLIL::const_xor);
                 if (mode_debug)
-                    log("      XOR: %s ^ %s = %s\n", operand_values[0].as_string().c_str(),
+                    uhdm_trace("      XOR: %s ^ %s = %s\n", operand_values[0].as_string().c_str(),
                         operand_values[1].as_string().c_str(), result.as_string().c_str());
                 return result;
             }
@@ -2142,7 +2142,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
             }
             local_var_widths[var_name] = var_width;
             if (mode_debug) {
-                log("UHDM: Function %s local variable %s width=%d\n", 
+                uhdm_trace("UHDM: Function %s local variable %s width=%d\n", 
                     func_name.c_str(), var_name.c_str(), var_width);
             }
         }
@@ -2165,7 +2165,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                         if (actual_ts->UhdmType() == uhdminteger_typespec) {
                             width = 32;
                             if (mode_debug) {
-                                log("UHDM: Function parameter %s is integer type, using width=32\n", io_name.c_str());
+                                uhdm_trace("UHDM: Function parameter %s is integer type, using width=32\n", io_name.c_str());
                             }
                         } else {
                             // For non-integer types, compute width from the formal parameter's typespec
@@ -2176,7 +2176,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                                 width = args[arg_idx].size();
                             }
                             if (mode_debug) {
-                                log("UHDM: Function parameter %s is not integer (type=%d), using formal width=%d\n",
+                                uhdm_trace("UHDM: Function parameter %s is not integer (type=%d), using formal width=%d\n",
                                     io_name.c_str(), actual_ts->UhdmType(), width);
                             }
                         }
@@ -2184,7 +2184,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                         // No actual typespec
                         width = args[arg_idx].size();
                         if (mode_debug) {
-                            log("UHDM: Function parameter %s has no actual typespec, using arg width=%d\n", 
+                            uhdm_trace("UHDM: Function parameter %s has no actual typespec, using arg width=%d\n", 
                                 io_name.c_str(), width);
                         }
                     }
@@ -2192,7 +2192,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                     // Fallback to argument width if no typespec
                     width = args[arg_idx].size();
                     if (mode_debug) {
-                        log("UHDM: Function parameter %s has no typespec, using arg width=%d\n", 
+                        uhdm_trace("UHDM: Function parameter %s has no typespec, using arg width=%d\n", 
                             io_name.c_str(), width);
                     }
                 }
@@ -2293,7 +2293,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                     // directly update the output wire
                     input_mapping[io_name] = args[arg_idx];
                     if (mode_debug) {
-                        log("UHDM: Mapping output parameter %s to wire with width %d\n",
+                        uhdm_trace("UHDM: Mapping output parameter %s to wire with width %d\n",
                             io_name.c_str(), width);
                     }
                 } else if (direction == vpiInout) {
@@ -2354,31 +2354,31 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     // If function doesn't assign to its return value, initialize result to 0
     // This prevents proc_init errors when called from initial blocks
     if (!has_return_assignment) {
-        log("UHDM: Function %s doesn't assign to its return value, initializing to 0\n", func_name.c_str());
+        uhdm_trace("UHDM: Function %s doesn't assign to its return value, initializing to 0\n", func_name.c_str());
         root_case->actions.push_back(RTLIL::SigSig(temp_result1_wire, RTLIL::SigSpec(0, result_wire->width)));
     }
     
     // Always add the function name itself as a return variable
     // This handles direct assignments like fsm_function = IDLE
     input_mapping[func_name] = temp_result1_wire;
-    log("UHDM: Mapping function name '%s' to result wire\n", func_name.c_str());
+    uhdm_trace("UHDM: Mapping function name '%s' to result wire\n", func_name.c_str());
     
     // Also add any actual local variables that are assigned to the function name
     // The prescanning found these intermediate variables
     // We already filtered out input parameters in scan_for_return_variables
     for (const auto& var : return_vars) {
         input_mapping[var] = temp_result1_wire;
-        log("UHDM: Mapping return variable '%s' to result wire for function %s\n",
+        uhdm_trace("UHDM: Mapping return variable '%s' to result wire for function %s\n",
             var.c_str(), func_name.c_str());
     }
     
     // Process the function body into switches
     int func_temp_counter = 0; // Not used anymore, kept for compatibility
-    log("UHDM: Processing function body for %s\n", func_name.c_str());
+    uhdm_trace("UHDM: Processing function body for %s\n", func_name.c_str());
     if (func_def->Stmt()) {
-        log("UHDM: Function has statement of type %d\n", func_def->Stmt()->VpiType());
+        uhdm_trace("UHDM: Function has statement of type %d\n", func_def->Stmt()->VpiType());
     } else {
-        log("UHDM: Function has no statement body!\n");
+        uhdm_trace("UHDM: Function has no statement body!\n");
     }
     
     // Expose the return struct typespec so process_stmt_to_case can map
@@ -2727,11 +2727,11 @@ void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string&
                             if (!is_input_param && !is_parameter) {
                                 return_vars.insert(var_name);
                                 if (mode_debug) {
-                                    log("UHDM: Found return variable '%s' for function %s\n", 
+                                    uhdm_trace("UHDM: Found return variable '%s' for function %s\n", 
                                         var_name.c_str(), func_name.c_str());
                                 }
                             } else if (is_parameter && mode_debug) {
-                                log("UHDM: Skipping parameter '%s' in function %s (not a return variable)\n",
+                                uhdm_trace("UHDM: Skipping parameter '%s' in function %s (not a return variable)\n",
                                     var_name.c_str(), func_name.c_str());
                             }
                         }
@@ -2829,7 +2829,7 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     }
     
     if (all_const) {
-        log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
+        uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
         std::map<std::string, RTLIL::Const> output_params;
         RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
         return RTLIL::SigSpec(result);
@@ -2852,7 +2852,7 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
                 std::string param_name = std::string(io_decl->VpiName());
                 if (args[arg_idx].is_fully_const()) {
                     ctx.const_wire_values[param_name] = args[arg_idx].as_const();
-                    log("UHDM: Parameter %s has constant value %s\n",
+                    uhdm_trace("UHDM: Parameter %s has constant value %s\n",
                         param_name.c_str(), args[arg_idx].as_const().as_string().c_str());
                 }
                 arg_idx++;
@@ -2879,7 +2879,7 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     
     // Check for recursion
     if (function_call_stack.isRecursive(func_name)) {
-        log("UHDM: Recursive call to function %s detected (depth=%d)\n", 
+        uhdm_trace("UHDM: Recursive call to function %s detected (depth=%d)\n", 
             func_name.c_str(), ctx.call_depth);
         
         // For recursive calls with non-constant arguments, we need to limit depth
@@ -2888,7 +2888,7 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
         // when the guard condition (e.g. exp > 0) evaluates to const-false.
         // Allow up to 20 levels; non-terminating calls beyond that return X.
         if (ctx.call_depth > 20) { // Limit recursion depth for synthesis
-            log("UHDM: Reached maximum recursion depth for %s, returning undefined\n", func_name.c_str());
+            uhdm_trace("UHDM: Reached maximum recursion depth for %s, returning undefined\n", func_name.c_str());
             
             // Get return width
             int ret_width = 32; // Default
@@ -2949,7 +2949,7 @@ std::string UhdmImporter::create_function_instance_id(const std::string& func_na
 // Handle recursive function calls
 RTLIL::SigSpec UhdmImporter::handle_recursive_call(FunctionCallContext& ctx,
                                                    FunctionCallContext* parent_ctx) {
-    log("UHDM: Handling recursive call to %s (instance: %s)\n", 
+    uhdm_trace("UHDM: Handling recursive call to %s (instance: %s)\n", 
         ctx.function_name.c_str(), ctx.instance_id.c_str());
     
     // Create a unique result wire for this recursive instance
@@ -2982,7 +2982,7 @@ RTLIL::SigSpec UhdmImporter::handle_recursive_call(FunctionCallContext& ctx,
 
 // Generate process for a specific function context
 RTLIL::Process* UhdmImporter::generate_process_for_context(const FunctionCallContext& ctx) {
-    log("UHDM: Generating process for function %s (instance: %s)\n", 
+    uhdm_trace("UHDM: Generating process for function %s (instance: %s)\n", 
         ctx.function_name.c_str(), ctx.instance_id.c_str());
     
     // Note: The context is already on the stack from process_function_with_context

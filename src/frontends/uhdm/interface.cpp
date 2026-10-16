@@ -15,7 +15,7 @@ YOSYS_NAMESPACE_BEGIN
 // Import interface definition
 void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
     if (mode_debug)
-        log("UHDM: Starting import_interface\n");
+        uhdm_trace("UHDM: Starting import_interface\n");
     
     std::string interface_name = std::string(uhdm_interface->VpiName());
     if (interface_name.empty()) {
@@ -35,7 +35,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
     }
     
     if (mode_debug)
-        log("UHDM: Processing interface: %s\n", interface_name.c_str());
+        uhdm_trace("UHDM: Processing interface: %s\n", interface_name.c_str());
     
     // Create interface module - interfaces become modules in RTLIL
     // We need to create parameterized versions for each WIDTH value
@@ -76,7 +76,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
     
     // Check if this interface module already exists
     if (design->module(mod_id)) {
-        log("UHDM: Interface module %s already exists\n", param_module_name.c_str());
+        uhdm_trace("UHDM: Interface module %s already exists\n", param_module_name.c_str());
         return;
     }
     
@@ -109,7 +109,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
             std::string var_name = std::string(var->VpiName());
             RTLIL::Wire* w = iface_module->addWire(RTLIL::escape_id(var_name), width);
             add_src_attribute(w->attributes, var);
-            log("UHDM: Added wire '%s' (width=%d) to interface module from Variables\n", var_name.c_str(), width);
+            uhdm_trace("UHDM: Added wire '%s' (width=%d) to interface module from Variables\n", var_name.c_str(), width);
         }
     } 
     // Then try Nets
@@ -118,7 +118,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
             std::string net_name = std::string(net->VpiName());
             RTLIL::Wire* w = iface_module->addWire(RTLIL::escape_id(net_name), width);
             add_src_attribute(w->attributes, net);
-            log("UHDM: Added wire '%s' (width=%d) to interface module from Nets\n", net_name.c_str(), width);
+            uhdm_trace("UHDM: Added wire '%s' (width=%d) to interface module from Nets\n", net_name.c_str(), width);
         }
     }
     else {
@@ -129,15 +129,15 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
             for (const auto& signal_name : signal_names) {
                 RTLIL::Wire* w = iface_module->addWire(RTLIL::escape_id(signal_name), width);
                 add_src_attribute(w->attributes, uhdm_interface);
-                log("UHDM: Added wire '%s' (width=%d) to interface module (hardcoded)\n", signal_name.c_str(), width);
+                uhdm_trace("UHDM: Added wire '%s' (width=%d) to interface module (hardcoded)\n", signal_name.c_str(), width);
             }
         }
     }
     
-    log("UHDM: Created interface module %s\n", param_module_name.c_str());
+    uhdm_trace("UHDM: Created interface module %s\n", param_module_name.c_str());
     
     if (mode_debug)
-        log("UHDM: Finished importing interface: %s\n", interface_name.c_str());
+        uhdm_trace("UHDM: Finished importing interface: %s\n", interface_name.c_str());
 }
 
 RTLIL::SigSpec UhdmImporter::resolve_bare_iface_member_actual(const UHDM::any* hc,
@@ -240,7 +240,7 @@ RTLIL::SigSpec UhdmImporter::resolve_bare_iface_member_actual(const UHDM::any* h
     std::string full = cand + "." + member;
     RTLIL::Wire* w = name_map.count(full) ? name_map[full] : module->wire(RTLIL::escape_id(full));
     if (!w) return out;
-    log("UHDM: %s actual resolved to %s (declared by %s, unique port of that type)\n",
+    uhdm_trace("UHDM: %s actual resolved to %s (declared by %s, unique port of that type)\n",
         what.c_str(), full.c_str(), decl_if.c_str());
     return RTLIL::SigSpec(w);
 }
@@ -248,7 +248,7 @@ RTLIL::SigSpec UhdmImporter::resolve_bare_iface_member_actual(const UHDM::any* h
 // Import interface instances within a module
 void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_module) {
     if (mode_debug)
-        log("UHDM: Starting import_interface_instances\n");
+        uhdm_trace("UHDM: Starting import_interface_instances\n");
 
     // AllModules entries for non-top modules typically store local interface
     // instances as plain `logic_net` placeholders — the `Interfaces()` list
@@ -275,17 +275,17 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             if (auto r = find(t)) { source = r; break; }
         }
         if (source != uhdm_module) {
-            log("UHDM: Augmenting interface instances for %s from elaborated %s\n",
+            uhdm_trace("UHDM: Augmenting interface instances for %s from elaborated %s\n",
                 def.c_str(), std::string(source->VpiFullName()).c_str());
         }
     }
 
     // Import interface instances
     if (source->Interfaces()) {
-        log("UHDM: Module has %d interfaces\n", (int)source->Interfaces()->size());
+        uhdm_trace("UHDM: Module has %d interfaces\n", (int)source->Interfaces()->size());
         for (auto interface : *source->Interfaces()) {
             std::string interface_name = std::string(interface->VpiName());
-            log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
+            uhdm_trace("UHDM: Processing interface instance: %s\n", interface_name.c_str());
             log_flush();
             // Record the packed struct/union typespec of an interface signal
             // (e.g. "arr[0].req") so a field access `arr[0].req.adr` can slice
@@ -329,7 +329,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             // First check if the current module has a WIDTH parameter
             if (module->parameter_default_values.count(RTLIL::escape_id("WIDTH"))) {
                 interface_width = module->parameter_default_values.at(RTLIL::escape_id("WIDTH")).as_int();
-                log("UHDM: Using module's WIDTH parameter: %d\n", interface_width);
+                uhdm_trace("UHDM: Using module's WIDTH parameter: %d\n", interface_width);
             } else {
                 // Fall back to interface instance's parameter assignments
                 if (interface->Param_assigns()) {
@@ -345,7 +345,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                                     std::string val_str = std::string(const_val->VpiValue());
                                     RTLIL::Const const_val_rtlil = extract_const_from_value(val_str);
                                     interface_width = const_val_rtlil.as_int();
-                                    log("UHDM: Interface %s has WIDTH=%d\n", interface_name.c_str(), interface_width);
+                                    uhdm_trace("UHDM: Interface %s has WIDTH=%d\n", interface_name.c_str(), interface_width);
                                 }
                             }
                         }
@@ -475,7 +475,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     }
 
                     if (mode_debug)
-                        log("UHDM: Creating interface signal from Variables: %s (width=%d)\n", full_name.c_str(), width);
+                        uhdm_trace("UHDM: Creating interface signal from Variables: %s (width=%d)\n", full_name.c_str(), width);
 
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
@@ -514,7 +514,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                                     init_sig = init_sig.extract(0, width);
                                 module->connect(RTLIL::SigSpec(wire), init_sig);
                                 if (mode_debug)
-                                    log("UHDM: Drove %s from net-decl init (width=%d)\n",
+                                    uhdm_trace("UHDM: Drove %s from net-decl init (width=%d)\n",
                                         full_name.c_str(), width);
                             }
                         }
@@ -571,7 +571,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         }
 
                     if (mode_debug)
-                        log("UHDM: Creating interface signal from Nets: %s (width=%d)\n", full_name.c_str(), width);
+                        uhdm_trace("UHDM: Creating interface signal from Nets: %s (width=%d)\n", full_name.c_str(), width);
 
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, net);
@@ -645,7 +645,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     iface_array_elem_width_[full_name] = elem_w;
                     if (an_dims.size() >= 2) iface_array_dims_[full_name] = an_dims;
                     if (mode_debug)
-                        log("UHDM: Materialized interface array signal %s "
+                        uhdm_trace("UHDM: Materialized interface array signal %s "
                             "(elem_w=%d count=%d total=%d)\n",
                             full_name.c_str(), elem_w, count, total_w);
                 }
@@ -733,7 +733,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         rhs = rhs.extract(0, lhs.size());
                     module->connect(lhs, rhs);
                     if (mode_debug)
-                        log("UHDM: Drove %s from interface cont_assign\n", full.c_str());
+                        uhdm_trace("UHDM: Drove %s from interface cont_assign\n", full.c_str());
                 }
             }
 
@@ -1041,7 +1041,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                             add_src_attribute(lw->attributes, p);
                             name_map[full] = lw;
                             if (mode_debug)
-                                log("UHDM: Created interface port wire %s "
+                                uhdm_trace("UHDM: Created interface port wire %s "
                                     "(width=%d)\n", full.c_str(), hi.size());
                         }
                     }
@@ -1138,23 +1138,23 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 if (!module->wire(cell_name) && !module->cell(cell_name) &&
                     design->module(RTLIL::escape_id(param_interface_type))) {
                     module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
-                    log("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
+                    uhdm_trace("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
                 } else if (!module->wire(cell_name) && !module->cell(cell_name)) {
-                    log("UHDM: Interface '%s': type %s is not a module in the design "
+                    uhdm_trace("UHDM: Interface '%s': type %s is not a module in the design "
                         "— no representative cell (its members are flattened wires)\n",
                         interface_name.c_str(), param_interface_type.c_str());
                 } else {
-                    log("UHDM: Interface '%s' already represented (wire/cell exists) — skipping instance cell\n", interface_name.c_str());
+                    uhdm_trace("UHDM: Interface '%s' already represented (wire/cell exists) — skipping instance cell\n", interface_name.c_str());
                 }
             }
             
         }
     } else {
-        log("UHDM: Module has no interfaces\n");
+        uhdm_trace("UHDM: Module has no interfaces\n");
     }
     
     if (mode_debug)
-        log("UHDM: Finished import_interface_instances\n");
+        uhdm_trace("UHDM: Finished import_interface_instances\n");
 }
 
 // Check if a module uses interface ports
@@ -1199,7 +1199,7 @@ void UhdmImporter::create_interface_module_with_width(const std::string& interfa
     
     // Check if this interface module already exists
     if (design->module(mod_id)) {
-        log("UHDM: Interface module %s already exists\n", param_module_name.c_str());
+        uhdm_trace("UHDM: Interface module %s already exists\n", param_module_name.c_str());
         return;
     }
     
@@ -1221,10 +1221,10 @@ void UhdmImporter::create_interface_module_with_width(const std::string& interfa
     std::vector<std::string> signal_names = {"a", "b", "c"};
     for (const auto& signal_name : signal_names) {
         iface_module->addWire(RTLIL::escape_id(signal_name), width);
-        log("UHDM: Added wire '%s' (width=%d) to interface module\n", signal_name.c_str(), width);
+        uhdm_trace("UHDM: Added wire '%s' (width=%d) to interface module\n", signal_name.c_str(), width);
     }
     
-    log("UHDM: Created interface module %s\n", param_module_name.c_str());
+    uhdm_trace("UHDM: Created interface module %s\n", param_module_name.c_str());
 }
 
 YOSYS_NAMESPACE_END

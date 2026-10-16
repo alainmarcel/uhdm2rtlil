@@ -423,7 +423,7 @@ bool UhdmImporter::resolve_struct_array_elem_member_lhs(
     width = field_w;
     if (off + width > bit->second.size()) return false;
     if (mode_debug)
-        log("UHDM: struct-array elem member %s[%d].%s -> [%d+:%d]\n",
+        uhdm_trace("UHDM: struct-array elem member %s[%d].%s -> [%d+:%d]\n",
             base_name.c_str(), idx, field_name.c_str(), off, width);
     return true;
 }
@@ -537,7 +537,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     pending_func_local_inits.push_back(local_wire);
 
                     if (mode_debug) {
-                        log("    Created block-local variable %s (width=%d)\n", var_name.c_str(), width);
+                        uhdm_trace("    Created block-local variable %s (width=%d)\n", var_name.c_str(), width);
                     }
                 }
             }
@@ -609,7 +609,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     pending_func_local_inits.push_back(local_wire);
 
                     if (mode_debug) {
-                        log("    Created block-local variable %s in named block %s (width=%d)\n",
+                        uhdm_trace("    Created block-local variable %s in named block %s (width=%d)\n",
                             var_name.c_str(), block_name.c_str(), width);
                     }
                 }
@@ -1167,7 +1167,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (assign->Lhs()->UhdmType() == uhdmref_obj) {
                     const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                     if (lhs_ref) {
-                        log("    LHS is ref_obj: %s\n", std::string(lhs_ref->VpiName()).c_str());
+                        uhdm_trace("    LHS is ref_obj: %s\n", std::string(lhs_ref->VpiName()).c_str());
                     }
                 }
             }
@@ -1261,7 +1261,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             // but we skip the assignment itself
                             skip_assignment = true;
                             if (mode_debug) {
-                                log("UHDM: Skipping accumulative assignment to return variable '%s' in loop iteration\n",
+                                uhdm_trace("UHDM: Skipping accumulative assignment to return variable '%s' in loop iteration\n",
                                     lhs_name.c_str());
                             }
                         }
@@ -1290,7 +1290,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (loop_accumulators.count(acc_name)) {
                     skip_assignment = true;
                     if (mode_debug)
-                        log("UHDM: Skipping per-iteration assignment to threaded "
+                        uhdm_trace("UHDM: Skipping per-iteration assignment to threaded "
                             "loop accumulator '%s'\n", acc_name.c_str());
                 }
             }
@@ -1370,7 +1370,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 rhs_sig = merged;
                 input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
                 if (mode_debug)
-                    log("UHDM: slice write %s[%d +: %d] -> SSA rename\n",
+                    uhdm_trace("UHDM: slice write %s[%d +: %d] -> SSA rename\n",
                         base_name.c_str(), offset, width);
                 return true;
             };
@@ -1453,14 +1453,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             lhs_sig = it->second;
                         }
                         if (mode_debug) {
-                            log("UHDM: Assignment to mapped variable %s\n", lhs_name.c_str());
+                            uhdm_trace("UHDM: Assignment to mapped variable %s\n", lhs_name.c_str());
                         }
                     } else if (lhs_name == func_name) {
                         // Direct assignment to function name - use result wire
                         // (only if not shadowed by a block-local variable in input_mapping)
                         lhs_sig = result_wire;
                         if (mode_debug) {
-                            log("UHDM: Direct assignment to function %s, using result wire\n", func_name.c_str());
+                            uhdm_trace("UHDM: Direct assignment to function %s, using result wire\n", func_name.c_str());
                         }
                     } else {
                         // Create a function-scoped temporary wire for local variable
@@ -1473,7 +1473,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             if (width_it != local_var_widths.end()) {
                                 wire_width = width_it->second;
                                 if (mode_debug) {
-                                    log("UHDM: Using declared width %d for local variable %s\n",
+                                    uhdm_trace("UHDM: Using declared width %d for local variable %s\n",
                                         wire_width, lhs_name.c_str());
                                 }
                             } else {
@@ -1680,7 +1680,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (bs->VpiIndex()) {
                         index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
                         if (mode_debug) {
-                            log("      Bit select index for %s: is_const=%d, value=%s\n",
+                            uhdm_trace("      Bit select index for %s: is_const=%d, value=%s\n",
                                 base_name.c_str(), index_sig.is_fully_const(),
                                 index_sig.is_fully_const() ? std::to_string(index_sig.as_int()).c_str() : "non-const");
                         }
@@ -1696,7 +1696,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             lhs_sig = RTLIL::SigSpec(target_wire, offset, element_width);
                         }
                     } else {
-                        log("UHDM: Warning - non-constant bit select index in function %s\n", func_name.c_str());
+                        uhdm_trace("UHDM: Warning - non-constant bit select index in function %s\n", func_name.c_str());
                     }
                 } else {
                     // Handle bit select on other variables.
@@ -1755,7 +1755,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 rhs_sig = merged;
                                 input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
                                 if (mode_debug)
-                                    log("UHDM: const bit-select write %s[%d] -> SSA rename (ew=%d)\n",
+                                    uhdm_trace("UHDM: const bit-select write %s[%d] -> SSA rename (ew=%d)\n",
                                         base_name.c_str(), idx, element_width);
                             }
 
@@ -1841,7 +1841,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             rhs_sig = merged;
                             input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
                             if (mode_debug)
-                                log("UHDM: dynamic bit-select write %s[dyn] "
+                                uhdm_trace("UHDM: dynamic bit-select write %s[dyn] "
                                     "-> RMW + SSA rename (ew=%d)\n",
                                     base_name.c_str(), element_width);
                         }
@@ -1931,7 +1931,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             w > 0 && off >= 0 && off + w <= base_sig.size()) {
                             lhs_sig = base_sig.extract(off, w);
                             if (mode_debug)
-                                log("UHDM: nested struct-field write %s.%s -> [%d+:%d]\n",
+                                uhdm_trace("UHDM: nested struct-field write %s.%s -> [%d+:%d]\n",
                                     base_name.c_str(), member_path.c_str(), off, w);
                         }
                     } else if (!base_sig.empty() && st && st->Members()) {
@@ -1955,7 +1955,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             field_off + field_w <= base_sig.size()) {
                             lhs_sig = base_sig.extract(field_off, field_w);
                             if (mode_debug)
-                                log("UHDM: struct-field return %s.%s -> [%d+:%d]\n",
+                                uhdm_trace("UHDM: struct-field return %s.%s -> [%d+:%d]\n",
                                     base_name.c_str(), field_name.c_str(),
                                     field_off, field_w);
                         }
@@ -2063,7 +2063,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     case uhdmfor_stmt: {
         // Handle for loops - need to unroll at compile time for synthesis
         const for_stmt* fs = any_cast<const for_stmt*>(stmt);
-        log("UHDM: Processing for loop in function %s\n", func_name.c_str());
+        uhdm_trace("UHDM: Processing for loop in function %s\n", func_name.c_str());
         if (fs) {
                 // Get loop components
                 const any* init_stmt = nullptr;
@@ -2086,7 +2086,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 
                 if (!init_stmt || !condition || !inc_stmt || !loop_body) {
-                    log("UHDM: Warning - incomplete for loop structure in function %s (init:%p, cond:%p, inc:%p, body:%p)\n",
+                    uhdm_trace("UHDM: Warning - incomplete for loop structure in function %s (init:%p, cond:%p, inc:%p, body:%p)\n",
                         func_name.c_str(), init_stmt, condition, inc_stmt, loop_body);
                     break;
                 }
@@ -2101,10 +2101,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 bool downward = false;   // for (i=N; i>M; i--) style loops
                 
                 if (mode_debug) {
-                    log("    Attempting to unroll for loop in function %s\n", func_name.c_str());
-                    log("      init_stmt type: %d\n", init_stmt ? init_stmt->UhdmType() : -1);
-                    log("      condition type: %d\n", condition ? condition->UhdmType() : -1);
-                    log("      inc_stmt type: %d\n", inc_stmt ? inc_stmt->UhdmType() : -1);
+                    uhdm_trace("    Attempting to unroll for loop in function %s\n", func_name.c_str());
+                    uhdm_trace("      init_stmt type: %d\n", init_stmt ? init_stmt->UhdmType() : -1);
+                    uhdm_trace("      condition type: %d\n", condition ? condition->UhdmType() : -1);
+                    uhdm_trace("      inc_stmt type: %d\n", inc_stmt ? inc_stmt->UhdmType() : -1);
                 }
                 
                 // Extract initialization: i = start_value
@@ -2203,7 +2203,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             } else if (right_op->UhdmType() == uhdmoperation) {
                                 // Handle operations like WIDTH/2 using expression evaluator
                                 const operation* op = any_cast<const operation*>(right_op);
-                                log("UHDM: Evaluating operation for loop end value in function %s\n", func_name.c_str());
+                                uhdm_trace("UHDM: Evaluating operation for loop end value in function %s\n", func_name.c_str());
                                 
                                 // Use ExprEval to reduce the expression to a constant
                                 ExprEval eval;
@@ -2226,17 +2226,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     RTLIL::SigSpec const_spec = import_constant(const_val);
                                     if (const_spec.is_fully_const()) {
                                         end_value = const_spec.as_const().as_int();
-                                        log("UHDM: Operation evaluated to constant: %lld\n", (long long)end_value);
+                                        uhdm_trace("UHDM: Operation evaluated to constant: %lld\n", (long long)end_value);
                                         if (mode_debug) {
                                             log("DEBUG: Evaluated operation for end value: %lld\n", (long long)end_value);
                                         }
                                     } else {
                                         can_unroll = false;
-                                        log("UHDM: Operation could not be reduced to constant\n");
+                                        uhdm_trace("UHDM: Operation could not be reduced to constant\n");
                                     }
                                 } else {
                                     can_unroll = false;
-                                    log("UHDM: Operation result not constant, cannot unroll\n");
+                                    uhdm_trace("UHDM: Operation result not constant, cannot unroll\n");
                                     if (mode_debug) {
                                         log("DEBUG: Operation result not constant (invalidValue=%d)\n", invalidValue);
                                     }
@@ -2267,7 +2267,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     if (bv.is_fully_const() && bv.is_fully_def()) {
                                         end_value = bv.as_const().as_int();
                                         can_unroll = true;
-                                        log("UHDM: loop end value folded with the enclosing "
+                                        uhdm_trace("UHDM: loop end value folded with the enclosing "
                                             "loop's value: %lld\n", (long long)end_value);
                                     }
                                 }
@@ -2386,11 +2386,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         ? (inclusive ? end_value : end_value + 1)
                         : (inclusive ? end_value : end_value - 1);
                     
-                    log("UHDM: Unrolling for loop: %s from %lld to %lld in function %s\n", 
+                    uhdm_trace("UHDM: Unrolling for loop: %s from %lld to %lld in function %s\n", 
                         loop_var_name.c_str(), (long long)start_value, (long long)loop_end, func_name.c_str());
                     
                     if (mode_debug) {
-                        log("    Unrolling for loop: %s from %lld to %lld\n", 
+                        uhdm_trace("    Unrolling for loop: %s from %lld to %lld\n", 
                             loop_var_name.c_str(), (long long)start_value, (long long)loop_end);
                     }
                     
@@ -2444,7 +2444,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     };
                                     if (reads_var(assign->Rhs())) {
                                         is_accumulative = true;
-                                        log("UHDM: Detected accumulative loop for variable '%s'\n", accumulator_var.c_str());
+                                        uhdm_trace("UHDM: Detected accumulative loop for variable '%s'\n", accumulator_var.c_str());
                                     }
                                 }
                             }
@@ -2561,7 +2561,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                                           : (i + increment > loop_end);
                         
                         if (mode_debug) {
-                            log("      Iteration %lld (last=%d)\n", (long long)i, is_last_iteration);
+                            uhdm_trace("      Iteration %lld (last=%d)\n", (long long)i, is_last_iteration);
                         }
                         
                         // For accumulative loops, update the accumulator mapping for this iteration
@@ -2576,7 +2576,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         
                         // Process the loop body with the current iteration value
                         if (mode_debug) {
-                            log("      Processing loop body for iteration %lld\n", (long long)i);
+                            uhdm_trace("      Processing loop body for iteration %lld\n", (long long)i);
                         }
                         
                         // Save the current state of input_mapping for the accumulator
@@ -2642,7 +2642,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     RTLIL::SigSpec iter_result = import_expression(any_cast<const expr*>(assign->Rhs()), &iter_entry_mapping);
                                     if (!iter_result.empty()) {
                                         current_accumulator = iter_result;
-                                        log("UHDM: Updated accumulator to iteration %lld result\n", (long long)i);
+                                        uhdm_trace("UHDM: Updated accumulator to iteration %lld result\n", (long long)i);
                                     }
                                 }
                             }
@@ -2680,7 +2680,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     acc_val = acc_val.extract(0, it->second.size());
                             }
                             case_rule->actions.push_back(RTLIL::SigSig(it->second, acc_val));
-                            log("UHDM: Created final accumulator assignment for '%s'\n", accumulator_var.c_str());
+                            uhdm_trace("UHDM: Created final accumulator assignment for '%s'\n", accumulator_var.c_str());
                         }
                     }
                     // Stop treating the variable as threaded — unconditionally,
@@ -2739,7 +2739,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 input_mapping[loop_var_name] = target;
                             }
                             case_rule->actions.push_back(RTLIL::SigSig(target, lv));
-                            log("UHDM: Loop variable %s after a breaking loop assigned its exit value\n", loop_var_name.c_str());
+                            uhdm_trace("UHDM: Loop variable %s after a breaking loop assigned its exit value\n", loop_var_name.c_str());
                         }
                         if (had_outer_brk) input_mapping["$__brk_taken$"] = outer_brk;
                         else input_mapping.erase("$__brk_taken$");
@@ -2747,7 +2747,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     
                     // Loop has been unrolled into the case rule
                 } else {
-                    log("UHDM: Warning - for loop in function %s cannot be unrolled (can_unroll=%d, loop_var=%s, start=%lld, end=%lld)\n", 
+                    uhdm_trace("UHDM: Warning - for loop in function %s cannot be unrolled (can_unroll=%d, loop_var=%s, start=%lld, end=%lld)\n", 
                         func_name.c_str(), can_unroll, loop_var_name.c_str(), (long long)start_value, (long long)end_value);
                 }
         }
@@ -2787,7 +2787,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
             case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
             if (mode_debug)
-                log("UHDM: return_stmt assigned to result wire %s\n", result_wire->name.c_str());
+                uhdm_trace("UHDM: return_stmt assigned to result wire %s\n", result_wire->name.c_str());
         }
         {
             // Mark the return as taken (SSA value — the if/else phi-merge
@@ -5150,25 +5150,25 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
             {
                 const UHDM::port* port = any_cast<const UHDM::port*>(any_cast<const any*>(uhdm_expr));
                 std::string port_name = std::string(port->VpiName());
-                log("    Handling port '%s' as expression\n", port_name.c_str());
+                uhdm_trace("    Handling port '%s' as expression\n", port_name.c_str());
                 
                 // Check if this port has a Low_conn which would be the actual net/wire
                 if (port->Low_conn()) {
-                    log("    Port has Low_conn, importing that instead\n");
+                    uhdm_trace("    Port has Low_conn, importing that instead\n");
                     return import_expression(any_cast<const expr*>(port->Low_conn()));
                 }
                 
                 // Otherwise try to find the wire in the current module
                 RTLIL::IdString wire_id = RTLIL::escape_id(port_name);
                 if (module->wire(wire_id)) {
-                    log("    Found wire '%s' for port\n", wire_id.c_str());
+                    uhdm_trace("    Found wire '%s' for port\n", wire_id.c_str());
                     return RTLIL::SigSpec(module->wire(wire_id));
                 }
                 
                 // Try looking in the name_map
                 auto it = name_map.find(port_name);
                 if (it != name_map.end()) {
-                    log("    Found wire in name_map for port '%s'\n", port_name.c_str());
+                    uhdm_trace("    Found wire in name_map for port '%s'\n", port_name.c_str());
                     return RTLIL::SigSpec(it->second);
                 }
                 
@@ -5253,7 +5253,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 const logic_net* net = any_cast<const logic_net*>(uhdm_expr);
                 std::string net_name = std::string(net->VpiName());
                 if (mode_debug)
-                    log("    Handling logic_net '%s' as expression\n", net_name.c_str());
+                    uhdm_trace("    Handling logic_net '%s' as expression\n", net_name.c_str());
                 
                 // If we're in a generate scope, try hierarchical lookups first
                 std::string gen_scope = get_current_gen_scope();
@@ -5261,12 +5261,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // First try the full hierarchical name
                     std::string hierarchical_name = gen_scope + "." + net_name;
                     if (mode_debug)
-                        log("    Looking for hierarchical wire: %s (gen_scope=%s, net=%s)\n", 
+                        uhdm_trace("    Looking for hierarchical wire: %s (gen_scope=%s, net=%s)\n", 
                             hierarchical_name.c_str(), gen_scope.c_str(), net_name.c_str());
                     if (name_map.count(hierarchical_name)) {
                         RTLIL::Wire* wire = name_map[hierarchical_name];
                         if (mode_debug)
-                            log("    Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
+                            uhdm_trace("    Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
                         return RTLIL::SigSpec(wire);
                     }
                     
@@ -5281,7 +5281,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         if (name_map.count(parent_hierarchical)) {
                             RTLIL::Wire* wire = name_map[parent_hierarchical];
                             if (mode_debug)
-                                log("    Found wire %s in parent scope %s\n", net_name.c_str(), parent_path.c_str());
+                                uhdm_trace("    Found wire %s in parent scope %s\n", net_name.c_str(), parent_path.c_str());
                             return RTLIL::SigSpec(wire);
                         }
                     }
@@ -6080,7 +6080,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 std::string func_name = std::string(fc->VpiName());
-                log("UHDM: Processing function call: %s\n", func_name.c_str());
+                uhdm_trace("UHDM: Processing function call: %s\n", func_name.c_str());
 
                 // Get the function definition.  Surelog binds the
                 // `Function()` pointer at parse time and doesn't always
@@ -6103,18 +6103,18 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
                 if (!func_def) func_def = fc->Function();
-                log("UHDM: func_def pointer: %p\n", (void*)func_def);
+                uhdm_trace("UHDM: func_def pointer: %p\n", (void*)func_def);
                 if (!func_def) {
                     log_warning("Function definition not found for %s\n", func_name.c_str());
                     return RTLIL::SigSpec();
                 }
 
                 if (mode_debug) {
-                    log("UHDM: Function definition found for %s\n", func_name.c_str());
+                    uhdm_trace("UHDM: Function definition found for %s\n", func_name.c_str());
                     if (func_def->Stmt()) {
-                        log("UHDM: Function has statement body\n");
+                        uhdm_trace("UHDM: Function has statement body\n");
                     } else {
-                        log("UHDM: Function has no statement body!\n");
+                        uhdm_trace("UHDM: Function has no statement body!\n");
                     }
                 }
 
@@ -6167,7 +6167,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // Evaluate function at compile time for optimization.
                     // Clear side-effect map so this top-level call starts fresh.
                     const_eval_module_writes.clear();
-                    log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
+                    uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
                     std::map<std::string, RTLIL::Const> output_params;
                     RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
 
@@ -6208,19 +6208,19 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     if (!has_return) {
                         // Function doesn't assign to its return value
                         // Still generate process for output parameters, but return 0 for the return value
-                        log("UHDM: Function %s in initial block doesn't assign to its return value\n", func_name.c_str());
+                        uhdm_trace("UHDM: Function %s in initial block doesn't assign to its return value\n", func_name.c_str());
 
                         // Process function for output parameters (result wire created internally)
 
                         // Generate process to handle output parameters
-                        log("UHDM: Processing function %s with context-aware method\n", func_name.c_str());
+                        uhdm_trace("UHDM: Processing function %s with context-aware method\n", func_name.c_str());
                         process_function_with_context(func_def, args, fc, nullptr);
 
                         // But return a constant 0 for the function's return value in initial block
                         return RTLIL::SigSpec(0, ret_width);
                     }
 
-                    log("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
+                    uhdm_trace("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
                 }
 
                 // If we're in a combinational always block, inline the function
@@ -6259,7 +6259,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     (input_mapping == nullptr || input_mapping == &current_comb_values);
                 if (current_comb_process && func_def->Stmt() && top_level_call &&
                     !has_for_loop(func_def->Stmt())) {
-                    log("UHDM: Inlining function %s into combinational process\n", func_name.c_str());
+                    uhdm_trace("UHDM: Inlining function %s into combinational process\n", func_name.c_str());
                     return import_func_call_comb(fc, current_comb_process);
                 }
 
@@ -6376,7 +6376,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     if (!has_output_param && !in_gen_scope && !in_always_ff_context &&
                         !in_initial_block && args_match &&
                         is_straight_line(func_def->Stmt())) {
-                        log("UHDM: Inlining function %s via import_func_call_comb (no enclosing process)\n",
+                        uhdm_trace("UHDM: Inlining function %s via import_func_call_comb (no enclosing process)\n",
                             func_name.c_str());
                         RTLIL::Process* tmp_proc = module->addProcess(NEW_ID);
                         RTLIL::SyncRule* sta = new RTLIL::SyncRule();
@@ -6402,7 +6402,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 // Process the function using the new context-aware method
-                log("UHDM: Processing function %s with context-aware method (return width=%d, %d arguments)\n",
+                uhdm_trace("UHDM: Processing function %s with context-aware method (return width=%d, %d arguments)\n",
                     func_name.c_str(), ret_width, (int)args.size());
                 return process_function_with_context(func_def, args, fc, parent_ctx);
             }
@@ -6437,7 +6437,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                     if (ok && res.size() == total) {
                         if (mode_debug)
-                            log("UHDM: packed_array_var assembled to %d-bit constant\n",
+                            uhdm_trace("UHDM: packed_array_var assembled to %d-bit constant\n",
                                 total);
                         return res;
                     }
@@ -6558,7 +6558,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 rasm_cleanup();
                 if (rasm_ok) {
                     if (mode_debug)
-                        log("UHDM: struct_var reader-assembled to %d-bit constant\n",
+                        uhdm_trace("UHDM: struct_var reader-assembled to %d-bit constant\n",
                             full.size());
                     return RTLIL::SigSpec(full);
                 }
@@ -6584,7 +6584,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         import_constant(any_cast<const constant*>(res));
                     if (cv.is_fully_const() && cv.is_fully_def()) {
                         if (mode_debug)
-                            log("UHDM: struct_var assembled to %d-bit constant\n",
+                            uhdm_trace("UHDM: struct_var assembled to %d-bit constant\n",
                                 cv.size());
                         return cv;
                     }
@@ -6606,7 +6606,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
     std::string value = std::string(uhdm_const->VpiValue());
     int size = uhdm_const->VpiSize();
     
-    log("UHDM: Importing constant: %s (type=%d, size=%d)\n",
+    uhdm_trace("UHDM: Importing constant: %s (type=%d, size=%d)\n",
         value.c_str(), const_type, size);
 
     // If VpiConstType is 0 (undefined), infer the type from the value string prefix
@@ -6618,7 +6618,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         else if (value.substr(0, 4) == "DEC:") const_type = vpiDecConst;
         else if (value.substr(0, 7) == "STRING:") const_type = vpiStringConst;
         if (const_type != 0)
-            log("UHDM: Inferred constant type %d from value prefix\n", const_type);
+            uhdm_trace("UHDM: Inferred constant type %d from value prefix\n", const_type);
     }
 
     switch (const_type) {
@@ -6690,7 +6690,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         }
         case vpiHexConst: {
             if (mode_debug)
-                log("    vpiHexConst: value='%s', size=%d\n", value.c_str(), size);
+                uhdm_trace("    vpiHexConst: value='%s', size=%d\n", value.c_str(), size);
             
             std::string hex_str;
             // Handle UHDM format: "HEX:value" or traditional "'h prefix"
@@ -6704,7 +6704,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             }
             
             if (mode_debug)
-                log("    Parsed hex_str='%s', creating constant with size=%d\n", hex_str.c_str(), size);
+                uhdm_trace("    Parsed hex_str='%s', creating constant with size=%d\n", hex_str.c_str(), size);
             
             // Create hex constant with proper bit width.  Build via the
             // nibble-by-nibble helper so arbitrarily wide values work (std::stoull
@@ -6832,7 +6832,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         }
         case vpiUIntConst: {
             if (mode_debug)
-                log("    vpiUIntConst: value='%s', size=%d\n", value.c_str(), size);
+                uhdm_trace("    vpiUIntConst: value='%s', size=%d\n", value.c_str(), size);
             try {
                 // An UNSIZED value (vpiSize == -1, e.g. the folded `~'hF` in
                 // cva6_tlb's napot mask) must not pass -1 as the Const width —
@@ -6883,7 +6883,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             }
 
             if (mode_debug)
-                log("    vpiStringConst: value='%s', str='%s', size=%d\n", value.c_str(), str_val.c_str(), size);
+                uhdm_trace("    vpiStringConst: value='%s', str='%s', size=%d\n", value.c_str(), str_val.c_str(), size);
 
             // Convert string to bits: each character is 8 bits, big-endian (first char = MSB)
             int bit_width = str_val.size() * 8;
@@ -7823,7 +7823,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     else if (val.size() < field_w) val.extend_u0(field_w);
                 }
                 if (mode_debug)
-                    log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
+                    uhdm_trace("UHDM: AssignmentPatternOp field size=%d\n", val.size());
                 field_sigs.push_back(val);
                 field_tags.push_back(this_tag);
             }
@@ -7971,7 +7971,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             for (int i = 0; i < count; i++)
                 result.append(elem);
             if (mode_debug)
-                log("UHDM: MultiAssignmentPatternOp %d x %d-bit = %d-bit\n",
+                uhdm_trace("UHDM: MultiAssignmentPatternOp %d x %d-bit = %d-bit\n",
                     count, elem.size(), result.size());
             return result;
         }
@@ -8341,12 +8341,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // import_hier_path's null-module guard).
     if (!module) {
         if (mode_debug)
-            log("    import_operation: no RTLIL module yet — cannot emit cells, returning empty\n");
+            uhdm_trace("    import_operation: no RTLIL module yet — cannot emit cells, returning empty\n");
         return RTLIL::SigSpec();
     }
 
     if (mode_debug)
-        log("    Importing operation: %d\n", op_type);
+        uhdm_trace("    Importing operation: %d\n", op_type);
     
     // Get operands
     std::vector<RTLIL::SigSpec> operands;
@@ -8445,7 +8445,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     }
     if (uhdm_op->Operands()) {
         if (op_type == vpiConditionOp) {
-            log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
+            uhdm_trace("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
         }
         for (auto operand : *uhdm_op->Operands()) {
             int oty = operand->VpiType() == vpiOperation
@@ -8504,7 +8504,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 expression_context_unsigned = cond_saved_unsigned;
             }
             if (op_type == vpiConditionOp) {
-                log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
+                uhdm_trace("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
             }
             // Debug: Check for empty operands in comparison operations
             if ((op_type == vpiEqOp || op_type == vpiNeqOp || op_type == vpiLtOp || 
@@ -8855,7 +8855,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         
         if (can_evaluate && result.size() > 0) {
             if (mode_debug) {
-                log("    Evaluated constant operation type %d to value %s\n", op_type, result.as_string().c_str());
+                uhdm_trace("    Evaluated constant operation type %d to value %s\n", op_type, result.as_string().c_str());
             }
             return RTLIL::SigSpec(result);
         }
@@ -8885,7 +8885,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             RTLIL::State bit = operands[k].as_const()[0];
             operands[k] = RTLIL::SigSpec(bit, operands[other].size());
             if (mode_debug)
-                log("    fill literal operand %d replicated to %d bits\n",
+                uhdm_trace("    fill literal operand %d replicated to %d bits\n",
                     k, operands[other].size());
         }
     }
@@ -8952,7 +8952,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     cell_name_str += "$" + std::to_string(logic_not_counter);
                 }
                 
-                log("UHDM: import_operation creating logic_not cell with name: %s (gen_scope=%s)\n", 
+                uhdm_trace("UHDM: import_operation creating logic_not cell with name: %s (gen_scope=%s)\n", 
                     cell_name_str.c_str(), get_current_gen_scope().c_str());
                 RTLIL::IdString cell_name = RTLIL::escape_id(cell_name_str);
                 RTLIL::Cell* not_cell = module->addCell(cell_name, ID($logic_not));
@@ -9586,7 +9586,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // operands[2] is the false value
                 // Mux takes (name, selector, false_val, true_val)
 
-                log("UHDM: ConditionOp - operand sizes: cond=%d, true=%d, false=%d\n",
+                uhdm_trace("UHDM: ConditionOp - operand sizes: cond=%d, true=%d, false=%d\n",
                     operands[0].size(), operands[1].size(), operands[2].size());
 
                 // SV §11.8.1: a conditional `?:` is signed only when BOTH
@@ -9606,7 +9606,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Ensure the condition is 1-bit
                 RTLIL::SigSpec cond = operands[0];
                 if (cond.size() > 1) {
-                    log("UHDM: Reducing %d-bit condition to 1-bit\n", cond.size());
+                    uhdm_trace("UHDM: Reducing %d-bit condition to 1-bit\n", cond.size());
                     // Reduce multi-bit condition to single bit using ReduceBool
                     std::string cell_name = generate_cell_name(uhdm_op, "reduce_bool");
                     cond = module->ReduceBool(RTLIL::escape_id(cell_name), cond);
@@ -9661,7 +9661,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     false_val.extend_u0(max_width, is_signed);
                 }
 
-                log("UHDM: Creating Mux with selector size=%d, true_val size=%d, false_val size=%d, signed=%d\n",
+                uhdm_trace("UHDM: Creating Mux with selector size=%d, true_val size=%d, false_val size=%d, signed=%d\n",
                     cond.size(), true_val.size(), false_val.size(), is_signed);
 
                 // Mux signature: Mux(name, sig_a, sig_b, sig_s)
@@ -9816,7 +9816,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         result.append(src.extract(num_full * slice_w, leftover));
                 }
                 if (mode_debug)
-                    log("    Stream op type=%d slice_w=%d n=%d "
+                    uhdm_trace("    Stream op type=%d slice_w=%d n=%d "
                         "result_size=%d\n", op_type, slice_w, n, result.size());
                 return result;
             }
@@ -9828,7 +9828,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // the cast type signedness sets the result type signedness, but
             // the bit-pattern conversion sign-extends only if the source is
             // signed; otherwise zero-extends).
-            log("    Processing cast operation\n");
+            uhdm_trace("    Processing cast operation\n");
             if (operands.size() == 1) {
                 int target_width = 0;
                 bool target_signed = false;
@@ -9936,7 +9936,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                 target_width = w;
                                 is_size_cast = true;
                                 if (mode_debug)
-                                    log("    cast width from parameter '%s' = %d\n",
+                                    uhdm_trace("    cast width from parameter '%s' = %d\n",
                                         tn.c_str(), w);
                             }
                         }
@@ -10053,7 +10053,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // exprs collapsed through `(XLEN'(1)<<(XLEN-1)) | XLEN'(5)`).
             if (operands.size() == 1 && !operands[0].empty()) {
                 if (mode_debug)
-                    log("    Cast with unresolved width: passing operand through (%d bits)\n",
+                    uhdm_trace("    Cast with unresolved width: passing operand through (%d bits)\n",
                         operands[0].size());
                 return operands[0];
             }
@@ -10079,7 +10079,7 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
         if (name_map.count(hierarchical_name)) {
             RTLIL::Wire* wire = name_map[hierarchical_name];
             if (!context_for_log.empty()) {
-                log("UHDM: Found hierarchical wire %s for %s\n", hierarchical_name.c_str(), context_for_log.c_str());
+                uhdm_trace("UHDM: Found hierarchical wire %s for %s\n", hierarchical_name.c_str(), context_for_log.c_str());
             }
             return wire;
         }
@@ -10095,7 +10095,7 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
             if (name_map.count(parent_hierarchical)) {
                 RTLIL::Wire* wire = name_map[parent_hierarchical];
                 if (!context_for_log.empty()) {
-                    log("UHDM: Found wire %s in parent scope %s for %s\n", 
+                    uhdm_trace("UHDM: Found wire %s in parent scope %s for %s\n", 
                         signal_name.c_str(), parent_path.c_str(), context_for_log.c_str());
                 }
                 return wire;
@@ -10107,7 +10107,7 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
     if (name_map.count(signal_name)) {
         RTLIL::Wire* wire = name_map[signal_name];
         if (!context_for_log.empty()) {
-            log("UHDM: Found wire %s in name_map for %s\n", signal_name.c_str(), context_for_log.c_str());
+            uhdm_trace("UHDM: Found wire %s in name_map for %s\n", signal_name.c_str(), context_for_log.c_str());
         }
         return wire;
     }
@@ -10116,7 +10116,7 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
     RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
     RTLIL::Wire* wire = module->wire(wire_id);
     if (wire && !context_for_log.empty()) {
-        log("UHDM: Found wire %s via module->wire for %s\n", signal_name.c_str(), context_for_log.c_str());
+        uhdm_trace("UHDM: Found wire %s via module->wire for %s\n", signal_name.c_str(), context_for_log.c_str());
     }
     
     return wire;
@@ -10226,7 +10226,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     std::string ref_name = std::string(uhdm_ref->VpiName());
 
     if (mode_debug)
-        log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
+        uhdm_trace("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
     
     // A loop variable being unrolled must resolve to the CURRENT iteration's
     // constant.  A comb_read_map()-threaded input_mapping can carry a STALE
@@ -10261,7 +10261,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
         if (it != input_mapping->end()) {
             if (mode_debug)
-                log("    Found %s in function input_mapping\n", ref_name.c_str());
+                uhdm_trace("    Found %s in function input_mapping\n", ref_name.c_str());
             
             // Check if we have a constant value for this parameter
             FunctionCallContext* ctx = getCurrentFunctionContext();
@@ -10280,12 +10280,12 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                     sized.resize(param_width, RTLIL::State::S0);
                     const_val = sized;
                 }
-                log("UHDM: Function parameter %s has constant value %s\n",
+                uhdm_trace("UHDM: Function parameter %s has constant value %s\n",
                     ref_name.c_str(), const_val.as_string().c_str());
                 return RTLIL::SigSpec(const_val);
             }
             
-            log("UHDM: Function parameter %s mapped to signal %s\n",
+            uhdm_trace("UHDM: Function parameter %s mapped to signal %s\n",
                 ref_name.c_str(), it->second.is_wire() ?
                 it->second.as_wire()->name.c_str() : "const/temp");
             return mapped_inflight(it->second);
@@ -10349,7 +10349,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 arr.append(RTLIL::SigSpec(ew));
             }
             if (arr.size() > 0) {
-                log("    ref_obj: whole unpacked array %s -> %d-bit element concat\n",
+                uhdm_trace("    ref_obj: whole unpacked array %s -> %d-bit element concat\n",
                     ref_name.c_str(), arr.size());
                 return arr;
             }
@@ -10365,12 +10365,12 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         const logic_net* net = any_cast<const logic_net*>(actual_for_signal);
         std::string actual_name = std::string(net->VpiName());
         if (mode_debug)
-            log("    ref_obj has Actual_group() pointing to logic_net: %s\n", actual_name.c_str());
+            uhdm_trace("    ref_obj has Actual_group() pointing to logic_net: %s\n", actual_name.c_str());
         
         // Check if this is a module output that was incorrectly prefixed with generate scope
         if (name_map.count(actual_name)) {
             if (mode_debug)
-                log("    Using actual signal: %s\n", actual_name.c_str());
+                uhdm_trace("    Using actual signal: %s\n", actual_name.c_str());
             return RTLIL::SigSpec(name_map[actual_name]);
         }
         
@@ -10378,7 +10378,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         RTLIL::IdString wire_id = RTLIL::escape_id(actual_name);
         if (module->wire(wire_id)) {
             if (mode_debug)
-                log("    Found actual signal as module wire: %s\n", wire_id.c_str());
+                uhdm_trace("    Found actual signal as module wire: %s\n", wire_id.c_str());
             return RTLIL::SigSpec(module->wire(wire_id));
         }
     }
@@ -10387,7 +10387,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (loop_values.count(ref_name)) {
         int value = loop_values[ref_name];
         if (mode_debug)
-            log("    Substituting loop variable %s with value %d\n", ref_name.c_str(), value);
+            uhdm_trace("    Substituting loop variable %s with value %d\n", ref_name.c_str(), value);
         return RTLIL::SigSpec(RTLIL::Const(value, 32));
     }
     
@@ -10411,7 +10411,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             std::string val_str = std::string(enum_val->VpiValue());
             
             if (mode_debug)
-                log("UHDM: Found enum constant %s with value %s\n", ref_name.c_str(), val_str.c_str());
+                uhdm_trace("UHDM: Found enum constant %s with value %s\n", ref_name.c_str(), val_str.c_str());
             
             // Parse value from format like "INT:0", "UINT:1", "HEX:BB", etc.
             // The WIDTH comes from the enum's base typespec when it resolves
@@ -10432,7 +10432,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 }
             }
             if (mode_debug)
-                log("UHDM: enum constant %s width=%d (VpiSize=%d)\n", ref_name.c_str(), width, enum_val->VpiSize());
+                uhdm_trace("UHDM: enum constant %s width=%d (VpiSize=%d)\n", ref_name.c_str(), width, enum_val->VpiSize());
             if (!val_str.empty()) {
                 enum_value = vpi_value_to_const(val_str, width);
             } else {
@@ -10515,13 +10515,13 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             }
             if (inst_got) {
                 if (mode_debug)
-                    log("UHDM: Using instance parameter %s value %s (elaborated override)\n",
+                    uhdm_trace("UHDM: Using instance parameter %s value %s (elaborated override)\n",
                         param_name.c_str(), param_value.as_string().c_str());
             } else if (module && module->parameter_default_values.count(p_id) &&
                 module->parameter_default_values.at(p_id).size() > 0) {
                 param_value = module->parameter_default_values.at(p_id);
                 if (mode_debug)
-                    log("UHDM: Using module parameter %s value %s (overrides base VpiValue)\n",
+                    uhdm_trace("UHDM: Using module parameter %s value %s (overrides base VpiValue)\n",
                         param_name.c_str(), param_value.as_string().c_str());
             } else {
                 // Fall back to VpiValue from the UHDM parameter object
@@ -10709,12 +10709,12 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // it.  Fall through to the $unit/package map below instead.
             if (param_value.size() > 0) {
                 if (mode_debug)
-                    log("UHDM: ref_obj %s refers to parameter with value %s\n",
+                    uhdm_trace("UHDM: ref_obj %s refers to parameter with value %s\n",
                         ref_name.c_str(), param_value.as_string().c_str());
                 return RTLIL::SigSpec(param_value);
             }
             if (mode_debug)
-                log("UHDM: ref_obj %s refers to a parameter with no value — "
+                uhdm_trace("UHDM: ref_obj %s refers to a parameter with no value — "
                     "trying the $unit/package map\n", ref_name.c_str());
         }
     }
@@ -10730,7 +10730,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         auto upit = package_parameter_map.find(ref_name);
         if (upit != package_parameter_map.end()) {
             if (mode_debug)
-                log("    ref_obj '%s' resolved as $unit/package parameter = %s\n",
+                uhdm_trace("    ref_obj '%s' resolved as $unit/package parameter = %s\n",
                     ref_name.c_str(), upit->second.as_string().c_str());
             return RTLIL::SigSpec(upit->second);
         }
@@ -10754,7 +10754,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (module->parameter_default_values.count(param_id)) {
         RTLIL::Const param_value = module->parameter_default_values.at(param_id);
         if (mode_debug)
-            log("UHDM: Found parameter %s with value %s (bits=%d)\n", 
+            uhdm_trace("UHDM: Found parameter %s with value %s (bits=%d)\n", 
                 ref_name.c_str(), param_value.as_string().c_str(), param_value.size());
         return RTLIL::SigSpec(param_value);
     }
@@ -10765,11 +10765,11 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         // First try the full hierarchical name
         std::string hierarchical_name = gen_scope + "." + ref_name;
         if (mode_debug)
-            log("    Looking for hierarchical wire: %s (gen_scope=%s, ref=%s)\n", 
+            uhdm_trace("    Looking for hierarchical wire: %s (gen_scope=%s, ref=%s)\n", 
                 hierarchical_name.c_str(), gen_scope.c_str(), ref_name.c_str());
         if (name_map.count(hierarchical_name)) {
             RTLIL::Wire* wire = name_map[hierarchical_name];
-            log("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
+            uhdm_trace("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
             // In-flight blocking value of a gen-scope local written earlier in
             // this same always_comb (keyed by the FULL wire name), so a copy
             // chain / read-modify-write threads instead of reading the final net
@@ -10794,7 +10794,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             std::string parent_hierarchical = parent_path + "." + ref_name;
             if (name_map.count(parent_hierarchical)) {
                 RTLIL::Wire* wire = name_map[parent_hierarchical];
-                log("UHDM: Found wire %s in parent scope %s\n", ref_name.c_str(), parent_path.c_str());
+                uhdm_trace("UHDM: Found wire %s in parent scope %s\n", ref_name.c_str(), parent_path.c_str());
                 // In-flight value of a local declared in an OUTER gen scope
                 // (prim_subst_perm's data_state_sbox: declared in gen_round,
                 // written in the inner gen_enc always_comb).
@@ -10808,7 +10808,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             }
         }
         
-        log("UHDM: In generate scope %s, wire %s not found in hierarchical lookup\n",
+        uhdm_trace("UHDM: In generate scope %s, wire %s not found in hierarchical lookup\n",
             gen_scope.c_str(), ref_name.c_str());
     }
     
@@ -10824,7 +10824,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (module && gen_scope.empty()) {
         RTLIL::IdString wire_id = RTLIL::escape_id(ref_name);
         if (RTLIL::Wire* existing_wire = module->wire(wire_id)) {
-            log("UHDM: Found existing wire %s in module\n", ref_name.c_str());
+            uhdm_trace("UHDM: Found existing wire %s in module\n", ref_name.c_str());
             // Add to name_map for future lookups
             name_map[ref_name] = existing_wire;
             return RTLIL::SigSpec(existing_wire);
@@ -10835,7 +10835,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (uhdm_ref->Actual_group()) {
         const UHDM::any* actual = uhdm_ref->Actual_group();
         if (mode_debug) {
-            log("    ref_obj has VpiActual of type: %s\n", UhdmName(actual->UhdmType()).c_str());
+            uhdm_trace("    ref_obj has VpiActual of type: %s\n", UhdmName(actual->UhdmType()).c_str());
         }
         
         // Check if the actual is an interface_inst
@@ -10843,7 +10843,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // This is a reference to an interface instance
             // Create the interface connection wire with proper naming
             std::string interface_wire_name = "$dummywireforinterface\\" + ref_name;
-            log("UHDM: Reference to interface instance %s via VpiActual, creating connection wire %s\n", 
+            uhdm_trace("UHDM: Reference to interface instance %s via VpiActual, creating connection wire %s\n", 
                 ref_name.c_str(), interface_wire_name.c_str());
             return create_wire(interface_wire_name, 1);
         }
@@ -10860,7 +10860,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // This is a reference to an interface instance
             // Create the interface connection wire with proper naming
             std::string interface_wire_name = "$dummywireforinterface\\" + ref_name;
-            log("UHDM: Reference to interface instance %s, creating connection wire %s\n", 
+            uhdm_trace("UHDM: Reference to interface instance %s, creating connection wire %s\n", 
                 ref_name.c_str(), interface_wire_name.c_str());
             return create_wire(interface_wire_name, 1);
         }
@@ -10971,7 +10971,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             if (rc) {
                 RTLIL::SigSpec v = import_constant(rc);
                 if (v.is_fully_const()) {
-                    log("    ref_obj: interface localparam %s -> %d\n",
+                    uhdm_trace("    ref_obj: interface localparam %s -> %d\n",
                         ref_name.c_str(), v.as_const().as_int());
                     return v;
                 }
@@ -10985,7 +10985,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // submodules reaching the interface only through a bare port placeholder).
     if (ref_is_iface_localparam) {
         if (mode_debug)
-            log("    ref_obj '%s' is an interface localparam (constant width via "
+            uhdm_trace("    ref_obj '%s' is an interface localparam (constant width via "
                 "typespec); not a signal\n", ref_name.c_str());
     } else {
         // Last resort: a bare reference to an enum CONSTANT whose ref_obj has no
@@ -10998,7 +10998,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (ecit != enum_const_values_.end() &&
             !enum_const_ambiguous_.count(ref_name)) {
             if (mode_debug)
-                log("    ref_obj '%s' resolved as enum constant = %s\n",
+                uhdm_trace("    ref_obj '%s' resolved as enum constant = %s\n",
                     ref_name.c_str(), ecit->second.as_string().c_str());
             return RTLIL::SigSpec(ecit->second);
         }
@@ -11007,7 +11007,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         // on the reader's own warning stream.
         if (package_typespec_map.count(ref_name)) {
             if (mode_debug)
-                log("    ref_obj '%s' names a package TYPE, not a signal\n",
+                uhdm_trace("    ref_obj '%s' names a package TYPE, not a signal\n",
                     ref_name.c_str());
         } else {
             log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
@@ -11030,7 +11030,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
 // Import part select (e.g., sig[7:0])
 RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
-        log("    Importing part select\n");
+        uhdm_trace("    Importing part select\n");
     
     // Get the parent object - this should contain the base signal
     const any* parent = uhdm_part->VpiParent();
@@ -11039,26 +11039,26 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         return RTLIL::SigSpec();
     }
     
-    log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
+    uhdm_trace("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
     
     // Check if the indexed part select itself has the signal name
     std::string base_signal_name;
     if (!uhdm_part->VpiDefName().empty()) {
         base_signal_name = std::string(uhdm_part->VpiDefName());
-        log("      PartSelect VpiDefName: %s\n", base_signal_name.c_str());
+        uhdm_trace("      PartSelect VpiDefName: %s\n", base_signal_name.c_str());
     } else if (!uhdm_part->VpiName().empty()) {
         base_signal_name = std::string(uhdm_part->VpiName());
-        log("      PartSelect VpiName: %s\n", base_signal_name.c_str());
+        uhdm_trace("      PartSelect VpiName: %s\n", base_signal_name.c_str());
     }
     
     // If not found in the indexed part select, try the parent
     if (base_signal_name.empty()) {
         if (!parent->VpiDefName().empty()) {
             base_signal_name = std::string(parent->VpiDefName());
-            log("      Parent VpiDefName: %s\n", base_signal_name.c_str());
+            uhdm_trace("      Parent VpiDefName: %s\n", base_signal_name.c_str());
         } else if (!parent->VpiName().empty()) {
             base_signal_name = std::string(parent->VpiName());
-            log("      Parent VpiName: %s\n", base_signal_name.c_str());
+            uhdm_trace("      Parent VpiName: %s\n", base_signal_name.c_str());
         }
     }
     
@@ -11080,7 +11080,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             // always safe: its upper bits are 0.
             int bw = std::max(w ? w->width : 32, 32);
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
-            log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
+            uhdm_trace("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
         } else if (input_mapping && input_mapping->count(base_signal_name) &&
                    (!comb_lhs_keep_base ||
                     !module->wire(RTLIL::escape_id(base_signal_name)))) {
@@ -11097,7 +11097,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             // wire, so they still resolve through input_mapping
             // (function_mixed's `result[2*i] = x[i]`).
             base = input_mapping->at(base_signal_name);
-            log("      PartSelect: base '%s' from input_mapping (width=%d)\n",
+            uhdm_trace("      PartSelect: base '%s' from input_mapping (width=%d)\n",
                 base_signal_name.c_str(), base.size());
         } else if (uhdm_part->Actual_group() &&
                    uhdm_part->Actual_group()->VpiType() == vpiParameter) {
@@ -11121,7 +11121,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             RTLIL::IdString p_id = RTLIL::escape_id(std::string(p->VpiName()));
             if (module->parameter_default_values.count(p_id)) {
                 base = RTLIL::SigSpec(module->parameter_default_values.at(p_id));
-                log("      PartSelect: base '%s' from module parameter (width=%d)\n",
+                uhdm_trace("      PartSelect: base '%s' from module parameter (width=%d)\n",
                     base_signal_name.c_str(), base.size());
             } else {
                 std::string vs = std::string(p->VpiValue());
@@ -11133,7 +11133,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 }
                 if (!vs.empty())
                     base = RTLIL::SigSpec(RTLIL::Const(parse_vpi_value_to_int(vs), bw));
-                log("      PartSelect: base '%s' from genvar/parameter = %s (width=%d)\n",
+                uhdm_trace("      PartSelect: base '%s' from genvar/parameter = %s (width=%d)\n",
                     base_signal_name.c_str(), vs.c_str(), bw);
             }
         }
@@ -11189,7 +11189,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                         if (lo >= alow && hi - alow < n) {
                             RTLIL::SigSpec sl = base.extract((lo - alow) * e0->width,
                                                              (hi - lo + 1) * e0->width);
-                            log("    part_select: flat unpacked array %s[%d:%d] -> elements "
+                            uhdm_trace("    part_select: flat unpacked array %s[%d:%d] -> elements "
                                 "(elem_w=%d) bits [%d+:%d]\n",
                                 base_signal_name.c_str(), el, er, e0->width,
                                 (lo - alow) * e0->width, sl.size());
@@ -11217,7 +11217,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
             if (module->parameter_default_values.count(param_id)) {
                 base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
-                log("      Resolved '%s' as parameter for part select (width=%d)\n",
+                uhdm_trace("      Resolved '%s' as parameter for part select (width=%d)\n",
                     base_signal_name.c_str(), base.size());
             } else if (package_parameter_map.count(base_signal_name)) {
                 // A package localparam sliced directly, e.g. CVA6 csr_regfile
@@ -11239,7 +11239,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                         base = padded;
                     }
                 }
-                log("      Resolved '%s' as package parameter for part select (width=%d)\n",
+                uhdm_trace("      Resolved '%s' as package parameter for part select (width=%d)\n",
                     base_signal_name.c_str(), base.size());
             } else if (RTLIL::Wire* e0 =
                            (name_map.count(base_signal_name + "[0]")
@@ -11284,7 +11284,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                         else { ok = false; break; }
                     }
                     if (ok && concat.size() > 0) {
-                        log("    part_select: element-array %s[%d:%d] → %d-bit concat\n",
+                        uhdm_trace("    part_select: element-array %s[%d:%d] → %d-bit concat\n",
                             base_signal_name.c_str(), el, er, concat.size());
                         return concat;
                     }
@@ -11337,7 +11337,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             base = im->second;
     }
 
-    log("      Base signal width: %d\n", base.size());
+    uhdm_trace("      Base signal width: %d\n", base.size());
 
     // Get range.  Part-select bounds are CONSTANT expressions per the LRM
     // (variable ranges are only legal in `+:`/`-:` indexed part-selects), so
@@ -11488,7 +11488,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                         offset = decl_asc ? (decl_high - ihi) * elem_w
                                           : (ilo - decl_low) * elem_w;
                         width = (ihi - ilo + 1) * elem_w;
-                        log("    part_select: packed-array element range [%d:%d] "
+                        uhdm_trace("    part_select: packed-array element range [%d:%d] "
                             "(elem_w=%d) -> bits [%d+:%d]\n",
                             left, right, elem_w, offset, width);
                     }
@@ -11521,7 +11521,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                     offset = (ol < orr) ? (decl_high - ihi) * ew
                                         : (ilo - decl_low) * ew;
                     width = (ihi - ilo + 1) * ew;
-                    log("    part_select: packed-array element range [%d:%d] via "
+                    uhdm_trace("    part_select: packed-array element range [%d:%d] via "
                         "wire attrs (elem_w=%d) -> bits [%d+:%d]\n",
                         left, right, ew, offset, width);
                 }
@@ -11557,7 +11557,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                         ilo >= dlow && ihi <= dhigh) {
                         offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
                                               : (dhigh - ihi);    // ascending  [lo:hi]
-                        log("    part_select: non-zero-based vector [%d:%d], "
+                        uhdm_trace("    part_select: non-zero-based vector [%d:%d], "
                             "select [%d:%d] -> bits [%d+:%d]\n",
                             dli, dri, left, right, offset, width);
                     }
@@ -11580,7 +11580,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             int hi_r = bwire->from_hdl_index(std::max(left, right));
             if (lo_r != INT_MIN && hi_r != INT_MIN) {
                 offset = std::min(lo_r, hi_r);
-                log("    part_select: wire geometry (offset=%d upto=%d), "
+                uhdm_trace("    part_select: wire geometry (offset=%d upto=%d), "
                     "select [%d:%d] -> bits [%d+:%d]\n",
                     bwire->start_offset, bwire->upto ? 1 : 0, left, right, offset, width);
             }
@@ -11645,13 +11645,13 @@ static int packed_row_width(int total, int elem_w, int outer_l, int outer_r) {
 
 RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
-        log("    Importing bit select\n");
+        uhdm_trace("    Importing bit select\n");
 
     // Get the signal name directly from the bit_select
     std::string signal_name = std::string(uhdm_bit->VpiName());
 
     if (mode_debug)
-        log("    Bit select signal name: '%s'\n", signal_name.c_str());
+        uhdm_trace("    Bit select signal name: '%s'\n", signal_name.c_str());
 
     // Function-parameter bit access: if the parameter has a constant
     // value tracked in the current FunctionCallContext, return the
@@ -11679,7 +11679,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     bitselect_outer_dim(ag, (int)cur.size(), elem_w, outer_lo);
                 int off = (idx - outer_lo) * elem_w;
                 if (mode_debug)
-                    log("    const formal bit-select %s[%d]: total=%d elem_w=%d outer_lo=%d off=%d\n",
+                    uhdm_trace("    const formal bit-select %s[%d]: total=%d elem_w=%d outer_lo=%d off=%d\n",
                         signal_name.c_str(), idx, (int)cur.size(), elem_w, outer_lo, off);
                 if (off >= 0 && off + elem_w <= (int)cur.size()) {
                     std::vector<RTLIL::State> bits(cur.begin() + off,
@@ -11754,7 +11754,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             if (!elem_exists && off >= 0 &&
                 off + elem_w <= (int)fbase.size()) {
                 if (mode_debug)
-                    log("    formal bit-select %s[%d] from input_mapping: "
+                    uhdm_trace("    formal bit-select %s[%d] from input_mapping: "
                         "off=%d elem_w=%d of %d bits\n", signal_name.c_str(),
                         idxv, off, elem_w, (int)fbase.size());
                 return mapped_inflight(fbase.extract(off, elem_w));
@@ -11767,7 +11767,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     RTLIL::IdString mem_id = resolve_mem_id(signal_name);
     if (module->memories.count(mem_id) > 0) {
         if (mode_debug)
-            log("    This is a memory access - creating $memrd cell\n");
+            uhdm_trace("    This is a memory access - creating $memrd cell\n");
         
         // Get memory info
         RTLIL::Memory* memory = module->memories.at(mem_id);
@@ -11793,8 +11793,8 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         RTLIL::Wire* data_wire = module->addWire(data_wire_id, memory->width);
         
         if (mode_debug) {
-            log("    Created memrd cell: %s\n", cell_name.c_str());
-            log("    Created data wire: %s\n", data_wire_id.c_str());
+            uhdm_trace("    Created memrd cell: %s\n", cell_name.c_str());
+            uhdm_trace("    Created data wire: %s\n", data_wire_id.c_str());
         }
         
         // Connect ports
@@ -12267,7 +12267,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                             RTLIL::SigSpec full(param_value);
                             RTLIL::SigSpec slice = full.extract(off, elem_w);
                             if (mode_debug)
-                                log("    Bit-select on parameter %s[%d]: extracted %d bits @off %d\n",
+                                uhdm_trace("    Bit-select on parameter %s[%d]: extracted %d bits @off %d\n",
                                     signal_name.c_str(), idx, elem_w, off);
                             return slice;
                         }
@@ -12293,7 +12293,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         module->addShiftx(NEW_ID, RTLIL::SigSpec(param_value),
                                           off, out);
                         if (mode_debug)
-                            log("    Dynamic bit-select on parameter %s: $shiftx elem_w=%d\n",
+                            uhdm_trace("    Dynamic bit-select on parameter %s: $shiftx elem_w=%d\n",
                                 signal_name.c_str(), elem_w);
                         return RTLIL::SigSpec(out);
                     }
@@ -12341,7 +12341,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             wire = find_wire_in_scope(stringf("%s[%d]", signal_name.c_str(), idx));
             if (wire) {
                 if (mode_debug)
-                    log("    Found shift register element: %s\n", indexed_name.c_str());
+                    uhdm_trace("    Found shift register element: %s\n", indexed_name.c_str());
                 // Return the whole wire since it represents M[idx]
                 return RTLIL::SigSpec(wire);
             }
@@ -12401,7 +12401,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     RTLIL::Wire* out = module->addWire(NEW_ID, elem_w);
                     module->addShiftx(NEW_ID, mapped_inflight(it->second), off, out);
                     if (mode_debug)
-                        log("    Dynamic bit-select on function formal %s: $shiftx elem_w=%d\n",
+                        uhdm_trace("    Dynamic bit-select on function formal %s: $shiftx elem_w=%d\n",
                             signal_name.c_str(), elem_w);
                     return RTLIL::SigSpec(out);
                 }
@@ -12420,7 +12420,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
             } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(current_instance)) {
                 ci_kind = "gen_scope"; ci_name = std::string(gs->VpiFullName());
             }
-            log("    bit-select '%s' lookup failed: Actual_group=%s current_instance=%s(%s) "
+            uhdm_trace("    bit-select '%s' lookup failed: Actual_group=%s current_instance=%s(%s) "
                 "module=%s has_param_default=%d\n",
                 signal_name.c_str(),
                 ag ? UHDM::UhdmName(ag->UhdmType()).c_str() : "null",
@@ -12770,7 +12770,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 packed_outer_l = olow + osz - 1;
                 packed_outer_r = olow;
                 if (mode_debug)
-                    log("    bit select on a flat %d-D unpacked array: row of %d bits\n", 2, packed_elem_w);
+                    uhdm_trace("    bit select on a flat %d-D unpacked array: row of %d bits\n", 2, packed_elem_w);
             }
         }
     }
@@ -12778,7 +12778,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
         if (mode_debug)
-            log("    Bit select index: %d\n", idx);
+            uhdm_trace("    Bit select index: %d\n", idx);
 
         if (packed_elem_w > 1) {
             // ONE index into an array of N elements selects total/N bits.
@@ -12839,7 +12839,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                         int off = (dli >= dri) ? (idx - dlow)   // descending
                                                : (dhigh - idx); // ascending
                         if (mode_debug)
-                            log("    bit_select: non-zero-based vector [%d:%d], "
+                            uhdm_trace("    bit_select: non-zero-based vector [%d:%d], "
                                 "index %d -> bit %d\n", dli, dri, idx, off);
                         return base.extract(off, 1);
                     }
@@ -12872,7 +12872,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
             if (mode_debug)
-                log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n",
+                uhdm_trace("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n",
                     idx, rtlil_idx, wire->upto ? 1 : 0, wire->start_offset);
 
             // Check bounds before extracting
@@ -13063,7 +13063,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     element_width = packed_row_width(base.size(), element_width,
                                      outer_left, outer_right);
     if (mode_debug)
-        log("    Creating $shiftx for dynamic bit select (element_width=%d)\n", element_width);
+        uhdm_trace("    Creating $shiftx for dynamic bit select (element_width=%d)\n", element_width);
 
     RTLIL::SigSpec shift_amount;
     if (element_width > 1) {
@@ -13224,7 +13224,7 @@ bool UhdmImporter::declared_vector_bounds(const UHDM::any* node, const std::stri
 
 RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
-        log("    Importing indexed part select\n");
+        uhdm_trace("    Importing indexed part select\n");
 
     // Get the parent object - this should contain the base signal
     const any* parent = uhdm_indexed->VpiParent();
@@ -13234,7 +13234,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     }
     
     if (mode_debug)
-        log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
+        uhdm_trace("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
 
     // Check if the indexed part select itself has the signal name
     std::string base_signal_name;
@@ -13402,7 +13402,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             if (width > 0 && ilo >= dlo && ihi <= dhi) {
                 int boff = (pk_ol < pk_or) ? (dhi - ihi) * pk_ew : (ilo - dlo) * pk_ew;
                 if (mode_debug)
-                    log("    indexed part-select: packed elements [%d..%d] (elem_w=%d) -> bits [%d+:%d]\n",
+                    uhdm_trace("    indexed part-select: packed elements [%d..%d] (elem_w=%d) -> bits [%d+:%d]\n",
                         ilo, ihi, pk_ew, boff, width * pk_ew);
                 return base.extract(boff, width * pk_ew);
             }
@@ -13465,7 +13465,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                 int mapped = (dli >= dri) ? (low - dlow)     // descending
                                           : (dhigh - shigh); // ascending
                 if (mapped != low && mode_debug)
-                    log("    indexed part-select: declared [%d:%d], [%d+:%d] "
+                    uhdm_trace("    indexed part-select: declared [%d:%d], [%d+:%d] "
                         "-> bits [%d+:%d]\n", dli, dri, low, width, mapped, width);
                 low = mapped;
             }
@@ -13549,7 +13549,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
 // Import concatenation (e.g., {a, b, c})
 RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat, const UHDM::scope* inst) {
     if (mode_debug)
-        log("    Importing concatenation\n");
+        uhdm_trace("    Importing concatenation\n");
     
     RTLIL::SigSpec result;
     
@@ -13844,7 +13844,7 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
         if (idx < 0 || idx >= nelem)
             return RTLIL::SigSpec();
         if (mode_debug)
-            log("    param array elem field: %s[%d].%s -> %d bits\n",
+            uhdm_trace("    param array elem field: %s[%d].%s -> %d bits\n",
                 std::string(param->VpiName()).c_str(), idx,
                 fields.back().c_str(), field_width);
         return slice_of(idx);
@@ -13861,7 +13861,7 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
         result = module->Mux(NEW_ID, result, slice_of(idx), eq);
     }
     if (mode_debug)
-        log("    param array elem field: %s[<dyn>].%s -> %d-bit mux of %d\n",
+        uhdm_trace("    param array elem field: %s[<dyn>].%s -> %d-bit mux of %d\n",
             std::string(param->VpiName()).c_str(), fields.back().c_str(),
             field_width, nelem);
     return result;
@@ -14122,7 +14122,7 @@ RTLIL::SigSpec UhdmImporter::mapped_inflight(const RTLIL::SigSpec& mapped) {
 
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
-        log("    Importing hier_path\n");
+        uhdm_trace("    Importing hier_path\n");
 
     // Guard: import_hier_path dereferences `module` (e.g. module->cell()) while
     // resolving cell/instance references.  type_param_signature() computes port
@@ -14177,7 +14177,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int eo = (ix.as_const().as_int() - outer_lo) * elem_w;
                         if (eo >= 0 && eo + elem_w <= mit->second.size() && off >= 0 && off + mw <= elem_w) {
                             RTLIL::SigSpec out = mit->second.extract(eo + off, mw);
-                            log("    hier_path '%s' -> element %d of staged formal %s, member %s [%d +: %d]\n",
+                            uhdm_trace("    hier_path '%s' -> element %d of staged formal %s, member %s [%d +: %d]\n",
                                 std::string(uhdm_hier->VpiName()).c_str(), ix.as_const().as_int(),
                                 bn.c_str(), member_path.c_str(), off, mw);
                             return out;
@@ -14232,7 +14232,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::Const c = vpi_value_to_const(v, w);
                 if (c.size() > 0) {
                     if (mode_debug)
-                        log("    hier_path %s.%s -> generate-block localparam %s\n",
+                        uhdm_trace("    hier_path %s.%s -> generate-block localparam %s\n",
                             gname.c_str(), pname.c_str(), log_signal(RTLIL::SigSpec(c)));
                     return RTLIL::SigSpec(c);
                 }
@@ -14311,7 +14311,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     }
 
     if (mode_debug)
-        log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
+        uhdm_trace("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
             std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
 
     // Primary path: fold an interface-port parameter member (`sub.CFG.HSK.DLY`,
@@ -14323,7 +14323,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // fragile name/parent-chain search below.
     if (auto fs = fold_iface_param_via_chain(uhdm_hier); fs.size() > 0) {
         if (mode_debug)
-            log("    hier_path: %s -> %d-bit constant via Actual_group chain\n",
+            uhdm_trace("    hier_path: %s -> %d-bit constant via Actual_group chain\n",
                 path_name.c_str(), fs.size());
         return fs;
     }
@@ -14400,14 +14400,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             if (auto pm = dynamic_cast<const module_inst*>(p)) {
                 v = eval_iface_param_field(uhdm_hier, pm);
                 if (!v.empty())
-                    log("    hier_path: %s -> %s via parent %s interface param\n",
+                    uhdm_trace("    hier_path: %s -> %s via parent %s interface param\n",
                         path_name.c_str(), v.c_str(),
                         std::string(pm->VpiName()).c_str());
             }
         }
         if (!v.empty()) {
             int iv = atoi(v.c_str());
-            log("    hier_path: %s -> %d via interface struct parameter\n",
+            uhdm_trace("    hier_path: %s -> %d via interface struct parameter\n",
                 path_name.c_str(), iv);
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
@@ -14418,7 +14418,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         RTLIL::SigSpec ss = eval_iface_param_struct(uhdm_hier, current_instance);
         if (ss.size() > 0) {
             if (mode_debug)
-                log("    hier_path: %s -> %d-bit interface struct parameter\n",
+                uhdm_trace("    hier_path: %s -> %d-bit interface struct parameter\n",
                     path_name.c_str(), ss.size());
             return ss;
         }
@@ -14438,7 +14438,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
         if (!v.empty()) {
             int iv = atoi(v.c_str());
-            log("    hier_path: %s -> %d via bare interface struct parameter\n",
+            uhdm_trace("    hier_path: %s -> %d via bare interface struct parameter\n",
                 path_name.c_str(), iv);
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
@@ -14486,7 +14486,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (i.is_fully_const() && !i.empty())
                     slice(i.as_const().as_int(), i.as_const().as_int());
             }
-            log("    hier_path: %s -> %d via struct parameter field (w=%d"
+            uhdm_trace("    hier_path: %s -> %d via struct parameter field (w=%d"
                 "%s)\n", path_name.c_str(), iv, fw,
                 val.size() != (fw > 0 ? fw : 32) ? ", select applied" : "");
             return val;
@@ -14531,7 +14531,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 resolve_xmr_read(module, xcell, sig);
                 if (RTLIL::Wire* rw =
                         module->wire(RTLIL::escape_id(inst + "." + sig))) {
-                    log("    XMR read %s.%s: exposed child output port\n",
+                    uhdm_trace("    XMR read %s.%s: exposed child output port\n",
                         inst.c_str(), sig.c_str());
                     return RTLIL::SigSpec(rw);
                 }
@@ -14557,7 +14557,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 std::string pn = inst + "." + sig;
                 RTLIL::Wire* pw = module->wire(RTLIL::escape_id(pn));
                 if (!pw) pw = module->addWire(RTLIL::escape_id(pn), xw);
-                log("    XMR read %s.%s: deferred (cell not yet created, width=%d)\n",
+                uhdm_trace("    XMR read %s.%s: deferred (cell not yet created, width=%d)\n",
                     inst.c_str(), sig.c_str(), xw);
                 return RTLIL::SigSpec(pw);
             }
@@ -14614,7 +14614,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (width <= 0) width = 32;
                     auto ec = (func_name == "first") ? consts.front() : consts.back();
                     int64_t v = parse_vpi_value_to_int(std::string(ec->VpiValue()));
-                    log("    enum method %s.%s() -> %lld (%d-bit)\n",
+                    uhdm_trace("    enum method %s.%s() -> %lld (%d-bit)\n",
                         std::string(base_elem->VpiName()).c_str(), func_name.c_str(),
                         (long long)v, width);
                     return RTLIL::SigSpec(RTLIL::Const(v, width));
@@ -14646,7 +14646,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         evaluate_function_call(fdef, const_args, output_params);
                     const_eval_module_writes.clear();
                     if (mode_debug)
-                        log("    hier_path func call %s → compile-time const\n",
+                        uhdm_trace("    hier_path func call %s → compile-time const\n",
                             func_name.c_str());
                     return RTLIL::SigSpec(result);
                 }
@@ -14755,12 +14755,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     // silently instead of falling through to the "Could not
                     // resolve struct member" warning.
                     if (ok && field_w == 0 && off <= base_sig.size()) {
-                        log("    hier_path: interface signal struct member %s.* -> zero-width field\n",
+                        uhdm_trace("    hier_path: interface signal struct member %s.* -> zero-width field\n",
                             wname.c_str());
                         return RTLIL::SigSpec();
                     }
                     if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
-                        log("    hier_path: interface signal struct member %s.* -> [%d+:%d]\n",
+                        uhdm_trace("    hier_path: interface signal struct member %s.* -> [%d+:%d]\n",
                             wname.c_str(), off, field_w);
                         return base_sig.extract(off, field_w);
                     }
@@ -14840,7 +14840,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int pos = asc ? (std::max(l, r) - iv)
                                           : (iv - std::min(l, r));
                             if (pos >= 0 && pos < n) {
-                                log("    hier_path: packed-array member elem "
+                                uhdm_trace("    hier_path: packed-array member elem "
                                     "%s.%s[%d] -> \%s[%d +: %d]\n",
                                     ua_base.c_str(), ua_member.c_str(), iv,
                                     ua_base.c_str(), moff + pos * elem_w, elem_w);
@@ -14875,7 +14875,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 RTLIL::SigSpec(bw, moff, mw),
                                 RTLIL::SigSpec(sh), yw);
                             add_src_attribute(sx->attributes, uhdm_hier);
-                            log("    hier_path: packed-array member DYNAMIC elem "
+                            uhdm_trace("    hier_path: packed-array member DYNAMIC elem "
                                 "%s.%s[expr] -> shiftx over %d bits, elem %d\n",
                                 ua_base.c_str(), ua_member.c_str(), mw, elem_w);
                             return RTLIL::SigSpec(yw);
@@ -15163,7 +15163,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (is.is_fully_const()) idx = is.as_const().as_int();
             }
             if (mode_debug)
-                log("    hier_path elem-field part-select probe: base=%s est=%s idx=%d\n",
+                uhdm_trace("    hier_path elem-field part-select probe: base=%s est=%s idx=%d\n",
                     base_name.c_str(), est ? "yes" : "no", idx);
             if (base_wire && est && est->Members() && idx >= 0 &&
                 ps->Left_range() && ps->Right_range()) {
@@ -15190,7 +15190,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     int w = hi - lo + 1;
                     if (off >= 0 && w > 0 && off + w <= base_wire->width) {
                         if (mode_debug)
-                            log("    hier_path %s[%d].%s[%d:%d] -> %s[%d +: %d]\n",
+                            uhdm_trace("    hier_path %s[%d].%s[%d:%d] -> %s[%d +: %d]\n",
                                 base_name.c_str(), idx, field_name.c_str(), hi, lo,
                                 base_wire->name.c_str(), off, w);
                         return RTLIL::SigSpec(base_wire, off, w);
@@ -15275,7 +15275,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
                 if (found && field_w > 0 &&
                     field_off + field_w <= base_sig.size()) {
-                    log("    hier_path: union+struct %s.%s.%s -> [%d+:%d]\n",
+                    uhdm_trace("    hier_path: union+struct %s.%s.%s -> [%d+:%d]\n",
                         base_name.c_str(), union_member.c_str(),
                         field_name.c_str(), field_off, field_w);
                     return base_sig.extract(field_off, field_w);
@@ -15370,7 +15370,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                     int total = member_off + idx * elem_w + field_off;
                     if (found_field && field_w > 0 && total + field_w <= base_wire->width) {
-                        log("    hier_path: %s.%s[%d].%s -> %s[%d+:%d]\n",
+                        uhdm_trace("    hier_path: %s.%s[%d].%s -> %s[%d+:%d]\n",
                             base_name.c_str(), member_name.c_str(), idx,
                             field_name.c_str(), base_wire->name.c_str(), total, field_w);
                         return RTLIL::SigSpec(base_wire).extract(total, field_w);
@@ -15490,7 +15490,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             }
             int off = 0, mw = 0;
             if (mode_debug)
-                log("    hier_path '%s': elem-array struct field probe: elems=%d flat=%s ew=%d n=%d ets=%s actual=%s\n",
+                uhdm_trace("    hier_path '%s': elem-array struct field probe: elems=%d flat=%s ew=%d n=%d ets=%s actual=%s\n",
                     path_name.c_str(), (int)elems.size(), flat ? "yes" : "no", ew, n, ets ? "yes" : "no",
                     bs0->Actual_group() ? UhdmName(bs0->Actual_group()->UhdmType()).c_str() : "null");
             if (n > 0 && ets && ew > 0 &&
@@ -15628,7 +15628,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (bi.is_fully_const()) {
                             int k = bi.as_const().as_int();
                             int slot = fe_desc ? (k - fe_lo) : (fe_lo + fe_cnt - 1 - k);
-                            log("    hier_path '%s' -> elem-array struct field element %d (w=%d)\n",
+                            uhdm_trace("    hier_path '%s' -> elem-array struct field element %d (w=%d)\n",
                                 path_name.c_str(), k, fe_w);
                             if (slot >= 0 && slot < fe_cnt) return fs.extract(slot * fe_w, fe_w);
                             return RTLIL::SigSpec(RTLIL::State::Sx, fe_w);
@@ -15642,20 +15642,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         sh = module->Mul(NEW_ID, sh, RTLIL::Const(fe_w, 32), false);
                         RTLIL::Wire* yw = module->addWire(NEW_ID, fe_w);
                         module->addShiftx(NEW_ID, fs, sh, yw, false);
-                        log("    hier_path '%s' -> elem-array struct field dyn element (w=%d)\n",
+                        uhdm_trace("    hier_path '%s' -> elem-array struct field dyn element (w=%d)\n",
                             path_name.c_str(), fe_w);
                         return RTLIL::SigSpec(yw);
                     }
                     if (bi.is_fully_const()) {
                         int b = bi.as_const().as_int();
                         if (b >= 0 && b < mw) {
-                            log("    hier_path '%s' -> elem-array struct field bit\n", path_name.c_str());
+                            uhdm_trace("    hier_path '%s' -> elem-array struct field bit\n", path_name.c_str());
                             return fs.extract(b, 1);
                         }
                     } else {
                         RTLIL::Wire* yw = module->addWire(NEW_ID, 1);
                         module->addShiftx(NEW_ID, fs, bi, yw, false);
-                        log("    hier_path '%s' -> elem-array struct field dyn bit\n", path_name.c_str());
+                        uhdm_trace("    hier_path '%s' -> elem-array struct field dyn bit\n", path_name.c_str());
                         return RTLIL::SigSpec(yw);
                     }
                 } else if (fpart && fpart->Left_range() && fpart->Right_range()) {
@@ -15665,12 +15665,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int hi = l.as_const().as_int(), lo = r.as_const().as_int();
                         int lsb = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
                         if (lsb >= 0 && lsb + w2 <= mw) {
-                            log("    hier_path '%s' -> elem-array struct field part\n", path_name.c_str());
+                            uhdm_trace("    hier_path '%s' -> elem-array struct field part\n", path_name.c_str());
                             return fs.extract(lsb, w2);
                         }
                     }
                 } else if (!fbit && !fpart) {
-                    log("    hier_path '%s' -> elem-array struct field [%d +: %d]\n",
+                    uhdm_trace("    hier_path '%s' -> elem-array struct field [%d +: %d]\n",
                         path_name.c_str(), off, mw);
                     return fs;
                 }
@@ -15697,7 +15697,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::Wire* w = name_map.count(wname) ? name_map[wname]
                     : module->wire(RTLIL::escape_id(wname));
                 if (w) {
-                    log("    hier_path: interface-array element field %s -> wire %s\n",
+                    uhdm_trace("    hier_path: interface-array element field %s -> wire %s\n",
                         wname.c_str(), w->name.c_str());
                     return RTLIL::SigSpec(w);
                 }
@@ -15763,7 +15763,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     int off = 0, mw = 0;
                     if (calculate_struct_member_offset(ts, field, inst, off, mw)) {
                         if (off + mw <= w->width) {
-                            log("    hier_path: iface-array struct field %s.%s -> \\%s[%d +: %d]\n",
+                            uhdm_trace("    hier_path: iface-array struct field %s.%s -> \\%s[%d +: %d]\n",
                                 wname.c_str(), field.c_str(), wname.c_str(), off, mw);
                             return RTLIL::SigSpec(w, off, mw);
                         }
@@ -15849,7 +15849,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (idx_sig.is_fully_const() && geom && (g_ew > 1 || std::min(g_l, g_r) != 0 || g_l < g_r)) {
                         int idx = idx_sig.as_const().as_int(), pos = 0;
                         if (elem_pos(idx, pos)) {
-                            log("    hier_path: %s[%d] → \\%s[%d+:%d] (packed element)\n",
+                            uhdm_trace("    hier_path: %s[%d] → \\%s[%d+:%d] (packed element)\n",
                                 full.c_str(), idx, full.c_str(), pos * g_ew, g_ew);
                             return RTLIL::SigSpec(sig_wire).extract(pos * g_ew, g_ew);
                         }
@@ -15869,14 +15869,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         module->addMul(NEW_ID, pos, RTLIL::Const(g_ew, 32), sw);
                         RTLIL::Wire* ow = module->addWire(NEW_ID, g_ew);
                         module->addShiftx(NEW_ID, RTLIL::SigSpec(sig_wire), RTLIL::SigSpec(sw), ow);
-                        log("    hier_path: %s[dyn] → $shiftx(\\%s, idx*%d) (packed element)\n",
+                        uhdm_trace("    hier_path: %s[dyn] → $shiftx(\\%s, idx*%d) (packed element)\n",
                             full.c_str(), full.c_str(), g_ew);
                         return RTLIL::SigSpec(ow);
                     }
                     if (idx_sig.is_fully_const()) {
                         int idx = idx_sig.as_const().as_int();
                         if (idx >= 0 && idx < sig_wire->width) {
-                            log("    hier_path: %s[%d] → \\%s[%d]\n",
+                            uhdm_trace("    hier_path: %s[%d] → \\%s[%d]\n",
                                 full.c_str(), idx, full.c_str(), idx);
                             return RTLIL::SigSpec(sig_wire).extract(idx, 1);
                         }
@@ -15893,7 +15893,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int l = ls.as_int(), r = rs.as_int(), pl = 0, pr = 0;
                         if (elem_pos(l, pl) && elem_pos(r, pr)) {
                             int plo = std::min(pl, pr), n = std::abs(pl - pr) + 1;
-                            log("    hier_path: %s[%d:%d] → \\%s[%d+:%d] (declared range, elem %d)\n",
+                            uhdm_trace("    hier_path: %s[%d:%d] → \\%s[%d+:%d] (declared range, elem %d)\n",
                                 full.c_str(), l, r, full.c_str(), plo * g_ew, n * g_ew, g_ew);
                             return RTLIL::SigSpec(sig_wire).extract(plo * g_ew, n * g_ew);
                         }
@@ -15904,7 +15904,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int lo = std::min(l, r);
                         int w  = std::abs(l - r) + 1;
                         if (lo >= 0 && lo + w <= sig_wire->width) {
-                            log("    hier_path: %s[%d:%d] → \\%s[%d+:%d]\n",
+                            uhdm_trace("    hier_path: %s[%d:%d] → \\%s[%d+:%d]\n",
                                 full.c_str(), l, r, full.c_str(), lo, w);
                             return RTLIL::SigSpec(sig_wire).extract(lo, w);
                         }
@@ -16061,7 +16061,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     int sw = cnt * elem_w;
                     if (bit_lo >= 0 && bit_lo + sw <= w &&
                         off + bit_lo + sw <= base_wire->width) {
-                        log("    hier_path: packed-struct %s.%s[%d:%d] (elem_w=%d) -> %s[%d+:%d]\n",
+                        uhdm_trace("    hier_path: packed-struct %s.%s[%d:%d] (elem_w=%d) -> %s[%d+:%d]\n",
                             base.c_str(), field.c_str(), l, r, elem_w,
                             base_wire->name.c_str(), off + bit_lo, sw);
                         return RTLIL::SigSpec(base_wire).extract(off + bit_lo, sw);
@@ -16091,7 +16091,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 std::string full = base + "." + field;
                 auto it = name_map.find(full);
                 if (it != name_map.end()) {
-                    log("    hier_path: resolved %s → %s via name_map\n",
+                    uhdm_trace("    hier_path: resolved %s → %s via name_map\n",
                         full.c_str(), it->second->name.c_str());
                     return RTLIL::SigSpec(it->second);
                 }
@@ -16139,7 +16139,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int off = 0, w = 0;
                             if (calculate_struct_member_offset(ats, field, inst, off, w) &&
                                 w > 0 && off + w <= pval.size()) {
-                                log("    hier_path: struct param %s.%s -> [%d+:%d]\n",
+                                uhdm_trace("    hier_path: struct param %s.%s -> [%d+:%d]\n",
                                     base.c_str(), field.c_str(), off, w);
                                 return pval.extract(off, w);
                             }
@@ -16168,7 +16168,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int off = 0, w = 0;
                             if (calculate_struct_member_offset(ats, field, inst, off, w) &&
                                 w > 0 && off + w <= base_wire->width) {
-                                log("    hier_path: packed-struct %s → %s[%d+:%d]\n",
+                                uhdm_trace("    hier_path: packed-struct %s → %s[%d+:%d]\n",
                                     full.c_str(), base_wire->name.c_str(), off, w);
                                 return RTLIL::SigSpec(base_wire).extract(off, w);
                             }
@@ -16235,7 +16235,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
                                         RTLIL::SigSpec s = import_expression(re);
                                         if (s.is_fully_const()) {
-                                            log("    hier_path: resolved %s → param value %d via interface\n",
+                                            uhdm_trace("    hier_path: resolved %s → param value %d via interface\n",
                                                 full.c_str(), s.as_const().as_int());
                                             // Mark module dynports so
                                             // the hierarchy pass re-
@@ -16254,7 +16254,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (!v.empty()) {
                                 RTLIL::Const c = extract_const_from_value(v);
                                 if (c.size() > 0) {
-                                    log("    hier_path: resolved %s → param default %d via interface\n",
+                                    uhdm_trace("    hier_path: resolved %s → param default %d via interface\n",
                                         full.c_str(), c.as_int());
                                     module->set_bool_attribute(ID::dynports);
                                     return RTLIL::SigSpec(c);
@@ -16320,7 +16320,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             }
         }
         if (mode_debug)
-            log("    Nidx probe: nsel=%zu total=%zu tail_ok=%d run_base='%s'\n",
+            uhdm_trace("    Nidx probe: nsel=%zu total=%zu tail_ok=%d run_base='%s'\n",
                 nsel, peN.size(), tail_ok ? 1 : 0, run_base.c_str());
         if (nsel >= 1 && tail_ok) {
             const bit_select* bs0 = any_cast<const bit_select*>(peN[0]);
@@ -16358,7 +16358,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 flat_struct_array_geom(base_name, bs0->Actual_group(), inst,
                                        dims, &st, &elem_w);
             if (mode_debug)
-                log("    Nidx probe2: base_flat=%d geom=%d dims=%zu elem_w=%d\n",
+                uhdm_trace("    Nidx probe2: base_flat=%d geom=%d dims=%zu elem_w=%d\n",
                     base_flat ? 1 : 0, geom_ok ? 1 : 0, dims.size(), elem_w);
             if (geom_ok && nsel <= dims.size() && elem_w > 0) {
                 // Import the index expressions; note whether ANY is dynamic
@@ -16647,7 +16647,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     sx->setPort(ID::B, acc);
                     sx->setPort(ID::Y, out);
                     add_src_attribute(sx->attributes, uhdm_hier);
-                    log("    hier_path: dynamic %s[%zu dims] -> shiftx (w=%d)\n",
+                    uhdm_trace("    hier_path: dynamic %s[%zu dims] -> shiftx (w=%d)\n",
                         base_name.c_str(), nsel, field_width);
                     return RTLIL::SigSpec(out);
                 }
@@ -16668,7 +16668,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         off += (iv - dims[k].second) * strides[k];
                     }
                     if (in_range && off >= 0 && off + field_width <= base_flat->width) {
-                        log("    hier_path: const multi-index %s -> [%d+:%d]\n",
+                        uhdm_trace("    hier_path: const multi-index %s -> [%d+:%d]\n",
                             base_name.c_str(), off, field_width);
                         return RTLIL::SigSpec(base_flat).extract(off, field_width);
                     }
@@ -16678,7 +16678,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     }
 
     if (uhdm_hier->Path_elems()) {
-        log("    hier_path has %d path elements\n", (int)uhdm_hier->Path_elems()->size());
+        uhdm_trace("    hier_path has %d path elements\n", (int)uhdm_hier->Path_elems()->size());
         
         // A path whose BASE is a struct/union-typed signal: every later
         // element is a MEMBER name.  Surelog can still bind such an element to
@@ -16724,21 +16724,21 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         // Look through all path elements to find one with a resolved full name
         // Sometimes the resolution is in the Actual() of the ref_obj
         for (auto elem : *uhdm_hier->Path_elems()) {
-            log("      Path elem type: %s\n", UHDM::UhdmName(elem->UhdmType()).c_str());
+            uhdm_trace("      Path elem type: %s\n", UHDM::UhdmName(elem->UhdmType()).c_str());
             if (hp_base_struct && elem != hp_first && elem->UhdmType() == uhdmref_obj) {
-                log("      member element of a struct base — not bound by name\n");
+                uhdm_trace("      member element of a struct base — not bound by name\n");
                 continue;
             }
             
             if (elem->UhdmType() == uhdmref_obj) {
                 const ref_obj* ref = any_cast<const ref_obj*>(elem);
-                log("        ref_obj: name=%s, full_name=%s\n", 
+                uhdm_trace("        ref_obj: name=%s, full_name=%s\n", 
                     std::string(ref->VpiName()).c_str(), std::string(ref->VpiFullName()).c_str());
                 
                 // Check if this ref_obj has an Actual_group() pointing to the real signal
                 if (ref->Actual_group()) {
                     const any* actual = ref->Actual_group();
-                    log("        ref_obj has Actual_group of type %s\n", UHDM::UhdmName(actual->UhdmType()).c_str());
+                    uhdm_trace("        ref_obj has Actual_group of type %s\n", UHDM::UhdmName(actual->UhdmType()).c_str());
 
                     // Extract full name from the actual object (works for logic_net, integer_var, logic_var)
                     std::string_view actual_full_name;
@@ -16752,14 +16752,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 
                     if (!actual_full_name.empty()) {
                         std::string full_str = std::string(actual_full_name);
-                        log("          Actual full name: %s\n", full_str.c_str());
+                        uhdm_trace("          Actual full name: %s\n", full_str.c_str());
                         // Extract module-relative path (remove work@module_name. prefix)
                         size_t module_end = full_str.find('.');
                         if (module_end != std::string::npos) {
                             std::string signal_path = full_str.substr(module_end + 1);
-                            log("          Extracted signal path: %s\n", signal_path.c_str());
+                            uhdm_trace("          Extracted signal path: %s\n", signal_path.c_str());
                             if (name_map.count(signal_path)) {
-                                log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
+                                uhdm_trace("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
                                 return RTLIL::SigSpec(name_map[signal_path]);
                             } else if (!name_map.count(path_name)) {
                                 // Wire not yet created and hier_path name also absent —
@@ -16768,7 +16768,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 RTLIL::Wire* w = create_wire(signal_path, width);
                                 wire_map[actual] = w;
                                 name_map[signal_path] = w;
-                                log("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
+                                uhdm_trace("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
                                 return RTLIL::SigSpec(w);
                             }
                             // path_name is already in name_map (e.g., interface port "bus.a"):
@@ -16803,10 +16803,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (module_end != std::string::npos) {
                         std::string signal_path = full_str.substr(module_end + 1);
                         if (mode_debug)
-                            log("      ref_obj has VpiFullName: %s -> %s\n", full_str.c_str(), signal_path.c_str());
+                            uhdm_trace("      ref_obj has VpiFullName: %s -> %s\n", full_str.c_str(), signal_path.c_str());
                         if (name_map.count(signal_path)) {
                             if (mode_debug)
-                                log("      Found in name_map: %s\n", name_map[signal_path]->name.c_str());
+                                uhdm_trace("      Found in name_map: %s\n", name_map[signal_path]->name.c_str());
                             return RTLIL::SigSpec(name_map[signal_path]);
                         }
                     }
@@ -16815,7 +16815,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     } else {
         if (mode_debug)
-            log("    hier_path has no Path_elems\n");
+            uhdm_trace("    hier_path has no Path_elems\n");
     }
 
     // Unpacked-array-of-struct element + SCALAR struct member: `arr[i].field`
@@ -16901,7 +16901,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (found && field_w > 0 && elem_w > 0) {
                     int off = (i_idx - outer_low) * elem_w + field_off;
                     if (off >= 0 && off + field_w <= base_wire->width) {
-                        log("    hier_path: %s[%d].%s → %s[%d+:%d]\n",
+                        uhdm_trace("    hier_path: %s[%d].%s → %s[%d+:%d]\n",
                             base_name.c_str(), i_idx, field_name.c_str(),
                             base_wire->name.c_str(), off, field_w);
                         return RTLIL::SigSpec(base_wire).extract(off, field_w);
@@ -17020,7 +17020,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (abs_start >= 0 &&
                                 abs_start + elem_f_w <= base_wire->width) {
                                 if (mode_debug)
-                                    log("    Array-of-struct + array-member: "
+                                    uhdm_trace("    Array-of-struct + array-member: "
                                         "%s[%d].%s[%d] -> %s[%d+:%d]\n",
                                         base_name.c_str(), i_idx,
                                         field_name.c_str(), j_idx,
@@ -17134,7 +17134,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (abs_start >= 0 &&
                             abs_start + field_width <= base_wire->width) {
                             if (mode_debug)
-                                log("    Multi-dim array struct field: %s[lin=%lld]"
+                                uhdm_trace("    Multi-dim array struct field: %s[lin=%lld]"
                                     ".%s -> %s[%d+:%d]\n",
                                     base_name.c_str(), (long long)lin_idx,
                                     field_name.c_str(),
@@ -17336,7 +17336,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         }
                         if (found && field_w > 0 &&
                             field_off + field_w <= ew->width) {
-                            log("    hier_path: %s.%s (element wire) -> "
+                            uhdm_trace("    hier_path: %s.%s (element wire) -> "
                                 "[%d+:%d]\n", en.c_str(), field_name.c_str(),
                                 field_off, field_w);
                             return RTLIL::SigSpec(ew).extract(field_off, field_w);
@@ -17467,7 +17467,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (!have_range) pos = k;
                             int off = pos * elem_w + field_off;
                             if (pos >= 0 && off + field_w <= bwire->width) {
-                                log("    hier_path: %s[%d].%s (packed net) -> "
+                                uhdm_trace("    hier_path: %s[%d].%s (packed net) -> "
                                     "[%d+:%d]\n", base_name.c_str(), k,
                                     field_name.c_str(), off, field_w);
                                 return RTLIL::SigSpec(bwire)
@@ -17492,7 +17492,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             RTLIL::Wire* rw = module->addWire(NEW_ID, field_w);
                             module->addShiftx(NEW_ID, RTLIL::SigSpec(bwire),
                                               sh, RTLIL::SigSpec(rw));
-                            log("    hier_path: %s[dyn].%s (packed net) -> "
+                            uhdm_trace("    hier_path: %s[dyn].%s (packed net) -> "
                                 "$shiftx %d bits\n", base_name.c_str(),
                                 field_name.c_str(), field_w);
                             return RTLIL::SigSpec(rw);
@@ -17624,7 +17624,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 int abs_start = elem_offset + field_offset + ps_right;
                                 int abs_len   = ps_left - ps_right + 1;
                                 if (mode_debug)
-                                    log("    Packed array struct: %s[%d].%s[%d:%d] → wire[%d+:%d]\n",
+                                    uhdm_trace("    Packed array struct: %s[%d].%s[%d:%d] → wire[%d+:%d]\n",
                                         base_name.c_str(), elem_idx, field_name.c_str(),
                                         ps_left, ps_right, abs_start, abs_len);
                                 if (abs_start >= 0 && abs_start + abs_len <= base_wire->width)
@@ -17787,7 +17787,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     ? base_val : base_val - width + 1;
                                 if (lsb >= 0 && lsb + width <= field_slice.size()) {
                                     if (mode_debug)
-                                        log("    Unpacked-array indexed-part-select: %s[%d].%s[%d%s%d] → wire[%d+:%d]\n",
+                                        uhdm_trace("    Unpacked-array indexed-part-select: %s[%d].%s[%d%s%d] → wire[%d+:%d]\n",
                                             base_name.c_str(), elem_idx,
                                             field_name.c_str(), base_val,
                                             type == vpiPosIndexed ? "+:" : "-:",
@@ -18020,7 +18020,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (abs_start >= 0 &&
                                 abs_start + elem_width <= base_wire->width) {
                                 if (mode_debug)
-                                    log("    Struct field bit-select: %s.%s[%d] → "
+                                    uhdm_trace("    Struct field bit-select: %s.%s[%d] → "
                                         "%s[%d+:%d]\n",
                                         base_name.c_str(), field_name.c_str(), idx,
                                         base_wire->name.c_str(), abs_start, elem_width);
@@ -18066,7 +18066,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                               RTLIL::SigSpec(shift_w),
                                               RTLIL::SigSpec(result_w), true);
                             if (mode_debug)
-                                log("    Struct field dynamic bit-select: %s.%s[<dyn>] → "
+                                uhdm_trace("    Struct field dynamic bit-select: %s.%s[<dyn>] → "
                                     "$shiftx(%s[%d+:%d])\n",
                                     base_name.c_str(), field_name.c_str(),
                                     base_wire->name.c_str(),
@@ -18144,7 +18144,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (ok && abs_start >= 0 &&
                                 abs_start + slice_width <= base_wire->width) {
                                 if (mode_debug)
-                                    log("    Struct field var-select: %s.%s[...] → "
+                                    uhdm_trace("    Struct field var-select: %s.%s[...] → "
                                         "%s[%d+:%d]\n",
                                         base_name.c_str(), field_name.c_str(),
                                         base_wire->name.c_str(), abs_start, slice_width);
@@ -18167,7 +18167,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (abs_start >= 0 &&
                                 abs_start + abs_len <= base_wire->width) {
                                 if (mode_debug)
-                                    log("    Struct field part-select: %s.%s[%d:%d] → "
+                                    uhdm_trace("    Struct field part-select: %s.%s[%d:%d] → "
                                         "%s[%d+:%d]\n",
                                         base_name.c_str(), field_name.c_str(),
                                         ps_left, ps_right,
@@ -18364,7 +18364,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (abs_start >= 0 &&
                             abs_start + abs_len <= base_wire->width) {
                             if (mode_debug)
-                                log("    Struct field chained select: %s.%s[...][%d:%d] → "
+                                uhdm_trace("    Struct field chained select: %s.%s[...][%d:%d] → "
                                     "%s[%d+:%d]\n",
                                     base_name.c_str(), field_name.c_str(),
                                     ps_left, ps_right,
@@ -18381,7 +18381,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // These are already created during generate scope import
     if (name_map.count(path_name)) {
         if (mode_debug)
-            log("    Found wire in name_map: %s\n", name_map[path_name]->name.c_str());
+            uhdm_trace("    Found wire in name_map: %s\n", name_map[path_name]->name.c_str());
         return RTLIL::SigSpec(name_map[path_name]);
     }
     
@@ -18393,7 +18393,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         size_t dot_count = std::count(path_name.begin(), path_name.end(), '.');
         
         if (mode_debug)
-            log("    hier_path has %zu dots\n", dot_count);
+            uhdm_trace("    hier_path has %zu dots\n", dot_count);
         
         // `p.m[i][j]` -- a MULTI-DIM unpacked interface array member selected
         // with every index constant (RSD DCacheArray writes
@@ -18434,7 +18434,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 long w = stride[nidx - 1];
                 if (ok && w > 0 && off >= 0 && off + w <= fw->width) {
                     if (mode_debug)
-                        log("    hier_path: iface %zu-D array elem %s -> \\%s[%ld+:%ld]\n",
+                        uhdm_trace("    hier_path: iface %zu-D array elem %s -> \\%s[%ld+:%ld]\n",
                             dims.size(), path_name.c_str(), pfx.c_str(), off, w);
                     return RTLIL::SigSpec(fw).extract((int)off, (int)w);
                 }
@@ -18449,7 +18449,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             std::string final_member = path_name.substr(last_dot + 1);  // e.g., "data"
             
             if (mode_debug)
-                log("    Detected nested struct member access: base_path='%s', final_member='%s'\n", 
+                uhdm_trace("    Detected nested struct member access: base_path='%s', final_member='%s'\n", 
                     base_path.c_str(), final_member.c_str());
             
             // `p.arr[idx].field` on an interface UNPACKED-array member
@@ -18529,7 +18529,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             int i = idx.as_const().as_int();
                             if (i >= 0 && (i + 1) * ew <= fw->width) {
                                 if (mode_debug)
-                                    log("    hier_path: iface array elem field %s -> \\%s[%d+:%d]\n",
+                                    uhdm_trace("    hier_path: iface array elem field %s -> \\%s[%d+:%d]\n",
                                         path_name.c_str(), pfx.c_str(), i * ew + off, mw);
                                 return RTLIL::SigSpec(fw).extract(i * ew + off, mw);
                             }
@@ -18541,7 +18541,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             RTLIL::Wire* ow = module->addWire(NEW_ID, mw);
                             module->addShiftx(NEW_ID, RTLIL::SigSpec(fw), RTLIL::SigSpec(posw), ow);
                             if (mode_debug)
-                                log("    hier_path: iface array elem field %s -> $shiftx(\\%s, idx*%d+%d) %d bits\n",
+                                uhdm_trace("    hier_path: iface array elem field %s -> $shiftx(\\%s, idx*%d+%d) %d bits\n",
                                     path_name.c_str(), pfx.c_str(), ew, off, mw);
                             return RTLIL::SigSpec(ow);
                         }
@@ -18555,13 +18555,13 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             std::string first_member = base_path.substr(first_dot + 1);  // e.g., "base"
             
             if (mode_debug)
-                log("    Looking for struct wire '%s' in name_map\n", struct_name.c_str());
+                uhdm_trace("    Looking for struct wire '%s' in name_map\n", struct_name.c_str());
             
             if (name_map.count(struct_name)) {
                 RTLIL::Wire* struct_wire = name_map[struct_name];
                 
                 if (mode_debug)
-                    log("    Found struct wire '%s' with width %d\n", struct_name.c_str(), struct_wire->width);
+                    uhdm_trace("    Found struct wire '%s' with width %d\n", struct_name.c_str(), struct_wire->width);
                 
                 // Get UHDM object for the struct
                 const any* struct_uhdm_obj = nullptr;
@@ -18569,7 +18569,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (pair.second == struct_wire) {
                         struct_uhdm_obj = pair.first;
                         if (mode_debug)
-                            log("    Found UHDM object for struct wire (type=%d)\n", struct_uhdm_obj->UhdmType());
+                            uhdm_trace("    Found UHDM object for struct wire (type=%d)\n", struct_uhdm_obj->UhdmType());
                         break;
                     }
                 }
@@ -18606,7 +18606,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
 
                             if (mode_debug)
-                                log("    Found %s typespec\n", is_union ? "union" : "struct");
+                                uhdm_trace("    Found %s typespec\n", is_union ? "union" : "struct");
 
                             // Find the first-level member
                             if (members) {
@@ -18680,7 +18680,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 
                                         if (found_second_member) {
                                             if (mode_debug)
-                                                log("    Found nested member: total_offset=%d, width=%d\n",
+                                                uhdm_trace("    Found nested member: total_offset=%d, width=%d\n",
                                                     first_member_offset + second_member_offset, second_member_width);
 
                                             // Return bit slice from the wire
@@ -18695,10 +18695,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             } else if (mode_debug) {
-                log("    Struct wire '%s' not found in name_map\n", struct_name.c_str());
-                log("    Available wires in name_map:\n");
+                uhdm_trace("    Struct wire '%s' not found in name_map\n", struct_name.c_str());
+                uhdm_trace("    Available wires in name_map:\n");
                 for (auto& pair : name_map) {
-                    log("      %s (width=%d)\n", pair.first.c_str(), pair.second->width);
+                    uhdm_trace("      %s (width=%d)\n", pair.first.c_str(), pair.second->width);
                 }
             }
             
@@ -18709,7 +18709,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             std::string member_name = path_name.substr(dot_pos + 1);
         
         if (mode_debug)
-            log("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
+            uhdm_trace("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
         
         // Same gen-scope qualification as the resolver below: a struct
         // declared inside a generate block is registered as
@@ -18790,10 +18790,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_typespec = base_ref_typespec->Actual_typespec();
                     found_member = find_member_slice(base_typespec, mem_off, mem_w);
                     if (!found_member && mode_debug)
-                        log("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
+                        uhdm_trace("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
                             base_typespec ? UhdmName(base_typespec->UhdmType()).c_str() : "null");
                 } else if (mode_debug) {
-                    log("    Base wire has no typespec\n");
+                    uhdm_trace("    Base wire has no typespec\n");
                 }
 
                 // `parameter type` port/net: the base's own typespec is the
@@ -18822,7 +18822,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 if (total != base_wire->width) continue;
                                 if (find_member_slice(ats, mem_off, mem_w)) {
                                     if (mode_debug)
-                                        log("    Resolved '%s.%s' via type-parameter %s (bound struct, width %d)\n",
+                                        uhdm_trace("    Resolved '%s.%s' via type-parameter %s (bound struct, width %d)\n",
                                             base_name.c_str(), member_name.c_str(),
                                             std::string(tp->VpiName()).c_str(), total);
                                     found_member = true;
@@ -18835,11 +18835,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 
                 if (found_member) {
                     if (mode_debug)
-                        log("    Found packed member: offset=%d, width=%d\n", mem_off, mem_w);
+                        uhdm_trace("    Found packed member: offset=%d, width=%d\n", mem_off, mem_w);
                     return RTLIL::SigSpec(base_wire, mem_off, mem_w);
                 }
             } else if (mode_debug) {
-                log("    Could not find UHDM object for base wire '%s'\n", base_name.c_str());
+                uhdm_trace("    Could not find UHDM object for base wire '%s'\n", base_name.c_str());
             }
         }
         }  // End of single-level struct member handling
@@ -19128,7 +19128,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (have_decl && mranges->size() == 1 && !elem_rts &&
                                 decl_high - decl_low + 1 != field_width) {
                                 if (mode_debug)
-                                    log("    declared range [%d:%d] disagrees with the "
+                                    uhdm_trace("    declared range [%d:%d] disagrees with the "
                                         "measured field width %d -- indexing from 0\n",
                                         decl_high, decl_low, field_width);
                                 have_decl = false;
@@ -19224,7 +19224,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 RTLIL::Wire* out = module->addWire(NEW_ID, flen);
                                 module->addShiftx(NEW_ID, field, lsb_sig, out);
                                 if (mode_debug)
-                                    log("    Nested struct-field dynamic part-select: %s -> "
+                                    uhdm_trace("    Nested struct-field dynamic part-select: %s -> "
                                         "$shiftx(%s[%d+:%d])\n", path_name.c_str(),
                                         base_wire->name.c_str(), fstart, field_width);
                                 return RTLIL::SigSpec(out);
@@ -19279,7 +19279,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 RTLIL::Wire* out = module->addWire(NEW_ID, sel_elem_w);
                                 module->addShiftx(NEW_ID, field, lsb_sig, out);
                                 if (mode_debug)
-                                    log("    Nested struct-field dynamic bit-select: %s -> "
+                                    uhdm_trace("    Nested struct-field dynamic bit-select: %s -> "
                                         "$shiftx(%s[%d+:%d])\n", path_name.c_str(),
                                         base_wire->name.c_str(), fstart, field_width);
                                 return RTLIL::SigSpec(out);
@@ -19296,7 +19296,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int abs_start = elem_off + field_offset + lsb;
                         if (abs_start >= 0 && abs_start + len <= base_wire->width) {
                             if (mode_debug)
-                                log("    Nested struct-field part-select: %s → "
+                                uhdm_trace("    Nested struct-field part-select: %s → "
                                     "%s[%d+:%d]\n", path_name.c_str(),
                                     base_wire->name.c_str(), abs_start, len);
                             return RTLIL::SigSpec(base_wire).extract(abs_start, len);
@@ -19325,7 +19325,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     if (!invalidValue && member) {
         if (mode_debug)
-            log("    decodeHierPath returned member of type: %d\n", member->VpiType());
+            uhdm_trace("    decodeHierPath returned member of type: %d\n", member->VpiType());
         
         // Get the typespec from the member
         const ref_typespec* member_ref_typespec = nullptr;
@@ -19348,19 +19348,19 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             
             if (member_ref_typespec) {
                 if (mode_debug)
-                    log("    Found ref_typespec on member\n");
+                    uhdm_trace("    Found ref_typespec on member\n");
                 
                 // Get the actual typespec from ref_typespec
                 member_typespec = member_ref_typespec->Actual_typespec();
                 if (mode_debug && member_typespec)
-                    log("    Got actual typespec from ref_typespec\n");
+                    uhdm_trace("    Got actual typespec from ref_typespec\n");
                 
                 // Now use get_width_from_typespec
                 if (member_typespec) {
                     width = get_width_from_typespec(member_typespec, inst);
                     if (width > 0) {
                         if (mode_debug)
-                            log("    get_width_from_typespec returned width=%d\n", width);
+                            uhdm_trace("    get_width_from_typespec returned width=%d\n", width);
                     }
                 }
             }
@@ -19372,12 +19372,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             if (member_width > 1) {
                 width = member_width;
                 if (mode_debug)
-                    log("    get_width on member returned width=%d\n", width);
+                    uhdm_trace("    get_width on member returned width=%d\n", width);
             }
         }
     } else {
         if (mode_debug)
-            log("    ExprEval::decodeHierPath (MEMBER) returned invalid value or null\n");
+            uhdm_trace("    ExprEval::decodeHierPath (MEMBER) returned invalid value or null\n");
         
         // Fallback: try to get width from the hier_path itself
         int hier_width = get_width(uhdm_hier, inst);
@@ -19514,7 +19514,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                              std::to_string(iv.as_const().as_int()) +
                                              "]";
                             if (mode_debug)
-                                log("    folded member index -> '%s'\n",
+                                uhdm_trace("    folded member index -> '%s'\n",
                                     remaining_path.c_str());
                         }
                     }
@@ -19574,7 +19574,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (have_sub && ob != std::string::npos) {
                         remaining_path = remaining_path.substr(0, ob);
                         if (mode_debug)
-                            log("    folded member range -> '%s' [%d +: %d]\n",
+                            uhdm_trace("    folded member range -> '%s' [%d +: %d]\n",
                                 remaining_path.c_str(), sub_lsb, sub_width);
                     }
                 }
@@ -19615,7 +19615,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         }
                     }
                     if (mode_debug)
-                        log("    Calculated struct member '%s' offset=%d, width=%d\n",
+                        uhdm_trace("    Calculated struct member '%s' offset=%d, width=%d\n",
                             path_name.c_str(), bit_offset, member_width);
                     if (bit_offset >= 0 && member_width > 0 &&
                         bit_offset + member_width <= struct_wire->width)
@@ -19727,7 +19727,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (cv.is_fully_const() && cv.is_fully_def()) {
                             if (width > cv.size()) cv.extend_u0(width);
                             if (mode_debug)
-                                log("    hier_path '%s' folded via typespec-member "
+                                uhdm_trace("    hier_path '%s' folded via typespec-member "
                                     "annotation -> %s\n",
                                     path_name.c_str(),
                                     cv.as_const().as_string().c_str());
@@ -19747,7 +19747,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             cv.size() > 0) {
                             if (width > cv.size()) cv.extend_u0(width);
                             if (mode_debug)
-                                log("    hier_path '%s' folded via typespec-member "
+                                uhdm_trace("    hier_path '%s' folded via typespec-member "
                                     "annotation expr (%d bits)\n",
                                     path_name.c_str(), cv.size());
                             return cv;
@@ -19775,7 +19775,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             import_constant(any_cast<const constant*>(res));
                         if (cv.is_fully_const() && cv.is_fully_def()) {
                             if (mode_debug)
-                                log("    hier_path '%s' folded to constant %s via ExprEval\n",
+                                uhdm_trace("    hier_path '%s' folded to constant %s via ExprEval\n",
                                     path_name.c_str(), cv.as_const().as_string().c_str());
                             return cv;
                         }
@@ -19865,7 +19865,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                             if (width > v.size())
                                                 v.extend_u0(width);
                                             if (mode_debug)
-                                                log("    hier_path '%s' folded via positional pattern member %d\n",
+                                                uhdm_trace("    hier_path '%s' folded via positional pattern member %d\n",
                                                     path_name.c_str(), fidx);
                                             return v;
                                         }
@@ -19892,7 +19892,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     if (width > 0 && v.size() < width)
                                         v.extend_u0(width);
                                     if (mode_debug)
-                                        log("    hier_path '%s' folded via assignment-pattern member '%s'\n",
+                                        uhdm_trace("    hier_path '%s' folded via assignment-pattern member '%s'\n",
                                             path_name.c_str(), field_name.c_str());
                                     return v;
                                 }
@@ -19903,7 +19903,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
             if (mode_debug)
-                log("    hier_path '%s' is an interface/struct parameter field; "
+                uhdm_trace("    hier_path '%s' is an interface/struct parameter field; "
                     "width=%d resolved via typespec (constant, no signal)\n",
                     path_name.c_str(), width);
         } else {
@@ -19933,7 +19933,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 current_instance, off, w) &&
                             w > 0 && off + w <= cit->second.size()) {
                             if (mode_debug)
-                                log("    hier_path '%s' folded from const function arg '%s' [%d +: %d]\n",
+                                uhdm_trace("    hier_path '%s' folded from const function arg '%s' [%d +: %d]\n",
                                     path_name.c_str(), bn.c_str(), off, w);
                             return cit->second.extract(off, w);
                         }
@@ -20073,12 +20073,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (idx_s.back().empty()) idx_ok = false;
                     }
                     if (mode_debug) {
-                        log("    nested-tail '%s': bw=%d bts=%s idx=%zu ok=%d elems=%zu tail0=%zu\n",
+                        uhdm_trace("    nested-tail '%s': bw=%d bts=%s idx=%zu ok=%d elems=%zu tail0=%zu\n",
                             path_name.c_str(), bw ? 1 : 0,
                             bts ? UHDM::UhdmName(bts->UhdmType()).c_str() : "null",
                             idx_s.size(), idx_ok ? 1 : 0, peA.size(), tail0);
                         for (size_t t = 0; t < peA.size(); t++)
-                            log("      elem[%zu] %s '%s'\n", t,
+                            uhdm_trace("      elem[%zu] %s '%s'\n", t,
                                 UHDM::UhdmName(peA[t]->UhdmType()).c_str(),
                                 std::string(peA[t]->VpiName()).c_str());
                     }
@@ -20141,7 +20141,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         int nelem = 1;
                         for (auto& d : dims) nelem *= std::abs(d.first - d.second) + 1;
                         if (mode_debug)
-                            log("    nested-tail '%s': field ok=%d fw=%d dims=%zu dims_ok=%d "
+                            uhdm_trace("    nested-tail '%s': field ok=%d fw=%d dims=%zu dims_ok=%d "
                                 "ets=%s nelem=%d\n", path_name.c_str(), ok ? 1 : 0, fw,
                                 dims.size(), dims_ok ? 1 : 0,
                                 ets ? UHDM::UhdmName(ets->UhdmType()).c_str() : "null", nelem);
@@ -20253,7 +20253,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 }
                                 if (good && lw > 0 && sel_ok && all_const && sel_dyn.empty() &&
                                     total + eoff_c + sel_off + sel_w <= bw->width) {
-                                    log("    hier_path '%s' -> \\%s [%d +: %d] "
+                                    uhdm_trace("    hier_path '%s' -> \\%s [%d +: %d] "
                                         "(struct array field, nested tail)\n",
                                         path_name.c_str(), bname.c_str(),
                                         total + eoff_c + sel_off, sel_w);
@@ -20280,7 +20280,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                                 RTLIL::Const(fixed, 32), false);
                                     RTLIL::Wire* ow = module->addWire(NEW_ID, sel_w);
                                     module->addShiftx(NEW_ID, RTLIL::SigSpec(bw), sh, ow);
-                                    log("    hier_path '%s' -> \\%s dynamic elem "
+                                    uhdm_trace("    hier_path '%s' -> \\%s dynamic elem "
                                         "(elem_w=%d, field_off=%d, w=%d)\n",
                                         path_name.c_str(), bname.c_str(), elem_w,
                                         fixed, sel_w);
@@ -20328,7 +20328,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         mw > 0 && off + mw <= bw->width) {
                         RTLIL::SigSpec fs = RTLIL::SigSpec(bw).extract(off, mw);
                         if (fld->UhdmType() == uhdmref_obj) {
-                            log("    hier_path '%s' -> \\%s [%d +: %d] "
+                            uhdm_trace("    hier_path '%s' -> \\%s [%d +: %d] "
                                 "(scoped gen-scope struct member)\n",
                                 path_name.c_str(), bw->name.c_str(), off, mw);
                             return fs;
@@ -20339,7 +20339,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (ix.is_fully_const()) {
                                 int i = ix.as_const().as_int();
                                 if (i >= 0 && i < mw) {
-                                    log("    hier_path '%s' -> \\%s [%d] "
+                                    uhdm_trace("    hier_path '%s' -> \\%s [%d] "
                                         "(scoped gen-scope member bit)\n",
                                         path_name.c_str(), bw->name.c_str(), off + i);
                                     return fs.extract(i, 1);
@@ -20355,7 +20355,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 int lo = r.as_const().as_int();
                                 int lsb = std::min(hi, lo), w2 = std::abs(hi - lo) + 1;
                                 if (lsb >= 0 && lsb + w2 <= mw) {
-                                    log("    hier_path '%s' -> \\%s [%d +: %d] "
+                                    uhdm_trace("    hier_path '%s' -> \\%s [%d +: %d] "
                                         "(scoped gen-scope member part)\n",
                                         path_name.c_str(), bw->name.c_str(), off + lsb, w2);
                                     return fs.extract(lsb, w2);
@@ -20440,7 +20440,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                     force_const_fold = saved_fcf;
                     if (!out.empty()) {
-                        log("    hier_path '%s' -> \\%s (elaborated select actual, %d bits)\n",
+                        uhdm_trace("    hier_path '%s' -> \\%s (elaborated select actual, %d bits)\n",
                             path_name.c_str(), aw->name.c_str(), out.size());
                         return out;
                     }
@@ -20450,14 +20450,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // type T = logic` port makes `port.member` unresolvable by
             // construction, and the elaborated instance resolves it correctly.
             if (in_allmodules_pass_)
-                log("UHDM: (definition pass) unresolved struct member access '%s'\n",
+                uhdm_trace("UHDM: (definition pass) unresolved struct member access '%s'\n",
                     path_name.c_str());
             else
                 log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
             if (mode_debug && uhdm_hier->Path_elems())
                 for (size_t t = 0; t < uhdm_hier->Path_elems()->size(); t++) {
                     auto pe_t = (*uhdm_hier->Path_elems())[t];
-                    log("      unresolved elem[%zu] %s '%s'\n", t,
+                    uhdm_trace("      unresolved elem[%zu] %s '%s'\n", t,
                         UHDM::UhdmName(pe_t->UhdmType()).c_str(),
                         std::string(pe_t->VpiName()).c_str());
                 }
@@ -20467,7 +20467,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     // Create the wire with the determined width
     if (mode_debug)
-        log("    Creating wire '%s' with width=%d\n", path_name.c_str(), width);
+        uhdm_trace("    Creating wire '%s' with width=%d\n", path_name.c_str(), width);
     
     RTLIL::Wire* wire = create_wire(path_name, width);
     return RTLIL::SigSpec(wire);

@@ -131,6 +131,12 @@ def main():
                   f"(valgrind not installed)")
         for t_ in names(lists, "MEMCHECK_FAILED_TEST_NAMES"):
             print(f"      - {t_}")
+    if counts.get("QUIET_CHECK_RUN"):
+        qr, qf = counts["QUIET_CHECK_RUN"], counts["QUIET_CHECK_FAILED_TESTS"]
+        print(f"  🤫 Quiet check (no debug trace without -debug): "
+              f"{qr - qf}/{qr} clean, {qf} unexpected")
+        for t_ in names(lists, "QUIET_CHECK_FAILED_TEST_NAMES"):
+            print(f"      - {t_}")
     print(f"  ❌ True failures: {failed}")
     print(f"  💥 Crashes: {crashed}")
     if total:

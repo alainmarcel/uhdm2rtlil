@@ -281,6 +281,9 @@ run_structural_check() {
 MEMCHECK_RUN=0
 MEMCHECK_SKIPPED=0
 MEMCHECK_FAILED_TESTS=0
+QUIET_CHECK_RUN=0
+QUIET_CHECK_FAILED_TESTS=0
+QUIET_CHECK_FAILED_TEST_NAMES=()
 MEMCHECK_FAILED_TEST_NAMES=()
 
 # Memory check: an OPTIONAL per-test `test_memcheck.ys` read under valgrind.
@@ -311,6 +314,34 @@ run_memcheck() {
         UNEXPECTED_FAILURES+=("$test_dir (memcheck)")
     else
         echo "    ✅ Memcheck: no invalid accesses under valgrind"
+    fi
+}
+
+# Quiet check: an OPTIONAL per-test `test_quiet.ys` that reads WITHOUT -debug.
+# read_uhdm's ~1300 debug traces must be gated on `-debug`; a bare log() call
+# prints on every read, and the cost is not cosmetic -- it was 99 lines on
+# test/simple_counter (the smallest test in the suite) and 292 MB in the first
+# 7 minutes of BlackParrot's bp_unicore, which alone makes a 125-row sweep
+# unusable in CI.  The invariant cannot be gated on the netlist and yosys's
+# `logger -expect` cannot assert ABSENCE (it rejects an expected count of 0,
+# passes/cmds/logger.cc), so this hook greps the captured output instead.
+run_quietcheck() {
+    local test_dir="$1"
+    [ "${QUIETCHECK_DONE:-}" = "$test_dir" ] && return 0
+    local d="$SCRIPT_DIR/$test_dir"
+    [ -f "$d/test_quiet.ys" ] && [ -f "$d/slpp_all/surelog.uhdm" ] || return 0
+    QUIETCHECK_DONE="$test_dir"
+    QUIET_CHECK_RUN=$((QUIET_CHECK_RUN + 1))
+    (cd "$d" && timeout 300 "$YOSYS_BIN" -m "$UHDM_PLUGIN" ./test_quiet.ys > quiet.log 2>&1)
+    local n
+    n=$(grep -cE '^(UHDM:|    UHDM|    Uhdm)' "$d/quiet.log" 2>/dev/null || true)
+    if [ "${n:-0}" -gt 0 ]; then
+        echo "    ❌ Quiet check FAILED - $n ungated debug line(s) without -debug, see quiet.log"
+        QUIET_CHECK_FAILED_TESTS=$((QUIET_CHECK_FAILED_TESTS + 1))
+        QUIET_CHECK_FAILED_TEST_NAMES+=("$test_dir")
+        UNEXPECTED_FAILURES+=("$test_dir (quiet check)")
+    else
+        echo "    ✅ Quiet check: no debug trace without -debug"
     fi
 }
 
@@ -1013,6 +1044,7 @@ analyze_test_result() {
         run_slang_miter "$test_dir"
         run_structural_check "$test_dir"
         run_memcheck "$test_dir"
+        run_quietcheck "$test_dir"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     fi
@@ -1026,6 +1058,7 @@ analyze_test_result() {
             run_slang_miter "$test_dir"
             run_structural_check "$test_dir"
             run_memcheck "$test_dir"
+            run_quietcheck "$test_dir"
             run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
             run_slang_cosim_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
@@ -1093,6 +1126,7 @@ analyze_test_result() {
     run_slang_miter "$test_dir"
     run_structural_check "$test_dir"
     run_memcheck "$test_dir"
+    run_quietcheck "$test_dir"
 
     # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
@@ -1343,13 +1377,14 @@ dump_results_file() {
                  SLANG_MITER_RUN SLANG_MITER_FAILED_TESTS SLANG_MITER_KNOWN_FAIL \
                  STRUCT_CHECK_RUN STRUCT_CHECK_FAILED_TESTS \
                  MEMCHECK_RUN MEMCHECK_SKIPPED MEMCHECK_FAILED_TESTS \
+                 QUIET_CHECK_RUN QUIET_CHECK_FAILED_TESTS \
                  SIM_EQUIV_WARN_TESTS \
                  SIM_EQUIV_KNOWN_WARN_TESTS SIM_EQUIV_ANALYZED_TESTS \
                  SIM_EQUIV_ARTEFACT_TESTS SIM_EQUIV_UNCLASS_TESTS; do
             eval "printf 'count %s %s\n' \"\$v\" \"\${$v:-0}\""
         done
         for arr in SLANG_MITER_FAILED_TEST_NAMES STRUCT_CHECK_FAILED_TEST_NAMES \
-                   MEMCHECK_FAILED_TEST_NAMES \
+                   MEMCHECK_FAILED_TEST_NAMES QUIET_CHECK_FAILED_TEST_NAMES \
                    FAILED_TEST_NAMES CRASHED_TEST_NAMES PASSED_TEST_NAMES \
                    UHDM_ONLY_TEST_NAMES EQUIV_FAILED_TEST_NAMES \
                    MITER_FAILED_TEST_NAMES SIM_EQUIV_WARN_NAMES \
@@ -1501,6 +1536,9 @@ if [ "${MEMCHECK_RUN:-0}" -gt 0 ] || [ "${MEMCHECK_SKIPPED:-0}" -gt 0 ]; then
         echo "  🧪 Memcheck (valgrind): $((MEMCHECK_RUN - MEMCHECK_FAILED_TESTS))/$MEMCHECK_RUN clean, $MEMCHECK_FAILED_TESTS unexpected"
     fi
     [ "${MEMCHECK_SKIPPED:-0}" -gt 0 ] && echo "  🧪 Memcheck: $MEMCHECK_SKIPPED skipped (valgrind not installed)"
+fi
+if [ "${QUIET_CHECK_RUN:-0}" -gt 0 ]; then
+    echo "  🤫 Quiet check (no debug trace without -debug): $((QUIET_CHECK_RUN - QUIET_CHECK_FAILED_TESTS))/$QUIET_CHECK_RUN clean, $QUIET_CHECK_FAILED_TESTS unexpected"
     for t_ in "${MEMCHECK_FAILED_TEST_NAMES[@]}"; do
         echo "      - $t_"
     done

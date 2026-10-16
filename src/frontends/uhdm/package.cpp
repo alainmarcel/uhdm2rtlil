@@ -27,14 +27,14 @@ void UhdmImporter::import_package(const package* uhdm_package) {
         package_name = package_name.substr(5);
     }
     
-    log("UHDM: Importing package: %s\n", package_name.c_str());
+    uhdm_trace("UHDM: Importing package: %s\n", package_name.c_str());
     
     // Store package for later reference
     package_map[package_name] = uhdm_package;
     
     // Import package parameters
     if (uhdm_package->Parameters()) {
-        log("UHDM: Found %d parameters in package %s\n", 
+        uhdm_trace("UHDM: Found %d parameters in package %s\n", 
             (int)uhdm_package->Parameters()->size(), package_name.c_str());
         
         for (const any* param : *uhdm_package->Parameters()) {
@@ -42,7 +42,7 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                 std::string param_name = std::string(param_obj->VpiName());
                 std::string full_name = package_name + "::" + param_name;
 
-                log("UHDM: Importing package parameter: %s\n", full_name.c_str());
+                uhdm_trace("UHDM: Importing package parameter: %s\n", full_name.c_str());
 
                 // Outer element count of an array/table parameter (for a later
                 // `pkg::TABLE[idx]` element-select to derive its element width).
@@ -84,7 +84,7 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                     if (value_spec.is_fully_const()) {
                         RTLIL::Const param_value = value_spec.as_const();
                         package_parameter_map[full_name] = param_value;
-                        log("UHDM: Package parameter %s = %s\n", 
+                        uhdm_trace("UHDM: Package parameter %s = %s\n", 
                             full_name.c_str(), param_value.as_string().c_str());
                     } else {
                         log_warning("UHDM: Package parameter %s has non-constant value\n", 
@@ -109,7 +109,7 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                     if (param_value.size() != width)
                         param_value = param_value.extract(0, width, RTLIL::State::S0);
                     package_parameter_map[full_name] = param_value;
-                    log("UHDM: Package parameter %s = %s (from VpiValue)\n",
+                    uhdm_trace("UHDM: Package parameter %s = %s (from VpiValue)\n",
                         full_name.c_str(), param_value.as_string().c_str());
                 } else if (const UHDM::param_assign* pa = [&]() -> const UHDM::param_assign* {
                                // The value can live in the package's Param_assigns
@@ -140,7 +140,7 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                                 if (param_value.size() != width)
                                     param_value = param_value.extract(0, width, RTLIL::State::S0);
                                 package_parameter_map[full_name] = param_value;
-                                log("UHDM: Package parameter %s = %s (from param_assign)\n",
+                                uhdm_trace("UHDM: Package parameter %s = %s (from param_assign)\n",
                                     full_name.c_str(), param_value.as_string().c_str());
                             } else {
                                 log_warning("UHDM: Package parameter %s param_assign Rhs not constant\n",
@@ -159,14 +159,14 @@ void UhdmImporter::import_package(const package* uhdm_package) {
 
     // Import package typespecs
     if (uhdm_package->Typespecs()) {
-        log("UHDM: Found %d typespecs in package %s\n", 
+        uhdm_trace("UHDM: Found %d typespecs in package %s\n", 
             (int)uhdm_package->Typespecs()->size(), package_name.c_str());
         
         for (const typespec* ts : *uhdm_package->Typespecs()) {
             std::string type_name = std::string(ts->VpiName());
             std::string full_name = package_name + "::" + type_name;
             
-            log("UHDM: Importing package typespec: %s (UhdmType=%s)\n", 
+            uhdm_trace("UHDM: Importing package typespec: %s (UhdmType=%s)\n", 
                 full_name.c_str(), UhdmName(ts->UhdmType()).c_str());
             
             // Store typespec for later reference
@@ -193,19 +193,19 @@ void UhdmImporter::import_package(const package* uhdm_package) {
     
     // Import package variables (if any)
     if (uhdm_package->Variables()) {
-        log("UHDM: Found %d variables in package %s\n", 
+        uhdm_trace("UHDM: Found %d variables in package %s\n", 
             (int)uhdm_package->Variables()->size(), package_name.c_str());
         
         // Note: Package variables are not commonly used in synthesizable code
         // but we log them for completeness
         for (const variables* var : *uhdm_package->Variables()) {
             std::string var_name = std::string(var->VpiName());
-            log("UHDM: Package variable: %s (not imported - synthesis limitation)\n", 
+            uhdm_trace("UHDM: Package variable: %s (not imported - synthesis limitation)\n", 
                 var_name.c_str());
         }
     }
     
-    log("UHDM: Finished importing package %s\n", package_name.c_str());
+    uhdm_trace("UHDM: Finished importing package %s\n", package_name.c_str());
 }
 
 // Compilation-unit ($unit) parameters: the declarations an `include` file puts
@@ -424,14 +424,14 @@ void UhdmImporter::import_unit_parameters(const UHDM::design* uhdm_design) {
             package_parameter_map[n] = value;
             record_lsb(n, po);
             pending.erase(n);
-            log("UHDM: $unit parameter %s = %s\n", n.c_str(), value.as_string().c_str());
+            uhdm_trace("UHDM: $unit parameter %s = %s\n", n.c_str(), value.as_string().c_str());
             it = params.erase(it);
         }
     } while (package_parameter_map.size() != resolved_before && !params.empty());
 
     if (mode_debug)
         for (auto& [n, po] : params)
-            log("    $unit parameter '%s' left unresolved (no foldable value)\n", n.c_str());
+            uhdm_trace("    $unit parameter '%s' left unresolved (no foldable value)\n", n.c_str());
 }
 
 YOSYS_NAMESPACE_END

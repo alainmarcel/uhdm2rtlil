@@ -33,18 +33,18 @@ struct ReadUHDMPass : public Frontend {
 
     void help() override {
         log("\n");
-        log("    read_uhdm [options] <filename>\n");
+        uhdm_trace("    read_uhdm [options] <filename>\n");
         log("\n");
         log("Read a UHDM design file (created by Surelog) into Yosys.\n");
         log("\n");
-        log("    -keep_names      keep original signal names\n");
-        log("    -debug           enable debug output\n");
-        log("    -formal          enable formal verification constructs\n");
-        log("    -allow-undefined-modules\n");
-        log("                     keep an instance of a module that has no definition as a\n");
-        log("                     blackbox cell (the read_verilog behaviour, for designs read\n");
-        log("                     file by file).  By default the read is REFUSED and the\n");
-        log("                     undefined modules are listed.\n");
+        uhdm_trace("    -keep_names      keep original signal names\n");
+        uhdm_trace("    -debug           enable debug output\n");
+        uhdm_trace("    -formal          enable formal verification constructs\n");
+        uhdm_trace("    -allow-undefined-modules\n");
+        uhdm_trace("                     keep an instance of a module that has no definition as a\n");
+        uhdm_trace("                     blackbox cell (the read_verilog behaviour, for designs read\n");
+        uhdm_trace("                     file by file).  By default the read is REFUSED and the\n");
+        uhdm_trace("                     undefined modules are listed.\n");
         log("\n");
     }
 
@@ -165,7 +165,7 @@ struct ReadSVPass : public Pass {
 
     void help() override {
         log("\n");
-        log("    read_sv [surelog options] <files>\n");
+        uhdm_trace("    read_sv [surelog options] <files>\n");
         log("\n");
         log("Run the Surelog SystemVerilog compiler in-process on the given\n");
         log("arguments (forwarded verbatim, as to the `surelog` executable) and\n");
@@ -177,12 +177,12 @@ struct ReadSVPass : public Pass {
         log("(e.g. -nobuiltin, +incdir+, -D, -top) as usual.\n");
         log("\n");
         log("Plugin options (consumed, not passed to Surelog):\n");
-        log("    -uhdm_debug      enable importer debug output\n");
-        log("    -formal          enable formal verification constructs\n");
-        log("    -keep_names      keep original signal names\n");
-        log("    -allow-undefined-modules\n");
-        log("                     keep an instance of an undefined module as a blackbox cell\n");
-        log("                     instead of refusing the read (see read_uhdm -help)\n");
+        uhdm_trace("    -uhdm_debug      enable importer debug output\n");
+        uhdm_trace("    -formal          enable formal verification constructs\n");
+        uhdm_trace("    -keep_names      keep original signal names\n");
+        uhdm_trace("    -allow-undefined-modules\n");
+        uhdm_trace("                     keep an instance of an undefined module as a blackbox cell\n");
+        uhdm_trace("                     instead of refusing the read (see read_uhdm -help)\n");
         log("\n");
     }
 
@@ -343,8 +343,13 @@ std::string UhdmImporter::encode_param_bits32(const std::string& value_type,
 }
 
 // UhdmImporter constructor
+// Set from `read_uhdm -debug` by the UhdmImporter constructor below; read by
+// the uhdm_trace() macro, including from file-scope static helpers.
+bool uhdm_trace_enabled = false;
+
 UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
     design(design), module(nullptr), mode_keep_names(keep_names), mode_debug(debug) {
+    uhdm_trace_enabled = debug;
 }
 
 // Import entire UHDM design
@@ -364,7 +369,7 @@ void UhdmImporter::collect_elem_select_bases(const UHDM::any* e,
 }
 
 void UhdmImporter::import_design(UHDM::design* uhdm_design) {
-    log("UHDM: Starting import_design\n");
+    uhdm_trace("UHDM: Starting import_design\n");
     
     // Store the design for later access
     this->uhdm_design = uhdm_design;
@@ -379,7 +384,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                     mod_name = mod_name.substr(5);
                 }
                 top_level_module_names.insert(mod_name);
-                log("UHDM: Identified top-level module: %s\n", mod_name.c_str());
+                uhdm_trace("UHDM: Identified top-level module: %s\n", mod_name.c_str());
             }
         }
     }
@@ -423,18 +428,18 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     auto* packages = uhdm_design->TopPackages();
     if (!packages) packages = uhdm_design->AllPackages();
     if (packages) {
-        log("UHDM: Found %d packages in design\n", (int)packages->size());
+        uhdm_trace("UHDM: Found %d packages in design\n", (int)packages->size());
         for (const package* uhdm_package : *packages) {
-            log("UHDM: About to import package: %s\n", uhdm_package->VpiDefName().data());
+            uhdm_trace("UHDM: About to import package: %s\n", uhdm_package->VpiDefName().data());
             import_package(uhdm_package);
         }
     }
     
     // Then, import all interfaces
     if (uhdm_design->AllInterfaces()) {
-        log("UHDM: Found %d interfaces in design\n", (int)uhdm_design->AllInterfaces()->size());
+        uhdm_trace("UHDM: Found %d interfaces in design\n", (int)uhdm_design->AllInterfaces()->size());
         for (const interface_inst* uhdm_interface : *uhdm_design->AllInterfaces()) {
-            log("UHDM: About to import interface\n");
+            uhdm_trace("UHDM: About to import interface\n");
             // Import interface with default WIDTH=8
             import_interface(uhdm_interface);
             
@@ -526,7 +531,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // NOTE: AllModules signal types (signedness) may be incorrect; when modules
     // are re-encountered in the elaborated hierarchy, signedness will be updated.
     if (uhdm_design->AllModules()) {
-        log("UHDM: Found %d module definitions in AllModules\n",
+        uhdm_trace("UHDM: Found %d module definitions in AllModules\n",
             (int)uhdm_design->AllModules()->size());
         for (auto module_def : *uhdm_design->AllModules()) {
             std::string mod_name = std::string(module_def->VpiDefName());
@@ -536,7 +541,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             // Skip top-level modules - they must be imported from the elaborated
             // hierarchy to get complete module body (processes, assigns, etc.)
             if (top_level_module_names.find(mod_name) != top_level_module_names.end()) {
-                log("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
+                uhdm_trace("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
                 continue;
             }
             // Skip modules that are never instantiated in the elaborated top
@@ -551,7 +556,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             if (!hierarchy_reachable_modules.empty() &&
                 hierarchy_reachable_modules.find(mod_name) ==
                     hierarchy_reachable_modules.end()) {
-                log("UHDM: Skipping %s from AllModules (not instantiated in top "
+                uhdm_trace("UHDM: Skipping %s from AllModules (not instantiated in top "
                     "hierarchy)\n",
                     mod_name.c_str());
                 continue;
@@ -562,7 +567,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             // wires that don't exist yet. Defer to the elaborated walk, where
             // each gen_scope_array is materialized with its iteration index.
             if (module_def->Gen_stmts() && !module_def->Gen_stmts()->empty()) {
-                log("UHDM: Skipping %s from AllModules (has gen_stmts; will import from elaborated form)\n", mod_name.c_str());
+                uhdm_trace("UHDM: Skipping %s from AllModules (has gen_stmts; will import from elaborated form)\n", mod_name.c_str());
                 continue;
             }
             // AllModules represents an unpacked memory array as a scalar net
@@ -586,7 +591,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             auto eit = elab_inst_by_def.find(mod_name);
             if (eit != elab_inst_by_def.end() && has_unpacked_array(eit->second) &&
                 !has_unpacked_array(module_def)) {
-                log("UHDM: Importing %s from elaborated instance (has memory array lost in AllModules)\n",
+                uhdm_trace("UHDM: Importing %s from elaborated instance (has memory array lost in AllModules)\n",
                     mod_name.c_str());
                 to_import = eit->second;
             }
@@ -606,16 +611,16 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     
     // Then import from TopModules which contains the elaborated hierarchy with instances
     if (uhdm_design->TopModules()) {
-        log("UHDM: Found %d top modules in design\n", (int)uhdm_design->TopModules()->size());
+        uhdm_trace("UHDM: Found %d top modules in design\n", (int)uhdm_design->TopModules()->size());
         
         // Recursively import the instantiation tree starting from top modules
         for (const module_inst* top_mod : *uhdm_design->TopModules()) {
-            log("UHDM: Importing top module hierarchy starting from: %s\n", 
+            uhdm_trace("UHDM: Importing top module hierarchy starting from: %s\n", 
                 !top_mod->VpiName().empty() ? top_mod->VpiName().data() : top_mod->VpiDefName().data());
             import_module_hierarchy(top_mod);
         }
     } else {
-        log("UHDM: No top modules found in design\n");
+        uhdm_trace("UHDM: No top modules found in design\n");
     }
 
     // Resolve undefined-module stubs.  Surelog names a module that has no
@@ -678,7 +683,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                 for (auto cell : mod->cells())
                     if (cell->type == stub->name)
                         cell->type = bare_id;
-            log("UHDM: Resolved undefined-module stub %s -> blackbox %s\n",
+            uhdm_trace("UHDM: Resolved undefined-module stub %s -> blackbox %s\n",
                 sname.c_str(), bare.c_str());
             design->remove(stub);
         }
@@ -688,7 +693,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // as we handle parameterization during hierarchy traversal
     
     // Post-process: Mark interface connection wires with is_interface attribute
-    log("UHDM: Post-processing to mark interface connection wires\n");
+    uhdm_trace("UHDM: Post-processing to mark interface connection wires\n");
     for (auto module : design->modules()) {
         for (auto cell : module->cells()) {
             // Check if this is an interface cell by looking at the module it references
@@ -706,7 +711,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                 RTLIL::Wire* conn_wire = module->wire(RTLIL::escape_id(conn_wire_name));
                 if (conn_wire && !conn_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
                     conn_wire->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
-                    log("UHDM: Marked wire '%s' as interface connection in module %s\n", 
+                    uhdm_trace("UHDM: Marked wire '%s' as interface connection in module %s\n", 
                         conn_wire_name.c_str(), module->name.c_str());
                 }
             }
@@ -714,13 +719,13 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     }
     
     // Expand interfaces - replace interface instances with their signals
-    log("UHDM: Starting interface expansion\n");
+    uhdm_trace("UHDM: Starting interface expansion\n");
     expand_interfaces();
     
     // Post-process: Remove \reg attribute from wires driven by cell output ports.
     // In SystemVerilog, 'reg' variables connected to module instance outputs are
     // continuously driven and should not be treated as registers.
-    log("UHDM: Removing \\reg from wires driven by cell outputs\n");
+    uhdm_trace("UHDM: Removing \\reg from wires driven by cell outputs\n");
     for (auto mod : design->modules()) {
         for (auto cell : mod->cells()) {
             RTLIL::Module* cell_module = design->module(cell->type);
@@ -731,7 +736,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                     // This connection drives signals from a cell output port
                     for (auto &bit : conn.second) {
                         if (bit.wire && bit.wire->attributes.count(ID::reg)) {
-                            log("UHDM: Removing \\reg from wire '%s' in module %s (driven by cell %s port %s)\n",
+                            uhdm_trace("UHDM: Removing \\reg from wire '%s' in module %s (driven by cell %s port %s)\n",
                                 bit.wire->name.c_str(), mod->name.c_str(),
                                 cell->name.c_str(), conn.first.c_str());
                             bit.wire->attributes.erase(ID::reg);
@@ -744,7 +749,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 
     // Post-process: Detect and mark blackbox modules
     // This must be done after all instances are created
-    log("UHDM: Detecting blackbox modules\n");
+    uhdm_trace("UHDM: Detecting blackbox modules\n");
     for (auto module : design->modules()) {
         // A module is considered blackbox if it has no implementation:
         // no processes, no cells, no memories, and no connections (continuous assignments)
@@ -757,7 +762,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         // (e.g., parameter-only top module) is not a blackbox
         if (is_empty && !module->ports.empty()) {
             module->set_bool_attribute(ID::blackbox);
-            log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
+            uhdm_trace("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
         }
     }
     
@@ -769,7 +774,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         const std::string& sig = std::get<2>(xr);
         if (RTLIL::Cell* cell = mod->cell(RTLIL::escape_id(inst))) {
             resolve_xmr_read(mod, cell, sig);
-            log("UHDM: resolved deferred XMR read %s.%s\n", inst.c_str(), sig.c_str());
+            uhdm_trace("UHDM: resolved deferred XMR read %s.%s\n", inst.c_str(), sig.c_str());
         }
     }
     pending_xmr_reads_.clear();
@@ -792,7 +797,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         if (val.size() < pw->width) val.extend_u0(pw->width, false);
         else if (val.size() > pw->width) val = val.extract(0, pw->width);
         mod->connect(RTLIL::SigSpec(pw), val);
-        log("UHDM: resolved deferred XMR write %s.%s\n", inst.c_str(), sig.c_str());
+        uhdm_trace("UHDM: resolved deferred XMR write %s.%s\n", inst.c_str(), sig.c_str());
     }
     pending_xmr_writes_.clear();
 
@@ -814,34 +819,34 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 
     finalize_dead_selfhold_defaults();
 
-    log("UHDM: Finished import_design\n");
+    uhdm_trace("UHDM: Finished import_design\n");
     log_flush();
 
     // Debug: Log all created wires and memories
-    log("UHDM: Final debug - listing all created objects\n");
+    uhdm_trace("UHDM: Final debug - listing all created objects\n");
     log_flush();
     for (auto mod : design->modules()) {
         log("  Module: %s\n", log_id(mod->name));
         log_flush();
         for (auto wire : mod->wires()) {
-            log("    Wire: %s (width=%d) [raw name: %s]\n", log_id(wire->name), wire->width, wire->name.c_str());
+            uhdm_trace("    Wire: %s (width=%d) [raw name: %s]\n", log_id(wire->name), wire->width, wire->name.c_str());
             log_flush();
         }
         for (auto &mem_pair : mod->memories) {
-            log("    Memory: %s (width=%d, size=%d)\n", log_id(mem_pair.first), 
+            uhdm_trace("    Memory: %s (width=%d, size=%d)\n", log_id(mem_pair.first), 
                 mem_pair.second->width, mem_pair.second->size);
             log_flush();
         }
         for (auto cell : mod->cells()) {
-            log("    Cell: %s (type=%s) [raw name: %s]\n", log_id(cell->name), log_id(cell->type), cell->name.c_str());
+            uhdm_trace("    Cell: %s (type=%s) [raw name: %s]\n", log_id(cell->name), log_id(cell->type), cell->name.c_str());
             log_flush();
         }
         for (auto &proc_pair : mod->processes) {
-            log("    Process: %s\n", log_id(proc_pair.first));
+            uhdm_trace("    Process: %s\n", log_id(proc_pair.first));
             log_flush();
         }
     }
-    log("UHDM: End of debug listing\n");
+    uhdm_trace("UHDM: End of debug listing\n");
     log_flush();
 
     // Consistency check: every SigSpec in a module's connections, cells and
@@ -1946,7 +1951,7 @@ void UhdmImporter::stamp_packed_attrs_from_def(RTLIL::Wire* wire,
     wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
     wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
     wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
-    log("UHDM: def-view packed attrs on '%s': elem=%d outer=[%d:%d]\n",
+    uhdm_trace("UHDM: def-view packed attrs on '%s': elem=%d outer=[%d:%d]\n",
         var_name.c_str(), ew, ol, orr);
 }
 
@@ -2140,7 +2145,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 if (ns_pos != std::string::npos)
                     cell_type = cell_type.substr(ns_pos + 2);
 
-                log("UHDM: Creating techmap cell %s of type %s in parent %s\n",
+                uhdm_trace("UHDM: Creating techmap cell %s of type %s in parent %s\n",
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
 
                 // Save/set context for expression evaluation
@@ -2207,7 +2212,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
     // Build parameter signature
     std::string param_signature = module_name;
     if (uhdm_module->Param_assigns()) {
-        log("UHDM: Found param_assigns for %s\n", module_name.c_str());
+        uhdm_trace("UHDM: Found param_assigns for %s\n", module_name.c_str());
         for (auto param_assign : *uhdm_module->Param_assigns()) {
             if (param_assign->Lhs() && param_assign->Rhs()) {
                 std::string param_name;
@@ -2227,9 +2232,9 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                         // Get the actual integer value
                         std::string val_str;
-                        log("UHDM: Constant type: %d\n", const_val->VpiConstType());
-                        log("UHDM: VpiDecompile: '%s'\n", std::string(const_val->VpiDecompile()).c_str());
-                        log("UHDM: VpiValue: '%s'\n", const_val->VpiValue().data());
+                        uhdm_trace("UHDM: Constant type: %d\n", const_val->VpiConstType());
+                        uhdm_trace("UHDM: VpiDecompile: '%s'\n", std::string(const_val->VpiDecompile()).c_str());
+                        uhdm_trace("UHDM: VpiValue: '%s'\n", const_val->VpiValue().data());
                         
                         if (const_val->VpiConstType() == vpiUIntConst || const_val->VpiConstType() == vpiIntConst) {
                             // Use VpiDecompile which contains the actual value
@@ -2240,7 +2245,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         
                         // If val_str is empty, try to use import_expression
                         if (val_str.empty()) {
-                            log("UHDM: VpiDecompile/VpiValue empty, trying import_expression\n");
+                            uhdm_trace("UHDM: VpiDecompile/VpiValue empty, trying import_expression\n");
                             // Save current module context
                             RTLIL::Module* saved_module = this->module;
                             // Create a temporary module for expression evaluation
@@ -2253,7 +2258,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             override_eval_child_ = saved_oc2;
                             if (val_spec.is_fully_const()) {
                                 val_str = std::to_string(val_spec.as_int());
-                                log("UHDM: Got value from import_expression: %s\n", val_str.c_str());
+                                uhdm_trace("UHDM: Got value from import_expression: %s\n", val_str.c_str());
                             }
                             
                             // Remove temporary module and restore context
@@ -2262,7 +2267,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         }
                         
                         param_signature += val_str;
-                        log("UHDM: Added parameter %s=%s to signature\n", param_name.c_str(), val_str.c_str());
+                        uhdm_trace("UHDM: Added parameter %s=%s to signature\n", param_name.c_str(), val_str.c_str());
                     } else if (param_assign->Rhs()->UhdmType() == uhdmhier_path) {
                         // Non-constant RHS that's an interface struct-parameter
                         // field (`sub.CFG.BUS.DAT`).  Surelog leaves it as an
@@ -2275,7 +2280,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             any_cast<const hier_path*>(param_assign->Rhs()),
                             uhdm_module);
                         param_signature += val_str;
-                        log("UHDM: Added hier_path parameter %s=%s to signature\n",
+                        uhdm_trace("UHDM: Added hier_path parameter %s=%s to signature\n",
                             param_name.c_str(), val_str.c_str());
                     } else if ((param_assign->Rhs()->UhdmType() == uhdmfunc_call ||
                                 // Type-query SYSTEM calls ($bits(tag_t) etc.)
@@ -2333,7 +2338,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         if (vs2.is_fully_const() && vs2.is_fully_def() &&
                             vs2.size() > 0) {
                             param_signature += std::to_string(vs2.as_int());
-                            log("UHDM: Added evaluated parameter %s=%d to signature\n",
+                            uhdm_trace("UHDM: Added evaluated parameter %s=%d to signature\n",
                                 param_name.c_str(), vs2.as_int());
                         }
                     } else if (param_assign->Rhs()->UhdmType() == uhdmoperation) {
@@ -2378,7 +2383,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         this->module = saved_module;
                         if (vs3.is_fully_const() && vs3.size() > 0) {
                             param_signature += std::to_string(vs3.as_const().as_int());
-                            log("UHDM: Added operation parameter %s=%d to signature\n",
+                            uhdm_trace("UHDM: Added operation parameter %s=%d to signature\n",
                                 param_name.c_str(), vs3.as_const().as_int());
                         }
                     }
@@ -2386,7 +2391,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
             }
         }
     } else {
-        log("UHDM: No param_assigns found for %s\n", module_name.c_str());
+        uhdm_trace("UHDM: No param_assigns found for %s\n", module_name.c_str());
     }
     
     // Update param_signature to include interface information if needed
@@ -2412,8 +2417,8 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         imported_module_signatures.insert(param_signature);
 
         // Import the module definition
-        log("UHDM: Final param_signature: %s\n", param_signature.c_str());
-        log("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
+        uhdm_trace("UHDM: Final param_signature: %s\n", param_signature.c_str());
+        uhdm_trace("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
         log_flush();
 
         // Save current context before importing child module
@@ -2456,7 +2461,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 signature_to_modname_[param_signature] = self_it->second;
         }
     } else {
-        log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
+        uhdm_trace("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
         
         // Look up the existing module so we can create cells
         // First try the parameterized Yosys format
@@ -2537,28 +2542,28 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         }
         
         if (module) {
-            log("UHDM: Found existing module %s for instance\n", module->name.c_str());
+            uhdm_trace("UHDM: Found existing module %s for instance\n", module->name.c_str());
         } else {
-            log("UHDM: WARNING: Could not find module for %s (tried %s)\n", param_signature.c_str(), yosys_modname.c_str());
+            uhdm_trace("UHDM: WARNING: Could not find module for %s (tried %s)\n", param_signature.c_str(), yosys_modname.c_str());
         }
     }
     
     // Recursively import child modules through Modules() which contains elaborated instances
     if (uhdm_module->Modules()) {
-        log("UHDM: Found %d child module instances in %s\n", (int)uhdm_module->Modules()->size(), param_signature.c_str());
+        uhdm_trace("UHDM: Found %d child module instances in %s\n", (int)uhdm_module->Modules()->size(), param_signature.c_str());
         int child_index = 0;
         for (auto child : *uhdm_module->Modules()) {
-            log("UHDM: Processing child %d: %s (def: %s)\n", child_index++, 
+            uhdm_trace("UHDM: Processing child %d: %s (def: %s)\n", child_index++, 
                 child->VpiName().data(), child->VpiDefName().data());
             import_module_hierarchy(child);
         }
     } else {
-        log("UHDM: No child modules found in %s\n", param_signature.c_str());
+        uhdm_trace("UHDM: No child modules found in %s\n", param_signature.c_str());
     }
     
     // Also need to import the actual instantiations through RefModule
     // This happens after we've imported all the module definitions
-    log("UHDM: Checking if we should create cell: module=%p, has_parent=%d, create_instances=%d\n", 
+    uhdm_trace("UHDM: Checking if we should create cell: module=%p, has_parent=%d, create_instances=%d\n", 
         module, (uhdm_module->VpiParent() != nullptr), create_instances);
     if (create_instances && module && uhdm_module->VpiParent()) {
         // This is a child module instance - we need to create a cell in the parent
@@ -2639,7 +2644,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 cell->setPort(RTLIL::escape_id(port_name), conn);
                             }
                         }
-                        log("UHDM: Created internal-cell-type instance '%s' of '%s'\n",
+                        uhdm_trace("UHDM: Created internal-cell-type instance '%s' of '%s'\n",
                             inst_name.c_str(), def_base.c_str());
                         this->module = saved_module;
                         this->name_map = saved_name_map;
@@ -2749,7 +2754,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             real = real.substr(1);
                         if (!real.empty() &&
                             design->module(RTLIL::escape_id(real))) {
-                            log("UHDM: cell_type %s has no module; using resolved "
+                            uhdm_trace("UHDM: cell_type %s has no module; using resolved "
                                 "module name %s instead\n", cell_type.c_str(),
                                 real.c_str());
                             cell_type = real;
@@ -2758,7 +2763,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     }
                 }
 
-                log("UHDM: Creating cell %s of type %s in parent %s\n",
+                uhdm_trace("UHDM: Creating cell %s of type %s in parent %s\n",
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
 
                 // If a `bind` causes the same parent module to appear twice in
@@ -2768,7 +2773,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 // first walk already has its ports wired.
                 RTLIL::IdString cell_id = RTLIL::escape_id(inst_name);
                 if (parent_rtlil_module->cell(cell_id)) {
-                    log("UHDM: Cell %s already exists in %s — skipping duplicate "
+                    uhdm_trace("UHDM: Cell %s already exists in %s — skipping duplicate "
                         "creation (likely a second hierarchy view introduced by `bind`)\n",
                         inst_name.c_str(), parent_name.c_str());
                 } else {
@@ -2904,7 +2909,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         if (src_w) {
                                             cell->setPort(RTLIL::escape_id(dst_port),
                                                           RTLIL::SigSpec(src_w));
-                                            log("UHDM: Connected interface port %s to wire %s\n",
+                                            uhdm_trace("UHDM: Connected interface port %s to wire %s\n",
                                                 dst_port.c_str(), src_full.c_str());
                                         }
                                     }
@@ -2948,7 +2953,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         if (src_w) {
                                             cell->setPort(RTLIL::escape_id(dst_port),
                                                           RTLIL::SigSpec(src_w));
-                                            log("UHDM: Connected interface-array element %s -> %s\n",
+                                            uhdm_trace("UHDM: Connected interface-array element %s -> %s\n",
                                                 src_full.c_str(), dst_port.c_str());
                                         }
                                     }
@@ -3013,7 +3018,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         if (src_w) {
                                             cell->setPort(RTLIL::escape_id(dst_port),
                                                           RTLIL::SigSpec(src_w));
-                                            log("UHDM: Connected interface modport port %s to wire %s\n",
+                                            uhdm_trace("UHDM: Connected interface modport port %s to wire %s\n",
                                                 dst_port.c_str(), src_full.c_str());
                                         }
                                     }
@@ -3027,7 +3032,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // rp32 SoC: r5p_mouse's unused `tcb_xen` output.
                             if (port->High_conn()->UhdmType() == uhdmoperation &&
                                 any_cast<const operation*>(port->High_conn())->VpiOpType() == vpiNullOp) {
-                                log("UHDM: Port %s has an empty connection (.%s()); leaving unconnected\n",
+                                uhdm_trace("UHDM: Port %s has an empty connection (.%s()); leaving unconnected\n",
                                     port_name.c_str(), port_name.c_str());
                                 continue;
                             }
@@ -3157,7 +3162,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         import_expression(any_cast<const expr*>(def_conn));
                                     if (!dc.empty()) {
                                         conn = dc;
-                                        log("UHDM: port %s actual taken from the "
+                                        uhdm_trace("UHDM: port %s actual taken from the "
                                             "definition view (%s)\n",
                                             port_name.c_str(),
                                             std::string(def_conn->VpiName()).c_str());
@@ -3193,7 +3198,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 }
                                 if (found && nmatch == 1) {
                                     conn = RTLIL::SigSpec(found);
-                                    log("UHDM: interface-signal port %s -> %s\n",
+                                    uhdm_trace("UHDM: interface-signal port %s -> %s\n",
                                         port_name.c_str(), found->name.c_str());
                                 }
                             }
@@ -3222,7 +3227,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     conn.size() < pw->width &&
                                     ch.wire->width >= pw->width) {
                                     conn = RTLIL::SigSpec(ch.wire, 0, pw->width);
-                                    log("UHDM: port %s part-select under-resolved "
+                                    uhdm_trace("UHDM: port %s part-select under-resolved "
                                         "(%d bits); using base %s[%d:0]\n",
                                         port_name.c_str(), ch.width,
                                         ch.wire->name.c_str(), pw->width - 1);
@@ -3246,7 +3251,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     signed_wire->is_signed = true;
                                     module->connect(RTLIL::SigSpec(signed_wire), conn);
                                     conn = RTLIL::SigSpec(signed_wire);
-                                    log("UHDM: Created signed intermediate wire for signed constant on port %s\n", port_name.c_str());
+                                    uhdm_trace("UHDM: Created signed intermediate wire for signed constant on port %s\n", port_name.c_str());
                                 }
                             }
 
@@ -3262,7 +3267,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                             RTLIL::State bit_val = conn.as_const()[0];
                                             int port_width = port_wire->width;
                                             conn = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
-                                            log("UHDM: Extended unbased unsized literal to port width %d\n", port_width);
+                                            uhdm_trace("UHDM: Extended unbased unsized literal to port width %d\n", port_width);
                                         }
                                     }
                                 }
@@ -3298,7 +3303,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         if (!has_other_driver)
                                             module->connect(conn, RTLIL::SigSpec(wide).extract(0, n));
                                         conn = RTLIL::SigSpec(wide);
-                                        log("UHDM: Widened narrow output-port connection on '%s' to %d bits%s\n",
+                                        uhdm_trace("UHDM: Widened narrow output-port connection on '%s' to %d bits%s\n",
                                             port_name.c_str(), port_wire->width,
                                             has_other_driver ? " (skipping multi-driver back-connect)" : "");
                                     }
@@ -3311,7 +3316,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // `WriteEnables[0]` and drove `Matches[0]` without it.
                             slice_instance_array_actual(uhdm_module, inst_name, port_name, cell, conn);
                             cell->setPort(RTLIL::escape_id(port_name), conn);
-                            log("UHDM: Connected port %s\n", port_name.c_str());
+                            uhdm_trace("UHDM: Connected port %s\n", port_name.c_str());
                         }
                     }
                 }
@@ -3345,7 +3350,7 @@ void UhdmImporter::create_parameterized_modules() {
                 module_widths[base_module].insert(width);
                 
                 if (mode_debug)
-                    log("    Found parameterized cell %s/%s: %s with WIDTH=%d\n", 
+                    uhdm_trace("    Found parameterized cell %s/%s: %s with WIDTH=%d\n", 
                         mod->name.c_str(), cell->name.c_str(), base_module.c_str(), width);
             }
         }
@@ -3374,7 +3379,7 @@ void UhdmImporter::create_parameterized_modules() {
             }
             
             if (mode_debug)
-                log("    Creating parameterized module: %s\n", param_module_name.c_str());
+                uhdm_trace("    Creating parameterized module: %s\n", param_module_name.c_str());
             
             RTLIL::Module* param_mod = design->addModule(param_mod_id);
             
@@ -3514,7 +3519,7 @@ void UhdmImporter::create_parameterized_modules() {
                 cell->parameters.erase(RTLIL::escape_id("WIDTH"));
                 
                 if (mode_debug)
-                    log("    Updated cell %s/%s to use module %s\n", 
+                    uhdm_trace("    Updated cell %s/%s to use module %s\n", 
                         mod->name.c_str(), cell->name.c_str(), param_module_name.c_str());
             }
         }
@@ -3557,14 +3562,14 @@ RTLIL::Wire* UhdmImporter::materialize_flat_struct_array(
     if (elem_w <= 0) return nullptr;
     int row_w = elem_w * inner_count;
     int total_w = row_w * array_size;
-    log("UHDM: flat struct-array '%s': rows=%d row_w=%d total=%d\n",
+    uhdm_trace("UHDM: flat struct-array '%s': rows=%d row_w=%d total=%d\n",
         name.c_str(), array_size, row_w, total_w);
     RTLIL::IdString flat_id = RTLIL::escape_id(name);
     RTLIL::Wire* flat_wire = module->wire(flat_id);
     if (flat_wire && flat_wire->width != total_w) {
         // An on-demand reference created a placeholder (1-bit) wire before
         // the array was materialized (CVA6 btb_q) — resize it in place.
-        log("UHDM: flat struct-array '%s': resizing placeholder %d -> %d\n",
+        uhdm_trace("UHDM: flat struct-array '%s': resizing placeholder %d -> %d\n",
             name.c_str(), flat_wire->width, total_w);
         flat_wire->width = total_w;
         name_map[name] = flat_wire;
@@ -3835,7 +3840,7 @@ void UhdmImporter::collect_proc_elem_written(const module_inst* uhdm_module) {
     };
     scan_scope(uhdm_module);
     for (const auto& n : proc_elem_written)
-        log("UHDM: array '%s' has per-element writes — flat alias assembled "
+        uhdm_trace("UHDM: array '%s' has per-element writes — flat alias assembled "
             "from elements\n", n.c_str());
 }
 
@@ -4017,7 +4022,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     }
     
     // Debug and validation
-    log("UHDM: Processing module, VpiDefName() returns: '%s', VpiName() returns: '%s'\n", 
+    uhdm_trace("UHDM: Processing module, VpiDefName() returns: '%s', VpiName() returns: '%s'\n", 
         base_modname.c_str(), 
         uhdm_module->VpiName().data() ? uhdm_module->VpiName().data() : "<null>");
     
@@ -4025,7 +4030,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     if (base_modname.empty()) {
         base_modname = std::string(uhdm_module->VpiName());
         if (!base_modname.empty()) {
-            log("UHDM: Using VpiName: '%s'\n", base_modname.c_str());
+            uhdm_trace("UHDM: Using VpiName: '%s'\n", base_modname.c_str());
         } else {
             log_warning("UHDM: Module has empty name, using default name 'unnamed_module'\n");
             base_modname = "unnamed_module";
@@ -4035,7 +4040,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Strip work@ prefix if present
     if (base_modname.find("work@") == 0) {
         base_modname = base_modname.substr(5); // Remove "work@"
-        log("UHDM: Stripped work@ prefix, using: '%s'\n", base_modname.c_str());
+        uhdm_trace("UHDM: Stripped work@ prefix, using: '%s'\n", base_modname.c_str());
     }
     
     // Build parameterized module name if parameters exist
@@ -4247,7 +4252,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 std::string netname = std::string(net->VpiName());
                 RTLIL::Wire* w = existing_mod->wire(RTLIL::escape_id(netname));
                 if (w && !w->is_signed && net->VpiSigned()) {
-                    log("UHDM: Updating wire '%s' signedness in existing module %s from elaborated net\n",
+                    uhdm_trace("UHDM: Updating wire '%s' signedness in existing module %s from elaborated net\n",
                         netname.c_str(), modname.c_str());
                     w->is_signed = true;
                 }
@@ -4274,17 +4279,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Import parameters
     if (uhdm_module->Parameters()) {
-        log("UHDM: Found %d parameters to import\n", (int)uhdm_module->Parameters()->size());
+        uhdm_trace("UHDM: Found %d parameters to import\n", (int)uhdm_module->Parameters()->size());
         for (auto param : *uhdm_module->Parameters()) {
             std::string param_name = std::string(param->VpiName());
-            log("UHDM: About to import parameter: '%s'\n", param_name.c_str());
+            uhdm_trace("UHDM: About to import parameter: '%s'\n", param_name.c_str());
             import_parameter(param);
         }
     }
 
     // Import parameter overrides (param_assigns)
     if (uhdm_module->Param_assigns()) {
-        log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
+        uhdm_trace("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
         for (auto param_assign : *uhdm_module->Param_assigns()) {
             if (param_assign->Lhs() && param_assign->Rhs()) {
                 std::string param_name;
@@ -4294,7 +4299,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
                 
                 if (!param_name.empty()) {
-                    log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
+                    uhdm_trace("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
 
                     // Get the assigned value.  A value-carrying var STAMP
                     // (packed_array_var / struct_var) can hold garbage clone
@@ -4403,7 +4408,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             this->module = saved_m2;
                             current_instance = saved_ci2;
                             if (pv.is_fully_const() && pv.is_fully_def() && pv.size() > 0) {
-                                log("UHDM: parameter '%s' override evaluated in parent %s\n",
+                                uhdm_trace("UHDM: parameter '%s' override evaluated in parent %s\n",
                                     param_name.c_str(), pmod->name.c_str());
                                 value_spec = pv;
                             }
@@ -4494,7 +4499,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             module->avail_parameters(param_id);
                         }
                         module->parameter_default_values[param_id] = param_value;
-                        log("UHDM: Updated parameter '%s' to value %s\n",
+                        uhdm_trace("UHDM: Updated parameter '%s' to value %s\n",
                             param_name.c_str(), param_value.as_string().c_str());
                     } else {
                         log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n",
@@ -4512,7 +4517,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
     // Import ports
     if (uhdm_module->Ports()) {
-        log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
+        uhdm_trace("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
         int import_port_idx = 0;
         for (auto port : *uhdm_module->Ports()) {
             import_port_idx++;
@@ -4530,7 +4535,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
               }
             }
-            log("UHDM: About to import port: '%s'\n", port_name.c_str());
+            uhdm_trace("UHDM: About to import port: '%s'\n", port_name.c_str());
             import_port(port, import_port_idx);
         }
     }
@@ -4568,7 +4573,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (c.size() != w->width)
                     c = c.extract(0, w->width, RTLIL::State::S0);  // zero-extend/truncate
                 w->attributes[RTLIL::ID::init] = c;
-                log("UHDM: Set \\init on output port '%s' = %s\n",
+                uhdm_trace("UHDM: Set \\init on output port '%s' = %s\n",
                     std::string(dp->VpiName()).c_str(), c.as_string().c_str());
             }
             break;
@@ -4847,7 +4852,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (const auto& name : comb_written) {
             if (clocked_access.count(name) && !comb_only_arrays.count(name)) {
                 comb_only_arrays.insert(name);
-                log("UHDM: Array '%s' written in a combinational always block -> expand to wires\n", name.c_str());
+                uhdm_trace("UHDM: Array '%s' written in a combinational always block -> expand to wires\n", name.c_str());
             }
         }
 
@@ -4855,7 +4860,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (const auto& name : any_access) {
             if (!clocked_access.count(name)) {
                 comb_only_arrays.insert(name);
-                log("UHDM: Array '%s' used only in combinational always blocks -> expand to wires\n", name.c_str());
+                uhdm_trace("UHDM: Array '%s' used only in combinational always blocks -> expand to wires\n", name.c_str());
             }
         }
     }
@@ -5096,7 +5101,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (gsa->Gen_scopes())
                     for (auto gs : *gsa->Gen_scopes()) gs_fills(gs);
         for (const auto& n : async_reset_filled_arrays)
-            log("UHDM: array '%s' is cleared by an async reset — importing as "
+            uhdm_trace("UHDM: array '%s' is cleared by an async reset — importing as "
                 "registers instead of a memory\n", n.c_str());
     }
 
@@ -5105,7 +5110,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     std::vector<std::pair<const UHDM::any*, RTLIL::Wire*>> vars_with_init_expr;
 
     if (uhdm_module->Variables()) {
-        log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
+        uhdm_trace("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
         
         // First pass: Create all wires without initial values
         for (auto var : *uhdm_module->Variables()) {
@@ -5113,20 +5118,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (var->UhdmType() == uhdmarray_var) {
                 auto array_var = any_cast<const UHDM::array_var*>(var);
                 std::string array_name = std::string(array_var->VpiName());
-                log("UHDM: Found array_var: '%s'\n", array_name.c_str());
+                uhdm_trace("UHDM: Found array_var: '%s'\n", array_name.c_str());
                 
                 // Check if it should be imported as memory
                 // An array should be a memory if:
                 // 1. It has both packed and unpacked dimensions (checked by is_memory_array), AND
                 // 2. It has at least one non-constant array access
-                log("UHDM: Checking if array_var '%s' should be memory...\n", array_name.c_str());
+                uhdm_trace("UHDM: Checking if array_var '%s' should be memory...\n", array_name.c_str());
                 bool is_mem = is_memory_array(array_var);
-                log("UHDM: is_memory_array returned %s for '%s'\n", is_mem ? "true" : "false", array_name.c_str());
+                uhdm_trace("UHDM: is_memory_array returned %s for '%s'\n", is_mem ? "true" : "false", array_name.c_str());
                 bool has_const_only = true;
                 if (is_mem) {
-                    log("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
+                    uhdm_trace("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
                     has_const_only = has_only_constant_array_accesses(array_name);
-                    log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", has_const_only ? "true" : "false", array_name.c_str());
+                    uhdm_trace("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", has_const_only ? "true" : "false", array_name.c_str());
                 }
                 // Arrays that are only accessed from combinational always blocks must NOT
                 // be $memory objects: they need individual element wires so that
@@ -5151,7 +5156,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                         !inst_written_var;
 
                 if (should_be_memory) {
-                    log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
+                    uhdm_trace("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array_var);
                 } else if (is_memory_array(array_var) &&
                            (whole_array_accessed_names.count(array_name) ||
@@ -5224,7 +5229,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     if (dims_ok && elem_w > 0) {
                         int row_w = elem_w * inner_count;
                         int total_w = row_w * array_size;
-                        log("UHDM: Array_var '%s' whole/multi-dim — flat wire "
+                        uhdm_trace("UHDM: Array_var '%s' whole/multi-dim — flat wire "
                             "(rows=%d, row_w=%d, total=%d) + per-row slices\n",
                             array_name.c_str(), array_size, row_w, total_w);
                         RTLIL::IdString flat_id = RTLIL::escape_id(array_name);
@@ -5317,15 +5322,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // read back as the default.  A 1-D array that is NOT
                     // whole-accessed still goes to that per-element branch,
                     // which handles it correctly.
-                    log("UHDM: Array_var '%s' multi-dim — flat representation\n",
+                    uhdm_trace("UHDM: Array_var '%s' multi-dim — flat representation\n",
                         array_name.c_str());
                 } else if (is_memory_array(array_var)) {
                     // Has both packed and unpacked dimensions but only constant accesses,
                     // OR is a comb-only array with dynamic access — create individual element wires.
                     if (is_comb_only)
-                        log("UHDM: Array_var '%s' is comb-only, creating individual registers\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array_var '%s' is comb-only, creating individual registers\n", array_name.c_str());
                     else
-                        log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
 
                     // A typedef'd unpacked array (`typedef logic [W-1:0] mem_t
                     // [DEPTH]; mem_t mem;`) has NO Ranges() and NO Variables()
@@ -5360,7 +5365,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::Wire* ew = module->addWire(eid, ts_width);
                                 add_src_attribute(ew->attributes, array_var);
                                 name_map[ename] = ew;
-                                log("UHDM: Created wire '%s' (width=%d) for array element\n",
+                                uhdm_trace("UHDM: Created wire '%s' (width=%d) for array element\n",
                                     ew->name.c_str(), ts_width);
                             }
                         }
@@ -5412,7 +5417,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::Wire* wire = module->addWire(wire_id, element_width);
                                 add_src_attribute(wire->attributes, array_var);
                                 name_map[element_name] = wire;
-                                log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                                uhdm_trace("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
                             }
                         }
                     }
@@ -5428,7 +5433,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     bool is_1d = ranges && ranges->size() == 1;
                     bool whole_accessed = whole_array_accessed_names.count(array_name) > 0;
                     if (is_1d && !whole_accessed) {
-                        log("UHDM: Array_var '%s' is 1D unpacked with bit-select-only access, creating individual wires\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array_var '%s' is 1D unpacked with bit-select-only access, creating individual wires\n", array_name.c_str());
                         int array_size = 1;
                         int array_low = 0;
                         bool array_ascending = false;  // left < right, e.g. [1:6]
@@ -5464,7 +5469,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 add_src_attribute(wire->attributes, var);
                                 name_map[element_name] = wire;
                                 element_wires[i] = wire;
-                                log("UHDM: Created wire '%s' (width=%d) for unpacked-array_var element\n",
+                                uhdm_trace("UHDM: Created wire '%s' (width=%d) for unpacked-array_var element\n",
                                     wire->name.c_str(), element_width);
                             } else {
                                 element_wires[i] = module->wire(wire_id);
@@ -5476,10 +5481,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // Pattern values follow SV ordering: first
                         // operand drives the HIGH index, last operand
                         // the LOW index (`a[1] = 8'h12`, `a[0] = 8'h34`).
-                        log("UHDM: Array_var '%s' init check: Expr=%p\n",
+                        uhdm_trace("UHDM: Array_var '%s' init check: Expr=%p\n",
                             array_name.c_str(), (void*)array_var->Expr());
                         if (auto init_any = array_var->Expr()) {
-                            log("UHDM: Init type: %s op_type=%d\n",
+                            uhdm_trace("UHDM: Init type: %s op_type=%d\n",
                                 UhdmName(init_any->UhdmType()).c_str(),
                                 init_any->UhdmType() == uhdmoperation
                                     ? any_cast<const UHDM::operation*>(init_any)->VpiOpType() : -1);
@@ -5570,7 +5575,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             }
                             if (total > width) width = total;
                         }
-                        log("UHDM: Array_var '%s' has whole-array or multi-dim access, creating %d-bit wire (from typespec)\n",
+                        uhdm_trace("UHDM: Array_var '%s' has whole-array or multi-dim access, creating %d-bit wire (from typespec)\n",
                             array_name.c_str(), width);
                         RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
                         if (!module->wire(wire_id)) {
@@ -5578,7 +5583,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             wire_map[var] = wire;
                             name_map[array_name] = wire;
                             add_src_attribute(wire->attributes, var);
-                            log("UHDM: Created wire '%s' (width=%d) for array_var\n",
+                            uhdm_trace("UHDM: Created wire '%s' (width=%d) for array_var\n",
                                 wire->name.c_str(), width);
 
                             // Stash multi-dim metadata on the wire so
@@ -5699,7 +5704,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // Regular variable
                 std::string var_name = std::string(var->VpiName());
                 int width = get_width(var, uhdm_module);
-                log("UHDM: Importing variable '%s' (width=%d)\n", var_name.c_str(), width);
+                uhdm_trace("UHDM: Importing variable '%s' (width=%d)\n", var_name.c_str(), width);
                 
                 // Check if this wire already exists (might have been created as a port)
                 RTLIL::IdString wire_id = RTLIL::escape_id(var_name);
@@ -5761,7 +5766,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
                             wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);
-                            log("UHDM: packed_array_var '%s' elem_width=%d outer=[%d:%d]\n",
+                            uhdm_trace("UHDM: packed_array_var '%s' elem_width=%d outer=[%d:%d]\n",
                                 var_name.c_str(), elem_w, outer_l, outer_r);
                         }
                     }
@@ -5799,7 +5804,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 // Set the attribute value using import_attribute_value
                                 wire->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
                                 if (mode_debug)
-                                    log("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
+                                    uhdm_trace("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
                             }
                             if (!formal_cell.empty()) {
                                 std::string cell_name = formal_cell + "$" +
@@ -5816,7 +5821,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 cell->attributes[RTLIL::escape_id("reg")] =
                                     RTLIL::Const(var_name);
                                 if (mode_debug)
-                                    log("UHDM: Created %s cell '%s' driving wire '%s' (WIDTH=%d)\n",
+                                    uhdm_trace("UHDM: Created %s cell '%s' driving wire '%s' (WIDTH=%d)\n",
                                         formal_cell.c_str(), cell_name.c_str(),
                                         var_name.c_str(), width);
                             }
@@ -5844,7 +5849,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                         
                                         if (!type_name.empty()) {
                                             wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
-                                            log("UHDM: Added wiretype attribute '\\%s' to enum variable '%s'\n", type_name.c_str(), wire->name.c_str());
+                                            uhdm_trace("UHDM: Added wiretype attribute '\\%s' to enum variable '%s'\n", type_name.c_str(), wire->name.c_str());
                                         }
                                         
                                         // Add enum_type attribute
@@ -5870,7 +5875,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                                 
                                                 // Set the attribute value to the enum constant name
                                                 wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const("\\" + const_name);
-                                                log("UHDM: Added enum attribute %s = \\%s to enum variable '%s'\n", 
+                                                uhdm_trace("UHDM: Added enum attribute %s = \\%s to enum variable '%s'\n", 
                                                     attr_name.c_str(), const_name.c_str(), wire->name.c_str());
                                             }
                                         }
@@ -5881,7 +5886,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             // Skip initial expression processing here - will be handled in module import
                             // The enum constants don't exist yet at this point
                             if (enum_var->Expr()) {
-                                log("UHDM: Enum variable '%s' has initial expression - will be handled in module import\n", var_name.c_str());
+                                uhdm_trace("UHDM: Enum variable '%s' has initial expression - will be handled in module import\n", var_name.c_str());
                                 // Don't add to vars_with_init_expr - we can't process it here
                                 // vars_with_init_expr.push_back(std::make_pair(var, wire));
                             }
@@ -5902,7 +5907,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 // Add wiretype attribute for any typedef'd type
                                 if (!wiretype_name.empty()) {
                                     wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(wiretype_name);
-                                    log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", wiretype_name.c_str(), wire->name.c_str());
+                                    uhdm_trace("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", wiretype_name.c_str(), wire->name.c_str());
                                 }
 
                                 // Packed-array ELEMENT metadata for a module
@@ -5955,7 +5960,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
                                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
                                             wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
-                                            log("UHDM: tagged var '%s' packed_elem_width=%d outer=[%d:%d]\n",
+                                            uhdm_trace("UHDM: tagged var '%s' packed_elem_width=%d outer=[%d:%d]\n",
                                                 wire->name.c_str(), ew, ol, orr);
                                         }
                                     }
@@ -5967,13 +5972,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     case uhdmlogic_typespec:
                                         if (auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
                                             is_signed = logic_ts->VpiSigned();
-                                            log("UHDM: Variable '%s' logic_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
+                                            uhdm_trace("UHDM: Variable '%s' logic_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
                                         }
                                         break;
                                     case uhdmint_typespec:
                                         if (auto int_ts = dynamic_cast<const UHDM::int_typespec*>(actual_typespec)) {
                                             is_signed = int_ts->VpiSigned();
-                                            log("UHDM: Variable '%s' int_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
+                                            uhdm_trace("UHDM: Variable '%s' int_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
                                         }
                                         break;
                                     default:
@@ -5982,27 +5987,27 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 
                                 if (is_signed) {
                                     wire->is_signed = true;
-                                    log("UHDM: Variable '%s' is signed, setting is_signed=true\n", var_name.c_str());
+                                    uhdm_trace("UHDM: Variable '%s' is signed, setting is_signed=true\n", var_name.c_str());
                                 }
                             }
                         }
                         
                         // Defer initial expression processing to second pass
                         if (logic_var->Expr()) {
-                            log("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                            uhdm_trace("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
                             vars_with_init_expr.push_back(std::make_pair(var, wire));
                         }
                     } else if (auto struct_v = dynamic_cast<const UHDM::struct_var*>(var)) {
                         // Handle signedness for struct packed signed
                         if (struct_v->VpiSigned()) {
                             wire->is_signed = true;
-                            log("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
+                            uhdm_trace("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
                         // Packed struct with an aggregate initializer
                         // (`hw2reg_wrap_t hw2reg_wrap = {c, d}`): drive the
                         // flattened wire with the (constant) init expression.
                         if (struct_v->Expr()) {
-                            log("UHDM: struct_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
+                            uhdm_trace("UHDM: struct_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
                             vars_with_init_expr.push_back(std::make_pair(var, wire));
                         }
                     } else if (auto union_v = dynamic_cast<const UHDM::union_var*>(var)) {
@@ -6017,12 +6022,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             }
                             if (!wiretype_name.empty()) {
                                 wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(wiretype_name);
-                                log("UHDM: Added wiretype attribute '\\%s' to union_var '%s'\n", wiretype_name.c_str(), var_name.c_str());
+                                uhdm_trace("UHDM: Added wiretype attribute '\\%s' to union_var '%s'\n", wiretype_name.c_str(), var_name.c_str());
                             }
                         }
                         if (union_v->VpiSigned()) {
                             wire->is_signed = true;
-                            log("UHDM: union_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
+                            uhdm_trace("UHDM: union_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
                     } else if (var->UhdmType() == uhdminteger_var ||
                                var->UhdmType() == uhdmint_var ||
@@ -6031,11 +6036,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                var->UhdmType() == uhdmlong_int_var) {
                         // Built-in signed types: integer, int, byte, shortint, longint
                         wire->is_signed = true;
-                        log("UHDM: Variable '%s' is built-in signed type, setting is_signed=true\n", var_name.c_str());
+                        uhdm_trace("UHDM: Variable '%s' is built-in signed type, setting is_signed=true\n", var_name.c_str());
                         // Defer initial expression to second pass
                         if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                             if (v->Expr()) {
-                                log("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                                uhdm_trace("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
                                 vars_with_init_expr.push_back(std::make_pair(var, wire));
                             }
                         }
@@ -6045,7 +6050,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // continuous assignment.  Defer driving it.
                         if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(var)) {
                             if (pav->Expr()) {
-                                log("UHDM: packed_array_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
+                                uhdm_trace("UHDM: packed_array_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
                                 vars_with_init_expr.push_back(std::make_pair(var, wire));
                             }
                         }
@@ -6087,7 +6092,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
 
-                    log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
+                    uhdm_trace("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
                 } else {
                     // Wire already exists, but check if we need to handle initial expression
                     RTLIL::Wire* existing_wire = module->wire(wire_id);
@@ -6098,12 +6103,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // Defer initial expression processing for existing wire to second pass
                         if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                             if (logic_var->Expr()) {
-                                log("UHDM: Existing variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                                uhdm_trace("UHDM: Existing variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
                                 vars_with_init_expr.push_back(std::make_pair(var, existing_wire));
                             }
                         }
                     }
-                    log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
+                    uhdm_trace("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
                 }
             }
         }
@@ -6118,14 +6123,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 RTLIL::IdString wid = RTLIL::escape_id(std::string(uhdm_net->VpiName()));
                 RTLIL::Wire* w = module->wire(wid);
                 if (w && !w->is_signed) {
-                    log("UHDM: Pre-pass: setting is_signed on '%s' from net VpiSigned\n", wid.c_str());
+                    uhdm_trace("UHDM: Pre-pass: setting is_signed on '%s' from net VpiSigned\n", wid.c_str());
                     w->is_signed = true;
                 }
             }
         }
 
         // Second pass: Process initial expressions now that all variables exist
-        log("UHDM: Processing %d deferred initial expressions\n", (int)vars_with_init_expr.size());
+        uhdm_trace("UHDM: Processing %d deferred initial expressions\n", (int)vars_with_init_expr.size());
         for (const auto& [var, wire] : vars_with_init_expr) {
             std::string var_name = std::string(var->VpiName());
             
@@ -6137,7 +6142,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (false) { // Keep this code for reference but disabled
                 if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
                     if (enum_var->Expr()) {
-                        log("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
+                        uhdm_trace("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
                         RTLIL::SigSpec init_value = import_expression(enum_var->Expr());
                         if (init_value.size() > 0) {
                             // Check if this is a reference to another wire with an init value
@@ -6146,7 +6151,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::Wire* ref_wire = init_value.as_wire();
                                 if (ref_wire && ref_wire->attributes.count(RTLIL::escape_id("init"))) {
                                     init_value = RTLIL::SigSpec(ref_wire->attributes.at(RTLIL::escape_id("init")));
-                                    log("UHDM: Resolved initial value from referenced wire '%s'\n", ref_wire->name.c_str());
+                                    uhdm_trace("UHDM: Resolved initial value from referenced wire '%s'\n", ref_wire->name.c_str());
                                 }
                             }
                             
@@ -6169,13 +6174,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 } else {
                                     init_value.extend_u0(lhs.size(), false);
                                 }
-                                log("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
+                                uhdm_trace("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
                                     orig_size, lhs.size(), var_name.c_str());
                             }
                             
                             if (init_value.is_fully_const()) {
                                 wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
-                                log("UHDM: Set init attribute for enum variable '%s' to %s\n", 
+                                uhdm_trace("UHDM: Set init attribute for enum variable '%s' to %s\n", 
                                     var_name.c_str(), init_value.as_const().as_string().c_str());
                             } else {
                                 log_warning("Initial value for enum variable '%s' is not constant after resolution, skipping\n", var_name.c_str());
@@ -6185,7 +6190,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
             } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                 if (logic_var->Expr()) {
-                    log("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
+                    uhdm_trace("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
 
                     // Pre-check the UHDM expression's signedness before importing,
                     // because the referenced wire may not have VpiSigned applied yet
@@ -6240,14 +6245,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             } else {
                                 init_value = init_value.extract(0, lhs.size());
                             }
-                            log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n",
+                            uhdm_trace("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n",
                                 orig_size, lhs.size(), var_name.c_str());
                         }
 
                         if (init_value.is_fully_const()) {
                             // Set \init attribute for simulation/FF initial value
                             wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
-                            log("UHDM: Set init attribute for variable '%s' to %s\n",
+                            uhdm_trace("UHDM: Set init attribute for variable '%s' to %s\n",
                                 var_name.c_str(), init_value.as_const().as_string().c_str());
                             // Also create a sync-always process so the wire has a constant
                             // driver for combinational contexts (formal verification, opt, etc.)
@@ -6258,12 +6263,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             sync_always->type = RTLIL::SyncType::STa;
                             sync_always->actions.push_back(RTLIL::SigSig(lhs, init_value));
                             proc->syncs.push_back(sync_always);
-                            log("UHDM: Created sync-always process for variable '%s'\n", var_name.c_str());
+                            uhdm_trace("UHDM: Created sync-always process for variable '%s'\n", var_name.c_str());
                         } else {
                             // Non-constant RHS (e.g. `logic [127:0] a = x` where x is a wire).
                             // Create a continuous connection, possibly sign-extended.
                             module->connect(lhs, init_value);
-                            log("UHDM: Created continuous connection for variable '%s'\n", var_name.c_str());
+                            uhdm_trace("UHDM: Created continuous connection for variable '%s'\n", var_name.c_str());
                         }
                     }
                 }
@@ -6274,7 +6279,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                        var->UhdmType() == uhdmlong_int_var) {
                 if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                     if (v->Expr()) {
-                        log("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
+                        uhdm_trace("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
                         RTLIL::SigSpec init_val = import_expression(v->Expr());
                         if (init_val.size() > 0) {
                             // Extend to wire width; sign-extend since all these types are signed
@@ -6291,7 +6296,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             sync_always->actions.push_back(
                                 RTLIL::SigSig(RTLIL::SigSpec(wire), init_val));
                             proc->syncs.push_back(sync_always);
-                            log("UHDM: Created init process for variable '%s'\n", var_name.c_str());
+                            uhdm_trace("UHDM: Created init process for variable '%s'\n", var_name.c_str());
                         }
                     }
                 }
@@ -6302,7 +6307,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // flattened wire with its (constant) aggregate initializer.
                 if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                     if (v->Expr()) {
-                        log("UHDM: Processing initializer for %s\n", var_name.c_str());
+                        uhdm_trace("UHDM: Processing initializer for %s\n", var_name.c_str());
                         RTLIL::SigSpec init_val = import_expression(v->Expr());
                         if (init_val.size() > 0) {
                             if (init_val.size() < wire->width)
@@ -6310,7 +6315,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             else if (init_val.size() > wire->width)
                                 init_val = init_val.extract(0, wire->width);
                             module->connect(RTLIL::SigSpec(wire), init_val);
-                            log("UHDM: Connected '%s' to its initializer\n", var_name.c_str());
+                            uhdm_trace("UHDM: Connected '%s' to its initializer\n", var_name.c_str());
                         }
                     }
                 }
@@ -6333,7 +6338,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             std::string name = std::string(ref->VpiName());
                             if (!name.empty()) {
                                 instance_output_driven_nets.insert(name);
-                                log("UHDM: Pre-scan: net '%s' is driven by output port '%s' of instance '%s'\n",
+                                uhdm_trace("UHDM: Pre-scan: net '%s' is driven by output port '%s' of instance '%s'\n",
                                     name.c_str(), std::string(port->VpiName()).c_str(),
                                     std::string(child_inst->VpiName()).c_str());
                             }
@@ -6346,12 +6351,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
     // Import nets
     if (uhdm_module->Nets()) {
-        log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());
+        uhdm_trace("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());
         log_flush();
         int net_index = 0;
         for (auto net : *uhdm_module->Nets()) {
             std::string net_name = std::string(net->VpiName());
-            log("UHDM: About to import net %d/%d: '%s'\n", net_index+1, (int)uhdm_module->Nets()->size(), net_name.c_str());
+            uhdm_trace("UHDM: About to import net %d/%d: '%s'\n", net_index+1, (int)uhdm_module->Nets()->size(), net_name.c_str());
             log_flush();
             // Not a net at all: an unresolved reference to a $unit enum
             // constant that Surelog turned into a 1-bit implicit net.
@@ -6362,7 +6367,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             // Dropping the wire lets import_ref_obj fall through to the
             // design-wide enum-constant map.
             if (is_unit_enum_const_net(net, net_name)) {
-                log("UHDM: net '%s' is a $unit enum CONSTANT fabricated as an "
+                uhdm_trace("UHDM: net '%s' is a $unit enum CONSTANT fabricated as an "
                     "implicit net -- not importing it as a wire\n",
                     net_name.c_str());
                 net_index++;
@@ -6371,7 +6376,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             import_net(net, uhdm_module);
             net_index++;
         }
-        log("UHDM: Finished importing all nets\n");
+        uhdm_trace("UHDM: Finished importing all nets\n");
         log_flush();
     }
     
@@ -6379,14 +6384,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // This must be done BEFORE creating memories or importing array_nets
     std::set<std::string> shift_register_arrays;
     if (uhdm_module->Process()) {
-        log("UHDM: Pre-scanning %zu processes for shift registers\n", uhdm_module->Process()->size());
+        uhdm_trace("UHDM: Pre-scanning %zu processes for shift registers\n", uhdm_module->Process()->size());
         for (auto proc : *uhdm_module->Process()) {
             // Check for always blocks that may contain shift registers
             log("  Checking process type: %d\n", proc->VpiType());
             if (proc->VpiType() == vpiAlways) {
                 // Cast to always to get the type
                 const always* always_obj = any_cast<const always*>(proc);
-                log("    Found always block\n");
+                uhdm_trace("    Found always block\n");
                 auto stmt = always_obj->Stmt();
                 if (stmt && stmt->VpiType() == vpiEventControl) {
                     auto event_ctrl = any_cast<const event_control*>(stmt);
@@ -6402,20 +6407,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     if (for_loop->VpiStmt() && for_loop->VpiStmt()->VpiType() == vpiAssignment) {
                                         const assignment* assign = any_cast<const assignment*>(for_loop->VpiStmt());
                                         // Check for M[i+1] <= M[i] pattern
-                                        log("        Checking assignment in for loop\n");
+                                        uhdm_trace("        Checking assignment in for loop\n");
                                         if (assign->Lhs() && assign->Rhs()) {
-                                            log("          LHS type: %d, RHS type: %d\n", 
+                                            uhdm_trace("          LHS type: %d, RHS type: %d\n", 
                                                 assign->Lhs()->VpiType(), assign->Rhs()->VpiType());
                                             if (assign->Lhs()->VpiType() == vpiBitSelect &&
                                                 assign->Rhs()->VpiType() == vpiBitSelect) {
                                                 const bit_select* lhs_bs = any_cast<const bit_select*>(assign->Lhs());
                                                 const bit_select* rhs_bs = any_cast<const bit_select*>(assign->Rhs());
-                                                log("          LHS name: '%s', RHS name: '%s'\n",
+                                                uhdm_trace("          LHS name: '%s', RHS name: '%s'\n",
                                                     std::string(lhs_bs->VpiName()).c_str(),
                                                     std::string(rhs_bs->VpiName()).c_str());
                                                 if (!lhs_bs->VpiName().empty() && lhs_bs->VpiName() == rhs_bs->VpiName()) {
                                                     shift_register_arrays.insert(std::string(lhs_bs->VpiName()));
-                                                    log("UHDM: Pre-scan detected shift register array '%s'\n", 
+                                                    uhdm_trace("UHDM: Pre-scan detected shift register array '%s'\n", 
                                                         std::string(lhs_bs->VpiName()).c_str());
                                                 }
                                             }
@@ -6432,10 +6437,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Now import array_nets, but skip memory creation for shift registers
     if (uhdm_module->Array_nets()) {
-        log("UHDM: Found %d array_nets to import\n", (int)uhdm_module->Array_nets()->size());
+        uhdm_trace("UHDM: Found %d array_nets to import\n", (int)uhdm_module->Array_nets()->size());
         for (auto array : *uhdm_module->Array_nets()) {
             std::string array_name = std::string(array->VpiName());
-            log("UHDM: Found array_net: '%s'\n", array_name.c_str());
+            uhdm_trace("UHDM: Found array_net: '%s'\n", array_name.c_str());
 
             // An unpacked-array INPUT port was already fully materialized by
             // import_port: a flat port wire + per-element read-alias wires
@@ -6450,7 +6455,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             // per-element wires already resolve constant `name[i]` reads.
             if (RTLIL::Wire* pw = module->wire(RTLIL::escape_id(array_name)))
                 if (pw->port_input) {
-                    log("UHDM: Array net '%s' is an INPUT port — already "
+                    uhdm_trace("UHDM: Array net '%s' is an INPUT port — already "
                         "materialized as flat + per-element wires, skipping\n",
                         array_name.c_str());
                     continue;
@@ -6458,7 +6463,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
             // Check if this is a shift register first
             if (shift_register_arrays.count(array_name)) {
-                log("UHDM: Array net '%s' is a shift register, creating individual wires\n", array_name.c_str());
+                uhdm_trace("UHDM: Array net '%s' is a shift register, creating individual wires\n", array_name.c_str());
                 // Create individual wires for the shift register array
                 // Get array dimensions
                 int array_size = 4; // Default for M[3:0]
@@ -6481,7 +6486,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;  // Default for M[3:0]
                                 int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
                                 array_size = std::abs(left - right) + 1;
-                                log("UHDM:   Array size determined: %d (from [%d:%d])\n", array_size, left, right);
+                                uhdm_trace("UHDM:   Array size determined: %d (from [%d:%d])\n", array_size, left, right);
                                 break;
                             }
                         }
@@ -6499,17 +6504,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         std::string(array->VpiFile()).c_str(), 
                         array->VpiLineNo(), array->VpiColumnNo(),
                         array->VpiEndLineNo(), array->VpiEndColumnNo());
-                    log("UHDM:   Created wire %s (width=%d)\n", wire_name.c_str(), element_width);
+                    uhdm_trace("UHDM:   Created wire %s (width=%d)\n", wire_name.c_str(), element_width);
                 }
             } else if (is_memory_array(array)) {
                 // Check if it should be imported as memory
                 // An array should be a memory if:
                 // 1. It has both packed and unpacked dimensions (checked by is_memory_array), AND
                 // 2. It has at least one non-constant array access
-                log("UHDM: is_memory_array returned true for '%s'\n", array_name.c_str());
-                log("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
+                uhdm_trace("UHDM: is_memory_array returned true for '%s'\n", array_name.c_str());
+                uhdm_trace("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
                 bool has_const_only = has_only_constant_array_accesses(array_name);
-                log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", 
+                uhdm_trace("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", 
                     has_const_only ? "true" : "false", array_name.c_str());
                 bool is_comb_only_net = comb_only_arrays.count(array_name) > 0;
 
@@ -6550,7 +6555,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     !inst_elem_written_arrays.count(array_name);
 
                 if (should_be_memory) {
-                    log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
+                    uhdm_trace("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array);
                 } else if ((array->Ranges() && array->Ranges()->size() > 1) &&
                            array->Nets() && !array->Nets()->empty() &&
@@ -6562,16 +6567,16 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // canonical wire + per-ROW aliases; the per-element path
                     // below consumed only Ranges()[0] and sized rows at
                     // ELEMENT width.
-                    log("UHDM: Array net '%s' multi-dim — flat representation\n",
+                    uhdm_trace("UHDM: Array net '%s' multi-dim — flat representation\n",
                         array_name.c_str());
                 } else {
                     // Has only constant accesses, is comb-only, or has (* mem2reg *) attr
                     if (has_mem2reg_attr)
-                        log("UHDM: Array net '%s' has mem2reg attribute, expanding to individual registers\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array net '%s' has mem2reg attribute, expanding to individual registers\n", array_name.c_str());
                     else if (is_comb_only_net)
-                        log("UHDM: Array net '%s' is comb-only, creating individual registers\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array net '%s' is comb-only, creating individual registers\n", array_name.c_str());
                     else
-                        log("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
+                        uhdm_trace("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
                     
                     // Get the array dimensions
                     int array_size = 4; // Default for cases like M[3:0]
@@ -6621,7 +6626,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 wire->is_signed = true;
                             add_src_attribute(wire->attributes, array);
                             name_map[element_name] = wire;
-                            log("UHDM: Created wire '%s' (width=%d, signed=%d) for array element\n", wire->name.c_str(), element_width, element_signed);
+                            uhdm_trace("UHDM: Created wire '%s' (width=%d, signed=%d) for array element\n", wire->name.c_str(), element_width, element_signed);
                         }
                     }
                 }
@@ -6634,7 +6639,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // (is_memory_array doesn't recognize struct elements — CVA6
                 // bht/btb `bht_q[NR_ROWS-1:0][IPF-1:0]` with an anonymous
                 // packed struct): flat canonical wire + per-ROW aliases.
-                log("UHDM: Array net '%s' multi-dim — flat representation\n",
+                uhdm_trace("UHDM: Array net '%s' multi-dim — flat representation\n",
                     array_name.c_str());
             } else {
                 // Pure unpacked array of wires (e.g. `wire mw1[0:1]`).  When
@@ -6646,7 +6651,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // single-1-bit-wire shape (matches the prior behaviour).
                 bool whole_accessed = whole_array_accessed_names.count(array_name) > 0;
                 if (!whole_accessed) {
-                    log("UHDM: Array net '%s' has only unpacked dimensions and bit-select-only access, creating individual wires\n", array_name.c_str());
+                    uhdm_trace("UHDM: Array net '%s' has only unpacked dimensions and bit-select-only access, creating individual wires\n", array_name.c_str());
 
                     int array_size = 1;
                     int array_low = 0;
@@ -6685,7 +6690,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             if (element_signed) wire->is_signed = true;
                             add_src_attribute(wire->attributes, array);
                             name_map[element_name] = wire;
-                            log("UHDM: Created wire '%s' (width=%d) for unpacked-array element\n",
+                            uhdm_trace("UHDM: Created wire '%s' (width=%d) for unpacked-array element\n",
                                 wire->name.c_str(), element_width);
                         }
                     }
@@ -6742,7 +6747,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     element_width *= inner_count;
 
                     int total_width = array_size * element_width;
-                    log("UHDM: Array net '%s' has whole-array access — creating flat "
+                    uhdm_trace("UHDM: Array net '%s' has whole-array access — creating flat "
                         "wire (size=%d, elem_w=%d, total=%d) + per-element slices\n",
                         array_name.c_str(), array_size, element_width, total_width);
 
@@ -6793,20 +6798,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
             }
         }
-        log("UHDM: Finished importing all array_nets\n");
+        uhdm_trace("UHDM: Finished importing all array_nets\n");
     }
     
     // Import interface instances
     if (module) {
-        log("UHDM: About to import interface instances for module %s\n", log_id(module->name));
+        uhdm_trace("UHDM: About to import interface instances for module %s\n", log_id(module->name));
         log_flush();
     } else {
-        log("UHDM: ERROR - module is null!\n");
+        uhdm_trace("UHDM: ERROR - module is null!\n");
         log_flush();
         return;
     }
     import_interface_instances(uhdm_module);
-    log("UHDM: Finished importing interface instances\n");
+    uhdm_trace("UHDM: Finished importing interface instances\n");
     log_flush();
     
     // Pre-create the implicit nets that are the LHS of module-level continuous
@@ -6827,16 +6832,16 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             if (w <= 0) w = 1;
             RTLIL::Wire* iw = module->addWire(RTLIL::escape_id(lname), w);
             name_map[lname] = iw;
-            log("UHDM: Pre-created implicit cont-assign net '%s' (width=%d) for "
+            uhdm_trace("UHDM: Pre-created implicit cont-assign net '%s' (width=%d) for "
                 "generate-scope visibility\n", lname.c_str(), w);
         }
     }
 
     // Import generate scopes (generate blocks)
-    log("UHDM: About to import generate scopes for module %s\n", log_id(module->name));
+    uhdm_trace("UHDM: About to import generate scopes for module %s\n", log_id(module->name));
     log_flush();
     import_generate_scopes(uhdm_module);
-    log("UHDM: Finished importing generate scopes\n");
+    uhdm_trace("UHDM: Finished importing generate scopes\n");
     log_flush();
     
     // Import memory objects using analysis pass
@@ -6844,13 +6849,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Process initial expressions for enum variables now that enum constants are available
     if (uhdm_module->Variables()) {
-        log("UHDM: Processing initial expressions for enum variables in module\n");
+        uhdm_trace("UHDM: Processing initial expressions for enum variables in module\n");
         for (auto var : *uhdm_module->Variables()) {
             if (var->UhdmType() == uhdmenum_var) {
                 if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
                     std::string var_name = std::string(enum_var->VpiName());
                     if (enum_var->Expr()) {
-                        log("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
+                        uhdm_trace("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
                         
                         // Look up the wire we already created
                         RTLIL::Wire* wire = nullptr;
@@ -6867,16 +6872,16 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::SigSpec lhs(wire);
                                 if (init_value.size() != lhs.size()) {
                                     init_value.extend_u0(lhs.size(), false);
-                                    log("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
+                                    uhdm_trace("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
                                         init_value.size(), lhs.size(), var_name.c_str());
                                 }
                                 
                                 if (init_value.is_fully_const()) {
                                     wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
-                                    log("UHDM: Set init attribute for enum variable '%s' to %s\n", 
+                                    uhdm_trace("UHDM: Set init attribute for enum variable '%s' to %s\n", 
                                         var_name.c_str(), init_value.as_const().as_string().c_str());
                                 } else {
-                                    log("UHDM: Initial expression for enum variable '%s' is not constant\n", var_name.c_str());
+                                    uhdm_trace("UHDM: Initial expression for enum variable '%s' is not constant\n", var_name.c_str());
                                 }
                             }
                         } else {
@@ -6895,33 +6900,33 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         module_cont_assigns = *uhdm_module->Cont_assigns();
     gen_region_extras(uhdm_module, nullptr, &module_cont_assigns);
     if (!module_cont_assigns.empty()) {
-        log("UHDM: Found %d continuous assignments to import\n", (int)module_cont_assigns.size());
+        uhdm_trace("UHDM: Found %d continuous assignments to import\n", (int)module_cont_assigns.size());
         int assign_idx = 0;
         for (auto cont_assign : module_cont_assigns) {
-            log("UHDM: About to import continuous assignment %d (line:%d-%d)\n",
+            uhdm_trace("UHDM: About to import continuous assignment %d (line:%d-%d)\n",
                 assign_idx++, cont_assign->VpiLineNo(), cont_assign->VpiEndLineNo());
 
             // Debug: Check what the LHS is
             if (cont_assign->Lhs()) {
                 const expr* lhs = cont_assign->Lhs();
-                log("UHDM:   LHS type: %s (VpiType=%d)\n",
+                uhdm_trace("UHDM:   LHS type: %s (VpiType=%d)\n",
                     UHDM::UhdmName(lhs->UhdmType()).c_str(), lhs->VpiType());
                 if (lhs->VpiType() == vpiHierPath) {
                     const hier_path* hp = any_cast<const hier_path*>(lhs);
-                    log("UHDM:   LHS is hier_path: %s\n", std::string(hp->VpiName()).c_str());
+                    uhdm_trace("UHDM:   LHS is hier_path: %s\n", std::string(hp->VpiName()).c_str());
                 } else if (lhs->UhdmType() == uhdmlogic_net) {
                     const logic_net* net = any_cast<const logic_net*>(lhs);
-                    log("UHDM:   LHS is logic_net: %s\n", std::string(net->VpiName()).c_str());
+                    uhdm_trace("UHDM:   LHS is logic_net: %s\n", std::string(net->VpiName()).c_str());
                 } else if (lhs->UhdmType() == uhdmref_obj) {
                     const ref_obj* ref = any_cast<const ref_obj*>(lhs);
-                    log("UHDM:   LHS is ref_obj: %s\n", std::string(ref->VpiName()).c_str());
+                    uhdm_trace("UHDM:   LHS is ref_obj: %s\n", std::string(ref->VpiName()).c_str());
                 }
             }
 
             try {
                 import_continuous_assign(cont_assign);
                 imported_cont_assigns.insert(cont_assign);
-                log("UHDM: Successfully imported continuous assignment\n");
+                uhdm_trace("UHDM: Successfully imported continuous assignment\n");
             } catch (const std::exception& e) {
                 log_error("UHDM: Exception in continuous assignment import: %s\n", e.what());
             } catch (...) {
@@ -6983,7 +6988,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 }
             }
             if (n)
-                log("UHDM: recovered %d net-declaration initialiser(s) from the elaborated instance\n", n);
+                uhdm_trace("UHDM: recovered %d net-declaration initialiser(s) from the elaborated instance\n", n);
         }
     }
 
@@ -7082,7 +7087,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 } else {
                     module->connect(lhs, rhs);
                 }
-                log("UHDM: Lowered port-initialiser '%s = <expr>' to "
+                uhdm_trace("UHDM: Lowered port-initialiser '%s = <expr>' to "
                     "init+sync process\n", port_name.c_str());
             } catch (...) {
                 log_warning("UHDM: Failed to lower port-initialiser for '%s'\n",
@@ -7093,21 +7098,21 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
 
     // Import processes (always blocks) - re-enabled with debugging
-    log("UHDM: Checking for processes...\n");
+    uhdm_trace("UHDM: Checking for processes...\n");
     log_flush();
     VectorOfprocess_stmt module_processes;
     if (uhdm_module->Process())
         module_processes = *uhdm_module->Process();
     gen_region_extras(uhdm_module, &module_processes, nullptr);
     if (!module_processes.empty()) {
-        log("UHDM: Found %d processes to import\n", (int)module_processes.size());
+        uhdm_trace("UHDM: Found %d processes to import\n", (int)module_processes.size());
         log_flush();
         for (auto process : module_processes) {
-            log("UHDM: About to import process\n");
+            uhdm_trace("UHDM: About to import process\n");
             log_flush();
             try {
                 import_process(process);
-                log("UHDM: Successfully imported process\n");
+                uhdm_trace("UHDM: Successfully imported process\n");
                 log_flush();
             } catch (const std::exception& e) {
                 log_error("UHDM: Exception in process import: %s\n", e.what());
@@ -7116,7 +7121,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
     } else {
-        log("UHDM: No processes found\n");
+        uhdm_trace("UHDM: No processes found\n");
         log_flush();
     }
 
@@ -7140,7 +7145,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
 
     // Import concurrent assertions (assert property (...))
     if (uhdm_module->Assertions()) {
-        log("UHDM: Found %d assertions to import\n", (int)uhdm_module->Assertions()->size());
+        uhdm_trace("UHDM: Found %d assertions to import\n", (int)uhdm_module->Assertions()->size());
         for (auto assertion : *uhdm_module->Assertions()) {
             if (!assertion) continue;
             // Only handle assert_stmt (not assume/cover/restrict)
@@ -7187,7 +7192,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             check_cell->setPort(ID(A), cond);
             check_cell->setPort(ID(ARGS), RTLIL::SigSpec());
             check_cell->attributes[ID::keep] = RTLIL::Const(1);
-            log("UHDM: Imported assert_stmt as $check cell\n");
+            uhdm_trace("UHDM: Imported assert_stmt as $check cell\n");
         }
     }
 
@@ -7405,7 +7410,7 @@ void UhdmImporter::reverse_unpacked_array_ports() {
             module->connect(rev, RTLIL::SigSpec(pw));
         else
             module->connect(RTLIL::SigSpec(pw), rev);
-        log("UHDM: Port '%s' unpacked array: public face reversed to element 0 "
+        uhdm_trace("UHDM: Port '%s' unpacked array: public face reversed to element 0 "
             "at the MSB (%d x %d bits)\n", pub.c_str(), cnt, ew);
     }
 }
@@ -7451,7 +7456,7 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
     RTLIL::IdString param_module_id = RTLIL::escape_id(param_module_name);
     if (!design->module(param_module_id)) {
         if (mode_debug)
-            log("    Creating new parameterized module: %s\n", param_module_name.c_str());
+            uhdm_trace("    Creating new parameterized module: %s\n", param_module_name.c_str());
         
         // Clone the base module
         RTLIL::Module* param_module = design->addModule(param_module_id);
@@ -7497,7 +7502,7 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
 
 // Expand interfaces - replace interface instances with their signals
 void UhdmImporter::expand_interfaces() {
-    log("UHDM: Expanding interfaces in design\n");
+    uhdm_trace("UHDM: Expanding interfaces in design\n");
     
     // First, collect all interface modules and interface cells
     std::set<RTLIL::Module*> interface_modules;
@@ -7510,7 +7515,7 @@ void UhdmImporter::expand_interfaces() {
     for (auto module : design->modules()) {
         if (module->attributes.count(RTLIL::escape_id("is_interface"))) {
             interface_modules.insert(module);
-            log("UHDM: Found interface module: %s\n", module->name.c_str());
+            uhdm_trace("UHDM: Found interface module: %s\n", module->name.c_str());
         }
         
         // Find interface cells in this module
@@ -7518,7 +7523,7 @@ void UhdmImporter::expand_interfaces() {
             RTLIL::Module* cell_module = design->module(cell->type);
             if (cell_module && cell_module->attributes.count(RTLIL::escape_id("is_interface"))) {
                 interface_cells_to_remove.push_back(std::make_pair(module, cell));
-                log("UHDM: Found interface cell %s of type %s in module %s\n", 
+                uhdm_trace("UHDM: Found interface cell %s of type %s in module %s\n", 
                     cell->name.c_str(), cell->type.c_str(), module->name.c_str());
                 
                 // Map dummy wires to interface names
@@ -7531,7 +7536,7 @@ void UhdmImporter::expand_interfaces() {
                 for (auto wire : module->wires()) {
                     if (wire->name.str().find("$dummywireforinterface\\" + interface_name) == 0) {
                         dummy_wire_to_interface[wire->name] = interface_name;
-                        log("UHDM: Mapped dummy wire %s to interface %s\n", 
+                        uhdm_trace("UHDM: Mapped dummy wire %s to interface %s\n", 
                             wire->name.c_str(), interface_name.c_str());
                     }
                 }
@@ -7546,7 +7551,7 @@ void UhdmImporter::expand_interfaces() {
             continue;
         }
         
-        log("UHDM: Processing module %s for interface expansion\n", module->name.c_str());
+        uhdm_trace("UHDM: Processing module %s for interface expansion\n", module->name.c_str());
         
         // Find cells with interface ports
         std::vector<RTLIL::Cell*> cells_to_update;
@@ -7567,7 +7572,7 @@ void UhdmImporter::expand_interfaces() {
             
             if (has_interface_port) {
                 cells_to_update.push_back(cell);
-                log("UHDM: Cell %s has interface ports (module %s has interface ports)\n", 
+                uhdm_trace("UHDM: Cell %s has interface ports (module %s has interface ports)\n", 
                     cell->name.c_str(), cell->type.c_str());
             }
         }
@@ -7584,7 +7589,7 @@ void UhdmImporter::expand_interfaces() {
                     std::string wire_name = wire->name.str();
                     if (wire_name.find("\\bus.") == 0) {
                         cell_interface_signals.insert(wire_name);
-                        log("UHDM: Cell module %s has interface signal %s\n", 
+                        uhdm_trace("UHDM: Cell module %s has interface signal %s\n", 
                             cell->type.c_str(), wire_name.c_str());
                     }
                 }
@@ -7601,7 +7606,7 @@ void UhdmImporter::expand_interfaces() {
                 }
                 
                 if (port_wire && port_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
-                    log("UHDM: Expanding interface port %s on cell %s\n", 
+                    uhdm_trace("UHDM: Expanding interface port %s on cell %s\n", 
                         port_name.c_str(), cell->name.c_str());
                     
                     // Find which interface this dummy wire corresponds to
@@ -7610,13 +7615,13 @@ void UhdmImporter::expand_interfaces() {
                     // First check if it's in our dummy wire map
                     if (dummy_wire_to_interface.count(port_wire->name)) {
                         interface_name = dummy_wire_to_interface[port_wire->name];
-                        log("UHDM: Found interface %s from dummy wire map\n", interface_name.c_str());
+                        uhdm_trace("UHDM: Found interface %s from dummy wire map\n", interface_name.c_str());
                     } else {
                         // Try to extract from the wire name itself
                         std::string wire_name = port_wire->name.str();
                         if (wire_name.find("$dummywireforinterface\\") == 0) {
                             interface_name = wire_name.substr(23); // Skip "$dummywireforinterface\"
-                            log("UHDM: Extracted interface %s from wire name\n", interface_name.c_str());
+                            uhdm_trace("UHDM: Extracted interface %s from wire name\n", interface_name.c_str());
                         } else {
                             // The wire might have been renamed by Yosys, try to find it by checking connections
                             // Look for any interface signal wires that exist for this cell
@@ -7635,7 +7640,7 @@ void UhdmImporter::expand_interfaces() {
                                             }
                                             if (cell_interface_name == potential_interface) {
                                                 interface_name = potential_interface;
-                                                log("UHDM: Found interface %s by searching module wires\n", interface_name.c_str());
+                                                uhdm_trace("UHDM: Found interface %s by searching module wires\n", interface_name.c_str());
                                                 break;
                                             }
                                         }
@@ -7666,7 +7671,7 @@ void UhdmImporter::expand_interfaces() {
                             // Get the interface module to find its signals
                             RTLIL::Module* interface_module = design->module(interface_cell->type);
                             if (interface_module) {
-                                log("UHDM: Interface module %s has the following signals:\n", interface_module->name.c_str());
+                                uhdm_trace("UHDM: Interface module %s has the following signals:\n", interface_module->name.c_str());
                                 
                                 // Get all signals from the interface module
                                 for (auto iface_wire : interface_module->wires()) {
@@ -7683,7 +7688,7 @@ void UhdmImporter::expand_interfaces() {
                                         // Create connection to the expanded signal
                                         RTLIL::IdString expanded_port = RTLIL::escape_id(port_name.str() + "." + signal_name);
                                         new_connections[expanded_port] = parent_wire;
-                                        log("UHDM: Connected port %s to wire %s\n", expanded_port.c_str(), parent_wire->name.c_str());
+                                        uhdm_trace("UHDM: Connected port %s to wire %s\n", expanded_port.c_str(), parent_wire->name.c_str());
                                     } else {
                                         log_warning("UHDM: Could not find wire %s in parent module\n", expanded_wire_name.c_str());
                                     }
@@ -7712,7 +7717,7 @@ void UhdmImporter::expand_interfaces() {
                                     std::string parent_name = interface_name + "." + sig;
                                     if (auto pw = module->wire(RTLIL::escape_id(parent_name))) {
                                         new_connections[cw->name] = RTLIL::SigSpec(pw);
-                                        log("UHDM: (fallback) connected %s to wire %s\n",
+                                        uhdm_trace("UHDM: (fallback) connected %s to wire %s\n",
                                             cw->name.c_str(), pw->name.c_str());
                                     }
                                 }
@@ -7741,14 +7746,14 @@ void UhdmImporter::expand_interfaces() {
     for (auto &pair : interface_cells_to_remove) {
         RTLIL::Module* module = pair.first;
         RTLIL::Cell* cell = pair.second;
-        log("UHDM: Removing interface cell %s from module %s\n", 
+        uhdm_trace("UHDM: Removing interface cell %s from module %s\n", 
             cell->name.c_str(), module->name.c_str());
         module->remove(cell);
     }
     
     // Remove interface modules
     for (auto iface_module : interface_modules) {
-        log("UHDM: Removing interface module %s\n", iface_module->name.c_str());
+        uhdm_trace("UHDM: Removing interface module %s\n", iface_module->name.c_str());
         design->remove(iface_module);
     }
     
@@ -7762,7 +7767,7 @@ void UhdmImporter::expand_interfaces() {
         }
         if (!wires_to_remove.empty()) {
             for (auto wire : wires_to_remove) {
-                log("UHDM: Removing dummy interface wire %s\n", wire->name.c_str());
+                uhdm_trace("UHDM: Removing dummy interface wire %s\n", wire->name.c_str());
             }
             module->remove(wires_to_remove);
         }
@@ -7780,7 +7785,7 @@ void UhdmImporter::expand_interfaces() {
         for (auto wire : module->wires()) {
             if (wire->attributes.count(RTLIL::escape_id("is_interface")) && wire->port_id > 0) {
                 interface_port_wires.push_back(wire);
-                log("UHDM: Module %s has interface port %s\n", module->name.c_str(), wire->name.c_str());
+                uhdm_trace("UHDM: Module %s has interface port %s\n", module->name.c_str(), wire->name.c_str());
             }
         }
         
@@ -7808,7 +7813,7 @@ void UhdmImporter::expand_interfaces() {
                     if (wire_name.find(prefix) == 0 || wire_name.find(escaped_prefix) == 0 ||
                         wire_name.find(arr_prefix) == 0 || wire_name.find(escaped_arr_prefix) == 0) {
                         signal_wires.push_back(wire);
-                        log("UHDM: Found interface signal wire %s\n", wire_name.c_str());
+                        uhdm_trace("UHDM: Found interface signal wire %s\n", wire_name.c_str());
                     }
                 }
                 
@@ -7860,7 +7865,7 @@ void UhdmImporter::expand_interfaces() {
                         signal_wire->port_output = interface_wire->port_output;
                     }
                     signal_wire->port_id = ++max_port_id;
-                    log("UHDM: Converted %s to port (id=%d, in=%d, out=%d)\n",
+                    uhdm_trace("UHDM: Converted %s to port (id=%d, in=%d, out=%d)\n",
                         signal_wire->name.c_str(), signal_wire->port_id,
                         signal_wire->port_input, signal_wire->port_output);
                 }
@@ -7869,7 +7874,7 @@ void UhdmImporter::expand_interfaces() {
                 interface_wire->port_input = false;
                 interface_wire->port_output = false;
                 interface_wire->port_id = 0;
-                log("UHDM: Removed interface port status from %s\n", interface_wire->name.c_str());
+                uhdm_trace("UHDM: Removed interface port status from %s\n", interface_wire->name.c_str());
             }
             
             // Remove interface port wires
@@ -7884,7 +7889,7 @@ void UhdmImporter::expand_interfaces() {
         }
     }
     
-    log("UHDM: Finished expanding interfaces\n");
+    uhdm_trace("UHDM: Finished expanding interfaces\n");
 }
 
 YOSYS_NAMESPACE_END
