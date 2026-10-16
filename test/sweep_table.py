@@ -43,10 +43,14 @@ W='https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/'
 groups=[
  ('**Ibex**',['ibex'],'[ibex]('+W+'sweep-ibex.yml)'),
  ('**rp32 (R5P)**',['rp32'],'[rp32]('+W+'sweep-rp32.yml)'),
+ ('**fx68k**',['fx68k'],'[fx68k]('+W+'sweep-fx68k.yml)'),
  ('**Syntacore SCR1**',['scr1'],'[scr1]('+W+'sweep-scr1.yml)'),
+ ('**RgGen**',['rggen'],'[rggen]('+W+'sweep-rggen.yml)'),
  ('**VeeR EH1**',['veer-eh1'],'[veer-eh1]('+W+'sweep-veer-eh1.yml)'),
+ ('**TNoC**',['tnoc'],'[tnoc]('+W+'sweep-tnoc.yml)'),
  ('**VeeR EL2**',['veer-el2'],'[veer-el2]('+W+'sweep-veer-el2.yml)'),
  ('**RSD**',['rsd'],'[rsd]('+W+'sweep-rsd.yml)'),
+ ('**BlackParrot**',['black-parrot'],'[black-parrot]('+W+'sweep-black-parrot.yml)'),
  ('**OpenTitan** (upstream)',['opentitan'],'[opentitan]('+W+'sweep-opentitan.yml)'),
  ('**Pavona** (300 modules + 100 chip instances)',['acc','aes','csrng','edn','entropy_src','hmac','keymgr','kmac','pavona','periph','periph2','periph3','periph4','periph5','tlul','dragonfly','egret'],'[pavona]('+W+'sweep-pavona.yml)'),
  ('**Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only)',['cva6','cva6-chip'],'[cva6]('+W+'sweep-cva6.yml)'),
@@ -73,14 +77,29 @@ for name,fams,link in groups:
         if f not in rep: print(f'MISSING {f}'); continue
         n.update(rep[f])
         if f not in seen: tot.update(rep[f]); seen.add(f)
+    # A core whose first nightly has not finished has no report at all.  Print
+    # nothing rather than a row of zeros, which reads as "swept, nothing
+    # proven" -- the opposite of "not yet measured".  It joins when the nightly
+    # lands, which is the same rule the README stats table has always had.
+    if not n['rows'] and not any(f in rep for f in fams):
+        continue
     row(name,n)
 # the rows partition the reports, so every column sums to its total -- assert it
 colsum=collections.Counter()
 for name,fams,link in groups:
-    for f in fams: colsum.update(rep[f])
+    # A family whose nightly has not finished yet has no report; it is reported
+    # as MISSING above and must not break the column-sum assertion.
+    for f in fams:
+        if f in rep: colsum.update(rep[f])
 for k in ('rows','proven','s_pass','s_div','s_nc','u_pass','u_div','u_adj','u_nc','undriven'):
     assert colsum[k]==tot[k], (k, colsum[k], tot[k])
-row('**All sweeps** (12 workflows)',tot,bold=True)
+# Count the workflows actually MEASURED, not the ones that exist: a core
+# whose first nightly is still running contributes no rows, and labelling
+# the total with the larger number overstates what was measured.
+# Distinct WORKFLOWS, not rows: Pavona's many families and the External-IP
+# repos each share one workflow, so counting groups overstated it (17 for 12).
+measured = len({link for _, fams, link in groups if any(f in rep for f in fams)})
+row(f'**All sweeps** ({measured} workflows)',tot,bold=True)
 print()
 print('# per-report triples (Formal proven/rows, co-sim pass/comparable, opt-clean/opt-rows, differs, budget, err):')
 for k in sorted(rep):

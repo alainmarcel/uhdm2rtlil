@@ -162,21 +162,24 @@ line and in the total:
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **Ibex** | 28 | 22 | 23 | 20 | **3** | 24 | 20 | 0 | 4 | 0 |
 | **rp32 (R5P)** | 13 | 6 | 5 | 2 | **3** | 7 | 3 | 0 | 4 | 0 |
+| **fx68k** | 22 | 18 | 12 | 6 | **6** | 10 | 6 | 0 | 4 | 0 |
 | **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
+| **RgGen** | 26 | 15 | 19 | 19 | 0 | 19 | 15 | **4** | 0 | 0 |
 | **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
-| **VeeR EL2** | 92 | 69 | 80 | 80 | 0 | 81 | 81 | 0 | 0 | 0 |
-| **RSD** | 165 | 108 | 135 | 132 | **3** | 144 | 138 | **5** | 1 | 0 |
+| **TNoC** | 43 | 4 | 4 | 4 | 0 | 4 | 4 | 0 | 0 | 0 |
+| **VeeR EL2** | 92 | 70 | 80 | 80 | 0 | 81 | 81 | 0 | 0 | 0 |
+| **RSD** | 165 | 113 | 143 | 139 | **4** | 146 | 145 | 0 | 1 | 0 |
 | **OpenTitan** (upstream) | 32 | 27 | 28 | 26 | **2** | 28 | 27 | 0 | 1 | 0 |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 390 | 379 | **11** | 390 | 381 | 0 | 9 | 0 |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 382 | 389 | 378 | **11** | 389 | 380 | 0 | 9 | 0 |
 | **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
 | **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan** (香山) | 21 | 18 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan core** (香山) | 2002 | 1600 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1034 | 858 | 894 | 864 | **30** | 913 | 885 | **4** | 24 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1034 | 859 | 893 | 863 | **30** | 913 | 889 | 0 | 24 | 0 |
 | **chipsalliance/sv-tests** | 526 | 474 | 11 | 11 | 0 | 12 | 11 | **1** | 0 | 0 |
-| **All sweeps** (12 workflows) | **4719** | **3895** | **3785** | **3719** | **66** | **3818** | **3756** | **10** | **52** | **0** |
+| **All sweeps** (16 workflows) | **4810** | **3941** | **3826** | **3753** | **73** | **3852** | **3791** | **5** | **56** | **0** |
 
-The 10 `read_uhdm` divergences are 5 RSD rows, 4 cvw rows and one sv-tests file.
+The 5 `read_uhdm` divergences are 4 RgGen rows (`rggen_mux`, `block_0`, `block_1`, `uart_csr`, all four `differs` with read_slang clean) and one sv-tests file.  Every RSD and cvw divergence the previous table carried is closed.
 **read_slang passes every one of them**, so each is a place where our netlist
 disagrees with BOTH the RTL simulator and the other frontend:
 
