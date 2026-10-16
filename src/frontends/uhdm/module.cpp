@@ -2751,7 +2751,18 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         // Find the module name in the full path
         std::string module_prefix = "work@" + module->name.substr(1); // Remove leading backslash
         size_t module_pos = full_name.find(module_prefix);
-        
+        // The match must end at a path boundary: module `csr` instantiated
+        // as `dut` inside a wrapper `csr_flat` has the full name
+        // `work@csr_flat.dut.g_rbr.u_register`, and a bare prefix search
+        // matched the `csr` of `csr_flat`, naming the cell
+        // `_flat.dut.g_rbr.u_register` -- a name nothing else (the interface
+        // port expansion, the gen-scope wires) could ever match.
+        while (module_pos != std::string::npos) {
+            size_t e = module_pos + module_prefix.length();
+            if (e == full_name.length() || full_name[e] == '.') break;
+            module_pos = full_name.find(module_prefix, module_pos + 1);
+        }
+
         if (module_pos != std::string::npos) {
             // Skip past module name and the dot
             size_t start_pos = module_pos + module_prefix.length();
