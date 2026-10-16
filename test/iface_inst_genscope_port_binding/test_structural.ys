@@ -1,0 +1,8 @@
+# UHDM-only (read_verilog has no interfaces).  Without the fix: 73 undriven
+# bits (check -assert fails); test_slang_equiv.ys proves the values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top csr_flat
+proc
+flatten
+opt_clean
+check -assert
