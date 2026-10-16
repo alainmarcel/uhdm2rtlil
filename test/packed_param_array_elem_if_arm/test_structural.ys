@@ -1,0 +1,15 @@
+# Pins the VALUE, not a shape: with the bug, LIST[i] folds to 1 instead of 2,
+# `LIST[i] == 2` is false and the comb if/else chain takes the ELSE arm
+# (o_data = i_data[0]) instead of the OR arm (o_data = i_data[0] | i_data[1]).
+# The three vectors below differ between the two arms; 0010 is deliberately
+# NOT among them (both arms agree there).  o_list0 pins the folded parameter
+# itself.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt -full
+sat -verify -prove o_list0 16'd2
+sat -verify -set i_data 4'b0100 -prove o_data 2'b01
+sat -verify -set i_data 4'b1000 -prove o_data 2'b10
+sat -verify -set i_data 4'b0110 -prove o_data 2'b11

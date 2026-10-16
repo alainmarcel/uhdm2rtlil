@@ -381,27 +381,45 @@ int UhdmImporter::declare_function_local(const UHDM::any* var,
         // width registered so element / part-select access
         // (`result[i]`, `result[i][hi:lo]`) slices the right
         // bits in const-eval (BitSelectPartSelectInFunction).
+        // `bit [N-1:0][15:0] list` is a bit_typespec, NOT a logic_typespec,
+        // and this branch only looked at the latter -- so no element width
+        // was registered, `list[i] = chunk` wrote ONE bit, and the local
+        // became a bitmask of "chunk was nonzero".  rggen_or_reducer's
+        // get_sub_n_list builds its reduction schedule exactly that way;
+        // every `SUB_N_LIST[i] == 2` then compared 1 == 2, the reducer took
+        // its ELSE arm with no OR at all, and rggen_mux dropped every entry
+        // but the first (19 of 64 input vectors wrong; block_0 / block_1 /
+        // uart_csr diverged with it).  It hid behind the default N = 1, where
+        // the else arm IS the right one.  A bit_typespec carries Ranges() and
+        // no Elem_typespec.
         if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
-            if (v->Typespec() && v->Typespec()->Actual_typespec() &&
-                v->Typespec()->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
-                auto lt = any_cast<const UHDM::logic_typespec*>(
-                    v->Typespec()->Actual_typespec());
+            const UHDM::typespec* ats = (v->Typespec() ? v->Typespec()->Actual_typespec() : nullptr);
+            const UHDM::VectorOfrange* rgs = nullptr;
+            const UHDM::ref_typespec* elem = nullptr;
+            if (ats && ats->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(ats);
+                rgs = lt->Ranges();
+                elem = lt->Elem_typespec();
+            } else if (ats && ats->UhdmType() == uhdmbit_typespec) {
+                rgs = any_cast<const UHDM::bit_typespec*>(ats)->Ranges();
+            }
+            if (ats && (rgs || elem)) {
                 int inner_w = 0;
-                if (lt->Ranges() && lt->Ranges()->size() >= 2) {
-                    auto ri = lt->Ranges()->at(lt->Ranges()->size() - 1);
+                if (rgs && rgs->size() >= 2) {
+                    auto ri = rgs->at(rgs->size() - 1);
                     if (ri->Left_expr() && ri->Right_expr()) {
                         int l = evaluate_single_operand(ri->Left_expr(), scope_vars).as_int();
                         int r = evaluate_single_operand(ri->Right_expr(), scope_vars).as_int();
                         inner_w = std::abs(l - r) + 1;
                     }
-                } else if (lt->Elem_typespec() &&
-                           lt->Elem_typespec()->Actual_typespec()) {
-                    inner_w = get_width_from_typespec(
-                        lt->Elem_typespec()->Actual_typespec(), current_instance);
+                } else if (elem && elem->Actual_typespec()) {
+                    inner_w = get_width_from_typespec(elem->Actual_typespec(), current_instance);
                 }
                 if (inner_w > 1 && inner_w < width)
                     array_local_element_widths[var_name] = inner_w;
+            } else {
             }
+        } else {
         }
     }
     if (var->UhdmType() == uhdmarray_var)
@@ -578,11 +596,21 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         bit_index = idx_val.as_int();
                     }
                     // Detect array-element write: `state[i] = <value>`.
-                    if (((bs->Actual_group() &&
-                          (bs->Actual_group()->UhdmType() == uhdmarray_var ||
-                           bs->Actual_group()->UhdmType() == uhdmpacked_array_var)) ||
-                         array_local_unpacked_names.count(lhs_name)) &&
-                        array_local_element_widths.count(lhs_name)) {
+                    // A packed multi-dim local that is a plain bit_var /
+                    // logic_var (`bit [N-1:0][15:0] list`) is registered by
+                    // the generic branch of register_function_local with its
+                    // inner element width, but this gate keyed on the
+                    // variable KIND and refused it -- so `list[i] = chunk`
+                    // still wrote ONE bit (rggen_or_reducer's reduction
+                    // schedule became a bitmask).  A registered width > 1
+                    // means an element write, whatever the kind.
+                    if ((((bs->Actual_group() &&
+                           (bs->Actual_group()->UhdmType() == uhdmarray_var ||
+                            bs->Actual_group()->UhdmType() == uhdmpacked_array_var)) ||
+                          array_local_unpacked_names.count(lhs_name)) &&
+                         array_local_element_widths.count(lhs_name)) ||
+                        (array_local_element_widths.count(lhs_name) &&
+                         array_local_element_widths[lhs_name] > 1)) {
                         lhs_is_array_element = true;
                         lhs_array_element_width = array_local_element_widths[lhs_name];
                         lhs_array_offset = bit_index * lhs_array_element_width;
@@ -1215,9 +1243,13 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         // unpacked array_var, return the corresponding `element_width` bits.
         const bit_select* bs = any_cast<const bit_select*>(operand);
         std::string nm = std::string(bs->VpiName());
-        if (((bs->Actual_group() &&
-              bs->Actual_group()->UhdmType() == uhdmarray_var) ||
-             array_local_unpacked_names.count(nm)) &&
+        // Same rule as the write gate: a registered element width > 1 is an
+        // element READ, whatever the variable's kind (packed multi-dim bit_var).
+        if ((((bs->Actual_group() &&
+               bs->Actual_group()->UhdmType() == uhdmarray_var) ||
+              array_local_unpacked_names.count(nm)) ||
+             (array_local_element_widths.count(nm) &&
+              array_local_element_widths.at(nm) > 1)) &&
             local_vars.count(nm) &&
             array_local_element_widths.count(nm)) {
             int idx = 0;
