@@ -148,6 +148,37 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
                 // body — needed for SV-style assignment widening at the end.
                 if (formal_signed) arg.flags |= RTLIL::CONST_FLAG_SIGNED;
                 local_vars[param_name] = arg;
+                // A packed multi-dim FORMAL (`bit [N-1:0][15:0] sub_n_list`)
+                // needs its inner element width registered exactly like a
+                // local, or `sub[i-1]` inside the body reads ONE bit.
+                // rggen_or_reducer's get_offset_list takes SUB_N_LIST that
+                // way and folded OFFSET_LIST to all zeros, so the reducer
+                // read entries 0..2 for every slot and lost entries 3 and 4
+                // (block_0 / block_1 / uart_csr readback muxes, N >= 5).
+                if (io->Typespec() && io->Typespec()->Actual_typespec()) {
+                    const UHDM::typespec* fts = io->Typespec()->Actual_typespec();
+                    const UHDM::VectorOfrange* rgs = nullptr;
+                    const UHDM::ref_typespec* elem = nullptr;
+                    if (fts->UhdmType() == uhdmlogic_typespec) {
+                        auto lt = any_cast<const UHDM::logic_typespec*>(fts);
+                        rgs = lt->Ranges(); elem = lt->Elem_typespec();
+                    } else if (fts->UhdmType() == uhdmbit_typespec) {
+                        rgs = any_cast<const UHDM::bit_typespec*>(fts)->Ranges();
+                    }
+                    int inner_w = 0;
+                    if (rgs && rgs->size() >= 2) {
+                        auto ri = rgs->at(rgs->size() - 1);
+                        if (ri->Left_expr() && ri->Right_expr()) {
+                            int l = evaluate_single_operand(ri->Left_expr(), local_vars).as_int();
+                            int r = evaluate_single_operand(ri->Right_expr(), local_vars).as_int();
+                            inner_w = std::abs(l - r) + 1;
+                        }
+                    } else if (elem && elem->Actual_typespec()) {
+                        inner_w = get_width_from_typespec(elem->Actual_typespec(), current_instance);
+                    }
+                    if (inner_w > 1 && inner_w < formal_width)
+                        array_local_element_widths[param_name] = inner_w;
+                }
                 log("  Setting input parameter %s = %s (formal_width=%d, signed=%d)\n",
                     param_name.c_str(), arg.as_string().c_str(),
                     formal_width, (int)formal_signed);
