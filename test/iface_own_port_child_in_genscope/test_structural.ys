@@ -1,0 +1,9 @@
+# UHDM-only (read_verilog has no interfaces).  Without the fix the child's
+# bus_if.* are unconnected: bus__valid / bus__address / o_read_data undriven
+# (check -assert fails); test_slang_equiv.ys proves the values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_flat
+proc
+flatten
+opt_clean
+check -assert
