@@ -1,0 +1,55 @@
+# BlackParrot (black-parrot/black-parrot): the Linux-capable RV64 multicore
+# sv-tests builds as `wrapper` -- the FE/BE/ME complexes, the CCE/LCE coherence
+# engines, the bedrock network and the bsg_* / HardFloat libraries it sits on.
+# 125 synthesizable modules of its own.  A CORE sweep with its own action (like
+# scr1, ibex, rp32, veer-eh1/el2 and rsd), not an external-IP family: it is one
+# core closure, and the cores chipsalliance/sv-tests covers get an individual
+# sweep each.  BlackParrot was the last uncovered RISC-V core in that list;
+# CVA6's other four configurations, fx68k (a Motorola 68000), tnoc, rggen and
+# ivtest are still uncovered.
+#
+# The sources are a shallow clone pinned by test/ext_ip/black-parrot.json (the
+# commit chipsalliance/sv-tests itself pins), which core_sweep.py fetches.  The
+# RTL spans THREE repos -- black-parrot plus its external/basejump_stl and
+# external/HardFloat submodules -- so the manifest sets "submodules": true.
+# That is deliberately NOT "recursive": basejump_stl's own submodules are
+# DRAMSim3 and ramulator, simulation models this sweep never compiles.
+#
+# Only BlackParrot's OWN modules are swept as rows ("sweep_paths" in the
+# manifest); basejump_stl and HardFloat stay in the closure as dependencies,
+# being separate upstream libraries with their own identity.
+name: Sweep black-parrot
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "33 7 * * *"   # nightly 07:33 UTC, clear of opentitan's 06:37
+
+concurrency:
+  group: sweep-black-parrot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: black-parrot
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 300
+      # SHARD instead of running miters concurrently, for the same reason as
+      # veer-el2: the heavy rows here are whole-core (bp_processor, bp_unicore,
+      # bp_multicore) and one of those must never share a 16 GB runner with
+      # another.  Measured locally, reading the full bp_unicore `wrapper` peaks
+      # at 11.5 GB -- just under the 12 GB `ulimit -v` the reusable workflow
+      # defaults to -- so the near-top rows sit right at that ceiling.  125
+      # rows over four shards, each serialising; the first nightly will show
+      # which of the top rows exceed the limit, and those get an `overrides`
+      # entry or a documented skip rather than a raised ulimit (16 GB would
+      # OOM the runner itself).
+      shards: 4
+      jobs: "1"
