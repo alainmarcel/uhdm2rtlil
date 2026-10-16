@@ -392,7 +392,7 @@ def _with_wrapper_packages(cl, files, wrapper):
     return extra + files
 
 
-def _iface_port_wrapper(w, fam, mod, files):
+def _iface_port_wrapper(w, fam, mod, files, def_flags=(), inc_flags=(), src_bytes=0):
     """Wrap away an INTERFACE port so the module has a top level read_slang can
     take.
 
@@ -414,8 +414,38 @@ def _iface_port_wrapper(w, fam, mod, files):
     out = w / f"{mod}_ifc.sv"
     man = HERE / f"{fam}.json"
     extra = ["--manifest", str(man)] if man.exists() else []
-    rc, log = sh([sys.executable, str(TEST / "gen_iface_wrapper.py"), "--from-decl",
-                  *extra, str(w / "uhdm_hier.il"), mod, str(out), *files], timeout=300)
+    def _gen():
+        return sh([sys.executable, str(TEST / "gen_iface_wrapper.py"), "--from-decl",
+                   *extra, str(w / "uhdm_hier.il"), mod, str(out), *files],
+                  timeout=300)
+    rc, log = _gen()
+    # An interface whose MEMBERS are declared over a type taken from another
+    # interface port (tnoc_flit_if's `typedef types.tnoc_flit`) cannot be
+    # restated in a port list, so the generator wants the ELABORATED widths
+    # instead -- but the wrapper is built before this row's first read, so on a
+    # fresh work directory there is no netlist to read them from.  Elaborate the
+    # BARE module once, just for uhdm_hier.il, and ask again.  Without this the
+    # row depends on whether a previous run left a netlist behind, which is how
+    # tnoc_dummy_node went from `elab-fail` to `equivalent` only on a SECOND
+    # invocation -- not something a nightly can rely on.
+    if "NEEDS-NETLIST" in (log or "") and not (w / "uhdm_hier.il").exists():
+        bw = w / "_bootstrap"
+        subprocess.run(["rm", "-rf", str(bw)])
+        bw.mkdir(parents=True, exist_ok=True)
+        brc, bout = sh(_capped([str(S), "-parse", *def_flags, *inc_flags,
+                                "-top", mod, *files]),
+                       cwd=bw, timeout=_sl_timeout(src_bytes))
+        (bw / "surelog.log").write_text(bout or "")
+        if brc == 0 and (bw / "slpp_all" / "surelog.uhdm").exists():
+            (bw / "boot.ys").write_text(
+                f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -top {mod}\n"
+                f"write_rtlil ../uhdm_hier.il\n")
+            krc, kout = sh(_capped([str(Y), "-q", "-m", str(P), "boot.ys"]),
+                           cwd=bw, timeout=_sl_timeout(src_bytes))
+            (bw / "boot.log").write_text(kout or "")
+        if (w / "uhdm_hier.il").exists():
+            rc, log2 = _gen()
+            log = (log or "") + "\n# bootstrapped a netlist for the wrapper\n" + (log2 or "")
     (w / "ifacebind.log").write_text(log or "")
     if rc != 0 or not out.exists():
         return None
@@ -664,6 +694,10 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     w.mkdir(parents=True, exist_ok=True)
     top = m
     files = cl.closure(m)
+    # Surelog flags, needed here rather than at the read: the interface-port
+    # wrapper may have to elaborate the bare module once to get its widths.
+    inc_flags = [f"-I{EXT / d}" for d in incs]
+    def_flags = [f"-D{d}" for d in defines]
     # "always_srcs": files (globs, relative to $EXT_IP_ROOT) prepended to
     # every closure -- packages a module reaches only through an included
     # .svh, which the identifier scan of .sv/.v roots cannot see
@@ -705,9 +739,13 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
             files = files + [flat[0]]
             top = flat[1]
     else:
+        # Surelog flags are needed by the wrapper step too (it may have to
+        # elaborate the bare module once to get the interface widths).
         # An interface port at the top comes first: no other wrapper can bind
         # a module read_slang will not accept as a top level at all.
-        ifcw = _iface_port_wrapper(w, fam, m, files)
+        ifcw = _iface_port_wrapper(w, fam, m, files, def_flags, inc_flags,
+                                   sum(os.path.getsize(f) for f in files
+                                       if os.path.exists(f)))
         cfgw = None if ifcw else _config_wrapper(w, fam, m, files)
         for pick in (ifcw, cfgw):
             if pick:
@@ -738,8 +776,7 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     old_incs = (w / "incs.txt").read_text() if (w / "incs.txt").exists() else None
     (w / "srcs.txt").write_text("\n".join(files) + "\n")
     (w / "incs.txt").write_text("\n".join(str(EXT / d) for d in incs) + "\n")
-    inc_flags = [f"-I{EXT / d}" for d in incs]
-    def_flags = [f"-D{d}" for d in defines]
+    # (hoisted above the wrapper selection -- see there)
     uhdm = w / "slpp_all" / "surelog.uhdm"
     stale = (not uhdm.exists()) or S.stat().st_mtime > uhdm.stat().st_mtime \
         or old_srcs != (w / "srcs.txt").read_text() or old_incs != (w / "incs.txt").read_text() \

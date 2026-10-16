@@ -87,6 +87,11 @@ _NOT_A_TYPE = {"typedef", "modport", "localparam", "parameter", "endinterface",
 MEMBER = re.compile(r"^\s*((?:[A-Za-z_]\w*::)?[A-Za-z_]\w*)\s*(\[[^;]*?\])?\s*([A-Za-z_]\w*)\s*((?:\[[^\]]*\]\s*)*);")
 TYPEDEF = re.compile(r"^\s*(typedef\s[^;]+;)\s*$", re.M)
 IFPARAM = re.compile(r"parameter\s+(?:type\s+)?(?:[\w:]+\s+)*?(\w+)\s*=\s*([^,)]+)")
+# Same, but KEEPING the declared type: a parameter of a user-defined type must
+# not be re-declared `int unsigned` (see the emission site).
+IFPARAM_T = re.compile(r"parameter\s+((?:[\w:]+\s+)*?)(\w+)\s*=\s*([^,)]+)")
+_INTEGRAL = {"int", "integer", "logic", "bit", "byte", "shortint", "longint",
+             "unsigned", "signed", "reg", "time", "real", "realtime", "type"}
 LOCALP = re.compile(r"^\s*(localparam\s[^;]+;)\s*$", re.M)
 
 
@@ -427,6 +432,56 @@ def _iface_port_conns(ihdr, plain):
     return ", ".join(conn), unbound
 
 
+def iface_header_end(src, start, stop):
+    """Index of the `;` that ends an interface DECLARATION, not the first one.
+
+    `src.find(";", start)` is wrong whenever the interface imports a package
+    before its parameter list, which is how every tnoc interface is written:
+
+        interface tnoc_flit_if
+          import  tnoc_pkg::*;          <-- the first `;`
+        #(parameter ... )(tnoc_types types);
+
+    Taking that semicolon as the end of the header left the parameter list AND
+    the port list inside the `body`, so iface_members read `#(`, the parameters
+    and the ports as members and the emitted wrapper was nonsense -- literally
+    `import import  get_channel_ack;`, which Surelog rejects (tnoc_dummy_node
+    and every other tnoc interface user).
+
+    Skip leading `import`/`export` statements, then balance () and [] so the
+    header ends at the first top-level `;` after the port list.
+    """
+    i, n = start, stop
+    while True:
+        m = re.match(r"\s*(?://[^\n]*\n|/\*.*?\*/\s*)*\s*(import|export)\b", src[i:n], re.S)
+        if not m:
+            break
+        semi = src.find(";", i + m.end())
+        if semi < 0 or semi >= n:
+            break
+        i = semi + 1
+    depth = 0
+    while i < n:
+        c = src[i]
+        if c in "([":
+            depth += 1
+        elif c in ")]":
+            depth -= 1
+        elif c == ";" and depth <= 0:
+            return i
+        elif c == "/" and i + 1 < n and src[i + 1] == "/":
+            i = src.find("\n", i)
+            if i < 0:
+                break
+            continue
+        elif c == "/" and i + 1 < n and src[i + 1] == "*":
+            j = src.find("*/", i)
+            i = (j + 2) if j > 0 else n
+            continue
+        i += 1
+    return src.find(";", start)        # unchanged fallback
+
+
 def iface_body(txt, iface):
     """(header, body) text of `interface <iface> ... endinterface`.
 
@@ -439,10 +494,51 @@ def iface_body(txt, iface):
             continue
         end = re.search(r"^\s*endinterface\b", src[m.end():], re.M)
         stop = m.end() + (end.start() if end else len(src) - m.end())
-        semi = src.find(";", m.end())
+        semi = iface_header_end(src, m.end(), stop)
         iface_body.src = src
         return src[m.end():semi], src[semi + 1:stop]
     return None, None
+
+
+def declared_ifaces(txt):
+    """Every `interface <name>` declared in the given sources."""
+    out = set()
+    for body in txt.values():
+        out.update(re.findall(r"^\s*interface\s+(\w+)", body, re.M))
+    return out
+
+
+def iface_iface_ports(txt, iface):
+    """[(type, name)] ports of `iface` whose type is ANOTHER interface.
+
+    tnoc's interfaces take the typedef-exporting `tnoc_types` as a port:
+
+        interface tnoc_flit_if import tnoc_pkg::*;
+        #(parameter tnoc_packet_config PACKET_CONFIG = ..., ...)
+        (tnoc_types  types);
+          typedef types.tnoc_flit tnoc_flit;      <-- members are declared over it
+
+    Such a port carries no direction, so iface_decl's
+    `(?:input|output|inout)` scan never saw it and the instance was emitted as
+    `tnoc_flit_if receiver_if_i ()` -- which cannot elaborate, the interface
+    needs its `types`.  Everything the members are declared over comes through
+    that port, so it is load-bearing rather than decorative.
+    """
+    hdr, _ = iface_body(txt, iface)
+    if hdr is None:
+        return []
+    known = declared_ifaces(txt)
+    # the port list is the LAST parenthesised group of the header
+    groups = re.findall(r"\(([^()]*)\)", hdr, re.S)
+    if not groups:
+        return []
+    out = []
+    for item in groups[-1].split(","):
+        item = re.sub(r"//[^\n]*", "", item).strip()
+        m = re.match(r"^(\w+)(?:\.\w+)?\s+(\w+)$", item)
+        if m and m.group(1) in known:
+            out.append((m.group(1), m.group(2)))
+    return out
 
 
 def iface_members(body):
@@ -550,6 +646,65 @@ def read_all(srcs):
     return txt
 
 
+def guard_free_defines(body):
+    """The `define names a file really contributes -- WITHOUT its include guard.
+
+    A WHOLE-FILE include guard defines its macro inside the `ifndef that tests
+    it, so a flat scan for `define reports the guard as already defined, the
+    `ifndef evaluates FALSE, and strip_inactive blanks THE ENTIRE FILE:
+
+        `ifndef TNOC_FLIT_IF_SV
+        `define TNOC_FLIT_IF_SV
+        interface tnoc_flit_if ...
+        `endif                      <-- end of file
+
+    Every tnoc interface and package is written that way (9 files), so
+    iface_body found no declaration for tnoc_flit_if, the interface wrapper
+    declined, and the fallback flat wrapper emitted `input tnoc_flit_if.sender
+    sender_if` -- not legal SystemVerilog.  24 of tnoc's 43 rows were lost to
+    it (12 `elab-fail`, 12 `no reference`).
+
+    The DEFAULT-SETTING idiom opens identically and means the OPPOSITE:
+
+        `ifndef REF
+        `define REF
+        `endif                      <-- three lines, file continues
+
+    there the macro IS defined afterwards and gates real code (`ifdef REF` in
+    RSD's ReadyBitTable / SourceCAM).  Dropping it flipped those arms off and
+    silently cost RSD wrappers ports -- ActiveList 40 -> 36, CSR_Unit 26 -> 22,
+    FPExecutionStage 34 ports -> no wrapper at all.  Measured with the offline
+    old-vs-new diff over all 334 module work dirs, which is the only way this
+    was visible.
+
+    So the discriminator is NOT the idiom's opening but its EXTENT: a guard
+    whose `endif is the last thing in the file is an include guard; anything
+    shorter is a default.
+    """
+    guards = set()
+    stack = []                      # [(name, index_of_directive)]
+    for m in re.finditer(r"^[ \t]*`(ifndef|ifdef|elsif|else|endif|define)\b[ \t]*(\w+)?",
+                         body, re.M):
+        kind, nm = m.group(1), m.group(2)
+        if kind in ("ifndef", "ifdef"):
+            stack.append((nm if kind == "ifndef" else None, m.start()))
+        elif kind == "endif":
+            if not stack:
+                continue
+            nm_open, _ = stack.pop()
+            if nm_open and not stack:
+                # tail after this `endif: only whitespace/comments -> whole-file guard
+                tail = body[m.end():]
+                tail = re.sub(r"//[^\n]*", "", tail)
+                tail = re.sub(r"/\*.*?\*/", "", tail, flags=re.S)
+                if not tail.strip():
+                    guards.add(nm_open)
+        elif kind in ("else", "elsif") and stack:
+            stack[-1] = (None, stack[-1][1])
+    names = set(re.findall(r"^\s*`define\s+(\w+)", body, re.M))
+    return names - guards
+
+
 def defined_names(txt, defines):
     """Macro names that are defined when the sweep reads these sources.
 
@@ -559,7 +714,7 @@ def defined_names(txt, defines):
     or when an included header next to a source does."""
     names = set(defines)
     for body in txt.values():
-        names.update(re.findall(r"^\s*`define\s+(\w+)", body, re.M))
+        names.update(guard_free_defines(body))
     seen = set()
     for path, body in txt.items():
         d = Path(path).parent
@@ -715,10 +870,21 @@ def iface_ports_of(txt, top):
             continue
         cur.append(c)
     parts.append("".join(cur))
+    # A port written WITHOUT a modport -- `tnoc_types types` -- is still an
+    # interface port, but IFACE_PORT requires the `.modport`, so it was missed
+    # and the wrapper left it dangling ("interface port 'types' not connected").
+    # Only a type that is actually a declared `interface` here qualifies, so an
+    # ordinary typed port (`my_struct_t cfg`) is never mistaken for one.
+    known = declared_ifaces(txt)
     for part in parts:
-        m = IFACE_PORT.match(part.strip())
+        p_ = part.strip()
+        m = IFACE_PORT.match(p_)
         if m and not re.match(r"^(input|output|inout|logic|wire|reg|bit|parameter|localparam|import)$", m.group(1)):
             found[m.group(3)] = (m.group(1), m.group(2), (m.group(4) or "").strip())
+            continue
+        mb = re.match(r"^([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*((?:\[[^\]]*\]\s*)*)$", p_)
+        if mb and mb.group(1) in known:
+            found[mb.group(2)] = (mb.group(1), "", (mb.group(3) or "").strip())
     return found
 
 
@@ -797,6 +963,20 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             if inc not in param_includes:
                 param_includes.append(inc)
         my_param = []
+        # The declared TYPE, where it is a user-defined one.  Re-declaring every
+        # parameter `int unsigned` breaks a parameter of a STRUCT type, which is
+        # how tnoc configures everything:
+        #     parameter tnoc_packet_config PACKET_CONFIG = TNOC_DEFAULT_PACKET_CONFIG,
+        #     parameter int                CHANNELS      = PACKET_CONFIG.virtual_channels
+        # As `int unsigned PACKET_CONFIG`, the very next parameter's default is
+        # "invalid member access for type 'int unsigned'" (read_slang).  Only a
+        # non-integral, non-`type` type is carried over, so every existing
+        # width parameter keeps the exact declaration it had before.
+        ptype = {}
+        for pm in IFPARAM_T.finditer(hdr):
+            toks = pm.group(1).split()
+            if toks and not all(t in _INTEGRAL for t in toks):
+                ptype[pm.group(2)] = " ".join(toks)
         for pm in IFPARAM.finditer(hdr):
             nm, dflt = pm.group(1), pm.group(2).strip()
             my_param.append(nm)
@@ -805,7 +985,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             seen_param.add(nm)
             val = iface_params.get(nm) or bound_value(value_rules, nm, dflt) or dflt
             param_vals[nm] = val
-            plines.append(f"  parameter int unsigned {nm} = {val}")
+            plines.append(f"  parameter {ptype.get(nm, 'int unsigned')} {nm} = {val}")
         # Localparams and typedefs must reach the PORT LIST, which the ports
         # below are declared with -- so they go into the ANSI parameter list as
         # `localparam` / `localparam type` entries, not into the body (a
@@ -845,10 +1025,26 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         # into the wrapper's port list, so the wrapper needs the same import.
         # It goes between the module name and the parameter list, the only
         # place an import reaches an ANSI port list from.
-        for im in re.findall(r"^\s*import\s+([^;]+);", body, re.M):
+        # A MODPORT may import tasks/functions -- every tnoc interface does:
+        #     modport receiver (input valid, ..., import get_ack,
+        #                       import get_channel_ack, ...);
+        # Those are not package imports, and `[^;]+` runs from the first
+        # `import` all the way to the modport's closing `;`, so the wrapper came
+        # out with `import get_ack;` followed by `import import
+        # get_channel_ack;`.  A package import always names a scope with `::`
+        # (`import axi_pkg::*`), a modport function import never does, so that
+        # is the discriminator.
+        # Scan the HEADER as well as the body: an interface may import its
+        # package BEFORE the parameter list -- `interface tnoc_flit_if import
+        # tnoc_pkg::*; #(parameter tnoc_packet_config PACKET_CONFIG =
+        # TNOC_DEFAULT_PACKET_CONFIG, ...)` -- and the parameter defaults
+        # copied into the wrapper then name constants only that package
+        # declares ("use of undeclared identifier
+        # 'TNOC_DEFAULT_PACKET_CONFIG'" from read_slang).
+        for im in re.findall(r"^\s*import\s+([^;]+);", (hdr or "") + "\n" + body, re.M):
             for one in im.split(","):
                 one = one.strip()
-                if one and one not in imports:
+                if one and "::" in one and one not in imports:
                     imports.append(one)
         mports = iface_modports(body)
         dirs = mports.get(modport, {})
@@ -1040,6 +1236,23 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
           f"from the interface declaration")
 
 
+def type_from_iface_port(txt, ifaces):
+    """True when an interface used here declares members over a type taken from
+    an interface PORT -- `interface tnoc_flit_if (tnoc_types types); typedef
+    types.tnoc_flit tnoc_flit;`.  Such a declaration cannot be restated in a
+    wrapper's port list, because a port list cannot reference an instance."""
+    for ent in ifaces.values():
+        iface = ent[0]
+        subs = [n for _, n in iface_iface_ports(txt, iface)]
+        if not subs:
+            continue
+        _, body = iface_body(txt, iface)
+        for n in subs:
+            if re.search(r"\btypedef\s+" + re.escape(n) + r"\.", body or ""):
+                return True
+    return False
+
+
 def main():
     argv = sys.argv[1:]
     rtl_top = None
@@ -1085,9 +1298,43 @@ def main():
         ifaces = iface_ports_of(txt, rtl_top)
         if not ifaces:
             sys.exit(f"# gen_iface_wrapper: {rtl_top} declares no interface ports")
-        emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
-                       value_rules)
-        return
+        # --from-decl copies the interface's MEMBER DECLARATIONS into the
+        # wrapper's port list verbatim, which only works when those
+        # declarations can be read standalone.  tnoc's cannot: every member of
+        # tnoc_flit_if is declared over `typedef types.tnoc_flit tnoc_flit`, a
+        # type taken from ANOTHER interface handed in as a port, and a port
+        # list cannot reference an instance.  The wrapper came out with
+        # `tnoc_flit` unresolved -- receiver_if__flit 32 bits where the
+        # elaborated netlist says 582 (2 x 291) -- and read_slang rejected it
+        # with "use of undeclared identifier 'types'".
+        #
+        # The NETLIST path has neither problem: read_uhdm has already
+        # elaborated the module, so the flattened `\receiver_if.flit` port
+        # carries the real width, and the wrapper instantiates the interfaces
+        # (and the `types` they take as a port) instead of restating their
+        # members.  Use it for exactly that shape and leave every other family
+        # on --from-decl, where it is proven over 69 wrappers.
+        if type_from_iface_port(txt, ifaces):
+            have = []
+            if il and Path(il).exists():
+                have = [n for _, _, n in netlist_ports(il, top) if "." in n]
+            if have:
+                print("# gen_iface_wrapper: member types come from an interface "
+                      "port -- using the elaborated netlist instead of the "
+                      "declaration")
+                from_decl = False
+            else:
+                # The caller generates the wrapper BEFORE the first read, so on
+                # a fresh work directory there is no netlist yet.  Say so, so
+                # the flow can elaborate the bare module once and retry; fall
+                # through to --from-decl meanwhile, which is what it did
+                # before and keeps this a no-op for a caller that ignores the
+                # marker.
+                print(f"# gen_iface_wrapper: NEEDS-NETLIST {rtl_top}")
+        if from_decl:
+            emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
+                           value_rules)
+            return
     ports = netlist_ports(il, top)
     if not ports:
         sys.exit(f"# gen_iface_wrapper: no ports for {top} in {il}")
@@ -1106,8 +1353,13 @@ def main():
     # instances here, which is correct for a per-module wrapper: the DUT sees
     # one modport each and nothing cross-couples them.
     decls, insts, conns, dut = [], [], [], []
+    sub_insts = []
     for base in dotted:
-        iface, modport = ifaces[base]
+        # iface_ports_of returns (iface, modport, unpacked_dims); the third
+        # element was added for interface ARRAY ports and this caller was never
+        # updated, so the netlist path died with "too many values to unpack"
+        # the first time anything reached it (tnoc_dummy_node).
+        iface, modport = ifaces[base][0], ifaces[base][1]
         params, iports, pmem = iface_decl(txt, iface)
         pv = []
         for p in params:
@@ -1142,9 +1394,39 @@ def main():
                 cand = pref or cand
             if cand:
                 conn.append(f".{ip}({cand[0]})")
+        # An interface that itself takes an interface port (tnoc_flit_if's
+        # `tnoc_types types`) needs that one instantiated too, and shared: the
+        # member typedefs of every flit interface come from the SAME types
+        # instance, so a per-port copy would be a different type.
+        for sub_t, sub_n in iface_iface_ports(txt, iface):
+            inst_n = f"{sub_t}_shared_i"
+            decl = f"  {sub_t} {inst_n} ();"
+            if decl not in sub_insts:
+                sub_insts.append(decl)
+            conn.append(f".{sub_n}({inst_n})")
         args = ", ".join(conn)
         insts.append(f"  {iface} {pfx}{base}_i ({args});")
         dut.append(f"    .{base}({base}_i.{modport})")
+
+    # The DUT's OWN interface ports that carry no signals: tnoc_types exports
+    # only typedefs, so it contributes no flattened `types.x` port and never
+    # appears in `dotted` -- the wrapper left it dangling and read_slang
+    # refused the instance ("interface port 'types' not connected",
+    # tnoc_flit_if_fifo / tnoc_if_transposer / tnoc_vc_splitter).  Connect it
+    # to the SAME shared instance the member interfaces were given, which is
+    # what the DUT's own typedefs are resolved against.
+    for base in sorted(ifaces):
+        if base in dotted:
+            continue
+        sub_t = ifaces[base][0]
+        if sub_t not in declared_ifaces(txt):
+            continue
+        inst_n = f"{sub_t}_shared_i"
+        decl = f"  {sub_t} {inst_n} ();"
+        if decl not in sub_insts:
+            sub_insts.append(decl)
+        mp = ifaces[base][1]
+        dut.append(f"    .{base}({inst_n}{'.' + mp if mp else ''})")
 
     for width, direction, name in ports:
         base, _, field = name.partition(".")
@@ -1167,7 +1449,9 @@ def main():
                  f"// take an escaped port name containing a dot).\n"
                  f"module {rtl_top}_flat (\n")
         fh.write(",\n".join(decls) + "\n);\n\n")
-        fh.write("\n".join(insts) + "\n\n")
+        # the shared sub-interface instances must precede the interfaces
+        # that take them as a port
+        fh.write("\n".join(sub_insts + insts) + "\n\n")
         fh.write(f"  {rtl_top} dut (\n" + ",\n".join(dut) + "\n  );\n\n")
         fh.write("\n".join(conns) + "\nendmodule\n")
     print(f"# wrote {out}: {len(decls)} ports, {len(insts)} interface instance(s) "
