@@ -12197,6 +12197,48 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                                         outer_ascending = (l < r);
                                     }
                                 }
+                            } else if (ats->UhdmType() == uhdmbit_typespec) {
+                                // `bit [N-1:0][15:0] LIST` is a bit_typespec,
+                                // NOT a logic_typespec -- and it carries no
+                                // Elem_typespec, only Ranges().  Without this
+                                // branch packed_multidim stayed false and
+                                // elem_w stayed 1, so `LIST[i]` read BIT i
+                                // instead of the i-th 16-bit slot.
+                                //
+                                // rggen_or_reducer builds its reduction tree on
+                                // exactly that:
+                                //   localparam bit [N-1:0][15:0] SUB_N_LIST
+                                //       = get_sub_n_list(N);
+                                //   if      (SUB_N_LIST[i] == 4) ...
+                                //   else if (SUB_N_LIST[i] == 2) <two-way OR>
+                                //   else                         <single entry>
+                                // SUB_N_LIST[0] is 2, but bit 0 of it is 0, so
+                                // every comparison failed and the chain fell
+                                // through to the ELSE arm: the reducer emitted
+                                // `next_data = i_data[0]` with no OR at all.
+                                // rggen_mux then dropped every entry but the
+                                // first (19 of its 64 input combinations wrong)
+                                // and block_0 / block_1 / uart_csr diverged
+                                // with it.
+                                //
+                                // It hid behind the parameter DEFAULT: at N = 1
+                                // the correct arm IS the else arm, so
+                                // rggen_or_reducer's own sweep row proved while
+                                // every instantiation with N >= 2 was wrong.
+                                auto bt = dynamic_cast<const UHDM::bit_typespec*>(ats);
+                                if (bt && bt->Ranges() && bt->Ranges()->size() > 1) {
+                                    packed_multidim = true;
+                                    auto r0 = (*bt->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        int outer_size = std::abs(l - r) + 1;
+                                        outer_low = std::min(l, r);
+                                        if (outer_size > 0 && total % outer_size == 0)
+                                            elem_w = total / outer_size;
+                                    }
+                                }
                             } else if (ats->UhdmType() == uhdmarray_typespec) {
                                 // UNPACKED array parameter: `logic [W-1:0] DAM
                                 // [N-1:0]`.  `DAM[i]` selects a whole W-bit
