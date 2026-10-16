@@ -1,0 +1,5 @@
+# Pins the CELL NAME: with the bug the instance is `_flat.dut.g_rbr.u_register`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top csr_flat
+select -assert-count 1 csr/c:g_rbr.u_register
+select -assert-count 0 csr/c:*_flat*
