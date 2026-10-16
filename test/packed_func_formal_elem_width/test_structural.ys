@@ -1,0 +1,17 @@
+# Pins the folded VALUES.  Without the formal element-width registration
+# gol()'s `sub[i-1]` reads one bit, so OFF folds to all zeros (o1 = 0, o2 = 0)
+# and gnn() counts SET BITS of the argument instead of non-zero elements
+# (nn = 1).  SUB itself (a local, already registered) stays right either way
+# and is pinned as the control.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt -full
+sat -verify -prove s0 16'd2
+sat -verify -prove s1 16'd3
+sat -verify -prove s2 16'd0
+sat -verify -prove o0 16'd0
+sat -verify -prove o1 16'd2
+sat -verify -prove o2 16'd5
+sat -verify -prove nn 32'd2
