@@ -3583,8 +3583,20 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                         auto ia = any_cast<const UHDM::interface_array*>(a);
                         int n = 0;
                         if (ia->Instances()) n = (int)ia->Instances()->size();
-                        if (n < 1 && ia->Ranges()) {
-                            n = 1;
+                        // Surelog materializes ONLY element [0] of the port's
+                        // array under the child instance once the array
+                        // passes through a level below the top (rggen's
+                        // uart_csr -> rggen_apb_adapter -> rggen_adapter_common
+                        // `register_if[REGISTERS]`): Instances() has 1 entry
+                        // while the Range still says [0:REGISTERS-1].  Taking
+                        // the instance count alone created ports for
+                        // register_if[0] only, plus unindexed stand-ins
+                        // (\register_if.active) nothing ever drove.  The
+                        // declared range is the element count; the instance
+                        // list is only a lower bound.
+                        int n_range = 0;
+                        if (ia->Ranges()) {
+                            n_range = 1;
                             for (auto r : *ia->Ranges()) {
                                 int l = 0, rr = 0;
                                 if (r->Left_expr()) {
@@ -3595,9 +3607,10 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                                     auto s = import_expression(r->Right_expr());
                                     if (s.is_fully_const()) rr = s.as_const().as_int();
                                 }
-                                n *= std::abs(l - rr) + 1;
+                                n_range *= std::abs(l - rr) + 1;
                             }
                         }
+                        if (n_range > n) n = n_range;
                         if (n >= 1) {
                             uhdm_trace("UHDM: interface-array port '%s', %d element(s) -> width %d\n",
                                 std::string(port->VpiName()).c_str(), n, -n);
