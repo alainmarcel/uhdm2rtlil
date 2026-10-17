@@ -821,6 +821,27 @@ def module_header(txt, name):
     return None
 
 
+def _enum_scope(txt, ty):
+    """`pkg::` when the enum typedef `ty` lives in a package, else "".
+
+    The flat wrapper imports nothing, so a cast to a PACKAGE enum must name
+    the package (tnoc_axi_pkg's tnoc_axi_burst_size, read_slang: "no implicit
+    conversion from 'logic[2:0]' to 'tnoc_axi_burst_size'" on a plain
+    `assign slave_if_i.awsize = slave_if__awsize`).  A typedef in a module or
+    interface body is cast by its bare name as before.
+    """
+    pat = re.compile(r"\btypedef\s+enum\b[^;]*?\b" + re.escape(ty) + r"\s*;", re.S)
+    for body in txt.values():
+        m = pat.search(body)
+        if not m:
+            continue
+        pkg = None
+        for pm in re.finditer(r"^\s*(package|endpackage)\b\s*(\w+)?", body[:m.start()], re.M):
+            pkg = pm.group(2) if pm.group(1) == "package" else None
+        return f"{pkg}::" if pkg else ""
+    return ""
+
+
 def _is_enum_type(txt, ty):
     """True when `ty` is a typedef'd ENUM anywhere in the collected sources.
 
@@ -1137,7 +1158,7 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
                         # typedef'd packed struct or enum casts cleanly.
                         slice_ = f"{flat}[({idx})*({ew}) +: ({ew})]"
                         if not rng and _is_enum_type(txt, ty):
-                            slice_ = f"{ty}'({slice_})"
+                            slice_ = f"{_enum_scope(txt, ty)}{ty}'({slice_})"
                         body_ = (f"    assign {base}_i{sel}.{mem}{elem} = "
                                  f"{slice_};\n")
                     else:
@@ -1433,6 +1454,18 @@ def main():
         mp = ifaces[base][1]
         dut.append(f"    .{base}({inst_n}{'.' + mp if mp else ''})")
 
+    # The member's DECLARED type per interface port: the netlist knows only
+    # the width, and an ENUM-typed member needs an explicit cast from the flat
+    # `logic` port (no implicit conversion TO an enum -- see emit_from_decl's
+    # unpacked branch; here the plain-member case: tnoc_axi_if's
+    # `tnoc_axi_burst_size awsize`, which left tnoc_axi_if_connector with a
+    # co-sim and NO read_slang reference).
+    mem_ty = {}
+    for base in dotted:
+        _ih, ibody = iface_body(txt, ifaces[base][0])
+        if ibody:
+            mem_ty[base] = {m: (ty, rng) for ty, rng, m, ud in iface_members_full(ibody)
+                            if not ud}
     for width, direction, name in ports:
         base, _, field = name.partition(".")
         rng = "" if width == 1 else f"[{width - 1}:0] "
@@ -1443,7 +1476,11 @@ def main():
         flat = f"{base}__{field}"
         decls.append(f"  {direction} logic {rng}{flat}")
         if direction == "input":
-            conns.append(f"  assign {base}_i.{field} = {flat};")
+            ty, trng = mem_ty.get(base, {}).get(field, (None, None))
+            rhs = flat
+            if ty and not trng and _is_enum_type(txt, ty):
+                rhs = f"{_enum_scope(txt, ty)}{ty}'({flat})"
+            conns.append(f"  assign {base}_i.{field} = {rhs};")
         else:
             conns.append(f"  assign {flat} = {base}_i.{field};")
 
