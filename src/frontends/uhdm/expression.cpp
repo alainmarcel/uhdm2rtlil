@@ -3656,8 +3656,18 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             const UHDM::ref_typespec* ots = nullptr;
                             if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(obj)) {
                                 org = pv->Ranges(); ots = pv->Typespec();
+                                // A port's packed_array_var (`s_t [1:0][4:1]
+                                // mesh_i`) carries the element type on its
+                                // first ELEMENT, not on itself -- the same
+                                // place import_port measures it.
+                                if (!ots && pv->Elements() && !pv->Elements()->empty())
+                                    if (auto e0 = dynamic_cast<const UHDM::expr*>((*pv->Elements())[0]))
+                                        ots = e0->Typespec();
                             } else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(obj)) {
                                 org = pn->Ranges(); ots = pn->Typespec();
+                                if (!ots && pn->Elements() && !pn->Elements()->empty())
+                                    if (auto e0 = dynamic_cast<const UHDM::expr*>((*pn->Elements())[0]))
+                                        ots = e0->Typespec();
                             } else return;
                             if (!org || org->empty() || !own_dims.empty()) return;
                             for (auto r : *org) {
@@ -3709,6 +3719,29 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             if (own_dims.empty() && current_instance->Variables())
                                 for (auto v : *current_instance->Variables())
                                     if (std::string(v->VpiName()) == base_name) { own_geo(v); break; }
+                            // A PORT declared as a packed array of structs
+                            // (`bp_mem_ready_and_link_s [ic_x_dim_p-1:0][E:W]
+                            // mem_fwd_link_li` is a local, but the mesh side
+                            // `mesh_i` is a port): its packed_array_var is
+                            // reachable only through the port's Low_conn --
+                            // not in Nets()/Variables() -- and the var_select
+                            // carries no Actual_group.  With no dims and a
+                            // struct element (no logic_typespec) the select
+                            // fell to the legacy paths and `mesh_i[i][E:W]`
+                            // came back as a 5-bit temp: black-parrot
+                            // bp_io_complex's per-column link slices were all
+                            // zero (680 signals in the miter).
+                            if (own_dims.empty())
+                                if (auto mi9 = dynamic_cast<const UHDM::module_inst*>(current_instance))
+                                    if (mi9->Ports())
+                                        for (auto pt : *mi9->Ports())
+                                            if (std::string(pt->VpiName()) == base_name) {
+                                                if (auto lc = pt->Low_conn())
+                                                    if (lc->UhdmType() == uhdmref_obj)
+                                                        if (auto ag = any_cast<const UHDM::ref_obj*>(lc)->Actual_group())
+                                                            own_geo(ag);
+                                                break;
+                                            }
                         }
                         // Typespec with Elem_typespec (`ram_data_t [3:0]
                         // [0:0] data_wentry`): the lt path below requires a
