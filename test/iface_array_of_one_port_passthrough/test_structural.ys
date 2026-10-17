@@ -1,0 +1,9 @@
+# UHDM-only (read_verilog rejects the interface-array port).  Without the fix
+# the wrapper's register_if_0__valid / address and o_read_data are undriven
+# (check -assert fails); test_slang_equiv.ys proves the values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top adapter_flat
+proc
+flatten
+opt_clean
+check -assert
