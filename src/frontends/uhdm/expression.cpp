@@ -14567,6 +14567,47 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // A STAGED LOCAL / FORMAL of an inlined function (in input_mapping) read
+    // by struct FIELD, any depth: `request_header.request.byte_length` in
+    // tnoc_packet_if's unpack_header, inlined through a port.  The deeper
+    // branches below key on module wires and a 3-element path is claimed by
+    // the union/elem-array branch first, so resolve it here from the
+    // declaration's struct typespec (the ref's actual, or -- for a local of
+    // an INTERFACE method, which has no actual bound -- the enclosing
+    // task/function's declaration), aliases through an interface port
+    // included.
+    if (input_mapping && uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
+        (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmref_obj) {
+        bool all_refs = true;
+        for (auto e : *uhdm_hier->Path_elems()) if (e->UhdmType() != uhdmref_obj) { all_refs = false; break; }
+        std::string sl_base = std::string((*uhdm_hier->Path_elems())[0]->VpiName());
+        if (all_refs && input_mapping->count(sl_base)) {
+            std::string member_path;
+            for (size_t i = 1; i < uhdm_hier->Path_elems()->size(); i++)
+                member_path += (i > 1 ? "." : "") + std::string((*uhdm_hier->Path_elems())[i]->VpiName());
+            const UHDM::any* ag = any_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0])->Actual_group();
+            if (!ag) ag = find_enclosing_tf_decl(uhdm_hier, sl_base);
+            const UHDM::typespec* lts = nullptr;
+            if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) {
+                if (io->Typespec()) lts = io->Typespec()->Actual_typespec();
+            } else if (auto ex = dynamic_cast<const UHDM::expr*>(ag)) {
+                if (ex->Typespec()) lts = ex->Typespec()->Actual_typespec();
+            }
+            lts = resolve_iface_port_typedef(lts);
+            if (lts && (lts->UhdmType() == uhdmstruct_typespec || lts->UhdmType() == uhdmunion_typespec)) {
+                int off = 0, w = 0;
+                if (calculate_struct_member_offset(lts, member_path, inst, off, w) && w > 0) {
+                    RTLIL::SigSpec bv = input_mapping->at(sl_base);
+                    if (off >= 0 && off + w <= bv.size()) {
+                        uhdm_trace("    hier_path '%s' -> staged local %s member %s [%d +: %d]\n",
+                            std::string(uhdm_hier->VpiName()).c_str(), sl_base.c_str(), member_path.c_str(), off, w);
+                        return bv.extract(off, w);
+                    }
+                }
+            }
+        }
+    }
+
     // `gen_blk.Param` — a localparam declared in another NAMED generate block
     // of this module, used as a value (acc_alu_bignum indexes its ISPR read
     // mux with `ispr_rdata_intg_mux_in[gen_ispr_ids_pqc.IsprKmacMsg0Intg]`).
@@ -19716,6 +19757,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (mode_debug)
             uhdm_trace("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
         
+        // A FUNCTION LOCAL or FORMAL: its value is staged in input_mapping and
+        // its declaration (the ref_obj's actual, a ref_var / struct_var /
+        // io_decl) carries the struct typespec.  The module-wire lookup below
+        // found nothing -- or, worse, a same-named module net -- and `h.a`
+        // after `h = hdr_t'(v)` inside a function returned X (tnoc's AXI
+        // write/read demux `select_route`, header.packet_type).
+        bool all_refs = uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2;
+        if (all_refs) for (auto e : *uhdm_hier->Path_elems()) if (e->UhdmType() != uhdmref_obj) { all_refs = false; break; }
+        if (input_mapping && input_mapping->count(base_name) && all_refs) {
+            std::string member_name;
+            for (size_t i = 1; i < uhdm_hier->Path_elems()->size(); i++)
+                member_name += (i > 1 ? "." : "") + std::string((*uhdm_hier->Path_elems())[i]->VpiName());
+            const UHDM::any* ag = any_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0])->Actual_group();
+            // a local of an INTERFACE method inlined here has no actual bound
+            if (!ag) ag = find_enclosing_tf_decl(uhdm_hier, base_name);
+            const UHDM::typespec* lts = nullptr;
+            if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) {
+                if (io->Typespec()) lts = io->Typespec()->Actual_typespec();
+            } else if (auto ex = dynamic_cast<const UHDM::expr*>(ag)) {
+                if (ex->Typespec()) lts = ex->Typespec()->Actual_typespec();
+            }
+            lts = resolve_iface_port_typedef(lts);
+            if (lts && (lts->UhdmType() == uhdmstruct_typespec || lts->UhdmType() == uhdmunion_typespec)) {
+                int off = 0, w = 0;
+                if (calculate_struct_member_offset(lts, member_name, inst, off, w) && w > 0) {
+                    RTLIL::SigSpec bv = input_mapping->at(base_name);
+                    if (off >= 0 && off + w <= bv.size()) {
+                        uhdm_trace("    hier_path '%s' -> staged local %s member %s [%d +: %d]\n",
+                            path_name.c_str(), base_name.c_str(), member_name.c_str(), off, w);
+                        return bv.extract(off, w);
+                    }
+                }
+            }
+        }
         // Same gen-scope qualification as the resolver below: a struct
         // declared inside a generate block is registered as
         // `<gen_scope>.<name>`.
