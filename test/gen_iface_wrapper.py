@@ -1081,16 +1081,21 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
             if count is None:
                 sys.exit(f"# gen_iface_wrapper: cannot size the interface array "
                          f"port {base}{adim} of {rtl_top}")
-        if count > 1:
+        # An array port of ONE element is still an array port: rggen's
+        # adapters declare `rggen_register_if.host register_if[REGISTERS]`
+        # with REGISTERS defaulting to 1, and a scalar instance for it drew
+        # "dimensions of connection for port 'register_if' do not match its
+        # declaration" from read_slang -- five rows with no reference at all.
+        # Key the array shape on the DIMENSION being there, not on count > 1.
+        if adim:
             insts.append(f"  {iface} {pfx}{base}_i [{count-1}:0] ({iports});")
             dut.append(f"    .{base}({base}_i)")
         else:
             insts.append(f"  {iface} {pfx}{base}_i ({iports});")
-            dut.append(f"    .{base}({base}_i.{modport})" if not adim
-                       else f"    .{base}({base}_i)")
+            dut.append(f"    .{base}({base}_i.{modport})")
         for e in range(count):
-            sel = f"[{e}]" if count > 1 else ""
-            tag = f"_{e}" if count > 1 else ""
+            sel = f"[{e}]" if adim else ""
+            tag = f"_{e}" if adim else ""
             for ty, rng, mem, udims in iface_members_full(body):
                 d = dirs.get(mem)
                 if not d:                  # not in this modport
