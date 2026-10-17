@@ -2901,6 +2901,12 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
         }
     }
     
+    // An INTERFACE method reads the interface's members -- signals, not
+    // constants -- so a call with no or only constant arguments must still
+    // be inlined (`packet_if.pack()`, `packet_if.get_ack()`).
+    if (all_const && func_def->VpiParent() &&
+        func_def->VpiParent()->UhdmType() == uhdminterface_inst)
+        all_const = false;
     if (all_const) {
         uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
         std::map<std::string, RTLIL::Const> output_params;

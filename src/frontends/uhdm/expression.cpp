@@ -15076,6 +15076,66 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             auto mfc = any_cast<const UHDM::method_func_call*>(last_elem);
             std::string func_name = std::string(mfc->VpiName());
             const UHDM::function* fdef = mfc->Function();
+            // The INSTANCE the call's prefix names -- an interface instance
+            // of this module or of one of its generate scopes, or an element
+            // of an interface array (`flit_if[2].get_channel_ack(0)`).  It
+            // binds the method's type / value parameters (fix for tnoc's
+            // tbcm_selector) and, when Surelog leaves Function() null, holds
+            // the method itself in its Task_funcs.
+            auto find_prefix_inst = [&]() -> const UHDM::instance* {
+                auto& pe = *uhdm_hier->Path_elems();
+                if (pe.size() < 2 || !current_instance) return nullptr;
+                std::string base = std::string(pe[0]->VpiName());
+                if (pe[0]->UhdmType() == uhdmbit_select) {
+                    auto bs = any_cast<const bit_select*>(pe[0]);
+                    RTLIL::SigSpec ix = bs->VpiIndex() ? import_expression(bs->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                    if (ix.size() > 0 && ix.is_fully_const())
+                        base += "[" + std::to_string(ix.as_int()) + "]";
+                }
+                auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+                if (!mi) return nullptr;
+                std::string cur_gs = get_current_gen_scope();
+                const UHDM::instance* found = nullptr;
+                auto consider = [&](const UHDM::instance* cand) {
+                    if (!cand || std::string(cand->VpiName()) != base) return;
+                    std::string fn = std::string(cand->VpiFullName());
+                    bool on_path = cur_gs.empty() || fn.find("." + cur_gs + "." + base) != std::string::npos;
+                    if (!found || on_path) found = cand;
+                };
+                auto scan_ifaces = [&](const UHDM::VectorOfinterface_inst* ifs,
+                                       const UHDM::VectorOfinterface_array* ias) {
+                    if (ifs) for (auto ii : *ifs) consider(ii);
+                    if (ias) for (auto ia : *ias)
+                        if (ia->Instances())
+                            for (auto e : *ia->Instances())
+                                consider(dynamic_cast<const UHDM::instance*>(e));
+                };
+                scan_ifaces(mi->Interfaces(), mi->Interface_arrays());
+                std::function<void(const UHDM::VectorOfgen_scope_array*)> scan_gsa =
+                    [&](const UHDM::VectorOfgen_scope_array* gsas) {
+                    if (!gsas) return;
+                    for (auto gsa : *gsas)
+                        if (gsa->Gen_scopes())
+                            for (auto gs : *gsa->Gen_scopes()) {
+                                scan_ifaces(gs->Interfaces(), gs->Interface_arrays());
+                                scan_gsa(gs->Gen_scope_arrays());
+                            }
+                };
+                scan_gsa(mi->Gen_scope_arrays());
+                return found;
+            };
+            const UHDM::instance* prefix_inst = find_prefix_inst();
+            if (!fdef && prefix_inst)
+                if (auto pii = dynamic_cast<const UHDM::interface_inst*>(prefix_inst))
+                    if (pii->Task_funcs())
+                        for (auto tf : *pii->Task_funcs())
+                            if (tf->UhdmType() == uhdmfunction &&
+                                std::string(tf->VpiName()) == func_name) {
+                                fdef = any_cast<const UHDM::function*>(tf);
+                                uhdm_trace("    hier_path method %s resolved on interface instance %s\n",
+                                    func_name.c_str(), std::string(pii->VpiName()).c_str());
+                                break;
+                            }
             // Fall back: walk the current module's Task_funcs by name.
             if (!fdef && current_instance) {
                 if (auto mod = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
@@ -15093,6 +15153,67 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // Built-in enum methods `e.first()` / `e.last()` / `e.num()`:
             // these are compile-time constants of the enum TYPE (independent of
             // e's runtime value), so they have no user `Function()` (fdef null).
+            // A method of an INTERFACE reached through a PORT or an instance:
+            // tnoc's `packet_if.pack_header()` in an always_comb / an
+            // assignment pattern, `if (packet_if.get_header_ack())` in an
+            // always_ff.  Surelog leaves Function() null across a port, and
+            // the module's own Task_funcs do not hold an interface's methods,
+            // so the call imported as NOTHING ("hier_path function
+            // 'pack_header' -- no Function() and no match in current
+            // module's Task_funcs"): every header flit of tnoc's packet
+            // serializer was undriven.  Find the interface -- the prefix's
+            // instance, or the port wire's interface_type -- and take the
+            // method from its Task_funcs.  The members its body reads are
+            // the port's `<prefix>.<member>` wires (mapped below).
+            std::string mc_prefix;
+            const UHDM::interface_inst* mc_iface_def = nullptr;
+            if (!fdef && uhdm_hier->Path_elems()->size() >= 2 && uhdm_design) {
+                auto& pe0 = *uhdm_hier->Path_elems();
+                mc_prefix = std::string(pe0[0]->VpiName());
+                if (pe0[0]->UhdmType() == uhdmbit_select) {
+                    auto bs0 = any_cast<const bit_select*>(pe0[0]);
+                    RTLIL::SigSpec ix = bs0->VpiIndex() ? import_expression(bs0->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                    if (ix.size() > 0 && ix.is_fully_const()) mc_prefix += "[" + std::to_string(ix.as_int()) + "]";
+                }
+                std::string iface_def_name;
+                if (auto pw = module->wire(RTLIL::escape_id(mc_prefix)))
+                    if (pw->attributes.count(RTLIL::escape_id("interface_type"))) {
+                        iface_def_name = pw->attributes.at(RTLIL::escape_id("interface_type")).decode_string();
+                        if (!iface_def_name.empty() && iface_def_name[0] == '\\') iface_def_name = iface_def_name.substr(1);
+                        auto bs = iface_def_name.find("\\");   // a $paramod name: keep the bare interface name
+                        if (iface_def_name.compare(0, 8, "$paramod") == 0 && bs != std::string::npos) {
+                            std::string rest = iface_def_name.substr(bs + 1);
+                            iface_def_name = rest.substr(0, rest.find("\\"));
+                        }
+                    }
+                if (iface_def_name.empty() && pe0[0]->UhdmType() == uhdmref_obj)
+                    if (auto ag = any_cast<const ref_obj*>(pe0[0])->Actual_group()) {
+                        if (ag->UhdmType() == uhdminterface_inst)
+                            iface_def_name = std::string(any_cast<const interface_inst*>(ag)->VpiDefName());
+                        else if (ag->UhdmType() == uhdmmodport && ag->VpiParent())
+                            iface_def_name = std::string(ag->VpiParent()->VpiDefName());
+                    }
+                if (iface_def_name.find("work@") == 0) iface_def_name = iface_def_name.substr(5);
+                if (!iface_def_name.empty() && uhdm_design->AllInterfaces()) {
+                    for (auto ii : *uhdm_design->AllInterfaces()) {
+                        std::string dn = std::string(ii->VpiDefName());
+                        if (dn.find("work@") == 0) dn = dn.substr(5);
+                        if (dn != iface_def_name) continue;
+                        mc_iface_def = ii;
+                        if (ii->Task_funcs())
+                            for (auto tf : *ii->Task_funcs())
+                                if (tf->UhdmType() == uhdmfunction &&
+                                    std::string(tf->VpiName()) == func_name) {
+                                    fdef = any_cast<const UHDM::function*>(tf);
+                                    break;
+                                }
+                        break;
+                    }
+                }
+                if (fdef)
+                    uhdm_trace("    hier_path method %s.%s resolved in interface %s\n",
+                        mc_prefix.c_str(), func_name.c_str(), iface_def_name.c_str());
+            }
             if (!fdef && uhdm_hier->Path_elems()->size() >= 2 &&
                 (func_name == "first" || func_name == "last" || func_name == "num")) {
                 const UHDM::enum_typespec* ets = nullptr;
@@ -15142,7 +15263,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     const UHDM::instance*& slot; const UHDM::instance* saved;
                     McInst(const UHDM::instance*& s, const UHDM::instance* v) : slot(s), saved(s) { if (v) slot = v; }
                     ~McInst() { slot = saved; }
-                } mc_guard(method_call_inst_, [&]() -> const UHDM::instance* {
+                } mc_guard(method_call_inst_, prefix_inst);
+                if (false) {
                     auto& pe = *uhdm_hier->Path_elems();
                     if (pe.size() < 2 || !current_instance) return nullptr;
                     std::string base = std::string(pe[0]->VpiName());
@@ -15186,8 +15308,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 }
                     };
                     scan_gsa(mi->Gen_scope_arrays());
-                    return found;
-                }());
+                    (void)found;
+                }
                 if (method_call_inst_)
                     uhdm_trace("    hier_path func call %s inlined for interface instance %s\n",
                         func_name.c_str(), std::string(method_call_inst_->VpiName()).c_str());
@@ -15201,6 +15323,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         break;
                     }
                 }
+                // An INTERFACE method reads the interface's members (`valid &
+                // ready`, `{a, b}`), which are signals, not constants: a call
+                // with no (or only constant) arguments must still be inlined,
+                // never folded at compile time -- folding read every member
+                // as 0 (`o_data = packet_if.pack()` became 16'h0000).
+                if (all_const && fdef->VpiParent() &&
+                    fdef->VpiParent()->UhdmType() == uhdminterface_inst)
+                    all_const = false;
                 if (all_const) {
                     const_eval_module_writes.clear();
                     std::map<std::string, RTLIL::Const> output_params;
@@ -15211,6 +15341,45 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         uhdm_trace("    hier_path func call %s → compile-time const\n",
                             func_name.c_str());
                     return RTLIL::SigSpec(result);
+                }
+                // The method's body names the interface's MEMBERS (`valid`,
+                // `header.vc`); seen from this module they are the port's /
+                // instance's `<prefix>.<member>` wires.  Map them for the
+                // duration of the inlining (an interface method sees only
+                // its interface's scope, so shadowing a same-named module
+                // signal is the correct reading).
+                struct MemberMap {
+                    UhdmImporter* imp; std::vector<std::pair<std::string, RTLIL::Wire*>> saved;
+                    std::vector<std::string> added;
+                    ~MemberMap() {
+                        for (auto& a : added) imp->name_map.erase(a);
+                        for (auto& sv : saved) imp->name_map[sv.first] = sv.second;
+                    }
+                } member_map{this, {}, {}};
+                {
+                    const UHDM::interface_inst* src = mc_iface_def;
+                    if (!src && method_call_inst_)
+                        src = dynamic_cast<const UHDM::interface_inst*>(method_call_inst_);
+                    if (!src && fdef->VpiParent() && fdef->VpiParent()->UhdmType() == uhdminterface_inst)
+                        src = any_cast<const interface_inst*>(fdef->VpiParent());
+                    std::string pfx = mc_prefix;
+                    if (prefix_inst) pfx = std::string(prefix_inst->VpiName());
+                    if (pfx.empty() && uhdm_hier->Path_elems()->size() >= 2)
+                        pfx = std::string((*uhdm_hier->Path_elems())[0]->VpiName());
+                    auto map_member = [&](const std::string& m) {
+                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(pfx + "." + m));
+                        if (!w && name_map.count(pfx + "." + m)) w = name_map[pfx + "." + m];
+                        if (!w) return;
+                        auto it = name_map.find(m);
+                        if (it != name_map.end()) member_map.saved.push_back({m, it->second});
+                        else member_map.added.push_back(m);
+                        name_map[m] = w;
+                    };
+                    if (src && !pfx.empty()) {
+                        if (src->Variables()) for (auto v : *src->Variables()) map_member(std::string(v->VpiName()));
+                        if (src->Nets()) for (auto n : *src->Nets()) map_member(std::string(n->VpiName()));
+                        if (src->Ports()) for (auto pp : *src->Ports()) map_member(std::string(pp->VpiName()));
+                    }
                 }
                 UHDM::Serializer* s = uhdm_design->GetSerializer();
                 UHDM::func_call* tmp = s->MakeFunc_call();
