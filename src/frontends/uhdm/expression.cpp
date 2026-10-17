@@ -14654,8 +14654,44 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_map[mem] = RTLIL::SigSpec(w);
                     uhdm_trace("    hier_path: interface-array element member select %s -> base wire %s\n",
                         path_name.c_str(), w->name.c_str());
-                    if (t1 == uhdmbit_select)
-                        return import_bit_select(any_cast<const bit_select*>(e1), inst, &base_map);
+                    // A CONSTANT select is sliced right here.  Handing the
+                    // wire to import_bit_select through input_mapping keyed
+                    // by the member name is not enough when the enclosing
+                    // generate scope declares a LOCAL of that name: tnoc's
+                    //   for (genvar i ...) begin : g_grant
+                    //     logic [4:0] grant;
+                    //     for (genvar j ...) always_comb port_control_if[j].grant[i] = grant[j];
+                    // -- import_bit_select looks the name up as a wire
+                    // first, found `g_grant[1].grant`, and the write landed
+                    // on the LOCAL's bit i from all five blocks ("already
+                    // driven") while every interface member stayed undriven.
+                    auto slice_of = [&](int lo, int width) -> RTLIL::SigSpec {
+                        int off = w->upto ? (w->start_offset + w->width - 1 - lo - (width - 1))
+                                          : lo - w->start_offset;
+                        if (off < 0 || width <= 0 || off + width > w->width)
+                            return RTLIL::SigSpec();
+                        return RTLIL::SigSpec(w, off, width);
+                    };
+                    if (t1 == uhdmbit_select) {
+                        auto b1 = any_cast<const bit_select*>(e1);
+                        RTLIL::SigSpec ix = b1->VpiIndex()
+                            ? import_expression(b1->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                        if (ix.size() > 0 && ix.is_fully_const()) {
+                            RTLIL::SigSpec sl = slice_of(ix.as_int(), 1);
+                            if (sl.size() == 1) return sl;
+                        }
+                        return import_bit_select(b1, inst, &base_map);
+                    }
+                    if (t1 == uhdmpart_select) {
+                        auto p1 = any_cast<const part_select*>(e1);
+                        RTLIL::SigSpec l = p1->Left_range() ? import_expression(p1->Left_range(), input_mapping) : RTLIL::SigSpec();
+                        RTLIL::SigSpec r = p1->Right_range() ? import_expression(p1->Right_range(), input_mapping) : RTLIL::SigSpec();
+                        if (l.size() > 0 && r.size() > 0 && l.is_fully_const() && r.is_fully_const()) {
+                            int hi = l.as_int(), lo = r.as_int();
+                            RTLIL::SigSpec sl = slice_of(std::min(hi, lo), std::abs(hi - lo) + 1);
+                            if (sl.size() > 0) return sl;
+                        }
+                    }
                     if (t1 == uhdmpart_select)
                         return import_part_select(any_cast<const part_select*>(e1), inst, &base_map);
                     return import_indexed_part_select(
