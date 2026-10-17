@@ -94,14 +94,69 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     typespec = at->Elem_typespec()->Actual_typespec();
             }
 
+            // An interface-ARRAY port whose array_typespec is BARE (no
+            // Elem_typespec -- tnoc's `tnoc_flit_if.sender sender_if[CHANNELS]`
+            // at the top level, and any `bus_if.sender s[N]` whose N is a
+            // struct-parameter field): the unwrap above finds nothing, this
+            // branch was skipped, and the port got NO member wires of its own.
+            // Only the element instances Surelog happened to materialise were
+            // imported later (one, or none at all for tnoc: the hierarchy then
+            // died on "does not have a port named 'sender_if.vc_ready'", seven
+            // tnoc rows read-failed).  The Low_conn's interface_array names
+            // the interface and modport ("tnoc_flit_if.sender"); take them
+            // from there and let the branch run.
+            std::string ia_type, ia_modport;
+            {
+                // the interface / modport named by a port's Low_conn actual
+                auto from_actual = [&](const UHDM::any* a) {
+                    if (!a) return;
+                    std::string dn;
+                    if (a->UhdmType() == uhdmmodport) {
+                        auto mpo = any_cast<const UHDM::modport*>(a);
+                        if (ia_modport.empty()) ia_modport = std::string(mpo->VpiName());
+                        if (mpo->VpiParent()) dn = std::string(mpo->VpiParent()->VpiDefName());
+                    } else if (a->UhdmType() == uhdminterface_inst) {
+                        dn = std::string(any_cast<const UHDM::interface_inst*>(a)->VpiDefName());
+                    }
+                    if (dn.find("work@") == 0) dn = dn.substr(5);
+                    if (ia_type.empty()) ia_type = dn;
+                };
+                const UHDM::any* lc = uhdm_port->Low_conn();
+                const UHDM::any* a = (lc && lc->UhdmType() == uhdmref_obj)
+                    ? any_cast<const ref_obj*>(lc)->Actual_group() : nullptr;
+                from_actual(a);
+                // An ELABORATED interface-array port's actual is the
+                // interface_array itself, which names nothing; the module
+                // DEFINITION's port of the same name binds to the modport.
+                if (ia_type.empty() && a && a->UhdmType() == uhdminterface_array &&
+                    uhdm_design && uhdm_design->AllModules() && current_instance) {
+                    std::string def = std::string(current_instance->VpiDefName());
+                    for (auto m : *uhdm_design->AllModules()) {
+                        if (std::string(m->VpiDefName()) != def || !m->Ports()) continue;
+                        for (auto dp : *m->Ports()) {
+                            if (std::string(dp->VpiName()) != portname) continue;
+                            auto lc2 = dp->Low_conn();
+                            if (lc2 && lc2->UhdmType() == uhdmref_obj)
+                                from_actual(any_cast<const ref_obj*>(lc2)->Actual_group());
+                            break;
+                        }
+                        if (!ia_type.empty()) break;
+                    }
+                }
+                if (!ia_type.empty())
+                    uhdm_trace("UHDM: interface port '%s' typed from its low_conn: %s / %s\n",
+                        portname.c_str(), ia_type.c_str(), ia_modport.c_str());
+            }
             // Get interface type name
-            if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
-                const UHDM::interface_typespec* iface_ts = any_cast<const UHDM::interface_typespec*>(typespec);
-                std::string interface_type;
-                std::string modport_name;
+            if ((typespec && typespec->UhdmType() == uhdminterface_typespec) || !ia_type.empty()) {
+                const UHDM::interface_typespec* iface_ts =
+                    (typespec && typespec->UhdmType() == uhdminterface_typespec)
+                        ? any_cast<const UHDM::interface_typespec*>(typespec) : nullptr;
+                std::string interface_type = ia_type;
+                std::string modport_name = ia_modport;
                 
                 // Check if this is a modport (has vpiIsModPort)
-                if (iface_ts->VpiIsModPort()) {
+                if (iface_ts && iface_ts->VpiIsModPort()) {
                     // This is a modport, so get the modport name
                     modport_name = std::string(iface_ts->VpiName());
                     
@@ -111,7 +166,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             any_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
                         interface_type = std::string(parent_iface_ts->VpiName());
                     } 
-                } else {
+                } else if (iface_ts) {
                     // This is the interface itself
                     interface_type = std::string(iface_ts->VpiName());
                 }
@@ -136,7 +191,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 if (interface_type.empty()) {
                     if (ref_typespec && !ref_typespec->VpiDefName().empty()) {
                         interface_type = std::string(ref_typespec->VpiDefName());
-                    } else if (!iface_ts->VpiDefName().empty()) {
+                    } else if (iface_ts && !iface_ts->VpiDefName().empty()) {
                         interface_type = std::string(iface_ts->VpiDefName());
                     }
                 }
