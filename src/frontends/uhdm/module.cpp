@@ -1035,7 +1035,21 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 int elem_w = 0;
                 if (pel && !pel->empty())
                     elem_w = get_width((*pel)[0], current_instance);
+                // More than one packed dimension on the port's variable
+                // (`s_t [1:0][4:1] mesh_i`): Elements()[0] is the LEAF
+                // struct, but `mesh_i[i]` selects a whole ROW of the outer
+                // dimension; record the leaf width alongside.
+                int leaf_w9 = elem_w;
+                if (prg && prg->size() > 1 && outer_l >= 0 && outer_r >= 0) {
+                    int outer_size = abs(outer_l - outer_r) + 1;
+                    if (outer_size > 0 && w->width > 0 && w->width % outer_size == 0 &&
+                        w->width / outer_size > elem_w)
+                        elem_w = w->width / outer_size;
+                }
                 if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
+                    if (leaf_w9 > 1 && leaf_w9 < elem_w &&
+                        !w->attributes.count(RTLIL::escape_id("packed_leaf_width")))
+                        w->attributes[RTLIL::escape_id("packed_leaf_width")] = RTLIL::Const(leaf_w9);
                     w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                     w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
                     w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);

@@ -5805,6 +5805,24 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         int elem_w = 0;
                         if (pav->Elements() && !pav->Elements()->empty())
                             elem_w = get_width((*pav->Elements())[0], uhdm_module);
+                        // More than one packed dimension on the variable
+                        // (`s_t [0:0][2:1] link_li`, black-parrot's per-column
+                        // [E:W] link bundles): Elements()[0] is the LEAF
+                        // struct, but `link_li[i]` selects a whole ROW of the
+                        // outer dimension -- the leaf made `link_li[0]` one
+                        // struct, and with a one-element outer dim the index
+                        // landed on the inner dimension (node link actuals
+                        // became constant zero in bp_io_complex).  Keep the
+                        // leaf width alongside, as import_port does.
+                        int leaf_w = elem_w;
+                        if (pav->Ranges() && pav->Ranges()->size() > 1 &&
+                            outer_l >= 0 && outer_r >= 0) {
+                            int outer_size = abs(outer_l - outer_r) + 1;
+                            if (outer_size > 0 && wire->width > 0 &&
+                                wire->width % outer_size == 0 &&
+                                wire->width / outer_size > elem_w)
+                                elem_w = wire->width / outer_size;
+                        }
                         // get_width on a TYPE-PARAMETER element (`addr_t` =
                         // logic[W-1:0], CVA6 tc_sram r_addr_q) can fail and return
                         // 1, especially for a single-element array `addr_t [0:0]`.
@@ -5820,6 +5838,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 elem_w = wire->width / outer_size;
                         }
                         if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
+                            if (leaf_w > 1 && leaf_w < elem_w &&
+                                !wire->attributes.count(RTLIL::escape_id("packed_leaf_width")))
+                                wire->attributes[RTLIL::escape_id("packed_leaf_width")] = RTLIL::Const(leaf_w);
                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
                             wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);
