@@ -3113,10 +3113,44 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // the elaborated instance's param_assign.
                     RTLIL::Const pval;
                     bool is_param = false;
+                    const UHDM::VectorOfrange* prgs = nullptr;
+                    auto find_ranges = [&](const UHDM::VectorOfany* params) {
+                        if (!params || prgs) return;
+                        for (auto po : *params) {
+                            if (po->UhdmType() != uhdmparameter) continue;
+                            auto par = any_cast<const parameter*>(po);
+                            if (std::string(par->VpiName()) != base_name) continue;
+                            if (par->Typespec() && par->Typespec()->Actual_typespec()) {
+                                const typespec* ts = par->Typespec()->Actual_typespec();
+                                if (ts->UhdmType() == uhdmlogic_typespec)
+                                    prgs = any_cast<const logic_typespec*>(ts)->Ranges();
+                                else if (ts->UhdmType() == uhdmbit_typespec)
+                                    prgs = any_cast<const bit_typespec*>(ts)->Ranges();
+                            }
+                            return;
+                        }
+                    };
                     if (!(input_mapping && input_mapping->count(base_name))) {
                         if (module && module->parameter_default_values.count(pid) &&
                             module->parameter_default_values.at(pid).size() > 0) {
-                            pval = module->parameter_default_values.at(pid); is_param = true;
+                            // The module's own parameter is the table only if
+                            // its dimensions can take every index.  A child
+                            // paramod's SAME-NAMED parameter is not: rggen's
+                            //   rggen_bit_field #(.INITIAL_VALUE(INITIAL_VALUE[i][j]))
+                            // over `parameter bit [WIDTH-1:0] INITIAL_VALUE`
+                            // -- one range, two indices -- is folded with the
+                            // child as `module`, and taking its 2-bit default
+                            // as the base made the slice fall through: the
+                            // paramod's parameter was stored EMPTY (0'x) and
+                            // every block_0 register_10 bit_field_2 reset to 0
+                            // (29 diverging co-simulated cycles) although the
+                            // paramod NAME, folded in the parent, was right.
+                            if (current_instance) find_ranges(current_instance->Parameters());
+                            if (prgs && prgs->size() > exprs->size()) {
+                                pval = module->parameter_default_values.at(pid); is_param = true;
+                            } else {
+                                prgs = nullptr;
+                            }
                         }
                     }
                     // A child's parameter OVERRIDE is folded with the CHILD as
@@ -3150,24 +3184,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         look(uhdm_expr->VpiParent());
                         if (!is_param) look(current_instance);
                     }
-                    const UHDM::VectorOfrange* prgs = nullptr;
-                    if (is_param) {
-                        auto find_ranges = [&](const UHDM::VectorOfany* params) {
-                            if (!params || prgs) return;
-                            for (auto po : *params) {
-                                if (po->UhdmType() != uhdmparameter) continue;
-                                auto par = any_cast<const parameter*>(po);
-                                if (std::string(par->VpiName()) != base_name) continue;
-                                if (par->Typespec() && par->Typespec()->Actual_typespec()) {
-                                    const typespec* ts = par->Typespec()->Actual_typespec();
-                                    if (ts->UhdmType() == uhdmlogic_typespec)
-                                        prgs = any_cast<const logic_typespec*>(ts)->Ranges();
-                                    else if (ts->UhdmType() == uhdmbit_typespec)
-                                        prgs = any_cast<const bit_typespec*>(ts)->Ranges();
-                                }
-                                return;
-                            }
-                        };
+                    if (is_param && !prgs) {
                         if (owner) find_ranges(owner->Parameters());
                         else if (current_instance) find_ranges(current_instance->Parameters());
                         if (!prgs) {   // the owning scope may be further up, or the ranges on an ancestor

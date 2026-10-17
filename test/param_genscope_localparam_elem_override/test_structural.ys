@@ -1,0 +1,7 @@
+# Every child paramod must carry a REAL INITIAL_VALUE: without the fix the
+# parameter is stored empty (0'x) and all four fields reset to 0 (the slang
+# miter in test_slang_equiv.ys fails).  Four distinct paramods, named by value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+select -assert-count 16 top/t:*field*INITIAL_VALUE*
+select -assert-none top/t:field
