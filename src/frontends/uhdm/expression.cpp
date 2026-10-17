@@ -10366,6 +10366,54 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         std::string actual_name = std::string(net->VpiName());
         if (mode_debug)
             uhdm_trace("    ref_obj has Actual_group() pointing to logic_net: %s\n", actual_name.c_str());
+        // A FUNCTION-LOCAL localparam referenced inside the function body:
+        //   function automatic logic [WIDTH-1:0] calc_count_next(...);
+        //     localparam int             COUNT_NEXT_WIDTH = WIDTH + 1;
+        //     localparam bit [WIDTH-1:0] MIN_VALUE        = '0;
+        //     ...
+        //     return MIN_VALUE;
+        // Surelog does not bind the reference to the parameter: it
+        // FABRICATES an implicit 1-bit logic_net of that name on the
+        // module (no typespec) and points the ref there -- the same shape
+        // as a $unit enum constant outside its file.  The function's own
+        // Param_assigns carry the value, so take it from the enclosing
+        // function (walking the ref's parent chain) before treating the
+        // net as a signal.  Without this rggen_bit_field_counter's
+        // calc_count_next read MIN_VALUE / MAX_VALUE / COUNT_NEXT_WIDTH /
+        // UP_DOWN_VALUE_WIDTH as undriven module wires (block_0, 282 div).
+        if (!net->Typespec()) {
+            const any* p = uhdm_ref->VpiParent();
+            while (p && p->UhdmType() != uhdmfunction && p->UhdmType() != uhdmtask)
+                p = p->VpiParent();
+            if (p) {
+                auto tf = any_cast<const task_func*>(p);
+                if (tf->Param_assigns()) {
+                    for (auto pa : *tf->Param_assigns()) {
+                        if (!pa->Lhs() || !pa->Rhs()) continue;
+                        if (std::string(pa->Lhs()->VpiName()) != actual_name) continue;
+                        RTLIL::SigSpec v = import_expression(any_cast<const expr*>(pa->Rhs()), input_mapping);
+                        if (v.size() > 0 && v.is_fully_const()) {
+                            // size to the localparam's declared type when it has one
+                            if (auto par = dynamic_cast<const parameter*>(pa->Lhs()))
+                                if (par->Typespec() && par->Typespec()->Actual_typespec()) {
+                                    int w = get_width_from_typespec(par->Typespec()->Actual_typespec(), current_instance);
+                                    if (w > 0 && w != v.size()) {
+                                        // '1 / '0 fills arrive as 1 bit: replicate a fill,
+                                        // zero-extend / truncate anything else
+                                        if (w > v.size() && v.as_const().is_fully_ones())
+                                            v = RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S1, w));
+                                        else
+                                            v.extend_u0(w, false);
+                                    }
+                                }
+                            uhdm_trace("    ref_obj %s is the enclosing function's localparam: %s\n",
+                                actual_name.c_str(), v.as_const().as_string().c_str());
+                            return v;
+                        }
+                    }
+                }
+            }
+        }
         
         // Check if this is a module output that was incorrectly prefixed with generate scope
         if (name_map.count(actual_name)) {

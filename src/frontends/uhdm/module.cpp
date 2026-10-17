@@ -4523,6 +4523,45 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             return -1;  // Special value to indicate interface type
         }
 
+        // An `unsupported_typespec` is Surelog's stand-in for a size cast
+        // whose size names something it could not bind -- `COUNT_NEXT_WIDTH'(count)`
+        // or `UP_DOWN_VALUE_WIDTH'(0)` inside rggen_bit_field_counter's
+        // calc_count_next, where those are the function's own localparams
+        // (Surelog fabricates a net for the reference and leaves the cast's
+        // typespec unresolved, carrying only the NAME).  ExprEval then fails
+        // and the cast was sized ONE bit: `9'(count)` kept bit 0 of count and
+        // the counter lost its current value.  Resolve the name ourselves:
+        // the enclosing function's param_assign (walking the typespec's
+        // parent chain), else the module's own parameter.
+        if (typespec->UhdmType() == uhdmunsupported_typespec) {
+            std::string nm = std::string(typespec->VpiName());
+            if (!nm.empty()) {
+                const UHDM::any* p = typespec->VpiParent();
+                while (p && p->UhdmType() != uhdmfunction && p->UhdmType() != uhdmtask)
+                    p = p->VpiParent();
+                if (p) {
+                    auto tf = any_cast<const UHDM::task_func*>(p);
+                    if (tf->Param_assigns())
+                        for (auto pa : *tf->Param_assigns()) {
+                            if (!pa->Lhs() || !pa->Rhs() || std::string(pa->Lhs()->VpiName()) != nm) continue;
+                            RTLIL::SigSpec v = import_expression(any_cast<const UHDM::expr*>(pa->Rhs()));
+                            if (v.is_fully_const() && v.as_int() > 0) {
+                                uhdm_trace("UHDM: unsupported_typespec '%s' = function localparam %d\n", nm.c_str(), v.as_int());
+                                return v.as_int();
+                            }
+                        }
+                }
+                RTLIL::IdString pid = RTLIL::escape_id(nm);
+                if (module && module->parameter_default_values.count(pid) &&
+                    module->parameter_default_values.at(pid).size() > 0) {
+                    int w = module->parameter_default_values.at(pid).as_int();
+                    if (w > 0) {
+                        uhdm_trace("UHDM: unsupported_typespec '%s' = module parameter %d\n", nm.c_str(), w);
+                        return w;
+                    }
+                }
+            }
+        }
         // An ARRAY of interface ports (`myif.man m [N]`): the typespec is an
         // array_typespec wrapping an interface_typespec.  Return -N so
         // import_port creates per-element wires m[0..N-1].<sig> for EVERY

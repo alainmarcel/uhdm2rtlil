@@ -1,0 +1,13 @@
+# Without the fix the function's localparams become fabricated, undriven
+# module wires (check -assert fails, and `select -assert-count 0` on them);
+# test_slang_equiv.ys proves the counter against read_slang.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 0 w:MIN_VALUE
+select -assert-count 0 w:MAX_VALUE
+select -assert-count 0 w:COUNT_NEXT_WIDTH
+select -assert-count 0 w:UP_DOWN_VALUE_WIDTH
+proc
+flatten
+opt_clean
+check -assert
