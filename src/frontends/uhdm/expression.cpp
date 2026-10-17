@@ -1591,14 +1591,21 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const var_select* vs = any_cast<const var_select*>(assign->Lhs());
                 std::string base_name = std::string(vs->VpiName());
                 int off = -1, w = -1;
-                if (varselect_const_bitslice(vs, &input_mapping, off, w)) {
-                    RTLIL::SigSpec base_spec;
-                    if (base_name == func_name) {
-                        base_spec = RTLIL::SigSpec(result_wire);
-                    } else {
-                        auto it = input_mapping.find(base_name);
-                        if (it != input_mapping.end()) base_spec = it->second;
-                    }
+                // The base first: an UNPACKED local (`logic [W-1:0] sc[2]`,
+                // rggen_bit_field's set_clear) has no Actual_group, so the
+                // slicer needs the staged width to derive the element size
+                // from the declaration; and a local whose FIRST write is this
+                // select has no mapping yet (func_local_base_for_select
+                // creates it at the declared width, as the part-select
+                // branches do).
+                RTLIL::SigSpec base_spec;
+                if (base_name == func_name) {
+                    base_spec = RTLIL::SigSpec(result_wire);
+                } else {
+                    base_spec = func_local_base_for_select(base_name, input_mapping,
+                                                           func_call_context, local_var_widths);
+                }
+                if (varselect_const_bitslice(vs, &input_mapping, off, w, base_spec.size())) {
                     if (off >= 0 && w > 0 && base_spec.size() > 0 &&
                         off + w <= base_spec.size()) {
                         if (!ssa_slice_write(base_name, off, w))

@@ -1223,10 +1223,12 @@ struct UhdmImporter {
     // and typespec-range expressions (loop-unrolled constants + function
     // localparams).  Returns true and sets off/width for the fully/partially-
     // indexed CONSTANT case (used by the function inliner's var_select LHS).
+    // `total_width` (the staged base's width) lets an UNPACKED function-local
+    // array -- no Actual_group, dims on the declaration -- be sliced too.
     bool varselect_const_bitslice(
         const UHDM::var_select* vs,
         std::map<std::string, RTLIL::SigSpec>* ctx,
-        int& off, int& width);
+        int& off, int& width, int total_width = 0);
     // Outer-dimension geometry of a SINGLE-index bit_select `base[i]` on a packed
     // multi-dim local/param (`plane_t c; c[x]` = `logic [4:0][W-1:0]`, box_t):
     // the selected element is the whole first-dim slice = total_width/outer_size

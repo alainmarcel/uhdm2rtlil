@@ -10959,7 +10959,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 bool UhdmImporter::varselect_const_bitslice(
         const UHDM::var_select* vs,
         std::map<std::string, RTLIL::SigSpec>* ctx,
-        int& off, int& width) {
+        int& off, int& width, int total_width) {
     if (!vs || !vs->Exprs() || vs->Exprs()->empty()) return false;
     // Base variable's packed typespec -> dimension (hi,lo) list, outer->inner.
     const UHDM::ref_typespec* rt = nullptr;
@@ -10969,13 +10969,59 @@ bool UhdmImporter::varselect_const_bitslice(
     }
     const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
     auto lt = a ? dynamic_cast<const UHDM::logic_typespec*>(a) : nullptr;
-    if (!lt || !lt->Ranges() || lt->Ranges()->empty()) return false;
     std::vector<std::pair<int, int>> dims;
-    for (auto r : *lt->Ranges()) {
-        RTLIL::SigSpec l = import_expression(r->Left_expr(), ctx);
-        RTLIL::SigSpec rr = import_expression(r->Right_expr(), ctx);
-        if (!l.is_fully_const() || !rr.is_fully_const()) return false;
-        dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+    auto push_ranges = [&](const UHDM::VectorOfrange* rngs) -> bool {
+        if (!rngs) return false;
+        for (auto r : *rngs) {
+            if (!r->Left_expr() || !r->Right_expr()) return false;
+            RTLIL::SigSpec l = import_expression(r->Left_expr(), ctx);
+            RTLIL::SigSpec rr = import_expression(r->Right_expr(), ctx);
+            if (!l.is_fully_const() || !rr.is_fully_const()) return false;
+            dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+        }
+        return true;
+    };
+    if (lt && lt->Ranges() && !lt->Ranges()->empty()) {
+        if (!push_ranges(lt->Ranges())) return false;
+    } else {
+        // An UNPACKED function-local array -- rggen_bit_field's
+        //   logic [WIDTH-1:0] set_clear[2];
+        //   ... set_clear[0][HW_SET_WIDTH-1:0] = set;
+        // Surelog binds no Actual_group on the select, and the geometry
+        // lives on the declaration: the unpacked dim on the array_var's
+        // array_typespec, the element's packed dims on its logic_var.  With
+        // only the packed path above this returned false, the write was
+        // dropped ("var-select LHS set_clear: could not resolve constant
+        // slice") and the hardware-set path of every rggen bit field with
+        // HW_ACCESS[1] never set anything (block_0, 282 diverging cycles).
+        // Elements sit elem0@LSB (the unpacked invariant), so the outer dim
+        // is entered as a DESCENDING [osz-1+lo : lo] range whatever its
+        // declared direction.
+        const UHDM::any* decl = vs->Actual_group();
+        if (!decl) decl = find_enclosing_tf_decl(vs, std::string(vs->VpiName()));
+        if (!decl || total_width <= 0) return false;
+        int ew = 0, olo = 0;
+        if (!bitselect_outer_dim(decl, total_width, ew, olo) || ew <= 0) return false;
+        int osz = total_width / ew;
+        dims.push_back({olo + osz - 1, olo});
+        // The element's own packed dims (a `logic [1:0][3:0] a[2]` element
+        // is two 4-bit rows); fall back to one flat bit dim.
+        const UHDM::VectorOfrange* erngs = nullptr;
+        if (auto av = dynamic_cast<const UHDM::array_var*>(decl))
+            if (av->Variables() && !av->Variables()->empty())
+                if (auto ets = (*av->Variables())[0]->Typespec())
+                    if (auto elt = dynamic_cast<const UHDM::logic_typespec*>(ets->Actual_typespec()))
+                        erngs = elt->Ranges();
+        size_t before = dims.size();
+        if (erngs && !erngs->empty() && push_ranges(erngs)) {
+            long prod = 1;
+            for (size_t k = before; k < dims.size(); k++)
+                prod *= std::abs(dims[k].first - dims[k].second) + 1;
+            if (prod != ew) dims.resize(before);
+        } else {
+            dims.resize(before);
+        }
+        if (dims.size() == before) dims.push_back({ew - 1, 0});
     }
     auto exprs = vs->Exprs();
     size_t n_idx = exprs->size();
