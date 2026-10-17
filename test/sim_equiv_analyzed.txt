@@ -777,3 +777,15 @@ Test: mem_simple_4x1_cells
 
     The summary AUTO-CLASSIFIES this via the SAT miter; this entry only moves
     it out of the un-investigated WARNING bucket.
+
+Test: dyn_index_wide_out_of_range
+    The point of the test is an OUT-OF-RANGE element read: a 2-element array
+    indexed by a 64-bit value that is almost never in range.  The LRM read is
+    X, which the netlist carries as $shiftx's x-fill and the formal checks
+    prove (equivalent to read_verilog, miter-equal to read_slang's guarded
+    mux-to-x).  Verilator's 2-state RTL returns 0 for such a read while the
+    synthesised netlist's x resolves to an arbitrary value, so the random
+    co-sim mismatches on nearly every cycle by construction.  Not a reader
+    defect: the reader defect it ratchets (the index truncated to 32 bits so
+    2**54 WRAPPED onto element 0) is caught by the slang miter.
+
