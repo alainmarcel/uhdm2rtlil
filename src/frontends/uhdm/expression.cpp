@@ -14671,6 +14671,62 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // every rggen register block's read data came back undriven.  Resolve the
     // member wire the way the plain form does and hand it to the select
     // importer as the base.
+    // `sender_if.ready[vc]` -- a bit / element select of an interface PORT's
+    // member.  The port's base is a placeholder wire, not an interface
+    // instance, so the branch below (which keys on an interface_inst actual)
+    // declined and the access fell to the struct decoder: "Could not resolve
+    // struct member access 'sender_if.ready[vc]'" -> 1'x (tnoc's packet
+    // serializer).  The member wire exists; slice it by the member's
+    // declared element width (constant index) or $shiftx into it.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        const any* e0 = (*uhdm_hier->Path_elems())[0];
+        const any* e1 = (*uhdm_hier->Path_elems())[1];
+        if (e0->UhdmType() == uhdmref_obj && e1->UhdmType() == uhdmbit_select) {
+            auto r0 = any_cast<const ref_obj*>(e0);
+            bool inst_actual = r0->Actual_group() && r0->Actual_group()->UhdmType() == uhdminterface_inst;
+            std::string base = std::string(r0->VpiName());
+            auto bs1 = any_cast<const bit_select*>(e1);
+            std::string mem = std::string(bs1->VpiName());
+            std::string full = base + "." + mem;
+            RTLIL::Wire* pw = module->wire(RTLIL::escape_id(base));
+            // not for an UNPACKED-array member (per-element wires, own machinery)
+            bool unpacked_member = iface_array_elem_width_.count(full) || name_map.count(full + "[0]") ||
+                                   module->wire(RTLIL::escape_id(full + "[0]"));
+            const UHDM::any* decl = unpacked_member ? nullptr : iface_port_member_decl(base, mem);
+            bool is_iface_port = decl || (pw && pw->attributes.count(RTLIL::escape_id("is_interface")));
+            if (!inst_actual && !unpacked_member && is_iface_port) {
+                RTLIL::Wire* w = name_map.count(full) ? name_map[full] : module->wire(RTLIL::escape_id(full));
+                if (!decl) decl = bs1->Actual_group();
+                if (decl && (decl->UhdmType() == uhdmarray_var || decl->UhdmType() == uhdmarray_net)) decl = nullptr;
+                int ew = 0, lo = 0;
+                if (w && decl && bitselect_outer_dim(decl, w->width, ew, lo) && ew >= 1 && bs1->VpiIndex()) {
+                    RTLIL::SigSpec ix = import_expression(bs1->VpiIndex(), input_mapping);
+                    RTLIL::SigSpec basev = RTLIL::SigSpec(w);
+                    if (!comb_lhs_keep_base && input_mapping && input_mapping->count(full))
+                        basev = input_mapping->at(full);
+                    if (ix.size() > 0 && ix.is_fully_const()) {
+                        int off = (ix.as_const().as_int() - lo) * ew;
+                        if (off >= 0 && off + ew <= w->width) {
+                            uhdm_trace("    hier_path: interface port member select %s[%d] -> bits [%d+:%d]\n",
+                                full.c_str(), ix.as_const().as_int(), off, ew);
+                            return basev.extract(off, ew);
+                        }
+                    } else if (ix.size() > 0) {
+                        int iw = std::max(GetSize(ix), 32);
+                        RTLIL::SigSpec idx = ix; idx.extend_u0(iw, false);
+                        if (lo != 0) idx = module->Sub(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(lo, iw)));
+                        RTLIL::SigSpec amt = (ew == 1) ? idx
+                            : module->Mul(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(ew, iw)));
+                        RTLIL::Wire* out = module->addWire(NEW_ID, ew);
+                        module->addShiftx(NEW_ID, basev, amt, out);
+                        uhdm_trace("    hier_path: interface port member select %s[dyn] -> $shiftx (%d bits)\n",
+                            full.c_str(), ew);
+                        return RTLIL::SigSpec(out);
+                    }
+                }
+            }
+        }
+    }
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
         const any* e0 = (*uhdm_hier->Path_elems())[0];
         const any* e1 = (*uhdm_hier->Path_elems())[1];

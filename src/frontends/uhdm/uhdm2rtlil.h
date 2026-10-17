@@ -1213,6 +1213,16 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    // `iface_port.member[idx] = rhs` where `member` is a packed ARRAY of
+    // elements (tnoc's `tnoc_flit [FLITS-1:0] flit`): the element slice of
+    // the port's member wire, by the member's declared geometry.
+    // The declaration (variable / net) of member `mem` of the interface an
+    // interface PORT `base` (placeholder wire with interface_type) is typed by.
+    const UHDM::any* iface_port_member_decl(const std::string& base, const std::string& mem);
+    bool emit_iface_member_elem_write(const UHDM::hier_path* hp,
+                                      const UHDM::any* rhs_any,
+                                      RTLIL::Process* proc,
+                                      RTLIL::CaseRule* case_rule);
     // `arr[idx].field = rhs` (dynamic element index) on an unpacked struct
     // array represented as a flat wire — full-width mask/shift/or RMW.
     bool emit_dynamic_array_elem_field_write(

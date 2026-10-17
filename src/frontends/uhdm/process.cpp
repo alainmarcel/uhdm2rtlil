@@ -13696,6 +13696,185 @@ bool UhdmImporter::emit_dynamic_unpacked_array_partial_write(
 // within the base struct wire, then emits a mask/shift/or rewrite of the
 // base wire.  Mirrors `emit_dynamic_indexed_part_select_write` but
 // parameterised by the field's offset and per-element width.
+// `sender_if.flit[i] = flit_if[2].flit` -- an ELEMENT of an interface port's
+// packed-array member.  tnoc's flit interface declares
+//     tnoc_flit [FLITS-1:0] flit;
+// (291-bit elements) and its packet serializer writes one element per
+// channel in an always_comb loop.  The hier_path LHS [ref_obj(sender_if),
+// bit_select(flit)] went to the struct-array element-field writer, which
+// has no element geometry for an interface member and treated the index as
+// a BIT: `$0\sender_if.flit [0] = flit_if[2].flit [0]`, one bit per element,
+// and 580 bits of the 582-bit output were undriven (tnoc_packet_serializer,
+// 301 diverging co-simulated cycles; the error checker and AXI muxes too).
+// The member wire exists (import_port made it) and the bit_select's actual
+// is the member's declaration, whose outer range gives the element width;
+// slice the wire by it.  A dynamic index is left to the existing handlers.
+// The declaration of member `mem` of the interface that types the interface
+// PORT `base` -- the port's placeholder wire records the interface in its
+// interface_type attribute (a $paramod name keeps the bare interface name).
+const UHDM::any* UhdmImporter::iface_port_member_decl(const std::string& base, const std::string& mem) {
+    if (!uhdm_design || !uhdm_design->AllInterfaces()) return nullptr;
+    std::string itn;
+    // the port's placeholder wire records the interface in interface_type ...
+    RTLIL::Wire* pw = module ? module->wire(RTLIL::escape_id(base)) : nullptr;
+    if (pw && pw->attributes.count(RTLIL::escape_id("interface_type"))) {
+        itn = pw->attributes.at(RTLIL::escape_id("interface_type")).decode_string();
+        if (!itn.empty() && itn[0] == '\\') itn = itn.substr(1);
+        if (itn.compare(0, 8, "$paramod") == 0) {
+            auto b1 = itn.find('\\');
+            if (b1 != std::string::npos) { itn = itn.substr(b1 + 1); itn = itn.substr(0, itn.find('\\')); }
+        }
+    }
+    // ... or, once that placeholder is gone, the UHDM port itself does:
+    // its Low_conn binds a modport (parent = the interface definition) or an
+    // interface instance, and its typespec names the interface / modport.
+    if (itn.empty() && current_instance && current_instance->Ports()) {
+        for (auto p : *current_instance->Ports()) {
+            if (std::string(p->VpiName()) != base) continue;
+            if (auto lc = p->Low_conn())
+                if (lc->UhdmType() == uhdmref_obj)
+                    if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
+                        if (a->UhdmType() == uhdmmodport && a->VpiParent())
+                            itn = std::string(a->VpiParent()->VpiDefName());
+                        else if (a->UhdmType() == uhdminterface_inst)
+                            itn = std::string(any_cast<const UHDM::interface_inst*>(a)->VpiDefName());
+                    }
+            if (itn.empty() && p->Typespec() && p->Typespec()->Actual_typespec()) {
+                const UHDM::typespec* ts = p->Typespec()->Actual_typespec();
+                if (ts->UhdmType() == uhdmarray_typespec)
+                    if (auto et = any_cast<const UHDM::array_typespec*>(ts)->Elem_typespec())
+                        if (et->Actual_typespec()) ts = et->Actual_typespec();
+                if (ts->UhdmType() == uhdminterface_typespec) {
+                    auto its = any_cast<const UHDM::interface_typespec*>(ts);
+                    if (its->VpiIsModPort() && its->VpiParent() &&
+                        its->VpiParent()->UhdmType() == uhdminterface_typespec)
+                        itn = std::string(its->VpiParent()->VpiName());
+                    else if (!its->VpiIsModPort())
+                        itn = std::string(its->VpiName());
+                }
+            }
+            break;
+        }
+    }
+    if (itn.find("work@") == 0) itn = itn.substr(5);
+    if (itn.empty()) return nullptr;
+    for (auto ii : *uhdm_design->AllInterfaces()) {
+        std::string dn = std::string(ii->VpiDefName());
+        if (dn.find("work@") == 0) dn = dn.substr(5);
+        if (dn != itn) continue;
+        // an UNPACKED-array member (`logic [3:0] y [2]`) has per-element
+        // wires and its own machinery: not a packed-element select
+        if (ii->Array_vars()) for (auto av : *ii->Array_vars()) if (std::string(av->VpiName()) == mem) return nullptr;
+        if (ii->Array_nets()) for (auto an : *ii->Array_nets()) if (std::string(an->VpiName()) == mem) return nullptr;
+        if (ii->Variables()) for (auto v : *ii->Variables()) if (std::string(v->VpiName()) == mem) return v;
+        if (ii->Nets()) for (auto n : *ii->Nets()) if (std::string(n->VpiName()) == mem) return n;
+        return nullptr;
+    }
+    return nullptr;
+}
+
+bool UhdmImporter::emit_iface_member_elem_write(const UHDM::hier_path* hp,
+                                                const UHDM::any* rhs_any,
+                                                RTLIL::Process* proc,
+                                                RTLIL::CaseRule* case_rule) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2 || !rhs_any) return false;
+    auto& pe = *hp->Path_elems();
+    if (pe[0]->UhdmType() != uhdmref_obj || pe[1]->UhdmType() != uhdmbit_select) return false;
+    std::string base = std::string(pe[0]->VpiName());
+    auto bs = any_cast<const UHDM::bit_select*>(pe[1]);
+    std::string mem = std::string(bs->VpiName());
+    if (base.empty() || mem.empty()) return false;
+    std::string full = base + "." + mem;
+    RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                          : module->wire(RTLIL::escape_id(full));
+    if (!w) return false;
+    // an UNPACKED-array member has per-element wires (`p.y[0]`) and its own
+    // machinery -- not a packed-element select of a flat member wire
+    if (iface_array_elem_width_.count(full) || name_map.count(full + "[0]") ||
+        module->wire(RTLIL::escape_id(full + "[0]"))) return false;
+    // the base must be an interface port or an interface instance
+    const UHDM::any* decl = iface_port_member_decl(base, mem);
+    RTLIL::Wire* pw = module->wire(RTLIL::escape_id(base));
+    bool is_iface = decl || (pw && pw->attributes.count(RTLIL::escape_id("is_interface"))) ||
+                    iface_inst_vars_.count(base);
+    if (!is_iface) return false;
+    if (!decl) decl = bs->Actual_group();
+    if (decl && (decl->UhdmType() == uhdmarray_var || decl->UhdmType() == uhdmarray_net)) return false;
+    int ew = 0, lo = 0;
+    if (!decl || !bitselect_outer_dim(decl, w->width, ew, lo) || ew < 1) return false;
+    RTLIL::SigSpec ix = bs->VpiIndex()
+        ? import_expression(any_cast<const UHDM::expr*>(bs->VpiIndex()), comb_read_map())
+        : RTLIL::SigSpec();
+    if (ix.size() == 0) return false;
+    RTLIL::SigSpec rhs = import_expression(any_cast<const UHDM::expr*>(rhs_any), comb_read_map());
+    if (rhs.size() == 0) return false;
+    if (rhs.size() > ew) rhs = rhs.extract(0, ew);
+    else if (rhs.size() < ew) rhs.extend_u0(ew, false);
+    if (!ix.is_fully_const()) {
+        // `sender_if.valid[vc] = '1` with a DYNAMIC index: read-modify-write
+        // the whole member -- clear the element at (idx-lo)*ew, or in the
+        // value -- exactly as a dynamic struct-field bit write is lowered.
+        if (ew == 1 && w->width == 1) return false;
+        RTLIL::SigSpec cur = current_comb_values.count(full)
+            ? current_comb_values[full] : RTLIL::SigSpec(w);
+        if (cur.size() != w->width) return false;
+        int iw = std::max(GetSize(ix), 32);
+        RTLIL::SigSpec idx = ix; idx.extend_u0(iw, false);
+        if (lo != 0) idx = module->Sub(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(lo, iw)));
+        RTLIL::SigSpec amt = (ew == 1) ? idx
+            : module->Mul(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(ew, iw)));
+        RTLIL::SigSpec ones(RTLIL::Const(RTLIL::State::S1, ew)); ones.extend_u0(w->width, false);
+        RTLIL::SigSpec val = rhs; val.extend_u0(w->width, false);
+        RTLIL::SigSpec mask = module->Shl(NEW_ID, ones, amt);
+        RTLIL::SigSpec shifted = module->Shl(NEW_ID, val, amt);
+        RTLIL::SigSpec merged = module->Or(NEW_ID, module->And(NEW_ID, cur, module->Not(NEW_ID, mask)), shifted);
+        RTLIL::SigSpec tgt = RTLIL::SigSpec(w);
+        if (proc) {
+            RTLIL::Wire* tw0 = find_own_temp_wire(full);
+            if (tw0 && tw0->width == w->width) tgt = RTLIL::SigSpec(tw0);
+            emit_comb_assign(tgt, merged, proc);
+        } else if (case_rule) {
+            RTLIL::Wire* temp_wire = module->wire("$0\\" + full);
+            if (temp_wire && temp_wire->width == w->width) tgt = RTLIL::SigSpec(temp_wire);
+            remove_target_from_switches(case_rule, tgt);
+            case_rule->actions.push_back(RTLIL::SigSig(tgt, merged));
+        } else return false;
+        if (!in_always_ff_body_mode) current_comb_values[full] = merged;
+        uhdm_trace("    interface member element write %s[dyn] -> RMW (elem %d bits)\n", full.c_str(), ew);
+        return true;
+    }
+    if (ew == 1) return false;   // a constant single-bit write: the generic path is right
+    int off = (ix.as_const().as_int() - lo) * ew;
+    if (off < 0 || off + ew > w->width) return false;
+    RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(w).extract(off, ew);
+    if (proc) {
+        RTLIL::Wire* tw0 = find_own_temp_wire(full);
+        RTLIL::SigSpec tgt = (tw0 && tw0->width == w->width)
+            ? RTLIL::SigSpec(tw0).extract(off, ew) : lhs_slice;
+        emit_comb_assign(tgt, rhs, proc);
+    } else if (case_rule) {
+        std::string temp_name = "$0\\" + full;
+        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        RTLIL::SigSpec tgt = (temp_wire && temp_wire->width == w->width)
+            ? RTLIL::SigSpec(temp_wire).extract(off, ew) : lhs_slice;
+        remove_target_from_switches(case_rule, tgt);
+        case_rule->actions.push_back(RTLIL::SigSig(tgt, rhs));
+    } else {
+        return false;
+    }
+    if (!in_always_ff_body_mode) {
+        RTLIL::SigSpec cur = current_comb_values.count(full)
+            ? current_comb_values[full] : RTLIL::SigSpec(w);
+        if (cur.size() == w->width) {
+            cur.replace(off, rhs);
+            current_comb_values[full] = cur;
+        }
+    }
+    uhdm_trace("    interface member element write %s[%d] -> bits [%d+:%d]\n",
+               full.c_str(), ix.as_const().as_int(), off, ew);
+    return true;
+}
+
 bool UhdmImporter::emit_dynamic_struct_field_bit_write(
         const UHDM::hier_path* hp,
         const UHDM::any* rhs_any,
@@ -16190,6 +16369,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     if (auto lhs_e = uhdm_assign->Lhs()) {
         if (lhs_e->VpiType() == vpiHierPath) {
             auto hp = any_cast<const hier_path*>(lhs_e);
+            if (emit_iface_member_elem_write(hp, uhdm_assign->Rhs(), proc, nullptr))
+                return;
             if (emit_dynamic_struct_field_bit_write(
                     hp, uhdm_assign->Rhs(), proc, nullptr))
                 return;
@@ -17090,6 +17271,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     if (auto lhs_e = uhdm_assign->Lhs()) {
         if (lhs_e->VpiType() == vpiHierPath) {
             auto hp = any_cast<const hier_path*>(lhs_e);
+            if (emit_iface_member_elem_write(hp, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
             if (emit_dynamic_struct_field_bit_write(
                     hp, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
