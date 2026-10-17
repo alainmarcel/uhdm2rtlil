@@ -1,0 +1,9 @@
+# UHDM-only (read_verilog rejects the interface-array port).  Without the fix
+# `hierarchy -check` aborts: the cell connects a port the child does not
+# declare (`register_if.value`); test_slang_equiv.ys proves the values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top csr_flat
+proc
+flatten
+opt_clean
+check -assert
