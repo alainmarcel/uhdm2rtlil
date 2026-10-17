@@ -10397,6 +10397,20 @@ const UHDM::instance* UhdmImporter::find_iface_instance_by_name(const std::strin
                 }
     };
     scan_gsa(mi->Gen_scope_arrays());
+    // A module imported as a CHILD comes from the DEFINITION view, whose
+    // Interfaces() / Interface_arrays() are empty -- the instances live on
+    // the elaborated copies only.  tbcm_round_robin_arbiter's
+    // `u_selector.mux(...)` resolved at the top of its own row and NOT
+    // inside tnoc's AXI mux, where it is a child; tnoc_error_checker's
+    // `flit_if[1].get_tail_flit_ack(0)` likewise (the flat wrapper is the
+    // top there).  Every elaborated instance of one definition declares
+    // the same interface instances, so the first one serves.
+    if (!found)
+        if (auto ei = find_elab_instance(mi))
+            if (ei != mi) {
+                scan_ifaces(ei->Interfaces(), ei->Interface_arrays());
+                scan_gsa(ei->Gen_scope_arrays());
+            }
     return found;
 }
 
