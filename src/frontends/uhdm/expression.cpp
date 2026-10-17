@@ -6320,6 +6320,16 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // An INTERFACE method is never a function of its arguments
+                // alone: it reads the interface's members (`valid[channel] &
+                // ready[channel]`).  Folding it on constant arguments made
+                // tnoc's get_tail_flit_ack -- `tail ? get_channel_ack(channel)
+                // : '0`, the nested call reached from an inlined method body
+                // with `channel` bound to 0 -- return 0 for every VC.  The
+                // same guard process_function_with_context already applies.
+                if (all_const && func_def->VpiParent() &&
+                    func_def->VpiParent()->UhdmType() == uhdminterface_inst)
+                    all_const = false;
                 if (all_const) {
                     // Evaluate function at compile time for optimization.
                     // Clear side-effect map so this top-level call starts fresh.
