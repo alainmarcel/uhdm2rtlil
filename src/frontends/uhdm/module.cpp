@@ -4370,6 +4370,47 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
         }
         return ts_c;
     }
+    // A function inlined for `u_selector.mux(...)`: the INTERFACE INSTANCE
+    // named by method_call_inst_ binds the type parameter (DATA_TYPE =
+    // tnoc_flit), not the calling module.  Match the definition's default
+    // typespec against the instance's type parameters the same way.
+    if (method_call_inst_) {
+        const UHDM::instance* ii = method_call_inst_;
+        std::string dn = std::string(ii->VpiDefName());
+        const UHDM::instance* def = nullptr;
+        if (uhdm_design->AllInterfaces())
+            for (auto m : *uhdm_design->AllInterfaces())
+                if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+        if (!def)
+            for (auto m : *uhdm_design->AllModules())
+                if (std::string(m->VpiDefName()) == dn) { def = m; break; }
+        if (def && def != ii && def->Parameters() && ii->Parameters()) {
+            for (auto dp : *def->Parameters()) {
+                if (dp->UhdmType() != uhdmtype_parameter) continue;
+                auto dtp = any_cast<const UHDM::type_parameter*>(dp);
+                const UHDM::typespec* d_at =
+                    (dtp->Typespec() ? dtp->Typespec()->Actual_typespec() : nullptr);
+                if (!d_at) continue;
+                bool match = (d_at == ts_c) ||
+                             (d_at->UhdmType() == ts_c->UhdmType() &&
+                              d_at->VpiLineNo() == ts_c->VpiLineNo() &&
+                              d_at->VpiColumnNo() == ts_c->VpiColumnNo() &&
+                              d_at->VpiFile() == ts_c->VpiFile());
+                if (!match) continue;
+                for (auto ip : *ii->Parameters()) {
+                    if (ip->UhdmType() != uhdmtype_parameter) continue;
+                    if (ip->VpiName() != dp->VpiName()) continue;
+                    auto itp = any_cast<const UHDM::type_parameter*>(ip);
+                    if (itp->Typespec() && itp->Typespec()->Actual_typespec() &&
+                        itp->Typespec()->Actual_typespec() != ts_c) {
+                        uhdm_trace("UHDM: type parameter '%s' -> the method-call instance's type\\n",
+                            std::string(dp->VpiName()).c_str());
+                        return itp->Typespec()->Actual_typespec();
+                    }
+                }
+            }
+        }
+    }
     mi = dynamic_cast<const UHDM::module_inst*>(
         current_instance ? (const UHDM::scope*)current_instance : inst);
     // The default typespec may have been declared by an ANCESTOR that RELAYS

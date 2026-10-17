@@ -10596,6 +10596,30 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         return RTLIL::SigSpec(RTLIL::Const(value, 32));
     }
     
+    // Inside a function inlined for `u_selector.mux(...)`: a reference to one
+    // of the INTERFACE's parameters (`WIDTH`, `ENTRIES`) is the instance's
+    // value.  Surelog binds such a ref to the definition's folded DEFAULT
+    // (a constant, 8 for tnoc's selector), so this has to come before the
+    // Actual_group paths below.
+    if (method_call_inst_ && method_call_inst_->Param_assigns() &&
+        !(input_mapping && input_mapping->count(ref_name))) {
+        for (auto pa : *method_call_inst_->Param_assigns()) {
+            if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != ref_name) continue;
+            auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+            if (!re) break;
+            const UHDM::instance* saved_mci = method_call_inst_;
+            method_call_inst_ = nullptr;   // the RHS is written in the instantiating scope
+            RTLIL::SigSpec rs = import_expression(re);
+            method_call_inst_ = saved_mci;
+            if (rs.is_fully_const() && rs.size() > 0) {
+                uhdm_trace("UHDM: parameter %s taken from the method-call instance %s\n",
+                    ref_name.c_str(), std::string(method_call_inst_->VpiName()).c_str());
+                return rs;
+            }
+            break;
+        }
+    }
+
     // Check if the ref_obj has an Actual_group() that points to a parameter or enum constant
     if (uhdm_ref->Actual_group()) {
         const any* actual = uhdm_ref->Actual_group();
@@ -10686,7 +10710,29 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // read AW's definition default 32 for the chip's 19).  A
             // pass-through actual (`.AW(AW)`) is evaluated in the parent.
             bool inst_got = false;
-            if (measuring_in_declaring_scope_ &&
+            // Inside a function inlined for `u_selector.mux(...)`, a parameter
+            // of the interface (`WIDTH`, `ENTRIES`) is the INSTANCE's value,
+            // not the definition's default the ref carries and not a
+            // same-named parameter of the calling module.
+            if (method_call_inst_ && method_call_inst_->Param_assigns()) {
+                for (auto pa : *method_call_inst_->Param_assigns()) {
+                    if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != param_name) continue;
+                    auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+                    if (!re) break;
+                    const UHDM::instance* saved_mci = method_call_inst_;
+                    method_call_inst_ = nullptr;   // the RHS is written in the instantiating scope
+                    RTLIL::SigSpec rs = import_expression(re);
+                    method_call_inst_ = saved_mci;
+                    if (rs.is_fully_const() && rs.size() > 0) {
+                        param_value = rs.as_const();
+                        inst_got = true;
+                        uhdm_trace("UHDM: parameter %s taken from the method-call instance %s\n",
+                            param_name.c_str(), std::string(method_call_inst_->VpiName()).c_str());
+                    }
+                    break;
+                }
+            }
+            if (!inst_got && measuring_in_declaring_scope_ &&
                 !(module && module->parameter_default_values.count(p_id) &&
                   module->parameter_default_values.at(p_id).size() > 0)) {
                 if (auto ci = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
@@ -15082,6 +15128,69 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             any_cast<const UHDM::expr*>(a), input_mapping));
                     }
                 }
+                // The function belongs to an INTERFACE INSTANCE whose type /
+                // value parameters may be overridden there: tnoc's
+                //   tbcm_selector #(.DATA_TYPE(tnoc_flit), .ENTRIES(2)) u_selector();
+                //   assign sender_if.flit = u_selector.mux(i_select, flit);
+                // Inlined in the caller's context, `DATA_TYPE` resolved to the
+                // definition's default (`logic [WIDTH-1:0]`, 8 bits) and the
+                // 291-bit flit mux returned 8 bits -- 580 bits of every tnoc
+                // flit output undriven.  Name the instance for the duration
+                // of the inlining; the type-parameter resolver and the
+                // parameter import consult it first.
+                struct McInst {
+                    const UHDM::instance*& slot; const UHDM::instance* saved;
+                    McInst(const UHDM::instance*& s, const UHDM::instance* v) : slot(s), saved(s) { if (v) slot = v; }
+                    ~McInst() { slot = saved; }
+                } mc_guard(method_call_inst_, [&]() -> const UHDM::instance* {
+                    auto& pe = *uhdm_hier->Path_elems();
+                    if (pe.size() < 2 || !current_instance) return nullptr;
+                    std::string base = std::string(pe[0]->VpiName());
+                    if (pe[0]->UhdmType() == uhdmbit_select) {
+                        auto bs = any_cast<const bit_select*>(pe[0]);
+                        RTLIL::SigSpec ix = bs->VpiIndex() ? import_expression(bs->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                        if (ix.size() > 0 && ix.is_fully_const())
+                            base += "[" + std::to_string(ix.as_int()) + "]";
+                    }
+                    auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+                    if (!mi) return nullptr;
+                    // The instance may sit in a GENERATE scope (tnoc's
+                    // `if (1) begin : g_flit ... tbcm_selector u_selector();`):
+                    // search the module and every generate scope under it,
+                    // preferring one on the current generate-scope path.
+                    std::string cur_gs = get_current_gen_scope();
+                    const UHDM::instance* found = nullptr;
+                    auto consider = [&](const UHDM::instance* cand) {
+                        if (!cand || std::string(cand->VpiName()) != base) return;
+                        std::string fn = std::string(cand->VpiFullName());
+                        bool on_path = cur_gs.empty() || fn.find("." + cur_gs + "." + base) != std::string::npos;
+                        if (!found || on_path) found = cand;
+                    };
+                    auto scan_ifaces = [&](const UHDM::VectorOfinterface_inst* ifs,
+                                           const UHDM::VectorOfinterface_array* ias) {
+                        if (ifs) for (auto ii : *ifs) consider(ii);
+                        if (ias) for (auto ia : *ias)
+                            if (ia->Instances())
+                                for (auto e : *ia->Instances())
+                                    consider(dynamic_cast<const UHDM::instance*>(e));
+                    };
+                    scan_ifaces(mi->Interfaces(), mi->Interface_arrays());
+                    std::function<void(const UHDM::VectorOfgen_scope_array*)> scan_gsa =
+                        [&](const UHDM::VectorOfgen_scope_array* gsas) {
+                        if (!gsas) return;
+                        for (auto gsa : *gsas)
+                            if (gsa->Gen_scopes())
+                                for (auto gs : *gsa->Gen_scopes()) {
+                                    scan_ifaces(gs->Interfaces(), gs->Interface_arrays());
+                                    scan_gsa(gs->Gen_scope_arrays());
+                                }
+                    };
+                    scan_gsa(mi->Gen_scope_arrays());
+                    return found;
+                }());
+                if (method_call_inst_)
+                    uhdm_trace("    hier_path func call %s inlined for interface instance %s\n",
+                        func_name.c_str(), std::string(method_call_inst_->VpiName()).c_str());
                 bool all_const = true;
                 std::vector<RTLIL::Const> const_args;
                 for (const auto& arg : args) {

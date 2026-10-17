@@ -402,6 +402,10 @@ struct UhdmImporter {
     // Current instance context for hierarchical path resolution
     const UHDM::module_inst* current_instance = nullptr;
     const UHDM::scope* current_scope = nullptr;
+    // The interface instance a METHOD-STYLE call (`u_selector.mux(...)`) is
+    // being inlined for: its parameters (DATA_TYPE, WIDTH, ENTRIES) win over
+    // the caller's and over the interface definition's defaults while set.
+    const UHDM::instance* method_call_inst_ = nullptr;
 
     // Module DEFINITION name (work@ stripped) -> first-seen ELABORATED instance
     // of that def in the TopModules hierarchy.  AllModules defs carry only
