@@ -382,12 +382,38 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 if (auto he = dynamic_cast<const UHDM::expr*>(hc)) hv = import_expression(he);
                 return hv;
             };
+            // An INTERFACE-typed port of the interface -- tnoc_flit_if's
+            // `tnoc_types types`, bound as `tnoc_flit_if flit_vc_if[N](types)`
+            // -- carries no signal.  Importing its actual fabricated a 1-bit
+            // wire `flit_vc_if[k].types`, which the member fan-out then handed
+            // to a child as `sender_if.types`, a port the child's flattened
+            // port set never declares ("does not have a port named
+            // 'sender_if.types'": tnoc_vc_arbiter, the flit muxes/demuxes, the
+            // packet (de)serializers).  Both port loops below leave it out.
+            auto iface_typed_port = [&](const UHDM::port* p) -> bool {
+                if (p->Typespec() && p->Typespec()->Actual_typespec() &&
+                    p->Typespec()->Actual_typespec()->UhdmType() == uhdminterface_typespec)
+                    return true;
+                if (auto hc = p->High_conn())
+                    if (hc->UhdmType() == uhdmref_obj)
+                        if (auto a = any_cast<const UHDM::ref_obj*>(hc)->Actual_group())
+                            if (a->UhdmType() == uhdminterface_inst ||
+                                a->UhdmType() == uhdminterface_array ||
+                                a->UhdmType() == uhdmmodport)
+                                return true;
+                return false;
+            };
             std::map<std::string, RTLIL::SigSpec> port_conn_map;
             if (interface->Ports()) {
                 for (auto p : *interface->Ports()) {
                     if (!p->High_conn()) continue;
                     std::string pn = std::string(p->VpiName());
                     if (pn.empty()) continue;
+                    if (iface_typed_port(p)) {
+                        uhdm_trace("UHDM: interface %s port %s is interface-typed, no signal\n",
+                            interface_name.c_str(), pn.c_str());
+                        continue;
+                    }
                     RTLIL::SigSpec hv = iface_inst_port_actual(p);
                     if (hv.size() > 0) port_conn_map[pn] = hv;
                 }
@@ -533,6 +559,30 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     if (hidden_by_modport(net_name)) continue;
                     std::string full_name = interface_name + "." + net_name;
                     if (name_map.count(full_name)) continue;
+                    // The interface's OWN interface-typed port -- tnoc_flit_if's
+                    // `tnoc_types types`, which only supplies typedefs -- is
+                    // listed in Nets() as a typespec-less logic_net.  It is no
+                    // signal: a member wire for it made the parent connect
+                    // `sender_if.types` to a child whose flattened port set
+                    // has no such port ("does not have a port named
+                    // 'sender_if.types'": tnoc_vc_arbiter, the flit muxes,
+                    // the packet (de)serializers).  Leave it out.
+                    if (!net->Typespec() && interface->Ports()) {
+                        bool is_own_port = false;
+                        for (auto pp : *interface->Ports()) {
+                            if (std::string(pp->VpiName()) != net_name) continue;
+                            // a `logic clk` port keeps its logic typespec; an
+                            // interface-typed one has none, or an interface_typespec
+                            const UHDM::typespec* pts = (pp->Typespec() && pp->Typespec()->Actual_typespec())
+                                ? pp->Typespec()->Actual_typespec() : nullptr;
+                            is_own_port = !pts || pts->UhdmType() == uhdminterface_typespec;
+                            break;
+                        }
+                        if (is_own_port) {
+                            uhdm_trace("UHDM: Skipping interface port net %s (no signal)\n", full_name.c_str());
+                            continue;
+                        }
+                    }
 
                     int width = get_width(net, current_instance);
                     if (width <= 0) width = interface_width;
@@ -1022,6 +1072,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             if (interface->Ports()) {
                 for (auto p : *interface->Ports()) {
                     if (!p->High_conn()) continue;
+                    if (iface_typed_port(p)) continue;   // `tnoc_types types`: no signal
                     int dir = p->VpiDirection();
                     std::string port_name = std::string(p->VpiName());
                     if (port_name.empty()) continue;
