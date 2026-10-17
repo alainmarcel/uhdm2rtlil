@@ -1,0 +1,10 @@
+# Both elements of the interface-array port must exist as member ports;
+# without the fix only `sender_if[0].*` (the one element instance Surelog
+# materialised) is there and the generate loop's `sender_if[1]` writes are
+# unresolved struct-member accesses.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+select -assert-count 1 w:sender_if[0].valid
+select -assert-count 1 w:sender_if[1].valid
+select -assert-count 1 w:sender_if[1].data
+select -assert-count 1 w:sender_if[1].ready
