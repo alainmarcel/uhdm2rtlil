@@ -3125,23 +3125,55 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                     if (actual && actual->UhdmType() == uhdminterface_inst) {
                         const interface_inst* iface = any_cast<const interface_inst*>(actual);
                         std::string iface_name = std::string(iface->VpiName());
-                        uhdm_trace("    Port %s is connected to interface %s\n", port_name.c_str(), iface_name.c_str());
-                        
-                        // For interface connections, we need to expand the interface signals
-                        // and connect them individually as bus.a, bus.b, bus.c
-                        if (iface->Variables()) {
-                            for (auto var : *iface->Variables()) {
-                                std::string var_name = std::string(var->VpiName());
-                                std::string full_signal_name = iface_name + "." + var_name;
-                                std::string port_signal_name = port_name + "." + var_name;
-                                
-                                if (name_map.count(full_signal_name)) {
-                                    RTLIL::Wire* w = name_map[full_signal_name];
-                                    cell->setPort(RTLIL::escape_id(port_signal_name), w);
-                                    uhdm_trace("      Connected interface signal %s to port %s\n", full_signal_name.c_str(), port_signal_name.c_str());
-                                }
+                        // An interface instance declared inside a GENERATE
+                        // block (rggen's `rggen_bit_field_if #(32) bit_field_if();`
+                        // in `g_rbr`, and `bit_field_sub_if` one block deeper)
+                        // has its member wires under the scope-qualified name
+                        // `g_rbr.bit_field_if.<member>`.  The bare VpiName
+                        // found nothing in name_map and the port was left
+                        // UNCONNECTED without a word: every rggen register's
+                        // bit-field interface floated.  Qualify from the
+                        // instance's elaborated full name relative to this
+                        // module, and create a member wire that nothing has
+                        // referenced yet instead of dropping the connection.
+                        {
+                            std::string ifn = std::string(iface->VpiFullName());
+                            std::string ip = current_instance
+                                ? std::string(current_instance->VpiFullName()) + "." : "";
+                            if (!ip.empty() && ifn.compare(0, ip.size(), ip) == 0) {
+                                std::string scoped = ifn.substr(ip.size());
+                                if (scoped != iface_name && scoped.find('.') != std::string::npos)
+                                    iface_name = scoped;
                             }
                         }
+                        uhdm_trace("    Port %s is connected to interface %s\n", port_name.c_str(), iface_name.c_str());
+
+                        // For interface connections, we need to expand the interface signals
+                        // and connect them individually as bus.a, bus.b, bus.c
+                        auto connect_members = [&](const UHDM::any* var) {
+                            std::string var_name = std::string(var->VpiName());
+                            if (var_name.empty()) return;
+                            std::string full_signal_name = iface_name + "." + var_name;
+                            std::string port_signal_name = port_name + "." + var_name;
+                            RTLIL::Wire* w = nullptr;
+                            if (name_map.count(full_signal_name)) w = name_map[full_signal_name];
+                            else if (iface_name.find('.') != std::string::npos) {
+                                int mwid = get_width(const_cast<any*>(var), current_instance);
+                                if (mwid <= 0) mwid = 1;
+                                w = create_wire(full_signal_name, mwid);
+                                name_map[full_signal_name] = w;
+                                uhdm_trace("      Created interface member wire %s (width %d)\n",
+                                    full_signal_name.c_str(), mwid);
+                            }
+                            if (w) {
+                                cell->setPort(RTLIL::escape_id(port_signal_name), w);
+                                uhdm_trace("      Connected interface signal %s to port %s\n", full_signal_name.c_str(), port_signal_name.c_str());
+                            }
+                        };
+                        if (iface->Variables())
+                            for (auto var : *iface->Variables()) connect_members(var);
+                        if (iface->Nets())
+                            for (auto n : *iface->Nets()) connect_members(n);
                         continue;
                     }
                 }

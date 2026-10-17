@@ -16969,6 +16969,36 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         size_t module_end = full_str.find('.');
                         if (module_end != std::string::npos) {
                             std::string signal_path = full_str.substr(module_end + 1);
+                            // That strips ONE segment, which is only the whole
+                            // instance prefix when the module sits directly
+                            // under the top.  Strip the current instance's own
+                            // full name when the actual lives under it; and
+                            // when it does NOT -- Surelog binds elements [1..]
+                            // of an interface-ARRAY PORT to the PARENT's
+                            // interface instances (`work@top.dut.register_if[1]
+                            // .active` read from inside dut.u_adapter) -- peel
+                            // leading instance segments until the remainder
+                            // names one of this module's wires: the port
+                            // element \register_if[1].active.  The old result,
+                            // `dut.register_if[1].active`, became a forward-ref
+                            // wire nothing drove (rggen uart_csr / block_0 /
+                            // block_1 readback muxes, every entry but [0]).
+                            if (current_instance) {
+                                std::string ip = std::string(current_instance->VpiFullName()) + ".";
+                                if (full_str.compare(0, ip.size(), ip) == 0) {
+                                    signal_path = full_str.substr(ip.size());
+                                } else if (!name_map.count(signal_path)) {
+                                    std::string peeled = signal_path;
+                                    size_t dot;
+                                    while (!name_map.count(peeled) &&
+                                           (dot = peeled.find('.')) != std::string::npos)
+                                        peeled = peeled.substr(dot + 1);
+                                    if (name_map.count(peeled)) {
+                                        uhdm_trace("          Actual outside this instance; resolved by suffix: %s\n", peeled.c_str());
+                                        signal_path = peeled;
+                                    }
+                                }
+                            }
                             uhdm_trace("          Extracted signal path: %s\n", signal_path.c_str());
                             if (name_map.count(signal_path)) {
                                 uhdm_trace("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
