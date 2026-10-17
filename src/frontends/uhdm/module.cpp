@@ -656,6 +656,55 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             }
                         }
                         int sig_w = width_obj ? compute_signal_width(width_obj) : 1;
+                        // A member typed through the interface's OWN interface
+                        // port -- tnoc_flit_if's `typedef types.tnoc_flit tnoc_flit;`
+                        // over its `tnoc_types types` port -- does not resolve
+                        // on a TOP-level port stub of the interface, which is
+                        // the iface_inst a port bound to the enclosing module's
+                        // own interface port resolves to: `receiver_if.flit`
+                        // measured ONE bit while `sender_if.flit`, bound to an
+                        // elaborated `mid_if[0]`, measured eight ("Resizing
+                        // cell port ... flit from 8 bits to 1 bits").  Measure
+                        // the member on an ELABORATED instance of the same
+                        // interface where it resolves.
+                        if (sig_w <= 1 && !found_struct_ts && uhdm_design &&
+                            uhdm_design->TopModules() && iface_inst) {
+                            std::string want = std::string(iface_inst->VpiDefName());
+                            int best = 0;
+                            std::function<void(const UHDM::module_inst*)> walk =
+                                [&](const UHDM::module_inst* m) {
+                                if (!m || best > 1) return;
+                                auto try_ii = [&](const UHDM::interface_inst* ii) {
+                                    if (!ii || best > 1 || std::string(ii->VpiDefName()) != want) return;
+                                    const UHDM::any* o = nullptr;
+                                    if (ii->Variables())
+                                        for (auto v : *ii->Variables())
+                                            if (std::string(v->VpiName()) == sig_name) { o = v; break; }
+                                    if (!o && ii->Nets())
+                                        for (auto n : *ii->Nets())
+                                            if (std::string(n->VpiName()) == sig_name) { o = n; break; }
+                                    if (o) {
+                                        int w2 = compute_signal_width(o);
+                                        if (w2 > best) best = w2;
+                                    }
+                                };
+                                if (m->Interfaces())
+                                    for (auto ii : *m->Interfaces()) try_ii(ii);
+                                if (m->Interface_arrays())
+                                    for (auto ia : *m->Interface_arrays())
+                                        if (ia->Instances())
+                                            for (auto e : *ia->Instances())
+                                                try_ii(dynamic_cast<const UHDM::interface_inst*>(e));
+                                if (m->Modules())
+                                    for (auto c : *m->Modules()) walk(c);
+                            };
+                            for (auto t : *uhdm_design->TopModules()) walk(t);
+                            if (best > 1) {
+                                uhdm_trace("UHDM: modport member %s measured %d on an elaborated %s instance (was %d)\n",
+                                    full_name.c_str(), best, want.c_str(), sig_w);
+                                sig_w = best;
+                            }
+                        }
                         if (found_struct_ts) {
                             int sw_ts = get_width_from_typespec(found_struct_ts, current_instance);
                             if (sw_ts > 0) sig_w = sw_ts;

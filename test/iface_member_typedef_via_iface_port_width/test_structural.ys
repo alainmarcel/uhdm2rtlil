@@ -1,0 +1,10 @@
+# The stage's modport member `flit` must be eight bits on BOTH ports: split
+# the port wires into bits and count them.  Without the fix receiver_if.flit
+# is one bit (nothing to split: zero matches) while sender_if.flit is eight.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+cd stage
+splitnets -ports
+select -assert-count 8 w:receiver_if.flit?*
+select -assert-count 8 w:sender_if.flit?*
