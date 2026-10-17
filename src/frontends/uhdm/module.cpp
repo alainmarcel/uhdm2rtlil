@@ -3146,6 +3146,42 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                                     iface_name = scoped;
                             }
                         }
+                        // A WHOLE interface ARRAY handed to a child from inside a
+                        // GENERATE block: `matcher u_m (.register_if(register_if))`
+                        // in `g_rbr`, with `reg_if register_if[6]()` at module
+                        // level.  Surelog binds that actual to the array's FIRST
+                        // ELEMENT (`register_if[0]`) rather than to the array,
+                        // so this branch connected one element as the unindexed
+                        // `register_if.value` -- a port the child (which has
+                        // register_if[0..5].value) does not declare, and
+                        // `hierarchy` rejected the cell.  At module level the
+                        // actual is the array itself and the array branch fans
+                        // out.  Recognise the shape by the ref naming the bare
+                        // array while the actual is an element, and fan out
+                        // over every element the module knows.
+                        {
+                            std::string rn = std::string(ref->VpiName());
+                            if (!rn.empty() && rn != std::string(iface->VpiName()) &&
+                                iface_inst_vars_.count(rn + "[0]")) {
+                                int bound = 0, nelem = 0;
+                                for (int k = 0; iface_inst_vars_.count(rn + "[" + std::to_string(k) + "]"); k++) {
+                                    std::string elem = rn + "[" + std::to_string(k) + "]";
+                                    nelem++;
+                                    for (auto &var_name : iface_inst_vars_[elem]) {
+                                        std::string full_signal_name = elem + "." + var_name;
+                                        if (!name_map.count(full_signal_name)) continue;
+                                        cell->setPort(RTLIL::escape_id(port_name + "[" + std::to_string(k) + "]." + var_name),
+                                                      name_map[full_signal_name]);
+                                        bound++;
+                                    }
+                                }
+                                if (bound > 0) {
+                                    uhdm_trace("    Port %s bound to interface ARRAY %s (%d elements, %d members) from a generate scope\n",
+                                        port_name.c_str(), rn.c_str(), nelem, bound);
+                                    continue;
+                                }
+                            }
+                        }
                         uhdm_trace("    Port %s is connected to interface %s\n", port_name.c_str(), iface_name.c_str());
 
                         // For interface connections, we need to expand the interface signals
