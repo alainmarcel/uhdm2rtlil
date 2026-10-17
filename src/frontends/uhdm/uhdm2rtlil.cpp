@@ -4169,7 +4169,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 + encode_param_bits32(
                                     "", std::to_string(vs2.as_int()));
                         }
-                    } else if (param_assign->Rhs()->UhdmType() == uhdmoperation) {
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmoperation ||
+                               param_assign->Rhs()->UhdmType() == uhdmvar_select ||
+                               param_assign->Rhs()->UhdmType() == uhdmbit_select ||
+                               param_assign->Rhs()->UhdmType() == uhdmpart_select ||
+                               param_assign->Rhs()->UhdmType() == uhdmindexed_part_select) {
+                        // A SELECT on the parent's packed parameter as the
+                        // override (`.INITIAL_VALUE(TABLE[i][j])`, rggen
+                        // block_0) is folded like an operation -- the three
+                        // naming sites (here, the instance cell type, the
+                        // hierarchy signature) must agree.
+
                         // A struct/array PATTERN or concat RHS
                         // (`.ResetValue({MSTATUS_RST_VAL})` with
                         // MSTATUS_RST_VAL = '{mie:0, mpie:1, ...}`): none of
