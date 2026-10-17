@@ -14918,9 +14918,58 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     if (ei->Variables()) for (auto v : *ei->Variables()) if (std::string(v->VpiName()) == mem) { mdecl = v; break; }
                                     if (!mdecl && ei->Nets()) for (auto n : *ei->Nets()) if (std::string(n->VpiName()) == mem) { mdecl = n; break; }
                                 }
+                            // An element of an interface-ARRAY PORT (`receiver_if[i]
+                            // .flit[0]`, tnoc_vc_mux's `tnoc_flit_if.receiver
+                            // receiver_if[CHANNELS]`): no instance of that name
+                            // exists in this module -- the member is declared by
+                            // the port's interface definition.  Without it the
+                            // select took ONE BIT of the 291-bit flit and the mux
+                            // forwarded 290 zeros.
+                            bool from_port_def = false;
+                            if (!mdecl) {
+                                std::string b0 = elem.substr(0, elem.find('['));
+                                mdecl = iface_port_member_decl(b0, mem);
+                                from_port_def = mdecl != nullptr;
+                            }
                             int ew2 = 0, lo2 = 0;
                             if (mdecl && mdecl->UhdmType() != uhdmarray_var && mdecl->UhdmType() != uhdmarray_net &&
                                 bitselect_outer_dim(mdecl, w->width, ew2, lo2) && ew2 > 1) { ew = ew2; elo = lo2; }
+                            // The DEFINITION's member ranges carry the definition's
+                            // parameter defaults (`tnoc_flit [FLITS-1:0]` with FLITS
+                            // = 2), not this element's (CHANNELS = 1, 291 bits):
+                            // size the element by its TYPE instead and let the
+                            // wire's width say how many there are.
+                            // The ranges of the declaration we found carry
+                            // the DEFINITION's parameter defaults (`flit_t
+                            // [CH-1:0]` with CH = 2) even when this element
+                            // was instantiated with CH = 1 and its wire is
+                            // one element wide, so the range-derived count
+                            // halves the element.  The element's TYPE width is
+                            // the truth; the wire's width says how many.
+                            if (mdecl) {
+                                const UHDM::typespec* ets = nullptr;
+                                if (mdecl->UhdmType() == uhdmpacked_array_var) {
+                                    auto pav = any_cast<const UHDM::packed_array_var*>(mdecl);
+                                    if (pav->Elements() && !pav->Elements()->empty())
+                                        if (auto e0 = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                                            if (e0->Typespec()) ets = e0->Typespec()->Actual_typespec();
+                                }
+                                if (!ets)
+                                    if (auto dx = dynamic_cast<const UHDM::expr*>(mdecl))
+                                        if (dx->Typespec() && dx->Typespec()->Actual_typespec()) {
+                                            const UHDM::typespec* dts = dx->Typespec()->Actual_typespec();
+                                            if (dts->UhdmType() == uhdmpacked_array_typespec) {
+                                                if (auto et = any_cast<const UHDM::packed_array_typespec*>(dts)->Elem_typespec())
+                                                    ets = et->Actual_typespec();
+                                            } else if (dts->UhdmType() == uhdmlogic_typespec) {
+                                                if (auto et = any_cast<const UHDM::logic_typespec*>(dts)->Elem_typespec())
+                                                    ets = et->Actual_typespec();
+                                            }
+                                        }
+                                int tw = ets ? get_width_from_typespec(ets, inst) : 0;
+                                if (tw > 1 && w->width % tw == 0 && tw != ew) { ew = tw; elo = 0; }
+                                (void)from_port_def;
+                            }
                         }
                         RTLIL::SigSpec basev = base_map[mem];
                         if (ix.size() > 0 && ix.is_fully_const()) {
