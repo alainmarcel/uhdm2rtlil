@@ -3178,6 +3178,43 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                     }
                 }
 
+                // The module's OWN interface PORT handed to a child inside a
+                // GENERATE block: rggen block_0's
+                //   generate if (1) begin : g_register_19
+                //     rggen_external_register u_register (..., .bus_if(register_19_bus_if));
+                // The ref_obj's actual is the MODPORT (`rggen_bus_if.master`),
+                // not an interface instance -- a port is not an instance --
+                // so it fell to the generic import, whose gen-scope lookup
+                // wanted `g_register_19.register_19_bus_if`, found nothing,
+                // and connected a fabricated 1-bit wire; the child's bus_if.*
+                // then floated (the wrapper's register_19_bus_if__write_data /
+                // address / strobe undriven, 301 diverging cycles).  The
+                // port's member wires `register_19_bus_if.<m>` are right here
+                // in this module: bind the child's `bus_if.<m>` to them, as
+                // the interface-instance branch above does for an instance.
+                if (high_conn->UhdmType() == uhdmref_obj) {
+                    const ref_obj* pr = any_cast<const ref_obj*>(high_conn);
+                    const any* pa = pr->Actual_group();
+                    std::string rn = std::string(pr->VpiName());
+                    if (!rn.empty() && (!pa || pa->UhdmType() == uhdmmodport)) {
+                        std::string prefix = rn + ".";
+                        int bound = 0;
+                        for (auto w : module->wires()) {
+                            std::string wn = RTLIL::unescape_id(w->name);
+                            if (wn.compare(0, prefix.size(), prefix) != 0) continue;
+                            std::string member = wn.substr(prefix.size());
+                            if (member.empty() || member.find('.') != std::string::npos) continue;
+                            cell->setPort(RTLIL::escape_id(port_name + "." + member), w);
+                            bound++;
+                        }
+                        if (bound > 0) {
+                            uhdm_trace("    Port %s bound to this module's own interface port %s (%d members)\n",
+                                port_name.c_str(), rn.c_str(), bound);
+                            continue;
+                        }
+                    }
+                }
+
                 // Interface-ARRAY element connection: `.b(arr[0])`.  Surelog
                 // elaborates an interface array (`myif arr [N]`) into per-element
                 // interface instances named "arr[0]","arr[1]".  The High_conn is
