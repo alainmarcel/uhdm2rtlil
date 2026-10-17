@@ -13779,8 +13779,21 @@ bool UhdmImporter::emit_iface_member_elem_write(const UHDM::hier_path* hp,
                                                 RTLIL::CaseRule* case_rule) {
     if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2 || !rhs_any) return false;
     auto& pe = *hp->Path_elems();
-    if (pe[0]->UhdmType() != uhdmref_obj || pe[1]->UhdmType() != uhdmbit_select) return false;
+    if ((pe[0]->UhdmType() != uhdmref_obj && pe[0]->UhdmType() != uhdmbit_select) ||
+        pe[1]->UhdmType() != uhdmbit_select) return false;
     std::string base = std::string(pe[0]->VpiName());
+    // an interface-ARRAY ELEMENT as the base: `flit_if[0].flit[0] = ...`
+    // (tnoc's packet serializer building its header flit)
+    const UHDM::instance* elem_inst = nullptr;
+    if (pe[0]->UhdmType() == uhdmbit_select) {
+        auto b0 = any_cast<const UHDM::bit_select*>(pe[0]);
+        RTLIL::SigSpec bi = b0->VpiIndex()
+            ? import_expression(any_cast<const UHDM::expr*>(b0->VpiIndex()), comb_read_map()) : RTLIL::SigSpec();
+        if (bi.size() == 0 || !bi.is_fully_const()) return false;
+        base += "[" + std::to_string(bi.as_const().as_int()) + "]";
+        if (!iface_inst_vars_.count(base)) return false;
+        elem_inst = find_iface_instance_by_name(base);
+    }
     auto bs = any_cast<const UHDM::bit_select*>(pe[1]);
     std::string mem = std::string(bs->VpiName());
     if (base.empty() || mem.empty()) return false;
@@ -13794,6 +13807,15 @@ bool UhdmImporter::emit_iface_member_elem_write(const UHDM::hier_path* hp,
         module->wire(RTLIL::escape_id(full + "[0]"))) return false;
     // the base must be an interface port or an interface instance
     const UHDM::any* decl = iface_port_member_decl(base, mem);
+    if (!decl && elem_inst)
+        if (auto eii = dynamic_cast<const UHDM::interface_inst*>(elem_inst)) {
+            bool unpacked = false;
+            if (eii->Array_vars()) for (auto av : *eii->Array_vars()) if (std::string(av->VpiName()) == mem) unpacked = true;
+            if (eii->Array_nets()) for (auto an : *eii->Array_nets()) if (std::string(an->VpiName()) == mem) unpacked = true;
+            if (unpacked) return false;
+            if (eii->Variables()) for (auto v : *eii->Variables()) if (std::string(v->VpiName()) == mem) { decl = v; break; }
+            if (!decl && eii->Nets()) for (auto n : *eii->Nets()) if (std::string(n->VpiName()) == mem) { decl = n; break; }
+        }
     RTLIL::Wire* pw = module->wire(RTLIL::escape_id(base));
     bool is_iface = decl || (pw && pw->attributes.count(RTLIL::escape_id("is_interface"))) ||
                     iface_inst_vars_.count(base);
