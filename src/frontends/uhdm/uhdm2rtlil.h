@@ -1219,6 +1219,12 @@ struct UhdmImporter {
     // The declaration (variable / net) of member `mem` of the interface an
     // interface PORT `base` (placeholder wire with interface_type) is typed by.
     const UHDM::any* iface_port_member_decl(const std::string& base, const std::string& mem);
+    // A bare NAMED logic_typespec (no ranges, no element type) that is a
+    // typedef taken through one of this module's interface ports, resolved
+    // to the interface's own typedef of that name; any other typespec is
+    // returned unchanged.
+    const UHDM::typespec* resolve_iface_port_typedef(const UHDM::typespec* ts);
+    std::map<std::string, const UHDM::typespec*> iface_port_typedef_cache_;
     // The interface instance named `name` ("u_sel", "flit_if[2]") in the
     // current module or any of its generate scopes (interface arrays' elements
     // included), preferring one on the current generate-scope path.

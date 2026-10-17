@@ -1706,7 +1706,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     
     if (ref_ts) {
         uhdm_trace("UHDM: Found ref_typespec for net '%s'\n", netname.c_str());
-        if (auto actual_typespec = ref_ts->Actual_typespec()) {
+        if (auto actual_typespec = resolve_iface_port_typedef(ref_ts->Actual_typespec())) {
             uhdm_trace("UHDM: Found actual_typespec (UhdmType=%d) for net '%s'\n", actual_typespec->UhdmType(), netname.c_str());
             if (actual_typespec->UhdmType() == uhdmstruct_typespec) {
                 uhdm_trace("UHDM: typespec is a struct_typespec\n");
@@ -4621,6 +4621,8 @@ UhdmImporter::declaring_instance_of_typeparam_default(const UHDM::any* typespec)
 
 // Helper function to get width from typespec
 int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst) {
+    if (typespec && typespec->UhdmType() == uhdmlogic_typespec)
+        typespec = resolve_iface_port_typedef(any_cast<const UHDM::typespec*>(typespec));
     if (!typespec) return 1;
 
     if (auto ts_c = dynamic_cast<const UHDM::typespec*>(typespec)) {

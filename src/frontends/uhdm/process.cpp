@@ -13712,6 +13712,89 @@ bool UhdmImporter::emit_dynamic_unpacked_array_partial_write(
 // The declaration of member `mem` of the interface that types the interface
 // PORT `base` -- the port's placeholder wire records the interface in its
 // interface_type attribute (a $paramod name keeps the bare interface name).
+// A typedef declared THROUGH an interface port -- `typedef types.hdr_t hdr_t;`
+// -- that is itself an alias inside the interface (`typedef hdr_fields_t
+// hdr_t;` there) comes out of Surelog as a logic_typespec carrying only the
+// NAME: no members, no ranges.  Every local declared with it measured one
+// bit and every member select of it was unresolvable ("Could not resolve
+// struct member access 'header.packet_type'" -- tnoc's AXI write/read demux
+// routes on exactly that; tnoc_types spells all of its headers as
+// `typedef tnoc_common_header_fields tnoc_common_header;`).  The interface
+// instance's own typedef list has the resolved struct under the same name.
+const UHDM::typespec* UhdmImporter::resolve_iface_port_typedef(const UHDM::typespec* ts) {
+    if (!ts || ts->UhdmType() != uhdmlogic_typespec) return ts;
+    auto lt = any_cast<const UHDM::logic_typespec*>(ts);
+    if (lt->Elem_typespec() || (lt->Ranges() && !lt->Ranges()->empty())) return ts;
+    std::string nm = std::string(lt->VpiName());
+    if (nm.empty() || !uhdm_design || !uhdm_design->AllInterfaces()) return ts;
+    std::string key = (current_instance ? std::string(current_instance->VpiDefName()) : std::string("")) + "::" + nm;
+    auto cit = iface_port_typedef_cache_.find(key);
+    if (cit != iface_port_typedef_cache_.end()) return cit->second ? cit->second : ts;
+    // the interface definitions bound to this module's interface ports
+    std::set<std::string> port_defs;
+    if (current_instance && current_instance->Ports())
+        for (auto p : *current_instance->Ports()) {
+            std::string itn;
+            if (auto lc = p->Low_conn())
+                if (lc->UhdmType() == uhdmref_obj)
+                    if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
+                        if (a->UhdmType() == uhdmmodport && a->VpiParent())
+                            itn = std::string(a->VpiParent()->VpiDefName());
+                        else if (a->UhdmType() == uhdminterface_inst)
+                            itn = std::string(any_cast<const UHDM::interface_inst*>(a)->VpiDefName());
+                    }
+            if (itn.empty() && p->Typespec() && p->Typespec()->Actual_typespec()) {
+                const UHDM::typespec* pts = p->Typespec()->Actual_typespec();
+                if (pts->UhdmType() == uhdmarray_typespec)
+                    if (auto et = any_cast<const UHDM::array_typespec*>(pts)->Elem_typespec())
+                        if (et->Actual_typespec()) pts = et->Actual_typespec();
+                if (pts->UhdmType() == uhdminterface_typespec) {
+                    auto its = any_cast<const UHDM::interface_typespec*>(pts);
+                    if (its->VpiIsModPort() && its->VpiParent() &&
+                        its->VpiParent()->UhdmType() == uhdminterface_typespec)
+                        itn = std::string(its->VpiParent()->VpiName());
+                    else if (!its->VpiIsModPort())
+                        itn = std::string(its->VpiName());
+                }
+            }
+            if (itn.find("work@") == 0) itn = itn.substr(5);
+            if (!itn.empty()) port_defs.insert(itn);
+        }
+    auto resolved_kind = [](const UHDM::typespec* t) {
+        switch (t->UhdmType()) {
+            case uhdmstruct_typespec: case uhdmunion_typespec: case uhdmenum_typespec:
+            case uhdmpacked_array_typespec: case uhdmarray_typespec: case uhdmbit_typespec:
+            case uhdmint_typespec: case uhdminteger_typespec: case uhdmbyte_typespec:
+            case uhdmshort_int_typespec: case uhdmlong_int_typespec:
+                return true;
+            case uhdmlogic_typespec: {
+                auto l = any_cast<const UHDM::logic_typespec*>(t);
+                return l->Elem_typespec() != nullptr || (l->Ranges() && !l->Ranges()->empty());
+            }
+            default: return false;
+        }
+    };
+    const UHDM::typespec* on_port = nullptr;
+    std::map<std::string, const UHDM::typespec*> by_def;
+    for (auto ii : *uhdm_design->AllInterfaces()) {
+        std::string dn = std::string(ii->VpiDefName());
+        if (dn.find("work@") == 0) dn = dn.substr(5);
+        if (!ii->Typespecs()) continue;
+        for (auto t : *ii->Typespecs()) {
+            if (std::string(t->VpiName()) != nm || t == ts || !resolved_kind(t)) continue;
+            if (port_defs.count(dn)) { on_port = t; break; }
+            by_def.emplace(dn, t);
+        }
+        if (on_port) break;
+    }
+    const UHDM::typespec* res = on_port ? on_port : (by_def.size() == 1 ? by_def.begin()->second : nullptr);
+    iface_port_typedef_cache_[key] = res;
+    if (res)
+        uhdm_trace("UHDM: typedef '%s' resolved through an interface port to a %s\n",
+            nm.c_str(), UHDM::UhdmName(res->UhdmType()).c_str());
+    return res ? res : ts;
+}
+
 const UHDM::any* UhdmImporter::iface_port_member_decl(const std::string& base, const std::string& mem) {
     if (!uhdm_design || !uhdm_design->AllInterfaces()) return nullptr;
     std::string itn;

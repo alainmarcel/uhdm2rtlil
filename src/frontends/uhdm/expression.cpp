@@ -19792,7 +19792,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 int mem_off = 0, mem_w = 0;
                 bool found_member = false;
                 if (base_ref_typespec) {
-                    base_typespec = base_ref_typespec->Actual_typespec();
+                    base_typespec = resolve_iface_port_typedef(base_ref_typespec->Actual_typespec());
                     found_member = find_member_slice(base_typespec, mem_off, mem_w);
                     if (!found_member && mode_debug)
                         uhdm_trace("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
