@@ -1272,6 +1272,11 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             // the loop never ran.  The module's imported value is the
             // answer, exactly as for a bound parameter above.
             val = module->parameter_default_values.at(RTLIL::escape_id(var_name));
+        } else {
+            // not a local, not a constant: a SIGNAL -- this evaluation is
+            // not a compile-time constant (tnoc error_check() reads its
+            // interface port's flit with no arguments at all)
+            { const_eval_hit_signal_ = true; uhdm_trace("    const-eval touched a signal (%s)\n", operand ? std::string(operand->VpiName()).c_str() : "?"); }
         }
     } else if (operand->VpiType() == vpiOperation) {
         const operation* sub_op = any_cast<const operation*>(operand);
@@ -1565,11 +1570,15 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
                     if (r.size() > 0 && r.is_fully_const())
                         return r.as_const();
                 }
+                // not a parameter array: an interface-array element's member
+                // (`flit_if[1].flit[0].data`) -- a SIGNAL
+                { const_eval_hit_signal_ = true; uhdm_trace("    const-eval touched a signal (%s)\n", operand ? std::string(operand->VpiName()).c_str() : "?"); }
             }
         }
         if (hp && hp->Path_elems() && hp->Path_elems()->size() >= 2) {
             auto& pe = *hp->Path_elems();
             std::string base = std::string(pe[0]->VpiName());
+            if (!local_vars.count(base)) { const_eval_hit_signal_ = true; uhdm_trace("    const-eval touched a signal (%s)\n", operand ? std::string(operand->VpiName()).c_str() : "?"); }
             if (local_vars.count(base)) {
                 const typespec* ts = nullptr;
                 if (auto r0 = dynamic_cast<const ref_obj*>(pe[0]))
@@ -2910,8 +2919,16 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     if (all_const) {
         uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
         std::map<std::string, RTLIL::Const> output_params;
+        bool saved_hit = const_eval_hit_signal_;
+        const_eval_hit_signal_ = false;
         RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
-        return RTLIL::SigSpec(result);
+        bool hit = const_eval_hit_signal_;
+        const_eval_hit_signal_ = saved_hit || hit;
+        if (!hit)
+            return RTLIL::SigSpec(result);
+        // The body read a SIGNAL: not a constant after all -- inline it.
+        uhdm_trace("UHDM: function %s reads a signal; not folded\n", func_name.c_str());
+        all_const = false;
     }
     
     // Create new context for this call

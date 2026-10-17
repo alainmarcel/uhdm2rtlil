@@ -1225,6 +1225,10 @@ struct UhdmImporter {
     // returned unchanged.
     const UHDM::typespec* resolve_iface_port_typedef(const UHDM::typespec* ts);
     std::map<std::string, const UHDM::typespec*> iface_port_typedef_cache_;
+    // Set by the compile-time evaluator when a reference resolved to
+    // something that is not a constant (a module / interface signal):
+    // the fold is then discarded and the call inlined instead.
+    bool const_eval_hit_signal_ = false;
     // The interface instance named `name` ("u_sel", "flit_if[2]") in the
     // current module or any of its generate scopes (interface arrays' elements
     // included), preferring one on the current generate-scope path.

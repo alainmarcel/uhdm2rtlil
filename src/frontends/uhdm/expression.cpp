@@ -6336,8 +6336,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     const_eval_module_writes.clear();
                     uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
                     std::map<std::string, RTLIL::Const> output_params;
+                    // Sticky across nesting: a pure helper folded INSIDE this
+                    // evaluation re-enters this site and must not clear what
+                    // the outer body already recorded.
+                    bool saved_hit = const_eval_hit_signal_;
+                    const_eval_hit_signal_ = false;
                     RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
-
+                    bool hit = const_eval_hit_signal_;
+                    const_eval_hit_signal_ = saved_hit || hit;
+                    if (hit) {
+                        // The body read a SIGNAL (a zero-argument function
+                        // over a port's state: tnoc_error_checker's
+                        // error_check() decides the route from its receiver
+                        // flit's header): not a constant -- inline it below.
+                        uhdm_trace("UHDM: function %s reads a signal; not folded\n", func_name.c_str());
+                        const_eval_module_writes.clear();
+                        all_const = false;
+                    } else {
                     // Apply any module-level bit-select side effects collected during
                     // compile-time evaluation (e.g. "out6[exp] = base & 1").
                     for (auto& [sig_name, bit_vals] : const_eval_module_writes) {
@@ -6359,6 +6374,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
 
                     // Return the constant result
                     return RTLIL::SigSpec(result);
+                    }
                 }
 
                 // For initial blocks with non-constant arguments, check if function returns a value
