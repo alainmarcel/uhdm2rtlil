@@ -15257,6 +15257,56 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
+            // A function declared in a GENERATE SCOPE: tnoc's tbcm_onehot
+            // keeps one `__onehot` per `if (WIDTH ...) begin : g` arm and
+            // its method `to_onehot` returns `g.__onehot(bits)`.  Surelog
+            // elaborates only the taken arm, so `g` names exactly one
+            // gen_scope of the instance the method was called on
+            // (method_call_inst_) -- or of this module, for a module's own
+            // `g.f()`.  Function() is null and no instance's Task_funcs list
+            // holds a gen-scope function, so the call imported as NOTHING
+            // ("hier_path function '__onehot' -- no Function() and no match
+            // in current module's Task_funcs") and every grant of the
+            // round-robin arbiter built on it was X.
+            if (!fdef && !prefix_inst && uhdm_hier->Path_elems()->size() == 2) {
+                auto& pe = *uhdm_hier->Path_elems();
+                std::string sname = std::string(pe[0]->VpiName());
+                if (pe[0]->UhdmType() == uhdmbit_select) {
+                    auto bs = any_cast<const bit_select*>(pe[0]);
+                    RTLIL::SigSpec ix = bs->VpiIndex() ? import_expression(bs->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                    if (ix.size() > 0 && ix.is_fully_const())
+                        sname += "[" + std::to_string(ix.as_int()) + "]";
+                }
+                auto in_gen_scopes = [&](const UHDM::VectorOfgen_scope_array* gsas) -> const UHDM::function* {
+                    if (!gsas) return nullptr;
+                    for (auto gsa : *gsas) {
+                        if (!gsa->Gen_scopes()) continue;
+                        for (auto gs : *gsa->Gen_scopes()) {
+                            if (std::string(gs->VpiName()) != sname &&
+                                std::string(gsa->VpiName()) != sname) continue;
+                            if (gs->Task_funcs())
+                                for (auto tf : *gs->Task_funcs())
+                                    if (tf->UhdmType() == uhdmfunction &&
+                                        std::string(tf->VpiName()) == func_name)
+                                        return any_cast<const UHDM::function*>(tf);
+                        }
+                    }
+                    return nullptr;
+                };
+                auto in_owner = [&](const UHDM::any* owner) -> const UHDM::function* {
+                    if (!owner) return nullptr;
+                    if (auto ii = dynamic_cast<const UHDM::interface_inst*>(owner)) return in_gen_scopes(ii->Gen_scope_arrays());
+                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(owner)) return in_gen_scopes(mi->Gen_scope_arrays());
+                    if (auto gs = dynamic_cast<const UHDM::gen_scope*>(owner)) return in_gen_scopes(gs->Gen_scope_arrays());
+                    return nullptr;
+                };
+                fdef = in_owner(method_call_inst_);
+                if (!fdef) fdef = in_owner(current_scope);
+                if (!fdef) fdef = in_owner(current_instance);
+                if (fdef)
+                    uhdm_trace("    hier_path method %s.%s resolved in generate scope %s\n",
+                        sname.c_str(), func_name.c_str(), sname.c_str());
+            }
             // Built-in enum methods `e.first()` / `e.last()` / `e.num()`:
             // these are compile-time constants of the enum TYPE (independent of
             // e's runtime value), so they have no user `Function()` (fdef null).
@@ -15499,7 +15549,23 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
                 if (current_comb_process) {
                     // Inline into the current combinational process via
-                    // the synthesised func_call.
+                    // the synthesised func_call.  Its arguments are imported
+                    // again inside, against current_comb_values only -- but
+                    // a call made from an INLINED method's body names that
+                    // method's FORMALS (`return g.__onehot(bits)` inside
+                    // to_onehot), which live in this input_mapping.  Without
+                    // them `bits` was an unknown signal and a fabricated
+                    // 1-bit wire.  Lend the mapping for the nested inlining.
+                    struct CcvLend {
+                        std::map<std::string, RTLIL::SigSpec>& ccv; std::vector<std::string> added;
+                        ~CcvLend() { for (auto& k : added) ccv.erase(k); }
+                    } lend{current_comb_values, {}};
+                    if (input_mapping)
+                        for (auto& kv : *input_mapping)
+                            if (!current_comb_values.count(kv.first)) {
+                                current_comb_values[kv.first] = kv.second;
+                                lend.added.push_back(kv.first);
+                            }
                     return import_func_call_comb(tmp, current_comb_process);
                 }
                 // Continuous-assign context: route through the existing
