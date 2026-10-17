@@ -6320,6 +6320,16 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // An INTERFACE method is never a function of its arguments
+                // alone: it reads the interface's members (`valid[channel] &
+                // ready[channel]`).  Folding it on constant arguments made
+                // tnoc's get_tail_flit_ack -- `tail ? get_channel_ack(channel)
+                // : '0`, the nested call reached from an inlined method body
+                // with `channel` bound to 0 -- return 0 for every VC.  The
+                // same guard process_function_with_context already applies.
+                if (all_const && func_def->VpiParent() &&
+                    func_def->VpiParent()->UhdmType() == uhdminterface_inst)
+                    all_const = false;
                 if (all_const) {
                     // Evaluate function at compile time for optimization.
                     // Clear side-effect map so this top-level call starts fresh.
@@ -10397,6 +10407,20 @@ const UHDM::instance* UhdmImporter::find_iface_instance_by_name(const std::strin
                 }
     };
     scan_gsa(mi->Gen_scope_arrays());
+    // A module imported as a CHILD comes from the DEFINITION view, whose
+    // Interfaces() / Interface_arrays() are empty -- the instances live on
+    // the elaborated copies only.  tbcm_round_robin_arbiter's
+    // `u_selector.mux(...)` resolved at the top of its own row and NOT
+    // inside tnoc's AXI mux, where it is a child; tnoc_error_checker's
+    // `flit_if[1].get_tail_flit_ack(0)` likewise (the flat wrapper is the
+    // top there).  Every elaborated instance of one definition declares
+    // the same interface instances, so the first one serves.
+    if (!found)
+        if (auto ei = find_elab_instance(mi))
+            if (ei != mi) {
+                scan_ifaces(ei->Interfaces(), ei->Interface_arrays());
+                scan_gsa(ei->Gen_scope_arrays());
+            }
     return found;
 }
 
