@@ -10358,6 +10358,40 @@ bool UhdmImporter::is_unit_enum_const_net(const UHDM::net* n, const std::string&
 }
 
 // Import reference to object
+const UHDM::instance* UhdmImporter::find_iface_instance_by_name(const std::string& base) {
+    auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+    if (!mi || base.empty()) return nullptr;
+    std::string cur_gs = get_current_gen_scope();
+    const UHDM::instance* found = nullptr;
+    auto consider = [&](const UHDM::instance* cand) {
+        if (!cand || std::string(cand->VpiName()) != base) return;
+        std::string fn = std::string(cand->VpiFullName());
+        bool on_path = cur_gs.empty() || fn.find("." + cur_gs + "." + base) != std::string::npos;
+        if (!found || on_path) found = cand;
+    };
+    auto scan_ifaces = [&](const UHDM::VectorOfinterface_inst* ifs,
+                           const UHDM::VectorOfinterface_array* ias) {
+        if (ifs) for (auto ii : *ifs) consider(ii);
+        if (ias) for (auto ia : *ias)
+            if (ia->Instances())
+                for (auto e : *ia->Instances())
+                    consider(dynamic_cast<const UHDM::instance*>(e));
+    };
+    scan_ifaces(mi->Interfaces(), mi->Interface_arrays());
+    std::function<void(const UHDM::VectorOfgen_scope_array*)> scan_gsa =
+        [&](const UHDM::VectorOfgen_scope_array* gsas) {
+        if (!gsas) return;
+        for (auto gsa : *gsas)
+            if (gsa->Gen_scopes())
+                for (auto gs : *gsa->Gen_scopes()) {
+                    scan_ifaces(gs->Interfaces(), gs->Interface_arrays());
+                    scan_gsa(gs->Gen_scope_arrays());
+                }
+    };
+    scan_gsa(mi->Gen_scope_arrays());
+    return found;
+}
+
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Break reference CYCLES.  A parameter whose value resolves back to itself
     // (directly, or around a chain of parameters) recursed through
@@ -14671,6 +14705,62 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // every rggen register block's read data came back undriven.  Resolve the
     // member wire the way the plain form does and hand it to the select
     // importer as the base.
+    // `sender_if.ready[vc]` -- a bit / element select of an interface PORT's
+    // member.  The port's base is a placeholder wire, not an interface
+    // instance, so the branch below (which keys on an interface_inst actual)
+    // declined and the access fell to the struct decoder: "Could not resolve
+    // struct member access 'sender_if.ready[vc]'" -> 1'x (tnoc's packet
+    // serializer).  The member wire exists; slice it by the member's
+    // declared element width (constant index) or $shiftx into it.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        const any* e0 = (*uhdm_hier->Path_elems())[0];
+        const any* e1 = (*uhdm_hier->Path_elems())[1];
+        if (e0->UhdmType() == uhdmref_obj && e1->UhdmType() == uhdmbit_select) {
+            auto r0 = any_cast<const ref_obj*>(e0);
+            bool inst_actual = r0->Actual_group() && r0->Actual_group()->UhdmType() == uhdminterface_inst;
+            std::string base = std::string(r0->VpiName());
+            auto bs1 = any_cast<const bit_select*>(e1);
+            std::string mem = std::string(bs1->VpiName());
+            std::string full = base + "." + mem;
+            RTLIL::Wire* pw = module->wire(RTLIL::escape_id(base));
+            // not for an UNPACKED-array member (per-element wires, own machinery)
+            bool unpacked_member = iface_array_elem_width_.count(full) || name_map.count(full + "[0]") ||
+                                   module->wire(RTLIL::escape_id(full + "[0]"));
+            const UHDM::any* decl = unpacked_member ? nullptr : iface_port_member_decl(base, mem);
+            bool is_iface_port = decl || (pw && pw->attributes.count(RTLIL::escape_id("is_interface")));
+            if (!inst_actual && !unpacked_member && is_iface_port) {
+                RTLIL::Wire* w = name_map.count(full) ? name_map[full] : module->wire(RTLIL::escape_id(full));
+                if (!decl) decl = bs1->Actual_group();
+                if (decl && (decl->UhdmType() == uhdmarray_var || decl->UhdmType() == uhdmarray_net)) decl = nullptr;
+                int ew = 0, lo = 0;
+                if (w && decl && bitselect_outer_dim(decl, w->width, ew, lo) && ew >= 1 && bs1->VpiIndex()) {
+                    RTLIL::SigSpec ix = import_expression(bs1->VpiIndex(), input_mapping);
+                    RTLIL::SigSpec basev = RTLIL::SigSpec(w);
+                    if (!comb_lhs_keep_base && input_mapping && input_mapping->count(full))
+                        basev = input_mapping->at(full);
+                    if (ix.size() > 0 && ix.is_fully_const()) {
+                        int off = (ix.as_const().as_int() - lo) * ew;
+                        if (off >= 0 && off + ew <= w->width) {
+                            uhdm_trace("    hier_path: interface port member select %s[%d] -> bits [%d+:%d]\n",
+                                full.c_str(), ix.as_const().as_int(), off, ew);
+                            return basev.extract(off, ew);
+                        }
+                    } else if (ix.size() > 0) {
+                        int iw = std::max(GetSize(ix), 32);
+                        RTLIL::SigSpec idx = ix; idx.extend_u0(iw, false);
+                        if (lo != 0) idx = module->Sub(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(lo, iw)));
+                        RTLIL::SigSpec amt = (ew == 1) ? idx
+                            : module->Mul(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(ew, iw)));
+                        RTLIL::Wire* out = module->addWire(NEW_ID, ew);
+                        module->addShiftx(NEW_ID, basev, amt, out);
+                        uhdm_trace("    hier_path: interface port member select %s[dyn] -> $shiftx (%d bits)\n",
+                            full.c_str(), ew);
+                        return RTLIL::SigSpec(out);
+                    }
+                }
+            }
+        }
+    }
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
         const any* e0 = (*uhdm_hier->Path_elems())[0];
         const any* e1 = (*uhdm_hier->Path_elems())[1];
@@ -14697,7 +14787,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                           !b0->Actual_group())) {
                     std::map<std::string, RTLIL::SigSpec> base_map;
                     if (input_mapping) base_map = *input_mapping;
-                    base_map[mem] = RTLIL::SigSpec(w);
+                    // an always_comb that wrote this member earlier in the
+                    // block reads its IN-FLIGHT value (`f[2].flit[0] =
+                    // sel ? f[0].flit[1] : f[0].flit[0]` after writing both)
+                    base_map[mem] = (!comb_lhs_keep_base && input_mapping && input_mapping->count(mw))
+                        ? input_mapping->at(mw) : RTLIL::SigSpec(w);
                     uhdm_trace("    hier_path: interface-array element member select %s -> base wire %s\n",
                         path_name.c_str(), w->name.c_str());
                     // A CONSTANT select is sliced right here.  Handing the
@@ -14722,9 +14816,44 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         auto b1 = any_cast<const bit_select*>(e1);
                         RTLIL::SigSpec ix = b1->VpiIndex()
                             ? import_expression(b1->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+                        // `f[0].flit[1]` on a member that is a packed ARRAY of
+                        // elements (tnoc's `tnoc_flit [FLITS-1:0] flit`): the
+                        // select picks an ELEMENT, not a bit.  The select's
+                        // actual (or the element instance's declaration) gives
+                        // the element geometry.
+                        int ew = 1, elo = 0;
+                        {
+                            const UHDM::any* mdecl = b1->Actual_group();
+                            if (!mdecl)
+                                if (auto ei = dynamic_cast<const UHDM::interface_inst*>(find_iface_instance_by_name(elem))) {
+                                    if (ei->Variables()) for (auto v : *ei->Variables()) if (std::string(v->VpiName()) == mem) { mdecl = v; break; }
+                                    if (!mdecl && ei->Nets()) for (auto n : *ei->Nets()) if (std::string(n->VpiName()) == mem) { mdecl = n; break; }
+                                }
+                            int ew2 = 0, lo2 = 0;
+                            if (mdecl && mdecl->UhdmType() != uhdmarray_var && mdecl->UhdmType() != uhdmarray_net &&
+                                bitselect_outer_dim(mdecl, w->width, ew2, lo2) && ew2 > 1) { ew = ew2; elo = lo2; }
+                        }
+                        RTLIL::SigSpec basev = base_map[mem];
                         if (ix.size() > 0 && ix.is_fully_const()) {
-                            RTLIL::SigSpec sl = slice_of(ix.as_int(), 1);
-                            if (sl.size() == 1) return sl;
+                            if (ew > 1) {
+                                int off = (ix.as_const().as_int() - elo) * ew;
+                                if (off >= 0 && off + ew <= basev.size()) {
+                                    uhdm_trace("    hier_path: %s element [%d] -> bits [%d+:%d]\n",
+                                        mw.c_str(), ix.as_const().as_int(), off, ew);
+                                    return basev.extract(off, ew);
+                                }
+                            } else {
+                                RTLIL::SigSpec sl = slice_of(ix.as_int(), 1);
+                                if (sl.size() == 1) return sl;
+                            }
+                        } else if (ix.size() > 0 && ew > 1) {
+                            int iw = std::max(GetSize(ix), 32);
+                            RTLIL::SigSpec idx = ix; idx.extend_u0(iw, false);
+                            if (elo != 0) idx = module->Sub(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(elo, iw)));
+                            RTLIL::SigSpec amt = module->Mul(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(ew, iw)));
+                            RTLIL::Wire* out = module->addWire(NEW_ID, ew);
+                            module->addShiftx(NEW_ID, basev, amt, out);
+                            return RTLIL::SigSpec(out);
                         }
                         return import_bit_select(b1, inst, &base_map);
                     }
@@ -15092,37 +15221,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (ix.size() > 0 && ix.is_fully_const())
                         base += "[" + std::to_string(ix.as_int()) + "]";
                 }
-                auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
-                if (!mi) return nullptr;
-                std::string cur_gs = get_current_gen_scope();
-                const UHDM::instance* found = nullptr;
-                auto consider = [&](const UHDM::instance* cand) {
-                    if (!cand || std::string(cand->VpiName()) != base) return;
-                    std::string fn = std::string(cand->VpiFullName());
-                    bool on_path = cur_gs.empty() || fn.find("." + cur_gs + "." + base) != std::string::npos;
-                    if (!found || on_path) found = cand;
-                };
-                auto scan_ifaces = [&](const UHDM::VectorOfinterface_inst* ifs,
-                                       const UHDM::VectorOfinterface_array* ias) {
-                    if (ifs) for (auto ii : *ifs) consider(ii);
-                    if (ias) for (auto ia : *ias)
-                        if (ia->Instances())
-                            for (auto e : *ia->Instances())
-                                consider(dynamic_cast<const UHDM::instance*>(e));
-                };
-                scan_ifaces(mi->Interfaces(), mi->Interface_arrays());
-                std::function<void(const UHDM::VectorOfgen_scope_array*)> scan_gsa =
-                    [&](const UHDM::VectorOfgen_scope_array* gsas) {
-                    if (!gsas) return;
-                    for (auto gsa : *gsas)
-                        if (gsa->Gen_scopes())
-                            for (auto gs : *gsa->Gen_scopes()) {
-                                scan_ifaces(gs->Interfaces(), gs->Interface_arrays());
-                                scan_gsa(gs->Gen_scope_arrays());
-                            }
-                };
-                scan_gsa(mi->Gen_scope_arrays());
-                return found;
+                return find_iface_instance_by_name(base);
             };
             const UHDM::instance* prefix_inst = find_prefix_inst();
             if (!fdef && prefix_inst)
