@@ -13689,7 +13689,26 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
 
             shift_amount = RTLIL::SigSpec(mul_wire);
         } else {
-            // Normal range [N:0] - $mul(ix, element_width)
+            // Normal range [N:0] - $mul(ix, element_width).  A descending
+            // range with a NON-ZERO low bound (`s_t [2:1] p_i`, black-parrot's
+            // [E:W] link bundles) is rebased first: `p_i[sel]` took sel as a
+            // zero-based slot, so sel = W read element E and sel = E fell off
+            // the end.  The 1-bit-element branch below already did this.
+            int outer_low = (outer_left >= 0 && outer_right >= 0) ? std::min(outer_left, outer_right) : 0;
+            if (outer_low != 0) {
+                RTLIL::Wire* reb_wire = module->addWire(NEW_ID, aw);
+                RTLIL::Cell* reb_cell = module->addCell(NEW_ID, ID($sub));
+                reb_cell->setParam(ID::A_SIGNED, 0);
+                reb_cell->setParam(ID::B_SIGNED, 0);
+                reb_cell->setParam(ID::A_WIDTH, aw);
+                reb_cell->setParam(ID::B_WIDTH, aw);
+                reb_cell->setParam(ID::Y_WIDTH, aw);
+                reb_cell->setPort(ID::A, index32);
+                reb_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(outer_low, aw)));
+                reb_cell->setPort(ID::Y, reb_wire);
+                add_src_attribute(reb_cell->attributes, uhdm_bit);
+                index32 = RTLIL::SigSpec(reb_wire);
+            }
             RTLIL::Wire* mul_wire = module->addWire(NEW_ID, aw);
             std::string mul_name = generate_cell_name(uhdm_bit, "mul");
             RTLIL::Cell* mul_cell = module->addCell(RTLIL::escape_id(mul_name), ID($mul));
@@ -16818,10 +16837,28 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             int ew = ets ? get_width_from_typespec(ets, inst) : 0;
             int n = !elems.empty() ? (int)elems.size()
                   : (flat && ew > 0 && flat->width % ew == 0) ? flat->width / ew : 0;
+            bool ea_asc = false;   // ascending declared range: first index at the MSB
             if (flat && low < 0) {
                 low = 0;
                 auto lo_id = RTLIL::escape_id("unpacked_outer_low");
                 if (flat->attributes.count(lo_id)) low = flat->attributes.at(lo_id).as_int();
+                else {
+                    // A PACKED struct array declared with a non-zero low
+                    // bound -- black-parrot's `bp_mem_ready_and_link_s [E:W]`
+                    // link bundles, [2:1] -- carries its bounds in the
+                    // packed_outer_* attributes import_port stamps.  Taken
+                    // as zero-based, `link[W].v` read element E's slot and
+                    // `link[E].v` fell off the end (X): bp_io_complex's node
+                    // links were all zero.
+                    auto pl_id = RTLIL::escape_id("packed_outer_left");
+                    auto pr_id = RTLIL::escape_id("packed_outer_right");
+                    if (flat->attributes.count(pl_id) && flat->attributes.count(pr_id)) {
+                        int pl = flat->attributes.at(pl_id).as_int();
+                        int pr = flat->attributes.at(pr_id).as_int();
+                        low = std::min(pl, pr);
+                        ea_asc = pl < pr;
+                    }
+                }
             }
             int off = 0, mw = 0;
             if (mode_debug)
@@ -16851,14 +16888,18 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::SigSpec idx = import_expression(bs0->VpiIndex(), input_mapping);
                 RTLIL::SigSpec elem;
                 if (idx.is_fully_const()) {
-                    int k = idx.as_const().as_int() - low;
+                    int k = ea_asc ? (low + n - 1 - idx.as_const().as_int())
+                                   : (idx.as_const().as_int() - low);
                     if (k >= 0 && k < n) elem = elem_val(k);
                     else elem = RTLIL::SigSpec(RTLIL::State::Sx, ew);
                 } else if (elems.empty()) {
-                    // Flat array: element = flat >> ((idx - low) * ew), X past the end.
+                    // Flat array: element = flat >> ((idx - low) * ew), X past the end;
+                    // an ASCENDING range puts its first index at the MSB.
                     RTLIL::SigSpec sh = idx;
                     sh.extend_u0(32, false);
-                    if (low != 0)
+                    if (ea_asc)
+                        sh = module->Sub(NEW_ID, RTLIL::Const(low + n - 1, 32), sh, false);
+                    else if (low != 0)
                         sh = module->Sub(NEW_ID, sh, RTLIL::Const(low, 32), false);
                     if (ew > 1)
                         sh = module->Mul(NEW_ID, sh, RTLIL::Const(ew, 32), false);
