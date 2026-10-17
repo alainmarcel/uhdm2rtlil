@@ -438,9 +438,25 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                   // width of -N (-1 is a single interface); create the modport
                   // field wires for EACH element as "m[e].<sig>" so a whole-array
                   // connection `.m(arr)` can bind "m[e].<sig>" to "arr[e].<sig>".
+                  // An array port of ONE element (rggen's
+                  // `rggen_register_if.host register_if[REGISTERS]` with
+                  // REGISTERS = 1) reports width -1 like a scalar interface,
+                  // so its members were created UNINDEXED (`register_if.valid`)
+                  // -- while the elaborated element instance `register_if[0]`
+                  // had already given the module an INDEXED set, and the
+                  // generate loop writing `register_if[i].valid` drove that
+                  // one.  Parents connected the unindexed, undriven set:
+                  // five rggen adapters floated (301 div).  Decide the
+                  // naming by the port being declared an ARRAY, not by its
+                  // element count.
+                  bool port_is_iface_array = false;
+                  if (auto lc = uhdm_port->Low_conn())
+                      if (lc->UhdmType() == uhdmref_obj)
+                          if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group())
+                              port_is_iface_array = a->UhdmType() == uhdminterface_array;
                   int n_elem = (width < -1) ? -width : 1;
                   for (int e = 0; e < n_elem; e++) {
-                    std::string elem_prefix = (width < -1)
+                    std::string elem_prefix = (width < -1 || port_is_iface_array)
                         ? portname + "[" + std::to_string(e) + "]" : portname;
                     for (auto io : *mp->Io_decls()) {
                         std::string sig_name = std::string(io->VpiName());
