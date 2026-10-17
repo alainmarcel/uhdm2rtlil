@@ -15515,10 +15515,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // has no "dec.r" wire, so this stays specific to interfaces).
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3) {
         auto& pe = *uhdm_hier->Path_elems();
-        // pe[0] may be a ref_obj (single port "s") OR a bit_select (array element
-        // "arr[0]"); pe[1..] must be plain member refs.
-        bool rest_ref = true;
-        for (size_t i = 1; i < pe.size(); i++)
+        // The member may itself be ELEMENT-selected (`flit_if[2].flit[0].tail`:
+        // `flit` is a packed array of structs); the field chain after it
+        // stays plain references.
+        bool mid_sel = pe[1]->UhdmType() == uhdmbit_select;
+        bool rest_ref = (pe[1]->UhdmType() == uhdmref_obj || mid_sel);
+        for (size_t i = 2; i < pe.size(); i++)
             if (pe[i]->UhdmType() != uhdmref_obj) { rest_ref = false; break; }
         std::string base;
         if (rest_ref) {
@@ -15536,14 +15538,83 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             }
         }
         if (!base.empty()) {
-            std::string sig   = std::string(any_cast<const ref_obj*>(pe[1])->VpiName());
+            std::string sig   = std::string(pe[1]->VpiName());
             std::string wname = base + "." + sig;          // "s.req" / "arr[0].req"
-            if (name_map.count(wname) && iface_signal_struct_ts_.count(wname)) {
-                RTLIL::SigSpec base_sig = RTLIL::SigSpec(name_map[wname]);
-                // The path element pe[1] carries no typespec/Actual_group, so use
-                // the struct/union typespec recorded when the field wire was made.
-                const UHDM::typespec* cur_ts = iface_signal_struct_ts_[wname];
-                if (cur_ts) {
+            RTLIL::SigSpec base_sig;
+            const UHDM::typespec* cur_ts = nullptr;
+            RTLIL::Wire* mwire = name_map.count(wname) ? name_map[wname] : module->wire(RTLIL::escape_id(wname));
+            if (mwire && !mid_sel && iface_signal_struct_ts_.count(wname)) {
+                base_sig = RTLIL::SigSpec(mwire);
+                cur_ts = iface_signal_struct_ts_[wname];
+            } else if (mwire && mid_sel) {
+                // `flit_if[2].flit[0].tail`: the member is a packed array of
+                // structs -- slice ELEMENT [0] of the member wire by the
+                // array's geometry and continue into the element's struct.
+                auto mbs = any_cast<const bit_select*>(pe[1]);
+                const UHDM::typespec* mts = nullptr;
+                if (auto ag = mbs->Actual_group())
+                    if (auto ex = dynamic_cast<const UHDM::expr*>(ag))
+                        if (ex->Typespec()) mts = ex->Typespec()->Actual_typespec();
+                if (!mts && iface_signal_ts_.count(wname)) mts = iface_signal_ts_[wname];
+                if (!mts)   // an interface-ARRAY element: its own instance declares the member
+                    if (auto ei = dynamic_cast<const UHDM::interface_inst*>(find_iface_instance_by_name(base))) {
+                        if (ei->Variables()) for (auto v : *ei->Variables())
+                            if (std::string(v->VpiName()) == sig && v->Typespec()) { mts = v->Typespec()->Actual_typespec(); break; }
+                        if (!mts && ei->Nets()) for (auto n : *ei->Nets())
+                            if (std::string(n->VpiName()) == sig && n->Typespec()) { mts = n->Typespec()->Actual_typespec(); break; }
+                    }
+                if (!mts) {
+                    std::string b0 = base.substr(0, base.find('['));
+                    if (auto d = iface_port_member_decl(b0, sig))
+                        if (auto ex = dynamic_cast<const UHDM::expr*>(d))
+                            if (ex->Typespec()) mts = ex->Typespec()->Actual_typespec();
+                }
+                const UHDM::typespec* ets = nullptr;
+                const UHDM::VectorOfrange* rngs = nullptr;
+                // a packed_array_var actual carries no typespec of its own: its
+                // Ranges() are the array dims and its Elements() the typed
+                // element variables (struct_var -> struct_typespec)
+                if (auto ag = mbs->Actual_group())
+                    if (ag->UhdmType() == uhdmpacked_array_var) {
+                        auto pav = any_cast<const UHDM::packed_array_var*>(ag);
+                        rngs = pav->Ranges();
+                        if (pav->Elements() && !pav->Elements()->empty())
+                            if (auto e0 = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                                if (e0->Typespec()) ets = e0->Typespec()->Actual_typespec();
+                    }
+                if (!ets && mts && mts->UhdmType() == uhdmpacked_array_typespec) {
+                    auto pat = any_cast<const UHDM::packed_array_typespec*>(mts);
+                    rngs = pat->Ranges();
+                    if (pat->Elem_typespec()) ets = pat->Elem_typespec()->Actual_typespec();
+                } else if (mts && mts->UhdmType() == uhdmlogic_typespec) {
+                    auto lt = any_cast<const UHDM::logic_typespec*>(mts);
+                    rngs = lt->Ranges();
+                    if (lt->Elem_typespec()) ets = lt->Elem_typespec()->Actual_typespec();
+                }
+                RTLIL::Wire* mw = mwire;
+                if (ets && mw && mbs->VpiIndex()) {
+                    int ew = get_width_from_typespec(ets, inst);
+                    int lo = 0;
+                    if (rngs && !rngs->empty() && (*rngs)[0]->Left_expr() && (*rngs)[0]->Right_expr()) {
+                        RTLIL::SigSpec l = import_expression((*rngs)[0]->Left_expr());
+                        RTLIL::SigSpec r = import_expression((*rngs)[0]->Right_expr());
+                        if (l.is_fully_const() && r.is_fully_const())
+                            lo = std::min(l.as_const().as_int(), r.as_const().as_int());
+                    }
+                    RTLIL::SigSpec ix = import_expression(mbs->VpiIndex(), input_mapping);
+                    if (ew > 0 && ix.size() > 0 && ix.is_fully_const()) {
+                        int off0 = (ix.as_const().as_int() - lo) * ew;
+                        if (off0 >= 0 && off0 + ew <= mw->width) {
+                            base_sig = RTLIL::SigSpec(mw).extract(off0, ew);
+                            cur_ts = ets;
+                            uhdm_trace("    hier_path: %s element [%d] of a packed struct array -> bits [%d+:%d]\n",
+                                wname.c_str(), ix.as_const().as_int(), off0, ew);
+                        }
+                    }
+                }
+            }
+            if (cur_ts && base_sig.size() > 0) {
+                {
                     int off = 0, field_w = 0;
                     bool ok = true;
                     for (size_t lvl = 2; lvl < pe.size() && ok; lvl++) {
