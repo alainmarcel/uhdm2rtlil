@@ -1,0 +1,8 @@
+# Pins the OVERRIDES: the table holds the values 0..3, so the sixteen
+# instances must spread over FOUR distinct INITIAL_VALUE paramods and none
+# may bind to the bare module (the default).  Without the fix every instance
+# is typed `\field`; test_slang_equiv.ys proves the reset values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+select -assert-count 33 top/t:*field*INITIAL_VALUE*
+select -assert-none top/t:field

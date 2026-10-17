@@ -3076,6 +3076,139 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return RTLIL::SigSpec();
                 }
 
+                // A PACKED multi-dim PARAMETER as the base -- rggen block_0's
+                //   parameter bit [3:0][3:0][1:0] REGISTER_10_BIT_FIELD_1_INITIAL_VALUE
+                //   ... field #(.INITIAL_VALUE(REGISTER_10_BIT_FIELD_1_INITIAL_VALUE[i][j]))
+                // has no wire and (in the generate-scope copy) no Actual_group;
+                // the wire-centric path below looked for an element wire
+                // `P[0]`, warned "vpiVarSelect: element not found" and the
+                // child's override silently took its DEFAULT (every field's
+                // reset value zero -- block_0's register 10).  Slice the
+                // parameter's constant: the typespec's ranges give the dims,
+                // outermost first; the indexed dims select, the rest are the
+                // element's bits.
+                // Re-entrancy guard: a child's pass-through override
+                // `.INITIAL_VALUE(INITIAL_VALUE[i])` names the PARENT's
+                // same-named parameter, so the instance walk below meets this
+                // very node as the child's own param_assign RHS -- folding it
+                // recursed without end (rggen block_0, segfault).
+                static std::set<const UHDM::any*> vs_param_inflight;
+                struct VsInflight {
+                    const UHDM::any* n; bool mine;
+                    VsInflight(const UHDM::any* x) : n(x), mine(vs_param_inflight.insert(x).second) {}
+                    ~VsInflight() { if (mine) vs_param_inflight.erase(n); }
+                } vs_guard(uhdm_expr);
+                if (vs_guard.mine) {
+                    RTLIL::IdString pid = RTLIL::escape_id(base_name);
+                    // The value: the module's imported parameter -- or, when this
+                    // expression is being folded for a child's PARAMOD SIGNATURE
+                    // in a throwaway module that has no parameters of its own,
+                    // the elaborated instance's param_assign.
+                    RTLIL::Const pval;
+                    bool is_param = false;
+                    if (!(input_mapping && input_mapping->count(base_name))) {
+                        if (module && module->parameter_default_values.count(pid) &&
+                            module->parameter_default_values.at(pid).size() > 0) {
+                            pval = module->parameter_default_values.at(pid); is_param = true;
+                        }
+                    }
+                    // A child's parameter OVERRIDE is folded with the CHILD as
+                    // the context (`module` = the child, current_instance = its
+                    // instance), where the PARENT's parameter is unknown: walk
+                    // the instance parents for the param_assign that defines it.
+                    // ... and a GENERATE SCOPE carries param_assigns too: rggen
+                    // block_0's `localparam bit [3:0][3:0][1:0] INITIAL_VALUE = {...}`
+                    // inside `g_bit_field_2.g[j]`, selected as the same-named
+                    // child override.  So walk every scope, starting from the
+                    // select's own parent chain (the gen scope that declares the
+                    // table is an ancestor of the instance's port, not of the
+                    // instance being imported).
+                    const UHDM::scope* owner = nullptr;
+                    if (!is_param) {
+                        auto look = [&](const UHDM::any* ip) {
+                            while (ip && !is_param) {
+                                if (auto sc = dynamic_cast<const UHDM::scope*>(ip)) {
+                                    if (sc->Param_assigns())
+                                        for (auto pa : *sc->Param_assigns()) {
+                                            if (!pa->Lhs() || !pa->Rhs() || std::string(pa->Lhs()->VpiName()) != base_name) continue;
+                                            if (pa->Rhs() == uhdm_expr) continue;   // this node IS that assignment's RHS
+                                            RTLIL::SigSpec v = import_expression(any_cast<const expr*>(pa->Rhs()));
+                                            if (v.size() > 0 && v.is_fully_const()) { pval = v.as_const(); is_param = true; owner = sc; }
+                                            break;
+                                        }
+                                }
+                                ip = ip->VpiParent();
+                            }
+                        };
+                        look(uhdm_expr->VpiParent());
+                        if (!is_param) look(current_instance);
+                    }
+                    const UHDM::VectorOfrange* prgs = nullptr;
+                    if (is_param) {
+                        auto find_ranges = [&](const UHDM::VectorOfany* params) {
+                            if (!params || prgs) return;
+                            for (auto po : *params) {
+                                if (po->UhdmType() != uhdmparameter) continue;
+                                auto par = any_cast<const parameter*>(po);
+                                if (std::string(par->VpiName()) != base_name) continue;
+                                if (par->Typespec() && par->Typespec()->Actual_typespec()) {
+                                    const typespec* ts = par->Typespec()->Actual_typespec();
+                                    if (ts->UhdmType() == uhdmlogic_typespec)
+                                        prgs = any_cast<const logic_typespec*>(ts)->Ranges();
+                                    else if (ts->UhdmType() == uhdmbit_typespec)
+                                        prgs = any_cast<const bit_typespec*>(ts)->Ranges();
+                                }
+                                return;
+                            }
+                        };
+                        if (owner) find_ranges(owner->Parameters());
+                        else if (current_instance) find_ranges(current_instance->Parameters());
+                        if (!prgs) {   // the owning scope may be further up, or the ranges on an ancestor
+                            for (const UHDM::any* start : {uhdm_expr->VpiParent(), static_cast<const UHDM::any*>(current_instance)}) {
+                                const UHDM::any* ip = start;
+                                while (ip && !prgs) {
+                                    if (auto sc = dynamic_cast<const UHDM::scope*>(ip)) find_ranges(sc->Parameters());
+                                    ip = ip->VpiParent();
+                                }
+                            }
+                        }
+                    }
+                    if (prgs && prgs->size() > exprs->size()) {
+                        std::vector<long> sizes, lefts, rights; bool ok = true;
+                        for (auto r : *prgs) {
+                            if (!r->Left_expr() || !r->Right_expr()) { ok = false; break; }
+                            RTLIL::SigSpec l = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                            if (!l.is_fully_const() || !rr.is_fully_const()) { ok = false; break; }
+                            lefts.push_back(l.as_int()); rights.push_back(rr.as_int());
+                            sizes.push_back(std::labs(l.as_int() - rr.as_int()) + 1);
+                        }
+                        if (ok) {
+                            long elem_w = 1;
+                            for (size_t k = exprs->size(); k < sizes.size(); k++) elem_w *= sizes[k];
+                            long off = 0;
+                            for (size_t m = 0; m < exprs->size() && ok; m++) {
+                                RTLIL::SigSpec ix = import_expression(any_cast<const expr*>((*exprs)[m]), input_mapping);
+                                if (!ix.is_fully_const()) { ok = false; break; }
+                                long idx = ix.as_int();
+                                // position from the LSB end: a [3:0] dim puts
+                                // element 0 at the low bits, a [0:3] dim at the high
+                                long pos = (lefts[m] >= rights[m]) ? idx - rights[m] : rights[m] - idx;
+                                long stride = 1;
+                                for (size_t k = m + 1; k < sizes.size(); k++) stride *= sizes[k];
+                                if (pos < 0 || pos >= sizes[m]) { ok = false; break; }
+                                off += pos * stride;
+                            }
+                            const RTLIL::Const& pv = pval;
+                            if (ok && off >= 0 && off + elem_w <= pv.size()) {
+                                log("  vpiVarSelect: packed parameter %s[...] -> const bits [%ld+:%ld]\n",
+                                    base_name.c_str(), off, elem_w);
+                                return RTLIL::SigSpec(pv.extract((int)off, (int)elem_w));
+                            }
+                        }
+                    }
+                }
+
                 // A function parameter (`arg[0][0]` inside a function body) is
                 // not a module wire — it is staged in `input_mapping`.  Resolve
                 // the base wire from there first so the element extraction below
