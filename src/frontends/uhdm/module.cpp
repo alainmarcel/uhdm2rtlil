@@ -3403,6 +3403,52 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                     }
                 }
 
+                // A SLICE of an interface array as the actual of an
+                // interface-ARRAY port: tnoc's packet serializer hands two of
+                // its three flit interfaces to a mux,
+                //     tnoc_flit_if flit_if[3](types);
+                //     tnoc_flit_if_mux u_flit_mux (.receiver_if(flit_if[0:1]), ...)
+                // over `tnoc_flit_if.receiver receiver_if[ENTRIES]`.  The
+                // actual is a part_select named after the array; the generic
+                // expression import found no signal `flit_if`, connected an
+                // EMPTY `receiver_if`, and `hierarchy` rejected the cell ("does
+                // not have a port named 'receiver_if'": tnoc_error_checker,
+                // tnoc_packet_serializer, tnoc_packet_deserializer).  Fan out
+                // element k of the port over element lo+k of the array.
+                if (high_conn->UhdmType() == uhdmpart_select) {
+                    const part_select* ps = any_cast<const part_select*>(high_conn);
+                    std::string base = std::string(ps->VpiName());
+                    int lo = -1, hi = -1;
+                    if (ps->Left_range() && ps->Right_range()) {
+                        RTLIL::SigSpec l = import_expression(ps->Left_range());
+                        RTLIL::SigSpec r = import_expression(ps->Right_range());
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            lo = std::min(l.as_const().as_int(), r.as_const().as_int());
+                            hi = std::max(l.as_const().as_int(), r.as_const().as_int());
+                        }
+                    }
+                    if (lo >= 0 && iface_inst_vars_.count(base + "[" + std::to_string(lo) + "]")) {
+                        int bound = 0;
+                        for (int k = 0; lo + k <= hi; k++) {
+                            std::string elem = base + "[" + std::to_string(lo + k) + "]";
+                            auto it = iface_inst_vars_.find(elem);
+                            if (it == iface_inst_vars_.end()) break;
+                            for (auto &var_name : it->second) {
+                                std::string full_signal_name = elem + "." + var_name;
+                                if (!name_map.count(full_signal_name)) continue;
+                                cell->setPort(RTLIL::escape_id(port_name + "[" + std::to_string(k) + "]." + var_name),
+                                              name_map[full_signal_name]);
+                                bound++;
+                            }
+                        }
+                        if (bound > 0) {
+                            uhdm_trace("    Port %s bound to interface-array slice %s[%d:%d] (%d members)\n",
+                                port_name.c_str(), base.c_str(), lo, hi, bound);
+                            continue;
+                        }
+                    }
+                }
+
                 // Interface MODPORT connection: `.p(iface.mp)`.  Surelog
                 // encodes the actual as a hier_path <iface>.<modport>, which
                 // import_expression below resolves to 1'x — the child's

@@ -2960,6 +2960,53 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     continue;
                                 }
                             }
+                            // A SLICE of an interface array as the actual of an
+                            // interface-ARRAY port -- tnoc's packet serializer:
+                            //     tnoc_flit_if flit_if[3](types);
+                            //     tnoc_flit_if_mux u_flit_mux (.receiver_if(flit_if[0:1]), ...)
+                            // over `tnoc_flit_if.receiver receiver_if[ENTRIES]`.  The
+                            // High_conn is a part_select on the array base; the
+                            // expression import found no signal `flit_if`, connected
+                            // an EMPTY `receiver_if`, and `hierarchy` rejected the
+                            // cell ("does not have a port named 'receiver_if'":
+                            // tnoc_error_checker, tnoc_packet_serializer,
+                            // tnoc_packet_deserializer).  Pair the target's
+                            // `<port>[k].<field>` wires with `base[lo+k].<field>`.
+                            if (tgt_mod && port->High_conn()->UhdmType() == uhdmpart_select) {
+                                const part_select* ps = any_cast<const part_select*>(port->High_conn());
+                                std::string base = std::string(ps->VpiName());
+                                int lo = -1, hi = -1;
+                                if (ps->Left_range() && ps->Right_range()) {
+                                    RTLIL::SigSpec l = import_expression(ps->Left_range());
+                                    RTLIL::SigSpec r = import_expression(ps->Right_range());
+                                    if (l.is_fully_const() && r.is_fully_const()) {
+                                        lo = std::min(l.as_const().as_int(), r.as_const().as_int());
+                                        hi = std::max(l.as_const().as_int(), r.as_const().as_int());
+                                    }
+                                }
+                                int bound = 0;
+                                if (lo >= 0 && !base.empty())
+                                    for (int k = 0; lo + k <= hi; k++) {
+                                        std::string src_name = base + "[" + std::to_string(lo + k) + "]";
+                                        std::string tgt_prefix = "\\" + port_name + "[" + std::to_string(k) + "].";
+                                        for (auto& w : tgt_mod->wires_) {
+                                            std::string wn = w.first.str();
+                                            if (wn.compare(0, tgt_prefix.size(), tgt_prefix) != 0) continue;
+                                            std::string f = wn.substr(tgt_prefix.size());
+                                            std::string src_full = src_name + "." + f;
+                                            RTLIL::Wire* src_w = name_map.count(src_full) ? name_map[src_full] : nullptr;
+                                            if (!src_w) src_w = parent_rtlil_module->wire(RTLIL::escape_id(src_full));
+                                            if (!src_w) continue;
+                                            cell->setPort(w.first, RTLIL::SigSpec(src_w));
+                                            bound++;
+                                        }
+                                    }
+                                if (bound > 0) {
+                                    uhdm_trace("UHDM: Connected interface-array slice %s[%d:%d] -> %s (%d members)\n",
+                                        base.c_str(), lo, hi, port_name.c_str(), bound);
+                                    continue;
+                                }
+                            }
                             // Interface MODPORT connection: `.s(s.sub)`.  Surelog
                             // represents the actual as a hier_path <iface>.<modport>,
                             // which — unlike the whole-interface ref_obj case above —

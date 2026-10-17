@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+flatten
+opt_clean
+check -assert
+select -assert-none t:mux2
