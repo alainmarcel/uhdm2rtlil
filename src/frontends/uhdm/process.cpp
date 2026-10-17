@@ -13828,7 +13828,37 @@ bool UhdmImporter::emit_iface_member_elem_write(const UHDM::hier_path* hp,
         ? import_expression(any_cast<const UHDM::expr*>(bs->VpiIndex()), comb_read_map())
         : RTLIL::SigSpec();
     if (ix.size() == 0) return false;
+    // The RHS may be an assignment PATTERN of the element's struct type
+    // (tnoc's `flit_if[0].flit[0] = '{flit_type: .., head: .., tail: ..,
+    // data: packet_if.pack_header()}`): hand the pattern the element's
+    // struct typespec and width, else its fields were sized by nothing.
+    const UHDM::typespec* elem_ts = nullptr;
+    if (decl->UhdmType() == uhdmpacked_array_var) {
+        auto pav = any_cast<const UHDM::packed_array_var*>(decl);
+        if (pav->Elements() && !pav->Elements()->empty())
+            if (auto e0 = dynamic_cast<const UHDM::expr*>((*pav->Elements())[0]))
+                if (e0->Typespec()) elem_ts = e0->Typespec()->Actual_typespec();
+    }
+    if (!elem_ts)
+        if (auto dx = dynamic_cast<const UHDM::expr*>(decl))
+            if (dx->Typespec() && dx->Typespec()->Actual_typespec()) {
+                const UHDM::typespec* dts = dx->Typespec()->Actual_typespec();
+                if (dts->UhdmType() == uhdmpacked_array_typespec) {
+                    if (auto et = any_cast<const UHDM::packed_array_typespec*>(dts)->Elem_typespec())
+                        elem_ts = et->Actual_typespec();
+                } else if (dts->UhdmType() == uhdmlogic_typespec) {
+                    if (auto et = any_cast<const UHDM::logic_typespec*>(dts)->Elem_typespec())
+                        elem_ts = et->Actual_typespec();
+                }
+            }
+    const UHDM::typespec* saved_ctx_ts = expression_context_typespec;
+    int saved_ctx_w = expression_context_width;
+    if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec || elem_ts->UhdmType() == uhdmunion_typespec))
+        expression_context_typespec = elem_ts;
+    expression_context_width = ew;
     RTLIL::SigSpec rhs = import_expression(any_cast<const UHDM::expr*>(rhs_any), comb_read_map());
+    expression_context_typespec = saved_ctx_ts;
+    expression_context_width = saved_ctx_w;
     if (rhs.size() == 0) return false;
     if (rhs.size() > ew) rhs = rhs.extract(0, ew);
     else if (rhs.size() < ew) rhs.extend_u0(ew, false);
