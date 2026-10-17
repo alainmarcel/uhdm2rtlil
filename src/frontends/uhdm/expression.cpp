@@ -7920,6 +7920,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 const UHDM::typespec* field_member_ts = nullptr;
                 if (operand->UhdmType() == uhdmtagged_pattern) {
                     auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                    // The equal split (target width / field count) is for an
+                    // ARRAY of equal elements.  A NAMED pattern is a struct
+                    // whose fields differ in width; with no struct type to
+                    // consult, each field keeps its value's own width.
+                    // `p.header = '{ptype: i_ptype, dest: i_dest}` onto an
+                    // interface instance's 12-bit member was split 6 + 6 --
+                    // the 4-bit ptype grew, the 8-bit dest lost two bits.
+                    if (!struct_ts) field_w = 0;
                     if (tp && tp->Pattern())
                         field_expr = any_cast<const expr*>(tp->Pattern());
                     if (struct_ts && struct_ts->Members() && tp && tp->Typespec()) {
