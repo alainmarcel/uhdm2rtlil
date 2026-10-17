@@ -11175,6 +11175,40 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (actual->UhdmType() == uhdminterface_inst) {
             // This is a reference to an interface instance
             // Create the interface connection wire with proper naming
+            // A GENVAR named like this inside the current generate scope wins:
+            // Surelog binds the argument of a method called THROUGH A PORT or
+            // an instance (`fifo_out_if.get_head_flit_valid(i)` in tnoc's AXI
+            // write/read demux `g_routing[i]`) to the interface instance; the
+            // dummy wire below became the method's channel, and the dummy
+            // wires are scrubbed later, taking the formal's binding with them
+            // -- every channel but 0 never latched its route.  The generate
+            // scope elaborates the genvar as its own parameter: that is the
+            // argument.
+            if (!gen_scope.empty())
+                if (auto gs = dynamic_cast<const UHDM::gen_scope*>(current_scope)) {
+                    // the genvar is the scope's PARAMETER (vpiParameter with
+                    // the iteration value); a localparam would be a param_assign
+                    if (gs->Parameters())
+                        for (auto pr : *gs->Parameters())
+                            if (std::string(pr->VpiName()) == ref_name)
+                                if (auto prm = dynamic_cast<const UHDM::parameter*>(pr))
+                                    if (!prm->VpiValue().empty()) {
+                                        int64_t v = parse_vpi_value_to_int(std::string(prm->VpiValue()));
+                                        uhdm_trace("UHDM: ref_obj %s is the generate scope's own parameter (%lld), not the interface instance Surelog bound it to\n",
+                                            ref_name.c_str(), (long long)v);
+                                        return RTLIL::SigSpec(RTLIL::Const(v, 32));
+                                    }
+                    if (gs->Param_assigns())
+                        for (auto pa : *gs->Param_assigns())
+                            if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == ref_name && pa->Rhs()) {
+                                RTLIL::SigSpec gv = import_expression(any_cast<const UHDM::expr*>(pa->Rhs()));
+                                if (gv.is_fully_const()) {
+                                    uhdm_trace("UHDM: ref_obj %s is the generate scope's own parameter (%s), not the interface instance Surelog bound it to\n",
+                                        ref_name.c_str(), gv.as_const().as_string().c_str());
+                                    return gv;
+                                }
+                            }
+                }
             std::string interface_wire_name = "$dummywireforinterface\\" + ref_name;
             uhdm_trace("UHDM: Reference to interface instance %s via VpiActual, creating connection wire %s\n", 
                 ref_name.c_str(), interface_wire_name.c_str());
