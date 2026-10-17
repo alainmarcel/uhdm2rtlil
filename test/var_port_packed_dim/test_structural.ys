@@ -1,0 +1,11 @@
+# Pins the PORT WIDTHS: with the old Surelog the `var [W-1:0]` ports had no
+# typespec (UH0705) and read_uhdm failed outright; with a typespec but the
+# wrong one they would be 1 bit.  test_slang_equiv.ys proves the counter.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 1 w:i_up
+select -assert-count 1 w:o_count
+proc
+flatten
+opt_clean
+check -assert
