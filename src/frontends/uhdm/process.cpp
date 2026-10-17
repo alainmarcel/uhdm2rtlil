@@ -10324,6 +10324,59 @@ void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mf
                     iface_name = iface_name.substr(1);
             }
         }
+        // The placeholder wire is gone by the time a process body is
+        // imported in some modules (tnoc's packet deserializer:
+        // `packet_if.unpack_header(flit_if[0].flit[0].data)` -- a VOID
+        // method that WRITES the port's members, called as a statement),
+        // and the call was skipped: 116 header + 297 payload bits never
+        // assigned.  The UHDM port itself still names the interface: its
+        // Low_conn binds a modport (parent = the interface definition) or
+        // an interface instance, else its typespec is the interface /
+        // modport typespec.  Same recovery as iface_port_member_decl.
+        uhdm_trace("    method call %s.%s: attr iface_name='%s' current_instance=%s ports=%d\n",
+            prefix_name.c_str(), std::string(mfc->VpiName()).c_str(), iface_name.c_str(),
+            current_instance ? std::string(current_instance->VpiDefName()).c_str() : "null",
+            (current_instance && current_instance->Ports()) ? (int)current_instance->Ports()->size() : -1);
+        if (iface_name.empty() && current_instance && current_instance->Ports()) {
+            for (auto p : *current_instance->Ports()) {
+                if (std::string(p->VpiName()) != prefix_name) continue;
+                if (auto lc = p->Low_conn())
+                    if (lc->UhdmType() == uhdmref_obj)
+                        if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
+                            if (a->UhdmType() == uhdmmodport && a->VpiParent())
+                                iface_name = std::string(a->VpiParent()->VpiDefName());
+                            else if (a->UhdmType() == uhdminterface_inst)
+                                iface_name = std::string(any_cast<const UHDM::interface_inst*>(a)->VpiDefName());
+                        }
+                if (iface_name.empty() && p->Typespec() && p->Typespec()->Actual_typespec()) {
+                    const UHDM::typespec* ts = p->Typespec()->Actual_typespec();
+                    if (ts->UhdmType() == uhdminterface_typespec) {
+                        auto its = any_cast<const UHDM::interface_typespec*>(ts);
+                        if (its->VpiIsModPort() && its->VpiParent() &&
+                            its->VpiParent()->UhdmType() == uhdminterface_typespec)
+                            iface_name = std::string(its->VpiParent()->VpiName());
+                        else if (!its->VpiIsModPort())
+                            iface_name = std::string(its->VpiName());
+                    }
+                }
+                break;
+            }
+            if (iface_name.find("work@") == 0) iface_name = iface_name.substr(5);
+            if (iface_name.compare(0, 8, "$paramod") == 0) {
+                auto b1 = iface_name.find('\\');
+                if (b1 != std::string::npos) { iface_name = iface_name.substr(b1 + 1); iface_name = iface_name.substr(0, iface_name.find('\\')); }
+            }
+        }
+        uhdm_trace("    method call %s.%s: port-recovered iface_name='%s'\n",
+            prefix_name.c_str(), std::string(mfc->VpiName()).c_str(), iface_name.c_str());
+        // The attribute names a PARAMETERISED interface by its paramod
+        // spelling (`$paramod\tnoc_packet_if\PACKET_CONFIG=...`), which
+        // matches nothing in AllInterfaces: keep the bare interface name.
+        if (!iface_name.empty() && iface_name.compare(0, 8, "$paramod") == 0) {
+            auto b1 = iface_name.find('\\');
+            if (b1 != std::string::npos) { iface_name = iface_name.substr(b1 + 1); iface_name = iface_name.substr(0, iface_name.find('\\')); }
+        }
+        if (iface_name.find("work@") == 0) iface_name = iface_name.substr(5);
         if (!iface_name.empty()) {
             for (auto ii : *uhdm_design->AllInterfaces()) {
                 std::string n = std::string(ii->VpiDefName());
@@ -10346,6 +10399,37 @@ void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mf
                 break;
             }
         }
+    }
+    if (iface_inst)
+        uhdm_trace("    method call %s.%s: prefix bound to interface %s (def %s, %d task_funcs) -> %s\n",
+            prefix_name.c_str(), std::string(mfc->VpiName()).c_str(),
+            std::string(iface_inst->VpiName()).c_str(), std::string(iface_inst->VpiDefName()).c_str(),
+            iface_inst->Task_funcs() ? (int)iface_inst->Task_funcs()->size() : 0,
+            func_def ? "found" : "NOT found");
+    // The prefix's Actual_group named an interface -- the modport's parent,
+    // or an interface instance -- that does not carry the method in its own
+    // Task_funcs (tnoc's packet deserializer: `packet_if.unpack_header(..)`
+    // through the `tnoc_packet_if.master` port; the bound copy has no
+    // task_funcs at all).  Take it from the design-level interface of the
+    // same definition, as the port-attribute path above already does.
+    if (!func_def && iface_inst && uhdm_design && uhdm_design->AllInterfaces()) {
+        std::string dn = std::string(iface_inst->VpiDefName());
+        if (dn.find("work@") == 0) dn = dn.substr(5);
+        std::string method_name = std::string(mfc->VpiName());
+        for (auto ii : *uhdm_design->AllInterfaces()) {
+            std::string n = std::string(ii->VpiDefName());
+            if (n.find("work@") == 0) n = n.substr(5);
+            if (n != dn || !ii->Task_funcs()) continue;
+            for (auto tf : *ii->Task_funcs())
+                if (tf->UhdmType() == uhdmfunction && std::string(tf->VpiName()) == method_name) {
+                    func_def = any_cast<const UHDM::function*>(tf);
+                    iface_inst = ii;
+                    break;
+                }
+            if (func_def) break;
+        }
+        uhdm_trace("    method call %s.%s: design-level interface %s -> %s\n",
+            prefix_name.c_str(), method_name.c_str(), dn.c_str(), func_def ? "found" : "NOT found");
     }
     if (!func_def) {
         log_warning("Method func call '%s' has no Function() — skipping\n",
@@ -10406,6 +10490,51 @@ void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mf
             for (auto n : *iface_inst->Nets())
                 add_iface_sig(std::string(n->VpiName()));
     }
+    // (3) The method's own LOCALS, kept SSA-style in the mapping: a local
+    // reads as X until its first assignment overwrites the entry.  tnoc's
+    // unpack_header unpacks the flit into three struct locals and copies
+    // their fields into the port's `header` member by FIELD; the walker
+    // knew neither locals nor field targets and dropped every assignment
+    // ("Method func call body: unresolved assignment").
+    std::set<std::string> locals_;
+    std::map<std::string, const UHDM::typespec*> decl_ts;    // name -> struct typespec of a local / member
+    auto ts_of = [&](const UHDM::any* d) -> const UHDM::typespec* {
+        const UHDM::typespec* t = nullptr;
+        if (auto e = dynamic_cast<const UHDM::expr*>(d))
+            if (e->Typespec()) t = e->Typespec()->Actual_typespec();
+        return resolve_iface_port_typedef(t);
+    };
+    if (func_def->Variables())
+        for (auto v : *func_def->Variables()) {
+            std::string vn = std::string(v->VpiName());
+            if (vn.empty() || mapping.count(vn)) continue;
+            const UHDM::typespec* t = ts_of(v);
+            int w = t ? get_width_from_typespec(t, nullptr) : get_width(v, nullptr);
+            if (w <= 0) w = 1;
+            mapping[vn] = RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, w));
+            locals_.insert(vn);
+            if (t) decl_ts[vn] = t;
+        }
+    if (iface_inst) {
+        if (iface_inst->Variables())
+            for (auto v : *iface_inst->Variables())
+                if (auto t = ts_of(v)) decl_ts.emplace(std::string(v->VpiName()), t);
+        if (iface_inst->Nets())
+            for (auto n : *iface_inst->Nets())
+                if (auto t = ts_of(n)) decl_ts.emplace(std::string(n->VpiName()), t);
+    }
+    // `base.f.g` -> the (offset, width) of that field within `base`'s struct
+    auto field_slice = [&](const UHDM::hier_path* hp, std::string& base, int& off, int& w) -> bool {
+        if (!hp->Path_elems() || hp->Path_elems()->size() < 2) return false;
+        auto& pe = *hp->Path_elems();
+        for (auto e : pe) if (e->UhdmType() != uhdmref_obj) return false;
+        base = std::string(pe[0]->VpiName());
+        auto dit = decl_ts.find(base);
+        if (!dit->second || dit == decl_ts.end()) return false;
+        std::string path;
+        for (size_t i = 1; i < pe.size(); i++) path += (i > 1 ? "." : "") + std::string(pe[i]->VpiName());
+        return calculate_struct_member_offset(dit->second, path, nullptr, off, w) && w > 0;
+    };
 
     // Walk the function body, emitting each assignment as a comb action.
     std::function<void(const UHDM::any*)> walk = [&](const UHDM::any* stmt) {
@@ -10432,6 +10561,30 @@ void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mf
                     std::string lname = std::string(lref->VpiName());
                     auto it = mapping.find(lname);
                     if (it != mapping.end()) lhs = it->second;
+                    if (locals_.count(lname) && !rhs.empty()) {
+                        // a LOCAL: its new value is the mapping entry itself
+                        RTLIL::SigSpec v = rhs;
+                        if (v.size() < lhs.size()) v.extend_u0(lhs.size());
+                        else if (v.size() > lhs.size()) v = v.extract(0, lhs.size());
+                        mapping[lname] = v;
+                        break;
+                    }
+                } else if (a->Lhs()->VpiType() == vpiHierPath) {
+                    std::string base; int off = 0, w = 0;
+                    if (field_slice(any_cast<const UHDM::hier_path*>(a->Lhs()), base, off, w) &&
+                        mapping.count(base) && off >= 0 && off + w <= mapping[base].size()) {
+                        if (locals_.count(base)) {
+                            if (!rhs.empty()) {
+                                RTLIL::SigSpec v = rhs;
+                                if (v.size() < w) v.extend_u0(w); else if (v.size() > w) v = v.extract(0, w);
+                                RTLIL::SigSpec cur = mapping[base];
+                                cur.replace(off, v);
+                                mapping[base] = cur;
+                            }
+                            break;
+                        }
+                        lhs = mapping[base].extract(off, w);
+                    }
                 }
                 if (lhs.empty() || rhs.empty()) {
                     log_warning("Method func call body: unresolved assignment "
