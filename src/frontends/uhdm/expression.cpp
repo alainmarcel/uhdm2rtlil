@@ -14340,6 +14340,66 @@ RTLIL::SigSpec UhdmImporter::import_param_array_elem_field(
 const UHDM::typespec* UhdmImporter::hier_path_member_typespec(const UHDM::hier_path* hp) {
     if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return nullptr;
     auto& pe = *hp->Path_elems();
+    // An INTERFACE member as the target -- `error_packet_if[1].header =
+    // '{packet_type: .., address: '0, ..}` (tnoc_error_checker building its
+    // error response), `p.header = '{..}` -- is no struct variable of this
+    // module; its struct type was recorded when the member wire was made.
+    // Without it every field of a NAMED pattern kept its value's own width,
+    // an unsized `'0` became one bit, and every field above it landed at
+    // the wrong offset: the response type's top bit was lost and the
+    // serializer below never saw a header-only packet.
+    {
+        std::string base;
+        // (a bit_select IS a ref_obj in UHDM: test the element form first)
+        if (auto b0 = dynamic_cast<const UHDM::bit_select*>(pe[0])) {
+            RTLIL::SigSpec ix = b0->VpiIndex() ? import_expression(b0->VpiIndex()) : RTLIL::SigSpec();
+            if (ix.size() > 0 && ix.is_fully_const())
+                base = std::string(b0->VpiName()) + "[" + std::to_string(ix.as_const().as_int()) + "]";
+        } else if (auto r0 = dynamic_cast<const UHDM::ref_obj*>(pe[0])) base = std::string(r0->VpiName());
+        if (!base.empty() && pe[1]->UhdmType() == uhdmref_obj) {
+            std::string mem = std::string(pe[1]->VpiName());
+            std::string wname = base + "." + mem;
+            const UHDM::typespec* sts = nullptr;
+            auto it = iface_signal_struct_ts_.find(wname);
+            if (it != iface_signal_struct_ts_.end()) sts = it->second;
+            // Not recorded when the DEFINITION declares the member over a
+            // typedef taken through the interface's own interface port
+            // (`typedef t.hdr_t hdr_t; hdr_t header;`): the elaborated
+            // instance's member, or the port's definition member, has the
+            // struct -- resolved through the port typedef if need be.
+            if (!sts) {
+                const UHDM::any* mdecl = nullptr;
+                if (auto ei = dynamic_cast<const UHDM::interface_inst*>(find_iface_instance_by_name(base))) {
+                    if (ei->Nets()) for (auto n : *ei->Nets()) if (std::string(n->VpiName()) == mem) { mdecl = n; break; }
+                    if (!mdecl && ei->Variables()) for (auto v : *ei->Variables()) if (std::string(v->VpiName()) == mem) { mdecl = v; break; }
+                }
+                if (!mdecl) mdecl = iface_port_member_decl(base.substr(0, base.find('[')), mem);
+                if (auto dx = dynamic_cast<const UHDM::expr*>(mdecl))
+                    if (dx->Typespec()) {
+                        const UHDM::typespec* t = resolve_iface_port_typedef(dx->Typespec()->Actual_typespec());
+                        if (t && (t->UhdmType() == uhdmstruct_typespec || t->UhdmType() == uhdmunion_typespec)) {
+                            sts = t;
+                            iface_signal_struct_ts_[wname] = t;
+                        }
+                    }
+            }
+            uhdm_trace("    hier_path_member_typespec: interface member target %s -> %s\n", wname.c_str(), sts ? "struct" : "none");
+            if (sts) {
+                if (pe.size() == 2) return sts;
+                std::string mpath;
+                for (size_t i = 2; i < pe.size(); i++) {
+                    std::string n = std::string(pe[i]->VpiName());
+                    if (n.empty()) return nullptr;
+                    if (auto dot = n.rfind('.'); dot != std::string::npos) n = n.substr(dot + 1);
+                    mpath += (mpath.empty() ? "" : ".") + n;
+                }
+                int off = 0, w = 0;
+                const UHDM::typespec* mts = nullptr;
+                if (calculate_struct_member_offset(sts, mpath, current_instance, off, w, &mts)) return mts;
+                return nullptr;
+            }
+        }
+    }
     auto base_ref = dynamic_cast<const UHDM::ref_obj*>(pe[0]);
     if (!base_ref) return nullptr;
     const UHDM::ref_typespec* rts = nullptr;
@@ -14372,6 +14432,8 @@ const UHDM::typespec* UhdmImporter::assignment_lhs_hier_path_typespec(const UHDM
         lhs = any_cast<const UHDM::assignment*>(op->VpiParent())->Lhs();
     else if (op->VpiParent()->UhdmType() == uhdmcont_assign)
         lhs = any_cast<const UHDM::cont_assign*>(op->VpiParent())->Lhs();
+    uhdm_trace("    assignment_lhs_hier_path_typespec: parent=%s lhs=%s\n",
+        UHDM::UhdmName(op->VpiParent()->UhdmType()).c_str(), lhs ? UHDM::UhdmName(lhs->UhdmType()).c_str() : "null");
     if (!lhs || lhs->UhdmType() != uhdmhier_path) return nullptr;
     return hier_path_member_typespec(any_cast<const UHDM::hier_path*>(lhs));
 }
