@@ -213,11 +213,11 @@ def deep_check(args, rel, work, p, files, incs, defs, sl_args, timeout):
         rc, log = _netlist(work, "deep_miter.ys", f"""\
 read_rtlil uhdm_hier.il
 hierarchy -top {top}
-flatten; proc; opt; memory; async2sync
+flatten; proc; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync
 rename {top} gold; design -stash gold
 read_rtlil slang_hier.il
 hierarchy -top {top}
-flatten; proc; opt; memory; async2sync
+flatten; proc; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync
 rename {top} gate; design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate

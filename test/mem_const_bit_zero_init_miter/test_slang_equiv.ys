@@ -1,0 +1,19 @@
+# The sweeps' miter recipe (ext_flow.py / sv_tests_sweep.py / core_sweep.py):
+# memories mapped without opt_mem's constant-bit fold and zeroed before opt.
+# With the plain `memory` script in place of the memory_* line this miter
+# finds a counterexample at step 1 (read-before-write of a constant-written bit).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten; proc; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; setundef -undriven -zero
+rename top gold
+design -stash gold
+read_slang dut.sv --top top
+hierarchy -check -top top
+flatten; proc; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; setundef -undriven -zero
+rename top gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

@@ -386,13 +386,13 @@ def _auto_slang_miter(d, top, known_fail, timeout=240):
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {top}
 flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
-opt; memory; async2sync; techmap; opt
+opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; techmap; opt
 rename {top} gold
 design -stash gold
 read_slang -f project.f {slang} --top {top}
 hierarchy -check -top {top}
 flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
-opt; memory; async2sync; techmap; opt
+opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; techmap; opt
 rename {top} gate
 design -stash gate
 design -copy-from gold -as gold gold
