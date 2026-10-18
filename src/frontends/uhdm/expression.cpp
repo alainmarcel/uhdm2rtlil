@@ -13557,52 +13557,65 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
 
     RTLIL::SigSpec shift_amount;
     if (element_width > 1) {
-        // Packed array element access - compute byte offset
-        // Zero-extend index to 32 bits for arithmetic cells
+        // Packed array element access - compute byte offset.  The arithmetic
+        // is at least 32 bits wide, and WIDER when the index is: extend_u0(32)
+        // TRUNCATES a wider index, so black-parrot's
+        // `sharers_coh_states_i[gpr_i[sel]]` -- a 64-bit general-purpose
+        // register as the index into a 2-element array -- kept only the low
+        // 32 bits of the GPR, and an out-of-range index such as 2**54 wrapped
+        // onto element 0 where the LRM (and read_slang) read X.  Keep every
+        // index bit plus room for the element-width product; $shiftx then
+        // reads X for any index beyond the array.
+        int aw = 32;
+        {
+            int ewb = 0;
+            for (int t = element_width; t > 0; t >>= 1) ewb++;
+            aw = std::max(32, index.size() + ewb + 1);
+        }
         RTLIL::SigSpec index32 = index;
-        index32.extend_u0(32);
+        index32.extend_u0(aw);
 
         if (outer_left >= 0 && outer_right >= 0 && outer_left < outer_right) {
             // Reversed range [0:N] - need $sub(right, ix) then $mul by element_width
-            RTLIL::Wire* sub_wire = module->addWire(NEW_ID, 32);
+            RTLIL::Wire* sub_wire = module->addWire(NEW_ID, aw);
             std::string sub_name = generate_cell_name(uhdm_bit, "sub");
             RTLIL::Cell* sub_cell = module->addCell(RTLIL::escape_id(sub_name), ID($sub));
             sub_cell->setParam(ID::A_SIGNED, 0);
             sub_cell->setParam(ID::B_SIGNED, 0);
-            sub_cell->setParam(ID::A_WIDTH, 32);
-            sub_cell->setParam(ID::B_WIDTH, 32);
-            sub_cell->setParam(ID::Y_WIDTH, 32);
-            sub_cell->setPort(ID::A, RTLIL::SigSpec(RTLIL::Const(outer_right, 32)));
+            sub_cell->setParam(ID::A_WIDTH, aw);
+            sub_cell->setParam(ID::B_WIDTH, aw);
+            sub_cell->setParam(ID::Y_WIDTH, aw);
+            sub_cell->setPort(ID::A, RTLIL::SigSpec(RTLIL::Const(outer_right, aw)));
             sub_cell->setPort(ID::B, index32);
             sub_cell->setPort(ID::Y, sub_wire);
             add_src_attribute(sub_cell->attributes, uhdm_bit);
 
-            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, 32);
+            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, aw);
             std::string mul_name = generate_cell_name(uhdm_bit, "mul");
             RTLIL::Cell* mul_cell = module->addCell(RTLIL::escape_id(mul_name), ID($mul));
             mul_cell->setParam(ID::A_SIGNED, 0);
             mul_cell->setParam(ID::B_SIGNED, 0);
-            mul_cell->setParam(ID::A_WIDTH, 32);
-            mul_cell->setParam(ID::B_WIDTH, 32);
-            mul_cell->setParam(ID::Y_WIDTH, 32);
+            mul_cell->setParam(ID::A_WIDTH, aw);
+            mul_cell->setParam(ID::B_WIDTH, aw);
+            mul_cell->setParam(ID::Y_WIDTH, aw);
             mul_cell->setPort(ID::A, RTLIL::SigSpec(sub_wire));
-            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, 32)));
+            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, aw)));
             mul_cell->setPort(ID::Y, mul_wire);
             add_src_attribute(mul_cell->attributes, uhdm_bit);
 
             shift_amount = RTLIL::SigSpec(mul_wire);
         } else {
             // Normal range [N:0] - $mul(ix, element_width)
-            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, 32);
+            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, aw);
             std::string mul_name = generate_cell_name(uhdm_bit, "mul");
             RTLIL::Cell* mul_cell = module->addCell(RTLIL::escape_id(mul_name), ID($mul));
             mul_cell->setParam(ID::A_SIGNED, 0);
             mul_cell->setParam(ID::B_SIGNED, 0);
-            mul_cell->setParam(ID::A_WIDTH, 32);
-            mul_cell->setParam(ID::B_WIDTH, 32);
-            mul_cell->setParam(ID::Y_WIDTH, 32);
+            mul_cell->setParam(ID::A_WIDTH, aw);
+            mul_cell->setParam(ID::B_WIDTH, aw);
+            mul_cell->setParam(ID::Y_WIDTH, aw);
             mul_cell->setPort(ID::A, index32);
-            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, 32)));
+            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, aw)));
             mul_cell->setPort(ID::Y, mul_wire);
             add_src_attribute(mul_cell->attributes, uhdm_bit);
 
