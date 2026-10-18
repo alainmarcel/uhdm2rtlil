@@ -2896,7 +2896,13 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
                 for (int b = 0; b < 4; b++) bits[base + b] = RTLIL::State::Sx;
                 continue;
             }
-            if (c == 'z' || c == 'Z') {
+            // `?` is the alternative spelling of z in a literal (IEEE
+            // 1800-2017 5.7.1) and the usual way to write an address MATCH
+            // pattern: black-parrot's `cfg_mem_cce_ucode_match_gp =
+            // (dev_addr_width_gp)'('h0_8???)`.  It fell through to the
+            // digit path below as 0, so the pattern lost its wildcard
+            // nibbles and `addr inside {pattern}` matched one address.
+            if (c == 'z' || c == 'Z' || c == '?') {
                 for (int b = 0; b < 4; b++) bits[base + b] = RTLIL::State::Sz;
                 continue;
             }
