@@ -1,0 +1,12 @@
+# `top` has a parameter with NO default (basejump_stl's `BSG_INV_PARAM` under
+# SYNTHESIS: `parameter els_4k_p`, meant to be overridden by every
+# instantiation) and is read STANDALONE, so nothing ever gives it a value.
+# read_verilog refuses such a top outright, so this test is UHDM-only; the
+# gate is that the reference stays a CONSTANT (X) instead of becoming a
+# fabricated 1-bit SIGNAL that the child sized by it owns and the parent then
+# reads -- which aborted the whole read as a cross-module wire reference
+# (black-parrot's bp_tlb through bsg_cam_1r1w_replacement).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+select -assert-count 0 w:els_4k_p
+select -assert-count 0 w:*.els_4k_p

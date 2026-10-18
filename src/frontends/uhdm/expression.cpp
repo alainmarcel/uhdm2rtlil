@@ -11354,6 +11354,24 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (mode_debug)
             uhdm_trace("    ref_obj '%s' is an interface localparam (constant width via "
                 "typespec); not a signal\n", ref_name.c_str());
+    } else if (uhdm_ref->Actual_group() &&
+               uhdm_ref->Actual_group()->VpiType() == vpiParameter) {
+        // A PARAMETER with no value anywhere -- basejump_stl's `BSG_INV_PARAM`
+        // (a bare `parameter els_p` under SYNTHESIS, meant to be overridden by
+        // every instantiation) when the module is read STANDALONE: black-parrot's
+        // bp_tlb hands `els_4k_p` down to bsg_cam_1r1w_replacement, whose
+        // `.width_p(els_p-1)` children are sized by it.  Every lookup above
+        // failed, so this used to fall through to the unknown-SIGNAL path
+        // below, which fabricated a one-bit wire in whatever module was being
+        // imported at that moment (the child sized by it) and cached it by
+        // name; the parent's own `els_p-1` then resolved to the CHILD's wire
+        // and the read aborted on "import produced N cross-module wire
+        // reference(s)".  A parameter is a constant, and an unknown constant
+        // is X: the design is exactly as degenerate as its parameters.
+        if (mode_debug)
+            uhdm_trace("    ref_obj '%s' is a parameter with no value anywhere -> 32'x, "
+                "not a signal\n", ref_name.c_str());
+        return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, 32));
     } else {
         // Last resort: a bare reference to an enum CONSTANT whose ref_obj has no
         // Actual_group (a gen-scope-local `typedef enum {MULL,MULH}` used as
