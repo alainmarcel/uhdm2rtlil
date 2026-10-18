@@ -6865,7 +6865,13 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                     // of x — not `0…0x` (undef_eqx_nex's `=== 32'bx`).
                     RTLIL::State msb = sig.size() > 0
                         ? sig[sig.size() - 1].data : RTLIL::State::S0;
-                    if (!is_signed && (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz)) {
+                    // `?` (don't-care, State::Sa from from_string) extends the
+                    // same way: black-parrot's `base_addr_p({64'b????????????????})`
+                    // -- 16 wildcard digits in a 64-bit literal -- means "every
+                    // address"; zero-extended it matched only the low 64 KiB
+                    // (bp_sacc_vdp's register decode).
+                    if (!is_signed && (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz ||
+                                       msb == RTLIL::State::Sa)) {
                         while (sig.size() < size) sig.append(RTLIL::SigBit(msb));
                     } else {
                         sig.extend_u0(size, is_signed);
@@ -6901,8 +6907,18 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             {
                 RTLIL::Const const_val = extract_const_from_value("HEX:" + hex_str);
                 int target = size > 0 ? size : const_val.size();
+                // IEEE 1800-2017 5.7.1: a literal whose leftmost digit is
+                // x, z or `?` is extended with that digit (`8'h?` is eight
+                // wildcard bits, not `0000zzzz`); the binary path above
+                // already did this, the hex path padded with 0.
+                RTLIL::State pad = RTLIL::State::S0;
+                if (const_val.size() > 0 && const_val.size() < target) {
+                    RTLIL::State msb = const_val[const_val.size() - 1];
+                    if (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz || msb == RTLIL::State::Sa)
+                        pad = msb;
+                }
                 if (const_val.size() != target)
-                    const_val = const_val.extract(0, target, RTLIL::State::S0);
+                    const_val = const_val.extract(0, target, pad);
                 return RTLIL::SigSpec(const_val);
             }
         }
