@@ -12643,6 +12643,35 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                                             elem_w = total / outer_size;
                                     }
                                 }
+                            } else if (ats->UhdmType() == uhdmint_typespec) {
+                                // A packed multi-dimensional parameter declared
+                                // WITHOUT a base type -- `parameter
+                                // [els_p-1:0][reg_addr_width_p-1:0] base_addr_p`
+                                // (black-parrot bp_me_bedrock_register) -- is
+                                // typed by Surelog as an int_typespec that
+                                // carries BOTH ranges.  Nothing above looked at
+                                // that kind, so elem_w stayed 1 and
+                                // `base_addr_p[i]` returned ONE BIT of the
+                                // address table: every register decode in
+                                // bp_me_cfg_slice compared the request address
+                                // against 20'0.  Same rule as the bit/logic
+                                // branches: the OUTER range divides the total.
+                                auto it = dynamic_cast<const UHDM::int_typespec*>(ats);
+                                if (it && it->Ranges() && it->Ranges()->size() > 1) {
+                                    packed_multidim = true;
+                                    auto r0 = (*it->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        int outer_size = std::abs(l - r) + 1;
+                                        outer_low = std::min(l, r);
+                                        outer_high = std::max(l, r);
+                                        outer_ascending = (l < r);
+                                        if (outer_size > 0 && total % outer_size == 0)
+                                            elem_w = total / outer_size;
+                                    }
+                                }
                             } else if (ats->UhdmType() == uhdmarray_typespec) {
                                 // UNPACKED array parameter: `logic [W-1:0] DAM
                                 // [N-1:0]`.  `DAM[i]` selects a whole W-bit
