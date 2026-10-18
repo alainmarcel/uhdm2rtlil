@@ -8184,6 +8184,25 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             int w = std::max(a.size(), b.size());
             if (a.size() < w) a.extend_u0(w, sg);
             if (b.size() < w) b.extend_u0(w, sg);
+            // `inside` is a WILDCARD compare (LRM 11.4.6, `==?`): an x/z/?
+            // bit of a set MEMBER matches anything.  black-parrot's
+            // `cache_tagop_match_addr_gp = 20'('b????_????_????_??1?_????)`
+            // reached a plain $eq against `20'--...-1-----`, which is never 1
+            // (bp_me_dram_hash_encode: every tag op decoded as a plain
+            // address).  Compare only the member's DEFINED bits; a member
+            // with none matches everything.
+            if (b.is_fully_const()) {
+                RTLIL::SigSpec am, bm;
+                for (int i = 0; i < w; i++) {
+                    RTLIL::State st = b[i].data;
+                    if (st == RTLIL::State::S0 || st == RTLIL::State::S1) {
+                        am.append(a[i]);
+                        bm.append(b[i]);
+                    }
+                }
+                if (bm.size() == 0) return RTLIL::SigSpec(RTLIL::State::S1);
+                if (bm.size() < w) return module->Eq(NEW_ID, am, bm, false);
+            }
             return module->Eq(NEW_ID, a, b, false);
         };
         RTLIL::SigSpec result;
