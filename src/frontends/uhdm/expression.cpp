@@ -4943,7 +4943,31 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 int elem_row_w = 0;  // >0: multi-range packed element (dims below)
                 struct ElemDim { int lo, hi; bool desc; };
                 std::vector<ElemDim> elem_dims;   // outer -> inner packed ranges
-                if (auto ag2 = vs->Actual_group()) {
+                // The DEFINITION view's var_select carries no Actual_group
+                // (RSD ICache's `readLineInsnList[hitWay][wordPtr[i]]`, the
+                // array written by a generate loop of ICacheArray instances):
+                // without it none of the element geometry below was ever
+                // derived and the second index fell to the bit-select path.
+                // Resolve the array declaration by name, on this instance and
+                // then on an elaborated instance of the same definition.
+                const UHDM::any* ag2 = vs->Actual_group();
+                if (!ag2 && current_instance) {
+                    auto find_arr = [&](const UHDM::module_inst* m) -> const UHDM::any* {
+                        if (!m) return nullptr;
+                        if (m->Array_vars())
+                            for (auto a : *m->Array_vars())
+                                if (std::string(a->VpiName()) == base_name) return a;
+                        if (m->Array_nets())
+                            for (auto a : *m->Array_nets())
+                                if (std::string(a->VpiName()) == base_name) return a;
+                        return nullptr;
+                    };
+                    if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                        ag2 = find_arr(m);
+                        if (!ag2) ag2 = find_arr(find_elab_instance(m));
+                    }
+                }
+                if (ag2) {
                     const UHDM::ref_typespec* ert = nullptr;
                     // Inner packed_array_var of the unpacked element (its own
                     // Ranges() = the packed dims, Elements()[0] = the element).
@@ -4998,6 +5022,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // second index fell to the bit-select path below and
                     // `key_init_we_o[s][i] = sp2v_e'(...)` wrote ONE bit.
                     const UHDM::VectorOfrange* pk_rgs = nullptr;
+                    std::vector<const UHDM::range*> pk_vec;
                     int ew2 = 0;
                     if (auto pat2 = dynamic_cast<const UHDM::packed_array_typespec*>(ets2)) {
                         const UHDM::typespec* e2 =
@@ -5005,6 +5030,63 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 ? pat2->Elem_typespec()->Actual_typespec() : nullptr;
                         ew2 = e2 ? get_width_from_typespec(e2, current_instance) : 0;
                         pk_rgs = pat2->Ranges();
+                    } else if (auto lt3 = dynamic_cast<const UHDM::logic_typespec*>(ets2);
+                               lt3 && lt3->Elem_typespec() && lt3->Elem_typespec()->Actual_typespec() &&
+                               lt3->Ranges() && !lt3->Ranges()->empty()) {
+                        // A typedef'd packed vector as the ELEMENT of a packed
+                        // array that is itself the unpacked element type --
+                        // RSD ICache's `typedef InsnPath [LINE_INSN_NUM-1:0]
+                        // ICacheLineInsnPath; ICacheLineInsnPath
+                        // readLineInsnList [WAY_NUM]` read as
+                        // `readLineInsnList[hitWay][wordPtr[i]]`.  Surelog
+                        // keeps the outer dim as this logic_typespec's own
+                        // Range and the instruction type as its
+                        // Elem_typespec; both single-range branches here
+                        // required NO Elem_typespec, so the second index fell
+                        // to the bit-select path and the instruction word
+                        // read as ONE bit.  Walk the alias chain: a level
+                        // whose Elem_typespec is itself a packed array alias
+                        // with the SAME ranges repeats them (the typedef
+                        // alias form, CLAUDE.md "Packed Multidimensional
+                        // Array Typespec Variants") and contributes none; the
+                        // leaf is the innermost element type.
+                        std::vector<const UHDM::range*> chain;
+                        const UHDM::typespec* cur = lt3;
+                        const UHDM::typespec* leaf = nullptr;
+                        while (cur) {
+                            auto cl = dynamic_cast<const UHDM::logic_typespec*>(cur);
+                            if (!cl || !cl->Elem_typespec() || !cl->Elem_typespec()->Actual_typespec()) {
+                                leaf = cur;
+                                break;
+                            }
+                            const UHDM::typespec* nxt = cl->Elem_typespec()->Actual_typespec();
+                            bool redundant = false;
+                            if (auto nl = dynamic_cast<const UHDM::logic_typespec*>(nxt))
+                                if (nl->Elem_typespec() && nl->Ranges() && cl->Ranges() &&
+                                    nl->Ranges()->size() == cl->Ranges()->size()) {
+                                    redundant = true;
+                                    for (size_t k = 0; k < nl->Ranges()->size() && redundant; k++) {
+                                        auto ra = (*cl->Ranges())[k];
+                                        auto rb = (*nl->Ranges())[k];
+                                        RTLIL::SigSpec al = import_expression(ra->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec ar = import_expression(ra->Right_expr(), input_mapping);
+                                        RTLIL::SigSpec bl = import_expression(rb->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec br = import_expression(rb->Right_expr(), input_mapping);
+                                        if (!al.is_fully_const() || !ar.is_fully_const() ||
+                                            !bl.is_fully_const() || !br.is_fully_const() ||
+                                            al.as_const().as_int() != bl.as_const().as_int() ||
+                                            ar.as_const().as_int() != br.as_const().as_int())
+                                            redundant = false;
+                                    }
+                                }
+                            if (!redundant && cl->Ranges())
+                                for (auto r : *cl->Ranges()) chain.push_back(r);
+                            cur = nxt;
+                        }
+                        if (leaf && !chain.empty()) {
+                            ew2 = get_width_from_typespec(leaf, current_instance);
+                            pk_vec = chain;
+                        }
                     } else if (pav0 && pav0->Ranges() && !pav0->Ranges()->empty() &&
                                pav0->Elements() && !pav0->Elements()->empty()) {
                         // Surelog's elaborated form: the inner packed_array_var
@@ -5013,10 +5095,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         ew2 = get_width((*pav0->Elements())[0], current_instance);
                         pk_rgs = pav0->Ranges();
                     }
-                    if (pk_rgs) {
-                        if (ew2 > 1 && !pk_rgs->empty()) {
+                    if (pk_rgs) pk_vec.assign(pk_rgs->begin(), pk_rgs->end());
+                    if (!pk_vec.empty()) {
+                        if (ew2 > 1) {
                             bool ok = true;
-                            for (auto rr : *pk_rgs) {
+                            for (auto rr : pk_vec) {
                                 RTLIL::SigSpec dl = import_expression(rr->Left_expr(), input_mapping);
                                 RTLIL::SigSpec dr = import_expression(rr->Right_expr(), input_mapping);
                                 if (!dl.is_fully_const() || !dr.is_fully_const()) { ok = false; break; }
