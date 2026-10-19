@@ -14976,7 +14976,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // was already cleared -- so MPIE never captured the old MIE (the
             // top-module import binds the ref and was correct).  Take the
             // typespec from the declaration behind the module wire.
-            if (!lts && name_map.count(sl_base)) {
+            // Only for a NESTED field (`csrNext.mstatus.MIE`, three path
+            // elements).  A single-level field read (`next.numLoadMiss` in
+            // RSD PerformanceCounter, whose always_comb does `next = cur` and
+            // then increments fields) is answered further down by a path that
+            // stays in step with how the WRITE side of a compound assignment
+            // resolves the same field; routing it through the staged value
+            // here desynchronised the two and cost that module 228 co-sim
+            // cycles with read_slang clean.
+            if (!lts && uhdm_hier->Path_elems()->size() >= 3 &&
+                name_map.count(sl_base)) {
                 RTLIL::Wire* sw = name_map[sl_base];
                 for (auto& pr : wire_map) {
                     if (pr.second != sw) continue;
