@@ -59,7 +59,7 @@
   "^el2_mem_if$",
   "^el2_regfile_if$",
   "^ram_$",
-  "^ram_be_$"
+  "^rvclkhdr$", "^ram_be_$"
  ],
  "harness_srcs": [
   "stubs/veer_el2_macros.sv"
@@ -69,6 +69,7 @@
   "^el2_mem_if$": "an INTERFACE (design/lib/el2_mem_if.sv), not a module",
   "^el2_regfile_if$": "an INTERFACE (design/lib/el2_regfile_if.sv), not a module",
   "^ram_$": "the closure's identifier scan reading the `RV_*_DATA_CELL macro bodies in config/common_defines.vh as a module name; the SRAM wrappers are generated per size and have no such module",
-  "^ram_be_$": "same as ram_ -- a macro body, not a module"
+  "^rvclkhdr$": "declared inside `ifndef RV_FPGA_OPTIMIZE (design/lib/beh_lib.sv:790) and config/common_defines.vh defines RV_FPGA_OPTIMIZE, so the swept configuration never compiles it -- the closure's text scan still sees the declaration and the row read `Module 'rvclkhdr' not found!`",
+    "^ram_be_$": "same as ram_ -- a macro body, not a module"
  }
 }
