@@ -142,6 +142,12 @@ class Closure:
         # int_div_radix_16_v4's copy and read_slang reported "port 'quot_o'
         # does not exist" -- our closure, not its limitation.
         self.all_defs = {}
+        # Names declared as an INTERFACE.  They stay in defs/mod_files (the
+        # closures need them) but are not sweepable TOPS: read_uhdm reports
+        # "Module 'X' not found!" and read_slang refuses one too, so every
+        # such row was a harness artefact (caliptra-ss axi_mem_if, cif_if,
+        # css_mcu0_el2_mem_if, mci_mcu_sram_if).
+        self.iface_defs = set()
         for r in roots:
             # a root given as an absolute path is a HARNESS root (test/ext_ip/...)
             for pat in (r if os.path.isabs(r) else str(EXT / r),):
@@ -152,10 +158,25 @@ class Closure:
                         continue
                     t = open(f, errors="replace").read()
                     is_pkg = False
-                    for m in re.findall(r"^\s*(?:module|interface)\s+(\w+)", t, re.M):
-                        self.defs.setdefault(m, f)
-                        self.mod_files.setdefault(m, f)
-                        self.all_defs.setdefault(m, []).append(f)
+                    # Scan DECLARATIONS, not prose: the bare regex matched
+                    # " * module and its parameterization needs." in
+                    # tlul_adapter_reg.sv and swept a module named `and`.
+                    # Comments are blanked line-count-preservingly so the
+                    # `define scan below still sees the original text.
+                    scan = _strip_comments(t)
+                    for m in re.finditer(r"^[ \t]*(module|interface)\s+(\w+)([^\n]*)", scan, re.M):
+                        kind, name, rest = m.group(1), m.group(2), m.group(3)
+                        # A module declared inside a `define body with token
+                        # pasting (`module css_mcu0_ram_``depth``x``width(`,
+                        # caliptra-ss css_mcu0_mem_lib.sv) has no such name:
+                        # the regex captured the prefix.
+                        if rest.startswith("``") or rest.startswith("`"):
+                            continue
+                        self.defs.setdefault(name, f)
+                        self.mod_files.setdefault(name, f)
+                        self.all_defs.setdefault(name, []).append(f)
+                        if kind == "interface":
+                            self.iface_defs.add(name)
                     for p in re.findall(r"^\s*package\s+(\w+)", t, re.M):
                         self.defs.setdefault(p, f)
                         self.all_defs.setdefault(p, []).append(f)
@@ -1086,6 +1107,35 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
     return row
 
 
+def _strip_comments(t):
+    """Blank out // and /* */ comments, preserving every byte position (so a
+    later scan of the ORIGINAL text still lines up) -- newlines are kept."""
+    out = list(t)
+    i, n = 0, len(t)
+    while i < n:
+        c = t[i]
+        if c == '"':
+            i += 1
+            while i < n and t[i] != '"':
+                i += 2 if t[i] == '\\' else 1
+            i += 1
+        elif c == '/' and i + 1 < n and t[i + 1] == '/':
+            while i < n and t[i] != '\n':
+                out[i] = ' '
+                i += 1
+        elif c == '/' and i + 1 < n and t[i + 1] == '*':
+            while i + 1 < n and not (t[i] == '*' and t[i + 1] == '/'):
+                if t[i] != '\n':
+                    out[i] = ' '
+                i += 1
+            if i + 1 < n:
+                out[i] = out[i + 1] = ' '
+            i += 2
+        else:
+            i += 1
+    return "".join(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("family")
@@ -1139,7 +1189,8 @@ def main():
         # core has its own chip sweep and would otherwise be counted twice.
         sp = [str(EXT / d) for d in man.get("sweep_paths", [])]
         mods = [{"name": n} for n in sorted(cl.mod_files)
-                if not any(x.search(n) for x in excl)
+                if n not in cl.iface_defs
+                and not any(x.search(n) for x in excl)
                 and (not pref or n.startswith(pref))
                 and (not sp or any(cl.mod_files[n].startswith(d) for d in sp))]
         ov = man.get("overrides", {})
