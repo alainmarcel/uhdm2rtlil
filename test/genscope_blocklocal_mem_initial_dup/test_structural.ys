@@ -1,0 +1,14 @@
+# Netlist gate: each generate instance's BLOCK-LOCAL memory must be its own
+# RTLIL memory, named after its scope (what read_verilog produces:
+# \gen_rf[0].rf_local and \gen_rf[1].rf_local), with its own initialisation
+# cells -- two instances x four words = 8 $meminit_v2.  Before the fix both
+# instances collapsed into ONE memory named \rf_local, so they SHARED storage,
+# and the second instance's $meminit cell collided with the first: read_uhdm
+# aborted with `Assert count_id(cell->name) == 0 failed` and the whole module
+# was a read-fail (OpenTitan otbn_rf_bignum_fpga).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+select -assert-count 2 m:*
+select -assert-count 1 m:gen_rf[0].rf_local
+select -assert-count 1 m:gen_rf[1].rf_local
+select -assert-count 8 t:$meminit_v2

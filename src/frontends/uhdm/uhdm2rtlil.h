@@ -1678,6 +1678,8 @@ struct UhdmImporter {
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);
     void create_memory_from_array(const UHDM::array_net* uhdm_array);
     void create_memory_from_array(const UHDM::array_var* uhdm_array);
+    void create_memory_from_array(const UHDM::array_var* uhdm_array,
+                                  const std::string& name_override);
     
     // Helper functions to reduce code duplication
     const UHDM::assignment* cast_to_assignment(const UHDM::any* stmt);
