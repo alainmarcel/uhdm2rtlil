@@ -20415,7 +20415,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             if (cond_expr) {
                 int saved_case_ctx = expression_context_width;
                 expression_context_width = case_context_width(uhdm_case);
-                case_expr = import_expression(cond_expr);
+                // Pass the process's read map: a case expression is a READ and
+                // must see in-flight blocking values.  A plain reference
+                // already resolved through current_comb_values inside
+                // import_ref_obj, but every handler that keys on the
+                // input_mapping ARGUMENT was shut out -- `case (f3.cmp)` on a
+                // UNION-typed FORMAL of an inlined function (RSD Decoder's
+                // RISCV_DecodeFPOpFunct3) reached no staged value, warned
+                // "Could not resolve struct member access" and switched on
+                // 1'x, so every FP instruction took the first arm (FC_ADD).
+                case_expr = import_expression(cond_expr, comb_read_map());
                 expression_context_width = saved_case_ctx;
                 case_expr_signed = is_expr_signed(cond_expr);
                 uhdm_trace("        Case expression: %s (signed=%d)\n", log_signal(case_expr), case_expr_signed);
