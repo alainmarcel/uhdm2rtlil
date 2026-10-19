@@ -1180,6 +1180,43 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        case vpiFuncCall: {
+            // A void FUNCTION called as a STATEMENT writes its output actuals
+            // like a task does.  Only a SELECT actual is registered here --
+            // `EmitInvalidOp(microOps[i])` in RSD Decoder's per-instruction
+            // loops, whose element writes otherwise had no temp at all, so
+            // the write-back landed on the raw wire and fought the sync
+            // update of the one element a later plain assignment DID
+            // register (microOps[1] of an illegal instruction lost its
+            // envCode).  A WHOLE-signal actual is deliberately left alone:
+            // the arms of a member write inside the body land on the formal's
+            // own temp, and giving the actual a full-width temp of its own
+            // strands them (test/tf_formal_member_write_in_branch).
+            auto fc = any_cast<const UHDM::func_call*>(stmt);
+            const UHDM::task_func* fdef = fc ? fc->Function() : nullptr;
+            if (fc && fdef && fdef->Io_decls() && fc->Tf_call_args()) {
+                auto io_decls = fdef->Io_decls();
+                auto args = fc->Tf_call_args();
+                size_t n = std::min(io_decls->size(), args->size());
+                for (size_t i = 0; i < n; i++) {
+                    auto io = any_cast<const UHDM::io_decl*>((*io_decls)[i]);
+                    if (!io || io->VpiDirection() != vpiOutput) continue;
+                    auto arg_expr = dynamic_cast<const UHDM::expr*>((*args)[i]);
+                    if (!arg_expr) continue;
+                    int at = arg_expr->VpiType();
+                    if ((at != vpiBitSelect && at != vpiVarSelect &&
+                         at != vpiPartSelect && at != vpiIndexedPartSelect) ||
+                        arg_expr->VpiName().empty())
+                        continue;
+                    AssignedSignal sig;
+                    sig.lhs_expr = arg_expr;
+                    sig.is_part_select = true;
+                    sig.name = std::string(arg_expr->VpiName());
+                    signals.push_back(sig);
+                }
+            }
+            break;
+        }
         case vpiTaskCall: {
             // For task calls, we only extract:
             // 1. Output parameter targets (caller's arguments for output params)
