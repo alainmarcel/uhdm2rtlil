@@ -56,7 +56,11 @@ acc_dispatcher                         4   180   error
 aes                                    4   180   timeout
 alu                                    4   900   proven
 alu_wrapper                            4   900   proven
-amo_alu                                4   180   error
+amo_alu                                4   180   error    # source not vendored: this snapshot's
+#   rtl/core has amo_buffer.sv but no amo_alu.sv anywhere, so the wrapper's
+#   instance has no definition (Surelog EL0500, read_uhdm then refuses the
+#   design).  Same class as fpnew_fma_multi's missing fmalza.  Nothing to
+#   measure until the file is vendored.
 amo_buffer                             4   900   proven
 ariane_regfile_fpga                    4   400   dead     # FPGA variant, not instantiated in the shipped config (and slang rejects its $random init)
 axi_adapter                            4   180   proven
