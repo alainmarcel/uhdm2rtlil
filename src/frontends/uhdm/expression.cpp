@@ -14965,6 +14965,29 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             } else if (auto ex = dynamic_cast<const UHDM::expr*>(ag)) {
                 if (ex->Typespec()) lts = ex->Typespec()->Actual_typespec();
             }
+            // A module-level struct variable read in-flight in an always_comb
+            // (`csrNext.mstatus.MPIE = csrNext.mstatus.MIE` after
+            // `csrNext = csrReg`, RSD CSR_Unit): the comb importer stages the
+            // block's in-flight value under the variable's name in this very
+            // map, but in a module imported as a CHILD the definition-view
+            // ref_obj carries no Actual_group, so the typespec came back
+            // empty, this branch declined, and the nested-member fallback
+            // below read the RAW wire -- the block's END value, in which MIE
+            // was already cleared -- so MPIE never captured the old MIE (the
+            // top-module import binds the ref and was correct).  Take the
+            // typespec from the declaration behind the module wire.
+            if (!lts && name_map.count(sl_base)) {
+                RTLIL::Wire* sw = name_map[sl_base];
+                for (auto& pr : wire_map) {
+                    if (pr.second != sw) continue;
+                    if (auto ex = dynamic_cast<const UHDM::expr*>(pr.first)) {
+                        if (ex->Typespec()) lts = ex->Typespec()->Actual_typespec();
+                    } else if (auto po = dynamic_cast<const UHDM::port*>(pr.first)) {
+                        if (po->Typespec()) lts = po->Typespec()->Actual_typespec();
+                    }
+                    break;
+                }
+            }
             lts = resolve_iface_port_typedef(lts);
             if (lts && (lts->UhdmType() == uhdmstruct_typespec || lts->UhdmType() == uhdmunion_typespec)) {
                 int off = 0, w = 0;
