@@ -5993,7 +5993,27 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                                 continue;
                             }
                         }
-                        create_memory_from_array(av);
+                        {
+                            // Qualify a BLOCK-LOCAL memory with its generate
+                            // scope, exactly as the array_net path above
+                            // does.  Without it every instance of
+                            // `for (genvar i) begin : gen_rf logic [..]
+                            // rf_local [N]; ... end` created ONE memory named
+                            // `rf_local`, so the instances SHARED storage --
+                            // read_verilog makes `gen_rf[0].rf_local` and
+                            // `gen_rf[1].rf_local` -- and the second
+                            // instance's $meminit cell collided with the
+                            // first, aborting the read with
+                            // `Assert count_id(cell->name) == 0 failed`
+                            // (OpenTitan otbn_rf_bignum_fpga, a read-fail
+                            // row).  resolve_mem_id() maps the bare select
+                            // names back to the scoped memory.
+                            std::string gsp = get_current_gen_scope();
+                            std::string mem_name =
+                                gsp.empty() ? std::string(av->VpiName())
+                                            : gsp + "." + std::string(av->VpiName());
+                            create_memory_from_array(av, mem_name);
+                        }
                         continue;
                     }
                     // PURE unpacked array (1-bit / no packed dimension), so

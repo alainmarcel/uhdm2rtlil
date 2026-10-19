@@ -708,9 +708,16 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
 
 // Create RTLIL memory object from UHDM array_var
 void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
+    create_memory_from_array(uhdm_array, std::string());
+}
+
+void UhdmImporter::create_memory_from_array(const array_var* uhdm_array,
+                                           const std::string& name_override) {
     if (!uhdm_array) return;
     
-    std::string array_name = std::string(uhdm_array->VpiName());
+    std::string array_name = name_override.empty()
+                                 ? std::string(uhdm_array->VpiName())
+                                 : name_override;
     if (mode_debug)
         log("  Creating RTLIL memory from array_var: %s\n", array_name.c_str());
     

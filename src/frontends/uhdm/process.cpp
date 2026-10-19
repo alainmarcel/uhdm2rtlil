@@ -2068,7 +2068,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 processed_signals.insert(sig.name);
 
                 // Get the full signal spec (not part select)
-                RTLIL::IdString signal_id = RTLIL::escape_id(sig.name);
+                RTLIL::IdString signal_id = resolve_mem_id(sig.name);
                 if (module->memories.count(signal_id)) {
                     // Memory write (`mem[ptr] <= ...`) — driven through the
                     // memwr control wires set up above, not a register temp
@@ -2573,7 +2573,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 std::set<std::string> memory_signals;
                 std::set<std::string> regular_signals;
                 for (const auto& sig_name : assigned_signals) {
-                    RTLIL::IdString sig_id = RTLIL::escape_id(sig_name);
+                    RTLIL::IdString sig_id = resolve_mem_id(sig_name);
                     if (module->memories.count(sig_id)) {
                         memory_signals.insert(sig_name);
                         uhdm_trace("      Signal %s is a memory\n", sig_name.c_str());
@@ -5219,7 +5219,7 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
                 if (!lhs || lhs->VpiType() != vpiBitSelect) return false;
                 const bit_select* bs = any_cast<const bit_select*>(lhs);
                 std::string mem = std::string(bs->VpiName());
-                RTLIL::IdString mid = RTLIL::escape_id(mem);
+                RTLIL::IdString mid = resolve_mem_id(mem);
                 if (!module->memories.count(mid)) return false;
                 auto idx = bs->VpiIndex();
                 if (!idx || idx->VpiType() != vpiConstant) return false;
@@ -5302,7 +5302,7 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
                     return false;
                 const bit_select* bs = any_cast<const bit_select*>(ba->Lhs());
                 std::string mem = std::string(bs->VpiName());
-                RTLIL::IdString mid = RTLIL::escape_id(mem);
+                RTLIL::IdString mid = resolve_mem_id(mem);
                 if (!module->memories.count(mid)) return false;
                 int w = module->memories.at(mid)->width;
                 const expr* idxe = dynamic_cast<const expr*>(bs->VpiIndex());
@@ -5338,11 +5338,11 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
     if (!scan(stmt) || words.empty()) return false;
     int prio = 0;
     for (auto& [mem, addr, val] : words) {
-        RTLIL::IdString mid = RTLIL::escape_id(mem);
+        RTLIL::IdString mid = resolve_mem_id(mem);
         int w = module->memories.at(mid)->width;
         RTLIL::Cell* cell = module->addCell(
-            stringf("$meminit$\\%s$%d", mem.c_str(), addr), ID($meminit_v2));
-        cell->setParam(ID::MEMID, RTLIL::Const("\\" + mem));
+            stringf("$meminit%s$%d", mid.c_str(), addr), ID($meminit_v2));
+        cell->setParam(ID::MEMID, RTLIL::Const(mid.str()));
         cell->setParam(ID::ABITS, RTLIL::Const(32));
         cell->setParam(ID::WIDTH, RTLIL::Const(w));
         cell->setParam(ID::WORDS, RTLIL::Const(1));
