@@ -10226,6 +10226,23 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 } else {
                     out_actions().push_back(RTLIL::SigSig(caller_out, outv));
                 }
+            } else if (!caller_out.empty() && caller_out.chunks().size() == 1 &&
+                       (*caller_out.chunks().begin()).wire &&
+                       map_to_temp_wire(caller_out) != caller_out) {
+                // A SLICE of a signal as the output actual
+                // (`EmitInvalidOp(microOps[i])` on a packed array of
+                // micro-ops, RSD Decoder): this process's temp for it may be
+                // RANGED (`$0\microOps[121:61]`) or a per-element /
+                // flat-split redirect; the bare "$0\<name>" lookup below
+                // missed those and wrote the RAW wire, which the sync update
+                // from the temp then fought.  Resolve it the way a body
+                // assignment does and thread the in-flight value.
+                RTLIL::SigSpec val = it->second;
+                if (val.size() < caller_out.size()) val.extend_u0(caller_out.size());
+                else if (val.size() > caller_out.size()) val = val.extract(0, caller_out.size());
+                RTLIL::SigSpec dst = map_to_temp_wire(caller_out);
+                out_actions().push_back(RTLIL::SigSig(dst, val));
+                if (!in_always_ff_body_mode) record_comb_partial_write(caller_out, val);
             } else if (!caller_out.empty()) {
                 // An UNPACKED-array actual (`DecideCommit(.commit(commit), ...)`
                 // on `logic commit[COMMIT_WIDTH]`, RSD CommitStage) imports as
