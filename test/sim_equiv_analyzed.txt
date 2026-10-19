@@ -24,6 +24,20 @@
 #       <explanation, multi-line ok, indented under the Test: line>
 #   <blank line separator>
 
+Test: genscope_blocklocal_mem_initial_dup
+    The memory's power-up value comes from an `initial` loop
+    (`initial for (int k...) rf_local[k] = 8'hA5;`), which both frontends
+    carry as `$meminit_v2` cells.  `write_verilog` of the SYNTHESISED netlist
+    emits no `initial` block for it, so under Verilator the netlist's memory
+    starts at 0 while the behavioural RTL reads 0xA5 -- `rd_data: rtl=0xa5a5
+    nl=0x0` from cycle 0.  NOT a frontend difference: the read_verilog
+    netlist for this very test loses the seeding in exactly the same way
+    (both *_synth.v files carry the 0xA5 constants and zero `initial`
+    blocks), so the miter classifies it ARTEFACT.  The subject of the test is
+    the generate-scope memory NAMING (one memory per instance, asserted by
+    its test_structural.ys) and its read_verilog formal equivalence, both of
+    which pass.
+
 Test: sva_not
     Same x-init divergence as `sva_counter`: `reg [2:0] cnt;` is
     declared without an init, the sync reset writes 0, but RTL and
