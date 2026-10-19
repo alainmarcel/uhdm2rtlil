@@ -52,7 +52,7 @@ otbn_rf_base_ff              2   600   proven
 otbn_rf_base_fpga            2   600   proven
 otbn_rf_bignum               2   600   proven
 otbn_rf_bignum_ff            2   600   proven
-otbn_rf_bignum_fpga          2   600   error
+otbn_rf_bignum_fpga          2   600   proven
 otbn_rnd                     2   600   proven
 otbn_scramble_ctrl           2   600   proven
 otbn_sec_add                 2   600   proven
