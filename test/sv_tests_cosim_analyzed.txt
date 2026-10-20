@@ -1,0 +1,15 @@
+# sv-tests co-simulation divergences ADJUDICATED as non-bugs.
+#
+# One sv-tests-relative test path per line (the `tests/...` spelling the
+# sweep's results.tsv uses), then whitespace, then a free-text reason.  A row
+# listed here reads `⚠ artefact (N div, adjudicated)` instead of
+# `❌ N div`, the same way core_sweep.py treats test/sim_equiv_analyzed.txt.
+#
+# ONLY for a divergence that no frontend could avoid.  A construct Verilator
+# SIMULATES and no netlist can REPRESENT is the clear case: the co-sim then
+# compares a simulator honouring the construct against a synthesised netlist
+# that cannot, so the divergence measures the corpus, not the reader.
+# Anything a correct reader would get right does NOT belong here -- it
+# belongs in a fix.
+#
+tests/chapter-10/10.6.2--force-release.sv	force / release are procedural CONTINUOUS ASSIGNMENTS with no synthesis semantics. The module is a flop (always @(posedge clk) q <= d) that an always @(f1 or f0) block forces to 0 or 1 and releases. Verilator honours the force on the RTL side and no netlist can represent it, so every cycle with f0 or f1 high diverges by construction. read_slang refuses the file outright ("Design elaboration failed"), so there is no reference to adjudicate against either. Neither frontend is wrong.

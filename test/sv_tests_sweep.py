@@ -116,7 +116,29 @@ def _netlist(work, scr_name, script, timeout):
     return rc, log
 
 
-def _cosim_cells(log, cycles):
+_COSIM_ADJ = None
+
+
+def cosim_analyzed():
+    """sv-tests-relative paths whose co-sim divergence is ADJUDICATED as
+    unavoidable -- see test/sv_tests_cosim_analyzed.txt.  Same role as
+    test/sim_equiv_analyzed.txt in core_sweep.py: without it this corpus has
+    no way to say "no frontend could get this right", so a construct that
+    only a SIMULATOR can honour reads as a reader defect forever."""
+    global _COSIM_ADJ
+    if _COSIM_ADJ is None:
+        _COSIM_ADJ = set()
+        f = os.path.join(ROOT, "test", "sv_tests_cosim_analyzed.txt")
+        if os.path.exists(f):
+            with open(f) as fh:
+                for line in fh:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        _COSIM_ADJ.add(line.split()[0])
+    return _COSIM_ADJ
+
+
+def _cosim_cells(log, cycles, rel=""):
     """Render the co-sim columns the way every other sweep does."""
     act = re.search(r"ACTIVITY (\d+) cycles", log)
     a = f" ({cycles + 1} cycles, {act.group(1)} active)" if act else ""
@@ -154,11 +176,18 @@ def _cosim_cells(log, cycles):
     if "VERDICT RTL_INERT" in log:
         return "— (RTL inert: no oracle)", "— (RTL inert: no oracle)"
     u = int(m.group(1))
-    ours = ("✅ PASS" + a) if u == 0 else f"❌ {u} div"
+    adj = rel in cosim_analyzed()
+
+    def cell(n):
+        if n == 0:
+            return "✅ PASS" + a
+        return (f"⚠ artefact ({n} div, adjudicated)" if adj
+                else f"❌ {n} div")
+
+    ours = cell(u)
     if m.group(2) is None:
         return ours, "— (no slang netlist)"
-    sv = int(m.group(2))
-    return ours, (("✅ PASS" + a) if sv == 0 else f"❌ {sv} div")
+    return ours, cell(int(m.group(2)))
 
 
 def deep_check(args, rel, work, p, files, incs, defs, sl_args, timeout):
@@ -249,7 +278,8 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
             ccmd += ["--slang-il", os.path.join(work, "slang_hier.il")]
         rc, log, _ = run(ccmd, work, max(timeout, 600))
         open(os.path.join(cw, "cosim.log"), "w").write(log or "")
-        out["cosim"], out["slang_cosim"] = _cosim_cells(log or "", args.cycles)
+        out["cosim"], out["slang_cosim"] = _cosim_cells(log or "", args.cycles,
+                                                        rel)
     return out
 
 
