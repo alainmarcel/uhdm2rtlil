@@ -1,0 +1,15 @@
+# Netlist gate: the interface member read must come from the MEMBER wire, not
+# from the module-level local of the same name.  Before the fix
+# `bank_dout[i][31:0] = mem_export.bank_dout[i]` imported as
+# `assign $0\bank_dout [31:0] \bank_dout [31:0]` -- a self-assignment, so the
+# read data could never leave its reset value.  Asserting the connection is
+# what distinguishes the two: a self-assignment still builds a netlist.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+flatten
+opt_clean
+# every bit of rd must depend on the interface member input, not on itself
+select -set rd w:rd
+select -set din w:din
+select -assert-count 1 @rd %ci* @din %i
