@@ -1267,6 +1267,15 @@ struct UhdmImporter {
     bool bitselect_outer_dim(const UHDM::any* ag, int total_width,
                              int& elem_w, int& outer_lo, int* outer_hi = nullptr);
     const UHDM::any* find_enclosing_tf_decl(const UHDM::any* node, const std::string& name);
+
+    // Set by import_hier_path's interface-member-select branch around the
+    // bit/part-select it delegates: the base wire for THIS name is already
+    // resolved (`\<ifport>.<member>`) and must not be looked up by name
+    // again.  A member whose name collides with a module-level local
+    // (VeeR EL2 el2_lsu_dccm_mem declares `dccm_bank_dout` AND reads
+    // `dccm_mem_export.dccm_bank_dout[i]`) otherwise resolved to the local,
+    // turning the statement into a self-assignment.
+    std::string iface_sel_base_name_;
     bool tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out);
     // Loop variables whose comb for-loop is CURRENTLY being unrolled, outermost
     // first.  Distinguishes an enclosing loop's variable (restore its value

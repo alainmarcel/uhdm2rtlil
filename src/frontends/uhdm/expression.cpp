@@ -12276,6 +12276,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     bool bs_fn_scoped = bs_sep != std::string::npos &&
                         bs_full.compare(0, 5, "work@") != 0 &&
                         bs_full.substr(bs_sep + bs_seplen) == signal_name;
+    // An INTERFACE MEMBER select whose base import_hier_path already resolved
+    // (`\<ifport>.<member>`, handed over in input_mapping).  Its VpiFullName
+    // is `work@<Mod>.<genscope>.<ifport>.<member>[i].<member>`, so the
+    // qualifier test above rejects it and the by-name lookup below answered
+    // with a module-level local of the same name instead: VeeR EL2's
+    // el2_lsu_dccm_mem declares `dccm_bank_dout` and reads
+    // `dccm_mem_export.dccm_bank_dout[i]`, and the read became a
+    // self-assignment -- the DCCM read data never left 0, which is 300
+    // diverging co-sim cycles with read_slang clean, in six VeeR EL2 memory
+    // wrappers and the five caliptra-ss vendors them as `css_mcu0_*`.
+    if (!iface_sel_base_name_.empty() && signal_name == iface_sel_base_name_)
+        bs_fn_scoped = true;
     if (bs_fn_scoped && input_mapping && input_mapping->count(signal_name) &&
         uhdm_bit->VpiIndex()) {
         RTLIL::SigSpec fbase = input_mapping->at(signal_name);
@@ -15441,6 +15453,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_map[mem] = RTLIL::SigSpec(w);
                     uhdm_trace("    hier_path: interface member select %s -> base wire %s\n",
                         path_name.c_str(), w->name.c_str());
+                    // Mark the base as authoritative for the delegated
+                    // select: `mem` may also name a module-level local, and a
+                    // by-name lookup would answer with that instead (VeeR EL2
+                    // el2_lsu_dccm_mem).
+                    struct IfaceSelBase {
+                        std::string& slot; std::string saved;
+                        IfaceSelBase(std::string& s, const std::string& v)
+                            : slot(s), saved(s) { slot = v; }
+                        ~IfaceSelBase() { slot = saved; }
+                    } ifsel_guard(iface_sel_base_name_, mem);
                     if (t1 == uhdmbit_select)
                         return import_bit_select(any_cast<const bit_select*>(e1), inst, &base_map);
                     if (t1 == uhdmpart_select)
