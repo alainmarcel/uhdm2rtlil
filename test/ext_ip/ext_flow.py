@@ -435,9 +435,14 @@ def _iface_port_wrapper(w, fam, mod, files, def_flags=(), inc_flags=(), src_byte
     out = w / f"{mod}_ifc.sv"
     man = HERE / f"{fam}.json"
     extra = ["--manifest", str(man)] if man.exists() else []
+    # The netlist the generator reads must be the BARE module's, and it gets a
+    # FILE OF ITS OWN: the main read below writes the WRAPPER's netlist to
+    # uhdm_hier.il, so sharing that name makes the wrapper depend on whether
+    # this row has run before -- see the bootstrap guard.
+    bare = w / "bare_hier.il"
     def _gen():
         return sh([sys.executable, str(TEST / "gen_iface_wrapper.py"), "--from-decl",
-                   *extra, str(w / "uhdm_hier.il"), mod, str(out), *files],
+                   *extra, str(bare), mod, str(out), *files],
                   timeout=300)
     rc, log = _gen()
     # An interface whose MEMBERS are declared over a type taken from another
@@ -445,11 +450,23 @@ def _iface_port_wrapper(w, fam, mod, files, def_flags=(), inc_flags=(), src_byte
     # restated in a port list, so the generator wants the ELABORATED widths
     # instead -- but the wrapper is built before this row's first read, so on a
     # fresh work directory there is no netlist to read them from.  Elaborate the
-    # BARE module once, just for uhdm_hier.il, and ask again.  Without this the
+    # BARE module once, just for bare_hier.il, and ask again.  Without this the
     # row depends on whether a previous run left a netlist behind, which is how
     # tnoc_dummy_node went from `elab-fail` to `equivalent` only on a SECOND
     # invocation -- not something a nightly can rely on.
-    if "NEEDS-NETLIST" in (log or "") and not (w / "uhdm_hier.il").exists():
+    # Bootstrap on the MARKER ALONE.  Guarding it on the netlist's absence
+    # instead made the row depend on its own history: the main read leaves the
+    # WRAPPER's netlist in uhdm_hier.il, which holds `tnoc_packet_serializer_flat`
+    # and a `$paramod\tnoc_packet_serializer\...` copy but no plain
+    # `\tnoc_packet_serializer`, so a SECOND invocation found the file present,
+    # skipped the bootstrap, got no ports out of it and fell back to --from-decl
+    # -- which is the path that cannot restate `types.tnoc_flit` and emits
+    # `.types(types_i.)`.  tnoc_packet_serializer therefore read
+    # `❌ 189 div` on a clean work directory and `elab-fail` on every re-run.
+    # The marker is printed exactly when the generator could not use the file
+    # it was given, which is the condition that wants a bootstrap; when
+    # bare_hier.il is already good no marker appears and this is skipped.
+    if "NEEDS-NETLIST" in (log or ""):
         bw = w / "_bootstrap"
         subprocess.run(["rm", "-rf", str(bw)])
         bw.mkdir(parents=True, exist_ok=True)
@@ -460,11 +477,11 @@ def _iface_port_wrapper(w, fam, mod, files, def_flags=(), inc_flags=(), src_byte
         if brc == 0 and (bw / "slpp_all" / "surelog.uhdm").exists():
             (bw / "boot.ys").write_text(
                 f"read_uhdm slpp_all/surelog.uhdm\nhierarchy -top {mod}\n"
-                f"write_rtlil ../uhdm_hier.il\n")
+                f"write_rtlil ../bare_hier.il\n")
             krc, kout = sh(_capped([str(Y), "-q", "-m", str(P), "boot.ys"]),
                            cwd=bw, timeout=_sl_timeout(src_bytes))
             (bw / "boot.log").write_text(kout or "")
-        if (w / "uhdm_hier.il").exists():
+        if bare.exists():
             rc, log2 = _gen()
             log = (log or "") + "\n# bootstrapped a netlist for the wrapper\n" + (log2 or "")
     (w / "ifacebind.log").write_text(log or "")
