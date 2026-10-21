@@ -3613,6 +3613,130 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // THREE OR MORE indices into a packed array whose element
+                // type is a TYPE PARAMETER (`parameter type elem_t = logic;
+                // elem_t [RATIO-1:0][WAYS-1:0] arr; ... arr[i][j][k] = ...`).
+                // The geometry attributes stamped at declaration carry at most
+                // outer + elem + leaf, i.e. TWO index levels; a declared 2-D
+                // array over a typedef that is ITSELF packed 2-D needs FOUR
+                // numbers, so the last index fell through to the bit-select
+                // path and wrote ONE BIT instead of a whole leaf word -- 4
+                // one-bit connects of a 32-bit array, 28 bits left undriven.
+                // CVA6's hpdcache_memctrl is this shape
+                // (`hpdcache_req_data_t [RATIO-1:0][ways-1:0] data_read_words`,
+                // the element type a parameter), in code the default
+                // configuration never instantiates.
+                //
+                // LIMIT, measured: this recovers the dimensions Surelog
+                // REPORTS, and a DEGENERATE `[0:0]` packed dimension on a
+                // typedef bound through a type parameter is not among them --
+                // for `typedef word_t [0:0] data_t; data_t [WAYS-1:0] arr` the
+                // elaborated packed_array_var's typespec is `word_t` itself and
+                // the [0:0] level is gone, so `arr[j][k]` cannot be resolved
+                // from this node by anyone.  That is why CVA6's hpdcache
+                // (reqWords == 1) still needs a Surelog fix; this branch covers
+                // every shape whose dimensions survive elaboration.
+                //
+                // Take every dimension from the DECLARATION instead of a fixed
+                // number of attributes: the elaborated `packed_array_var`
+                // carries its declared Ranges(), and its typespec carries the
+                // bound element type's own Ranges() (recursively through
+                // Elem_typespec).  Then peel ONE index per dimension.
+                //
+                // Guarded three ways so no working select changes: at least 3
+                // indices (one and two are the paths every other design takes),
+                // the chain must have at least as many dimensions as there are
+                // indices, and the product of all dimensions must equal the
+                // wire's width EXACTLY -- if the geometry does not explain the
+                // wire, we have misread it and must not act on it.
+                if (exprs->size() >= 3) {
+                    RTLIL::Wire* dw = mapped_base_wire ? mapped_base_wire
+                                    : find_wire_in_scope(base_name);
+                    const UHDM::any* decl = vs->Actual_group();
+                    if (!decl && current_instance) {
+                        auto find_decl = [&](const UHDM::module_inst* m) -> const UHDM::any* {
+                            if (!m) return nullptr;
+                            if (m->Variables())
+                                for (auto v : *m->Variables())
+                                    if (std::string(v->VpiName()) == base_name) return v;
+                            if (m->Array_vars())
+                                for (auto a : *m->Array_vars())
+                                    if (std::string(a->VpiName()) == base_name) return a;
+                            return nullptr;
+                        };
+                        if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                            decl = find_decl(m);
+                            if (!decl) decl = find_decl(find_elab_instance(m));
+                        }
+                    }
+                    // (size, low, descending) outermost -> innermost
+                    std::vector<std::tuple<int,int,bool>> dims;
+                    bool dok = true;
+                    auto push_ranges2 = [&](const UHDM::VectorOfrange* rs) {
+                        if (!rs) return;
+                        for (auto r : *rs) {
+                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                            if (!l.is_fully_const() || !rr.is_fully_const()) { dok = false; return; }
+                            int li = l.as_const().as_int(), ri = rr.as_const().as_int();
+                            dims.push_back(std::make_tuple(std::abs(li - ri) + 1,
+                                                           std::min(li, ri), li >= ri));
+                        }
+                    };
+                    const UHDM::typespec* ets3 = nullptr;
+                    if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(decl)) {
+                        push_ranges2(pav->Ranges());
+                        if (pav->Typespec()) ets3 = pav->Typespec()->Actual_typespec();
+                    } else if (auto va = dynamic_cast<const UHDM::variables*>(decl)) {
+                        if (va->Typespec()) ets3 = va->Typespec()->Actual_typespec();
+                    }
+                    // The element type's own packed dimensions, following the
+                    // Elem_typespec chain down to the leaf.
+                    for (int depth = 0; ets3 && dok && depth < 8; depth++) {
+                        auto lts3 = dynamic_cast<const UHDM::logic_typespec*>(ets3);
+                        if (!lts3) break;
+                        push_ranges2(lts3->Ranges());
+                        if (!lts3->Elem_typespec()) break;
+                        const UHDM::typespec* nxt = lts3->Elem_typespec()->Actual_typespec();
+                        if (!nxt || nxt == ets3) break;
+                        ets3 = nxt;
+                    }
+                    if (dok && dw && dims.size() >= exprs->size()) {
+                        long long total = 1;
+                        for (auto& d : dims) total *= std::get<0>(d);
+                        if (total == (long long)dw->width) {
+                            long long leaf = 1;
+                            for (size_t d = exprs->size(); d < dims.size(); d++)
+                                leaf *= std::get<0>(dims[d]);
+                            long long off = 0;
+                            bool cok = true;
+                            for (size_t k = 0; k < exprs->size(); k++) {
+                                RTLIL::SigSpec is = import_expression((*exprs)[k], input_mapping);
+                                if (!is.is_fully_const()) { cok = false; break; }
+                                long long stride = 1;
+                                for (size_t d = k + 1; d < dims.size(); d++)
+                                    stride *= std::get<0>(dims[d]);
+                                int iv = is.as_const().as_int();
+                                int sz = std::get<0>(dims[k]), lo = std::get<1>(dims[k]);
+                                // A DESCENDING range counts up from its low
+                                // bound; an ASCENDING one is mirrored (element
+                                // 0 of `[0:N-1]` is the most significant).
+                                long long pos = std::get<2>(dims[k])
+                                                  ? (long long)(iv - lo)
+                                                  : (long long)(sz - 1 - (iv - lo));
+                                if (pos < 0 || pos >= sz) { cok = false; break; }
+                                off += pos * stride;
+                            }
+                            if (cok && off >= 0 && off + leaf <= (long long)dw->width) {
+                                log("  vpiVarSelect: %dD typed-elem %s[...] -> %s[%d+:%d]\n",
+                                    (int)exprs->size(), base_name.c_str(),
+                                    dw->name.c_str(), (int)off, (int)leaf);
+                                return RTLIL::SigSpec(dw).extract((int)off, (int)leaf);
+                            }
+                        }
+                    }
+                }
+
                 // PACKED multi-dim var_select (`x[i][j]` on
                 // `logic [0:N][2:0][31:0] x`): resolve every index against
                 // the net's typespec dimensions with correct MSB-first

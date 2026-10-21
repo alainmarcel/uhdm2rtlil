@@ -1,0 +1,19 @@
+# The VALUE gate: read_verilog cannot parse a type parameter at all, so the
+# miter against read_slang is the only real formal check this shape has.
+# Without the fix the 28 undriven bits make `dst` disagree with the reference
+# on every vector.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename top gold
+design -stash gold
+read_slang dut.sv --top top
+hierarchy -check -top top
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename top gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 1 -set-init-zero miter
