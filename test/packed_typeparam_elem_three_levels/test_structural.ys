@@ -1,0 +1,15 @@
+# Netlist gate: every bit of the array must have a driver.  Without the fix
+# `arr[i][j][k]` selects ONE BIT instead of the 8-bit leaf word, so 28 of the
+# 32 bits are undriven -- and `check` is the only thing that sees it: a 1-bit
+# write still builds a structurally valid netlist, it just leaves the rest of
+# the word floating.  `dst` must depend on `src` for all 32 bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+flatten
+opt_clean
+select -assert-count 0 t:$check
+check -assert
+select -set d w:dst
+select -set s w:src
+select -assert-count 1 @d %ci* @s %i
