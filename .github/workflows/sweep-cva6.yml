@@ -49,6 +49,72 @@ jobs:
       # builds into overlap).  Serial shards trade ~30 min for surviving.
       jobs: "1"
 
+  # The OTHER configurations chipsalliance/sv-tests defines.  sv-tests builds
+  # the full CVA6 core at FIVE flavours (its generators/ariane) and the two
+  # jobs above cover ONE of them.  A flavour is not a different design: it is
+  # the same RTL with a different `*_config_pkg.sv`, and every one of those
+  # packages declares the same package name, so a flavour is one line of the
+  # file list -- but it selects genuinely different RTL (the HPDcache subsystem
+  # instead of the write-through cache, the hypervisor two-stage MMU, a 32-bit
+  # datapath with no FPU), so reading one says nothing about the others.
+  #
+  # Cheap on purpose: the whole core is a SAT timeout even at the default
+  # config, so this reads the core per flavour and gates on the STRUCTURAL
+  # check -- every net the source assigns must have a driver.  Expectations and
+  # their reasons live in test/cva6_equiv/cva6_configs.txt and ratchet.
+  configs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # Same key the core sweeps package, so this normally restores their build
+    # instead of repeating it.
+    - name: Cache packaged runtime
+      id: cache-runtime
+      uses: actions/cache@v4
+      with:
+        path: |
+          runtime.tar.gz
+          verilator.tar.gz
+        key: core-sweep-runtime-${{ github.sha }}
+
+    - name: Install dependencies
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake ninja-build \
+          google-perftools libgoogle-perftools-dev python3 python3-dev \
+          python3-pip uuid-dev tclsh swig libreadline-dev flex bison \
+          libfl-dev ccache default-jre
+
+    - name: Setup ccache
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: cva6-configs-${{ github.sha }}
+
+    - name: Build project
+      if: steps.cache-runtime.outputs.cache-hit != 'true'
+      run: |
+        pip3 install orderedmultidict
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Unpack the cached runtime
+      if: steps.cache-runtime.outputs.cache-hit == 'true'
+      run: |
+        tar xzf runtime.tar.gz
+        test -x out/current/bin/yosys
+
+    - name: Read CVA6 at every sv-tests configuration
+      run: |
+        cd test/cva6_equiv
+        ./run_cva6_configs.sh | tee "$GITHUB_STEP_SUMMARY"
+
   # The full core the way the pavona / caliptra chips are swept: `cva6`
   # elaborated ONCE (read_uhdm + read_slang, hierarchy kept), every instance
   # at every level paired by path, one miter per distinct elaborated
