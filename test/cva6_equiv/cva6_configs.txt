@@ -1,0 +1,20 @@
+# CVA6 configurations swept as WHOLE-CORE rows, one per flavour that
+# chipsalliance/sv-tests defines (its generators/ariane `lists`).  sv-tests
+# builds the full core at five configurations and scores whether the tool reads
+# it; this adds our own structural gate on top -- every net the source assigns
+# must have a driver.
+#
+# Format:  <config-package-basename>  <expected-undriven-nets>  <note>
+#
+# `expected-undriven-nets` is the number of DISTINCT nets `check` may report
+# after proc/flatten/opt_clean.  It is a RATCHET: a config that reports fewer
+# is an unexpected success and must be updated here in the same commit that
+# improves it.  Each non-zero expectation names the net and why below.
+#
+# cv64a6_imafdc_sv39 is the default configuration the per-module sweep and the
+# per-instance chip sweep already cover in depth; it is listed so a regression
+# in the whole-core read is caught here too.
+cv64a6_imafdc_sv39            1   the default configuration -- also swept per module and per chip instance; carries the same never-assigned `axi_wr_data[1]` as the H-extension row below
+cv64a6_imafdch_sv39           1   gen_cache_wt...i_axi_shim.wr_data_i: `axi_wr_data` is declared [AxiNumWords-1:0][AxiDataWidth-1:0] and only [0] is ever assigned (64 bits the SOURCE never drives, see CLAUDE.md)
+cv64a6_imafdc_sv39_hpdcache   2   hpdcache_memctrl's data_read_words (504 bits) -- SURELOG drops the degenerate [0:0] packed dim of `word_t [reqWords-1:0] req_data_t` at reqWords==1, so the element width is unrecoverable from the UHDM; plus id_stage decoder_i.hcbie_i (2 bits) at RVH==0
+cv32a6_imac_sv32              1   the same hpdcache data_read_words net (499 bits), same Surelog cause
