@@ -72,6 +72,22 @@ jobs:
             shards: 3
             timeout: 330
             mem_limit_kb: "7000000"
+          # UPSTREAM lowRISC OpenTitan's IP library (lowRISC/opentitan @
+          # f49474bc, the commit the caliptra-ss family above already fetches).
+          # test/opentitan_equiv sweeps ONE of its 45 blocks (OTBN) from a
+          # vendored copy; this is the rest of the library -- 611 modules across
+          # hw/ip, hw/ip_templates and top_earlgrey's generated IP.  Pavona is a
+          # hard FORK whose RTL has diverged, so a pavona verdict is not an
+          # upstream one even for a block both trees have.
+          #
+          # Sharded 8 ways under the same 7 GB x 2-job cap as cvw and
+          # caliptra-ss: the big blocks are slow rather than huge (otp_ctrl 448
+          # s, spi_device 251 s, usbdev 202 s measured locally), so the budget
+          # is wall clock, not memory.
+          - family: opentitan-ip
+            shards: 8
+            timeout: 330
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

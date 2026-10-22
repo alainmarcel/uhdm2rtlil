@@ -1,0 +1,74 @@
+{
+  "title": "OpenTitan IP blocks (upstream)",
+  "url": "https://github.com/lowRISC/opentitan",
+  "_note": "UPSTREAM lowRISC OpenTitan's IP library, swept per module.  test/opentitan_equiv already sweeps ONE of its 45 blocks (OTBN, 32 modules, from a vendored copy); this family covers the library -- hw/ip, hw/ip_templates and top_earlgrey's generated IP -- which is 774 RTL files that nothing here measured.  Pinned at the SAME commit the caliptra-ss family already fetches (f49474bc), so this adds no new pin.  Pavona is a hard FORK whose RTL has diverged (of the 120 files the two trees share only 66 are byte-identical), so a pavona verdict is not an upstream verdict even for a block both have.  `prim_generic` is the technology library every abstract prim resolves to, and prim/rtl is on the include path for the assertion / flop macros OpenTitan relies on at compilation-unit scope.  SYNTHESIS compiles out the SVA macros, which is what OpenTitan's own flows pass and what run_opentitan_equiv.sh already does.",
+  "repos": [
+    {
+      "url": "https://github.com/lowRISC/opentitan.git",
+      "commit": "f49474bc89c3ce8a99536329a1e16bf22936da37",
+      "dir": "opentitan"
+    }
+  ],
+  "roots": [
+    "opentitan/hw/ip/*/rtl/*.sv",
+    "opentitan/hw/ip_templates/*/rtl/*.sv",
+    "opentitan/hw/top_earlgrey/ip_autogen/*/rtl/*.sv",
+    "opentitan/hw/top_earlgrey/rtl/*.sv",
+    "opentitan/hw/top_earlgrey/rtl/autogen/*.sv",
+    "opentitan/hw/vendor/pulp_riscv_dbg/src/*.sv",
+    "opentitan/hw/vendor/pulp_riscv_dbg/debug_rom/*.sv",
+    "opentitan/hw/vendor/pulp_common_cells/src/*.sv",
+    "opentitan/hw/top_earlgrey/rtl/autogen/testing/*.sv"
+  ],
+  "incdirs": [
+    "opentitan/hw/ip/prim/rtl",
+    "opentitan/hw/ip/bkdr_loader/rtl"
+  ],
+  "defines": [
+    "SYNTHESIS"
+  ],
+  "sweep_paths": [
+    "opentitan/hw/ip/",
+    "opentitan/hw/ip_templates/",
+    "opentitan/hw/top_earlgrey/"
+  ],
+  "modules": "auto",
+  "exclude": [
+    "_tb$",
+    "^tb_",
+    "^test",
+    "_bfm$",
+    "_sva$",
+    "_assert",
+    "^prim_xilinx",
+    "^prim_asap7",
+    "^ast$",
+    "^ast_",
+    "^chip_earlgrey_",
+    "^top_earlgrey$",
+    "^earlgrey_pd_"
+  ],
+  "exclude_notes": {
+    "^prim_xilinx": "vendor technology libraries -- prim_generic is the one an abstract prim resolves to here; two implementations of the same prim in one closure are duplicate module definitions",
+    "^prim_asap7": "same: an ASAP7 technology library, not the generic one",
+    "^ast$": "the analog model is a behavioural stub, not synthesisable RTL (the same exclusion caliptra-ss makes)",
+    "exclude_srcs: prim_asap7 / prim_xilinx*": "the VENDOR technology libraries, excluded as SOURCES and not merely as module rows: their cells (BUFx2_ASAP7_75t_R, DFFA, Xilinx primitives) have no definition in the closure, and read_uhdm correctly refuses an instance of a module nobody defines -- rv_timer failed that way on the first run.  prim_generic is the technology library an abstract prim resolves to here.",
+    "roots: hw/vendor/pulp_riscv_dbg + pulp_common_cells": "CLOSURE, not sweep targets (sweep_paths keeps the rows to OpenTitan's own IP): rv_dm and lc_ctrl's JTAG TAP are built over the vendored RISC-V debug module, so without dm_pkg read_slang reports \"unknown class or package 'dm'\" and lc_ctrl's DMI ports collapse to 1 bit and then drive constants.  pulp_common_cells is what that debug module is built on.",
+    "roots: top_earlgrey/rtl/autogen/testing": "lc_ctrl's life-cycle TOKENS live in a generated, top-specific package (`lc_ctrl_token_pkg`), so without this directory read_slang reports \"unknown package 'lc_ctrl_token_pkg'\" and the row has no reference.",
+    "exclude_srcs: dmi_bscane_tap.sv": "a XILINX-only FPGA JTAG tap in the vendored debug module: it instantiates the hard macro `BSCANE2`, which no generic closure defines, and it is an ALTERNATIVE to the tap the generic flow uses rather than something the design needs.  Leaving it in cost lc_ctrl and rv_dm their read_slang reference (\"unknown module 'BSCANE2'\").",
+    "^chip_earlgrey_ / ^top_earlgrey$ / ^earlgrey_pd_": "CHIP tops, not IP blocks: this family's scope is the IP library, and a chip top needs its analog model and pad ring, which are deliberately not in this closure (`chip_earlgrey_asic` elab-fails for exactly that reason).  The chip top has its own route -- test/opentitan_equiv/scripts/fusesoc_closure.py resolves `lowrisc:systems:top_earlgrey` to 635 files with 0 unresolved cores and read_uhdm reads it clean -- and wants its own sharded workflow because the read alone peaks at 11.9 GB."
+  },
+  "seq": 3,
+  "timeout": 600,
+  "want": "proven",
+  "slang_flags": [
+    "--single-unit",
+    "--relax-enum-conversions"
+  ],
+  "exclude_srcs": [
+    "opentitan/hw/ip/prim_asap7/",
+    "opentitan/hw/ip/prim_xilinx/",
+    "opentitan/hw/ip/prim_xilinx_ultrascale/",
+    "opentitan/hw/vendor/pulp_riscv_dbg/src/dmi_bscane_tap\\.sv$"
+  ]
+}
