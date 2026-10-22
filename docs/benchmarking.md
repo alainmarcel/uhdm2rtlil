@@ -43,24 +43,29 @@ line and in the total:
 | **RSD** | 165 | 116 | 144 | 140 | **4** | 147 | 146 | 0 | 1 | 0 |
 | **BlackParrot** | 125 | 50 | 45 | 42 | **3** | 45 | 44 | 0 | 1 | 0 |
 | **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **2** | 29 | 28 | 0 | 1 | 0 |
+| **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 521 | 551 | 539 | **12** | 551 | 537 | **10** | 4 | 0 |
 | **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **11** | 389 | 380 | 0 | 9 | 0 |
 | **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
 | **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **37** | 402 | 372 | **2** | 28 | 0 |
 | **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan core** (香山) | 2002 | 1602 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 865 | 893 | 863 | **30** | 913 | 889 | 0 | 24 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 867 | 893 | 863 | **30** | 913 | 889 | 0 | 24 | 0 |
 | **chipsalliance/sv-tests** | 527 | 474 | 11 | 11 | 0 | 12 | 11 | 0 | 1 | 0 |
-| **All sweeps** (18 workflows) | **5352** | **4332** | **4295** | **4182** | **113** | **4321** | **4233** | **2** | **86** | **0** |
+| **All sweeps** (18 workflows) | **5957** | **4855** | **4846** | **4721** | **125** | **4872** | **4770** | **12** | **90** | **0** |
 
-**Two `read_uhdm` divergences remain, and both are new coverage finding new
-defects**: 4233 of the 4321 co-simulated rows pass outright, 86 are divergences
-a SAT miter proved to be simulation artefacts, and the two real ones are
+**Twelve `read_uhdm` divergences remain, every one new coverage finding new
+defects**: 4770 of the 4872 co-simulated rows pass outright, 90 are divergences
+a SAT miter proved to be simulation artefacts, and the twelve real ones are
 `cva6_hpdcache_subsystem` (2 diverging cycles) and `cva6_hpdcache_wrapper` (3)
 at the HPDcache flavour of CVA6 -- modules that are `dead` at the default
-configuration and were measured for the first time this week, `read_slang`
-clean on both.  `read_slang`, measured on the same rows under the same
-stimulus, diverges on 113.
+configuration and were measured for the first time this week -- and ten rows
+of the OpenTitan IP library on its first nightly (`aes_control` 301,
+`prim_gf_mult` 300, `prim_sram_arbiter` 286, `rram_phy_rd_buf_dep` 73,
+`rram_scramble` 56, `i3c_targ_async_events` 38, `cheriot_rmw_filter` 36,
+`i3c_stby_cr_regs` 22, `i3c_ctrl_req_gen` 1, `rram_ctrl_mp` 1), `read_slang`
+clean on all twelve.  `prim_gf_mult` is fixed in #1270.  `read_slang`,
+measured on the same rows under the same stimulus, diverges on 125.
 
 The `read_slang` divergences are listed with their reasons in
 [slang_unsupported.md](slang_unsupported.md).  Counted by
@@ -75,15 +80,9 @@ the tree with the CVA6 flavour sweep (#1267) in it, so the three flavour
 families appear for the first time.  Two rows are not from that morning:
 **BlackParrot is its 2026-10-18 run** on `52374ad92` (its nightly has been
 cancelled on the job time limit every day since, and a cancelled run uploads a
-TRUNCATED report, 95 of its 126 rows), and the **External IP** row mixes the
-2026-10-22 ext dispatch on `f9d32e2d0` (run 39854252763: axi, common_cells,
-cv32e40p, hdmi, verilog-pcie, the XiangShan library) with the 2026-10-20 ext
-run (39396603819: caliptra-ss, cve2, cvfpu, cvw, verilog-ethernet), because
-the 10-22 dispatch was still publishing those families when the table was
-taken -- their 10-20 and 10-22 numbers are identical for every family both
-runs had finished.  The **OpenTitan IP library** (#1268, 605 modules) has no
-nightly yet and is not in this table; its first dispatch is the same run
-39854252763, still running at the time of writing.  Run ids: ibex
+TRUNCATED report, 95 of its 126 rows), and the **External IP** and
+**OpenTitan IP library** rows are the 2026-10-22 ext dispatch on `f9d32e2d0`
+(run 39854252763, the library's first nightly).  Run ids: ibex
 39741501672, rp32 39744204814, fx68k 39784956558, scr1 39743766501, rggen
 39790604505, veer-eh1 39751125305, tnoc 39792360831, veer-el2 39763829282,
 rsd 39756486232, black-parrot 39126191261, opentitan 39777587456, pavona
