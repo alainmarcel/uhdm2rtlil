@@ -43,7 +43,7 @@ array_default_struct_pattern	OK
 array_elem_field_write_whole_default	OK	
 array_elem_nested_struct_member_read	OK	
 array_elem_union_member_read	OK	
-array_init_2d	FAIL	ERROR: Design elaboration failed; see full log for details
+array_init_2d	FAIL	dut.sv:30: ERROR: internal error: evaluation does not resolve to a constant in design initialization
 ArrayInit	OK	
 arrays01	OK	
 arrays03	OK	
@@ -75,7 +75,7 @@ AssignSumOfConstants	OK
 AssignSumWithParameterInSubmodule	OK	
 AssignSumWithParameter	OK	
 AssignToUnionAndReadField	OK	
-AssignToUnpackedUnionFieldAndReadOtherField	FAIL	ERROR: Design elaboration failed; see full log for details
+AssignToUnpackedUnionFieldAndReadOtherField	FAIL	dut.sv:5: ERROR: value of type 'union' is unsupported for conversion to bits in this context
 AssignTypedefedFunctionCall	OK	
 asym_ram_sdp_read_wider	OK	
 asym_ram_sdp_write_wider	OK	
@@ -107,8 +107,8 @@ bits_pkg_typedef_alias	OK
 bits_type_param	OK	
 bits_typeparam_override_scope	OK	
 bit_typed_memory_genscope	OK	
-bitwise_operations	FAIL	ERROR: Design elaboration failed; see full log for details
-bitwise_operations_reverted_range	FAIL	ERROR: Design elaboration failed; see full log for details
+bitwise_operations	FAIL	dut.sv:9: ERROR: expected ';'
+bitwise_operations_reverted_range	FAIL	dut.sv:9: ERROR: expected ';'
 blocking_temp_ff	OK	
 blocking_temp_select	OK	
 block_local_packed_struct_array_dyn_write	OK	
@@ -116,10 +116,10 @@ block_local_per_process	OK
 block_local_same_name_widths	OK	
 blocklocal_struct_width	OK	
 blockrom	OK	
-BreakContinue	FAIL	ERROR: Design elaboration failed; see full log for details
+BreakContinue	FAIL	dut.sv:5: ERROR: unsupported language feature
 BreakContinueWhile	OK	
-Break	FAIL	ERROR: Design elaboration failed; see full log for details
-BreakNested	FAIL	ERROR: Design elaboration failed; see full log for details
+Break	FAIL	dut.sv:5: ERROR: unsupported language feature
+BreakNested	FAIL	dut.sv:5: ERROR: unsupported language feature
 BreakWhile	OK	
 carryadd	OK	
 case_auto_local_sub	OK	
@@ -147,16 +147,16 @@ CastToSumOfConstants	OK
 CastToSumWithParameterIn2InstancesOfSubmodule	OK	
 CastToSumWithParameterInSubmodule	OK	
 CastWidthFromPackage	OK	
-cdc_static_basic	FAIL	ERROR: Design elaboration failed; see full log for details
+cdc_static_basic	FAIL	dut.sv:6: ERROR: value of type 'real' is unsupported for conversion to bits in this context
 CellNamedLikeModule	OK	
 cfg_func_width_loop	OK	
 child_dyn_bit_write	OK	
-clk2fflogic_effects	FAIL	ERROR: Design elaboration failed; see full log for details
+clk2fflogic_effects	FAIL	dut.sv:59: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
 Clog2OfSumWithParameterIn2InstancesOfSubmodule	OK	
 ClogOfParamOfInstanceInitializedByStructMember	OK	
 code_hdl_models_decoder_2to4_gates	OK	
 code_hdl_models_parallel_crc	OK	
-code_tidbits_fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
+code_tidbits_fsm_using_function	FAIL	dut.sv:60: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 comb_2d_bitsel	OK	
 comb_array_next_state	OK	
 comb_blocklocal_same_name_two_blocks	OK	
@@ -198,7 +198,7 @@ compound_assignments	OK
 concat_lhs_signext	OK	
 ConcatWidth	OK	
 conditional_if_else	OK	
-conditional_if	FAIL	ERROR: Design elaboration failed; see full log for details
+conditional_if	FAIL	dut.sv:9: ERROR: statements that pass time are not allowed in this context
 cond_pattern_packed_struct_array_elem	OK	
 const_arg_loop	OK	
 const_ashift	OK	
@@ -211,36 +211,36 @@ const_func_shadow	OK
 constmsk_test	OK	
 ConstSizes	OK	
 cont_assign_nested_named_pattern_member	OK	
-Continue	FAIL	ERROR: Design elaboration failed; see full log for details
-ContinueNested	FAIL	ERROR: Design elaboration failed; see full log for details
+Continue	FAIL	dut.sv:5: ERROR: unsupported language feature
+ContinueNested	FAIL	dut.sv:5: ERROR: unsupported language feature
 ContinueWhile	OK	
 counter_dual_xbranch	OK	
 counter_ifelse_chain	OK	
 counter_in_cpu_state	OK	
 counter	OK	
-counters_repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+counters_repeat	FAIL	dut.sv:29: ERROR: unsupported language feature
 counter_unbased	OK	
 counter_xpath	OK	
 CppMacroNameAsVariableName	OK	
 cs_registers	OK	
-custom_map_incomp	FAIL	ERROR: Design elaboration failed; see full log for details
+custom_map_incomp	FAIL	dut.sv:2: ERROR: unknown module 'ALU'
 cva6_struct_param_field	OK	
 decimal_question_mark_z	OK	
 DeclarationInFor	OK	
 def_ctx_struct_param	OK	
 defvalue	OK	
-dff_different_styles	FAIL	ERROR: Design elaboration failed; see full log for details
+dff_different_styles	FAIL	dut.sv:46: ERROR: polarity of condition doesn't match edge sensitivity
 dffs	OK	
-dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
+dffsr	FAIL	dut.sv:2: ERROR: multiple asynchronous loads unsupported
 dff_styles	OK	
 Disable	OK	
-display_lm	FAIL	ERROR: Design elaboration failed; see full log for details
+display_lm	FAIL	dut.sv:11: ERROR: unsynthesizable feature
 DisplayWithBinFormatSpecifier	OK	
 DisplayWithHexFormatSpecifier	OK	
 DivisionOfSize	OK	
 DotMultirange	OK	
 DotRange	OK	
-DpiChandle	FAIL	ERROR: Design elaboration failed; see full log for details
+DpiChandle	FAIL	dut.sv:12: ERROR: invalid operands to binary expression ('chandle' and 'int')
 dyn_elem_field_ff_override	OK	
 dyn_elem_field_guarded_write	OK	
 dyn_elem_member_slice_compound_write	OK	
@@ -260,25 +260,25 @@ EmptyTask	OK
 EnumArrayListedElements	OK	
 EnumArray	OK	
 enum_array_unpacked_elem_write	OK	
-EnumBases	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumBases	FAIL	dut.sv:10: ERROR: expression width of 2 does not exactly match declared enum type width of 32
 EnumConcatenatedConst	OK	
 EnumConcat	OK	
 EnumConstX	OK	
-EnumFirstInInitial	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumFirstInInitial	FAIL	dut.sv:6: ERROR: unsupported language feature
 EnumFirst	OK	
 enum_funcsized_member_replication	OK	
 enum_in_concat	OK	
 EnumInPackage	OK	
-EnumMultirange	FAIL	ERROR: Design elaboration failed; see full log for details
-EnumParameterInNestedModules	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumMultirange	FAIL	dut.sv:39: ERROR: no implicit conversion from 'int' to 'dec_lc_state_e'; explicit conversion exists, are you missing a cast?
+EnumParameterInNestedModules	FAIL	dut.sv:26: ERROR: no implicit conversion from 'top.enum_t' to 'prim_subreg_shadow.enum_t'; explicit conversion exists, are you missing a cast?
 enum_simple	OK	
 enum_sized_cast_member	OK	
 enum_values	OK	
-EnumVariantInPackage	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumVariantInPackage	FAIL	dut.sv:15: ERROR: no implicit conversion from 'logic' to 'lc_tx_t'; explicit conversion exists, are you missing a cast?
 enum_wide_concat_member_values	OK	
 EnumWidth	OK	
 eq_narrow_const_zero_extend	OK	
-EscapedIdentifiersInHierPath	FAIL	ERROR: Design elaboration failed; see full log for details
+EscapedIdentifiersInHierPath	FAIL	dut.sv:19: ERROR: no implicit conversion from 'int' to 'fie_t'; explicit conversion exists, are you missing a cast?
 escape_id	FAIL	ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers
 eval_module_stale_wire	OK	
 event_implicit_expression_list	OK	
@@ -299,10 +299,10 @@ ff_reset_loop_named_pattern_cfg_index	OK
 ff_share1_array_reset_elem_loop	OK	
 ff_shift_indexed_partsel_param_width	OK	
 ff_whole_array_reset_varselect_elem_write	OK	
-fib	FAIL	ERROR: Design elaboration failed; see full log for details
+fib	FAIL	dut.sv:55: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression
 fib_initial	OK	
 fib_recursion	OK	
-fib_simple	FAIL	ERROR: Design elaboration failed; see full log for details
+fib_simple	FAIL	dut.sv:21: ERROR: reading net state during design initialization unsupported
 FileLevelParameter	OK	
 FileLevelUnionWithMultirange	OK	
 fill_const_instance_port	OK	
@@ -326,10 +326,10 @@ forloop_desc_array_shift	OK
 for_loop_nonconst_bound	OK	
 forloops	OK	
 fsm2	OK	
-fsm	FAIL	ERROR: Design elaboration failed; see full log for details
-fsm_single_always	FAIL	ERROR: Design elaboration failed; see full log for details
-fsm_using_always	FAIL	ERROR: Design elaboration failed; see full log for details
-fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
+fsm	FAIL	dut.sv:19: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+fsm_single_always	FAIL	dut.sv:34: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+fsm_using_always	FAIL	dut.sv:58: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+fsm_using_function	FAIL	dut.sv:61: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 full_case_latch	OK	
 func_3d_packed_return	OK	
 func_arg_partsel_loop	OK	
@@ -414,8 +414,8 @@ function_loop	OK
 function_mixed	OK	
 function_nested	OK	
 FunctionOnDesignLevel	OK	
-FunctionOutputArgument	FAIL	ERROR: Design elaboration failed; see full log for details
-function_output	FAIL	ERROR: Design elaboration failed; see full log for details
+FunctionOutputArgument	FAIL	dut.sv:3: ERROR: cannot refer to automatic variable 'x' from non-procedural context
+function_output	FAIL	dut.sv:16: ERROR: reading net state during design initialization unsupported
 FunctionParam	OK	
 FunctionReturnEnum	OK	
 FunctionWireAssignmentOnDeclaration	OK	
@@ -428,14 +428,14 @@ func_unpacked_table_arg_bit_accum	OK
 func_unused_local_undriven	OK	
 func_upto	OK	
 func_varsel_trailing_partsel	OK	
-func_width_scope	FAIL	ERROR: Design elaboration failed; see full log for details
+func_width_scope	FAIL	dut.sv:21: ERROR: cannot call a function declared inside a generate block in a constant expression
 func_zero_arg_reads_signal	OK	
 genblk_order	OK	
 genblk_relative_assign	OK	
 generate_scope_implicit_net	OK	
 generate_test	OK	
 genfor_local_unpacked_array_pattern_assign	OK	
-genfor_unit_param_bound	FAIL	ERROR: Design elaboration failed; see full log for details
+genfor_unit_param_bound	FAIL	dut.sv:17: ERROR: use of undeclared identifier 'FETCH_WIDTH'
 genif_array_comb_slice_write_child_inst	OK	
 GenIfInside	OK	
 genloop_comb_unpacked_elem_slice_write	OK	
@@ -456,7 +456,7 @@ genscope_fifo_dyn_write	OK
 genscope_func_stream_slice_param	OK	
 GenScopeFunction	OK	
 genscope_func_typedef_multirange	OK	
-genscope_hier_localparam_array_index	FAIL	ERROR: Design elaboration failed; see full log for details
+genscope_hier_localparam_array_index	FAIL	dut.sv:29: ERROR: reference to 'IdB' by hierarchical name is not allowed in a constant expression
 gen_scope_iface_member_clk_actual	OK	
 genscope_iface_modport_port	OK	
 genscope_loop_var_final_value	OK	
@@ -496,17 +496,17 @@ gen_test9	OK
 genvar_async_reset_array	OK	
 genvar_exprfold_ancestor_shadow	OK	
 genvar_iface_struct	OK	
-genvar_loop_decl_1	FAIL	ERROR: Design elaboration failed; see full log for details
+genvar_loop_decl_1	FAIL	dut.sv:8: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this)
 genvar_loop_decl_2	OK	
 genvar_loop_decl_3	OK	
 genvar_nested_func_loopvar	OK	
 genvar_param_slice_by_struct_array_member	OK	
 genvar_pow_index	OK	
-GetC	FAIL	ERROR: Design elaboration failed; see full log for details
+GetC	FAIL	dut.sv:3: ERROR: unsupported system task 'getc'
 gpr_genscope_repro	OK	
 hana_test_intermout	OK	
 hana_test_parse2synthtrans	OK	
-hello-uvm	FAIL	ERROR: Design elaboration failed; see full log for details
+hello-uvm	FAIL	dut.sv:4: ERROR: unknown package 'uvm_pkg'
 hex_literal_wildcard_digits	OK	
 hierdefparam	OK	
 hierpath_elem_nested_field_partsel	OK	
@@ -538,15 +538,15 @@ ibex_prefetch_buffer	OK
 ibex_register_file_ff	OK	
 ibex_register_file_fpga	OK	
 ibex_register_file_latch	OK	
-ibex_top	FAIL	ERROR: Design elaboration failed; see full log for details
-ibex_top_tracing	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
-ibex_tracer	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+ibex_top	FAIL	ibex_top.sv:578: ERROR: reading net state during design initialization unsupported
+ibex_top_tracing	FAIL	ibex_top.sv:578: ERROR: reading net state during design initialization unsupported
+ibex_tracer	FAIL	ibex_tracer.sv:77: ERROR: reading net state during design initialization unsupported
 ibex_wb_stage	OK	
 iface_2d_member_elem_select	OK	
 iface_array_actual_in_genscope	OK	
 iface_array_count	OK	
 iface_array_elem_cfg_param	OK	
-iface_array_elem_member_bit_write_genscope	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_array_elem_member_bit_write_genscope	FAIL	dut.sv:27: ERROR: top-level module 'top' has unconnected interface port 'port_control_if'
 iface_array_elem_member_elem_write	OK	
 iface_array_elem_member_named_pattern	OK	
 iface_array_elem_member_partsel	OK	
@@ -563,7 +563,7 @@ iface_array_of_one_port_passthrough	OK
 iface_array_port_elem_count_deep	OK	
 iface_array_port_elem_member_elem_read	OK	
 iface_array_port	OK	
-iface_array_port_struct_param_count	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_array_port_struct_param_count	FAIL	dut.sv:39: ERROR: top-level module 'top' has unconnected interface port 'receiver_if'
 iface_array_slice_actual	OK	
 iface_array_struct_field	OK	
 iface_array_struct	OK	
@@ -582,7 +582,6 @@ iface_gen_delay_struct	OK
 iface_genscope_func_method_call	OK	
 iface_inst_genscope_port_binding	OK	
 iface_inst_member_select_genscope	OK	
-iface_inst_packed_member_elem_arg	OK	
 iface_inst_port_from_iface_port_member	OK	
 iface_internal_assign	OK	
 iface_local_in_sub	OK	
@@ -594,7 +593,7 @@ iface_member_packed_elem_select	OK
 iface_member_port	OK	
 iface_member_read_assign	OK	
 iface_member_select_shadowed_by_local	OK	
-iface_member_typedef_via_iface_port_width	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_member_typedef_via_iface_port_width	FAIL	dut.sv:44: ERROR: top-level module 'top' has unconnected interface port 'types'
 iface_method_call_in_child_module	OK	
 iface_method_call	OK	
 iface_method_call_type_param_inst	OK	
@@ -603,10 +602,10 @@ iface_method_nested_query_call	OK
 iface_modport_conn	OK	
 iface_modport	OK	
 iface_modport_out	OK	
-iface_modport_passthrough	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_modport_passthrough	FAIL	dut.sv:28: ERROR: cannot connect modport 'my_iface.drv' to port requiring modport 'my_iface.rcv'
 iface_modport_subset_ports	OK	
 iface_nested_param_field	OK	
-iface_own_iface_port_member_not_signal	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_own_iface_port_member_not_signal	FAIL	dut.sv:44: ERROR: top-level module 'top' has unconnected interface port 'types'
 iface_own_port_child_in_genscope	OK	
 iface_own_port_modport_clk	OK	
 iface_param_2level	OK	
@@ -616,7 +615,7 @@ iface_param_width_per_inst	OK
 iface_passthrough	OK	
 iface_pkg_enum_item	OK	
 iface_port_flat_wrapper	OK	
-iface_port_localparam	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_port_localparam	FAIL	dut.sv:28: ERROR: top-level module 'iface_port_localparam' has unconnected interface port 'm'
 iface_port_member_elem_write	OK	
 iface_port_method_call_expr	OK	
 iface_port_param_width	OK	
@@ -642,8 +641,8 @@ ImportedFunctionCallInModuleAndSubmodule	OK
 ImportedFunctionUsesAnotherFunction	OK	
 ImportedPackageEnumItemInInterface	OK	
 ImportedParameter	OK	
-ImportFunction	FAIL	ERROR: Design elaboration failed; see full log for details
-ImportPackageWithFunction	FAIL	ERROR: Design elaboration failed; see full log for details
+ImportFunction	FAIL	dut.sv:13: ERROR: no member named 'get_5' in package 'lc_ctrl_state_pkg'
+ImportPackageWithFunction	FAIL	dut.sv:14: ERROR: module instantiation is missing port list parentheses
 ImportParametrizedTypeAndDeclareParamWithTheSameName	OK	
 ImportTypeOfPort	OK	
 indexed_partsel_array	OK	
@@ -652,8 +651,8 @@ IndexedPartSelectInUniqueCase	OK
 IndexedPartSelectOfArrayElement	OK	
 IndexedPartSelectOfMember	OK	
 IndexedPartSelect	OK	
-initial_seq_values	FAIL	ERROR: Design elaboration failed; see full log for details
-initval	FAIL	ERROR: Design elaboration failed; see full log for details
+initial_seq_values	FAIL	dut.sv:21: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+initval	FAIL	dut.sv:1: ERROR: redefinition of 'foo' [-Wredefinition]
 inside_wildcard_pattern_member	OK	
 instance_array_port_slice	OK	
 inst_array_port_slice	OK	
@@ -672,7 +671,7 @@ InterfaceInitial	OK
 InterfaceParameter	OK	
 InterfaceParameterSetValue	OK	
 InterfaceVariable	OK	
-InterfaceWithPort	FAIL	ERROR: Design elaboration failed; see full log for details
+InterfaceWithPort	FAIL	dut.sv:2: ERROR: reading net state during design initialization unsupported
 int_port_signed	OK	
 int_types_blk1	OK	
 int_types	OK	
@@ -682,7 +681,7 @@ jeras_gpr	OK
 jeras_reverse	OK	
 jeras_tcb_gpio	OK	
 jeras_union	OK	
-LargeModuleParameter	FAIL	ERROR: Design elaboration failed; see full log for details
+LargeModuleParameter	FAIL	dut.sv:19: ERROR: unknown module 'PRIMITIVE'
 latch_002	OK	
 latch_axi_adapter	OK	
 latch_case_arm_mask	OK	
@@ -706,7 +705,7 @@ LocalParamSelect	OK
 local_param_shadows_import	OK	
 local_typedef_definition_pass	OK	
 local_var_in_always	OK	
-logic_ops	FAIL	ERROR: Design elaboration failed; see full log for details
+logic_ops	FAIL	dut.sv:8: ERROR: expected ';'
 LogicPackedArray	OK	
 Longint	OK	
 loop_break_index	OK	
@@ -751,16 +750,16 @@ mem_read_reg	OK
 mem_sub_plain	OK	
 mem_write_dead_branch	OK	
 memwr_multi_block_port_order	OK	
-memwr_two_writes_one_block	FAIL	ERROR: Design elaboration failed; see full log for details
+memwr_two_writes_one_block	FAIL	dut.sv:32: ERROR: non-blocking assignments unsupported in design initialization
 mixed_array_elem_field_write_loop	OK	
 MixedPatterns	OK	
 mixed_sign_ops	OK	
 ModuleAlways	OK	
 ModuleInstantiationAndIndirectParams	OK	
-module_scope_func	FAIL	ERROR: Design elaboration failed; see full log for details
+module_scope_func	FAIL	dut.sv:41: ERROR: cannot call a function declared inside a generate block in a constant expression
 ModuleUsingStuctInput	OK	
-MonitorInputPort	FAIL	ERROR: Design elaboration failed; see full log for details
-mriscv_bind_sva	FAIL	ERROR: Design elaboration failed; see full log for details
+MonitorInputPort	FAIL	dut.sv:3: ERROR: unsupported system task '$monitor'
+mriscv_bind_sva	FAIL	jg_bind_wrapper.sv:322: ERROR: could not resolve hierarchical path name 'DECODE_INSTR_inst'
 mul	OK	
 mul_plain	OK	
 mul_signed_async	OK	
@@ -777,7 +776,7 @@ multiple_blocking_gate	OK
 multiple_blocking	OK	
 MultipleCells	OK	
 MultipleNets	OK	
-MultiplePrints	FAIL	ERROR: Design elaboration failed; see full log for details
+MultiplePrints	FAIL	dut.sv:7: ERROR: expression of type string with dynamic size unsupported for synthesis
 multiplier	OK	
 MultirangesStartNotFromZero	OK	
 mul_unsigned	OK	
@@ -790,10 +789,10 @@ mux8	OK
 named_begin_local_collision	OK	
 named_cover_assert	OK	
 named_field_pack	OK	
-named_genblk_cascade	FAIL	ERROR: Design elaboration failed; see full log for details
+named_genblk_cascade	FAIL	dut.sv:26: ERROR: unsupported system task '$bits'
 name_not_a_memory	OK	
 ndffnr	OK	
-NegationAsParameterOfInstance	FAIL	ERROR: Design elaboration failed; see full log for details
+NegationAsParameterOfInstance	FAIL	dut.sv:2: ERROR: parameter declaration is missing an initializer
 NegationOfParameterInInstance	OK	
 NegationOfPatternParameterInInstance	OK	
 NegationOfPatternParameter	OK	
@@ -802,7 +801,6 @@ nested_case_concat	OK
 nested_cast_repro	OK	
 NestedForLoops	OK	
 nested_full_case	OK	
-nested_func_call_output_local_switch	NOFILES	no sources found (run the regression first for run/** tests)
 nested_func_loopvar_collision	OK	
 nested_gen_ff	OK	
 NestedGenscopesInModuleWithMultidimensionalPorts	OK	
@@ -898,7 +896,7 @@ ParameterPackedArraySurelogSubstitution	OK
 ParameterPassedTo3TimesNestedSubmodule	OK	
 ParameterPassedToSubmoduleInGenscopeOfSubmodule	OK	
 ParameterPassedToSubmoduleOfSubmodule	OK	
-ParameterRangeUsingDot	FAIL	ERROR: Design elaboration failed; see full log for details
+ParameterRangeUsingDot	FAIL	dut.sv:41: ERROR: assignment pattern for 'part_info_t$[2]' requires 2 elements but 8 were provided
 ParameterSizeOfInstance	OK	
 ParameterUnpackedArray	OK	
 ParameterUnpackedLogicArray	OK	
@@ -948,7 +946,7 @@ PatternIndexes	OK
 PatternInFunction	OK	
 PatternParameterInSubmodule	OK	
 PatternStruct	OK	
-PatternType	FAIL	ERROR: Design elaboration failed; see full log for details
+PatternType	FAIL	dut.sv:2: ERROR: parameter declaration is missing an initializer
 perelem_struct_field_write	OK	
 pico_count_cycle	OK	
 pipe_elem_whole_and_field_arms	OK	
@@ -969,36 +967,36 @@ plru_dyn_elem	OK
 port_chained_type_param	OK	
 port_int_types	OK	
 portsel_struct_param	OK	
-port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
+port_sign_extend	FAIL	dut.v:75: ERROR: expected identifier
 posedge_iff_enable	OK	
 positional_concat_port_actual	OK	
-power_state	FAIL	ERROR: Design elaboration failed; see full log for details
+power_state	FAIL	dut.sv:17: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 pow_exponent_self_determined	OK	
 prefix	OK	
 prim_lfsr_perm	OK	
-print_trg_mixed_edges	FAIL	ERROR: Design elaboration failed; see full log for details
-print_trg_multi_edge	FAIL	ERROR: Design elaboration failed; see full log for details
+print_trg_mixed_edges	FAIL	dut.sv:20: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
+print_trg_multi_edge	FAIL	dut.sv:25: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
 print_trg_single_edge	OK	
 priority_case	OK	
 priority_if	OK	
-priority_memory	FAIL	ERROR: Design elaboration failed; see full log for details
-PutC	FAIL	ERROR: Design elaboration failed; see full log for details
+priority_memory	FAIL	dut.sv:19: ERROR: non-blocking assignments unsupported in design initialization
+PutC	FAIL	dut.sv:5: ERROR: unsupported system task 'putc'
 r5p_gpr_cosim	OK	
-rand_const	FAIL	ERROR: Design elaboration failed; see full log for details
-ReadmemhInGenblock	FAIL	ERROR: Design elaboration failed; see full log for details
+rand_const	FAIL	dut.sv:10: ERROR: constant variable must have an initializer
+ReadmemhInGenblock	FAIL	dut.sv:14: ERROR: expected member
 readmemh_param	OK	
 readmemh_rom	OK	
 read_remux	OK	
 realexpr	OK	
-RealValue	FAIL	ERROR: Design elaboration failed; see full log for details
+RealValue	FAIL	dut.sv:3: ERROR: value of type 'real' is unsupported for conversion to bits in this context
 recursive_map	OK	
 ReferencedPackageParameterInEnum	OK	
 regbank_async_clear	OK	
 regbank_depth1	OK	
 regdecl_init_narrower_than_reg	OK	
-reg_wire_error	FAIL	ERROR: Design elaboration failed; see full log for details
+reg_wire_error	FAIL	dut.sv:26: ERROR: cannot assign to a net within a procedural context
 relayed_typeparam_dependent_default	OK	
-Repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+Repeat	FAIL	dut.sv:4: ERROR: unsupported language feature
 Replication	OK	
 ReplicationPassedToInstance	OK	
 repwhile	FAIL	ERROR: Assert `vbit.variable.kind == Variable::Static' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553.
@@ -1010,30 +1008,30 @@ rom_named_begin_readmemh	OK
 rotate	OK	
 rp32_r5p_alu	OK	
 rp32_r5p_bru	OK	
-rp32_r5p_csr	FAIL	ERROR: Design elaboration failed; see full log for details
-rp32_r5p_degu	FAIL	ERROR: Design elaboration failed; see full log for details
-rp32_r5p_degu_soc_top	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_csr	FAIL	r5p32_csr_pkg.sv:324: ERROR: no implicit conversion from 'bit[0:0]' to 'csr_vector_t'; explicit conversion exists, are you missing a cast?
+rp32_r5p_degu	FAIL	r5p_degu.sv:56: ERROR: top-level module 'r5p_degu' has unconnected interface port 'tcb_ifu'
+rp32_r5p_degu_soc_top	FAIL	tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub'
 rp32_r5p_gpr_1r1w	OK	
-rp32_r5p_hamster	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+rp32_r5p_hamster	FAIL	r5p_hamster.sv:267: ERROR: no member named 'alu' in 'dec_t'
 rp32_r5p_mdu	OK	
 rp32_r5p_mouse	OK	
 rp32_r5p_mouse_soc_simple_top	OK	
-rp32_r5p_mouse_soc_top	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_mouse_soc_top	FAIL	tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub'
 rp32_r5p_wbu	OK	
-rp32_soc_vfriendly	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_soc_vfriendly	FAIL	tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub'
 rsp_gen_minimal	OK	
 run/arch/analogdevices/asym_ram_sdp_read_wider	OK	
 run/arch/analogdevices/asym_ram_sdp_write_wider	OK	
 run/arch/analogdevices/mul_unsigned	OK	
 run/arch/common/add_sub	OK	
 run/arch/common/adffs	OK	
-run/arch/common/blockram	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/blockram	FAIL	dut.v:75: ERROR: identifier 'WORD' used before its declaration
 run/arch/common/blockrom	OK	
 run/arch/common/counter	OK	
 run/arch/common/dffs	OK	
-run/arch/common/fsm	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/fsm	FAIL	dut.v:19: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 run/arch/common/latches	OK	
-run/arch/common/logic	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/logic	FAIL	dut.v:8: ERROR: expected ';'
 run/arch/common/lutram	OK	
 run/arch/common/memory_attributes/attributes_test	OK	
 run/arch/common/mul	OK	
@@ -1042,39 +1040,39 @@ run/arch/common/shifter	OK
 run/arch/common/tribuf	OK	
 run/arch/ecp5/dpram	OK	
 run/arch/ecp5/macc	OK	
-run/arch/ecp5/rom	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/ecp5/rom	FAIL	dut.v:9: ERROR: cannot assign to a net within a procedural context
 run/arch/fabulous/arith_map	OK	
 run/arch/fabulous/cells_map	FAIL	ERROR: Found control character or space (0x20) in string '$lut$\$lut ' which is not allowed in RTLIL identifiers
-run/arch/fabulous/custom_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/custom_map	FAIL	dut.v:2: ERROR: unknown module 'ALU'
 run/arch/fabulous/custom_prims	OK	
-run/arch/fabulous/ff_map	FAIL	ERROR: Design elaboration failed; see full log for details
-run/arch/fabulous/io_map	FAIL	ERROR: Design elaboration failed; see full log for details
-run/arch/fabulous/latches_map	FAIL	ERROR: Design elaboration failed; see full log for details
-run/arch/fabulous/prims	FAIL	ERROR: Design elaboration failed; see full log for details
-run/arch/fabulous/regfile_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/ff_map	FAIL	dut.v:1: ERROR: unknown module 'LUTFF'
+run/arch/fabulous/io_map	FAIL	dut.v:2: ERROR: unknown module 'IO_1_bidirectional_frame_config_pass'
+run/arch/fabulous/latches_map	FAIL	dut.v:4: ERROR: only 'output' variable port declarations may have an initializer expression
+run/arch/fabulous/prims	FAIL	dut.v:128: ERROR: port 'Q' does not exist in 'LUTFF'
+run/arch/fabulous/regfile_map	FAIL	dut.v:2: ERROR: expected identifier
 run/arch/gatemate/luttrees	OK	
 run/arch/gatemate/mul	OK	
 run/arch/gowin/compare	OK	
 run/arch/gowin/init	OK	
 run/arch/ice40/dpram	OK	
 run/arch/ice40/macc	OK	
-run/arch/ice40/rom	FAIL	ERROR: Design elaboration failed; see full log for details
-run/arch/ice40/spram	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/ice40/rom	FAIL	dut.v:10: ERROR: cannot assign to a net within a procedural context
+run/arch/ice40/spram	FAIL	dut.v:19: ERROR: cannot assign to a net within a procedural context
 run/arch/nanoxplore/meminit	OK	
 run/arch/nexus/blockram_dc	FAIL	ERROR: '../common/blockram.v': No such file or directory
 run/arch/nexus/dsp_equiv	OK	
 run/arch/nexus/fuse_mac	OK	
 run/arch/nexus/pipe_mul	OK	
 run/arch/quicklogic/qlf_k6n10f/meminit	OK	
-run/arch/quicklogic/qlf_k6n10f/mem_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/quicklogic/qlf_k6n10f/mem_tb	FAIL	dut.v:48: ERROR: unknown macro or compiler directive '`MEM_TEST_VECTOR'
 run/arch/xilinx/asym_ram_sdp_read_wider	OK	
 run/arch/xilinx/asym_ram_sdp_write_wider	OK	
-run/arch/xilinx/bug3670	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/xilinx/bug3670	FAIL	dut.v:4: ERROR: unknown module 'RAMB36E1'
 run/arch/xilinx/macc	OK	
-run/arch/xilinx/macc_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/xilinx/macc_tb	FAIL	dut.v:8: ERROR: port declaration 'REF_accum_out' does not match any port in the module's port list
 run/arch/xilinx/mul_unsigned	OK	
 run/asicworld/code_hdl_models_arbiter	OK	
-run/asicworld/code_hdl_models_arbiter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_hdl_models_arbiter_tb	FAIL	dut.v:22: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided
 run/asicworld/code_hdl_models_cam	OK	
 run/asicworld/code_hdl_models_clk_div_45	OK	
 run/asicworld/code_hdl_models_clk_div	OK	
@@ -1116,9 +1114,9 @@ run/asicworld/code_hdl_models_up_down_counter	OK
 run/asicworld/code_specman_switch_fabric	OK	
 run/asicworld/code_tidbits_asyn_reset	OK	
 run/asicworld/code_tidbits_blocking	OK	
-run/asicworld/code_tidbits_fsm_using_always	FAIL	ERROR: Design elaboration failed; see full log for details
-run/asicworld/code_tidbits_fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
-run/asicworld/code_tidbits_fsm_using_single_always	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_tidbits_fsm_using_always	FAIL	dut.v:57: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/asicworld/code_tidbits_fsm_using_function	FAIL	dut.v:60: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/asicworld/code_tidbits_fsm_using_single_always	FAIL	dut.v:33: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 run/asicworld/code_tidbits_nonblocking	OK	
 run/asicworld/code_tidbits_reg_combo_example	OK	
 run/asicworld/code_tidbits_reg_seq_example	OK	
@@ -1129,17 +1127,17 @@ run/asicworld/code_verilog_tutorial_always_example	OK
 run/asicworld/code_verilog_tutorial_bus_con	OK	
 run/asicworld/code_verilog_tutorial_comment	OK	
 run/asicworld/code_verilog_tutorial_counter	OK	
-run/asicworld/code_verilog_tutorial_counter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_counter_tb	FAIL	dut.v:23: ERROR: unknown module 'counter'
 run/asicworld/code_verilog_tutorial_decoder_always	OK	
 run/asicworld/code_verilog_tutorial_decoder	OK	
 run/asicworld/code_verilog_tutorial_d_ff	OK	
 run/asicworld/code_verilog_tutorial_escape_id	FAIL	ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers
 run/asicworld/code_verilog_tutorial_explicit	OK	
 run/asicworld/code_verilog_tutorial_first_counter	OK	
-run/asicworld/code_verilog_tutorial_first_counter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_first_counter_tb	FAIL	dut.v:9: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided
 run/asicworld/code_verilog_tutorial_flip_flop	OK	
 run/asicworld/code_verilog_tutorial_fsm_full	OK	
-run/asicworld/code_verilog_tutorial_fsm_full_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_fsm_full_tb	FAIL	dut.v:10: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided
 run/asicworld/code_verilog_tutorial_good_code	OK	
 run/asicworld/code_verilog_tutorial_if_else	OK	
 run/asicworld/code_verilog_tutorial_multiply	OK	
@@ -1162,50 +1160,50 @@ run/bind/slpp_all/lib/work/test_bind2	OK
 run/bind/slpp_all/lib/work/test_bind	OK	
 run/bind/toplevel	OK	
 run/check_mem/sub_addr	OK	
-run/cxxrtl/test_unconnected_output	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err01	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err02	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err03	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err04	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err05	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err06	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err07	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err08	FAIL	ERROR: Design elaboration failed; see full log for details
+run/cxxrtl/test_unconnected_output	FAIL	dut.v:3: ERROR: can't use port declaration in module with ANSI style port list
+run/errors/syntax_err01	FAIL	dut.v:2: ERROR: packed dimensions not allowed on predefined integer type 'integer'
+run/errors/syntax_err02	FAIL	dut.v:3: ERROR: packed dimensions not allowed on predefined integer type 'integer'
+run/errors/syntax_err03	FAIL	dut.v:3: ERROR: packed dimensions require a full range specification
+run/errors/syntax_err04	FAIL	dut.v:2: ERROR: packed dimensions require a full range specification
+run/errors/syntax_err05	FAIL	dut.v:2: ERROR: port declaration 'x' does not match any port in the module's port list
+run/errors/syntax_err06	FAIL	dut.v:4: ERROR: 'label2' doesn't match previous name 'label1'
+run/errors/syntax_err07	FAIL	dut.v:4: ERROR: expected ';'
+run/errors/syntax_err08	FAIL	dut.v:4: ERROR: expected ';'
 run/errors/syntax_err09	OK	
-run/errors/syntax_err10	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err11	FAIL	ERROR: Design elaboration failed; see full log for details
-run/errors/syntax_err12	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err10	FAIL	dut.v:2: ERROR: packed dimensions not allowed on predefined integer type 'integer'
+run/errors/syntax_err11	FAIL	dut.v:2: ERROR: expected a declaration name
+run/errors/syntax_err12	FAIL	dut.v:5: ERROR: top-level module 'a' has unconnected interface port 'x'
 run/errors/syntax_err13	OK	
 run/fmt/always_comb	OK	
-run/fmt/always_comb_tb	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/always_display	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/always_full	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
-run/fmt/always_full_tb	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/display_lm	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/initial_display	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
-run/fmt/roundtrip	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/roundtrip_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/always_comb_tb	FAIL	dut.v:4: ERROR: unknown module 'top'
+run/fmt/always_display	FAIL	dut.v:15: ERROR: expected member
+run/fmt/always_full	FAIL	dut.v:8: ERROR: unknown format specifier '%+'
+run/fmt/always_full_tb	FAIL	dut.v:5: ERROR: unknown module 'always_full'
+run/fmt/display_lm	FAIL	dut.v:11: ERROR: unsynthesizable feature
+run/fmt/initial_display	FAIL	dut.v:7: ERROR: unknown format specifier '%+'
+run/fmt/roundtrip	FAIL	dut.v:1: ERROR: unknown macro or compiler directive '`SIGN'
+run/fmt/roundtrip_tb	FAIL	dut.v:5: ERROR: unknown module 'm'
 run/fmt/yosys-always_display-clk-1	OK	
 run/fmt/yosys-always_display-clk-2	OK	
 run/fmt/yosys-always_display-clk_en-1	OK	
 run/fmt/yosys-always_display-clk_en-2	OK	
-run/fmt/yosys-always_display-clk_rst-1	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-always_display-clk_rst-2	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-always_display-clk_rst_en-1	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-always_display-clk_rst_en-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-clk_rst-1	FAIL	dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
+run/fmt/yosys-always_display-clk_rst-2	FAIL	dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
+run/fmt/yosys-always_display-clk_rst_en-1	FAIL	dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
+run/fmt/yosys-always_display-clk_rst_en-2	FAIL	dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
 run/fmt/yosys-always_display-star-1	OK	
 run/fmt/yosys-always_display-star-2	OK	
 run/fmt/yosys-always_display-star_en-1	OK	
 run/fmt/yosys-always_display-star_en-2	OK	
-run/fmt/yosys-always_full-1	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/fmt/yosys-always_full-1	FAIL	dut.sv:20: ERROR: unknown format specifier '%+'
 run/fmt/yosys-roundtrip-bin_signed-1	OK	
 run/fmt/yosys-roundtrip-bin_signed-2	OK	
 run/fmt/yosys-roundtrip-bin_unsigned-1	OK	
 run/fmt/yosys-roundtrip-bin_unsigned-2	OK	
-run/fmt/yosys-roundtrip-dec_signed-1	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-roundtrip-dec_signed-2	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-roundtrip-dec_unsigned-1	FAIL	ERROR: Design elaboration failed; see full log for details
-run/fmt/yosys-roundtrip-dec_unsigned-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-roundtrip-dec_signed-1	FAIL	dut.sv:14: ERROR: unknown format specifier '%+'
+run/fmt/yosys-roundtrip-dec_signed-2	FAIL	dut.sv:14: ERROR: unknown format specifier '%+'
+run/fmt/yosys-roundtrip-dec_unsigned-1	FAIL	dut.sv:14: ERROR: unknown format specifier '%+'
+run/fmt/yosys-roundtrip-dec_unsigned-2	FAIL	dut.sv:14: ERROR: unknown format specifier '%+'
 run/fmt/yosys-roundtrip-hex_signed-1	OK	
 run/fmt/yosys-roundtrip-hex_signed-2	OK	
 run/fmt/yosys-roundtrip-hex_unsigned-1	OK	
@@ -1215,11 +1213,11 @@ run/fmt/yosys-roundtrip-oct_signed-2	OK
 run/fmt/yosys-roundtrip-oct_unsigned-1	OK	
 run/fmt/yosys-roundtrip-oct_unsigned-2	OK	
 run/functional/picorv32	OK	
-run/functional/picorv32_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/functional/picorv32_tb	FAIL	dut.v:44: ERROR: unknown module 'picorv32'
 run/hana/hana_vlib	FAIL	ERROR: Assert `false && "unreachable"' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3247.
 run/hana/test_intermout	OK	
 run/hana/test_parse2synthtrans	OK	
-run/hana/test_parser	FAIL	ERROR: Design elaboration failed; see full log for details
+run/hana/test_parser	FAIL	dut.v:33: ERROR: expected ';'
 run/hana/test_simulation_always	OK	
 run/hana/test_simulation_and	OK	
 run/hana/test_simulation_buffer	OK	
@@ -1233,35 +1231,35 @@ run/hana/test_simulation_shifter	OK
 run/hana/test_simulation_sop	OK	
 run/hana/test_simulation_techmap	OK	
 run/hana/test_simulation_techmap_tech	OK	
-run/hana/test_simulation_vlib	FAIL	ERROR: Design elaboration failed; see full log for details
+run/hana/test_simulation_vlib	FAIL	dut.v:9: ERROR: unknown module 'BUF'
 run/hana/test_simulation_xnor	OK	
 run/hana/test_simulation_xor	OK	
-run/liberty/small	FAIL	ERROR: Design elaboration failed; see full log for details
-run/lut/map_and	FAIL	ERROR: Design elaboration failed; see full log for details
-run/lut/map_cmp	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
-run/lut/map_mux	FAIL	ERROR: Design elaboration failed; see full log for details
-run/lut/map_not	FAIL	ERROR: Design elaboration failed; see full log for details
-run/lut/map_or	FAIL	ERROR: Design elaboration failed; see full log for details
-run/lut/map_xor	FAIL	ERROR: Design elaboration failed; see full log for details
-run/memfile/memory	FAIL	ERROR: Design elaboration failed; see full log for details
-run/memlib/memlib_9b1B	FAIL	ERROR: Design elaboration failed; see full log for details
+run/liberty/small	FAIL	dut.v:3: ERROR: expected identifier
+run/lut/map_and	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/lut/map_cmp	FAIL	dut.v:8: ERROR: can't use port declaration in module with ANSI style port list
+run/lut/map_mux	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/lut/map_not	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/lut/map_or	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/lut/map_xor	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/memfile/memory	FAIL	dut.v:15: ERROR: failed to open file ''
+run/memlib/memlib_9b1B	FAIL	dut.v:66: ERROR: cannot refer to element 1 of 'logic[0:0]' [-Windex-oob]
 run/memlib/memlib_block_sdp_1clk	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
 run/memlib/memlib_block_sdp	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
-run/memlib/memlib_block_sp	FAIL	ERROR: Design elaboration failed; see full log for details
-run/memlib/memlib_block_sp_full	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_block_sp	FAIL	dut.v:77: ERROR: unsupported language feature
+run/memlib/memlib_block_sp_full	FAIL	dut.v:78: ERROR: unsupported language feature
 run/memlib/memlib_block_tdp	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
 run/memlib/memlib_clock_sdp	OK	
 run/memlib/memlib_lut	OK	
 run/memlib/memlib_multilut	OK	
 run/memlib/memlib_wide_read	OK	
 run/memlib/memlib_wide_sdp	OK	
-run/memlib/memlib_wide_sp	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_wide_sp	FAIL	dut.v:43: ERROR: cannot select range of [4:0] from 'logic[0:0]' [-Wrange-oob]
 run/memlib/memlib_wide_write	OK	
 run/memlib/memlib_wren	OK	
 run/memories/amber23_sram_byte_en	OK	
 run/memories/firrtl_938	OK	
 run/memories/implicit_en	OK	
-run/memories/issue00335	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memories/issue00335	FAIL	dut.v:20: ERROR: non-blocking assignments unsupported in design initialization
 run/memories/issue00710	OK	
 run/memories/no_implicit_en	OK	
 run/memories/read_arst	OK	
@@ -1278,18 +1276,18 @@ run/memories/wide_read_sync	OK
 run/memories/wide_read_trans	OK	
 run/memories/wide_thru_priority	OK	
 run/memories/wide_write	OK	
-run/opt/opt_dff_eqbits_large	FAIL	ERROR: Design elaboration failed; see full log for details
-run/opt/opt_dff_eqbits_small	FAIL	ERROR: Design elaboration failed; see full log for details
-run/opt/opt_expr_cmp	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
-run/opt/opt_expr_constconn	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_dff_eqbits_large	FAIL	opt_dff_eqbits_small.sv:1: ERROR: duplicate definition of 'test_case' [-Wduplicate-definition]
+run/opt/opt_dff_eqbits_small	FAIL	opt_dff_eqbits_large.sv:1: ERROR: duplicate definition of 'test_case' [-Wduplicate-definition]
+run/opt/opt_expr_cmp	FAIL	dut.v:2: ERROR: can't use port declaration in module with ANSI style port list
+run/opt/opt_expr_constconn	FAIL	dut.v:3: ERROR: can't use port declaration in module with ANSI style port list
 run/opt/opt_hier_simple1	OK	
 run/opt/opt_hier_simple2	OK	
 run/opt/opt_hier_test1	OK	
 run/opt/opt_lut	OK	
-run/opt/opt_rmdff	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/opt/opt_rmdff	FAIL	dut.v:2: ERROR: unknown module '$dffe'
 run/opt/opt_rmdff_sat	OK	
 run/opt/opt_share_add_sub	OK	
-run/opt/opt_share_cat	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_share_cat	FAIL	dut.v:10: ERROR: reading net state during design initialization unsupported
 run/opt/opt_share_cat_multiuser	OK	
 run/opt/opt_share_diff_port_widths	OK	
 run/opt/opt_share_extend	OK	
@@ -1301,20 +1299,20 @@ run/opt/opt_share_mux_tree	OK
 run/proc/bug_1268	OK	
 run/proc/rmdead	OK	
 run/proc/yosys_latch	OK	
-run/rpc/design	FAIL	ERROR: Design elaboration failed; see full log for details
+run/rpc/design	FAIL	dut.v:2: ERROR: unknown module 'python_inv'
 run/rtlil/everything	OK	
-run/sat/alu	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/alu	FAIL	ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization
 run/sat/asserts	OK	
 run/sat/asserts_seq	OK	
 run/sat/counters	OK	
-run/sat/counters-repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/counters-repeat	FAIL	dut.v:29: ERROR: unsupported language feature
 run/sat/expose_dff	OK	
-run/sat/grom_computer	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sat/grom_cpu	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sat/initval	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sat/ram_memory	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/grom_computer	FAIL	ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization
+run/sat/grom_cpu	FAIL	ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization
+run/sat/initval	FAIL	dut.v:1: ERROR: redefinition of 'foo' [-Wredefinition]
+run/sat/ram_memory	FAIL	dut.v:13: ERROR: non-blocking assignments unsupported in design initialization
 run/sat/share	OK	
-run/sat/sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/sizebits	FAIL	dut.sv:31: ERROR: invalid argument type 'logic' to system function
 run/sat/splice	OK	
 run/sdc/alu_sub	OK	
 run/select/boxes	OK	
@@ -1325,10 +1323,10 @@ run/sim/aldffe	OK
 run/sim/aldff	OK	
 run/sim/dffe	OK	
 run/sim/dff	OK	
-run/sim/dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/dffsr	FAIL	dut.v:2: ERROR: multiple asynchronous loads unsupported
 run/sim/dlatch	OK	
 run/sim/dlatchsr	OK	
-run/simple_abc9/abc9	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple_abc9/abc9	FAIL	dut.v:88: ERROR: cannot select range of [7:4] from 'reg[3:0]' [-Wrange-oob]
 run/simple/aes_kexp128	OK	
 run/simple/always01	OK	
 run/simple/always02	OK	
@@ -1357,7 +1355,7 @@ run/simple/const_func_shadow	OK
 run/simple/constmuldivmod	OK	
 run/simple/constpower	OK	
 run/simple/defvalue	OK	
-run/simple/dff_different_styles	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/dff_different_styles	FAIL	dut.v:46: ERROR: polarity of condition doesn't match edge sensitivity
 run/simple/dff_init	OK	
 run/simple/dynslice	OK	
 run/simple/fiedler-cooley	OK	
@@ -1367,7 +1365,7 @@ run/simple/forloops	OK
 run/simple/fsm	OK	
 run/simple/func_block	OK	
 run/simple/func_recurse	OK	
-run/simple/func_width_scope	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/func_width_scope	FAIL	dut.v:21: ERROR: cannot call a function declared inside a generate block in a constant expression
 run/simple/genblk_collide	OK	
 run/simple/genblk_dive	OK	
 run/simple/genblk_order	OK	
@@ -1376,7 +1374,7 @@ run/simple/generate	OK
 run/simple/graphtest	OK	
 run/simple/hierarchy	OK	
 run/simple/hierdefparam	OK	
-run/simple/i2c_master_tests	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/i2c_master_tests	FAIL	dut.v:14: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 run/simple/ifdef_1	OK	
 run/simple/ifdef_2	OK	
 run/simple/implicit_ports	OK	
@@ -1390,23 +1388,23 @@ run/simple/macro_arg_spaces	OK
 run/simple/macro_arg_surrounding_spaces	OK	
 run/simple/macros	OK	
 run/simple/matching_end_labels	OK	
-run/simple/mem2reg_bounds_tern	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/mem2reg_bounds_tern	FAIL	dut.v:13: ERROR: cannot refer to element 3 of 'reg[0:7]$[3]' [-Windex-oob]
 run/simple/mem2reg	OK	
 run/simple/mem_arst	OK	
-run/simple/memory	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/memory	FAIL	dut.v:39: ERROR: expected identifier
 run/simple/memwr_port_connection	OK	
 run/simple/module_scope_case	OK	
-run/simple/module_scope_func	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/module_scope_func	FAIL	dut.v:41: ERROR: cannot call a function declared inside a generate block in a constant expression
 run/simple/module_scope	OK	
 run/simple/multiplier	OK	
 run/simple/muxtree	OK	
-run/simple/named_genblk	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/named_genblk	FAIL	dut.v:20: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this)
 run/simple/nested_genblk_resolve	OK	
 run/simple/omsp_dbg_uart	OK	
 run/simple/operators	OK	
 run/simple/param_attr	OK	
 run/simple/paramods	OK	
-run/simple/partsel	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/partsel	FAIL	dut.v:43: ERROR: non-blocking assignment to variable 'r1' is not supported after previous blocking assignment
 run/simple/process	OK	
 run/simple/realexpr	OK	
 run/simple/repwhile	FAIL	ERROR: Assert `vbit.variable.kind == Variable::Static' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553.
@@ -1433,58 +1431,58 @@ run/sim/sdffce	OK
 run/sim/sdffe	OK	
 run/sim/sdff	OK	
 run/sim/simple_assign	OK	
-run/sim/tb/tb_adffe	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_adff	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_adlatch	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_aldffe	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_aldff	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_dffe	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_dff	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_dlatch	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_dlatchsr	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_sdffce	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_sdffe	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sim/tb/tb_sdff	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_adffe	FAIL	dut.v:9: ERROR: unknown module 'adffe'
+run/sim/tb/tb_adff	FAIL	dut.v:8: ERROR: unknown module 'adff'
+run/sim/tb/tb_adlatch	FAIL	dut.v:9: ERROR: unknown module 'adlatch'
+run/sim/tb/tb_aldffe	FAIL	dut.v:10: ERROR: unknown module 'aldffe'
+run/sim/tb/tb_aldff	FAIL	dut.v:9: ERROR: unknown module 'aldff'
+run/sim/tb/tb_dffe	FAIL	dut.v:8: ERROR: unknown module 'dffe'
+run/sim/tb/tb_dff	FAIL	dut.v:7: ERROR: unknown module 'dff'
+run/sim/tb/tb_dffsr	FAIL	dut.v:9: ERROR: unknown module 'dffsr'
+run/sim/tb/tb_dlatch	FAIL	dut.v:8: ERROR: unknown module 'dlatch'
+run/sim/tb/tb_dlatchsr	FAIL	dut.v:8: ERROR: unknown module 'dlatchsr'
+run/sim/tb/tb_sdffce	FAIL	dut.v:9: ERROR: unknown module 'sdffce'
+run/sim/tb/tb_sdffe	FAIL	dut.v:9: ERROR: unknown module 'sdffe'
+run/sim/tb/tb_sdff	FAIL	dut.v:8: ERROR: unknown module 'sdff'
 run/sim/undriven_replay	OK	
-run/sva/basic00	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/basic01	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/basic02	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/basic03	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/basic04	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/basic05	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/counter	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic00	FAIL	dut.sv:9: ERROR: encountered unsupported SVA feature
+run/sva/basic01	FAIL	dut.sv:14: ERROR: encountered unsupported SVA feature
+run/sva/basic02	FAIL	dut.sv:16: ERROR: encountered unsupported SVA feature
+run/sva/basic03	FAIL	dut.sv:7: ERROR: encountered unsupported SVA feature
+run/sva/basic04	FAIL	dut.sv:10: ERROR: unknown module 'top'
+run/sva/basic05	FAIL	dut.sv:4: ERROR: unknown module 'demo'
+run/sva/counter	FAIL	dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
 run/sva/extnets	OK	
-run/sva/nested_clk_else	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_not	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_range	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_throughout	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_value_change_changed	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_value_change_changed_wide	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_value_change_rose	FAIL	ERROR: Design elaboration failed; see full log for details
-run/sva/sva_value_change_sim	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/load_and_derive	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/ondemand	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/resolve_types	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/svinterface1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/nested_clk_else	FAIL	dut.sv:4: ERROR: encountered unsupported SVA feature
+run/sva/sva_not	FAIL	dut.sv:25: ERROR: encountered unsupported SVA feature
+run/sva/sva_range	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/sva/sva_throughout	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/sva/sva_value_change_changed	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/sva/sva_value_change_changed_wide	FAIL	dut.sv:6: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/sva/sva_value_change_rose	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+run/sva/sva_value_change_sim	FAIL	dut.sv:13: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported
+run/svinterfaces/load_and_derive	FAIL	dut.sv:15: ERROR: unknown module 'ondemand'
+run/svinterfaces/ondemand	FAIL	dut.sv:3: ERROR: use of undeclared identifier 'iface'
+run/svinterfaces/resolve_types	FAIL	dut.sv:19: ERROR: unknown module 'ondemand'
+run/svinterfaces/svinterface1	FAIL	dut.sv:83: ERROR: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2'
 run/svinterfaces/svinterface1_ref	OK	
 run/svinterfaces/svinterface1_syn	OK	
-run/svinterfaces/svinterface1_tb	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/svinterface_at_top	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface1_tb	FAIL	dut.v:15: ERROR: unknown module 'TopModule'
+run/svinterfaces/svinterface_at_top	FAIL	dut.sv:10: ERROR: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop'
 run/svinterfaces/svinterface_at_top_ref	OK	
-run/svinterfaces/svinterface_at_top_tb	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/svinterface_at_top_tb_wrapper	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svinterfaces/svinterface_at_top_wrapper	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface_at_top_tb	FAIL	dut.v:21: ERROR: unknown module 'TopModule'
+run/svinterfaces/svinterface_at_top_tb_wrapper	FAIL	dut.v:21: ERROR: unknown module 'TopModule'
+run/svinterfaces/svinterface_at_top_wrapper	FAIL	dut.v:19: ERROR: unknown module 'TopModule'
 run/svtypes/array_assign	OK	
-run/svtypes/enum_simple	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/enum_simple	FAIL	dut.sv:9: ERROR: expected member
 run/svtypes/logic_rom	OK	
 run/svtypes/multirange_array	OK	
 run/svtypes/static_cast_simple	OK	
-run/svtypes/struct_array	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/struct_array	FAIL	dut.sv:15: ERROR: cannot refer to element -1 of 'bit[5:0][7:0]' [-Windex-oob]
 run/svtypes/struct_dynamic_range	OK	
 run/svtypes/struct_simple	OK	
-run/svtypes/struct_sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
-run/svtypes/typedef_initial_and_assign	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/struct_sizebits	FAIL	dut.sv:40: ERROR: invalid argument type 'logic' to system function
+run/svtypes/typedef_initial_and_assign	FAIL	dut.sv:52: ERROR: identifier 'wire_3' used before its declaration
 run/svtypes/typedef_memory_2	OK	
 run/svtypes/typedef_memory	OK	
 run/svtypes/typedef_package	OK	
@@ -1494,31 +1492,31 @@ run/svtypes/typedef_simple	OK
 run/svtypes/typedef_struct	OK	
 run/svtypes/typedef_struct_port	OK	
 run/svtypes/union_simple	OK	
-run/symfpu/edges	FAIL	ERROR: Design elaboration failed; see full log for details
+run/symfpu/edges	FAIL	dut.sv:30: ERROR: unknown module 'symfpu'
 run/techmap/bug5495	OK	
 run/techmap/clockgate	OK	
 run/techmap/clockgate_wide	OK	
-run/techmap/dfflibmap_dffsr_mixedpol-sim	FAIL	ERROR: Design elaboration failed; see full log for details
-run/techmap/dfflibmap-sim	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/dfflibmap_dffsr_mixedpol-sim	FAIL	dut.v:3: ERROR: multiple asynchronous loads unsupported
+run/techmap/dfflibmap-sim	FAIL	dut.v:12: ERROR: multiple asynchronous loads unsupported
 run/techmap/dlatchlibmap_dlatchsr_mixedpol-sim	OK	
 run/techmap/dlatchlibmap-sim	OK	
-run/techmap/lcu_refined	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/lcu_refined	FAIL	dut.v:11: ERROR: unknown module '$lcu'
 run/techmap/mem_simple_4x1_cells	OK	
-run/techmap/mem_simple_4x1_map	FAIL	ERROR: Design elaboration failed; see full log for details
-run/techmap/mem_simple_4x1_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/mem_simple_4x1_map	FAIL	dut.v:66: ERROR: value must be positive
+run/techmap/mem_simple_4x1_tb	FAIL	dut.v:7: ERROR: unknown module 'uut'
 run/techmap/mem_simple_4x1_uut	OK	
-run/techmap/recursive	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/recursive	FAIL	dut.v:2: ERROR: unknown module 'sub'
 run/techmap/recursive_map	OK	
 run/various/abc9	OK	
 run/various/async	OK	
 run/various/attrib05_port_conn	OK	
 run/various/attrib07_func_call	OK	
 run/various/bug3515	OK	
-run/various/clk2fflogic_effects	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/clk2fflogic_effects	FAIL	dut.sv:59: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop
 run/various/const_arg_loop	OK	
 run/various/const_func_block_var	OK	
 run/various/const_func	OK	
-run/various/constmsk_testmap	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/constmsk_testmap	FAIL	dut.v:7: ERROR: can't use port declaration in module with ANSI style port list
 run/various/constmsk_test	OK	
 run/various/countbits	OK	
 run/various/dynamic_part_select/forloop_select_gate	OK	
@@ -1540,47 +1538,47 @@ run/various/dynamic_part_select/reset_test	OK
 run/various/dynamic_part_select/reversed_gate	OK	
 run/various/dynamic_part_select/reversed	OK	
 run/various/elab_sys_tasks	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above
-run/various/fib	FAIL	ERROR: Design elaboration failed; see full log for details
-run/various/fib_tern	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/fib	FAIL	dut.v:55: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression
+run/various/fib_tern	FAIL	dut.v:60: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression
 run/various/func_port_implied_dir	OK	
-run/various/gen_if_null	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/gen_if_null	FAIL	dut.v:14: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this)
 run/various/hierarchy_recursive	OK	
 run/various/json_netnames_signed	OK	
 run/various/json_param_defaults	OK	
 run/various/lcov	OK	
-run/various/memory_word_as_index	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/memory_word_as_index	FAIL	dut.v:20: ERROR: only 'output' variable port declarations may have an initializer expression
 run/various/muxpack	OK	
-run/various/pmux2shiftx	FAIL	ERROR: Design elaboration failed; see full log for details
-run/various/port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
-run/various/reg_wire_error	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/pmux2shiftx	FAIL	dut.v:5: ERROR: redefinition of 'D' [-Wredefinition]
+run/various/port_sign_extend	FAIL	dut.v:75: ERROR: expected identifier
+run/various/reg_wire_error	FAIL	dut.sv:26: ERROR: cannot assign to a net within a procedural context
 run/various/setundef	OK	
 run/various/setundef_selection_undriven	OK	
-run/various/specify	FAIL	ERROR: Design elaboration failed; see full log for details
-run/various/struct_access	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/specify	FAIL	dut.v:41: ERROR: parallel specify path source type 'logic' has different width than destination type 'logic[1:0]'
+run/various/struct_access	FAIL	dut.sv:24: ERROR: invalid member access for type 'logic[1:0]'
 run/various/sub	OK	
 run/various/tcl_apis	OK	
-run/verific/bounds	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verific/bounds	FAIL	dut.sv:10: ERROR: use of undeclared identifier 'my_ifc'
 run/verific/case	OK	
 run/verific/enum_values	OK	
 run/verific/ext_ramnet_err	OK	
-run/verific/mixed_flist	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verific/mixed_flist	FAIL	dut.sv:3: ERROR: unknown module 'vhdl_mod'
 run/verific/range_case	OK	
 run/verilog/asgn_expr	OK	
 run/verilog/bug656	OK	
-run/verilog/constparser_f_file	FAIL	ERROR: Design elaboration failed; see full log for details
-run/verilog/dynamic_range_lhs	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/verilog/constparser_f_file	FAIL	dut.sv:2: ERROR: expected binary digit
+run/verilog/dynamic_range_lhs	FAIL	dut.v:2: ERROR: unknown macro or compiler directive '`ALT'
 run/verilog/for_decl_shadow	OK	
 run/verilog/func_tern_hint	OK	
 run/verilog/func_typename_ret	OK	
 run/verilog/func_upto	OK	
 run/verilog/genblk_case	OK	
 run/verilog/genblk_wire	OK	
-run/verilog/genvar_loop_decl_1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/genvar_loop_decl_1	FAIL	dut.sv:8: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this)
 run/verilog/genvar_loop_decl_2	OK	
 run/verilog/genvar_loop_decl_3	OK	
 run/verilog/int_types	OK	
-run/verilog/macro_arg_tromp	FAIL	ERROR: Design elaboration failed; see full log for details
-run/verilog/mem_bounds	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/macro_arg_tromp	FAIL	dut.sv:18: ERROR: can't use port declaration in module with ANSI style port list
+run/verilog/mem_bounds	FAIL	dut.sv:7: ERROR: cannot refer to element -1 of 'reg[0:7]$[3]' [-Windex-oob]
 run/verilog/net_types	OK	
 run/verilog/package_import_separate_module	OK	
 run/verilog/package_import_specific_module	OK	
@@ -1596,7 +1594,7 @@ run/verilog/unbased_unsized	OK
 run/verilog/unbased_unsized_shift	OK	
 run/verilog/unbased_unsized_tern	OK	
 run/verilog/unnamed_genblk	OK	
-run/verilog/wire_and_var	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/wire_and_var	FAIL	dut.sv:21: ERROR: cannot assign to a net within a procedural context
 run/write_verilog/mixed_upto	OK	
 sat_asserts_seq	OK	
 scope_func	OK	
@@ -1619,7 +1617,7 @@ signed_interm_cmp	OK
 signed_partsel_ext	OK	
 SignedWire	OK	
 sign_part_assign	OK	
-simple_abc9	FAIL	ERROR: Design elaboration failed; see full log for details
+simple_abc9	FAIL	dut.sv:88: ERROR: cannot select range of [7:4] from 'reg[3:0]' [-Wrange-oob]
 simple_always_ff	OK	
 simple_always_ifelse	OK	
 simple_assign	OK	
@@ -1641,21 +1639,21 @@ simple_unary_op_minus	OK
 simple_unary_op_not_log	OK	
 simple_unary_op_plus	OK	
 sincos	OK	
-sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+sizebits	FAIL	dut.sv:31: ERROR: invalid argument type 'logic' to system function
 size_cast	OK	
 size_cast_param	OK	
 sized_literal_wildcard_extension	OK	
-SizeOfGeneratedWireArray	FAIL	ERROR: Design elaboration failed; see full log for details
+SizeOfGeneratedWireArray	FAIL	dut.sv:9: ERROR: unsupported system task '$bits'
 SizeOfUnsignedParameter	OK	
-sp_read_first	FAIL	ERROR: Design elaboration failed; see full log for details
-sp_read_or_write	FAIL	ERROR: Design elaboration failed; see full log for details
-sp_write_first	FAIL	ERROR: Design elaboration failed; see full log for details
+sp_read_first	FAIL	dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization
+sp_read_or_write	FAIL	dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization
+sp_write_first	FAIL	dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization
 src_lhs_attr	OK	
 stamped_gen_param	OK	
 static_cast_simple	OK	
 StreamOperatorBitReverseFunction	OK	
 StreamOpImplicitSliceSize	OK	
-StreamOpInitialAlways	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+StreamOpInitialAlways	FAIL	dut.sv:20: ERROR: cannot assign to a net within a procedural context
 StreamOp	OK	
 StringAssignConcatenation	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
 StringAssignment	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
@@ -1689,12 +1687,12 @@ struct_member_elem_writes_update_range	OK
 struct_member_expr_index	OK	
 struct_member_trailing_index	OK	
 struct_member_typeparam_array	OK	
-struct_negative_index	FAIL	ERROR: Design elaboration failed; see full log for details
+struct_negative_index	FAIL	dut.sv:14: ERROR: cannot refer to element -1 of 'bit[3:0][7:0]' [-Windex-oob]
 StructOfArrayOfStructs	OK	
 StructPackedArray	OK	
 StructPackedOutput	OK	
 struct_param_dim	OK	
-StructParameterInGenScope	FAIL	ERROR: Design elaboration failed; see full log for details
+StructParameterInGenScope	FAIL	dut.sv:30: ERROR: use of undeclared identifier 'PageW'
 StructParameterInitializedWithPatternAndReferenced	OK	
 StructParameter	OK	
 struct_param_field_shift	OK	
@@ -1709,29 +1707,29 @@ struct_pat_fill	OK
 struct_pattern_loop	OK	
 struct_pattern_named_default	OK	
 struct_pattern_procedural	OK	
-struct_sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+struct_sizebits	FAIL	dut.sv:40: ERROR: invalid argument type 'logic' to system function
 struct_typedef_packed_array	OK	
-struct_unpacked_array_member	FAIL	ERROR: Design elaboration failed; see full log for details
+struct_unpacked_array_member	FAIL	dut.sv:9: ERROR: packed members must be of integral type (not 'bit[7:0]$[4]')
 subbytes	OK	
 SubmoduleInGenScopeWithGenScopeParametrizedByParameterFromTopModule	OK	
 SumOfParametersInNestedForLoops	OK	
 SumOfParameters	OK	
-sva_basic00	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_basic01	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_basic02	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_basic03	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_counter	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_not	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_range	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_throughout	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_value_change_changed	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_value_change_changed_wide	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_value_change_rose	FAIL	ERROR: Design elaboration failed; see full log for details
-sva_value_change_sim	FAIL	ERROR: Design elaboration failed; see full log for details
-svinterface1	FAIL	ERROR: Design elaboration failed; see full log for details
-svinterface_at_top	FAIL	ERROR: Design elaboration failed; see full log for details
-svtypes_enum_simple	FAIL	ERROR: Design elaboration failed; see full log for details
-svtypes_struct_array	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_basic00	FAIL	dut.sv:9: ERROR: encountered unsupported SVA feature
+sva_basic01	FAIL	dut.sv:24: ERROR: encountered unsupported SVA feature
+sva_basic02	FAIL	dut.sv:26: ERROR: encountered unsupported SVA feature
+sva_basic03	FAIL	dut.sv:12: ERROR: encountered unsupported SVA feature
+sva_counter	FAIL	dut.sv:16: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_not	FAIL	dut.sv:34: ERROR: encountered unsupported SVA feature
+sva_range	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_throughout	FAIL	dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_value_change_changed	FAIL	dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_value_change_changed_wide	FAIL	dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_value_change_rose	FAIL	dut.sv:10: ERROR: unsynthesizable timing control (ignore with '--ignore-timing')
+sva_value_change_sim	FAIL	dut.sv:24: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported
+svinterface1	FAIL	dut.sv:83: ERROR: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2'
+svinterface_at_top	FAIL	dut.sv:10: ERROR: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop'
+svtypes_enum_simple	FAIL	dut.sv:9: ERROR: expected member
+svtypes_struct_array	FAIL	dut.sv:15: ERROR: cannot refer to element -1 of 'bit[5:0][7:0]' [-Windex-oob]
 svtypes_struct_simple	OK	
 sync_concat_lhs_then_member_reset	OK	
 sync_elem_field_reset_whole_array_nba	OK	
@@ -1742,12 +1740,12 @@ sync_nested_for_in_conditional	OK
 sync_nested_zero_trip_loop_write	OK	
 sync_path_blocking_temp	OK	
 sync_path_dyn_bitsel_write	OK	
-synthesis	FAIL	ERROR: Design elaboration failed; see full log for details
+synthesis	FAIL	dut.sv:9: ERROR: cannot assign to a net within a procedural context
 SystemFunctions	OK	
 TaskExportDPI	OK	
 TaskImportDPI	OK	
-TaskOutputArgument	FAIL	ERROR: Design elaboration failed; see full log for details
-TaskReturn	FAIL	ERROR: Design elaboration failed; see full log for details
+TaskOutputArgument	FAIL	dut.sv:9: ERROR: cannot assign to a net within a procedural context
+TaskReturn	FAIL	dut.sv:3: ERROR: unsupported language feature
 ternary_not_cond	OK	
 tern_fill_literal	OK	
 tf_formal_array_elem_select	OK	
@@ -1760,7 +1758,7 @@ typaram_struct_array_elem_read	OK
 typaram_struct_array_pattern_write	OK	
 typaram_typedef_2d	OK	
 typedef_2d_unpacked_elem_select	OK	
-TypedefAlias	FAIL	ERROR: Design elaboration failed; see full log for details
+TypedefAlias	FAIL	dut.sv:25: ERROR: no implicit conversion from 'third_alias_t' (aka 'logic[7:0]') to 'alias_t' (aka 'enum_t'); explicit conversion exists, are you missing a cast?
 TypedefAliasInPackage	OK	
 typedef_chain_dims	OK	
 typedef_dir_param_range	OK	
@@ -1811,11 +1809,11 @@ unary_op_plus	OK
 unbased_unsized	OK	
 unbased_unsized_param	OK	
 unbased_unsized_shift	OK	
-undefined_module_refused	FAIL	ERROR: Design elaboration failed; see full log for details
-union4_repro	FAIL	ERROR: Design elaboration failed; see full log for details
+undefined_module_refused	FAIL	dut.sv:10: ERROR: unknown module 'prim_clock_buf'
+union4_repro	FAIL	dut.sv:3: ERROR: all members of a packed union must have the same width; 'raw' has width of 32, previously seen width was 29
 UnionCustomTypeMultirange	OK	
 union_field_partsel	OK	
-UnionInPackageWithMultirange	FAIL	ERROR: Design elaboration failed; see full log for details
+UnionInPackageWithMultirange	FAIL	dut.sv:30: ERROR: cannot reference compilation unit item from within a package
 UnionInsideStruct	OK	
 union_member_elem_select	OK	
 UnionParameter	OK	
@@ -1823,9 +1821,9 @@ union_param_repro	OK
 union_simple	OK	
 unique_case_default	OK	
 unique_case	OK	
-unit_enum_const_child_ref	FAIL	ERROR: Design elaboration failed; see full log for details
+unit_enum_const_child_ref	FAIL	child.sv:8: ERROR: use of undeclared identifier 'UWIDTH_BYTE'
 UnitForLoop	OK	
-unit_param_unpacked_port_dim	FAIL	ERROR: Design elaboration failed; see full log for details
+unit_param_unpacked_port_dim	FAIL	dut.sv:16: ERROR: use of undeclared identifier 'W'
 unit_scope_param_slice	OK	
 unit_struct_member_pkg_type	OK	
 unnamed_block_decl	OK	
@@ -1862,8 +1860,8 @@ untyped_param_override_width	OK
 valueless_param_ref_not_a_signal	OK	
 VarInFor	OK	
 various_abc9	OK	
-various_port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
-various_struct_access	FAIL	ERROR: Design elaboration failed; see full log for details
+various_port_sign_extend	FAIL	dut.v:75: ERROR: expected identifier
+various_struct_access	FAIL	dut.sv:24: ERROR: invalid member access for type 'logic[1:0]'
 VarPassedTo2Submodules	OK	
 var_port_packed_dim	OK	
 VarSelect	OK	
@@ -1877,7 +1875,7 @@ void_func_call_in_case_arm	OK
 void_func_local_array_elem_write	OK	
 void_func_local_loop_ssa	OK	
 void_func_nested_call	OK	
-VoidFunction2Returns	FAIL	ERROR: Design elaboration failed; see full log for details
+VoidFunction2Returns	FAIL	dut.sv:3: ERROR: cannot refer to automatic variable 'x' from non-procedural context
 VoidFunction	OK	
 VoidFunctionWithoutReturn	OK	
 wandwor	OK	

@@ -48,15 +48,15 @@ CLASSES = [  # (kind, label, regex) -- first match wins; "incomplete" rows leave
     ("incomplete", "a module no file of the test defines", r"unknown module|unknown class or package"),
     ("incomplete", "a file the test does not ship", r"No such file or directory|failed to open file"),
     ("sim-only", "`#` delay / timing control", r"unsynthesizable timing control|statements that pass time"),
-    ("sim-only", "unsupported system task (`$past`, `$stable`, `$fopen`, ...)", r"unsupported system task|unknown format specifier|arguments for '\$fopen'|arguments for '\$f"),
+    ("sim-only", "unsupported system task (`$past`, `$stable`, `$fopen`, ...)", r"unsupported system task|unknown format specifier|arguments for '\$fopen'|arguments for '\$f|\$past gating_expr"),
     ("sim-only", "SystemVerilog assertion (SVA) feature", r"unsupported SVA"),
     ("sim-only", "non-blocking assignment in design initialization", r"non-blocking assignments unsupported in design initialization"),
     ("sim-only", "net state read in design initialization", r"reading net state during design initialization|evaluation does not resolve to a constant in design initialization"),
-    ("sim-only", "unsynthesizable feature (string, event, dynamic size)", r"unsynthesizable feature|dynamic size unsupported for synthesis|value of type .* is unsupported for conversion to bits"),
+    ("sim-only", "unsynthesizable feature (string, event, dynamic size)", r"unsynthesizable feature|dynamic size unsupported for synthesis|value of type .* is unsupported for conversion to bits|is unsupported for conversion to bits"),
     ("strict", "non-ANSI port declaration in an ANSI module", r"port declaration in module with ANSI style port list|port declaration .* does not match any port|implicit named port"),
     ("strict", "assignment to a net in a procedural block", r"cannot assign to a net within a procedural context"),
     ("strict", "implicit conversion needs a cast (enum / struct)", r"no implicit conversion|expression width of .* enum type width|invalid operands to binary expression"),
-    ("strict", "out-of-range select or index", r"Windex-oob|Wrange-oob|Wrange-width-oob|out of range"),
+    ("strict", "out-of-range select or index", r"Windex-oob|Wrange-oob|Wrange-width-oob|out of range|Wrange-select-reversed|range of selection .* is reversed"),
     # `$error` is the same thing as `$fatal` here: the DESIGN declares the
     # configuration illegal at elaboration and slang honours it, where
     # read_verilog / read_uhdm carry on.  VeeR's `rvdffe` does
@@ -65,13 +65,13 @@ CLASSES = [  # (kind, label, regex) -- first match wins; "incomplete" rows leave
     # rule at all before.
     ("strict", "`$fatal` / `$error` raised at elaboration -- the design refuses this configuration", r"\$(fatal|error) encountered"),
     ("strict", "hierarchical reference inside a constant function call (`$bits(inst.sig)`)", r"hierarchical references are not allowed in calls"),
-    ("strict", "assignment pattern leaves array elements uncovered / overrides a parameter that does not exist", r"not all elements of array are covered|Wundefined-param-override|does not exist in"),
+    ("strict", "assignment pattern leaves array elements uncovered / overrides a parameter that does not exist", r"not all elements of array are covered|Wundefined-param-override|does not exist in|not covered by any assignment pattern"),
     ("strict", "redefinition / duplicate definition", r"Wredefinition|Wduplicate-definition"),
     ("strict", "name used before declaration / undeclared", r"used before its declaration|use of undeclared identifier|identifier .* used before"),
     ("strict", "generate-block reference or generate function in a constant expression", r"unnamed generate block|function declared inside a generate block|hierarchical name is not allowed in a constant expression|reference to non-constant variable"),
-    ("strict", "top-level interface port left unconnected", r"unconnected interface port|cannot connect modport|allow-toplevel-iface-ports"),
+    ("strict", "top-level interface port left unconnected", r"unconnected interface port|cannot connect modport|allow-toplevel-iface-ports|interface port .* not connected"),
     ("strict", "type rule (packed dims on int type, port initializer, member access, argument count, ...)", r"packed dimensions|packed members must be|variable port declarations may have an initializer|parameter declaration is missing an initializer|automatic variable|invalid member access|no member named|invalid argument type .* to system function|unknown package|too few arguments|too many arguments|value must be positive|module instantiation is missing port list|port .* does not exist|parallel specify path|could not resolve|assignment pattern for|constant variable must have an initializer|packed union|compilation unit|cannot refer to|is not a valid|does not match|cannot be assigned|requires a|is not allowed"),
-    ("strict", "syntax slang rejects (`expected ...`, macro, binary digit)", r"error: expected |unknown macro|doesn.*label|expected (a |an )?[a-z]"),
+    ("strict", "syntax slang rejects (`expected ...`, macro, binary digit)", r"(?i)error: expected |unknown macro|doesn.*label|expected (a |an )?[a-z]|expected '"),
     ("synth-limit", "flip-flop with multiple / non-canonical asynchronous loads", r"asynchronous load|polarity of condition doesn't match edge"),
     ("synth-limit", "`unsupported language feature`", r"unsupported language feature"),
     ("synth-limit", "mixed blocking / non-blocking assignment to one variable", r"assignment to variable .* after previous (non-)?blocking|is not supported after previous"),
@@ -107,6 +107,10 @@ def clean_diag(d):
 CORE_ROOTS = {
     "ibex": ["test/ibex"], "rp32": ["test/rp32"],
     "cva6": ["test/cva6_equiv/rtl"], "cva6-chip": ["test/cva6_equiv/rtl", "test/cva6_chip"],
+    # The three CVA6 flavours (#1267) are the same vendored RTL at another
+    # *_config_pkg.sv; without roots their rows linked to .github/workflows/.
+    "cva6-hpdcache": ["test/cva6_equiv/rtl"], "cva6-hext": ["test/cva6_equiv/rtl"],
+    "cva6-rv32": ["test/cva6_equiv/rtl"],
     "caliptra": ["test/caliptra_chip"], "opentitan": ["test/opentitan_equiv"],
 }
 PAVONA = ["pavona", "tlul", "acc", "kmac", "hmac", "edn", "csrng", "aes", "entropy_src",
@@ -351,6 +355,19 @@ def main():
     A("")
     A("The yosys line counts every generated `run/` directory, 29 of which the regression does not score (the deliberately invalid `tests/errors` and tests that produce no RTLIL under any frontend); the regression's own count is 547.\n")
     A("The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.\n")
+    # Reconcile with docs/benchmarking.md's co-simulation table, whose
+    # `read_slang` **diverge** column counts EVERY row where the slang netlist
+    # disagrees with the RTL: the ones where ours agrees are the "bug" class
+    # below, the ones where both netlists disagree identically are
+    # testbench artefacts and sit in incomplete_testcases.md.  Readers compare
+    # the two documents, so say how the numbers add up.
+    _n_div = sum(1 for r in report if r["set"] == "sweep" and r["diag"].startswith("SLANG_COSIM_DIVERGES"))
+    _n_shared = sum(1 for r in incomplete if r["set"] == "sweep" and r["diag"].startswith("both netlists diverge"))
+    A(f"**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is "
+      f"{_n_div + _n_shared} rows over these sweeps = **{_n_div}** where the slang netlist diverges and read_uhdm's "
+      f"tracks the RTL (the *bug* class below) + **{_n_shared}** where BOTH netlists diverge identically (a testbench "
+      f"artefact, in [incomplete_testcases.md](incomplete_testcases.md)).  The other direction -- read_slang clean, "
+      f"read_uhdm diverging -- is the last section of this file.\n")
 
     A("## Failure classes\n")
     A("| kind | class | internal | yosys | sweeps |")

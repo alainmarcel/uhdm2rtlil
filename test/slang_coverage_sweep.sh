@@ -109,11 +109,16 @@ one() {
     if [ $rc -eq 0 ]; then printf '%s\tOK\t\n' "$d"
     elif [ $rc -eq 124 ]; then printf '%s\tTIMEOUT\t\n' "$d"
     else
-        # slang's own diagnostic is on stdout (`file:line:col: error: ...`); the
-        # yosys summary ("Design elaboration failed") on stderr is the fallback.
+        # The diagnostic that NAMES the construct comes first: slang's own
+        # (`file:line:col: error: ...`, stdout) or sv-elab's, which is
+        # `file:line: ERROR: ...` on STDERR -- a line that does not start with
+        # `ERROR:`, so a capture keyed on `^ERROR:` skipped it and recorded the
+        # generic yosys summary ("Design elaboration failed; see full log")
+        # for 256 of the 300 local failures, leaving them unclassifiable.
         local diag
-        diag=$( (echo "$out" | grep -E ': error: |^error: '; echo "$err" | grep -E '^ERROR:') | head -1 \
-                | sed -E 's#^(\.\./)*[^ :]*/([^/ :]+):([0-9]+):([0-9]+): #\2:\3:\4: #' | cut -c1-220)
+        diag=$( (echo "$out"; echo "$err") | grep -E '^[^ ]+:[0-9]+(:[0-9]+)?: (error|ERROR): |: error: |^error: ' | head -1)
+        [ -n "$diag" ] || diag=$(echo "$err" | grep -E '^ERROR:' | head -1)
+        diag=$(echo "$diag" | sed -E 's#^(\.\./)*[^ :]*/([^/ :]+):([0-9]+):([0-9]+): #\2:\3:\4: #; s#^(\.\./)*[^ :]*/([^/ :]+):([0-9]+): #\2:\3: #' | cut -c1-220)
         printf '%s\tFAIL\t%s\n' "$d" "$diag"
     fi
 }
@@ -132,7 +137,8 @@ fi
 {
     for d in */; do d=${d%/}; case "$d" in run|parallel_results|ext_ip|cva6_equiv|cva6_chip|pavona_*|caliptra_chip|ibex|rp32|opentitan_equiv) continue;; esac
         [ -f "$d/test_verilog_read.ys" ] || [ -f "$d/dut.sv" ] || [ -f "$d/dut.v" ] || [ -f "$d/project.f" ] || continue; echo "$d"; done
-    find run -name test_verilog_read.ys -printf '%h\n' | sort
+    # -L: run/ may be a symlink to a built tree's test/run (a docs worktree).
+    find -L run -name test_verilog_read.ys -printf '%h\n' | sort
 } | xargs -P "$JOBS" -I{} bash -c 'one "$@"' _ {} | sort > "$OUT"
 awk -F'\t' '{c[$2]++} END {for (k in c) printf "%s %d\n", k, c[k]}' "$OUT" | sort
 echo "-> $OUT"
