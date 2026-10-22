@@ -1,0 +1,1891 @@
+1DUnpackedArray	OK	
+2DeclarationsInFor	OK	
+2DFunctionArg	OK	
+2DParameterOfInstance	OK	
+2DUnpackedArray	OK	
+2DUnpackedFunctionArgument	OK	
+AdditionAsParameterInInstance	OK	
+add_sub_bind_if	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
+add_width_wider_operand_under_shift	OK	
+adffn	OK	
+adff	OK	
+aes_kexp128	OK	
+allconst_attr	OK	
+allseq_attr	OK	
+AluOps	OK	
+alu_sub	OK	
+always01	OK	
+always02	OK	
+always03	OK	
+always_comb_attribute_instance	OK	
+always_ff_dyn_elem_field_write	OK	
+always_ff_mem_read_not_transparent	OK	
+always_ff_param_dead_branch	OK	
+anon_struct_packed_dim	OK	
+AnonStructs	OK	
+AnonymousEnum	OK	
+AnonymousUnion	OK	
+ansi_grouped_port_dims	OK	
+ansi_grouped_typedef_port_dims	OK	
+anyconst_attr	OK	
+anyseq_attr	OK	
+arb_idx_cast	OK	
+arith_context_width_nested_add	OK	
+ArithShiftTernary	OK	
+array2d_enum_struct_row_default	OK	
+array2d_row_default_elem_write	OK	
+array_assign	OK	
+arraycells	OK	
+array-copy	OK	
+array_default_init	OK	
+array_default_struct_enum_member	OK	
+array_default_struct_pattern	OK	
+array_elem_field_write_whole_default	OK	
+array_elem_nested_struct_member_read	OK	
+array_elem_union_member_read	OK	
+array_init_2d	FAIL	ERROR: Design elaboration failed; see full log for details
+ArrayInit	OK	
+arrays01	OK	
+arrays03	OK	
+ArraySize	OK	
+array_var_elem_copy_field_write	OK	
+array_whole_and_elem_write_ff	OK	
+arr_pattern_dir	OK	
+ascending_vector_dyn_bitselect	OK	
+asc_packed_dyn_write	OK	
+asgn_binop	OK	
+asgn_expr2	OK	
+asgn_expr	OK	
+asgn_expr_sv	OK	
+asicworld_clk_div_45	OK	
+asicworld_serial_crc	OK	
+assert_wide_const_cond	OK	
+AssignArraySelPlus	OK	
+AssignBitsCallToSubmoduleParameter	OK	
+AssignBitSelectPartSelect	OK	
+AssignGeneratedWireInAlways	OK	
+AssignmentPatternArrayPort	OK	
+assignment-pattern	OK	
+AssignmentPattern	OK	
+AssignmentToConcatenation	OK	
+AssignmentToConcatenationWithSelect	OK	
+AssignSizeOfVar	OK	
+AssignSumOfConstantsInSubmodule	OK	
+AssignSumOfConstants	OK	
+AssignSumWithParameterInSubmodule	OK	
+AssignSumWithParameter	OK	
+AssignToUnionAndReadField	OK	
+AssignToUnpackedUnionFieldAndReadOtherField	FAIL	ERROR: Design elaboration failed; see full log for details
+AssignTypedefedFunctionCall	OK	
+asym_ram_sdp_read_wider	OK	
+asym_ram_sdp_write_wider	OK	
+async_reset_eq_zero_wide_const	OK	
+async_reset_partsel	OK	
+automatic_local_case_arm_latch	OK	
+bind_hier	OK	
+BindModule	OK	
+BindModuleWithInputPortsInGenScope	OK	
+BindModuleWithInputPorts	OK	
+BindModuleWithOutputPorts	OK	
+bind_toplevel	OK	
+BitsCallOnExpression	OK	
+BitsCallOnParametetrizedTypeFromPackage	OK	
+BitsCallOnStructMember	OK	
+BitsCallOnSubArray	OK	
+BitsCallOnType	OK	
+BitsCallOnVar	OK	
+bits_cfg_struct	OK	
+BitSelect2ndBitOfPattern	OK	
+BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule	OK	
+BitSelectOfParameterPassedToSubmoduleInGenFor	OK	
+BitSelectOfParameterPassedToSubmodule	OK	
+BitSelect	OK	
+BitSelectPartSelectInFunction	OK	
+bits_of_anonymous_packed_type	OK	
+bits_of_type_param	OK	
+bits_pkg_typedef_alias	OK	
+bits_type_param	OK	
+bits_typeparam_override_scope	OK	
+bit_typed_memory_genscope	OK	
+bitwise_operations	FAIL	ERROR: Design elaboration failed; see full log for details
+bitwise_operations_reverted_range	FAIL	ERROR: Design elaboration failed; see full log for details
+blocking_temp_ff	OK	
+blocking_temp_select	OK	
+block_local_packed_struct_array_dyn_write	OK	
+block_local_per_process	OK	
+block_local_same_name_widths	OK	
+blocklocal_struct_width	OK	
+blockrom	OK	
+BreakContinue	FAIL	ERROR: Design elaboration failed; see full log for details
+BreakContinueWhile	OK	
+Break	FAIL	ERROR: Design elaboration failed; see full log for details
+BreakNested	FAIL	ERROR: Design elaboration failed; see full log for details
+BreakWhile	OK	
+carryadd	OK	
+case_auto_local_sub	OK	
+case_default_first	OK	
+case_expr_const	OK	
+case_expr_extend	OK	
+case_expr_non_const	OK	
+case_expr_query	OK	
+CaseInside	OK	
+case_selector_context_width	OK	
+CaseWithGeneratedWire	OK	
+casez_wildcard_partial_lhs	OK	
+Casezx	OK	
+CastClog2	OK	
+CastClog2ToMinimalSizeOfParamValueFromCommandLine	OK	
+CastClog2ToMinimalSizeOfParamValue	OK	
+CastExpression	OK	
+CastInFunctionInGenBlock	OK	
+CastInFunctionToParameterWidth	OK	
+CastLogic	OK	
+CastSize	OK	
+CastStructArray	OK	
+CastStruct	OK	
+CastToSumOfConstants	OK	
+CastToSumWithParameterIn2InstancesOfSubmodule	OK	
+CastToSumWithParameterInSubmodule	OK	
+CastWidthFromPackage	OK	
+cdc_static_basic	FAIL	ERROR: Design elaboration failed; see full log for details
+CellNamedLikeModule	OK	
+cfg_func_width_loop	OK	
+child_dyn_bit_write	OK	
+clk2fflogic_effects	FAIL	ERROR: Design elaboration failed; see full log for details
+Clog2OfSumWithParameterIn2InstancesOfSubmodule	OK	
+ClogOfParamOfInstanceInitializedByStructMember	OK	
+code_hdl_models_decoder_2to4_gates	OK	
+code_hdl_models_parallel_crc	OK	
+code_tidbits_fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
+comb_2d_bitsel	OK	
+comb_array_next_state	OK	
+comb_blocklocal_same_name_two_blocks	OK	
+comb_case_init_crossarm	OK	
+comb_case_local_loop	OK	
+comb_case_local_temp	OK	
+comb_caserule_descending_for	OK	
+comb_case_whole_unpacked_array_write	OK	
+comb_compound_partsel_rmw	OK	
+comb_concat_lhs_dyn_packed_elem_write	OK	
+comb_concat_lhs_inflight_read	OK	
+comb_dead_guard_latch	OK	
+comb_dyn_2d_packed_sel	OK	
+comb_dyn_bit_write_elem_confined	OK	
+comb_elem_field_write_inflight_read	OK	
+comb_field_write_after_switch	OK	
+comb_flag_after_case	OK	
+comb_if_both_arms_value	OK	
+comb_if_local_temp	OK	
+comb_local_index_fold	OK	
+comb_local_init_latch	OK	
+comb_loop_break_same_iteration	OK	
+comb_loop_compound_bitsel_accum	OK	
+comb_loop_compound_incr	OK	
+comb_loop_continue	OK	
+comb_loop_descending_break	OK	
+comb_loopidx_then_dyn_elem_write	OK	
+comb_loop_local_latch	OK	
+comb_loop_member_write_update_range	OK	
+comb_loop_packed_elem_compound_xor	OK	
+comb_mixed_array_default_chunks	OK	
+comb_partial_struct_write	OK	
+comb_partsel_after_struct_assign	OK	
+comb_reduction_accumulator	OK	
+comb_struct_field_inflight_child_module	OK	
+comb_task_loop_var_shadows_outer_loop	OK	
+comb_uncond_after_cond	OK	
+compound_assignments	OK	
+concat_lhs_signext	OK	
+ConcatWidth	OK	
+conditional_if_else	OK	
+conditional_if	FAIL	ERROR: Design elaboration failed; see full log for details
+cond_pattern_packed_struct_array_elem	OK	
+const_arg_loop	OK	
+const_ashift	OK	
+const_cast_signext	OK	
+const_fold_func	OK	
+const_func_block_var	OK	
+const_func_case_chain	OK	
+const_func	OK	
+const_func_shadow	OK	
+constmsk_test	OK	
+ConstSizes	OK	
+cont_assign_nested_named_pattern_member	OK	
+Continue	FAIL	ERROR: Design elaboration failed; see full log for details
+ContinueNested	FAIL	ERROR: Design elaboration failed; see full log for details
+ContinueWhile	OK	
+counter_dual_xbranch	OK	
+counter_ifelse_chain	OK	
+counter_in_cpu_state	OK	
+counter	OK	
+counters_repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+counter_unbased	OK	
+counter_xpath	OK	
+CppMacroNameAsVariableName	OK	
+cs_registers	OK	
+custom_map_incomp	FAIL	ERROR: Design elaboration failed; see full log for details
+cva6_struct_param_field	OK	
+decimal_question_mark_z	OK	
+DeclarationInFor	OK	
+def_ctx_struct_param	OK	
+defvalue	OK	
+dff_different_styles	FAIL	ERROR: Design elaboration failed; see full log for details
+dffs	OK	
+dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
+dff_styles	OK	
+Disable	OK	
+display_lm	FAIL	ERROR: Design elaboration failed; see full log for details
+DisplayWithBinFormatSpecifier	OK	
+DisplayWithHexFormatSpecifier	OK	
+DivisionOfSize	OK	
+DotMultirange	OK	
+DotRange	OK	
+DpiChandle	FAIL	ERROR: Design elaboration failed; see full log for details
+dyn_elem_field_ff_override	OK	
+dyn_elem_field_guarded_write	OK	
+dyn_elem_member_slice_compound_write	OK	
+dyn_elem_read_inflight	OK	
+dyn_elem_write_after_bit_reset	OK	
+dyn_field_select	OK	
+dyn_index_wide_out_of_range	OK	
+dyn_packed_multidim	OK	
+dyn_packed_row_nonzero_lsb_idx	OK	
+dyn_packed_row_write_ff	OK	
+dynslice	OK	
+dyn_write_1bit_unpacked_array	OK	
+elem_copy_field_write_alias	OK	
+elem_field_idx_write	OK	
+empty_port_connection	OK	
+EmptyTask	OK	
+EnumArrayListedElements	OK	
+EnumArray	OK	
+enum_array_unpacked_elem_write	OK	
+EnumBases	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumConcatenatedConst	OK	
+EnumConcat	OK	
+EnumConstX	OK	
+EnumFirstInInitial	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumFirst	OK	
+enum_funcsized_member_replication	OK	
+enum_in_concat	OK	
+EnumInPackage	OK	
+EnumMultirange	FAIL	ERROR: Design elaboration failed; see full log for details
+EnumParameterInNestedModules	FAIL	ERROR: Design elaboration failed; see full log for details
+enum_simple	OK	
+enum_sized_cast_member	OK	
+enum_values	OK	
+EnumVariantInPackage	FAIL	ERROR: Design elaboration failed; see full log for details
+enum_wide_concat_member_values	OK	
+EnumWidth	OK	
+eq_narrow_const_zero_extend	OK	
+EscapedIdentifiersInHierPath	FAIL	ERROR: Design elaboration failed; see full log for details
+escape_id	FAIL	ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers
+eval_module_stale_wire	OK	
+event_implicit_expression_list	OK	
+ExpressionInIndex	OK	
+expr_width_cast	OK	
+fail_detect_width	OK	
+ff_array_reset_default_elem_writes	OK	
+ff_async_reset_struct_field_procs	OK	
+ff_blocking_module_reg_temp	OK	
+ff_conditional_reset	OK	
+ff_dead_both_branches	OK	
+ff_dead_guarded_reset	OK	
+ff_dyn_packed_write_inflight_chain	OK	
+ff_loop_write_const_override	OK	
+ff_nested_cfg_guard	OK	
+ff_nonblocking_write_then_read	OK	
+ff_reset_loop_named_pattern_cfg_index	OK	
+ff_share1_array_reset_elem_loop	OK	
+ff_shift_indexed_partsel_param_width	OK	
+ff_whole_array_reset_varselect_elem_write	OK	
+fib	FAIL	ERROR: Design elaboration failed; see full log for details
+fib_initial	OK	
+fib_recursion	OK	
+fib_simple	FAIL	ERROR: Design elaboration failed; see full log for details
+FileLevelParameter	OK	
+FileLevelUnionWithMultirange	OK	
+fill_const_instance_port	OK	
+fill_literal_compare	OK	
+flipflop	OK	
+fmt_always_comb	OK	
+for_bound_struct_param	OK	
+for_break	OK	
+for_cond_bound_on_left	OK	
+for_decl_shadow	OK	
+foreach_comb	OK	
+foreach_member_update_range	OK	
+foreach_struct_member_array	OK	
+Forever	OK	
+forgen01	OK	
+forgen02	OK	
+Fork	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/statements.h:570, see AST and code line dump above (failed condition "blk.blockKind == ast::StatementBlockKind::Sequential"
+ForkJoinTypes	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/statements.h:570, see AST and code line dump above (failed condition "blk.blockKind == ast::StatementBlockKind::Sequential"
+forloop_bitsel_wholewrite_sync	OK	
+forloop_desc_array_shift	OK	
+for_loop_nonconst_bound	OK	
+forloops	OK	
+fsm2	OK	
+fsm	FAIL	ERROR: Design elaboration failed; see full log for details
+fsm_single_always	FAIL	ERROR: Design elaboration failed; see full log for details
+fsm_using_always	FAIL	ERROR: Design elaboration failed; see full log for details
+fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
+full_case_latch	OK	
+func_3d_packed_return	OK	
+func_arg_partsel_loop	OK	
+func_bin2oh_dyn	OK	
+func_block	OK	
+func_call_output_select_actual_loop	OK	
+func_casez_wildcard_items	OK	
+func_clog2_const_eval	OK	
+func_clog2_partsel	OK	
+func_concat_formal_width_probe	OK	
+func_concat_lhs_local	OK	
+func_concat_lhs_return	OK	
+func_const_table_packed_elem_select	OK	
+func_downward_loop	OK	
+func_eval_wide_ops	OK	
+func_forloop_onehot	OK	
+func_formal_packed_dyn_bitselect	OK	
+func_formal_shadowed_by_array	OK	
+func_formal_shadowed_by_genvar	OK	
+func_formal_shadows_module	OK	
+func_if_cond_self_determined	OK	
+func_incomplete_case_default	OK	
+func_inline_selfloop	OK	
+func_inner_loop_bound_outer_var	OK	
+func_local_2d_unpacked_array	OK	
+func_local_array_elem_fold	OK	
+func_local_array	OK	
+func_local_bitwrite_return	OK	
+func_local_compound_partselect	OK	
+func_local_compound_xor	OK	
+func_local_decl_init	OK	
+func_local_decl_width_assign	OK	
+func_local_localparam_inlined	OK	
+func_local_nested_struct_field_write	OK	
+func_localparam_2darray_index	OK	
+func_local_read_before_write_loop	OK	
+func_local_shadows_genvar	OK	
+func_local_slice_write_ssa	OK	
+func_local_typedef_unpacked_array	OK	
+func_local_unpacked_elem_write	OK	
+func_longint_lcg_eval	OK	
+func_loop_accum_index_local	OK	
+func_loop_accum_ops	OK	
+func_loop_break_return_var	OK	
+func_loop_dyn_bit_write_accum_index	OK	
+func_loop_return	OK	
+func_loopvar_bitselect	OK	
+func_mul_widen	OK	
+func_nested_case_no_default	OK	
+func_noarg_nested	OK	
+func_nonansi_local_init	OK	
+func_nonansi_local_partsel_write	OK	
+func_oldstyle_port_case_bitsel	OK	
+func_output_arg_in_case_arm	OK	
+func_output_arg	OK	
+func_output_args_comb_case	OK	
+func_packed2d_formal_indexed_partsel	OK	
+func_packed_enum_array_reverse	OK	
+func_param_table_wrapper_override	OK	
+func_plane_bitsel	OK	
+func_port_implied_dir	OK	
+func_pow_64bit_eval	OK	
+func_replication_const_eval	OK	
+func_scope_local_array	OK	
+func_scope_loopvar_nested	OK	
+func_struct_arg_member_bitsel	OK	
+func_struct_array_member_cond_write	OK	
+func_struct_local_return_comb	OK	
+func_struct_pattern_return_comb	OK	
+func_struct_repro	OK	
+func_struct_return	OK	
+func_table_index_var_select	OK	
+func_tern_hint	OK	
+Function2Returns	OK	
+function_arith	OK	
+function_bool	OK	
+FunctionCallsFunctionWithIndexedPartSelectAsArgument	OK	
+function_case	OK	
+FunctionColonReference	OK	
+FunctionExportDPI	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:1698, see AST and code line dump above (failed condition "ret.width() == expr.type->getBitstreamWidth()")
+function_loop	OK	
+function_mixed	OK	
+function_nested	OK	
+FunctionOnDesignLevel	OK	
+FunctionOutputArgument	FAIL	ERROR: Design elaboration failed; see full log for details
+function_output	FAIL	ERROR: Design elaboration failed; see full log for details
+FunctionParam	OK	
+FunctionReturnEnum	OK	
+FunctionWireAssignmentOnDeclaration	OK	
+FunctionWithoutReturn	OK	
+FunctionWithOverriddenParameter	OK	
+func_typename_ret	OK	
+func_unbound_module_param_ref	OK	
+func_unpacked_local_elem_partsel	OK	
+func_unpacked_table_arg_bit_accum	OK	
+func_unused_local_undriven	OK	
+func_upto	OK	
+func_varsel_trailing_partsel	OK	
+func_width_scope	FAIL	ERROR: Design elaboration failed; see full log for details
+func_zero_arg_reads_signal	OK	
+genblk_order	OK	
+genblk_relative_assign	OK	
+generate_scope_implicit_net	OK	
+generate_test	OK	
+genfor_local_unpacked_array_pattern_assign	OK	
+genfor_unit_param_bound	FAIL	ERROR: Design elaboration failed; see full log for details
+genif_array_comb_slice_write_child_inst	OK	
+GenIfInside	OK	
+genloop_comb_unpacked_elem_slice_write	OK	
+genloop_inst_no_override_pkg_param_child	OK	
+genloop_share_array_word_slice_writes	OK	
+genloop_two_ff_halves_unpacked_elem	OK	
+gen_region_bare_always	OK	
+genscope_array_inst_concat_write	OK	
+genscope_async_ff_signal	OK	
+genscope_blocklocal_mem_initial_dup	OK	
+genscope_cells	OK	
+genscope_comb_arrays	OK	
+genscope_comb_automatic_local	OK	
+genscope_comb_local_thread	OK	
+genscope_enum_array_port	OK	
+genscope_enum_const	OK	
+genscope_fifo_dyn_write	OK	
+genscope_func_stream_slice_param	OK	
+GenScopeFunction	OK	
+genscope_func_typedef_multirange	OK	
+genscope_hier_localparam_array_index	FAIL	ERROR: Design elaboration failed; see full log for details
+gen_scope_iface_member_clk_actual	OK	
+genscope_iface_modport_port	OK	
+genscope_loop_var_final_value	OK	
+genscope_mem_access	OK	
+genscope_member_partsel_func_bound	OK	
+genscope_memory_byte_enable_write	OK	
+genscope_memory_dyn_index	OK	
+genscope_memory_pipe_shift_sync	OK	
+genscope_module_ctx_reset	OK	
+gen_scope_numports	OK	
+genscope_outer_reg_inner_ff	OK	
+genscope_packed3d_indexed_partsel	OK	
+genscope_packed_array_dyn_write	OK	
+genscope_packed_be	OK	
+genscope_param_table	OK	
+genscope_parent_local_inplace_slice	OK	
+genscope_reg_decl_init	OK	
+genscope_reg_init	OK	
+genscope_scalar_elem_array_share	OK	
+genscope_struct_array_elem_field_case_write	OK	
+genscope_struct_member	OK	
+genscope_two_procs_same_reg	OK	
+gen_scope_typaram	OK	
+genscope_unpacked_array_inst_driven_dynread	OK	
+genscope_unpacked_array_per_elem_ff	OK	
+genscope_whole_array_nba	OK	
+gen_struct_access	OK	
+gen_test1	OK	
+gen_test2	OK	
+gen_test3	OK	
+gen_test4	OK	
+gen_test5	OK	
+gen_test6	OK	
+gen_test7	OK	
+gen_test8	OK	
+gen_test9	OK	
+genvar_async_reset_array	OK	
+genvar_exprfold_ancestor_shadow	OK	
+genvar_iface_struct	OK	
+genvar_loop_decl_1	FAIL	ERROR: Design elaboration failed; see full log for details
+genvar_loop_decl_2	OK	
+genvar_loop_decl_3	OK	
+genvar_nested_func_loopvar	OK	
+genvar_param_slice_by_struct_array_member	OK	
+genvar_pow_index	OK	
+GetC	FAIL	ERROR: Design elaboration failed; see full log for details
+gpr_genscope_repro	OK	
+hana_test_intermout	OK	
+hana_test_parse2synthtrans	OK	
+hello-uvm	FAIL	ERROR: Design elaboration failed; see full log for details
+hex_literal_wildcard_digits	OK	
+hierdefparam	OK	
+hierpath_elem_nested_field_partsel	OK	
+hier_path	OK	
+hierpath_packed_elem_field_partsel	OK	
+hier_path_struct_member_shadow	OK	
+hier_undriven_port	OK	
+ibex_alu	OK	
+ibex_branch_predict	OK	
+ibex_compressed_decoder	OK	
+ibex_controller	OK	
+ibex_core	OK	
+ibex_counter	OK	
+ibex_cs_registers	OK	
+ibex_csr	OK	
+ibex_decoder	OK	
+ibex_dummy_instr	OK	
+ibex_ex_block	OK	
+ibex_fetch_fifo	OK	
+ibex_icache	OK	
+ibex_id_stage	OK	
+ibex_if_stage	OK	
+ibex_load_store_unit	OK	
+ibex_lockstep	OK	
+ibex_multdiv_fast	OK	
+ibex_multdiv_slow	OK	
+ibex_pmp	OK	
+ibex_prefetch_buffer	OK	
+ibex_register_file_ff	OK	
+ibex_register_file_fpga	OK	
+ibex_register_file_latch	OK	
+ibex_top	FAIL	ERROR: Design elaboration failed; see full log for details
+ibex_top_tracing	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+ibex_tracer	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+ibex_wb_stage	OK	
+iface_2d_member_elem_select	OK	
+iface_array_actual_in_genscope	OK	
+iface_array_count	OK	
+iface_array_elem_cfg_param	OK	
+iface_array_elem_member_bit_write_genscope	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_array_elem_member_elem_write	OK	
+iface_array_elem_member_named_pattern	OK	
+iface_array_elem_member_partsel	OK	
+iface_array_elem_member_select	OK	
+iface_array_elem_struct_member_elem_field	OK	
+iface_array_internal_assign	OK	
+iface_array_member_dyn_field	OK	
+iface_array_member_elem_select	OK	
+iface_array_member_logic_elem	OK	
+iface_array_member_nested_elem_field	OK	
+iface_array_member_struct_one	OK	
+iface_array_modport_drive	OK	
+iface_array_of_one_port_passthrough	OK	
+iface_array_port_elem_count_deep	OK	
+iface_array_port_elem_member_elem_read	OK	
+iface_array_port	OK	
+iface_array_port_struct_param_count	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_array_slice_actual	OK	
+iface_array_struct_field	OK	
+iface_array_struct	OK	
+iface_array_struct_whole	OK	
+iface_arr_struct_field_partsel	OK	
+iface_arr_struct_whole_field	OK	
+iface_cfg_mem	OK	
+iface_cfg_param_def_pass	OK	
+iface_ff_genvar_partsel	OK	
+iface_field_as_port_actual	OK	
+iface_field_assign_nocol	OK	
+iface_field_assign	OK	
+iface_field_partsel	OK	
+iface_gen_delay	OK	
+iface_gen_delay_struct	OK	
+iface_genscope_func_method_call	OK	
+iface_inst_genscope_port_binding	OK	
+iface_inst_member_select_genscope	OK	
+iface_inst_packed_member_elem_arg	OK	
+iface_inst_port_from_iface_port_member	OK	
+iface_internal_assign	OK	
+iface_local_in_sub	OK	
+iface_member_child_port_actual	OK	
+iface_member_expr_actual_two_ports	OK	
+iface_member_in_instance_actual_expr	OK	
+iface_member_named_pattern_width	OK	
+iface_member_packed_elem_select	OK	
+iface_member_port	OK	
+iface_member_read_assign	OK	
+iface_member_select_shadowed_by_local	OK	
+iface_member_typedef_via_iface_port_width	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_method_call_in_child_module	OK	
+iface_method_call	OK	
+iface_method_call_type_param_inst	OK	
+iface_method_genvar_arg_always_ff	OK	
+iface_method_nested_query_call	OK	
+iface_modport_conn	OK	
+iface_modport	OK	
+iface_modport_out	OK	
+iface_modport_passthrough	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_modport_subset_ports	OK	
+iface_nested_param_field	OK	
+iface_own_iface_port_member_not_signal	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_own_port_child_in_genscope	OK	
+iface_own_port_modport_clk	OK	
+iface_param_2level	OK	
+iface_param_port_width	OK	
+iface_param_set_value	OK	
+iface_param_width_per_inst	OK	
+iface_passthrough	OK	
+iface_pkg_enum_item	OK	
+iface_port_flat_wrapper	OK	
+iface_port_localparam	FAIL	ERROR: Design elaboration failed; see full log for details
+iface_port_member_elem_write	OK	
+iface_port_method_call_expr	OK	
+iface_port_param_width	OK	
+iface_port_typedef_alias_chain	OK	
+iface_port_typedef_func_local_member	OK	
+iface_port_void_method_member_write	OK	
+iface_samename_port	OK	
+iface_scalar_localparam	OK	
+iface_sig_in_child_port	OK	
+iface_struct_field_bitselect	OK	
+iface_struct_field	OK	
+iface_struct_field_param_width	OK	
+iface_struct_field_partsel	OK	
+iface_struct_field_slice_read	OK	
+iface_unpacked_signal	OK	
+iface_unpacked_struct_array	OK	
+iface_wholestruct_param	OK	
+iface_zero_width_field	OK	
+ImportedDoubleCastedParameter	OK	
+ImportedEnumCast	OK	
+ImportedFunctionCallAsInstantiatedModulePortValueInsideGenFor	OK	
+ImportedFunctionCallInModuleAndSubmodule	OK	
+ImportedFunctionUsesAnotherFunction	OK	
+ImportedPackageEnumItemInInterface	OK	
+ImportedParameter	OK	
+ImportFunction	FAIL	ERROR: Design elaboration failed; see full log for details
+ImportPackageWithFunction	FAIL	ERROR: Design elaboration failed; see full log for details
+ImportParametrizedTypeAndDeclareParamWithTheSameName	OK	
+ImportTypeOfPort	OK	
+indexed_partsel_array	OK	
+IndexedPartSelectInFor	OK	
+IndexedPartSelectInUniqueCase	OK	
+IndexedPartSelectOfArrayElement	OK	
+IndexedPartSelectOfMember	OK	
+IndexedPartSelect	OK	
+initial_seq_values	FAIL	ERROR: Design elaboration failed; see full log for details
+initval	FAIL	ERROR: Design elaboration failed; see full log for details
+inside_wildcard_pattern_member	OK	
+instance_array_port_slice	OK	
+inst_array_port_slice	OK	
+inst_arr_dyn_read	OK	
+inst_name_module_prefix_boundary	OK	
+inst_out_elem_array	OK	
+inst_port_func_call_actual	OK	
+inst_written_array_net_dead_dyn_read	OK	
+InterfaceAlways	OK	
+interface_array_fanout	OK	
+interface_array	OK	
+InterfaceAsPortAssignValueInSubmodule	OK	
+InterfaceAsPort	OK	
+InterfaceAssign	OK	
+InterfaceInitial	OK	
+InterfaceParameter	OK	
+InterfaceParameterSetValue	OK	
+InterfaceVariable	OK	
+InterfaceWithPort	FAIL	ERROR: Design elaboration failed; see full log for details
+int_port_signed	OK	
+int_types_blk1	OK	
+int_types	OK	
+isacode_fold	OK	
+issue326_packed_mem	OK	
+jeras_gpr	OK	
+jeras_reverse	OK	
+jeras_tcb_gpio	OK	
+jeras_union	OK	
+LargeModuleParameter	FAIL	ERROR: Design elaboration failed; see full log for details
+latch_002	OK	
+latch_axi_adapter	OK	
+latch_case_arm_mask	OK	
+latch_csr_armlocal	OK	
+latch_decoder_partial	OK	
+latch_fifo_dynfield	OK	
+latch_nested_ex_field	OK	
+latchn	OK	
+latch_packed_dyn_write	OK	
+latch_packed_enum_loop	OK	
+latch_perf_counters	OK	
+latchp	OK	
+latchsr	OK	
+latch_tlb_napot	OK	
+lcov	OK	
+led_blink_counter	OK	
+load_and_derive	OK	
+local_nested_struct_field	OK	
+LocalParamInNestedForLoops	OK	
+LocalParamSelect	OK	
+local_param_shadows_import	OK	
+local_typedef_definition_pass	OK	
+local_var_in_always	OK	
+logic_ops	FAIL	ERROR: Design elaboration failed; see full log for details
+LogicPackedArray	OK	
+Longint	OK	
+loop_break_index	OK	
+loop_dyn_elem_write_expanded	OK	
+loop_if_vector_condition	OK	
+loop_index_blocking_local	OK	
+loop_index_shift_array	OK	
+loopvar_dyn_index_second_stmt	OK	
+loopvar_eq_fold	OK	
+loopvar_index_no_stray	OK	
+loopvar_partsel_after_bitsel	OK	
+loopvar_postloop_sibling	OK	
+lut_map_and	OK	
+lut_map_cmp	OK	
+lut_map_mux	OK	
+lut_map_not	OK	
+lut_map_or	OK	
+lut_map_xor	OK	
+macc	OK	
+macro_arg_spaces	OK	
+many_functions	OK	
+matching_end_labels	OK	
+mem2reg_test1	OK	
+mem2reg_test2	OK	
+mem2reg_test3	OK	
+mem2reg_test4	OK	
+mem2reg_test5	OK	
+mem2reg_test6	OK	
+MemberSelectOf2DStructPackedArray	OK	
+mem_const_bit_zero_init_miter	OK	
+mem_dyn_idx_byte_write	OK	
+mem_ff_partial_rsp	OK	
+mem_iface_index	OK	
+mem_init_for_param	OK	
+mem_multi_always_write	OK	
+mem_multiport_priority	OK	
+MemoryInGenblock	OK	
+MemoryPort	OK	
+MemorySlice	OK	
+mem_packed_2d_byte_write	OK	
+mem_read_reg	OK	
+mem_sub_plain	OK	
+mem_write_dead_branch	OK	
+memwr_multi_block_port_order	OK	
+memwr_two_writes_one_block	FAIL	ERROR: Design elaboration failed; see full log for details
+mixed_array_elem_field_write_loop	OK	
+MixedPatterns	OK	
+mixed_sign_ops	OK	
+ModuleAlways	OK	
+ModuleInstantiationAndIndirectParams	OK	
+module_scope_func	FAIL	ERROR: Design elaboration failed; see full log for details
+ModuleUsingStuctInput	OK	
+MonitorInputPort	FAIL	ERROR: Design elaboration failed; see full log for details
+mriscv_bind_sva	FAIL	ERROR: Design elaboration failed; see full log for details
+mul	OK	
+mul_plain	OK	
+mul_signed_async	OK	
+mul_sync_enable_test	OK	
+mul_sync_reset_test	OK	
+MultiAssignmentPatternOfConcat	OK	
+multidim_hier_path7	OK	
+multidim_hier_path8	OK	
+multidim_hier_path9	OK	
+multi_ff_slice	OK	
+multi_input_gates	OK	
+MultipleAssignments	OK	
+multiple_blocking_gate	OK	
+multiple_blocking	OK	
+MultipleCells	OK	
+MultipleNets	OK	
+MultiplePrints	FAIL	ERROR: Design elaboration failed; see full log for details
+multiplier	OK	
+MultirangesStartNotFromZero	OK	
+mul_unsigned	OK	
+mul_unsigned_sync	OK	
+mul_unsigned_sync_simple	OK	
+mux16	OK	
+mux2	OK	
+mux4	OK	
+mux8	OK	
+named_begin_local_collision	OK	
+named_cover_assert	OK	
+named_field_pack	OK	
+named_genblk_cascade	FAIL	ERROR: Design elaboration failed; see full log for details
+name_not_a_memory	OK	
+ndffnr	OK	
+NegationAsParameterOfInstance	FAIL	ERROR: Design elaboration failed; see full log for details
+NegationOfParameterInInstance	OK	
+NegationOfPatternParameterInInstance	OK	
+NegationOfPatternParameter	OK	
+NestedCallsOfTheSameFunction	OK	
+nested_case_concat	OK	
+nested_cast_repro	OK	
+NestedForLoops	OK	
+nested_full_case	OK	
+nested_func_call_output_local_switch	NOFILES	no sources found (run the regression first for run/** tests)
+nested_func_loopvar_collision	OK	
+nested_gen_ff	OK	
+NestedGenscopesInModuleWithMultidimensionalPorts	OK	
+nested_gen_struct_member	OK	
+NestedParamSubstitution	OK	
+nested_pattern_2d_unpacked_order	OK	
+NestedPatternPassedAsPort	OK	
+NestedSelectOnInputPortInGenscope	OK	
+NestedSelectOnVarInGenscope	OK	
+NestedStructArrayParameterInitializedByPatternPassedAsPort	OK	
+nested_struct_member_dyn_bit_read	OK	
+nested_struct_member_dyn_bit_write	OK	
+nested_struct_nopack	OK	
+nested_struct	OK	
+net_decl_init_child	OK	
+netdecl_init_sibling_paramod	OK	
+net_types	OK	
+net_whole_assign_genscope_inst	OK	
+no_modules_empty_design	OK	
+nonzero_lsb_partsel_child_instance	OK	
+nonzero_lsb_range	OK	
+OneAlwaysComb	OK	
+OneArithShift	OK	
+OneCast	OK	
+OneClass	OK	
+OneConcat	OK	
+onehot_case_nested	OK	
+OneImport	OK	
+OneInside	OK	
+OneNetModport	OK	
+onenet	OK	
+OnePackage	OK	
+OneReplicate	OK	
+OneShift	OK	
+OneStruct	OK	
+OneSysFunc	OK	
+OneThis	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/lvalue.cc:132, see AST and code line dump above (failed condition "acc.member.kind == ast::SymbolKind::Field")
+opt_share_add_sub	OK	
+OutputSizeWithParameterOfInstanceInitializedByStructMember	OK	
+overlapping_dyn_vector_writes	OK	
+PackageCast	OK	
+package_task_func	OK	
+packed2d_elem_range	OK	
+packed2d_indexed_partsel_cont_assign_elems	OK	
+packed2d_ips_read	OK	
+packed_2d_row_single_index	OK	
+packed_array_elem_select	OK	
+PackedArray	OK	
+packed_array_reset_loop	OK	
+packed_array_struct	OK	
+packed_array_struct_port_sel	OK	
+packed_dim_index_is_part_select	OK	
+packed_func_formal_elem_width	OK	
+packed_param_array_elem_if_arm	OK	
+packed_range_inlined_localparam	OK	
+packed_single_row_range	OK	
+packed_struct_2d_row_actual	OK	
+packed_struct_array_fifo	OK	
+packed_struct_array_inner_range_slice	OK	
+packed_struct_array_member_read	OK	
+packed_struct_array_net_elem	OK	
+packed_struct_array_nonzero_lsb_elem_field	OK	
+packed_struct_array_row_select_single_outer	OK	
+packed_struct_array_shift	OK	
+packed_struct_elem_field	OK	
+packed_typedef_elem_leaf_width	OK	
+packed_typedef_elem_select	OK	
+packed_typeparam_elem_three_levels	OK	
+param_2d_unpacked_default_map	OK	
+param_array_wildcard	OK	
+param_dyn_elem_select	OK	
+ParameterColonReference	OK	
+ParameterConditionalAssignment	OK	
+ParameterDoubleUnderscoreInSvFrontend	OK	
+ParameterFromPkgInNestedModule	OK	
+ParameterFromPkgOnParameterPortList	OK	
+ParameterInGenScopeInitializedWithLongConstant	OK	
+ParameterInitializationWithNegation	OK	
+ParameterInitializedByOperationOnPackageParametersAndUsedInGenscope	OK	
+ParameterInitializedByPartSelectOfParametersAssignedToVar	OK	
+ParameterInitializedByPartSelectOfParameters	OK	
+ParameterInitializedInSubModuleOfTopOf5LevelHierarchy	OK	
+ParameterInitializedInTopOf5LevelHierarchy	OK	
+ParameterInitializedInTopOf5LevelHierarchyWithUnusedParamInTheMiddle	OK	
+ParameterInitializedInTopOf5LevelHierarchyWithUnusedParamOfDifferentTypeInTheMiddle	OK	
+ParameterOfParametrizedTypeInSubmodule	OK	
+ParameterOfParametrizedType	OK	
+ParameterOfSizeOfParametrizedPortInSubmodule	OK	
+ParameterOfSizeOfParametrizedPort	OK	
+ParameterOfSizeOfPort	OK	
+ParameterPackedArray	OK	
+ParameterPackedArraySurelogSubstitution	OK	
+ParameterPassedTo3TimesNestedSubmodule	OK	
+ParameterPassedToSubmoduleInGenscopeOfSubmodule	OK	
+ParameterPassedToSubmoduleOfSubmodule	OK	
+ParameterRangeUsingDot	FAIL	ERROR: Design elaboration failed; see full log for details
+ParameterSizeOfInstance	OK	
+ParameterUnpackedArray	OK	
+ParameterUnpackedLogicArray	OK	
+ParameterUnsignedInt	OK	
+ParameterWithUnderscoreValueDivided	OK	
+ParameterWithUnderscoreValueDividedPassedFromCommandLine	OK	
+ParameterWithUnderscoreValue	OK	
+param_expr_ternary_localparam	OK	
+param_fill_default_paramod	OK	
+param_fill_literal_typaram_def	OK	
+param_genscope_localparam_elem_override	OK	
+param_int_types	OK	
+param_name_collision_typeparam	OK	
+param_nested_struct_field_width	OK	
+param_no_default	OK	
+paramod_genscope_child	OK	
+paramod_override_inlined_localparam	OK	
+paramod_struct_default_array_fill	OK	
+paramod_struct_param	OK	
+param_packed_2d_elem_select_int_typespec	OK	
+param_packed_3d_elem_override	OK	
+param_packed_array_subst	OK	
+param_port_bare_type	OK	
+param_struct_field_bitsel	OK	
+param_struct_field_partsel	OK	
+param_struct_pattern_cast_child_const	OK	
+param_table_elem_partsel	OK	
+param_test	OK	
+param_type_logic_width	OK	
+param_unit_narrow_fold	OK	
+param_unpacked_struct_array	OK	
+param_x_default	OK	
+PartSelectInFor	OK	
+PartSelectOfMember	OK	
+PartSelectOfPartSelectedBitSelect	OK	
+PartSelect	OK	
+partsel_param_bound	OK	
+partsel_simple	OK	
+past_assert	OK	
+PatternAsFunctionArgument	OK	
+PatternAsParameterOfInstance	OK	
+PatternAssignmentOfStructParam	OK	
+PatternDefault	OK	
+pattern_default_packed	OK	
+pattern_field_param_default	OK	
+PatternIndexes	OK	
+PatternInFunction	OK	
+PatternParameterInSubmodule	OK	
+PatternStruct	OK	
+PatternType	FAIL	ERROR: Design elaboration failed; see full log for details
+perelem_struct_field_write	OK	
+pico_count_cycle	OK	
+pipe_elem_whole_and_field_arms	OK	
+pkg_class_only	OK	
+pkg_concat_param_default	OK	
+pkg_func_case_return_by_name	OK	
+pkg_localparam_partsel	OK	
+pkg_nested_struct_param_width	OK	
+pkg_packed2d_localparam_elem_addr_decode	OK	
+PkgParamAsFunctionArg	OK	
+pkg_param_elem_select	OK	
+pkg_param_table_varselect_partsel	OK	
+pkg_pattern_param_func_actual_width	OK	
+pkg_struct_packed_array_partsel_port_conn	OK	
+pkg_table_unqualified_in_pkg_function	OK	
+pkg_typedef_member_packed_dim	OK	
+plru_dyn_elem	OK	
+port_chained_type_param	OK	
+port_int_types	OK	
+portsel_struct_param	OK	
+port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
+posedge_iff_enable	OK	
+positional_concat_port_actual	OK	
+power_state	FAIL	ERROR: Design elaboration failed; see full log for details
+pow_exponent_self_determined	OK	
+prefix	OK	
+prim_lfsr_perm	OK	
+print_trg_mixed_edges	FAIL	ERROR: Design elaboration failed; see full log for details
+print_trg_multi_edge	FAIL	ERROR: Design elaboration failed; see full log for details
+print_trg_single_edge	OK	
+priority_case	OK	
+priority_if	OK	
+priority_memory	FAIL	ERROR: Design elaboration failed; see full log for details
+PutC	FAIL	ERROR: Design elaboration failed; see full log for details
+r5p_gpr_cosim	OK	
+rand_const	FAIL	ERROR: Design elaboration failed; see full log for details
+ReadmemhInGenblock	FAIL	ERROR: Design elaboration failed; see full log for details
+readmemh_param	OK	
+readmemh_rom	OK	
+read_remux	OK	
+realexpr	OK	
+RealValue	FAIL	ERROR: Design elaboration failed; see full log for details
+recursive_map	OK	
+ReferencedPackageParameterInEnum	OK	
+regbank_async_clear	OK	
+regbank_depth1	OK	
+regdecl_init_narrower_than_reg	OK	
+reg_wire_error	FAIL	ERROR: Design elaboration failed; see full log for details
+relayed_typeparam_dependent_default	OK	
+Repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+Replication	OK	
+ReplicationPassedToInstance	OK	
+repwhile	FAIL	ERROR: Assert `vbit.variable.kind == Variable::Static' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553.
+resolve_types	OK	
+ReturnEnumArray	OK	
+ReturnFunctionCall	OK	
+rmw_comb_var	OK	
+rom_named_begin_readmemh	OK	
+rotate	OK	
+rp32_r5p_alu	OK	
+rp32_r5p_bru	OK	
+rp32_r5p_csr	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_degu	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_degu_soc_top	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_gpr_1r1w	OK	
+rp32_r5p_hamster	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+rp32_r5p_mdu	OK	
+rp32_r5p_mouse	OK	
+rp32_r5p_mouse_soc_simple_top	OK	
+rp32_r5p_mouse_soc_top	FAIL	ERROR: Design elaboration failed; see full log for details
+rp32_r5p_wbu	OK	
+rp32_soc_vfriendly	FAIL	ERROR: Design elaboration failed; see full log for details
+rsp_gen_minimal	OK	
+run/arch/analogdevices/asym_ram_sdp_read_wider	OK	
+run/arch/analogdevices/asym_ram_sdp_write_wider	OK	
+run/arch/analogdevices/mul_unsigned	OK	
+run/arch/common/add_sub	OK	
+run/arch/common/adffs	OK	
+run/arch/common/blockram	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/blockrom	OK	
+run/arch/common/counter	OK	
+run/arch/common/dffs	OK	
+run/arch/common/fsm	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/latches	OK	
+run/arch/common/logic	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/common/lutram	OK	
+run/arch/common/memory_attributes/attributes_test	OK	
+run/arch/common/mul	OK	
+run/arch/common/mux	OK	
+run/arch/common/shifter	OK	
+run/arch/common/tribuf	OK	
+run/arch/ecp5/dpram	OK	
+run/arch/ecp5/macc	OK	
+run/arch/ecp5/rom	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/arith_map	OK	
+run/arch/fabulous/cells_map	FAIL	ERROR: Found control character or space (0x20) in string '$lut$\$lut ' which is not allowed in RTLIL identifiers
+run/arch/fabulous/custom_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/custom_prims	OK	
+run/arch/fabulous/ff_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/io_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/latches_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/prims	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/fabulous/regfile_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/gatemate/luttrees	OK	
+run/arch/gatemate/mul	OK	
+run/arch/gowin/compare	OK	
+run/arch/gowin/init	OK	
+run/arch/ice40/dpram	OK	
+run/arch/ice40/macc	OK	
+run/arch/ice40/rom	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/ice40/spram	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/nanoxplore/meminit	OK	
+run/arch/nexus/blockram_dc	FAIL	ERROR: '../common/blockram.v': No such file or directory
+run/arch/nexus/dsp_equiv	OK	
+run/arch/nexus/fuse_mac	OK	
+run/arch/nexus/pipe_mul	OK	
+run/arch/quicklogic/qlf_k6n10f/meminit	OK	
+run/arch/quicklogic/qlf_k6n10f/mem_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/xilinx/asym_ram_sdp_read_wider	OK	
+run/arch/xilinx/asym_ram_sdp_write_wider	OK	
+run/arch/xilinx/bug3670	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/xilinx/macc	OK	
+run/arch/xilinx/macc_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/arch/xilinx/mul_unsigned	OK	
+run/asicworld/code_hdl_models_arbiter	OK	
+run/asicworld/code_hdl_models_arbiter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_hdl_models_cam	OK	
+run/asicworld/code_hdl_models_clk_div_45	OK	
+run/asicworld/code_hdl_models_clk_div	OK	
+run/asicworld/code_hdl_models_decoder_2to4_gates	OK	
+run/asicworld/code_hdl_models_decoder_using_assign	OK	
+run/asicworld/code_hdl_models_decoder_using_case	OK	
+run/asicworld/code_hdl_models_dff_async_reset	OK	
+run/asicworld/code_hdl_models_d_ff_gates	OK	
+run/asicworld/code_hdl_models_dff_sync_reset	OK	
+run/asicworld/code_hdl_models_d_latch_gates	OK	
+run/asicworld/code_hdl_models_encoder_4to2_gates	OK	
+run/asicworld/code_hdl_models_encoder_using_case	OK	
+run/asicworld/code_hdl_models_encoder_using_if	OK	
+run/asicworld/code_hdl_models_full_adder_gates	OK	
+run/asicworld/code_hdl_models_full_subtracter_gates	OK	
+run/asicworld/code_hdl_models_gray_counter	OK	
+run/asicworld/code_hdl_models_GrayCounter	OK	
+run/asicworld/code_hdl_models_half_adder_gates	OK	
+run/asicworld/code_hdl_models_lfsr	OK	
+run/asicworld/code_hdl_models_lfsr_updown	OK	
+run/asicworld/code_hdl_models_mux_2to1_gates	OK	
+run/asicworld/code_hdl_models_mux_using_assign	OK	
+run/asicworld/code_hdl_models_mux_using_case	OK	
+run/asicworld/code_hdl_models_mux_using_if	OK	
+run/asicworld/code_hdl_models_one_hot_cnt	OK	
+run/asicworld/code_hdl_models_parallel_crc	OK	
+run/asicworld/code_hdl_models_parity_using_assign	OK	
+run/asicworld/code_hdl_models_parity_using_bitwise	OK	
+run/asicworld/code_hdl_models_parity_using_function	OK	
+run/asicworld/code_hdl_models_pri_encoder_using_assign	OK	
+run/asicworld/code_hdl_models_rom_using_case	OK	
+run/asicworld/code_hdl_models_serial_crc	OK	
+run/asicworld/code_hdl_models_tff_async_reset	OK	
+run/asicworld/code_hdl_models_tff_sync_reset	OK	
+run/asicworld/code_hdl_models_uart	OK	
+run/asicworld/code_hdl_models_up_counter_load	OK	
+run/asicworld/code_hdl_models_up_counter	OK	
+run/asicworld/code_hdl_models_up_down_counter	OK	
+run/asicworld/code_specman_switch_fabric	OK	
+run/asicworld/code_tidbits_asyn_reset	OK	
+run/asicworld/code_tidbits_blocking	OK	
+run/asicworld/code_tidbits_fsm_using_always	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_tidbits_fsm_using_function	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_tidbits_fsm_using_single_always	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_tidbits_nonblocking	OK	
+run/asicworld/code_tidbits_reg_combo_example	OK	
+run/asicworld/code_tidbits_reg_seq_example	OK	
+run/asicworld/code_tidbits_syn_reset	OK	
+run/asicworld/code_tidbits_wire_example	OK	
+run/asicworld/code_verilog_tutorial_addbit	OK	
+run/asicworld/code_verilog_tutorial_always_example	OK	
+run/asicworld/code_verilog_tutorial_bus_con	OK	
+run/asicworld/code_verilog_tutorial_comment	OK	
+run/asicworld/code_verilog_tutorial_counter	OK	
+run/asicworld/code_verilog_tutorial_counter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_decoder_always	OK	
+run/asicworld/code_verilog_tutorial_decoder	OK	
+run/asicworld/code_verilog_tutorial_d_ff	OK	
+run/asicworld/code_verilog_tutorial_escape_id	FAIL	ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers
+run/asicworld/code_verilog_tutorial_explicit	OK	
+run/asicworld/code_verilog_tutorial_first_counter	OK	
+run/asicworld/code_verilog_tutorial_first_counter_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_flip_flop	OK	
+run/asicworld/code_verilog_tutorial_fsm_full	OK	
+run/asicworld/code_verilog_tutorial_fsm_full_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/asicworld/code_verilog_tutorial_good_code	OK	
+run/asicworld/code_verilog_tutorial_if_else	OK	
+run/asicworld/code_verilog_tutorial_multiply	OK	
+run/asicworld/code_verilog_tutorial_mux_21	OK	
+run/asicworld/code_verilog_tutorial_n_out_primitive	OK	
+run/asicworld/code_verilog_tutorial_parallel_if	OK	
+run/asicworld/code_verilog_tutorial_parity	OK	
+run/asicworld/code_verilog_tutorial_simple_function	OK	
+run/asicworld/code_verilog_tutorial_simple_if	OK	
+run/asicworld/code_verilog_tutorial_task_global	OK	
+run/asicworld/code_verilog_tutorial_tri_buf	OK	
+run/asicworld/code_verilog_tutorial_v2k_reg	OK	
+run/asicworld/code_verilog_tutorial_which_clock	OK	
+run/bind/basic	OK	
+run/bind/cell_list	OK	
+run/bind/hier	OK	
+run/bind/inst_list	OK	
+run/bind/param	OK	
+run/bind/slpp_all/lib/work/test_bind2	OK	
+run/bind/slpp_all/lib/work/test_bind	OK	
+run/bind/toplevel	OK	
+run/check_mem/sub_addr	OK	
+run/cxxrtl/test_unconnected_output	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err01	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err02	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err03	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err04	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err05	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err06	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err07	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err08	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err09	OK	
+run/errors/syntax_err10	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err11	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err12	FAIL	ERROR: Design elaboration failed; see full log for details
+run/errors/syntax_err13	OK	
+run/fmt/always_comb	OK	
+run/fmt/always_comb_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/always_display	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/always_full	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/fmt/always_full_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/display_lm	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/initial_display	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/fmt/roundtrip	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/roundtrip_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-clk-1	OK	
+run/fmt/yosys-always_display-clk-2	OK	
+run/fmt/yosys-always_display-clk_en-1	OK	
+run/fmt/yosys-always_display-clk_en-2	OK	
+run/fmt/yosys-always_display-clk_rst-1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-clk_rst-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-clk_rst_en-1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-clk_rst_en-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-always_display-star-1	OK	
+run/fmt/yosys-always_display-star-2	OK	
+run/fmt/yosys-always_display-star_en-1	OK	
+run/fmt/yosys-always_display-star_en-2	OK	
+run/fmt/yosys-always_full-1	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/fmt/yosys-roundtrip-bin_signed-1	OK	
+run/fmt/yosys-roundtrip-bin_signed-2	OK	
+run/fmt/yosys-roundtrip-bin_unsigned-1	OK	
+run/fmt/yosys-roundtrip-bin_unsigned-2	OK	
+run/fmt/yosys-roundtrip-dec_signed-1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-roundtrip-dec_signed-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-roundtrip-dec_unsigned-1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-roundtrip-dec_unsigned-2	FAIL	ERROR: Design elaboration failed; see full log for details
+run/fmt/yosys-roundtrip-hex_signed-1	OK	
+run/fmt/yosys-roundtrip-hex_signed-2	OK	
+run/fmt/yosys-roundtrip-hex_unsigned-1	OK	
+run/fmt/yosys-roundtrip-hex_unsigned-2	OK	
+run/fmt/yosys-roundtrip-oct_signed-1	OK	
+run/fmt/yosys-roundtrip-oct_signed-2	OK	
+run/fmt/yosys-roundtrip-oct_unsigned-1	OK	
+run/fmt/yosys-roundtrip-oct_unsigned-2	OK	
+run/functional/picorv32	OK	
+run/functional/picorv32_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/hana/hana_vlib	FAIL	ERROR: Assert `false && "unreachable"' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3247.
+run/hana/test_intermout	OK	
+run/hana/test_parse2synthtrans	OK	
+run/hana/test_parser	FAIL	ERROR: Design elaboration failed; see full log for details
+run/hana/test_simulation_always	OK	
+run/hana/test_simulation_and	OK	
+run/hana/test_simulation_buffer	OK	
+run/hana/test_simulation_decoder	OK	
+run/hana/test_simulation_mux	OK	
+run/hana/test_simulation_nand	OK	
+run/hana/test_simulation_nor	OK	
+run/hana/test_simulation_or	OK	
+run/hana/test_simulation_seq	OK	
+run/hana/test_simulation_shifter	OK	
+run/hana/test_simulation_sop	OK	
+run/hana/test_simulation_techmap	OK	
+run/hana/test_simulation_techmap_tech	OK	
+run/hana/test_simulation_vlib	FAIL	ERROR: Design elaboration failed; see full log for details
+run/hana/test_simulation_xnor	OK	
+run/hana/test_simulation_xor	OK	
+run/liberty/small	FAIL	ERROR: Design elaboration failed; see full log for details
+run/lut/map_and	FAIL	ERROR: Design elaboration failed; see full log for details
+run/lut/map_cmp	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/lut/map_mux	FAIL	ERROR: Design elaboration failed; see full log for details
+run/lut/map_not	FAIL	ERROR: Design elaboration failed; see full log for details
+run/lut/map_or	FAIL	ERROR: Design elaboration failed; see full log for details
+run/lut/map_xor	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memfile/memory	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_9b1B	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_block_sdp_1clk	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
+run/memlib/memlib_block_sdp	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
+run/memlib/memlib_block_sp	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_block_sp_full	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_block_tdp	FAIL	ERROR: Assert `raw_.size() == 1' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231.
+run/memlib/memlib_clock_sdp	OK	
+run/memlib/memlib_lut	OK	
+run/memlib/memlib_multilut	OK	
+run/memlib/memlib_wide_read	OK	
+run/memlib/memlib_wide_sdp	OK	
+run/memlib/memlib_wide_sp	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memlib/memlib_wide_write	OK	
+run/memlib/memlib_wren	OK	
+run/memories/amber23_sram_byte_en	OK	
+run/memories/firrtl_938	OK	
+run/memories/implicit_en	OK	
+run/memories/issue00335	FAIL	ERROR: Design elaboration failed; see full log for details
+run/memories/issue00710	OK	
+run/memories/no_implicit_en	OK	
+run/memories/read_arst	OK	
+run/memories/read_two_mux	OK	
+run/memories/shared_ports	OK	
+run/memories/simple_sram_byte_en	OK	
+run/memories/trans_addr_enable	OK	
+run/memories/trans_sdp	OK	
+run/memories/trans_sp	OK	
+run/memories/wide_all	OK	
+run/memories/wide_read_async	OK	
+run/memories/wide_read_mixed	OK	
+run/memories/wide_read_sync	OK	
+run/memories/wide_read_trans	OK	
+run/memories/wide_thru_priority	OK	
+run/memories/wide_write	OK	
+run/opt/opt_dff_eqbits_large	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_dff_eqbits_small	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_expr_cmp	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/opt/opt_expr_constconn	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_hier_simple1	OK	
+run/opt/opt_hier_simple2	OK	
+run/opt/opt_hier_test1	OK	
+run/opt/opt_lut	OK	
+run/opt/opt_rmdff	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/opt/opt_rmdff_sat	OK	
+run/opt/opt_share_add_sub	OK	
+run/opt/opt_share_cat	FAIL	ERROR: Design elaboration failed; see full log for details
+run/opt/opt_share_cat_multiuser	OK	
+run/opt/opt_share_diff_port_widths	OK	
+run/opt/opt_share_extend	OK	
+run/opt/opt_share_large_pmux_cat_multipart	OK	
+run/opt/opt_share_large_pmux_cat	OK	
+run/opt/opt_share_large_pmux_multipart	OK	
+run/opt/opt_share_large_pmux_part	OK	
+run/opt/opt_share_mux_tree	OK	
+run/proc/bug_1268	OK	
+run/proc/rmdead	OK	
+run/proc/yosys_latch	OK	
+run/rpc/design	FAIL	ERROR: Design elaboration failed; see full log for details
+run/rtlil/everything	OK	
+run/sat/alu	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/asserts	OK	
+run/sat/asserts_seq	OK	
+run/sat/counters	OK	
+run/sat/counters-repeat	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/expose_dff	OK	
+run/sat/grom_computer	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/grom_cpu	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/initval	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/ram_memory	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/share	OK	
+run/sat/sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sat/splice	OK	
+run/sdc/alu_sub	OK	
+run/select/boxes	OK	
+run/sim/adffe	OK	
+run/sim/adff	OK	
+run/sim/adlatch	OK	
+run/sim/aldffe	OK	
+run/sim/aldff	OK	
+run/sim/dffe	OK	
+run/sim/dff	OK	
+run/sim/dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/dlatch	OK	
+run/sim/dlatchsr	OK	
+run/simple_abc9/abc9	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/aes_kexp128	OK	
+run/simple/always01	OK	
+run/simple/always02	OK	
+run/simple/always03	OK	
+run/simple/arraycells	OK	
+run/simple/arrays01	OK	
+run/simple/arrays02	OK	
+run/simple/arrays03	OK	
+run/simple/asgn_binop	OK	
+run/simple/attrib01_module	OK	
+run/simple/attrib02_port_decl	OK	
+run/simple/attrib03_parameter	OK	
+run/simple/attrib04_net_var	OK	
+run/simple/attrib06_operator_suffix	OK	
+run/simple/attrib08_mod_inst	OK	
+run/simple/attrib09_case	OK	
+run/simple/carryadd	OK	
+run/simple/case_expr_const	OK	
+run/simple/case_expr_extend	OK	
+run/simple/case_expr_non_const	OK	
+run/simple/case_expr_query	OK	
+run/simple/case_large	TIMEOUT	
+run/simple/const_branch_finish	OK	
+run/simple/const_fold_func	OK	
+run/simple/const_func_shadow	OK	
+run/simple/constmuldivmod	OK	
+run/simple/constpower	OK	
+run/simple/defvalue	OK	
+run/simple/dff_different_styles	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/dff_init	OK	
+run/simple/dynslice	OK	
+run/simple/fiedler-cooley	OK	
+run/simple/forgen01	OK	
+run/simple/forgen02	OK	
+run/simple/forloops	OK	
+run/simple/fsm	OK	
+run/simple/func_block	OK	
+run/simple/func_recurse	OK	
+run/simple/func_width_scope	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/genblk_collide	OK	
+run/simple/genblk_dive	OK	
+run/simple/genblk_order	OK	
+run/simple/genblk_port_shadow	OK	
+run/simple/generate	OK	
+run/simple/graphtest	OK	
+run/simple/hierarchy	OK	
+run/simple/hierdefparam	OK	
+run/simple/i2c_master_tests	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/ifdef_1	OK	
+run/simple/ifdef_2	OK	
+run/simple/implicit_ports	OK	
+run/simple/lesser_size_cast	OK	
+run/simple/local_loop_var	OK	
+run/simple/localparam_attr	OK	
+run/simple/loop_prefix_case	OK	
+run/simple/loops	OK	
+run/simple/loop_var_shadow	OK	
+run/simple/macro_arg_spaces	OK	
+run/simple/macro_arg_surrounding_spaces	OK	
+run/simple/macros	OK	
+run/simple/matching_end_labels	OK	
+run/simple/mem2reg_bounds_tern	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/mem2reg	OK	
+run/simple/mem_arst	OK	
+run/simple/memory	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/memwr_port_connection	OK	
+run/simple/module_scope_case	OK	
+run/simple/module_scope_func	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/module_scope	OK	
+run/simple/multiplier	OK	
+run/simple/muxtree	OK	
+run/simple/named_genblk	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/nested_genblk_resolve	OK	
+run/simple/omsp_dbg_uart	OK	
+run/simple/operators	OK	
+run/simple/param_attr	OK	
+run/simple/paramods	OK	
+run/simple/partsel	FAIL	ERROR: Design elaboration failed; see full log for details
+run/simple/process	OK	
+run/simple/realexpr	OK	
+run/simple/repwhile	FAIL	ERROR: Assert `vbit.variable.kind == Variable::Static' failed in /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553.
+run/simple/retime	OK	
+run/simple/rotate	OK	
+run/simple/scopes	OK	
+run/simple/signedexpr	OK	
+run/simple/signed_full_slice	OK	
+run/simple/sign_part_assign	OK	
+run/simple/sincos	OK	
+run/simple/specify	OK	
+run/simple/string_format	OK	
+run/simple/subbytes	OK	
+run/simple/task_func	OK	
+run/simple/undef_eqx_nex	OK	
+run/simple/unnamed_block_decl	OK	
+run/simple/usb_phy_tests	OK	
+run/simple/values	OK	
+run/simple/verilog_primitives	OK	
+run/simple/vloghammer	OK	
+run/simple/wandwor	OK	
+run/simple/wreduce	OK	
+run/sim/sdffce	OK	
+run/sim/sdffe	OK	
+run/sim/sdff	OK	
+run/sim/simple_assign	OK	
+run/sim/tb/tb_adffe	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_adff	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_adlatch	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_aldffe	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_aldff	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_dffe	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_dff	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_dffsr	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_dlatch	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_dlatchsr	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_sdffce	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_sdffe	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/tb/tb_sdff	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sim/undriven_replay	OK	
+run/sva/basic00	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic01	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic02	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic03	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic04	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/basic05	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/counter	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/extnets	OK	
+run/sva/nested_clk_else	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_not	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_range	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_throughout	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_value_change_changed	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_value_change_changed_wide	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_value_change_rose	FAIL	ERROR: Design elaboration failed; see full log for details
+run/sva/sva_value_change_sim	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/load_and_derive	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/ondemand	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/resolve_types	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface1_ref	OK	
+run/svinterfaces/svinterface1_syn	OK	
+run/svinterfaces/svinterface1_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface_at_top	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface_at_top_ref	OK	
+run/svinterfaces/svinterface_at_top_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface_at_top_tb_wrapper	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svinterfaces/svinterface_at_top_wrapper	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/array_assign	OK	
+run/svtypes/enum_simple	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/logic_rom	OK	
+run/svtypes/multirange_array	OK	
+run/svtypes/static_cast_simple	OK	
+run/svtypes/struct_array	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/struct_dynamic_range	OK	
+run/svtypes/struct_simple	OK	
+run/svtypes/struct_sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/typedef_initial_and_assign	FAIL	ERROR: Design elaboration failed; see full log for details
+run/svtypes/typedef_memory_2	OK	
+run/svtypes/typedef_memory	OK	
+run/svtypes/typedef_package	OK	
+run/svtypes/typedef_param	OK	
+run/svtypes/typedef_scopes	OK	
+run/svtypes/typedef_simple	OK	
+run/svtypes/typedef_struct	OK	
+run/svtypes/typedef_struct_port	OK	
+run/svtypes/union_simple	OK	
+run/symfpu/edges	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/bug5495	OK	
+run/techmap/clockgate	OK	
+run/techmap/clockgate_wide	OK	
+run/techmap/dfflibmap_dffsr_mixedpol-sim	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/dfflibmap-sim	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/dlatchlibmap_dlatchsr_mixedpol-sim	OK	
+run/techmap/dlatchlibmap-sim	OK	
+run/techmap/lcu_refined	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/mem_simple_4x1_cells	OK	
+run/techmap/mem_simple_4x1_map	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/mem_simple_4x1_tb	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/mem_simple_4x1_uut	OK	
+run/techmap/recursive	FAIL	ERROR: Design elaboration failed; see full log for details
+run/techmap/recursive_map	OK	
+run/various/abc9	OK	
+run/various/async	OK	
+run/various/attrib05_port_conn	OK	
+run/various/attrib07_func_call	OK	
+run/various/bug3515	OK	
+run/various/clk2fflogic_effects	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/const_arg_loop	OK	
+run/various/const_func_block_var	OK	
+run/various/const_func	OK	
+run/various/constmsk_testmap	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/constmsk_test	OK	
+run/various/countbits	OK	
+run/various/dynamic_part_select/forloop_select_gate	OK	
+run/various/dynamic_part_select/forloop_select_nowrshmsk	OK	
+run/various/dynamic_part_select/forloop_select	OK	
+run/various/dynamic_part_select/latch_002_gate_good	OK	
+run/various/dynamic_part_select/latch_002_gate	OK	
+run/various/dynamic_part_select/latch_002	OK	
+run/various/dynamic_part_select/latch_1990_gate	OK	
+run/various/dynamic_part_select/latch_1990	OK	
+run/various/dynamic_part_select/multiple_blocking_gate	OK	
+run/various/dynamic_part_select/multiple_blocking	OK	
+run/various/dynamic_part_select/nonblocking_gate	OK	
+run/various/dynamic_part_select/nonblocking	OK	
+run/various/dynamic_part_select/original_gate	OK	
+run/various/dynamic_part_select/original	OK	
+run/various/dynamic_part_select/reset_test_gate	OK	
+run/various/dynamic_part_select/reset_test	OK	
+run/various/dynamic_part_select/reversed_gate	OK	
+run/various/dynamic_part_select/reversed	OK	
+run/various/elab_sys_tasks	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above
+run/various/fib	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/fib_tern	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/func_port_implied_dir	OK	
+run/various/gen_if_null	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/hierarchy_recursive	OK	
+run/various/json_netnames_signed	OK	
+run/various/json_param_defaults	OK	
+run/various/lcov	OK	
+run/various/memory_word_as_index	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/muxpack	OK	
+run/various/pmux2shiftx	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/reg_wire_error	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/setundef	OK	
+run/various/setundef_selection_undriven	OK	
+run/various/specify	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/struct_access	FAIL	ERROR: Design elaboration failed; see full log for details
+run/various/sub	OK	
+run/various/tcl_apis	OK	
+run/verific/bounds	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verific/case	OK	
+run/verific/enum_values	OK	
+run/verific/ext_ramnet_err	OK	
+run/verific/mixed_flist	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verific/range_case	OK	
+run/verilog/asgn_expr	OK	
+run/verilog/bug656	OK	
+run/verilog/constparser_f_file	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/dynamic_range_lhs	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+run/verilog/for_decl_shadow	OK	
+run/verilog/func_tern_hint	OK	
+run/verilog/func_typename_ret	OK	
+run/verilog/func_upto	OK	
+run/verilog/genblk_case	OK	
+run/verilog/genblk_wire	OK	
+run/verilog/genvar_loop_decl_1	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/genvar_loop_decl_2	OK	
+run/verilog/genvar_loop_decl_3	OK	
+run/verilog/int_types	OK	
+run/verilog/macro_arg_tromp	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/mem_bounds	FAIL	ERROR: Design elaboration failed; see full log for details
+run/verilog/net_types	OK	
+run/verilog/package_import_separate_module	OK	
+run/verilog/package_import_specific_module	OK	
+run/verilog/package_task_func	OK	
+run/verilog/param_int_types	OK	
+run/verilog/param_no_default	OK	
+run/verilog/port_int_types	OK	
+run/verilog/prefix	OK	
+run/verilog/size_cast	OK	
+run/verilog/struct_access	OK	
+run/verilog/typedef_const_shadow	OK	
+run/verilog/unbased_unsized	OK	
+run/verilog/unbased_unsized_shift	OK	
+run/verilog/unbased_unsized_tern	OK	
+run/verilog/unnamed_genblk	OK	
+run/verilog/wire_and_var	FAIL	ERROR: Design elaboration failed; see full log for details
+run/write_verilog/mixed_upto	OK	
+sat_asserts_seq	OK	
+scope_func	OK	
+scopes	OK	
+scope_task	OK	
+SelectFromUnpackedInFunction	OK	
+SelectGivenBySelectOnParameterInFunction	OK	
+SelectOnMemberSelectedFrom2DArray	OK	
+SelfPartSelectInBitSelect	OK	
+SelfSelectsInBitSelectAfterBitSelect	OK	
+setundef	OK	
+shift_amount_self_determined	OK	
+ShiftTernary	OK	
+Shortint	OK	
+Shortreal	FAIL	ERROR: Feature unimplemented at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:814, see AST and code line dump above
+signed_cmp_negative_const	OK	
+signed_compare	OK	
+signed_ext_case	OK	
+signed_interm_cmp	OK	
+signed_partsel_ext	OK	
+SignedWire	OK	
+sign_part_assign	OK	
+simple_abc9	FAIL	ERROR: Design elaboration failed; see full log for details
+simple_always_ff	OK	
+simple_always_ifelse	OK	
+simple_assign	OK	
+simple_counter	OK	
+simple_enum	OK	
+simple_forloops	OK	
+simple_fsm	OK	
+simple_function	OK	
+simple_generate	OK	
+simple_hierarchy	OK	
+simple_instance_array	OK	
+simple_interface	OK	
+simple_memory_noreset	OK	
+simple_memory	OK	
+simple_nested_struct_nopack	OK	
+simple_package	OK	
+simple_struct	OK	
+simple_unary_op_minus	OK	
+simple_unary_op_not_log	OK	
+simple_unary_op_plus	OK	
+sincos	OK	
+sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+size_cast	OK	
+size_cast_param	OK	
+sized_literal_wildcard_extension	OK	
+SizeOfGeneratedWireArray	FAIL	ERROR: Design elaboration failed; see full log for details
+SizeOfUnsignedParameter	OK	
+sp_read_first	FAIL	ERROR: Design elaboration failed; see full log for details
+sp_read_or_write	FAIL	ERROR: Design elaboration failed; see full log for details
+sp_write_first	FAIL	ERROR: Design elaboration failed; see full log for details
+src_lhs_attr	OK	
+stamped_gen_param	OK	
+static_cast_simple	OK	
+StreamOperatorBitReverseFunction	OK	
+StreamOpImplicitSliceSize	OK	
+StreamOpInitialAlways	FAIL	ERROR: too many errors emitted, stopping now [--error-limit=]
+StreamOp	OK	
+StringAssignConcatenation	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
+StringAssignment	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
+StringLocalParamInitByConcatenation	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
+StringWithBackslash	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
+struct_3d_packed_array	OK	
+struct_access	OK	
+struct_array_2d_elem_member_field	OK	
+struct_array_elem_field_read	OK	
+struct_arrayfield_nested_read	OK	
+struct_array_indexed_write	OK	
+struct_array_member_cond_write	OK	
+struct_array_member_partsel	OK	
+struct_array	OK	
+StructArrayParameterInitializedByPatternPassedAsPort	OK	
+struct_array_param_pattern	OK	
+struct_dynamic_range	OK	
+struct_elem_field_write_range	OK	
+struct_field_packed_array_elem	OK	
+struct_field_self_guard	OK	
+struct_init_partial_write	OK	
+StructInPackage	OK	
+struct_little_endian_bit_array	OK	
+StructLocalParam	OK	
+StructMemberAsModuleInput	OK	
+struct_member_cfg_width	OK	
+struct_member_cond_write_ranged_temp	OK	
+struct_member_dyn_indexed_partsel	OK	
+struct_member_dyn_indexed_partsel_write	OK	
+struct_member_elem_writes_update_range	OK	
+struct_member_expr_index	OK	
+struct_member_trailing_index	OK	
+struct_member_typeparam_array	OK	
+struct_negative_index	FAIL	ERROR: Design elaboration failed; see full log for details
+StructOfArrayOfStructs	OK	
+StructPackedArray	OK	
+StructPackedOutput	OK	
+struct_param_dim	OK	
+StructParameterInGenScope	FAIL	ERROR: Design elaboration failed; see full log for details
+StructParameterInitializedWithPatternAndReferenced	OK	
+StructParameter	OK	
+struct_param_field_shift	OK	
+struct_param_func_arg	OK	
+struct_param_func_config	OK	
+struct_param_func_loop	OK	
+struct_param_member_size_cast	OK	
+struct_param_pattern_packing	OK	
+struct_param_repl_count	OK	
+struct_part_select_write	OK	
+struct_pat_fill	OK	
+struct_pattern_loop	OK	
+struct_pattern_named_default	OK	
+struct_pattern_procedural	OK	
+struct_sizebits	FAIL	ERROR: Design elaboration failed; see full log for details
+struct_typedef_packed_array	OK	
+struct_unpacked_array_member	FAIL	ERROR: Design elaboration failed; see full log for details
+subbytes	OK	
+SubmoduleInGenScopeWithGenScopeParametrizedByParameterFromTopModule	OK	
+SumOfParametersInNestedForLoops	OK	
+SumOfParameters	OK	
+sva_basic00	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_basic01	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_basic02	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_basic03	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_counter	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_not	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_range	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_throughout	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_value_change_changed	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_value_change_changed_wide	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_value_change_rose	FAIL	ERROR: Design elaboration failed; see full log for details
+sva_value_change_sim	FAIL	ERROR: Design elaboration failed; see full log for details
+svinterface1	FAIL	ERROR: Design elaboration failed; see full log for details
+svinterface_at_top	FAIL	ERROR: Design elaboration failed; see full log for details
+svtypes_enum_simple	FAIL	ERROR: Design elaboration failed; see full log for details
+svtypes_struct_array	FAIL	ERROR: Design elaboration failed; see full log for details
+svtypes_struct_simple	OK	
+sync_concat_lhs_then_member_reset	OK	
+sync_elem_field_reset_whole_array_nba	OK	
+sync_loop_dyn_elem_field_write	OK	
+sync_loop_dyn_packed_bit_write	OK	
+sync_loop_memwr_multi_memid_mask	OK	
+sync_nested_for_in_conditional	OK	
+sync_nested_zero_trip_loop_write	OK	
+sync_path_blocking_temp	OK	
+sync_path_dyn_bitsel_write	OK	
+synthesis	FAIL	ERROR: Design elaboration failed; see full log for details
+SystemFunctions	OK	
+TaskExportDPI	OK	
+TaskImportDPI	OK	
+TaskOutputArgument	FAIL	ERROR: Design elaboration failed; see full log for details
+TaskReturn	FAIL	ERROR: Design elaboration failed; see full log for details
+ternary_not_cond	OK	
+tern_fill_literal	OK	
+tf_formal_array_elem_select	OK	
+tf_formal_member_write_in_branch	OK	
+tf_output_actual_array_elem	OK	
+top_module_type_param	OK	
+typaram_pav_dims	OK	
+typaram_sig_header_localparam	OK	
+typaram_struct_array_elem_read	OK	
+typaram_struct_array_pattern_write	OK	
+typaram_typedef_2d	OK	
+typedef_2d_unpacked_elem_select	OK	
+TypedefAlias	FAIL	ERROR: Design elaboration failed; see full log for details
+TypedefAliasInPackage	OK	
+typedef_chain_dims	OK	
+typedef_dir_param_range	OK	
+TypedefedFunctionArgument	OK	
+TypedefedFunctionReturn	OK	
+TypedefedRangedFunctionArgument	OK	
+TypedefedRangedFunctionReturn	OK	
+TypedefEnum	OK	
+TypedefInModule	OK	
+TypedefInModulePort	OK	
+TypedefOnFileLevel	OK	
+typedef_package	OK	
+typedef_packed_alias_elem_dyn_row_select	OK	
+TypedefPackedDimensions	OK	
+typedef_packed_enum_array	OK	
+typedef_param	OK	
+typedef_simple	OK	
+TypedefStructArray	OK	
+TypedefStructParamWithRangeInSubmodule	OK	
+typedef_unpacked_array_elem_select	OK	
+typedef_unpacked_array_var_dims	OK	
+typedef_unpacked_input	OK	
+TypedefVariableDimensions	OK	
+TypedefWithParameter	OK	
+typed_named_pattern	OK	
+typed_net_packed_struct_array	OK	
+typeparam_cast_in_genblock	OK	
+typeparam_default_twin_inst	OK	
+TypeParameterAsPortTypeWithEnumOfParametrizedWidth	OK	
+TypeParameterAsPortTypeWithEnum	OK	
+TypeParameterAsPortTypeWithLogicAnonymous	OK	
+TypeParameterAsPortTypeWithLogic	OK	
+TypeParameterAsPortTypeWithStruct	OK	
+typeparam_genscope_struct	OK	
+type_param_override_elem_sel	OK	
+typeparam_packed_array_outer_dims	OK	
+type_param_packed_dim	OK	
+typeparam_relay_member_range	OK	
+typeparam_relay_name_capture	OK	
+typeparam_struct_member_width	OK	
+type_param_unpacked_port	OK	
+uarr_out_port	OK	
+ucsbece154b_victim_cache	OK	
+uhdm_trace_gated	OK	
+unary_op_minus	OK	
+unary_op_not_log	OK	
+unary_op_plus	OK	
+unbased_unsized	OK	
+unbased_unsized_param	OK	
+unbased_unsized_shift	OK	
+undefined_module_refused	FAIL	ERROR: Design elaboration failed; see full log for details
+union4_repro	FAIL	ERROR: Design elaboration failed; see full log for details
+UnionCustomTypeMultirange	OK	
+union_field_partsel	OK	
+UnionInPackageWithMultirange	FAIL	ERROR: Design elaboration failed; see full log for details
+UnionInsideStruct	OK	
+union_member_elem_select	OK	
+UnionParameter	OK	
+union_param_repro	OK	
+union_simple	OK	
+unique_case_default	OK	
+unique_case	OK	
+unit_enum_const_child_ref	FAIL	ERROR: Design elaboration failed; see full log for details
+UnitForLoop	OK	
+unit_param_unpacked_port_dim	FAIL	ERROR: Design elaboration failed; see full log for details
+unit_scope_param_slice	OK	
+unit_struct_member_pkg_type	OK	
+unnamed_block_decl	OK	
+unpacked_1bit_array_sync_dyn_write	OK	
+unpacked_2d_comb_dyn_row	OK	
+unpacked_2d_dyn_row_mem	OK	
+unpacked_2d_port_elem_read	OK	
+unpacked_2d_row_actual	OK	
+unpacked_2d_row_port_actual	OK	
+unpacked_3d_subarray_actual	OK	
+UnpackedArray	OK	
+unpacked_array_shift_ff	OK	
+unpacked_array_slice_shift_ff	OK	
+unpacked_asc_field	OK	
+unpacked_elem_packed_row_range_write	OK	
+unpacked_elem_packed_row_select	OK	
+unpacked_elem_partsel_comb	OK	
+unpacked_elem_write_flat	OK	
+unpacked_port_elem_order	OK	
+unpacked_port_packed2d_word_select	OK	
+unpacked_struct_2d	OK	
+unpacked_struct_array_typedef	OK	
+unpacked_struct_dyn_read	OK	
+unpacked_struct_mixed	OK	
+unsigned_cast_arg_self_determined	OK	
+UnsizedConstant	OK	
+UnsizedConstantParameterInInstance	OK	
+UnsizedConstantParameter	OK	
+UnsizedConstantsParameterParsing	OK	
+UnsizedConstantsParsing	OK	
+UnsizedConst	OK	
+unsized_literal_relational_width	OK	
+untyped_param_override_width	OK	
+valueless_param_ref_not_a_signal	OK	
+VarInFor	OK	
+various_abc9	OK	
+various_port_sign_extend	FAIL	ERROR: Design elaboration failed; see full log for details
+various_struct_access	FAIL	ERROR: Design elaboration failed; see full log for details
+VarPassedTo2Submodules	OK	
+var_port_packed_dim	OK	
+VarSelect	OK	
+vector_index	OK	
+verilog_primitives	OK	
+void_func_actual_wider_than_formal	OK	
+void_func_array_output_arg	OK	
+void_func_body_case_on_formal	OK	
+void_func_body_local	OK	
+void_func_call_in_case_arm	OK	
+void_func_local_array_elem_write	OK	
+void_func_local_loop_ssa	OK	
+void_func_nested_call	OK	
+VoidFunction2Returns	FAIL	ERROR: Design elaboration failed; see full log for details
+VoidFunction	OK	
+VoidFunctionWithoutReturn	OK	
+wandwor	OK	
+while_comb_bounded	OK	
+wildcard_eq	OK	
+WireNotStartingFromZero	OK	
+wreduce_test0	OK	
+wreduce_test1	OK	
+xmr_read	OK	
+xmr_write_into_child	OK	
+xor_assignment	OK	

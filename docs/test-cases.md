@@ -78,6 +78,8 @@
 - **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
 
 #### Functions
+- **func_call_output_select_actual_loop** - `void function` called as a statement in a loop with a bit/part-select of a module signal as its OUTPUT actual; the select-shaped actual was never scanned, so the write was dropped (#1250)
+- **nested_func_call_output_local_switch** - a `case` whose expression is a union member of an inlined function formal; the case expression was imported with NO read map and switched on `1'x` (#1251)
 - **simple_function** - AND-OR tree function driving flip-flop (tests function in continuous assignment)
 - **function_arith** - Arithmetic function with add/subtract/shift/AND/XOR
 - **function_bool** - Boolean logic function with if-else modes
@@ -104,6 +106,9 @@
 - **unnamed_block_decl** - Unnamed begin/end blocks with local integer variable declarations and variable scoping (inner z shadows output z, compile-time evaluated to z=5)
 
 #### Arrays & Memory
+- **genscope_blocklocal_mem_initial_dup** - a memory declared inside a generate-for body with an `initial` seed, two iterations; only the array_NET path scoped the name, so every iteration shared ONE memory (#1254; `test_structural.ys` asserts 2 scoped memories and 8 `$meminit_v2`)
+- **typedef_packed_alias_elem_dyn_row_select** - a dynamic row select into an array whose element type is a typedef ALIAS of another packed typedef; with no `Actual_group` on the definition-view select the row read was ONE BIT (#1248)
+- **packed_typeparam_elem_three_levels** - a 3-level index into a packed array whose element type is a TYPE PARAMETER bound to a packed 2-D typedef; the stamped geometry holds two index levels, so the third wrote one bit and left 28 of 32 bits undriven (#1264; gates: `check -assert` + the read_slang miter)
 - **arrays01** - 4-bit x16 array with synchronous read and write (tests memory inference)
 - **arrays03** - Packed multidimensional arrays with dynamic element access (tests `logic [0:3][7:0]`, `reg8_t [0:3]`, and typedef variants)
 - **simple_memory** - Memory arrays and access patterns
@@ -121,6 +126,7 @@
 - **memwr_multi_block_port_order** - Four SEPARATE `always_ff` blocks writing one memory (the shape a generate-for over the write ports makes): asserts the write PORTS are numbered in SOURCE order, because `proc_memwr` numbers them by walking `module->processes` and yosys dicts iterate in reverse — and the LAST port is the one that takes a same-address collision. No formal check can see this: the blocks compute the same function, so the miter is satisfied by any numbering (`test_structural.ys`)
 
 #### Data Types & Structs
+- **comb_struct_field_inflight_child_module** - a nested struct field (`a.b.c`) written then read in-flight in one always_comb, in a module imported as a CHILD; the staged path read the raw wire (#1249, narrowed to genuinely nested fields in #1257)
 - **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
 - **struct_array** - Arrays of packed structs with complex indexing and member access
 - **struct_access** - Packed struct field access with initial block assignments; fixed `'1` fill constant extension (4-bit field now gets `4'b1111`, not `4'b0001`)
@@ -163,6 +169,7 @@
 - **case_expr_const** - Case statement with constant expressions including signed case items, mixed signed/unsigned contexts, and context-width extension per SV LRM 12.5.1
 
 #### Module Hierarchy & Interfaces
+- **iface_member_select_shadowed_by_local** - an interface member array read through a modport in a genvar loop while a module-level local of the SAME NAME exists; the select resolved to the local and became a self-assignment (#1258; `test_structural.ys` asserts the CONNECTION, since a self-assignment still builds a clean netlist)
 - **simple_hierarchy** - Module instantiation and port connections
 - **simple_interface** - Interface-based connections
 - **iface_own_port_modport_clk** - `.clk(port.clk)` where `clk` is one of the INTERFACE'S OWN PORTS, in a module with TWO interface ports whose types both declare it: the elaborated actual is a bare net, so the member is matched back to a port by TYPE, and `clk` is declared by every interface — the bound MODPORT is what disambiguates (LRM 25.5). Asserts the CONNECTION, not a value: a dropped port connection still builds a netlist, the register merely never clocks (`test_structural.ys`)
