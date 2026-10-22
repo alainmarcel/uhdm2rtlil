@@ -2255,6 +2255,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                             // Case for false (else)
                             RTLIL::CaseRule* case_false = new RTLIL::CaseRule;
+                            bool attached_async_switch = false;
                             std::string else_src = if_else_stmt->VpiElseStmt() ? get_src_attribute(if_else_stmt->VpiElseStmt()) : "";
                             if (!else_src.empty())
                                 case_false->attributes[ID::src] = RTLIL::Const(else_src);
@@ -2285,15 +2286,33 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // mem[addr]` read the word being written).
                                 bool saved_ff_body_mode = in_always_ff_body_mode;
                                 in_always_ff_body_mode = true;
+                                // Attach the reset switch (with this arm) to
+                                // the process BEFORE importing the arm, and
+                                // publish the root as the in-flight fold
+                                // root: a dynamic packed element write in a
+                                // later sibling `if` reconstructs the value
+                                // the earlier one staged from this tree
+                                // (case_inflight_value), starting from the
+                                // hold default `$0\x = \x` in root_case, so
+                                // two writes to different elements compose
+                                // instead of the last one winning.
+                                sw->switches[0]->cases.push_back(case_false);
+                                yosys_proc->root_case.switches.push_back(sw->switches[0]);
+                                attached_async_switch = true;
+                                RTLIL::CaseRule* saved_fold_root = ff_inflight_fold_root_;
+                                ff_inflight_fold_root_ = &yosys_proc->root_case;
                                 import_statement_comb(else_stmt, case_false);
+                                ff_inflight_fold_root_ = saved_fold_root;
                                 in_always_ff_body_mode = saved_ff_body_mode;
                                 
                                 // Clear context
                                 current_signal_temp_wires.clear();
                             }
                             
-                            sw->switches[0]->cases.push_back(case_false);
-                            yosys_proc->root_case.switches.push_back(sw->switches[0]);
+                            if (!attached_async_switch) {
+                                sw->switches[0]->cases.push_back(case_false);
+                                yosys_proc->root_case.switches.push_back(sw->switches[0]);
+                            }
                         }
             }
             
@@ -16390,11 +16409,21 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
     // (see case_inflight_value): reconstruct it from the process's own
     // emitted actions and switches, so repeated DYNAMIC writes to one signal
     // accumulate under their respective conditions.
-    if (in_always_ff_body_mode && case_rule && current_comb_process) {
+    // The async-reset always_ff path imports its clocked arm with
+    // current_comb_process unset and hands the fold root over separately
+    // (ff_inflight_fold_root_): OpenTitan rram_phy_rd_buf_dep's
+    //     if (fin_cnt_incr) buf_dependency_cnt[incr_buf_sel] <= cnt + 1;
+    //     if (fin_cnt_decr) buf_dependency_cnt[decr_buf_sel] <= cnt - 1;
+    // had NO fold there, so the second write's RMW started from the
+    // registered value and, both firing on different buffers, the increment
+    // was dropped (73 diverging co-simulated cycles, read_slang clean).
+    RTLIL::CaseRule* fold_root = current_comb_process
+        ? &current_comb_process->root_case : ff_inflight_fold_root_;
+    if (in_always_ff_body_mode && case_rule && fold_root) {
         RTLIL::Wire* tw_i = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt_i = tw_i ? RTLIL::SigSpec(tw_i) : RTLIL::SigSpec(base_wire);
         if (tgt_i.size() == base_w) {
-            RTLIL::SigSpec fold = case_inflight_value(&current_comb_process->root_case, tgt_i);
+            RTLIL::SigSpec fold = case_inflight_value(fold_root, tgt_i);
             if (fold.size() == base_w && fold != tgt_i) {
                 cur = fold;
                 if (mode_debug)

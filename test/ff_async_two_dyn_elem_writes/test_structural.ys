@@ -1,0 +1,12 @@
+# The VALUE after one clock is the gate: from reset, write element 0 := 2'b01
+# and element 1 := 2'b10 in the same cycle (we_a and we_b both up).  Without
+# the fix the second RMW starts from the registered zeros, so element 0 stays
+# 00 and cnt reads 8'b0000_1000 instead of 8'b0000_1001.  A single write and
+# the same-index collision (last write wins, 2'b11 below) must stay right.
+# Inputs are held for both steps; the prove is checked at step 2 only.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; async2sync; opt
+sat -verify -seq 2 -set-init-zero -prove-skip 1 -set rst_n 1 -set we_a 1 -set we_b 1 -set ia 0 -set ib 1 -set da 2'b01 -set db 2'b10 -prove cnt 8'b00001001
+sat -verify -seq 2 -set-init-zero -prove-skip 1 -set rst_n 1 -set we_a 1 -set we_b 0 -set ia 2 -set da 2'b11 -prove cnt 8'b00110000
+sat -verify -seq 2 -set-init-zero -prove-skip 1 -set rst_n 1 -set we_a 1 -set we_b 1 -set ia 3 -set ib 3 -set da 2'b01 -set db 2'b11 -prove cnt 8'b11000000
