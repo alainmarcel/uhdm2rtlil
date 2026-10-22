@@ -1,0 +1,11 @@
+# The VALUE is the gate (a wrong element offset is wrong arithmetic, not a
+# wrong shape): without the fix `m[S-1:1] = '0` zeroes bits [3:1] of m[0], so
+# o0 reads 8'h80 for seed 8'h82 and o1 (m[0] << 1) reads 8'h00 instead of
+# 8'h04; the indexed form `m[2 +: 2]` likewise lands on bits [3:2] of m[0].
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set seed 8'h82 -prove o0 8'h82 -prove o1 8'h04 -prove o2 8'h00 -prove o3 8'h00
+sat -verify -set seed 8'h82 -prove p0 8'h82 -prove p1 8'h00 -prove p2 8'h7d -prove p3 8'h7d
+sat -verify -set seed 8'h01 -prove o0 8'h01 -prove o1 8'h02 -prove p2 8'hfe -prove p3 8'hfe
