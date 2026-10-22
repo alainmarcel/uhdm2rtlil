@@ -1,0 +1,69 @@
+name: Sweep cva6 flavours
+
+# chipsalliance/sv-tests builds the CVA6 core at FIVE configurations
+# (`generators/ariane`), and sweep-cva6.yml covers ONE of them per module and
+# per chip instance.  A flavour is the same RTL with a different
+# `core/include/<cfg>_config_pkg.sv` -- one line of the file list -- but it
+# selects genuinely different RTL, so reading one says little about the others:
+#
+#   cv64a6_imafdc_sv39_hpdcache  the HPDcache subsystem instead of the
+#                                write-through cache.  `hpdcache`,
+#                                `cva6_hpdcache_subsystem` and
+#                                `cva6_hpdcache_wrapper` are `dead` at the
+#                                default configuration (DCacheType == WT makes
+#                                hpdcache.sv:1327 $fatal) and are measured for
+#                                the first time here.
+#   cv64a6_imafdch_sv39          the hypervisor extension: two-stage MMU, new
+#                                CSRs, and the RVH-guarded paths the default
+#                                configuration leaves unassigned.
+#   cv32a6_imac_sv32             32-bit datapath, Sv32 MMU, no FPU.
+#
+# Its own nightly rather than three more jobs on sweep-cva6.yml, so the main
+# cva6 nightly's wall clock is unchanged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per module"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "41 4 * * *"   # nightly 04:41 UTC, after sweep-cva6
+
+concurrency:
+  group: sweep-cva6-flavours-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hpdcache:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: cva6-hpdcache
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      # Same shape and shard count as the default cva6 family: the module set
+      # is the same size and the SAT miters dominate the same way.  One miter
+      # and one co-sim at a time, because this family adds the WHOLE HPDcache
+      # (`hpdcache`, `cva6_hpdcache_subsystem`) whose Verilator builds are as
+      # heavy as the std_nbdcache / cva6 pair that already forced serial shards.
+      shards: 8
+      timeout: 240
+      jobs: "1"
+
+  hext:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: cva6-hext
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      shards: 8
+      timeout: 240
+      jobs: "1"
+
+  rv32:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: cva6-rv32
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      shards: 8
+      timeout: 240
+      jobs: "1"

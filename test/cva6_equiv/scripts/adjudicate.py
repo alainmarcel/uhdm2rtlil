@@ -21,12 +21,16 @@ mod    = sys.argv[1]
 CYCLES = int(sys.argv[2]) if len(sys.argv) > 2 else 2000
 SEED   = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 HERE   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WORK   = f"{HERE}/work/{mod}"
+# CVA6_WORK lets a FLAVOUR sweep (a different `*_config_pkg.sv`) keep its
+# artefacts apart from the default configuration's; run_cva6_equiv.sh
+# exports it together with CVA6_FLIST so both always agree.
+WORKROOT = os.environ.get("CVA6_WORK", f"{HERE}/work")
+WORK   = f"{WORKROOT}/{mod}"
 _ROOT  = os.environ.get("UHDM2RTLIL_ROOT", os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")))
 YOSYS  = os.path.join(_ROOT, "out", "current", "bin", "yosys")
 PLUGIN = os.path.join(_ROOT, "build", "uhdm2rtlil.so")
-FLIST  = os.environ.get("CVA6_FLIST", f"{HERE}/work/cva6.f")
+FLIST  = os.environ.get("CVA6_FLIST", f"{WORKROOT}/cva6.f")
 WRAP   = f"{HERE}/wrappers/wrapper_{mod}.sv"
 TOP    = f"{mod}_equiv"
 os.chdir(WORK)

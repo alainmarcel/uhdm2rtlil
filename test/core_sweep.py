@@ -566,13 +566,43 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
 
 
 # --------------------------------------------------------------------- cva6
-def sweep_cva6(cycles, jobs, flt=None):
-    """Run the cva6_equiv miter suite, then adjudicate each module's co-sim."""
+# The CVA6 FLAVOURS chipsalliance/sv-tests defines (its generators/ariane): the
+# same RTL at a different `core/include/<cfg>_config_pkg.sv`.  A flavour is one
+# line of the file list, but it selects genuinely different RTL -- three modules
+# that are `dead` at the default configuration (DCacheType == WT makes
+# hpdcache.sv $fatal) are only measurable at the HPDcache one.  Each flavour
+# keeps its own work root and expectations file so they cannot be confused.
+CVA6_CONFIGS = {
+    "cva6": "cv64a6_imafdc_sv39",                       # the default
+    "cva6-hpdcache": "cv64a6_imafdc_sv39_hpdcache",
+    "cva6-hext": "cv64a6_imafdch_sv39",
+    "cva6-rv32": "cv32a6_imac_sv32",
+}
+
+
+def sweep_cva6(cycles, jobs, flt=None, config=None):
+    """Run the cva6_equiv miter suite, then adjudicate each module's co-sim.
+
+    `config` is a CVA6 flavour's config-package basename; None means the
+    default.  It is passed to run_cva6_equiv.sh through the environment, which
+    swaps the config package in the file list and redirects the work root --
+    and exports CVA6_FLIST / CVA6_WORK so each module's co-sim rebuilds the RTL
+    of the SAME flavour it was mitered at."""
+    cfg_env = dict(os.environ)
+    default_cfg = CVA6_CONFIGS["cva6"]
+    work_root = CVA6_DIR / "work"
+    if config and config != default_cfg:
+        cfg_env["CONFIG"] = config
+        work_root = CVA6_DIR / f"work_{config}"
     # 1. Formal statuses from one run_cva6_equiv.sh pass.  The SAT miters are
     # the sweep's dominant cost, so when a filter or a shard narrows the module
     # set we pass those modules explicitly (the script accepts module arguments)
     # — a shard then only SAT-runs its ~1/N slice, not the whole core.
     manifest = CVA6_DIR / "cva6_modules.txt"
+    if config and config != default_cfg:
+        per_cfg = CVA6_DIR / f"cva6_modules_{config}.txt"
+        if per_cfg.exists():
+            manifest = per_cfg
     all_mods = []
     if manifest.exists():
         for line in manifest.read_text().splitlines():
@@ -594,7 +624,7 @@ def sweep_cva6(cycles, jobs, flt=None):
     # a real shard).  With neither, run bare so the script sweeps its full set.
     if subset:
         cmd += target_mods
-    rc, out = sh(cmd, cwd=CVA6_DIR, timeout=10800)
+    rc, out = sh(cmd, cwd=CVA6_DIR, timeout=10800, env=cfg_env)
     formal = {}
     for line in out.splitlines():
         m = re.match(r"\s*[✅⚠❓💥❌]*\s*(\S+)\s+(proven|cex|timeout|error|"
@@ -616,7 +646,6 @@ def sweep_cva6(cycles, jobs, flt=None):
     }
 
     # Merge the manifest so a module the run did not report still gets a row.
-    manifest = CVA6_DIR / "cva6_modules.txt"
     if manifest.exists():
         for line in manifest.read_text().splitlines():
             line = line.strip()
@@ -648,7 +677,7 @@ def sweep_cva6(cycles, jobs, flt=None):
         row = {"module": mod, "formal": label.get(formal[mod], formal[mod]),
                "cosim": "—", "check": "—", "conflicts": "—"}
         st = formal[mod]
-        work = CVA6_DIR / "work" / mod
+        work = work_root / mod
         # A module that elaborated (proven / cex / SAT-timeout) has a read_uhdm
         # netlist; error / crash / elabfail / dead / skipped do not.
         elaborated = st in ("proven", "cex", "timeout")
@@ -667,8 +696,12 @@ def sweep_cva6(cycles, jobs, flt=None):
             return row
         for f in ("obj_dir", "adj_gold.v", "adj_gate.v", "adj_tb.sv", "adj.ys"):
             sh(["rm", "-rf", str(work / f)])
+        adj_env = dict(cfg_env)
+        adj_env["CVA6_WORK"] = str(work_root)
+        adj_env["CVA6_FLIST"] = str(work_root / "cva6.f")
         rc, out = sh([sys.executable, "scripts/adjudicate.py", mod,
-                      str(cycles), "1"], cwd=CVA6_DIR, timeout=2400)
+                      str(cycles), "1"], cwd=CVA6_DIR, timeout=2400,
+                     env=adj_env)
         row["slang_cosim"] = _slang_cell(out)
         m = re.search(r"ADJUDICATION \d+ cycles: uhdm_vs_rtl=(\d+)"
                       r" slang_vs_rtl=(\d+)", out)
@@ -1901,6 +1934,7 @@ def main():
                                      "acc", "kmac", "hmac", "edn", "csrng", "aes",
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
                                      "egret", "dragonfly", "caliptra", "cva6-chip",
+                                     "cva6-hpdcache", "cva6-hext", "cva6-rv32",
                                      "opentitan"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
@@ -1970,8 +2004,9 @@ def main():
         i, n = (int(x) for x in args.shard.split("/"))
         _SHARD = (i - 1, n)
 
-    if args.core == "cva6":
-        rows = sweep_cva6(args.cycles, args.jobs, args.filter)
+    if args.core in CVA6_CONFIGS:
+        rows = sweep_cva6(args.cycles, args.jobs, args.filter,
+                          config=CVA6_CONFIGS[args.core])
     elif args.core == "pavona":
         rows = sweep_pavona(args.jobs, args.cycles, args.filter)
     elif args.core == "opentitan":

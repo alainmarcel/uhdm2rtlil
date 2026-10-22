@@ -1,0 +1,302 @@
+# CVA6 module expectations for the `cv64a6_imafdc_sv39_hpdcache` FLAVOUR.
+#
+# Same format and meaning as cva6_modules.txt (module, seq, SAT budget,
+# expected verdict), and a flavour falls back to that file when it has none of
+# its own.  This one exists because the HPDcache configuration instantiates
+# RTL the default configuration cannot: `hpdcache`, `cva6_hpdcache_subsystem`
+# and `cva6_hpdcache_wrapper` are `dead` at the default (DCacheType == WT
+# selects the write-through cache and hpdcache.sv:1327 $fatal's) and are
+# MEASURED here for the first time.
+#
+# CVA6 per-module equivalence expectations: read_uhdm vs the built-in read_slang.
+#
+#   <module>  <seq>  <timeout_s>  <expected>
+#
+# expected:
+#   proven    SAT proves the miter unsatisfiable to depth <seq>.  The goal.
+#   cex       a real counterexample survives — a frontend bug still to fix.
+#   timeout   SAT capacity, NOT a known bug: no model found within the budget.
+#             These get a short budget on purpose; we already expect them not
+#             to finish, and burning the full 900s each would make the suite
+#             unusable.  If one starts proving it flips to `proven` and is
+#             reported as unexpected — promote it here in that commit.
+#   crash     yosys itself DIED on the miter (SIGSEGV/SIGFPE), rather than
+#             running out of budget.  A real problem to investigate — it is
+#             recorded so it is visible instead of hiding inside `timeout`,
+#             which is exactly where these 21 modules were sitting until the
+#             classifier learned to tell a signal death from a timeout.
+#   elabfail  the WRAPPER does not elaborate yet.  A harness gap, not a
+#             frontend bug: most of these are auto-generated wrappers whose
+#             module takes parent-local types and needs an extras_<mod>.svh
+#             (see README).  This is the backlog for widening coverage.
+#   dead      the module cannot be elaborated at THIS configuration, so there
+#             is nothing to measure.  NOT a gap and NOT a backlog item: it is
+#             excluded from the coverage denominator and never run.  Reserve it
+#             for modules whose own parameters make them illegal here (an
+#             elaboration $fatal / an assertion on the config), not for wrappers
+#             we simply have not written yet.
+#
+# Shrink-only in the not-proven direction: a module that starts proving should
+# be promoted in the same commit; one that stops proving is a regression to
+# investigate, never to downgrade.
+#
+# Regenerate the measured part with scripts/classify_all.sh after refreshing
+# the vendored RTL (vendor_cva6.sh), then re-apply the entries below whose
+# seq/timeout differ from the 300s default sweep.
+
+# acc_dispatcher references members that DO NOT EXIST in the type the design
+# passes it.  cva6.sv binds .acc_req_t(cvxif_req_t), and CVXIF_REQ_T has no
+# `acc_req` member (it has compressed_valid/compressed_req/issue_valid/...),
+# yet acc_dispatcher.sv reads acc_req_o.acc_req.req_valid.  read_slang says so
+# plainly: "no member named 'acc_req' in 'acc_req_t'" (5 sites).  The vendored
+# acc_dispatcher.sv is out of sync with cvxif_types.svh in this snapshot, so the
+# module is not elaborable as written by ANY tool; this config also disables the
+# accelerator, so the chip never instantiates it.
+#
+# NOTE a real frontend gap this exposed: read_uhdm accepts the invalid member
+# access and emits a netlist whose spill_register output port is tied to a
+# constant, which yosys only rejects later at `hierarchy -check`.  We should
+# diagnose it at read time the way slang does.
+acc_dispatcher                         4   180   error
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+aes                                    4   180   timeout
+alu                                    4   900   proven
+alu_wrapper                            4   900   proven
+amo_alu                                4   180   error    # source not vendored: this snapshot's
+#   rtl/core has amo_buffer.sv but no amo_alu.sv anywhere, so the wrapper's
+#   instance has no definition (Surelog EL0500, read_uhdm then refuses the
+#   design).  Same class as fpnew_fma_multi's missing fmalza.  Nothing to
+#   measure until the file is vendored.
+amo_buffer                             4   900   proven
+ariane_regfile_fpga                    4   400   dead     # FPGA variant, not instantiated in the shipped config (and slang rejects its $random init)
+axi_adapter                            4   180   proven
+axi_shim                               4   400   proven
+bht                                    4   900   proven
+bht2lvl                                2   900   proven
+branch_unit                            4   900   proven
+btb                                    4   900   proven
+cache_ctrl                             4   180   proven
+commit_stage                           4   900   proven
+compressed_decoder                     4   900   proven
+compressed_instr_decoder               4   400   proven
+control_mvp                            4   400   proven
+controller                             4   900   proven
+copro_alu                              4   400   proven
+csr_buffer                             4   900   proven
+csr_regfile                            4   180   cex
+cva6                                   4   180   timeout
+cva6_fifo_v3                           4   900   proven
+cva6_hpdcache_if_adapter               4   400   proven   # proven since 2026-09-16 (3 consecutive sharded runs)
+cva6_hpdcache_subsystem                4   180   timeout  # MEASURED at this flavour: elaborates + miters (dead at the default); SAT budget
+cva6_hpdcache_subsystem_axi_arbiter    4   180   proven      # cex now measurable (was crash: null-module segfault) - TRIAGE
+cva6_hpdcache_wrapper                  4   180   timeout  # MEASURED at this flavour: elaborates + miters (dead at the default); SAT budget
+cva6_icache                             4   900   timeout  # SAT capacity: the SRAM byte enables are really all-ones since #975 (`.be_i('1)` used to import as ONE bit, so only byte 0 of each word was ever written and the proof was small); the full-depth model needs more than the 12 GB CI cap -- proven locally without the cap (seq=4)
+cva6_icache_axi_wrapper                 4   400   timeout  # SAT capacity, same as cva6_icache -- proven locally without the cap (seq=4)
+cva6_mmu                               4   180   proven
+cva6_ptw                               1   900   proven
+cva6_rvfi_probes                       4   180   proven
+cva6_shared_tlb                        4   900   proven
+cva6_tlb                               4   900   proven
+cvxif_compressed_if_driver             4   900   proven
+cvxif_example_coprocessor              4   400   proven
+cvxif_fu                               4   900   proven
+cvxif_issue_register_commit_if_driver  4   900   proven
+decoder                                4   900   proven
+div_sqrt_top_mvp                       4   180   timeout
+# ex_stage: was `cex`.  The counterexample was the duplicated always_ff pair
+# Surelog produced for its two sibling `if (CVA6Cfg.RVH) ... else ...`
+# constructs (chipsalliance/Surelog#4183, bumped in #838) -- 81 driver
+# conflicts on vaddr_to_be_flushed / asid_to_be_flushed /
+# current_instruction_is_sfence_vma.  With that fixed the miter has to prove
+# the whole execute stage and does NOT finish: still timeout at a 1800s budget,
+# so the budget stays at 180 rather than burning CI for the same verdict.
+# Verilator co-sim against the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+ex_stage                               4   180   timeout
+fpnew_cast_multi                       4   600   proven   # re-proven after bit-select-index self-determination + CPK_FORMATS typespec fix (was briefly cex when the corrected special_results import exposed the then-mirrored CPK geometry)
+fpnew_classifier                       4   180   proven
+# Was `elabfail`: the wrapper left NumPipeRegs at the module default 0, so
+# ExtRegEnaWidth was 1 and reg_ena_i[NUM_INP_REGS-1] indexed -1; read_slang
+# rejected it and the row was never measured.  CVA6 builds the DIVSQRT lane
+# with LAT_DIVSQRT regs and the DISTRIBUTED pipe config (fpu_wrap.sv
+# FPU_IMPLEMENTATION), passed down through fpnew_top -> fpnew_opgroup_block
+# -> fpnew_opgroup_multifmt_slice.  With those bound it PROVES.
+fpnew_divsqrt_multi                    4   400   proven
+fpnew_divsqrt_th_32                    4   180   proven
+fpnew_divsqrt_th_64_multi              4   900   proven
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpnew_fma                              4   180   timeout
+fpnew_fma_multi                        4   180   error    # count_id assert FIXED; remaining error = missing module (fmalza not vendored), like amo_alu
+fpnew_noncomp                          4   180   proven
+fpnew_opgroup_block                    4   180   cex
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpnew_opgroup_fmt_slice                4   180   timeout
+fpnew_opgroup_multifmt_slice           4   180   timeout  # co-sim CLEAN (was 97 divergences pre-fillgen/CPK rounds); miter exceeds SAT budget at full CPK lane widths (>15min)
+fpnew_rounding                         4   900   proven
+fpnew_top                              4   180   error    # was crash (segfault); now read_slang "Feature unimplemented"
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+fpu_wrap                               4   180   timeout
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+frontend                               4   180   timeout
+hpdcache                               4   180   timeout  # MEASURED at this flavour: elaborates + miters (dead at the default, where DCacheType==WT $fatal's); SAT budget on the whole cache
+hpdcache_1hot_to_binary                4   180   proven
+hpdcache_amo                           4   900   proven
+hpdcache_cbuf                          4   180   proven
+hpdcache_cmo                           4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_core_arbiter                  4   180   proven   # the unpacked-array ports are flattened by the wrapper now (gen_wrapper flatten_array_ports), the element-order convention cex is gone
+hpdcache_ctrl                          4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 185v187 (comparison artifact)
+hpdcache_ctrl_pe                       4   180   proven
+hpdcache_data_downsize                 4   400   dead     # STILL not instantiable here: its own $fatal "RD_WIDTH must be less to WR_WIDTH" (hpdcache_data_downsize.sv:182) does not depend on the cache type
+hpdcache_data_resize                   4   180   proven   # PROVEN: typedef-range + packed-write chain fixes
+hpdcache_data_upsize                   4   180   proven   # PROVEN: multi-dim packed dynamic write fixes
+hpdcache_decoder                       4   180   proven
+hpdcache_demux                         4   180   proven
+hpdcache_fifo_reg                      4   900   proven
+hpdcache_fifo_reg_initialized          4   180   proven   # PROVEN once the wrapper binds real params (was FIFO_DEPTH=0/fifo_data_t=logic degenerate default — [-1:0] ranges); co-sim clean
+hpdcache_flush                         4   180   proven   # PROVEN: Surelog typedef-range + reader fixes
+hpdcache_fxarb                         4   180   proven
+hpdcache_lfsr                          4   900   proven
+hpdcache_mem_req_read_arbiter          4   180   proven
+hpdcache_mem_req_write_arbiter         4   180   proven   # promoted: proves since the fev rounds (co-sim NO_DIVERGENCE)
+hpdcache_mem_resp_demux                4   180   proven
+hpdcache_mem_to_axi_read               4   400   proven
+hpdcache_mem_to_axi_write              4   400   proven
+hpdcache_memctrl                       4   180   timeout  # wrapper now binds hpdcache_dir_entry_t; co-sim BOTH_DIFFER 137v160, same first cycle/signal both sides
+hpdcache_miss_handler                  4   180   elabfail  # was crash (segfault); now elabfail
+hpdcache_mshr                          4   400   proven   # async-reset RAM clear (mem2reg demotion) + contract-legalized wrapper
+hpdcache_mux                           4   180   proven
+hpdcache_prio_1hot_encoder             4   180   proven
+hpdcache_prio_bin_encoder              4   180   proven
+# Was `elabfail`: the wrapper left DATA_SIZE at the module default 0, so wdata
+# was `logic[-1:0]` and read_slang rejected the byte selects.  Bound from
+# HPDcacheCfg like ADDR_SIZE/DEPTH already were; the module now elaborates and
+# miters.  Still SAT-hard (timeout at 180s and at 1200s), budget kept at 180.
+# Verilator co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+hpdcache_regbank_wbyteenable_1rw       4   180   timeout
+hpdcache_regbank_wmask_1rw             4   180   proven   # co-sim N/A: wrapper exposes no outputs to compare
+hpdcache_rrarb                         4   180   proven
+hpdcache_rtab                          4   180   proven   # promoted: proves since the fev rounds (co-sim NO_DIVERGENCE)
+hpdcache_sram                          4   180   proven
+hpdcache_sram_1rw                      4   180   proven
+hpdcache_sram_wbyteenable              4   400   timeout  # now elaborates+miters (was error: 1-bit memory word); SAT budget
+hpdcache_sram_wbyteenable_1rw          4   400   timeout  # now elaborates+miters (was error: 1-bit memory word); SAT budget
+hpdcache_sram_wmask                    4   180   proven
+hpdcache_sram_wmask_1rw                4   180   proven
+hpdcache_sync_buffer                   4   900   proven
+hpdcache_uncached                      4   400   cex      # cex now measurable (was error: type-param width) - TRIAGE
+hpdcache_victim_plru                   4  3600   proven   # PROVEN 2026-08-24: dyn packed elem write used elem-typedef range as outer dim (wrote set*256, read set*8)
+hpdcache_victim_random                 4   180   proven
+hpdcache_victim_sel                    4   180   proven   # PROVEN after part-select param-bound fold fix
+hpdcache_wbuf                          4   180   elabfail  # was crash (segfault); now elabfail
+hwpf_stride                            4   400   proven
+hwpf_stride_arb                        4   400   proven
+# Was `cex`; PROVEN after the Surelog sibling-generate fix (#838).
+hwpf_stride_wrapper                    4   400   proven
+id_stage                               4   180   proven
+instr_decoder                          4   400   proven
+instr_queue                            4   900   proven
+instr_realign                          4   900   proven
+instr_scan                             4   900   proven
+issue_read_operands                    4   180   timeout  # co-sim CLEAN (0/2000 vs RTL, slang 0) after the dyn-index/element-field/supersede fixes; SAT capacity only
+issue_stage                            4   180   timeout
+iteration_div_sqrt_mvp                 4   900   proven
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+load_store_unit                        4   180   timeout
+load_unit                              4   900   proven
+lsu_bypass                             4   900   proven
+macro_decoder                          4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 1/1 -- uhdm and slang diverge IDENTICALLY,
+# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+
+miss_handler                           4   180   proven
+mult                                   4   180   timeout
+multiplier                             4   180   timeout
+norm_div_sqrt_mvp                      4   900   proven
+nrbd_nrsc_mvp                          4   900   proven
+perf_counters                          4   900   proven
+pmp                                    4   180   proven
+pmp_data_if                            4   180   proven
+pmp_entry                              4   900   proven
+popcount                               4   900   proven
+preprocess_mvp                         4   400   proven
+ras                                    4   900   proven
+raw_checker                            4   900   proven
+scoreboard                             4   180   timeout  # co-sim CLEAN (0/2000 vs RTL) since the type-param write walk + packed element-range fixes; SAT capacity only, still times out at 1800s
+serdiv                                 4   180   timeout
+std_cache_subsystem                    4   180   timeout  # was crash (segfault); now timeout
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+std_nbdcache                           4   180   timeout
+store_buffer                           4   900   proven
+store_unit                             4   900   proven
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: NO_DIVERGENCE, 300 cycles.
+
+tag_cmp                                4   400   timeout
+trigger_module                         4   900   proven
+wt_axi_adapter                         4   400   proven      # cex now measurable (was error: 1-bit chained-type-param port) - TRIAGE
+wt_cache_subsystem                     4   180   timeout
+wt_dcache                              4   180   timeout
+# Was `cex`; PROVEN after the Surelog sibling-generate fix (#838).
+wt_dcache_ctrl                         4   180   proven
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  Co-sim vs the behavioural RTL: BOTH_DIFFER 63/63 -- uhdm and slang
+# diverge IDENTICALLY, the shared sim-artefact class (X-init / stimulus), not a
+# reader bug.
+#
+# It is nevertheless `cex`, NOT `timeout`.  `timeout` was recorded on the
+# assumption that the miter would prove it given budget; it does not.  At the
+# 180 s budget here SAT does not finish, but at 2400 s it reports
+# "model found: FAIL" on a miter of 8.8 M variables / 23.8 M clauses -- a
+# genuine read_uhdm vs read_slang difference that the short budget was hiding.
+# The nightly CI runner gets far enough to find it, which is why main's own
+# sharded regression was failing on `got=cex want=timeout` while a slower
+# machine saw `timeout` and called the suite green.
+#
+# `cex` is the honest and the STABLE expectation: a machine that still times
+# out reports SOFT (inconclusive, tolerated), whereas an unexpected `cex` is a
+# hard failure by policy.  OPEN: the counterexample itself is unfixed.
+
+wt_dcache_mem                           4   180   timeout  # SAT capacity under the 12 GB cap since #975 (full-width byte enables); without the cap the miter still finds the known cex: the reference has no SRAM contents
+wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
+# Was `cex`.  The counterexample was Surelog duplicating the always blocks of
+# sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in
+# #838).  With that fixed the miter must prove the module outright and does
+# not finish in budget.  Co-sim vs the behavioural RTL: BOTH_DIFFER 216/216 -- uhdm and slang diverge IDENTICALLY,
+# the shared sim-artefact class (X-init / stimulus), not a reader bug.
+
+wt_dcache_wbuffer                      4   180   timeout
+zcmt_decoder                           4   180   cex      # co-sim NO_DIVERGENCE 0/0 (adjudicator async2sync fix)
+rr_arb_tree                            4   400   proven
