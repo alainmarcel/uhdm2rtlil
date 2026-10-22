@@ -55,20 +55,15 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 ### Test Suite Status
 
 `make test-all --all` runs the internal SystemVerilog suite plus the upstream
-Yosys suite, and is the same run as the sharded
+Yosys suite -- the same run as the sharded
 [Regression](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/regression-sharded.yml)
-workflow (every PR + nightly).  Local developer run:
-`cd test && ./run_parallel.sh 6 --no-cva6` (the 1314 internal tests, ~24 min).  A PR
-lands only on a clean run.  The counts below are the regression's own summary
-(`Total tests run` / per-suite lines of the combined report), not a tally kept
-by hand; "upstream" counts the 514 generated yosys tests the suite scored in
-that run (the deliberately invalid `tests/errors` and tests that produce no RTLIL
-under any frontend are generated but not scored).  Counts are the regression of
-main at `f65702a6c` (2026-10-22, run 39719454412 -- the tree the 2026-10-22
-nightly sweeps below ran on), split internal / upstream by the `run/` prefix of
-the shard result lists.
-The 11 upstream failures are the **Yosys 0.70** bump's, unchanged since #1186
-and each recorded in `failing_tests.txt`; crashes have been **0** since it.
+workflow (every PR + nightly); the developer run is
+`cd test && ./run_parallel.sh 6 --no-cva6` (the internal tests, ~24 min), and
+a PR lands only on a clean run.  The counts are the regression's own summary
+of main at `f65702a6c` (2026-10-22, run 39719454412), not a tally kept by
+hand; "upstream" is the 514 generated yosys tests the suite scores.  The 11
+upstream failures are the Yosys 0.70 bump's, each recorded in
+`test/failing_tests.txt`.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
@@ -92,12 +87,9 @@ and each recorded in `failing_tests.txt`; crashes have been **0** since it.
   (`read_verilog` mis-lowers the construct) — a SAT miter against `read_slang`
   proves UHDM correct.
 - **Sim-equiv ratchet** (`test/sim_equiv_warn_baseline.txt`, shrink-only): 84
-  divergences outstanding across the full corpus; 75 analyzed, 58 shown to be
-  sim/synth artefacts a miter proves UHDM == Verilog, 17 still inconclusive
-  (adjudication-miter budget under the 12-shard CI load, not counterexamples).
-  Restricted to the internal SV suite the backlog is 22, and all 55 analyzed
-  ones are artefacts with 0 inconclusive (local `run_parallel.sh` of the same
-  commit).
+  divergences outstanding across the full corpus, 58 of the 75 analyzed shown
+  by a miter to be sim/synth artefacts; 22 on the internal suite, all analyzed
+  ones artefacts.
 
 
 ### Supported Core IP
@@ -119,189 +111,33 @@ proof gap is never mistaken for a bug.
 | **Ibex** | [lowRISC/ibex](https://github.com/lowRISC/ibex) | 2-stage RV32IMC core (+PMP, ICache, lockstep); 28 modules incl. `ibex_top` | **22 / 28 proven** · 20 / 24 co-sim, 0 `read_uhdm` divergences (4 adjudicated artefacts) · 28 / 28 opt-clean · 1 `differs` formal-only, 1 over the SAT budget, 4 no `read_slang` reference · `read_slang` itself diverges on 3 | [ibex](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ibex.yml) |
 | **rp32 (R5P)** | [jeras/rp32](https://github.com/jeras/rp32) | 32-bit cores + TCB SoCs; 13 modules | **6 / 13 proven** · 3 / 7 co-sim, 0 divergences (4 adjudicated artefacts) · 13 / 13 opt-clean · 7 rows have no `read_slang` reference · both SoCs boot and run a program · `read_slang` diverges on 3 | [rp32](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rp32.yml) |
 | **fx68k** | [ijor/fx68k](https://github.com/ijor/fx68k) @ [`0602ee46`](https://github.com/ijor/fx68k/commit/0602ee4627b10f301298f2673d826cdd6baa9327) (the commit chipsalliance/sv-tests pins) | Cycle-accurate **Motorola 68000** — the one non-RISC-V CPU core in the sv-tests list: sequencer, microcode/nanocode ROMs and their address PLA, ALU and shifter, bus arbiter/controller, exception unit; 22 modules from three files | **18 / 22 proven** · 6 / 10 co-sim, 0 divergences (4 adjudicated artefacts) · 21 / 21 opt-clean · 1 `differs` formal-only, 3 no `read_slang` reference · `read_slang` diverges on 6 of the 12 it co-simulates | [fx68k](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-fx68k.yml) |
-| **Syntacore SCR1** | [syntacore/scr1](https://github.com/syntacore/scr1) @ [`ebb5e355`](https://github.com/syntacore/scr1/commit/ebb5e3551a9d93c0ee95f0b767dd878b8927e702) | RV32IMC core, pipeline and the AXI/AHB SoC tops; 37 modules | **29 / 37 proven** · 32 / 32 co-sim, 0 divergences · 37 / 37 opt-clean · 2 `differs` formal-only (`scr1_dm`'s Surelog enum-value fold is fixed, #4208 / #1091) · 6 over the SAT budget | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
-| **RgGen** | [rggen/rggen-sv-rtl](https://github.com/rggen/rggen-sv-rtl) @ [`6b3f25a0`](https://github.com/rggen/rggen-sv-rtl/commit/6b3f25a08fdbe87c6ab0bccbf83d9a16eb6974f7) + [rggen/rggen-sample](https://github.com/rggen/rggen-sample) @ [`9458b9ff`](https://github.com/rggen/rggen-sample/commit/9458b9ffd6d9bb5b4b23a0d66b55ae6c653e8012) (the commits chipsalliance/sv-tests pins) | Register-file generator: the hand-written library (bit fields and their counters/triggers, register and adapter commons, APB / AXI4-Lite / Avalon / Wishbone / native bridges, the address decoder, the mux and its recursive OR reducer) plus the generated sample blocks; 26 modules over two repos | **25 / 25 proven — the family is clean** · 25 / 25 co-sim, 0 divergences · 25 / 25 opt-clean · 0 `differs`, 0 over budget, 0 rows without a reference (the four `differs` rows of 2026-10-16 are all fixed) | [rggen](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rggen.yml) |
+| **Syntacore SCR1** | [syntacore/scr1](https://github.com/syntacore/scr1) @ [`ebb5e355`](https://github.com/syntacore/scr1/commit/ebb5e3551a9d93c0ee95f0b767dd878b8927e702) | RV32IMC core, pipeline and the AXI/AHB SoC tops; 37 modules | **29 / 37 proven** · 32 / 32 co-sim, 0 divergences · 37 / 37 opt-clean · 2 `differs` formal-only · 6 over the SAT budget | [scr1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-scr1.yml) |
+| **RgGen** | [rggen/rggen-sv-rtl](https://github.com/rggen/rggen-sv-rtl) @ [`6b3f25a0`](https://github.com/rggen/rggen-sv-rtl/commit/6b3f25a08fdbe87c6ab0bccbf83d9a16eb6974f7) + [rggen/rggen-sample](https://github.com/rggen/rggen-sample) @ [`9458b9ff`](https://github.com/rggen/rggen-sample/commit/9458b9ffd6d9bb5b4b23a0d66b55ae6c653e8012) (the commits chipsalliance/sv-tests pins) | Register-file generator: the hand-written library (bit fields and their counters/triggers, register and adapter commons, APB / AXI4-Lite / Avalon / Wishbone / native bridges, the address decoder, the mux and its recursive OR reducer) plus the generated sample blocks; 26 modules over two repos | **25 / 25 proven — the family is clean** · 25 / 25 co-sim, 0 divergences · 25 / 25 opt-clean · 0 `differs`, 0 over budget, 0 rows without a reference | [rggen](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rggen.yml) |
 | **VeeR EH1** | [chipsalliance/Cores-VeeR-EH1](https://github.com/chipsalliance/Cores-VeeR-EH1) @ [`d04b1c7a`](https://github.com/chipsalliance/Cores-VeeR-EH1/commit/d04b1c7ae675a63dc4307cacfd10547ec937b928) | RV32IMC core (`veer` / `veer_wrapper`), its IFU/DEC/EXU/LSU/DBG blocks, the `rv*` primitive library and the AHB/AXI4 bridges; 66 modules | **55 / 67 proven** · 66 / 66 co-sim, 0 divergences · 67 / 67 opt-clean · whole core `veer` equivalent + co-sim PASS · 0 undriven, 0 read errors · 11 over the SAT budget, 1 no reference | [veer-eh1](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-eh1.yml) |
-| **TNoC** | [taichi-ishitani/tnoc](https://github.com/taichi-ishitani/tnoc) @ [`7e9841ff`](https://github.com/taichi-ishitani/tnoc/commit/7e9841ff775ea22fba3f222f7bdfe35668345e00) (the commit chipsalliance/sv-tests pins) | Network-on-chip: the fabric and its routers, input/output blocks and switches, the virtual-channel arbiter / merger / mux / splitter, the packet serializer and deserializer, the AXI master and slave adapters, over the `tbcm_*` basic-component library (a submodule); 43 modules | **16 / 43 proven** · 12 / 12 co-sim, **0 divergences** · 24 / 24 opt-clean · 2 `differs` formal-only (`tnoc_dummy_node` and `tnoc_flit_if_dummy_sender`, degenerate dummies whose co-sim is `0 active` and passes) · 25 rows have no `read_slang` reference (its interface-array ports) · `tnoc_packet_serializer`, `tnoc_packet_deserializer` and `tnoc_error_checker` were fixed by a Surelog const-function fold (chipsalliance/UHDM#1166, chipsalliance/Surelog#4221) | [tnoc](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-tnoc.yml) |
-| **VeeR EL2** | [chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2) @ [`c2ea3a73`](https://github.com/chipsalliance/Cores-VeeR-EL2/commit/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e) (the commit chipsalliance/sv-tests pins) | RV32IMC core (`el2_veer_wrapper` / `el2_veer`), its IFU/DEC/EXU/LSU/DBG/PIC/PMP/DMA blocks, the lockstep shadow and the rv* primitive library; 91 modules (`rvclkhdr` excluded) | **77 / 91 proven** · 87 / 87 co-sim, **0 divergences** · 91 / 91 opt-clean, 0 undriven · the six ICCM/DCCM/I-cache memory wrappers (`EL2_IC_DATA`, `EL2_IC_TAG`, `el2_ifu_ic_mem`, `el2_ifu_iccm_mem`, `el2_lsu_dccm_mem`, `el2_mem`) diverged by 171-300 cycles until #1258 fixed the interface-member select they all share · 1 `differs`, 8 over budget, 5 no reference · `rvclkhdr` is excluded: it sits inside `ifndef RV_FPGA_OPTIMIZE` and is not compiled in the swept configuration (#1260) | [veer-el2](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-el2.yml) |
-| **RSD** | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) @ [`7b65f6ba`](https://github.com/rsd-devel/rsd/commit/7b65f6ba) | Out-of-order superscalar RISC-V core (RV32IMF) — the `Core` sv-tests builds, its front end, rename / issue / commit stages, FP pipelines and cache hierarchy; 165 rows after its interfaces and test benches are set aside | **116 / 165 proven** · 146 / 147 co-sim, **0 divergences** (1 adjudicated artefact) · 151 / 151 opt-clean · `PerformanceCounter` regressed for one day on 2026-10-19 and was fixed the same day in #1257 · 7 `differs` formal-only, 23 over the SAT budget, 19 no `read_slang` reference · `read_slang` diverges on 4 | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
+| **TNoC** | [taichi-ishitani/tnoc](https://github.com/taichi-ishitani/tnoc) @ [`7e9841ff`](https://github.com/taichi-ishitani/tnoc/commit/7e9841ff775ea22fba3f222f7bdfe35668345e00) (the commit chipsalliance/sv-tests pins) | Network-on-chip: the fabric and its routers, input/output blocks and switches, the virtual-channel arbiter / merger / mux / splitter, the packet serializer and deserializer, the AXI master and slave adapters, over the `tbcm_*` basic-component library (a submodule); 43 modules | **16 / 43 proven** · 12 / 12 co-sim, **0 divergences** · 24 / 24 opt-clean · 2 `differs` formal-only (`tnoc_dummy_node` and `tnoc_flit_if_dummy_sender`, degenerate dummies whose co-sim is `0 active` and passes) · 25 rows have no `read_slang` reference (its interface-array ports) | [tnoc](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-tnoc.yml) |
+| **VeeR EL2** | [chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2) @ [`c2ea3a73`](https://github.com/chipsalliance/Cores-VeeR-EL2/commit/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e) (the commit chipsalliance/sv-tests pins) | RV32IMC core (`el2_veer_wrapper` / `el2_veer`), its IFU/DEC/EXU/LSU/DBG/PIC/PMP/DMA blocks, the lockstep shadow and the rv* primitive library; 91 modules (`rvclkhdr` excluded) | **77 / 91 proven** · 87 / 87 co-sim, **0 divergences** · 91 / 91 opt-clean, 0 undriven · 1 `differs`, 8 over budget, 5 no reference · `rvclkhdr` excluded (not compiled in the swept configuration) | [veer-el2](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-veer-el2.yml) |
+| **RSD** | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) @ [`7b65f6ba`](https://github.com/rsd-devel/rsd/commit/7b65f6ba) | Out-of-order superscalar RISC-V core (RV32IMF) — the `Core` sv-tests builds, its front end, rename / issue / commit stages, FP pipelines and cache hierarchy; 165 rows after its interfaces and test benches are set aside | **116 / 165 proven** · 146 / 147 co-sim, **0 divergences** (1 adjudicated artefact) · 151 / 151 opt-clean · 7 `differs` formal-only, 23 over the SAT budget, 19 no `read_slang` reference · `read_slang` diverges on 4 | [rsd](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-rsd.yml) |
 | **BlackParrot** | [black-parrot/black-parrot](https://github.com/black-parrot/black-parrot) @ [`710b0ea9`](https://github.com/black-parrot/black-parrot/commit/710b0ea998c3b2f70ef9671d5619e439f13f826c) (the commit chipsalliance/sv-tests pins) | Linux-capable RV64 multicore (`wrapper` / `bp_processor`): the FE/BE/ME complexes, the CCE/LCE coherence engines, the bedrock network, over `basejump_stl` + `HardFloat` (three repos); 125 modules | **50 / 125 proven** · 44 / 45 co-sim, 0 `read_uhdm` divergences (1 adjudicated artefact) · 83 / 83 opt-clean · 2 `differs` formal-only, 8 over the SAT budget · 65 rows have no `read_slang` reference (28 of them read_slang cannot elaborate) · `read_slang` diverges on 3 | [black-parrot](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-black-parrot.yml) |
-| **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **28 / 32 proven** · 28 / 29 co-sim, 0 divergences (1 adjudicated artefact) · 32 / 32 opt-clean · 4 SAT timeouts (256-bit datapaths) · `read_slang` diverges on 2 · `otbn_rf_bignum_fpga` went from a read-fail to a full pass in #1254 (a generate-scope block-local memory was one memory shared by every instance) | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
-| **OpenTitan IP library** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | The other 44 of OpenTitan's 45 IP blocks -- `hw/ip`, `hw/ip_templates` and top_earlgrey's generated IP, over the vendored RISC-V debug module and `prim_generic`; 605 modules, 817 RTL files.  Pavona is a hard fork of this tree and is swept separately | **first nightly pending** -- measured locally before landing (#1268): a 1/12 shard **41 / 47 comparable proven**, and the large blocks sampled separately all proven with clean 301-cycle co-sims (`otp_ctrl`, `spi_device`, `usbdev`, `aes_cipher_core`, `sha3`, `keymgr_dpe`, `dma`, `mbx`, `ascon_core`, `hmac_core`, `kmac_core`, `lc_ctrl`, `rv_dm`) · three candidate reader defects already on the first shard, all `read_slang` clean: `prim_gf_mult` (300 diverging cycles), `rram_phy_rd_buf_dep` (73), `i3c_target_fsm` (`differs`) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **OpenTitan** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | [OTBN](https://github.com/lowRISC/opentitan/tree/master/hw/ip/otbn/rtl) 256-bit bignum accelerator; 32 modules, 122 files | **28 / 32 proven** · 28 / 29 co-sim, 0 divergences (1 adjudicated artefact) · 32 / 32 opt-clean · 4 SAT timeouts (256-bit datapaths) · `read_slang` diverges on 2 | [opentitan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-opentitan.yml) |
+| **OpenTitan IP library** (upstream) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) @ [`f49474bc`](https://github.com/lowRISC/opentitan/commit/f49474bc89c3ce8a99536329a1e16bf22936da37) | The other 44 of OpenTitan's 45 IP blocks -- `hw/ip`, `hw/ip_templates` and top_earlgrey's generated IP, over the vendored RISC-V debug module and `prim_generic`; 605 modules, 817 RTL files.  Pavona is a hard fork of this tree and is swept separately | **first nightly pending** -- a 1/12 shard measured before landing (#1268): **41 / 47 comparable proven**, the large blocks (`otp_ctrl`, `spi_device`, `usbdev`, `aes_cipher_core`, `sha3`, `keymgr_dpe`, `dma`, `mbx`, `kmac_core`, `lc_ctrl`, `rv_dm`) all proven with clean co-sims · three reader-defect leads on that shard, all `read_slang` clean: `prim_gf_mult` (300 diverging cycles, fixed in #1270), `rram_phy_rd_buf_dep` (73), `i3c_target_fsm` (`differs`) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **Pavona** | [pavona/pavona](https://github.com/pavona/pavona) @ [`61ebeba1`](https://github.com/pavona/pavona/commit/61ebeba10cafca3b0dd43786fa79d26882a5ccf5) | OpenTitan-derived SoC family: hardened Ibex, TL-UL fabric, 27 crypto/peripheral IPs, 2 full chips; 300 module rows + 98 chip instances | **381 / 400 proven** · 380 / 389 co-sim, 0 `read_uhdm` divergences (9 adjudicated artefacts; both full chips build and co-simulate) · 395 / 395 opt-clean · 14 over the SAT budget, 3 miter errors · `read_slang` diverges on 11 | [pavona](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-pavona.yml) · [per-IP table](docs/pavona_sweep.md) |
-| **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules, plus the full core split into its 138 distinct instantiations (366 instances paired with `read_slang`) | **228 / 280 proven** (142 modules 99, 138 core instantiations 129) · 126 / 135 co-sim, 0 `read_uhdm` divergences (9 adjudicated artefacts) · 273 / 273 opt-clean, 0 undriven on every row · full core lowers with 0 inferred latches · 6 `differs`, all adjudicated non-defects (see below), 39 over the SAT budget, 3 miter errors | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
+| **Ariane CVA6** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | 6-stage 64-bit app-class core (`cv64a6_imafdc_sv39`) + HPDcache, FPnew; 142 modules, plus the full core split into its 138 distinct instantiations (366 instances paired with `read_slang`) | **228 / 280 proven** (142 modules 99, 138 core instantiations 129) · 126 / 135 co-sim, 0 `read_uhdm` divergences (9 adjudicated artefacts) · 273 / 273 opt-clean, 0 undriven on every row · full core lowers with 0 inferred latches · 6 `differs`, all adjudicated non-defects (see [docs/benchmarking.md](docs/benchmarking.md)), 39 over the SAT budget, 3 miter errors | [cva6](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6.yml) |
 | **Ariane CVA6 flavours** | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | The three OTHER configurations chipsalliance/sv-tests builds the core at: `cv64a6_imafdc_sv39_hpdcache` (the HPDcache subsystem instead of the write-through cache), `cv64a6_imafdch_sv39` (the hypervisor extension) and `cv32a6_imac_sv32` (32-bit, Sv32, no FPU).  The same RTL at a different `*_config_pkg.sv`, swept per module like the default; 429 rows over three families | **301 / 429 proven** (hpdcache 99 / 145, H-extension 100 / 142, RV32 102 / 142) · 372 / 402 co-sim · **2 `read_uhdm` divergences** (`cva6_hpdcache_subsystem` 2 cycles, `cva6_hpdcache_wrapper` 3, both at the HPDcache flavour and `read_slang` clean -- the next targets) · 28 adjudicated artefacts · 408 / 408 opt-clean · 15 `differs`, every one the same five adjudicated non-defects the default configuration carries (`csr_regfile`, `zcmt_decoder`, `macro_decoder`, `hpdcache_cmo`, `hpdcache_uncached`) seen three times · 92 over the SAT budget · the HPDcache flavour measures `hpdcache`, `cva6_hpdcache_subsystem` and `cva6_hpdcache_wrapper` for the first time: all three are `dead` at the default configuration | [cva6-flavours](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-cva6-flavours.yml) |
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **20 / 22 instances proven** · 21 / 21 co-sim, 0 divergences · 21 / 21 opt-clean, 0 driver conflicts · full-chip co-sim NO_DIVERGENCE over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | the project's **hand-written** SystemVerilog arithmetic library — SRT dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**, which is Chisel | **19 / 21 proven** · 21 / 21 co-sim, 0 divergences · 21 / 21 opt-clean · 2 SAT timeouts (64-bit divide datapaths) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig`.  **There is no Verilog to read**: the RTL is the Chisel generator's output (1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules, one per file), published as the release asset [`xiangshan-rtl-e4566c29`](https://github.com/alainmarcel/uhdm2rtlil/releases/tag/xiangshan-rtl-e4566c29) and swept module by module in 16 CI shards | whole core elaborates clean (1981 modules / 6.52 M cells, 1 warning) · per-module **1602 / 2002 proven** · 1944 / 1944 co-sim, 0 divergences · 1994 / 1994 opt-clean · 392 over the SAT budget · `read_slang` diverges on 3 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| **External IP** (11 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **865 / 949 comparable proven** of 1023 rows (the XiangShan library's 21 rows have their own line) · 889 / 913 co-sim, **0 `read_uhdm` divergences** (24 adjudicated artefacts) · 985 / 985 opt-clean · 74 rows not comparable · the five caliptra-ss rows that vendor VeeR EL2's memory wrappers as `css_mcu0_*` were fixed with the EL2 ones in #1258 | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
-| **chipsalliance/sv-tests** | [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) @ [`db159ad8`](https://github.com/chipsalliance/sv-tests/commit/db159ad8e9cbbd62036569d240153f753258f640) | The LRM-chapter conformance corpus, not a design: 708 synthesizable tests of its own local suite (`tests/chapter-*`, `generic`, `sanity.sv`). The cores it also defines are swept per core | **read_uhdm 689 / 708** vs read_verilog 364, read_slang 682 · 474 / 527 proven · 527 / 527 opt-clean, 0 conflicts · co-sim on 12 rows, **0 divergences**: the one row that diverged is `force` / `release`, which has no synthesis semantics on either side, and it is now adjudicated in `test/sv_tests_cosim_analyzed.txt` (#1261) | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) · [per-test table](docs/sv_tests_coverage.md) |
+| **External IP** (11 repos) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **865 / 949 comparable proven** of 1023 rows (the XiangShan library's 21 rows have their own line) · 889 / 913 co-sim, **0 `read_uhdm` divergences** (24 adjudicated artefacts) · 985 / 985 opt-clean · 74 rows not comparable | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **chipsalliance/sv-tests** | [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) @ [`db159ad8`](https://github.com/chipsalliance/sv-tests/commit/db159ad8e9cbbd62036569d240153f753258f640) | The LRM-chapter conformance corpus, not a design: 708 synthesizable tests of its own local suite (`tests/chapter-*`, `generic`, `sanity.sv`). The cores it also defines are swept per core | **read_uhdm 689 / 708** vs read_verilog 364, read_slang 682 · 474 / 527 proven · 527 / 527 opt-clean, 0 conflicts · co-sim on 12 rows, **0 divergences** (`force` / `release`, which has no synthesis semantics on either side, is adjudicated in `test/sv_tests_cosim_analyzed.txt`) | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) · [per-test table](docs/sv_tests_coverage.md) |
 
-#### Co-simulation per core: `read_slang` vs `read_uhdm`
-
-Every sweep row co-simulates **both** netlists against the same RTL under the
-same random stimulus, so the reference frontend is measured by the same yardstick
-as this one.  The columns are disjoint counts and the arithmetic holds on every
-line and in the total:
-
-- *co-simulated* = rows whose netlist got a Verilator run at all;
-  **Rows − co-simulated** = rows with no co-sim for that netlist (no ports — 514
-  of the 526 sv-tests snippets — no buildable testbench, no default
-  elaboration, or a formal-only instantiation row).
-- `read_slang`: **co-simulated = pass + diverge**.
-- `read_uhdm`: **co-simulated = pass + diverge + artefact**, where *artefact* is
-  a divergence a SAT miter proved to be a simulation artefact (X-semantics,
-  unique/priority-case violation stimulus), not a reader defect, and
-  **diverge** is a real one.
-- The rows are the rows of the Supported Core IP table above, in its order
-  (the sweep links are there); the XiangShan library has its own row, so the
-  External IP row is the other 10 repos and every column sums to its total.
-  The script asserts both identities before printing.
-
-| Core | Rows | Formal proven | `read_slang` co-simulated | pass | **diverge** | `read_uhdm` co-simulated | pass | **diverge** | artefact | Undriven |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **Ibex** | 28 | 22 | 23 | 20 | **3** | 24 | 20 | 0 | 4 | 0 |
-| **rp32 (R5P)** | 13 | 6 | 5 | 2 | **3** | 7 | 3 | 0 | 4 | 0 |
-| **fx68k** | 22 | 18 | 12 | 6 | **6** | 10 | 6 | 0 | 4 | 0 |
-| **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
-| **RgGen** | 25 | 25 | 25 | 25 | 0 | 25 | 25 | 0 | 0 | 0 |
-| **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
-| **TNoC** | 43 | 16 | 12 | 12 | 0 | 12 | 12 | 0 | 0 | 0 |
-| **VeeR EL2** | 91 | 77 | 86 | 86 | 0 | 87 | 87 | 0 | 0 | 0 |
-| **RSD** | 165 | 116 | 144 | 140 | **4** | 147 | 146 | 0 | 1 | 0 |
-| **BlackParrot** | 125 | 50 | 45 | 42 | **3** | 45 | 44 | 0 | 1 | 0 |
-| **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **2** | 29 | 28 | 0 | 1 | 0 |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **11** | 389 | 380 | 0 | 9 | 0 |
-| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
-| **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **37** | 402 | 372 | **2** | 28 | 0 |
-| **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan core** (香山) | 2002 | 1602 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 865 | 893 | 863 | **30** | 913 | 889 | 0 | 24 | 0 |
-| **chipsalliance/sv-tests** | 527 | 474 | 11 | 11 | 0 | 12 | 11 | 0 | 1 | 0 |
-| **All sweeps** (18 workflows) | **5352** | **4332** | **4295** | **4182** | **113** | **4321** | **4233** | **2** | **86** | **0** |
-
-**Two `read_uhdm` divergences remain, and both are new coverage finding new
-defects**: 4233 of the 4321 co-simulated rows pass outright, 86 are divergences
-a SAT miter proved to be simulation artefacts, and the two real ones are
-`cva6_hpdcache_subsystem` (2 diverging cycles) and `cva6_hpdcache_wrapper` (3)
-at the HPDcache flavour of CVA6 -- modules that are `dead` at the default
-configuration and were measured for the first time this week, `read_slang`
-clean on both.  `read_slang`, measured on the same rows under the same
-stimulus, diverges on 113.  The table is 430 rows larger than 2026-10-20: the
-three CVA6 flavours add 429 rows and the sv-tests corpus moved by one.
-
-The 14 divergences the 2026-10-19 table carried were closed in five days, and
-each cause is worth keeping because none of them was what the symptom
-suggested:
-
-* **11 of the 14 were ONE defect**, counted twice because two families vendor
-  the same RTL: VeeR EL2's six ICCM / DCCM / I-cache memory wrappers
-  (`EL2_IC_DATA` 171 diverging cycles, `EL2_IC_TAG` 280, `el2_ifu_ic_mem` 284,
-  `el2_ifu_iccm_mem` 300, `el2_lsu_dccm_mem` 300, `el2_mem` 300) and the same
-  five again as caliptra-ss's `css_mcu0_*`.  An interface-member bit-select was
-  answered by a module-level local of the SAME NAME, turning
-  `dccm_bank_dout[i][..] = dccm_mem_export.dccm_bank_dout[i]` into a
-  self-assignment, so the read data never left its reset value (#1258).  A
-  self-assignment still builds a structurally valid netlist that `check`
-  reports clean, so the test for it asserts the CONNECTION, not a cell count.
-* **TNoC `tnoc_packet_serializer`** (189) was **not ours**.  Our netlist held
-  the module's multi-flit header arm while `read_slang` held the single-flit
-  one, and Surelog's own elaborated model held only the multi arm.  A constant
-  function's `if` / `return` over a struct FORMAL never folded, so
-  `HEADER_FLITS` had no value when the generate-if was evaluated -- and that
-  if-generate takes the else branch whenever it cannot evaluate the condition,
-  silently.  Fixed upstream (chipsalliance/UHDM#1166,
-  chipsalliance/Surelog#4221), which closed `tnoc_packet_deserializer` and
-  `tnoc_error_checker` with it.
-* **RSD `PerformanceCounter`** (228) was a regression we introduced on
-  2026-10-19 and fixed the same day: #1249's staged in-flight path had started
-  answering single-level struct field reads while the write side of those
-  compound assignments kept resolving the field its own way, so the two stopped
-  agreeing.  Guarding it to genuinely nested fields restored the row (#1257).
-* **sv-tests `chapter-10/10.6.2--force-release.sv`** uses `force` / `release`,
-  which has no synthesis semantics on either side: Verilator honours the force
-  on the RTL and no netlist can represent it, so the divergence measures the
-  corpus.  The sweep had no adjudication list at all, unlike every other
-  sweep, so it now reads one (#1261).
-
-Everything that used to be on this list is gone: RgGen's four `differs` rows
-(`rggen_mux`, `block_0`, `block_1`, `uart_csr`) are all proven and co-sim
-clean, so the family is **25 / 25**; RSD's multi-write-port RAMs
-(`BlockMultiPortRAM`, `RegisterMultiPortRAM`, `BlockTrueDualPortRAM`), its
-`FPExecutionStage` / `FP32PipelinedOther` pair and cvw's carry-less-multiply
-cluster (`clmul`, `zbc`, `bitmanipalu`, `alu`) all pass; and Pavona's two full
-chips lower and co-simulate.
-
-The 76 `read_slang` divergences are listed with their
-reasons in [docs/slang_unsupported.md](docs/slang_unsupported.md).  Counted by
-[`test/sweep_table.py`](test/sweep_table.py) over the reports of the runs below — nothing in this
-table is kept by hand.
-
-Numbers above are the **2026-10-22 nightly runs**, one per sweep workflow, 18
-workflows.  Every nightly ran that morning on main at `f65702a6c`, which is
-the tree with the CVA6 flavour sweep (#1267) in it, so the three flavour
-families appear for the first time.  Two rows are not from that morning:
-**BlackParrot is its 2026-10-18 run** on `52374ad92` (its nightly has been
-cancelled on the job time limit every day since, and a cancelled run uploads a
-TRUNCATED report, 95 of its 126 rows), and the **External IP** row mixes the
-2026-10-22 ext dispatch on `f9d32e2d0` (run 39854252763: axi, common_cells,
-cv32e40p, hdmi, verilog-pcie, the XiangShan library) with the 2026-10-20 ext
-run (39396603819: caliptra-ss, cve2, cvfpu, cvw, verilog-ethernet), because
-the 10-22 dispatch was still publishing those families when the table was
-taken -- their 10-20 and 10-22 numbers are identical for every family both
-runs had finished.  The **OpenTitan IP library** (#1268, 605 modules) has no
-nightly yet and is not in this table; its first dispatch is the same run
-39854252763, still running at the time of writing.  Run ids: ibex
-39741501672, rp32 39744204814, fx68k 39784956558, scr1 39743766501, rggen
-39790604505, veer-eh1 39751125305, tnoc 39792360831, veer-el2 39763829282,
-rsd 39756486232, black-parrot 39126191261, opentitan 39777587456, pavona
-39751517757, cva6 39748696611, cva6-flavours 39756605918, caliptra
-39761257260, xiangshan-core 39757172255, sv-tests 39751418334.
-
-- **CVA6's 5 `differs` rows are adjudicated non-defects**, each re-checked on
-  2026-10-19 against its own counterexample: `hpdcache_cmo` is a
-  **unique-case violation** (the solver sets `is_flush_by_nline`,
-  `is_flush_all` and `is_fence` at once, so two arms of
-  `unique case (1'b1)` match and either lowering is licensed);
-  `hpdcache_uncached` is **unprovable by construction** -- the differing bit
-  is in `mem_req_atomic`, which that `always_comb` never assigns on the path
-  taken, and BOTH netlists then hold it through the same combinational
-  self-hold, which SAT reads as two independent free values;
-  `csr_regfile` is an **init-state** difference, because we fold `dcsr`'s
-  reset-only `xdebugver` field to a constant while `read_slang` keeps a flop
-  and the miter's `-set-init-zero` pins both initial states to 0;
-  `macro_decoder` and `zcmt_decoder` are **latch-vs-self-feedback** -- we
-  infer a latch for a comb variable the source leaves unassigned on the
-  illegal-instruction path (22 and 5 of them) where `read_slang` builds a
-  combinational loop SAT treats as free.  Every undriven row is a net the
-  source never assigns, which the sweeps tell apart from a dropped driver.
-- **rp32's driver conflicts are gone**: the 32-conflict rows (sibling generate
-  scopes sharing a name) no longer appear — all 13 modules report none, so the
-  formal column is trustworthy again.  Of the 13, 6 are proven and 7 have no
-  `read_slang` reference to compare against.
-- **External IP: 74 rows are still not comparable, down from 435** (and the
-  cvw figure is now 174 proven of 193 comparable, 27 of 220 not comparable).
-  Six project-setup fixes did that — binding cvw's configuration struct (234
-  rows comparable for the first time), wrapping away an interface port at
-  the top (39 rows), retrying a module at parameters its own design permits
-  rather than at zero-defaults, and supplying a header the repository never
-  vendored.  They also settled nine axi rows that had been reporting `differs`
-  with undriven nets: those were compared in a degenerate configuration, so the
-  findings were never real.
-- **VeeR EL2's six memory wrappers are the clearest case for harness changes
-  that make rows FAIL.** Until the 2026-10-15 nightly all six read
-  `elab-fail — (no elaboration)` and contributed nothing to any column; once
-  the harness elaborated them they each showed a 171-300 cycle divergence, and
-  the same five showed it again inside caliptra-ss, which vendors that core —
-  11 of the 14 divergences in the 10-19 table, one defect counted twice.  They
-  were failing all along, unmeasured.  #1258 fixed the interface-member select
-  behind all of them and every one of the 11 now co-simulates clean.
-- **Still open on our side:** the sweep rows where `read_slang` tracks the RTL and
-  we do not are listed, in the same format as slang's own failures, in the "other
-  direction" section of [docs/slang_unsupported.md](docs/slang_unsupported.md).
-- CVA6 is the one family excluded from the local `--no-cva6` developer run, so
-  read the nightly rather than a local run for its figures.
+**Benchmarking against the reference frontend.**  Every row also co-simulates
+the `read_slang` netlist, so the reference is measured by the same yardstick:
+over the 2026-10-22 nightlies, **5352 rows, 4332 formally proven, `read_uhdm`
+4233 co-sim passes / 2 divergences / 86 adjudicated artefacts, `read_slang`
+4182 / 113**, 0 undriven anywhere.  The per-core table, the provenance of
+every number, the reference frontend's own record and the nightly 4-frontend
+matrix (`uhdm` / `sv2v` / `slang` / `verilog`, 1822 tests: `uhdm` reads 1792,
+654 of them designs `read_verilog` cannot read at all) are in
+**[docs/benchmarking.md](docs/benchmarking.md)**.
 
 **Pavona vs upstream OpenTitan** are swept separately on purpose: pavona is a
 hard *fork* whose RTL has diverged — of the 120 files the two trees share,
@@ -329,41 +165,6 @@ failure.  `undriven` likewise counts comparable rows only.
 | verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | [`25156a9a`](https://github.com/alexforencich/verilog-pcie/commit/25156a9a162c) | **75 / 89** | 4 of 93 | 0 |
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **19 / 21** | 0 of 21 | 0 |
 | Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **242 / 260** | 13 of 273 | 0 |
-
-**How the reference frontend itself does.** The left-most column of every sweep
-table co-simulates the `read_slang` netlist against the same RTL, so the sweeps
-also measure the frontend they compare against.  Every row where it does not
-track the RTL -- and every design it cannot read at all, in the sweeps, in the
-local test suite and in the upstream Yosys tests -- is collected in ONE report,
-[docs/slang_unsupported.md](docs/slang_unsupported.md): one format (reason, link
-to the test, recipe to reproduce), the recipes described up front.  Rows the
-harness could not give slang a fair run on (a module no file of the test defines,
-a test invalid on purpose, a design no frontend elaborates, a co-sim both netlists
-fail identically) are in [docs/incomplete_testcases.md](docs/incomplete_testcases.md)
-with a statement of which frontends fail on them.  The same report lists the
-**other direction** -- rows where `read_slang` is clean and OURS is wrong --
-because a document that can only record another tool's mistakes is not a
-measurement.
-
-**What the reference frontend cannot read.** 117 sweep rows carry
-`no reference (read_slang fails)` -- `read_slang` cannot elaborate the module,
-so there is nothing for the miter or the co-sim to judge us against -- and of
-the 76 rows where it does build a netlist that diverges from the RTL, **19 are
-rows ours passes outright**.  The other 55 are rows where both netlists diverge
-and a miter has adjudicated ours as the same simulation artefact, which is the
-shared-divergence class rather than a verdict on either frontend.  Every one of
-these is in [docs/slang_unsupported.md](docs/slang_unsupported.md) with the
-reason, a link to the module's source and the recipe that reproduces it, next
-to the local and upstream tests slang cannot read.  Rows that carry no verdict
-for either side -- a design neither frontend elaborates, a co-sim both netlists
-fail identically, a testbench Verilator could not build -- sit in
-[docs/incomplete_testcases.md](docs/incomplete_testcases.md) with a statement of
-which frontends fail on them.  The unreadable count was **360** on 2026-09-29: an
-audit of every class found that a configuration the design forbids at its own
-defaults, a package or macro our closure withheld, an interface port nobody
-wrapped, an unroll limit left at its default and a header the repository never
-vendored accounted for 234 of them -- harness, not slang -- and fixing the
-harness is what brought the number down.
 
 #### Generated IP: the XiangShan core
 
@@ -400,99 +201,20 @@ under `$EXT_IP_ROOT` (default `~/ext`), download `mill` if needed and run
 AXI additionally pulls [tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic)
 and verilog-pcie pulls [verilog-axis](https://github.com/alexforencich/verilog-axis).
 
-AXI's exclusions are one cause: PULP declares its struct ports through type
+AXI's not-comparable rows: PULP declares its struct ports through type
 parameters (`parameter type axi_resp_t = logic`), so a module swept standalone
 with its defaults performs a member access on a 1-bit `logic` — not legal
 SystemVerilog, and nothing to compare against.  The manifest's `bind` section
-gives those modules concrete types and values instead, which is what took the
-family from 73 excluded rows to 32; the rest are recorded with the slang
-diagnostic that identifies them.
+gives those modules concrete types and values instead; the rest are recorded
+with the slang diagnostic that identifies them.
 
-**CORE-V Wally sweeps 234 modules.**  Its nightly job used to take the whole
-runner down: one module (`fdivsqrtuslc4`, 113 lines that fill a 1024-entry table
-from a nested loop) made `read_uhdm` peak at 10.5 GB, and at `--jobs 2` on a
-16 GB runner the VM was exhausted before any per-process cap could trip.  Both
-halves are fixed — the blowup itself was a quadratic expansion in loop
-unrolling, now 0.37 GB — so the family reports real rows again.
+### More documentation
 
-
-### SystemVerilog Frontend Comparison
-
-The 4-frontend regression matrix (`make test-matrix`, run nightly) synthesizes
-every test's SystemVerilog through **four** frontends and ranks them by how much
-SV each handles **correctly**. Every netlist is verified either by **formal
-equivalence** — Yosys `equiv_induct` plus a sound SAT-from-reset miter, against
-the Yosys Verilog-frontend golden — **and/or** by **high-activity randomized
-Verilator co-simulation** against the original RTL. A result counts as *Correct*
-only when one of those checks proves it equivalent; *SV-only* means the frontend
-synthesized SystemVerilog that the native Verilog frontend cannot even read (no
-golden to compare against, so it is verified against the RTL by co-simulation).
-
-The nightly run
-([Frontend Matrix](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/frontend-matrix.yml),
-1822 tests) reports two things separately: what each frontend could **read**,
-and — where a `read_verilog` golden exists to compare against — whether it was
-**right**.
-
-| Frontend | Read | Failed to read | Correct | Incorrect | No golden | Unknown |
-|---|---:|---:|---:|---:|---:|---:|
-| **`uhdm`** (this project) | **1792** | 33 | 1044 | 24 | 654 | 67 |
-| `sv2v` | 1610 | 213 | 992 | 0 | 546 | 71 |
-| `slang` (Yosys sv-elab) | 1545 | 277 | 845 | 0 | 569 | 131 |
-| `verilog` (Yosys native, the golden) | 1091 | 731 | 1091 | 0 | — | 0 |
-
-*Failed to read* = failed + crashed + timed out + out-of-memory.  *No golden* = this
-frontend synthesized but `read_verilog` could not, so there is nothing to
-compare against — a capability win, verified against the RTL by co-simulation
-rather than formally.  *Unknown* = formal non-equivalence the co-sim could not
-adjudicate.
-
-On this corpus the UHDM frontend reads the most SystemVerilog — **1792 of 1822**,
-including **654 designs the native Verilog frontend cannot read at all**.
-
-**How to read this table honestly:**
-
-- **It is a self-run benchmark on a largely self-authored corpus.** The matrix is
-  mostly this project's own test suite (plus imported Yosys and
-  chipsalliance/UHDM-integration tests), and many tests were added specifically to
-  exercise constructs this frontend targets. The ranking is real but it is *not* a
-  neutral third-party comparison — a tool graded on the set its authors curated is
-  playing at home. Read "#1 by ~10 points" in that light.
-- **The benchmark rewards breadth over conservatism.** `sv2v` and `slang` report
-  **0 incorrect** results here; `uhdm`'s **24** are a real (tracked) triage backlog
-  in `test/failing_tests.txt`. Ranking by how much is read favors breadth, but
-  "accepts less yet is never wrong on what it accepts" is a legitimate — sometimes
-  preferable — posture, and it's the one `sv2v`/`slang` show on this corpus. Their
-  higher "Failed to read" counts (213 / 277 vs 33) reflect that trade-off, not a
-  defect.
-- **Coverage ≠ ecosystem fit.** `slang`/sv-elab is the frontend that has been
-  **upstreamed into Yosys itself**, ships in the OSS CAD Suite, and is used by
-  OpenROAD — adoption, integration, and maintenance advantages a nightly coverage
-  count does not capture. If your criterion is *maximum SV coverage through the
-  Surelog/UHDM path today*, this table favors `uhdm`; if it is *what is maintained
-  and integrated for production*, sv-elab has the stronger case. Both can be true.
-
-`verilog` is the golden reference, so it has no *SV-only* column and its ceiling is
-the SV subset it can parse. Numbers are from one nightly run and drift between runs
-(seq-equiv induction is inductively incomplete on some designs) — treat any single
-figure as approximate.
-
-> **Note:** 349 DUTs from
-> [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
-> were imported as `test/<Name>/dut.sv` (harnesses excluded) on 2026-06-14, when only
-> 89 of the 316 observable ones passed; `test/imported_tests_status.txt` keeps that
-> initial assessment.  Most of the gaps it lists (parameters, functions, arrays,
-> patterns, structs, enums) have since been closed — the 24 `uhdm` *Incorrect* tests
-> above are what remains of that backlog and are tracked in `test/failing_tests.txt`.
-
-The detailed per-test coverage that used to follow — the **UHDM-only verified
-test list**, **Recent Additions**, and the **Recent Fixes** changelog — has moved
-out of the README to keep this section focused on the leaderboard:
-
+- Benchmarks against `read_slang`, `sv2v` and `read_verilog` → [`docs/benchmarking.md`](docs/benchmarking.md)
 - Changelog / fixes → [`docs/recent-improvements.md`](docs/recent-improvements.md)
 - Test catalog (incl. the UHDM-only list) → [`docs/test-cases.md`](docs/test-cases.md)
-- chipsalliance/sv-tests (the LRM-chapter corpus, 707 synthesis tests of its own local suite, swept nightly by the **Sweep sv-tests** action): read_uhdm 688 pass vs read_verilog 364 / read_slang 682, every miss classified → [`docs/sv_tests_coverage.md`](docs/sv_tests_coverage.md)
-- Everything `read_slang` cannot read or gets wrong, across the sweeps, the 1341 internal tests and the 576 generated upstream Yosys tests, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
+- chipsalliance/sv-tests (the LRM-chapter corpus, swept nightly): read_uhdm 689 / 708 vs read_verilog 364 / read_slang 682, every miss classified → [`docs/sv_tests_coverage.md`](docs/sv_tests_coverage.md)
+- Everything `read_slang` cannot read or gets wrong, with reproduce recipes → [`docs/slang_unsupported.md`](docs/slang_unsupported.md); tests no frontend can be judged on → [`docs/incomplete_testcases.md`](docs/incomplete_testcases.md)
 
 ## Architecture & Workflow
 
@@ -891,11 +613,12 @@ uhdm2rtlil/
 
 ## Test Results
 
-The authoritative, up-to-date figures live in one place —
-[Verification Methodology → Test Suite Status](#test-suite-status) and the
-[SystemVerilog Frontend Comparison](#systemverilog-frontend-comparison) leaderboard
-— to avoid the numeric drift that comes from repeating counts in several sections.
-Any single figure is from one nightly run and is approximate.
+The authoritative figures live in one place --
+[Verification Methodology → Test Suite Status](#test-suite-status), the
+[Supported Core IP](#supported-core-ip) table and
+[docs/benchmarking.md](docs/benchmarking.md) -- to avoid the drift that comes
+from repeating counts in several sections.  Any single figure is from one
+nightly run and is approximate.
 
 ## Recent Improvements
 
@@ -997,9 +720,9 @@ build cached by commit):
 - **`regression-sharded.yml`** — the full `make test-all --all` suite plus the
   CVA6 per-module ratchet, split into 12 shards and merged into one report
   (every PR and nightly); the numbers under *Test Suite Status* come from it.
-- **`frontend-matrix.yml`** — the nightly 4-frontend comparison behind the
-  leaderboard above.
-- **`sweep-{ibex,rp32,cva6,pavona,caliptra}.yml`** — the nightly per-IP sweeps
+- **`frontend-matrix.yml`** — the nightly 4-frontend comparison behind
+  [docs/benchmarking.md](docs/benchmarking.md).
+- **`sweep-*.yml`** (one per family, the badges at the top) — the nightly per-IP sweeps
   (formal vs `read_slang`, opt-check, Verilator co-sim; sharded, memory-capped)
   whose tables feed the *Supported Core IP* rows and `docs/pavona_sweep.md`.
 
