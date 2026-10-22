@@ -1,0 +1,10 @@
+# The VALUE is the gate: without the fix o_comb and lo_comb are constant x
+# (the concat write never reaches the locals), which no miter can tell from
+# a value.  f(~8'hA5) = (~A5 = 5A: {0101101, 0} ^ 0F) >> 1 = 0101010;
+# g(8'hA5): A5 + 1 = A6, bit 0 = 0;  g(8'hA4) = 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set i 8'hA5 -prove o_assign 7'b1010101 -prove o_comb 7'b0101010 -prove lo_comb 1'b0
+sat -verify -set i 8'hA4 -prove lo_comb 1'b1

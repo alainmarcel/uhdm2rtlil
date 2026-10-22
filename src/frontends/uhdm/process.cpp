@@ -12007,6 +12007,49 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     // selector addr_tmp read 3'x, so the byte rotation
                     // collapsed to a passthrough).
                     lhs_name = std::string(lhs_var->VpiName());
+                } else if (lhs_expr->VpiType() == vpiOperation &&
+                           any_cast<const operation*>(lhs_expr)->VpiOpType() == vpiConcatOp) {
+                    // `{cmd_intg, unused_cmd_payload} = enc(...)` -- a
+                    // CONCATENATION of function locals.  This inliner (the
+                    // always_comb call site) resolved only a named LHS, so
+                    // the whole statement was dropped and `return cmd_intg`
+                    // read the local's X init: OpenTitan tlul_pkg::get_cmd_intg
+                    // returned 7'x at every always_comb call site
+                    // (cheriot_rmw_filter, 36 diverging co-simulated cycles)
+                    // while the SAME function called from a continuous assign
+                    // was right (process_stmt_to_case has a concat branch).
+                    // Operands are MSB-first; all or nothing, as tf_local_lhs.
+                    auto cop = any_cast<const operation*>(lhs_expr);
+                    std::vector<std::pair<std::string, int>> parts;
+                    bool ok = cop->Operands() && !cop->Operands()->empty();
+                    int total = 0;
+                    if (ok)
+                        for (auto opnd : *cop->Operands()) {
+                            std::string nm;
+                            if (opnd->VpiType() == vpiRefObj)
+                                nm = std::string(opnd->VpiName());
+                            else if (auto ov = dynamic_cast<const UHDM::variables*>(opnd))
+                                nm = std::string(ov->VpiName());
+                            auto fit = nm.empty() ? func_mapping.end() : func_mapping.find(nm);
+                            if (fit == func_mapping.end() || fit->second.size() <= 0) { ok = false; break; }
+                            parts.push_back({nm, fit->second.size()});
+                            total += fit->second.size();
+                        }
+                    if (ok && !rhs.empty()) {
+                        RTLIL::SigSpec r = rhs;
+                        if (r.size() < total) r.extend_u0(total);
+                        int off = total;
+                        for (auto& pr : parts) {
+                            off -= pr.second;
+                            RTLIL::SigSpec slice = r.extract(off, pr.second);
+                            func_mapping[pr.first] = mask_write(pr.first, slice);
+                            uhdm_trace("      inline_func_body_comb: concat part %s = %s\n",
+                                pr.first.c_str(), log_signal(slice).c_str());
+                        }
+                        break;
+                    }
+                    uhdm_trace("      inline_func_body_comb: dropped concat LHS write\n");
+                    break;
                 } else if (lhs_expr->VpiType() == vpiPartSelect ||
                            lhs_expr->VpiType() == vpiIndexedPartSelect ||
                            lhs_expr->VpiType() == vpiBitSelect) {
