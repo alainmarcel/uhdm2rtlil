@@ -33,6 +33,7 @@ table to the run's step summary.
 | `verilog-ethernet` | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | 129 | 125 / 129 read | Verilog-2001 corpus (+ its axis library) |
 | `verilog-pcie` | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) (+ verilog-axis) | 93 | 80 / 93 read | `dma_psdpram*` "missing edge-sensitive event", several DMA / PTile modules fail to read |
 | `hdmi` | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | 10 | 9 / 10 read | top `hdmi` out-of-range bit-select on read; `packet_picker` 62k undriven (partially assigned `headers` table, read_slang fails too) |
+| `opentitan-ip` | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) (hw/ip, hw/ip_templates, top_earlgrey ip_autogen; + the vendored pulp_riscv_dbg / pulp_common_cells for the closure) | 605 | first nightly pending; shard 1/12 measured locally: 41 / 47 comparable proven, 45 / 47 elaborate | upstream OpenTitan's IP library, 44 of its 45 blocks (OTBN is `test/opentitan_equiv/`); vendor technology libraries (`prim_asap7`, `prim_xilinx*`) and one Xilinx-only JTAG tap excluded as SOURCES, chip tops excluded as rows; first-shard leads: `prim_gf_mult` 300 div, `rram_phy_rd_buf_dep` 73 div, `i3c_target_fsm` differs |
 
 "read" = Surelog elaborates and `read_uhdm` + `hierarchy -check` succeed; the
 nightly table adds the miter verdict, the opt-check and the co-sim result per
@@ -44,9 +45,14 @@ point of the sweep is to keep the counts moving in the open.
 - **Ibex** — `test/ibex/` (own sweep) and the Pavona hardened variant.
 - **CVA6 and its HPDcache** — `test/cva6_equiv/` (own sweep; the HPDcache
   modules are part of it).
-- **OpenTitan IP blocks** — the Pavona families in [pavona_sweep.md](pavona_sweep.md)
-  are the OpenTitan-derived IPs; OpenTitan itself is planned as a third full
-  chip (`top_earlgrey`) through the `test/pavona_chips/` flow.
+- **OpenTitan IP blocks** — UPSTREAM lowRISC OpenTitan's IP library is the
+  `opentitan-ip` family in the table above (605 modules, 44 of its 45 blocks;
+  the 45th, OTBN, is `test/opentitan_equiv/`'s own sweep).  The Pavona families
+  in [pavona_sweep.md](pavona_sweep.md) are the OpenTitan-DERIVED IPs of a hard
+  fork whose RTL has diverged, so the two are not duplicates.  The Earlgrey chip
+  top is not a row yet: `test/opentitan_equiv/scripts/fusesoc_closure.py`
+  resolves it (635 files, 0 unresolved cores) and read_uhdm reads it clean, but
+  that read peaks at 11.9 GB and wants its own sharded workflow.
 - **snitch_cluster / cheshire** (PULP) need their Bender dependency sets
   fetched before a manifest makes sense; **XiangShan** is generated SystemVerilog
   and is deferred.

@@ -4,6 +4,42 @@
 > UHDM→RTLIL frontend. Extracted from the main [README](../README.md) to keep it
 > concise; newest entries are near the top.
 
+### A 3-Level Index into a Packed Array Whose Element Type Is a TYPE PARAMETER Wrote One Bit (`packed_typeparam_elem_three_levels`)
+- Test: `parameter type elem_t` bound to a packed 2-D typedef, `elem_t [RATIO-1:0][WAYS-1:0] arr`, written by a triple nested generate `arr[i][j][k] = ...`
+- **Bug — the stamped geometry carries outer + element + leaf, three numbers, i.e. TWO index levels**: a declared 2-D array over a typedef that is itself packed 2-D needs four, so the third index fell to the bit-select path and wrote ONE BIT of an 8-bit leaf word -- 4 one-bit connects of a 32-bit array, 28 bits left undriven.  CVA6's `hpdcache_memctrl` is this shape (`hpdcache_req_data_t [RATIO-1:0][ways-1:0] data_read_words`), in code the default configuration never instantiates.
+- **Fix in `expression.cpp`** (vpiVarSelect, ahead of the geometry region): take EVERY dimension from the declaration -- the elaborated `packed_array_var`'s own `Ranges()` plus its typespec's `Ranges()` chain through `Elem_typespec` -- and peel one index per dimension.  Three guards: >= 3 indices, chain dims >= index count, product(dims) == wire width EXACTLY.
+- Measured: `check -assert` 28 problems -> 0 and the read_slang miter counterexample -> proven, against a labelled control plugin.  **Limit, recorded:** a type parameter bound to a packed-array TYPEDEF loses that typedef's dimensions in Surelog's model itself (the elaborated typespec is the base word type, the typedef level is absent), so CVA6's hpdcache `reqWords == 1` case still needs a Surelog fix -- root cause located in `bindTypespec` / `DataType::getActual()`, two fix attempts measured and rejected.
+
+### An INTERFACE MEMBER Select Answered by a Same-Named Module Local (`iface_member_select_shadowed_by_local`)
+- Test: a 4-entry interface member array read through a modport in a genvar loop while a module-level local of the SAME NAME holds the ECC-extended word (VeeR EL2's `dccm_bank_dout[i][..] = dccm_mem_export.dccm_bank_dout[i]`)
+- **Bug — the member select was resolved to the local**: `import_bit_select_inner` let the hier_path's resolved base beat a by-name lookup only when the select's full name had a non-`work@` owner (the function-FORMAL test), and an interface member's full name is `work@<Mod>.<ifport>.<member>[i]`, so the write became a SELF-ASSIGNMENT and the read data never left its reset value.  11 sweep rows: VeeR EL2's six ICCM/DCCM/I-cache memory wrappers (171-300 diverging cycles each) and the five caliptra-ss `css_mcu0_*` vendors of them.
+- **Fix in `expression.cpp`**: the interface-member-select branch marks its resolved base authoritative for the delegated select (`iface_sel_base_name_`, RAII-restored) and `import_bit_select_inner` honours it for that one name.
+- Measured: all 11 rows `equivalent` + co-sim PASS (301 cycles).  A self-assignment still builds a valid netlist that `check` reports clean, so the test's `test_structural.ys` asserts the CONNECTION (`rd` depends on the member input), not a cell count.
+
+### A Generate-Scope BLOCK-LOCAL Memory Was One Memory Shared by Every Instance (`genscope_blocklocal_mem_initial_dup`)
+- Test: a memory declared inside a generate-for body with an `initial` seed, two instances of the loop
+- **Bug — only the array_NET path scoped the name**: an `array_var` memory in a generate scope was created under its bare name, so every iteration's memory collapsed into one and the duplicate `$meminit` cell name was the only visible symptom (OpenTitan `otbn_rf_bignum_fpga` read-fail).
+- **Fix in `process.cpp` / `memory_analysis.cpp` / `module.cpp`**: the gen-scope `array_var` call site passes the scoped name, and every memory-id site (`$meminit_v2` MEMID, cell names, the two write-detection guards) resolves through `resolve_mem_id` instead of `escape_id`.
+- Measured: `otbn_rf_bignum_fpga` read-fail -> proven + co-sim PASS; `test_structural.ys` asserts 2 scoped memories and 8 `$meminit_v2`.
+
+### A Void-Function OUTPUT Actual Written as a SELECT Was Never Scanned (`func_call_output_select_actual_loop`, `nested_func_call_output_local_switch`)
+- Test: `void function` calls as statements whose output actuals are bit/part selects of a module signal, inside a loop; and a `case` whose expression is a union member of an inlined formal
+- **Bug (#1250)**: `extract_assigned_signals` had no `vpiFuncCall` case, so a select-shaped output actual registered nothing and the write was dropped; restricted deliberately to SELECT-shaped actuals -- registering a WHOLE-signal actual gave it a full-width temp that stranded in-arm member writes (`tf_formal_member_write_in_branch`).  **Bug (#1251)**: the vpiCase arm imported its expression with NO read map, so a union member of an inlined formal switched on `1'x`.
+- **Fix in `process.cpp`**: the new `vpiFuncCall` case + routing a single-chunk slice through `map_to_temp_wire` / `record_comb_partial_write`; `case_expr = import_expression(cond_expr, comb_read_map())`.
+- Measured: RSD `Decoder` and `PreDecodeStage` `differs` -> proven.
+
+### A Nested Struct Field Read In-Flight in a CHILD Module Read the RAW Wire (`comb_struct_field_inflight_child_module`)
+- Test: `csrNext.mstatus.MIE`-style nested field written then read in one always_comb, in a module imported as a child
+- **Bug**: with no `Actual_group` on the hier_path in the definition view, the staged in-flight path never found the field's typespec and read the raw wire (RSD `CSR_Unit`, 2026-10-18).  The first fix (#1249) also answered SINGLE-LEVEL reads and regressed RSD `PerformanceCounter` (228 cycles) for one day; #1257 limits it to >= 3 path elements, a genuinely nested field.
+- **Fix in `expression.cpp`**: take the typespec from the wire_map entry of the staged base when the ref has no Actual_group, only for `Path_elems()->size() >= 3`.
+- Measured: `CSR_Unit` proven; `PerformanceCounter` restored (6 pinned-plugin row runs to localise -- the minimal repro never reproduced).
+
+### A Typedef-ALIAS Packed Element Read ONE BIT per Dynamic Row Select (`typedef_packed_alias_elem_dyn_row_select`)
+- Test: a `var_select` with a dynamic row index into an array whose element type is a typedef alias of another packed typedef (`logic_typespec` WITH `Elem_typespec`, its Range repeating the inner one)
+- **Bug**: the definition-view `var_select` has no `Actual_group`, so no element geometry was derived and the row read was one bit (RSD `ICache`, 39 diverging cycles).
+- **Fix in `expression.cpp`**: resolve the array declaration by name on the instance (then on an elaborated instance of the same definition), and walk the Elem_typespec chain as a VECTOR of range sets, skipping a level whose Elem is a packed alias with identical ranges.
+- Measured: `ICache` 39 -> PASS.
+
 ### Interface OWN-PORT Actual Needs the MODPORT to Disambiguate (`iface_own_port_modport_clk`)
 - Test: two interface ports whose types BOTH declare `clk` as an interface own port, only one modport exposing it, and a child instantiated with `.clk(port.clk)`
 - **Bug — matched by TYPE alone, and `clk` is declared by every interface**: `.clk(port.clk)` where `clk` comes from `interface MulDivUnitIF(input logic clk, rst);` reaches `import_instance` in the ELABORATED view as a BARE NET named `clk` (`VpiType=36`), with no interface port in its name. `resolve_bare_iface_member_actual()` matches it back to one of the module's interface ports by type — every interface that *declares* a member of that name is a candidate — and requires a unique candidate. A codebase that writes `interface FooIF(input logic clk, rst);` declares `clk` in EVERY interface, so RSD's `MulDivUnit(MulDivUnitIF.MulDivUnit port, RecoveryManagerIF.MulDivUnit recovery)` had two candidates and the resolution gave up: both the multiplier and the divider instances lost their clock entirely (`Port clk has empty connection`), their pipeline registers never advanced, and `port.mulDataOut` stayed 0 from cycle 7 on.
