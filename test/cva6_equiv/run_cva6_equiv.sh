@@ -17,8 +17,26 @@ YOSYS="$ROOT/out/current/bin/yosys"
 PLUGIN="$ROOT/build/uhdm2rtlil.so"
 SURELOG="$ROOT/build/third_party/Surelog/bin/surelog"
 RTL="$HERE/rtl"
-LIST="$HERE/cva6_modules.txt"
-WORKROOT="$HERE/work"
+# CONFIG selects the CVA6 flavour: chipsalliance/sv-tests builds the core at
+# five of them and they are the same RTL with a different
+# `core/include/<cfg>_config_pkg.sv` (every one of those packages declares the
+# same package name, so it is one line of the file list) -- but a flavour
+# selects genuinely different RTL, and five modules that are `dead` at the
+# default configuration are only instantiable at another.  Each flavour gets
+# its own work root and its own expectations file so the two cannot be confused.
+CONFIG="${CONFIG:-cv64a6_imafdc_sv39}"
+DEFAULT_CONFIG="cv64a6_imafdc_sv39"
+if [ "$CONFIG" = "$DEFAULT_CONFIG" ]; then
+  LIST="$HERE/cva6_modules.txt"
+  WORKROOT="$HERE/work"
+else
+  LIST="$HERE/cva6_modules_$CONFIG.txt"
+  [ -f "$LIST" ] || LIST="$HERE/cva6_modules.txt"
+  WORKROOT="$HERE/work_$CONFIG"
+fi
+if [ ! -f "$RTL/core/include/${CONFIG}_config_pkg.sv" ]; then
+  echo "SKIP: no config package for '$CONFIG' in the vendored RTL"; exit 0
+fi
 
 if [ ! -x "$YOSYS" ] || [ ! -f "$PLUGIN" ]; then
   echo "SKIP: build the plugin first (make -j)"; exit 0
@@ -31,7 +49,13 @@ fi
 # Materialise the flist with real paths (regenerated each run; not committed).
 FLIST="$WORKROOT/cva6.f"
 mkdir -p "$WORKROOT"
-sed "s|__CVA6_RTL__|$RTL|g" "$HERE/cva6.flist" > "$FLIST"
+sed -e "s|__CVA6_RTL__|$RTL|g" \
+    -e "s|${DEFAULT_CONFIG}_config_pkg.sv|${CONFIG}_config_pkg.sv|" \
+    "$HERE/cva6.flist" > "$FLIST"
+# adjudicate.py reads these: it must co-simulate the SAME flavour, out of the
+# same work root, or a flavour's co-sim would rebuild the default's RTL.
+export CVA6_FLIST="$FLIST"
+export CVA6_WORK="$WORKROOT"
 
 # --shard i/N selects a stable slice of the module list.  A full pass does not
 # fit one CI runner's time budget, so CI fans the list across shards and merges
