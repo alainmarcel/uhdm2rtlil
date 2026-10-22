@@ -1374,6 +1374,56 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         base_name.c_str(), offset, width);
                 return true;
             };
+            // Element width of a PACKED MULTI-DIM local/return seen through a
+            // select: `logic [N-1:0][M-1:0] x; x[i] = …` writes an M-bit
+            // element, not one bit.  Shared by the bit-select, part-select and
+            // indexed-part-select LHS branches below (the select's
+            // Actual_group is the declaration; a typedef'd packed local keeps
+            // its dims on the TYPESPEC, hence the bitselect_outer_dim fallback
+            // against the base's total width -- keccak theta's `plane_t c`).
+            auto func_local_elem_width = [&](const any* actual,
+                                             const std::string& base_name) -> int {
+                int element_width = 1;
+                if (!actual) return 1;
+                if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(actual)) {
+                    if (auto ts = pav->Typespec()) {
+                        if (auto a = ts->Actual_typespec()) {
+                            if (a->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
+                                if (lt && lt->Elem_typespec() &&
+                                    lt->Elem_typespec()->Actual_typespec()) {
+                                    // Typespec encodes the full type;
+                                    // element type is Elem_typespec.
+                                    element_width = get_width_from_typespec(
+                                        lt->Elem_typespec()->Actual_typespec(),
+                                        current_instance);
+                                } else {
+                                    // Typespec is just the element type
+                                    // (outer ranges live on pav->Ranges()).
+                                    element_width = get_width_from_typespec(
+                                        a, current_instance);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (element_width <= 0) element_width = 1;
+                if (element_width <= 1) {
+                    int total = 0;
+                    if (base_name == func_name)
+                        total = result_wire ? result_wire->width : 0;
+                    else {
+                        RTLIL::SigSpec b = func_local_base_for_select(
+                            base_name, input_mapping, func_call_context, local_var_widths);
+                        total = (int)b.size();
+                    }
+                    int ew = 1, olo = 0;
+                    if (total > 0 &&
+                        bitselect_outer_dim(actual, total, ew, olo) && ew > 0)
+                        element_width = ew;
+                }
+                return element_width;
+            };
             if (lhs_is_named) {
                 {
                     std::string lhs_name = std::string(assign->Lhs()->VpiName());
@@ -1507,9 +1557,6 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
 
                 if (left_val >= 0 && right_val >= 0) {
-                    int width = std::abs(left_val - right_val) + 1;
-                    int offset = std::min(left_val, right_val);
-
                     RTLIL::SigSpec base_spec;
                     if (base_name == func_name) {
                         base_spec = RTLIL::SigSpec(result_wire);
@@ -1517,6 +1564,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         base_spec = func_local_base_for_select(base_name, input_mapping,
                                                                func_call_context, local_var_widths);
                     }
+                    // A part-select of a packed MULTI-DIM local selects along
+                    // the OUTER dimension (LRM 7.4.5): `m[S-1:1] = '0` on
+                    // `logic [S-1:0][W-1:0] m` clears S-1 W-bit ELEMENTS.  The
+                    // bit-select branch already scales its index this way;
+                    // this one wrote bits [S-1:1] of element 0, so OpenTitan
+                    // prim_gf_mult's gen_matrix zeroed the seed it had just
+                    // staged in m[0] (300 diverging co-simulated cycles).
+                    int ps_ew = func_local_elem_width(ps->Actual_group(), base_name);
+                    int width = (std::abs(left_val - right_val) + 1) * ps_ew;
+                    int offset = std::min(left_val, right_val) * ps_ew;
 
                     if (base_spec.size() > 0 && offset + width <= base_spec.size()) {
                         if (!ssa_slice_write(base_name, offset, width))
@@ -1564,6 +1621,12 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         base_spec = func_local_base_for_select(base_name, input_mapping,
                                                                func_call_context, local_var_widths);
                     }
+                    // Outer-dimension select on a packed multi-dim local, as
+                    // in the part-select branch above: the index and the
+                    // width count ELEMENTS.
+                    int ips_ew = func_local_elem_width(ips->Actual_group(), base_name);
+                    offset *= ips_ew;
+                    width_val *= ips_ew;
                     if (offset >= 0 && base_spec.size() > 0 &&
                         offset + width_val <= base_spec.size()) {
                         if (!ssa_slice_write(base_name, offset, width_val))
@@ -1631,55 +1694,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // or `logic4 [N-1:0] x;`), `x[i]` refers to an
                 // element_width-bit slice, not a single bit.  Detect
                 // this by inspecting the bit_select's Actual_group.
-                int element_width = 1;
-                if (auto actual = bs->Actual_group()) {
-                    if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(actual)) {
-                        if (auto ts = pav->Typespec()) {
-                            if (auto a = ts->Actual_typespec()) {
-                                if (a->UhdmType() == uhdmlogic_typespec) {
-                                    auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
-                                    if (lt && lt->Elem_typespec() &&
-                                        lt->Elem_typespec()->Actual_typespec()) {
-                                        // Typespec encodes the full type;
-                                        // element type is Elem_typespec.
-                                        element_width = get_width_from_typespec(
-                                            lt->Elem_typespec()->Actual_typespec(),
-                                            current_instance);
-                                    } else {
-                                        // Typespec is just the element type
-                                        // (outer ranges live on pav->Ranges()).
-                                        element_width = get_width_from_typespec(
-                                            a, current_instance);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (element_width <= 0) element_width = 1;
-
-                // Typedef'd packed multi-dim local/return (plane_t/box_t): the
-                // detection above only handles packed_array_var, so a logic_var
-                // whose dimensions live on its TYPESPEC (keccak theta's
-                // `plane_t c; c[x] = …`) kept element_width=1 and only the LSB
-                // was written.  Recompute the element width from the outer dim
-                // against the base's total width.
-                if (element_width <= 1) {
-                    if (auto actual = bs->Actual_group()) {
-                        int total = 0;
-                        if (base_name == func_name)
-                            total = result_wire ? result_wire->width : 0;
-                        else {
-                            RTLIL::SigSpec b = func_local_base_for_select(
-                                base_name, input_mapping, func_call_context, local_var_widths);
-                            total = (int)b.size();
-                        }
-                        int ew = 1, olo = 0;
-                        if (total > 0 &&
-                            bitselect_outer_dim(actual, total, ew, olo) && ew > 0)
-                            element_width = ew;
-                    }
-                }
+                int element_width = func_local_elem_width(bs->Actual_group(), base_name);
 
                 if (base_name == func_name) {
                     // Assigning to a bit of the return value
