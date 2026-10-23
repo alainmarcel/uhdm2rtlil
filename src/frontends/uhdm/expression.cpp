@@ -14797,6 +14797,34 @@ const UHDM::typespec* UhdmImporter::hier_path_member_typespec(const UHDM::hier_p
     if (!rts) rts = base_ref->Typespec();
     if (!rts || !rts->Actual_typespec()) return nullptr;
     const UHDM::typespec* ats = rts->Actual_typespec();
+    // An ELEMENT of an array of structs / unions (`async_evt[k].ccc = '{..}`,
+    // OpenTitan i3c_targ_async_events): the base is a bit_select whose
+    // actual is the array object, and its typespec is the ARRAY type.  Take
+    // the element type -- from the array_var / array_net's first element,
+    // or a packed array typespec's Elem_typespec -- or the pattern below is
+    // imported with no target type and every named field lands at width 1.
+    if (ats->UhdmType() != uhdmstruct_typespec && ats->UhdmType() != uhdmunion_typespec &&
+        dynamic_cast<const UHDM::bit_select*>(pe[0])) {
+        const UHDM::typespec* ets = nullptr;
+        if (auto a = base_ref->Actual_group()) {
+            if (auto av = dynamic_cast<const UHDM::array_var*>(a)) {
+                if (av->Variables() && !av->Variables()->empty())
+                    if (auto ev = (*av->Variables())[0]; ev && ev->Typespec())
+                        ets = ev->Typespec()->Actual_typespec();
+            } else if (auto an = dynamic_cast<const UHDM::array_net*>(a)) {
+                if (an->Nets() && !an->Nets()->empty())
+                    if (auto en = dynamic_cast<const UHDM::net*>((*an->Nets())[0]); en && en->Typespec())
+                        ets = en->Typespec()->Actual_typespec();
+            }
+        }
+        if (!ets)
+            if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats))
+                if (pt->Elem_typespec()) ets = pt->Elem_typespec()->Actual_typespec();
+        if (!ets)
+            if (auto at = dynamic_cast<const UHDM::array_typespec*>(ats))
+                if (at->Elem_typespec()) ets = at->Elem_typespec()->Actual_typespec();
+        if (ets) ats = ets;
+    }
     if (ats->UhdmType() != uhdmstruct_typespec && ats->UhdmType() != uhdmunion_typespec)
         return nullptr;
     std::string mpath;
