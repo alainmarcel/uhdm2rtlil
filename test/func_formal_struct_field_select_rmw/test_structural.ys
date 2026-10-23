@@ -1,0 +1,12 @@
+# The VALUE is the gate (read_slang's words): kind 0 clears the id's top bit,
+# kind 1 sets it, kind 2 sets the whole id; the address passes through.
+# Without the fixes the always_comb site returns the argument unchanged
+# (1011 for every kind) and the assign site is unevaluable for kinds 0 / 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set id_i 4'b1011 -set addr_i 8'h5A -set kind_i 0 -prove id_o 4'b0011 -prove id_a_o 4'b0011 -prove addr_o 8'h5A
+sat -verify -set id_i 4'b1011 -set addr_i 8'h5A -set kind_i 1 -prove id_o 4'b1011 -prove id_a_o 4'b1011
+sat -verify -set id_i 4'b0011 -set addr_i 8'hA5 -set kind_i 1 -prove id_o 4'b1011 -prove id_a_o 4'b1011 -prove addr_o 8'hA5
+sat -verify -set id_i 4'b1011 -set addr_i 8'h5A -set kind_i 2 -prove id_o 4'b1111 -prove id_a_o 4'b1111
