@@ -20412,6 +20412,47 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
                 
+                // Type parameters are resolved against the instance whose
+                // scope the EXPRESSION is in.  As a PORT ACTUAL
+                // (`.dir_match_tag_i(st1_req.req.addr_tag)`) this read is
+                // imported while the CHILD instance is current, where ctrl's
+                // `hpdcache_req_t` is not bound; measure in the expression's
+                // own scope (see the vpiCastOp handler for the same trap).
+                struct CiGuard {
+                    UhdmImporter* s; decltype(current_instance) saved;
+                    ~CiGuard() { s->current_instance = saved; }
+                } ci_guard{this, current_instance};
+                if (const UHDM::module_inst* encl = expr_scope_instance(uhdm_hier)) {
+                    build_elab_index();
+                    bool is_elab = false;
+                    auto eit = elab_insts_by_def_.find(std::string(encl->VpiDefName()));
+                    if (eit != elab_insts_by_def_.end())
+                        for (auto ei : eit->second)
+                            if (ei == encl) { is_elab = true; break; }
+                    if (!is_elab)
+                        if (auto ei = find_elab_instance(encl)) encl = ei;
+                    if (encl != current_instance) {
+                        if (mode_debug)
+                            uhdm_trace("    nested member read measured in the expression's scope %s\n",
+                                std::string(encl->VpiFullName()).c_str());
+                        current_instance = encl;
+                    }
+                }
+                // The base may not be in wire_map (a struct_net declared over
+                // a LOCAL typedef -- HPDcache's `hpdcache_req_x_t st1_req`);
+                // the path's own first element names the declaration.
+                if (!struct_uhdm_obj && uhdm_hier->Path_elems() &&
+                    !uhdm_hier->Path_elems()->empty()) {
+                    if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                        if (r0->Actual_group() &&
+                            (dynamic_cast<const UHDM::nets*>(r0->Actual_group()) ||
+                             dynamic_cast<const UHDM::variables*>(r0->Actual_group()))) {
+                            struct_uhdm_obj = r0->Actual_group();
+                            if (mode_debug)
+                                uhdm_trace("    base struct typespec taken from the path's first element (%s)\n",
+                                    UHDM::UhdmName(struct_uhdm_obj->UhdmType()).c_str());
+                        }
+                }
                 if (struct_uhdm_obj) {
                     // Get struct typespec
                     const ref_typespec* struct_ref_typespec = nullptr;
@@ -20427,10 +20468,15 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         struct_ref_typespec = struct_var_obj->Typespec();
                     } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
                         struct_ref_typespec = union_var_obj->Typespec();
+                    } else if (auto nets_obj = dynamic_cast<const UHDM::nets*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = nets_obj->Typespec();
+                    } else if (auto vars_obj = dynamic_cast<const UHDM::variables*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = vars_obj->Typespec();
                     }
 
                     if (struct_ref_typespec) {
-                        const typespec* struct_typespec = struct_ref_typespec->Actual_typespec();
+                        const typespec* struct_typespec =
+                            resolve_type_param_typespec(struct_ref_typespec->Actual_typespec(), inst);
                         if (struct_typespec && (struct_typespec->UhdmType() == uhdmstruct_typespec ||
                                                struct_typespec->UhdmType() == uhdmunion_typespec)) {
                             bool is_union = (struct_typespec->UhdmType() == uhdmunion_typespec);
@@ -20461,7 +20507,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         if (auto actual_ts = member_ts->Actual_typespec()) {
                                             member_width = get_width_from_typespec(actual_ts, inst);
                                             if (member_name == first_member) {
-                                                first_member_typespec = actual_ts;
+                                                // A member typed by a `parameter type`
+                                                // carries the DEFAULT here (`logic`):
+                                                // descend into the type BOUND on the
+                                                // instance (HPDcache ctrl's local
+                                                // `hpdcache_req_x_t { hpdcache_req_t req;
+                                                // ... }`, read as `st1_req.req.addr_tag`
+                                                // for the directory match tag -- X, so
+                                                // the cache never hit).
+                                                first_member_typespec =
+                                                    resolve_type_param_typespec(actual_ts, inst);
                                             }
                                         }
                                     }
@@ -20521,10 +20576,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                                 uhdm_trace("    Found nested member: total_offset=%d, width=%d\n",
                                                     first_member_offset + second_member_offset, second_member_width);
 
-                                            // Return bit slice from the wire
-                                            return RTLIL::SigSpec(struct_wire,
-                                                                first_member_offset + second_member_offset,
-                                                                second_member_width);
+                                            // Return bit slice from the wire.  A
+                                            // DEFAULT-typed definition copy (the
+                                            // AllModules pass) is narrower than
+                                            // the type bound on the instance the
+                                            // members were resolved in: decline
+                                            // rather than slice past the wire.
+                                            if (first_member_offset + second_member_offset +
+                                                    second_member_width <= struct_wire->width)
+                                                return RTLIL::SigSpec(struct_wire,
+                                                                    first_member_offset + second_member_offset,
+                                                                    second_member_width);
+                                            if (mode_debug)
+                                                uhdm_trace("    nested member slice exceeds the wire (%d bits): declined\n",
+                                                    struct_wire->width);
                                         }
                                     }
                                 }
