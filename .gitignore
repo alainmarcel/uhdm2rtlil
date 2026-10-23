@@ -73,3 +73,8 @@ test/pavona_periph2_equiv/work/
 test/pavona_periph3_equiv/work/
 test/pavona_periph4_equiv/work/
 test/pavona_periph5_equiv/work/
+
+# Claude Code runtime state (session lock); only .claude/skills/ is meant to be tracked
+.claude/*.lock
+.claude/RESUME.md
+.claude/settings.local.json
