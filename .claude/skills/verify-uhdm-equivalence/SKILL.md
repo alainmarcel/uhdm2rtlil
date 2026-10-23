@@ -1,6 +1,6 @@
 ---
 name: verify-uhdm-equivalence
-description: Verify a UHDM-frontend test or fix is correct — runs the full pipeline (frontend workflow → thorough Verilator co-sim → formal equiv_induct → sound SAT-from-reset miter) and interprets the trichotomy verdict (real bug vs artefact vs inconclusive). Use after changing src/frontends/uhdm/ or adding/triaging a test, and whenever asked to "check equivalence", "make sure the cosim passes", or decide whether a divergence is a real frontend bug.
+description: Verify a UHDM-frontend test or fix, and take a sweep divergence from symptom to merged fix. Covers the verification pipeline (frontend workflow → thorough Verilator co-sim → formal equiv_induct → sound SAT-from-reset miter) and its trichotomy verdict (real bug vs artefact vs inconclusive), AND the debug-to-fix method: re-measure the row, localise with eval / sat traces, minimal repro + bisection, the -debug trace, the fix, a ratchet test that fails on a control plugin, row re-measure, full regression, one fix per PR. Use after changing src/frontends/uhdm/, when a sweep row reads "N div (slang clean)" / "differs" / read-fail, when adding or triaging a test, and whenever asked to "check equivalence", "make sure the cosim passes", "fix the cex", or decide whether a divergence is a real frontend bug.
 ---
 
 # Verifying UHDM → RTLIL equivalence
@@ -99,6 +99,112 @@ counts matching is NOT sufficient — only a miter EQUIVALENT (bounded proof, on
 design with all operators modellable) lets you call remaining co-sim diffs
 artefacts. When in doubt, run the miter; if it can't run, say "unverified", not
 "artefact".
+
+## From a sweep divergence to a merged fix (the method)
+
+The nightly sweeps (`test/ext_ip/ext_flow.py <family>`, `test/core_sweep.py
+<core>`, `test/sweep_table.py`, `test/slang_report.py`) report a row as
+`❌ N div (slang clean)`, `❌ differs`, `read-fail`, or `❌ N undriven`.  Every
+one of the 2026-10 fixes followed the same eleven steps; skipping one is how a
+fix gets claimed that does not hold.
+
+1. **Re-measure the ROW first, from a clean work dir** -- `rm -rf
+   test/ext_ip/work/<family>/<module>` then `python3 ext_flow.py <family>
+   --filter '^<module>$'` (or `core_sweep.py <core> --filter`).  A verdict
+   can depend on the work dir's history (a wrapper reading its own previous
+   netlist), so measure twice if it moves.  The row's artefacts are the
+   evidence: `cosim/cosim.log` (`FIRST-UHDM cycle N <signal> rtl=.. uhdm=..`),
+   `check.log` / the "unresolved reads" column (`Could not resolve struct
+   member access '...'` -- the reader naming the construct it gave up on),
+   `miter.log`, and the two netlists `<module>_uhdm.il` / `<module>_slang.il`.
+2. **Read the divergence exactly.**  The summary line is cut at 40 characters:
+   diff `cosim/run_rtl.log` against `cosim/run_uhdm.log` per cycle and print
+   the differing BIT positions, then map them onto the struct layout
+   (`typedef struct packed` fields, MSB-first) -- that names the field.  A
+   formal `differs` next to a passing co-sim is often the miter's trigger
+   folding to a CONSTANT because an output the source never assigns is
+   undriven on our side and `1'x` on slang's: dump the optimised miter
+   (`write_rtlil` after `opt`) and look for `connect \trigger 1'1` before
+   calling it a reader bug.
+3. **Localise on the real netlists, not by reading code.**  Combinational:
+   `yosys -p "read_rtlil <m>_uhdm.il; hierarchy -top <m>_uhdm; proc; flatten;
+   opt_clean; delete t:$adff t:$dff; eval -set <state regs> ... -set <inputs>
+   ... -show <out>"` on both netlists with the SAME vector (delete the flops
+   and force the state wires to reach a specific FSM state).  Sequential:
+   `async2sync; sat -seq 10 -set-init-zero -set <inputs> ... -show <out>`
+   prints a deterministic per-step trace on each netlist.  Grep the IL for the
+   target signal's drivers (`assign $0\x ...`, `connect \x ...`): an
+   `assign ... 7'x`, a slice that is too wide, an empty `case 1'1` with no
+   actions, or a RMW that reads the register instead of the staged value is
+   the defect in one line.
+4. **Minimal repro, then bisect it.**  Write a 20-line DUT with ONLY the
+   construct (struct formal + the select, the generate loop + the ternary, the
+   async-reset always_ff + the task call, ...), `surelog -parse -sverilog`,
+   then `eval` both `read_uhdm slpp_all/surelog.uhdm` and `read_slang dut.sv
+   --top dut` on one vector.  Make variants that each remove ONE element
+   (the loop, the union, the cast, the nested call, the `unique`) and run
+   them all -- the variant that passes names the element.  A repro that passes
+   while the row still fails is itself a finding: the missing context is
+   almost always a TYPE PARAMETER (the formal / port / member is typed by one
+   and the definition carries the `= logic` default), a module-local typedef,
+   a generate scope, or the child-definition import pass -- re-read the row's
+   own `-debug` trace for that construct instead of guessing further.
+5. **The `-debug` trace names the handler.**  `read_uhdm -debug` is huge;
+   filter it (`grep -vE "^\s+\\_|\|vpi|get_width|Analyzing typespec|Importing
+   constant"`) and look around the statement: the ABSENCE of a line is the
+   clue -- no `Importing operation: N` means a pre-fold swallowed it, no
+   `PER-ELEMENT` / `SSA rename` line means the handler declined before the
+   emit, `dropped` / `proc=(nil)` / `base_wire=0 geom=0` say which branch gave
+   up.  Add a temporary `uhdm_trace` to print the variables of the suspected
+   branch rather than reasoning about them.
+6. **Fix at the handler that declined, mirroring its siblings.**  Most fixes
+   are a missing case next to a handled one: the bit-select branch scaled by
+   element width but the part-select branch did not; the task inliner had a
+   concat-LHS branch but the always_comb inliner did not; the sync-only
+   always_ff path folded the in-flight value but the async-reset path never
+   set the pointer it keyed on.  Keep the change to that branch; widen a guard
+   only to the shape you measured.
+7. **Label the plugins and always re-run the known-good control.**  Copy
+   `build/uhdm2rtlil.so` to the scratchpad under a name that says what it
+   contains (`uhdm2rtlil_ctrl_<sha>.so`, `uhdm2rtlil_fix3.so`); never bisect
+   against a `build/uhdm2rtlil.so` whose contents you have not just built.
+   A control built from `git stash` + `make uhdm2rtlil` takes a minute and has
+   saved three wrong conclusions.
+8. **Ratchet test that FAILS without the fix.**  `test/<name>/dut.sv` with a
+   header comment stating symptom, row, and cause.  When `read_verilog`
+   cannot parse the construct (struct parameters, packed unions, `[N]`
+   unpacked ports, multi-dim function returns) the test is UHDM-only, so give
+   it `test_structural.ys` (`sat -verify -set ... -prove <out> <value>` with
+   read_slang's words, `-seq 2 -prove-skip 1` for a register, `check -assert`
+   / `select -assert-count` for a shape) AND `test_slang_equiv.ys` (the
+   read_uhdm-vs-read_slang miter).  Run both on the fixed plugin AND the
+   control: fix 0 failures, control >=1, or the test gates nothing.  Then
+   `./test_uhdm_workflow.sh <name>` and `./test_sim_equivalence.py <name>` --
+   a `unique if` in the DUT makes Verilator `$stop` on random stimulus and
+   reads as a divergence; use a plain `if`.
+9. **Re-measure the ROW with the fix** (step 1 again).  The repro passing says
+   nothing about the row; a row that still diverges after the repro is fixed
+   means a SECOND construct (the HPDcache id re-tagging needed four edits and
+   the row still had another class behind it).  Say so in the PR rather than
+   claim the row.
+10. **Full local regression, then nothing else touches the tree.**  `cd test
+    && ./run_parallel.sh 6 --no-cva6` (~25 min); ONE at a time; no rebuild,
+    no `git checkout`, no `git stash` while it runs (the suite reads the
+    working tree).  Read the AGGREGATE summary: `True failures: 0`,
+    `Miter-Formal: 0`, `Slang-Miter ... 0 unexpected`, `Structural ... 0
+    unexpected`, and no NEW sim-equiv warning.  A failure in a test you did
+    not touch is yours until the control plugin passes it; a failure listed
+    in `test/failing_tests.txt` / `slang_miter_expected_fail.txt` is the
+    baseline (e.g. `rp32_r5p_mouse`).  Kill a run by PID in its own tool
+    call -- `pkill -f` matches the shell that runs it.
+11. **One fix per PR.**  Commit message: the construct (a code block), what
+    the netlist showed, the cause, the fix, the ratchet (and that it fails
+    on the control), the row before/after, the regression line; end with
+    `Prepared with the assistance of Claude Code.` and no other trailers.
+    At most two PRs open; merge when CI is green (the `combine` job of the
+    sharded regression must be PRESENT and `pass`, not just the build).
+    Record the finding (symptom, cause, test, what did NOT work) so the next
+    row of the same class starts from it.
 
 ## Gotchas
 
