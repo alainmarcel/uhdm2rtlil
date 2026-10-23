@@ -1,0 +1,10 @@
+# The directory SRAM must be as wide as the bound struct: 44-bit tag + 4
+# flags = 48.  With the member measured at its default the RAM is 5 bits and
+# the tag written at step 1 cannot come back at step 3.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten
+proc
+memory_map
+opt
+sat -verify -seq 3 -set-init-zero -set-at 1 we 2'b01 -set-at 1 addr 4'd3 -set-at 1 wvalid 2'b01 -set-at 1 wtag 88'h0000000000ABCDE123456 -set-at 2 we 2'b00 -set-at 2 addr 4'd3 -set-at 3 we 2'b00 -set-at 3 addr 4'd3 -prove-skip 2 -prove rtag[43:0] 44'hABCDE123456 -prove valid_o[0] 1'b1
