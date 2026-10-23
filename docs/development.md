@@ -85,16 +85,71 @@ This "vibe coding" approach has proven highly effective, enabling the implementa
 
 ## Contributing
 
-1. Fork the repository
-2. Clone and set up git hooks:
-   ```bash
-   git clone --recursive https://github.com/yourusername/uhdm2rtlil.git
-   cd uhdm2rtlil
-   git config core.hooksPath .githooks
-   ```
-3. Create a feature branch
-4. Add appropriate test cases
-5. Ensure all tests pass (or update `failing_tests.txt` if needed)
-6. Submit a pull request
+**We prefer AI-agent submissions.**  The frontend is built with Claude Code,
+and the method that produced every fix -- re-measure the sweep row, localise
+on the netlists, a minimal repro bisected one element at a time, the
+`-debug` trace, the fix at the handler that declined, a ratchet test that
+fails on a control plugin, the row re-measured, the full regression -- is
+written down in the checked-in skill
+[`.claude/skills/verify-uhdm-equivalence/SKILL.md`](../.claude/skills/verify-uhdm-equivalence/SKILL.md),
+which a Claude Code session loads automatically in this repository.  Point
+your agent at a sweep row or a failing test and let it run that method end
+to end; review the result against the checklist below.  Hand-written
+contributions are welcome on exactly the same bar.
 
-**Note**: The repository has git hooks configured to prevent committing files larger than 10MB. This helps keep the repository size manageable. If you need to include large files, consider using Git LFS or adding them to `.gitignore`.
+### What a pull request must contain
+
+1. **One change.**  One reader defect, one harness change, or one document
+   per PR.  A fix that needs several edits to one construct is one change; a
+   second construct found on the way is a second PR.
+2. **A test case and/or a sweep.**
+   - `test/<name>/dut.sv` reproducing the construct in a few dozen lines,
+     with a header comment stating the symptom, the sweep row it came from
+     and the cause.
+   - Its gates: the regular workflow compares against `read_verilog` where
+     that frontend can parse the source; where it cannot (struct parameters,
+     packed unions, `[N]` unpacked ports, multi-dimensional function
+     returns, interfaces) the test is UHDM-only and needs
+     `test_structural.ys` (`sat -verify -prove` of read_slang's values, or
+     `check -assert` / `select -assert-count` for a netlist shape) and
+     `test_slang_equiv.ys` (the read_uhdm-vs-read_slang miter).
+   - **The test must FAIL on a plugin built without the change** and pass
+     with it; say so in the PR.  A test that passes both ways gates nothing.
+   - When the defect came from third-party RTL, the sweep that keeps
+     measuring it: a family manifest under `test/ext_ip/<family>.json` (repo
+     + commit, roots, include dirs, defines, excludes) or a per-core sweep,
+     so the row appears in the nightly tables.
+3. **Fully vetted with the skill's verification process**, in this order:
+   `./test_uhdm_workflow.sh <name>`, `python3 test_sim_equivalence.py
+   <name>` (watch the ACTIVITY line), `./test_equivalence.sh <name>`,
+   `python3 triage_cosim.py <name>`; the originating sweep row re-measured
+   from a CLEAN work dir (`ext_flow.py <family> --filter '^<module>$'` or
+   `core_sweep.py <core> --filter`); and the full local regression `cd test
+   && ./run_parallel.sh 6 --no-cva6` with `True failures: 0`, `Miter-Formal:
+   0`, no unexpected slang-miter or structural result and no new sim-equiv
+   warning.  CI then runs the sharded regression and the CVA6 ratchet; a PR
+   merges only when every check, including the regression's `combine` job,
+   is green.
+4. **A commit message that reads as a report**: the construct (a code
+   block), what the netlist showed, the cause, the fix, the ratchet and that
+   it fails on the control, the row before / after, the regression line.
+   End with `Prepared with the assistance of Claude Code.` and no other
+   trailer -- `Co-Authored-By` lines fail the CLA bot.
+5. **Honesty about what was and was not closed.**  If the row still
+   diverges after the fix, the PR says so and names the remaining lead; a
+   divergence that turned out to be a testbench artefact (an unlisted enum
+   selector, a never-assigned output, X semantics) is recorded in the
+   family's adjudication list with its reason, not silently dropped.
+
+### Setup
+
+```bash
+git clone --recursive https://github.com/<you>/uhdm2rtlil.git
+cd uhdm2rtlil
+git config core.hooksPath .githooks     # blocks files > 10 MB and generated test outputs
+make                                    # Surelog, Yosys (+ read_slang), the plugin
+```
+
+Branch from `main`, keep at most two pull requests open, and do not rebuild
+or switch branches while a regression is running -- the suite reads the
+working tree.
