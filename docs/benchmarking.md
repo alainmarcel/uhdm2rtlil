@@ -20,7 +20,12 @@ line and in the total:
   **Rows − co-simulated** = rows with no co-sim for that netlist (no ports — 514
   of the 526 sv-tests snippets — no buildable testbench, no default
   elaboration, or a formal-only instantiation row).
-- `read_slang`: **co-simulated = pass + diverge**.
+- `read_slang`: **co-simulated = pass + diverge + artefact / no oracle**, counted
+  the same way as ours: *artefact* is a row where BOTH netlists diverge from the
+  RTL identically (or the miter adjudicates the divergence), *no oracle* a row
+  whose RTL is inert under Verilator -- neither is a verdict on slang -- and
+  **diverge** is a row where our netlist tracks the RTL and slang's does not:
+  the "bug" class of [slang_unsupported.md](slang_unsupported.md), row for row.
 - `read_uhdm`: **co-simulated = pass + diverge + artefact**, where *artefact* is
   a divergence a SAT miter proved to be a simulation artefact (X-semantics,
   unique/priority-case violation stimulus), not a reader defect, and
@@ -30,29 +35,29 @@ line and in the total:
   External IP row is the other 10 repos and every column sums to its total.
   The script asserts both identities before printing.
 
-| Core | Rows | Formal proven | `read_slang` co-simulated | pass | **diverge** | `read_uhdm` co-simulated | pass | **diverge** | artefact | Undriven |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **Ibex** | 28 | 22 | 23 | 20 | **3** | 24 | 20 | 0 | 4 | 0 |
-| **rp32 (R5P)** | 13 | 6 | 5 | 2 | **3** | 7 | 3 | 0 | 4 | 0 |
-| **fx68k** | 22 | 18 | 12 | 6 | **6** | 10 | 6 | 0 | 4 | 0 |
-| **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 32 | 32 | 0 | 0 | 0 |
-| **RgGen** | 25 | 25 | 25 | 25 | 0 | 25 | 25 | 0 | 0 | 0 |
-| **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 66 | 66 | 0 | 0 | 0 |
-| **TNoC** | 43 | 16 | 12 | 12 | 0 | 12 | 12 | 0 | 0 | 0 |
-| **VeeR EL2** | 91 | 77 | 86 | 86 | 0 | 87 | 87 | 0 | 0 | 0 |
-| **RSD** | 165 | 116 | 144 | 140 | **4** | 147 | 146 | 0 | 1 | 0 |
-| **BlackParrot** | 125 | 50 | 45 | 42 | **3** | 45 | 44 | 0 | 1 | 0 |
-| **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **2** | 29 | 28 | 0 | 1 | 0 |
-| **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 521 | 551 | 539 | **12** | 551 | 537 | **10** | 4 | 0 |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **11** | 389 | 380 | 0 | 9 | 0 |
-| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **11** | 135 | 126 | 0 | 9 | 0 |
-| **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **37** | 402 | 372 | **2** | 28 | 0 |
-| **Caliptra** | 22 | 20 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan core** (香山) | 2002 | 1602 | 1944 | 1941 | **3** | 1944 | 1944 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 867 | 893 | 863 | **30** | 913 | 889 | 0 | 24 | 0 |
-| **chipsalliance/sv-tests** | 527 | 474 | 11 | 11 | 0 | 12 | 11 | 0 | 1 | 0 |
-| **All sweeps** (18 workflows) | **5957** | **4855** | **4846** | **4721** | **125** | **4872** | **4770** | **12** | **90** | **0** |
+| Core | Rows | Formal proven | `read_slang` co-simulated | pass | **diverge** | artefact / no oracle | `read_uhdm` co-simulated | pass | **diverge** | artefact | Undriven |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Ibex** | 28 | 22 | 23 | 20 | 0 | 3 | 24 | 20 | 0 | 4 | 0 |
+| **rp32 (R5P)** | 13 | 6 | 5 | 2 | 0 | 3 | 7 | 3 | 0 | 4 | 0 |
+| **fx68k** | 22 | 18 | 12 | 6 | 0 | 6 | 10 | 6 | 0 | 4 | 0 |
+| **Syntacore SCR1** | 37 | 29 | 32 | 32 | 0 | 0 | 32 | 32 | 0 | 0 | 0 |
+| **RgGen** | 25 | 25 | 25 | 25 | 0 | 0 | 25 | 25 | 0 | 0 | 0 |
+| **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 0 | 66 | 66 | 0 | 0 | 0 |
+| **TNoC** | 43 | 16 | 12 | 12 | 0 | 0 | 12 | 12 | 0 | 0 | 0 |
+| **VeeR EL2** | 91 | 77 | 86 | 86 | 0 | 0 | 87 | 87 | 0 | 0 | 0 |
+| **RSD** | 165 | 116 | 144 | 140 | **3** | 1 | 147 | 146 | 0 | 1 | 0 |
+| **BlackParrot** | 125 | 50 | 45 | 42 | **2** | 1 | 45 | 44 | 0 | 1 | 0 |
+| **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **1** | 1 | 29 | 28 | 0 | 1 | 0 |
+| **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 521 | 551 | 539 | **6** | 6 | 551 | 537 | **10** | 4 | 0 |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **2** | 9 | 389 | 380 | 0 | 9 | 0 |
+| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **2** | 9 | 135 | 126 | 0 | 9 | 0 |
+| **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **9** | 28 | 402 | 372 | **2** | 28 | 0 |
+| **Caliptra** | 22 | 20 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **XiangShan core** (香山) | 2002 | 1602 | 1944 | 1941 | **3** | 0 | 1944 | 1944 | 0 | 0 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 867 | 893 | 863 | **6** | 24 | 913 | 889 | 0 | 24 | 0 |
+| **chipsalliance/sv-tests** | 527 | 474 | 11 | 11 | 0 | 0 | 12 | 11 | 0 | 1 | 0 |
+| **All sweeps** (18 workflows) | **5957** | **4855** | **4846** | **4721** | **34** | **91** | **4872** | **4770** | **12** | **90** | **0** |
 
 **Twelve `read_uhdm` divergences remain, every one new coverage finding new
 defects**: 4770 of the 4872 co-simulated rows pass outright, 90 are divergences
@@ -65,7 +70,9 @@ of the OpenTitan IP library on its first nightly (`aes_control` 301,
 `rram_scramble` 56, `i3c_targ_async_events` 38, `cheriot_rmw_filter` 36,
 `i3c_stby_cr_regs` 22, `i3c_ctrl_req_gen` 1, `rram_ctrl_mp` 1), `read_slang`
 clean on all twelve.  `prim_gf_mult` is fixed in #1270.  `read_slang`,
-measured on the same rows under the same stimulus, diverges on 125.
+measured on the same rows under the same stimulus, diverges on 34 of its own
+(81 more rows are divergences both netlists share, 6 the miter adjudicated, 4
+have no oracle).
 
 The `read_slang` divergences are listed with their reasons in
 [slang_unsupported.md](slang_unsupported.md).  Counted by
@@ -135,7 +142,8 @@ measurement.
 `no reference (read_slang fails)` -- `read_slang` cannot elaborate the module,
 so there is nothing for the miter or the co-sim to judge us against -- and of
 the 125 rows where it does build a netlist that diverges from the RTL (the
-*diverge* column of the table above), **34 are rows ours passes outright**.
+*diverge* and *artefact / no oracle* columns of the table above), **34 are
+rows ours passes outright**.
 The other 91 are rows where both netlists diverge
 and a miter has adjudicated ours as the same simulation artefact, which is the
 shared-divergence class rather than a verdict on either frontend.  Every one of
