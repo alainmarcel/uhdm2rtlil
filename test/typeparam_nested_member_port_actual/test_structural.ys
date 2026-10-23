@@ -1,0 +1,11 @@
+# The VALUE is the gate (read_slang's words): the request captured at step 1
+# must match the stored tag at step 2 and expose its size / need_rsp fields.
+# Without the fix the match tag is X (constant 0 in a 2-state netlist) and
+# hit_o never rises.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt -fast
+sat -verify -seq 2 -set-init-zero -set-at 1 core_req_i 55'b1010101111001101111000010010001101000101011001111111101 -set-at 1 core_req_valid_i 1 -set-at 2 stored_tag_i 44'h0ABCDE123456 -prove-skip 1 -prove hit_o 1 -prove size_o 2'b10 -prove need_rsp_o 1
+sat -verify -seq 2 -set-init-zero -set-at 1 core_req_i 55'b1010101111001101111000010010001101000101011001111111101 -set-at 1 core_req_valid_i 1 -set-at 2 stored_tag_i 44'h0ABCDE123457 -prove-skip 1 -prove hit_o 0
