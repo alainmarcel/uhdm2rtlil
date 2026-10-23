@@ -131,11 +131,12 @@ with a statement of which frontends fail on them.  The same report lists the
 because a document that can only record another tool's mistakes is not a
 measurement.
 
-**What the reference frontend cannot read.** 117 sweep rows carry
+**What the reference frontend cannot read.** 146 sweep rows carry
 `no reference (read_slang fails)` -- `read_slang` cannot elaborate the module,
 so there is nothing for the miter or the co-sim to judge us against -- and of
-the 76 rows where it does build a netlist that diverges from the RTL, **19 are
-rows ours passes outright**.  The other 55 are rows where both netlists diverge
+the 125 rows where it does build a netlist that diverges from the RTL (the
+*diverge* column of the table above), **34 are rows ours passes outright**.
+The other 91 are rows where both netlists diverge
 and a miter has adjudicated ours as the same simulation artefact, which is the
 shared-divergence class rather than a verdict on either frontend.  Every one of
 these is in [slang_unsupported.md](slang_unsupported.md) with the

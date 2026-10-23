@@ -14,7 +14,7 @@ downloaded nightly sweep reports; regenerate after a regression + sweep cycle.
 
 Inputs, with their vintages -- the two halves are NOT measured at the same time:
 the **test** rows (internal + yosys) come from `slang_coverage.tsv` (2026-10-22), measured against the tree it
-was run on; the **sweep** rows come from 47 downloaded report(s) under `build/sweeps/latest_1022` (2026-10-22), so they
+was run on; the **sweep** rows come from 48 downloaded report(s) under `../../../../../../home/alain/uhdm2rtlil/build/sweeps/_all1022` (2026-10-22), so they
 are only as current as that download and do not reflect anything merged since.
 
 ## How to reproduce
@@ -32,8 +32,8 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 
 | set | tests / modules | read_slang fails | of which in this report | in incomplete_testcases.md |
 |---|---|---|---|---|
-| internal tests | 1314 | 132 | 132 | 0 |
-| yosys tests | 576 | 168 | 156 | 12 |
+| internal tests | 1313 | 132 | 129 | 3 |
+| yosys tests | 576 | 168 | 117 | 51 |
 | sweep aes | 1 rows read | 1 | 1 | 0 |
 | sweep axi | 12 rows read | 12 | 5 | 7 |
 | sweep black-parrot | 43 rows read | 43 | 30 | 13 |
@@ -54,6 +54,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep ibex | 7 rows read | 7 | 3 | 4 |
 | sweep kmac | 1 rows read | 1 | 1 | 0 |
 | sweep opentitan | 5 rows read | 5 | 1 | 4 |
+| sweep opentitan-ip | 43 rows read | 43 | 23 | 20 |
 | sweep pavona | 2 rows read | 2 | 0 | 2 |
 | sweep periph | 1 rows read | 1 | 0 | 1 |
 | sweep periph5 | 1 rows read | 1 | 0 | 1 |
@@ -63,7 +64,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep tnoc | 23 rows read | 23 | 6 | 17 |
 | sweep veer-eh1 | 1 rows read | 1 | 1 | 0 |
 | sweep veer-el2 | 5 rows read | 5 | 5 | 0 |
-| sweep verilog-ethernet | 19 rows read | 19 | 17 | 2 |
+| sweep verilog-ethernet | 17 rows read | 17 | 15 | 2 |
 | sweep verilog-pcie | 19 rows read | 19 | 6 | 13 |
 | sweep xiangshan-core-full | 3 rows read | 3 | 3 | 0 |
 
@@ -71,56 +72,175 @@ The yosys line counts every generated `run/` directory, 29 of which the regressi
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 
+**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 125 rows over these sweeps = **34** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **91** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
+
 ## Failure classes
 
 | kind | class | internal | yosys | sweeps |
 |---|---|---|---|---|
-| sim-only | non-blocking assignment in design initialization | 0 | 0 | 6 |
-| strict | syntax slang rejects (`expected ...`, macro, binary digit) | 0 | 0 | 22 |
-| strict | type rule (packed dims on int type, port initializer, member access, argument count, ...) | 1 | 2 | 8 |
-| strict | out-of-range select or index | 0 | 0 | 9 |
+| sim-only | `#` delay / timing control | 14 | 11 | 0 |
+| sim-only | unsupported system task (`$past`, `$stable`, `$fopen`, ...) | 6 | 11 | 0 |
+| sim-only | non-blocking assignment in design initialization | 5 | 5 | 6 |
+| sim-only | SystemVerilog assertion (SVA) feature | 5 | 6 | 0 |
+| sim-only | net state read in design initialization | 7 | 1 | 0 |
+| sim-only | unsynthesizable feature (string, event, dynamic size) | 5 | 1 | 0 |
+| strict | syntax slang rejects (`expected ...`, macro, binary digit) | 10 | 17 | 23 |
+| strict | type rule (packed dims on int type, port initializer, member access, argument count, ...) | 18 | 9 | 20 |
+| strict | top-level interface port left unconnected | 12 | 2 | 8 |
+| strict | out-of-range select or index | 3 | 6 | 10 |
+| strict | non-ANSI port declaration in an ANSI module | 0 | 12 | 2 |
+| strict | generate-block reference or generate function in a constant expression | 5 | 7 | 0 |
+| strict | name used before declaration / undeclared | 4 | 4 | 4 |
+| strict | implicit conversion needs a cast (enum / struct) | 8 | 0 | 2 |
+| strict | assignment to a net in a procedural block | 4 | 5 | 0 |
 | strict | `$fatal` / `$error` raised at elaboration -- the design refuses this configuration | 0 | 0 | 7 |
+| strict | redefinition / duplicate definition | 1 | 4 | 1 |
 | strict | hierarchical reference inside a constant function call (`$bits(inst.sig)`) | 0 | 0 | 6 |
-| strict | top-level interface port left unconnected | 0 | 0 | 6 |
-| strict | non-ANSI port declaration in an ANSI module | 0 | 0 | 2 |
-| strict | implicit conversion needs a cast (enum / struct) | 0 | 0 | 2 |
-| strict | name used before declaration / undeclared | 0 | 0 | 2 |
-| strict | assignment pattern leaves array elements uncovered / overrides a parameter that does not exist | 0 | 0 | 1 |
-| strict | redefinition / duplicate definition | 0 | 0 | 1 |
-| synth-limit | read_slang did not finish within the sweep's time budget | 0 | 1 | 6 |
+| strict | assignment pattern leaves array elements uncovered / overrides a parameter that does not exist | 0 | 1 | 3 |
+| synth-limit | `unsupported language feature` | 9 | 3 | 0 |
+| synth-limit | flip-flop with multiple / non-canonical asynchronous loads | 2 | 4 | 0 |
 | synth-limit | net declaration initializer / `$readmemh` (sv-elab) | 0 | 0 | 6 |
-| synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 0 | 3 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 28 |
+| synth-limit | read_slang did not finish within the sweep's time budget | 0 | 1 | 4 |
+| synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 1 | 3 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 34 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 6 | 5 | 5 |
-| bug | `Feature unimplemented` | 5 | 1 | 1 |
-| unclassified | ERROR: Design elaboration failed; see full log for details | 116 | 140 | 0 |
-| unclassified | ERROR: too many errors emitted, stopping now [--error-limit=] | 4 | 7 | 0 |
-| unclassified | ERROR: interface port 'el2_mem_export' not connected | 0 | 0 | 2 |
-| unclassified | ERROR: member 'id' is not covered by any assignment pattern key | 0 | 0 | 2 |
+| bug | `Feature unimplemented` | 5 | 1 | 2 |
 
 ## sim-only
 
 Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regression's co-sim never sees them); slang rejects them unless told `--ignore-timing` / `--ignore-assertions` / `--ignore-initial`.
 
-### non-blocking assignment in design initialization -- 6
+### `#` delay / timing control -- 25
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
+| internal test | [`code_tidbits_fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/code_tidbits_fsm_using_function) | dut.sv:60: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one code_tidbits_fsm_using_function` |
+| internal test | [`conditional_if`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/conditional_if) | dut.sv:9: ERROR: statements that pass time are not allowed in this context | R1 `./slang_coverage_sweep.sh --one conditional_if` |
+| internal test | [`fsm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm) | dut.sv:19: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one fsm` |
+| internal test | [`fsm_single_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_single_always) | dut.sv:34: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one fsm_single_always` |
+| internal test | [`fsm_using_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_using_always) | dut.sv:58: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one fsm_using_always` |
+| internal test | [`fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_using_function) | dut.sv:61: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one fsm_using_function` |
+| internal test | [`initial_seq_values`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/initial_seq_values) | dut.sv:21: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one initial_seq_values` |
+| internal test | [`power_state`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/power_state) | dut.sv:17: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one power_state` |
+| internal test | [`sva_counter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_counter) | dut.sv:16: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_counter` |
+| internal test | [`sva_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_range) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_range` |
+| internal test | [`sva_throughout`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_throughout) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_throughout` |
+| internal test | [`sva_value_change_changed`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_changed) | dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_value_change_changed` |
+| internal test | [`sva_value_change_changed_wide`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_changed_wide) | dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_value_change_changed_wide` |
+| internal test | [`sva_value_change_rose`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_rose) | dut.sv:10: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_value_change_rose` |
+| yosys test | [`run/arch/common/fsm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/fsm) | dut.v:19: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/arch/common/fsm` |
+| yosys test | [`run/asicworld/code_tidbits_fsm_using_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_always) | dut.v:57: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_always` |
+| yosys test | [`run/asicworld/code_tidbits_fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_function) | dut.v:60: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_function` |
+| yosys test | [`run/asicworld/code_tidbits_fsm_using_single_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_single_always) | dut.v:33: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_single_always` |
+| yosys test | [`run/simple/i2c_master_tests`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/i2c_master_tests) | dut.v:14: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/simple/i2c_master_tests` |
+| yosys test | [`run/sva/counter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/counter) | dut.sv:11: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/counter` |
+| yosys test | [`run/sva/sva_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_range) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_range` |
+| yosys test | [`run/sva/sva_throughout`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_throughout) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_throughout` |
+| yosys test | [`run/sva/sva_value_change_changed`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_changed) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_changed` |
+| yosys test | [`run/sva/sva_value_change_changed_wide`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_changed_wide) | dut.sv:6: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_changed_wide` |
+| yosys test | [`run/sva/sva_value_change_rose`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_rose) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_rose` |
+
+### unsupported system task (`$past`, `$stable`, `$fopen`, ...) -- 17
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`GetC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/GetC) | dut.sv:3: ERROR: unsupported system task 'getc' | R1 `./slang_coverage_sweep.sh --one GetC` |
+| internal test | [`MonitorInputPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MonitorInputPort) | dut.sv:3: ERROR: unsupported system task '$monitor' | R1 `./slang_coverage_sweep.sh --one MonitorInputPort` |
+| internal test | [`PutC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PutC) | dut.sv:5: ERROR: unsupported system task 'putc' | R1 `./slang_coverage_sweep.sh --one PutC` |
+| internal test | [`SizeOfGeneratedWireArray`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/SizeOfGeneratedWireArray) | dut.sv:9: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one SizeOfGeneratedWireArray` |
+| internal test | [`named_genblk_cascade`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/named_genblk_cascade) | dut.sv:26: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one named_genblk_cascade` |
+| internal test | [`sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_sim) | dut.sv:24: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported | R1 `./slang_coverage_sweep.sh --one sva_value_change_sim` |
+| yosys test | [`run/asicworld/code_hdl_models_arbiter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_hdl_models_arbiter_tb) | dut.v:22: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_hdl_models_arbiter_tb` |
+| yosys test | [`run/asicworld/code_verilog_tutorial_first_counter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_first_counter_tb) | dut.v:9: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_first_counter_tb` |
+| yosys test | [`run/asicworld/code_verilog_tutorial_fsm_full_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_fsm_full_tb) | dut.v:10: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_fsm_full_tb` |
+| yosys test | [`run/fmt/always_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_full) | dut.v:8: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/always_full` |
+| yosys test | [`run/fmt/initial_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/initial_display) | dut.v:7: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/initial_display` |
+| yosys test | [`run/fmt/yosys-always_full-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_full-1) | dut.sv:20: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_full-1` |
+| yosys test | [`run/fmt/yosys-roundtrip-dec_signed-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_signed-1) | dut.sv:14: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_signed-1` |
+| yosys test | [`run/fmt/yosys-roundtrip-dec_signed-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_signed-2) | dut.sv:14: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_signed-2` |
+| yosys test | [`run/fmt/yosys-roundtrip-dec_unsigned-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_unsigned-1) | dut.sv:14: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_unsigned-1` |
+| yosys test | [`run/fmt/yosys-roundtrip-dec_unsigned-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_unsigned-2) | dut.sv:14: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_unsigned-2` |
+| yosys test | [`run/sva/sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_sim) | dut.sv:13: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_sim` |
+
+### non-blocking assignment in design initialization -- 16
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`memwr_two_writes_one_block`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/memwr_two_writes_one_block) | dut.sv:32: ERROR: non-blocking assignments unsupported in design initialization | R1 `./slang_coverage_sweep.sh --one memwr_two_writes_one_block` |
+| internal test | [`priority_memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/priority_memory) | dut.sv:19: ERROR: non-blocking assignments unsupported in design initialization | R1 `./slang_coverage_sweep.sh --one priority_memory` |
+| internal test | [`sp_read_first`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_read_first) | dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization | R1 `./slang_coverage_sweep.sh --one sp_read_first` |
+| internal test | [`sp_read_or_write`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_read_or_write) | dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization | R1 `./slang_coverage_sweep.sh --one sp_read_or_write` |
+| internal test | [`sp_write_first`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_write_first) | dut.sv:16: ERROR: non-blocking assignments unsupported in design initialization | R1 `./slang_coverage_sweep.sh --one sp_write_first` |
 | sweep fx68k | [`excUnit`](https://github.com/ijor/fx68k/blob/0602ee4627b10f301298f2673d826cdd6baa9327/fx68k.sv#L1150) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py fx68k excUnit` |
 | sweep fx68k | [`fx68k`](https://github.com/ijor/fx68k/blob/0602ee4627b10f301298f2673d826cdd6baa9327/fx68k.sv#L136) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py fx68k fx68k` |
 | sweep verilog-ethernet | [`axis_srl_fifo`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/lib/axis/rtl/axis_srl_fifo.v#L34) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py verilog-ethernet axis_srl_fifo` |
 | sweep verilog-ethernet | [`axis_srl_register`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/lib/axis/rtl/axis_srl_register.v#L34) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py verilog-ethernet axis_srl_register` |
 | sweep verilog-pcie | [`axis_srl_fifo`](https://github.com/alexforencich/verilog-axis/blob/48ff7a7e2ef782cf778d47910cf85835c64b1bce/rtl/axis_srl_fifo.v#L34) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py verilog-pcie axis_srl_fifo` |
 | sweep verilog-pcie | [`axis_srl_register`](https://github.com/alexforencich/verilog-axis/blob/48ff7a7e2ef782cf778d47910cf85835c64b1bce/rtl/axis_srl_register.v#L34) | ERROR: non-blocking assignments unsupported in design initialization | R3 `python3 ext_flow.py verilog-pcie axis_srl_register` |
+| yosys test | [`run/memories/issue00335`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memories/issue00335) | dut.v:20: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/memories/issue00335` |
+| yosys test | [`run/sat/alu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/alu) | ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/alu` |
+| yosys test | [`run/sat/grom_computer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/grom_computer) | ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/grom_computer` |
+| yosys test | [`run/sat/grom_cpu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/grom_cpu) | ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/grom_cpu` |
+| yosys test | [`run/sat/ram_memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/ram_memory) | dut.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/ram_memory` |
+
+### SystemVerilog assertion (SVA) feature -- 11
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`sva_basic00`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic00) | dut.sv:9: ERROR: encountered unsupported SVA feature | R1 `./slang_coverage_sweep.sh --one sva_basic00` |
+| internal test | [`sva_basic01`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic01) | dut.sv:24: ERROR: encountered unsupported SVA feature | R1 `./slang_coverage_sweep.sh --one sva_basic01` |
+| internal test | [`sva_basic02`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic02) | dut.sv:26: ERROR: encountered unsupported SVA feature | R1 `./slang_coverage_sweep.sh --one sva_basic02` |
+| internal test | [`sva_basic03`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic03) | dut.sv:12: ERROR: encountered unsupported SVA feature | R1 `./slang_coverage_sweep.sh --one sva_basic03` |
+| internal test | [`sva_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_not) | dut.sv:34: ERROR: encountered unsupported SVA feature | R1 `./slang_coverage_sweep.sh --one sva_not` |
+| yosys test | [`run/sva/basic00`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic00) | dut.sv:9: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/basic00` |
+| yosys test | [`run/sva/basic01`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic01) | dut.sv:14: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/basic01` |
+| yosys test | [`run/sva/basic02`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic02) | dut.sv:16: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/basic02` |
+| yosys test | [`run/sva/basic03`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic03) | dut.sv:7: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/basic03` |
+| yosys test | [`run/sva/nested_clk_else`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/nested_clk_else) | dut.sv:4: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/nested_clk_else` |
+| yosys test | [`run/sva/sva_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_not) | dut.sv:25: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/sva_not` |
+
+### net state read in design initialization -- 8
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`InterfaceWithPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/InterfaceWithPort) | dut.sv:2: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one InterfaceWithPort` |
+| internal test | [`array_init_2d`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/array_init_2d) | dut.sv:30: ERROR: internal error: evaluation does not resolve to a constant in design initialization | R1 `./slang_coverage_sweep.sh --one array_init_2d` |
+| internal test | [`fib_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib_simple) | dut.sv:21: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one fib_simple` |
+| internal test | [`function_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/function_output) | dut.sv:16: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one function_output` |
+| internal test | [`ibex_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top` |
+| internal test | [`ibex_top_tracing`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top_tracing) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top_tracing` |
+| internal test | [`ibex_tracer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_tracer) | ibex_tracer.sv:77: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_tracer` |
+| yosys test | [`run/opt/opt_share_cat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_share_cat) | dut.v:10: ERROR: reading net state during design initialization unsupported | R2 `./slang_coverage_sweep.sh --one run/opt/opt_share_cat` |
+
+### unsynthesizable feature (string, event, dynamic size) -- 6
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`AssignToUnpackedUnionFieldAndReadOtherField`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/AssignToUnpackedUnionFieldAndReadOtherField) | dut.sv:5: ERROR: value of type 'union' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one AssignToUnpackedUnionFieldAndReadOtherField` |
+| internal test | [`MultiplePrints`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MultiplePrints) | dut.sv:7: ERROR: expression of type string with dynamic size unsupported for synthesis | R1 `./slang_coverage_sweep.sh --one MultiplePrints` |
+| internal test | [`RealValue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/RealValue) | dut.sv:3: ERROR: value of type 'real' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one RealValue` |
+| internal test | [`cdc_static_basic`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/cdc_static_basic) | dut.sv:6: ERROR: value of type 'real' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one cdc_static_basic` |
+| internal test | [`display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/display_lm) | dut.sv:11: ERROR: unsynthesizable feature | R1 `./slang_coverage_sweep.sh --one display_lm` |
+| yosys test | [`run/fmt/display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/display_lm) | dut.v:11: ERROR: unsynthesizable feature | R2 `./slang_coverage_sweep.sh --one run/fmt/display_lm` |
 
 ## strict
 
 LRM rules slang enforces and the other two frontends relax. The source is what a strict compiler rejects; the fix is in the design or in the test.
 
-### syntax slang rejects (`expected ...`, macro, binary digit) -- 22
+### syntax slang rejects (`expected ...`, macro, binary digit) -- 50
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
+| internal test | [`ReadmemhInGenblock`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ReadmemhInGenblock) | dut.sv:14: ERROR: expected member | R1 `./slang_coverage_sweep.sh --one ReadmemhInGenblock` |
+| internal test | [`bitwise_operations`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/bitwise_operations) | dut.sv:9: ERROR: expected ';' | R1 `./slang_coverage_sweep.sh --one bitwise_operations` |
+| internal test | [`bitwise_operations_reverted_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/bitwise_operations_reverted_range) | dut.sv:9: ERROR: expected ';' | R1 `./slang_coverage_sweep.sh --one bitwise_operations_reverted_range` |
+| internal test | [`clk2fflogic_effects`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/clk2fflogic_effects) | dut.sv:59: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R1 `./slang_coverage_sweep.sh --one clk2fflogic_effects` |
+| internal test | [`logic_ops`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/logic_ops) | dut.sv:8: ERROR: expected ';' | R1 `./slang_coverage_sweep.sh --one logic_ops` |
+| internal test | [`port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/port_sign_extend) | dut.v:75: ERROR: expected identifier | R1 `./slang_coverage_sweep.sh --one port_sign_extend` |
+| internal test | [`print_trg_mixed_edges`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/print_trg_mixed_edges) | dut.sv:20: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R1 `./slang_coverage_sweep.sh --one print_trg_mixed_edges` |
+| internal test | [`print_trg_multi_edge`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/print_trg_multi_edge) | dut.sv:25: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R1 `./slang_coverage_sweep.sh --one print_trg_multi_edge` |
+| internal test | [`svtypes_enum_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svtypes_enum_simple) | dut.sv:9: ERROR: expected member | R1 `./slang_coverage_sweep.sh --one svtypes_enum_simple` |
+| internal test | [`various_port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/various_port_sign_extend) | dut.v:75: ERROR: expected identifier | R1 `./slang_coverage_sweep.sh --one various_port_sign_extend` |
 | sweep black-parrot | [`bp_be_calculator_top`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_be/src/v/bp_be_calculator/bp_be_calculator_top.sv#L18) | ERROR: expected a declaration name | R3 `python3 ext_flow.py black-parrot bp_be_calculator_top` |
 | sweep black-parrot | [`bp_be_dcache`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_be/src/v/bp_be_dcache/bp_be_dcache.sv#L77) | ERROR: expected a declaration name | R3 `python3 ext_flow.py black-parrot bp_be_dcache` |
 | sweep black-parrot | [`bp_be_pipe_mem`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_be/src/v/bp_be_calculator/bp_be_pipe_mem.sv#L16) | ERROR: expected a declaration name | R3 `python3 ext_flow.py black-parrot bp_be_pipe_mem` |
@@ -143,12 +263,47 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | sweep black-parrot | [`bp_sacc_tile`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_top/src/v/bp_sacc_tile.sv#L9) | ERROR: expected a declaration name | R3 `python3 ext_flow.py black-parrot bp_sacc_tile` |
 | sweep black-parrot | [`bp_sacc_tile_node`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_top/src/v/bp_sacc_tile_node.sv#L6) | ERROR: expected a declaration name | R3 `python3 ext_flow.py black-parrot bp_sacc_tile_node` |
 | sweep caliptra-ss | [`adc`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/ast/rtl/adc.sv#L13) | ERROR: unknown macro or compiler directive '`ASSERT' | R3 `python3 ext_flow.py caliptra-ss adc` |
+| sweep opentitan-ip | [`rv_plic_gateway`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_darjeeling/ip_autogen/rv_plic/rtl/rv_plic_gateway.sv#L7) | ERROR: unknown macro or compiler directive '`ASSERT' | R3 `python3 ext_flow.py opentitan-ip rv_plic_gateway` |
+| yosys test | [`run/arch/common/logic`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/logic) | dut.v:8: ERROR: expected ';' | R2 `./slang_coverage_sweep.sh --one run/arch/common/logic` |
+| yosys test | [`run/arch/fabulous/regfile_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/regfile_map) | dut.v:2: ERROR: expected identifier | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/regfile_map` |
+| yosys test | [`run/arch/quicklogic/qlf_k6n10f/mem_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/quicklogic/qlf_k6n10f/mem_tb) | dut.v:48: ERROR: unknown macro or compiler directive '`MEM_TEST_VECTOR' | R2 `./slang_coverage_sweep.sh --one run/arch/quicklogic/qlf_k6n10f/mem_tb` |
+| yosys test | [`run/fmt/always_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_display) | dut.v:15: ERROR: expected member | R2 `./slang_coverage_sweep.sh --one run/fmt/always_display` |
+| yosys test | [`run/fmt/roundtrip`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/roundtrip) | dut.v:1: ERROR: unknown macro or compiler directive '`SIGN' | R2 `./slang_coverage_sweep.sh --one run/fmt/roundtrip` |
+| yosys test | [`run/fmt/yosys-always_display-clk_rst-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst-1) | dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst-1` |
+| yosys test | [`run/fmt/yosys-always_display-clk_rst-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst-2) | dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst-2` |
+| yosys test | [`run/fmt/yosys-always_display-clk_rst_en-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst_en-1) | dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst_en-1` |
+| yosys test | [`run/fmt/yosys-always_display-clk_rst_en-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst_en-2) | dut.sv:19: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst_en-2` |
+| yosys test | [`run/hana/test_parser`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/hana/test_parser) | dut.v:33: ERROR: expected ';' | R2 `./slang_coverage_sweep.sh --one run/hana/test_parser` |
+| yosys test | [`run/liberty/small`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/liberty/small) | dut.v:3: ERROR: expected identifier | R2 `./slang_coverage_sweep.sh --one run/liberty/small` |
+| yosys test | [`run/simple/memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/memory) | dut.v:39: ERROR: expected identifier | R2 `./slang_coverage_sweep.sh --one run/simple/memory` |
+| yosys test | [`run/svtypes/enum_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/enum_simple) | dut.sv:9: ERROR: expected member | R2 `./slang_coverage_sweep.sh --one run/svtypes/enum_simple` |
+| yosys test | [`run/various/clk2fflogic_effects`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/clk2fflogic_effects) | dut.sv:59: ERROR: simple if-else pattern expected in modeling an asynchronous load on a flip-flop | R2 `./slang_coverage_sweep.sh --one run/various/clk2fflogic_effects` |
+| yosys test | [`run/various/port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/port_sign_extend) | dut.v:75: ERROR: expected identifier | R2 `./slang_coverage_sweep.sh --one run/various/port_sign_extend` |
+| yosys test | [`run/verilog/constparser_f_file`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/constparser_f_file) | dut.sv:2: ERROR: expected binary digit | R2 `./slang_coverage_sweep.sh --one run/verilog/constparser_f_file` |
+| yosys test | [`run/verilog/dynamic_range_lhs`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/dynamic_range_lhs) | dut.v:2: ERROR: unknown macro or compiler directive '`ALT' | R2 `./slang_coverage_sweep.sh --one run/verilog/dynamic_range_lhs` |
 
-### type rule (packed dims on int type, port initializer, member access, argument count, ...) -- 11
+### type rule (packed dims on int type, port initializer, member access, argument count, ...) -- 47
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
+| internal test | [`FunctionOutputArgument`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/FunctionOutputArgument) | dut.sv:3: ERROR: cannot refer to automatic variable 'x' from non-procedural context | R1 `./slang_coverage_sweep.sh --one FunctionOutputArgument` |
+| internal test | [`ImportFunction`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ImportFunction) | dut.sv:13: ERROR: no member named 'get_5' in package 'lc_ctrl_state_pkg' | R1 `./slang_coverage_sweep.sh --one ImportFunction` |
+| internal test | [`ImportPackageWithFunction`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ImportPackageWithFunction) | dut.sv:14: ERROR: module instantiation is missing port list parentheses | R1 `./slang_coverage_sweep.sh --one ImportPackageWithFunction` |
+| internal test | [`NegationAsParameterOfInstance`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/NegationAsParameterOfInstance) | dut.sv:2: ERROR: parameter declaration is missing an initializer | R1 `./slang_coverage_sweep.sh --one NegationAsParameterOfInstance` |
+| internal test | [`ParameterRangeUsingDot`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ParameterRangeUsingDot) | dut.sv:41: ERROR: assignment pattern for 'part_info_t$[2]' requires 2 elements but 8 were provided | R1 `./slang_coverage_sweep.sh --one ParameterRangeUsingDot` |
+| internal test | [`PatternType`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PatternType) | dut.sv:2: ERROR: parameter declaration is missing an initializer | R1 `./slang_coverage_sweep.sh --one PatternType` |
+| internal test | [`UnionInPackageWithMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/UnionInPackageWithMultirange) | dut.sv:30: ERROR: cannot reference compilation unit item from within a package | R1 `./slang_coverage_sweep.sh --one UnionInPackageWithMultirange` |
+| internal test | [`VoidFunction2Returns`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/VoidFunction2Returns) | dut.sv:3: ERROR: cannot refer to automatic variable 'x' from non-procedural context | R1 `./slang_coverage_sweep.sh --one VoidFunction2Returns` |
 | internal test | [`escape_id`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/escape_id) | ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers | R1 `./slang_coverage_sweep.sh --one escape_id` |
+| internal test | [`hello-uvm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/hello-uvm) | dut.sv:4: ERROR: unknown package 'uvm_pkg' | R1 `./slang_coverage_sweep.sh --one hello-uvm` |
+| internal test | [`mriscv_bind_sva`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/mriscv_bind_sva) | jg_bind_wrapper.sv:322: ERROR: could not resolve hierarchical path name 'DECODE_INSTR_inst' | R1 `./slang_coverage_sweep.sh --one mriscv_bind_sva` |
+| internal test | [`rand_const`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rand_const) | dut.sv:10: ERROR: constant variable must have an initializer | R1 `./slang_coverage_sweep.sh --one rand_const` |
+| internal test | [`rp32_r5p_hamster`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_hamster) | r5p_hamster.sv:267: ERROR: no member named 'alu' in 'dec_t' | R1 `./slang_coverage_sweep.sh --one rp32_r5p_hamster` |
+| internal test | [`sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sizebits) | dut.sv:31: ERROR: invalid argument type 'logic' to system function | R1 `./slang_coverage_sweep.sh --one sizebits` |
+| internal test | [`struct_sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_sizebits) | dut.sv:40: ERROR: invalid argument type 'logic' to system function | R1 `./slang_coverage_sweep.sh --one struct_sizebits` |
+| internal test | [`struct_unpacked_array_member`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_unpacked_array_member) | dut.sv:9: ERROR: packed members must be of integral type (not 'bit[7:0]$[4]') | R1 `./slang_coverage_sweep.sh --one struct_unpacked_array_member` |
+| internal test | [`union4_repro`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/union4_repro) | dut.sv:3: ERROR: all members of a packed union must have the same width; 'raw' has width of 32, previously seen width was 29 | R1 `./slang_coverage_sweep.sh --one union4_repro` |
+| internal test | [`various_struct_access`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/various_struct_access) | dut.sv:24: ERROR: invalid member access for type 'logic[1:0]' | R1 `./slang_coverage_sweep.sh --one various_struct_access` |
 | sweep black-parrot | [`bp_be_ptw`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_be/src/v/bp_be_calculator/bp_be_ptw.sv#L5) | ERROR: 'bp_be_ptw' is not a valid top-level module | R3 `python3 ext_flow.py black-parrot bp_be_ptw` |
 | sweep black-parrot | [`bp_lce_req`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_me/src/v/lce/bp_lce_req.sv#L16) | ERROR: 'bp_lce_req' is not a valid top-level module | R3 `python3 ext_flow.py black-parrot bp_lce_req` |
 | sweep black-parrot | [`bp_me_stream_pump_control`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_me/src/v/network/bp_me_stream_pump_control.sv#L22) | ERROR: 'bp_me_stream_pump_control' is not a valid top-level module | R3 `python3 ext_flow.py black-parrot bp_me_stream_pump_control` |
@@ -157,14 +312,64 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | sweep black-parrot | [`bp_tlb`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_common/src/v/bp_tlb.sv#L10) | ERROR: 'bp_tlb' is not a valid top-level module | R3 `python3 ext_flow.py black-parrot bp_tlb` |
 | sweep caliptra-ss | [`counter_template`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/third_party/i3c-core/src/libs/counter_template.sv#L7) | ERROR: unknown package 'i3c_ctrl_pkg' | R3 `python3 ext_flow.py caliptra-ss counter_template` |
 | sweep caliptra-ss | [`serializer`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/third_party/i3c-core/src/libs/serializer.sv#L3) | ERROR: unknown package 'i3c_ctrl_pkg' | R3 `python3 ext_flow.py caliptra-ss serializer` |
+| sweep opentitan-ip | [`flash_ctrl_arb`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_ctrl_arb.sv#L15) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_ctrl_arb` |
+| sweep opentitan-ip | [`flash_ctrl_erase`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_ctrl_erase.sv#L8) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_ctrl_erase` |
+| sweep opentitan-ip | [`flash_ctrl_info_cfg`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_ctrl_info_cfg.sv#L10) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_ctrl_info_cfg` |
+| sweep opentitan-ip | [`flash_ctrl_prog`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_ctrl_prog.sv#L8) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_ctrl_prog` |
+| sweep opentitan-ip | [`flash_ctrl_rd`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_ctrl_rd.sv#L8) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_ctrl_rd` |
+| sweep opentitan-ip | [`flash_mp_data_region_sel`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_englishbreakfast/ip_autogen/flash_ctrl/rtl/flash_mp_data_region_sel.sv#L10) | ERROR: unknown package 'flash_ctrl_top_specific_pkg' | R3 `python3 ext_flow.py opentitan-ip flash_mp_data_region_sel` |
+| sweep opentitan-ip | [`i3c_controller_trx`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller_trx.sv#L9) | ERROR: unknown package 'i3c_io_pkg' | R3 `python3 ext_flow.py opentitan-ip i3c_controller_trx` |
+| sweep opentitan-ip | [`i3c_dat_cache`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_dat_cache.sv#L7) | ERROR: 'i3c_dat_cache' is not a valid top-level module | R3 `python3 ext_flow.py opentitan-ip i3c_dat_cache` |
+| sweep opentitan-ip | [`i3c_target_trx`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_target_trx.sv#L24) | ERROR: unknown package 'i3c_io_pkg' | R3 `python3 ext_flow.py opentitan-ip i3c_target_trx` |
+| sweep opentitan-ip | [`i3c_timers`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_timers.sv#L16) | ERROR: 'i3c_timers' is not a valid top-level module | R3 `python3 ext_flow.py opentitan-ip i3c_timers` |
+| sweep opentitan-ip | [`soc_dbg_ctrl`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/soc_dbg_ctrl/rtl/soc_dbg_ctrl.sv#L7) | ERROR: no member named 'pwr_boot_status_t' in package 'pwrmgr_pkg' | R3 `python3 ext_flow.py opentitan-ip soc_dbg_ctrl` |
+| sweep opentitan-ip | [`sram_ctrl_ram_reg_top`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/sram_ctrl/rtl/sram_ctrl_ram_reg_top.sv#L9) | ERROR: no member named 'NumRegsRam' in package 'sram_ctrl_reg_pkg' | R3 `python3 ext_flow.py opentitan-ip sram_ctrl_ram_reg_top` |
 | yosys test | [`run/arch/fabulous/cells_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/cells_map) | ERROR: Found control character or space (0x20) in string '$lut$\$lut ' which is not allowed in RTLIL identifiers | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/cells_map` |
+| yosys test | [`run/arch/fabulous/latches_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/latches_map) | dut.v:4: ERROR: only 'output' variable port declarations may have an initializer expression | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/latches_map` |
 | yosys test | [`run/asicworld/code_verilog_tutorial_escape_id`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_escape_id) | ERROR: Found control character or space (0x20) in string '\1dff$\1dff ' which is not allowed in RTLIL identifiers | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_escape_id` |
+| yosys test | [`run/sat/sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/sizebits) | dut.sv:31: ERROR: invalid argument type 'logic' to system function | R2 `./slang_coverage_sweep.sh --one run/sat/sizebits` |
+| yosys test | [`run/svtypes/struct_sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/struct_sizebits) | dut.sv:40: ERROR: invalid argument type 'logic' to system function | R2 `./slang_coverage_sweep.sh --one run/svtypes/struct_sizebits` |
+| yosys test | [`run/techmap/mem_simple_4x1_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/mem_simple_4x1_map) | dut.v:66: ERROR: value must be positive | R2 `./slang_coverage_sweep.sh --one run/techmap/mem_simple_4x1_map` |
+| yosys test | [`run/various/memory_word_as_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/memory_word_as_index) | dut.v:20: ERROR: only 'output' variable port declarations may have an initializer expression | R2 `./slang_coverage_sweep.sh --one run/various/memory_word_as_index` |
+| yosys test | [`run/various/specify`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/specify) | dut.v:41: ERROR: parallel specify path source type 'logic' has different width than destination type 'logic[1:0]' | R2 `./slang_coverage_sweep.sh --one run/various/specify` |
+| yosys test | [`run/various/struct_access`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/struct_access) | dut.sv:24: ERROR: invalid member access for type 'logic[1:0]' | R2 `./slang_coverage_sweep.sh --one run/various/struct_access` |
 
-### out-of-range select or index -- 9
+### top-level interface port left unconnected -- 22
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
+| internal test | [`iface_array_elem_member_bit_write_genscope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_array_elem_member_bit_write_genscope) | dut.sv:27: ERROR: top-level module 'top' has unconnected interface port 'port_control_if' | R1 `./slang_coverage_sweep.sh --one iface_array_elem_member_bit_write_genscope` |
+| internal test | [`iface_array_port_struct_param_count`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_array_port_struct_param_count) | dut.sv:39: ERROR: top-level module 'top' has unconnected interface port 'receiver_if' | R1 `./slang_coverage_sweep.sh --one iface_array_port_struct_param_count` |
+| internal test | [`iface_member_typedef_via_iface_port_width`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_member_typedef_via_iface_port_width) | dut.sv:44: ERROR: top-level module 'top' has unconnected interface port 'types' | R1 `./slang_coverage_sweep.sh --one iface_member_typedef_via_iface_port_width` |
+| internal test | [`iface_modport_passthrough`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_modport_passthrough) | dut.sv:28: ERROR: cannot connect modport 'my_iface.drv' to port requiring modport 'my_iface.rcv' | R1 `./slang_coverage_sweep.sh --one iface_modport_passthrough` |
+| internal test | [`iface_own_iface_port_member_not_signal`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_own_iface_port_member_not_signal) | dut.sv:44: ERROR: top-level module 'top' has unconnected interface port 'types' | R1 `./slang_coverage_sweep.sh --one iface_own_iface_port_member_not_signal` |
+| internal test | [`iface_port_localparam`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_port_localparam) | dut.sv:28: ERROR: top-level module 'iface_port_localparam' has unconnected interface port 'm' | R1 `./slang_coverage_sweep.sh --one iface_port_localparam` |
+| internal test | [`rp32_r5p_degu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_degu) | r5p_degu.sv:56: ERROR: top-level module 'r5p_degu' has unconnected interface port 'tcb_ifu' | R1 `./slang_coverage_sweep.sh --one rp32_r5p_degu` |
+| internal test | [`rp32_r5p_degu_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_degu_soc_top) | tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub' | R1 `./slang_coverage_sweep.sh --one rp32_r5p_degu_soc_top` |
+| internal test | [`rp32_r5p_mouse_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_mouse_soc_top) | tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub' | R1 `./slang_coverage_sweep.sh --one rp32_r5p_mouse_soc_top` |
+| internal test | [`rp32_soc_vfriendly`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_soc_vfriendly) | tcb_lite_lib_passthrough.sv:23: ERROR: top-level module 'tcb_lite_lib_passthrough' has unconnected interface port 'sub' | R1 `./slang_coverage_sweep.sh --one rp32_soc_vfriendly` |
+| internal test | [`svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface1) | dut.sv:83: ERROR: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2' | R1 `./slang_coverage_sweep.sh --one svinterface1` |
+| internal test | [`svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface_at_top) | dut.sv:10: ERROR: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop' | R1 `./slang_coverage_sweep.sh --one svinterface_at_top` |
+| sweep caliptra-ss | [`css_mcu0_el2_veer_wrapper`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/riscv_core/veer_el2/rtl/design/css_mcu0_el2_veer_wrapper.sv#L24) | ERROR: interface port 'el2_mem_export' not connected | R3 `python3 ext_flow.py caliptra-ss css_mcu0_el2_veer_wrapper` |
+| sweep tnoc | [`tnoc_flit_if_dummy_receiver_array`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_flit_if_dummy_receiver_array.sv#L1) | ERROR: top-level module 'tnoc_flit_if_dummy_receiver_array' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_flit_if_dummy_receiver_array` |
+| sweep tnoc | [`tnoc_flit_if_dummy_sender_array`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_flit_if_dummy_sender_array.sv#L1) | ERROR: top-level module 'tnoc_flit_if_dummy_sender_array' has unconnected interface port 'sender_if' | R3 `python3 ext_flow.py tnoc tnoc_flit_if_dummy_sender_array` |
+| sweep tnoc | [`tnoc_if_transposer`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_if_transposer.sv#L1) | ERROR: top-level module 'tnoc_if_transposer' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_if_transposer` |
+| sweep tnoc | [`tnoc_input_block_dummy`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_input_block_dummy.sv#L1) | ERROR: top-level module 'tnoc_input_block_dummy' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_input_block_dummy` |
+| sweep tnoc | [`tnoc_output_block_dummy`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_output_block_dummy.sv#L1) | ERROR: top-level module 'tnoc_output_block_dummy' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_output_block_dummy` |
+| sweep tnoc | [`tnoc_vc_splitter`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_vc_splitter.sv#L1) | ERROR: top-level module 'tnoc_vc_splitter' has unconnected interface port 'types' | R3 `python3 ext_flow.py tnoc tnoc_vc_splitter` |
+| sweep veer-el2 | [`el2_veer_wrapper`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_veer_wrapper.sv#L24) | ERROR: interface port 'el2_mem_export' not connected | R3 `python3 ext_flow.py veer-el2 el2_veer_wrapper` |
+| yosys test | [`run/svinterfaces/svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface1) | dut.sv:83: ERROR: cannot connect modport 'MyInterface.submodule1' to port requiring modport 'MyInterface.submodule2' | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface1` |
+| yosys test | [`run/svinterfaces/svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top) | dut.sv:10: ERROR: top-level module 'TopModule' has unconnected interface port 'interfaceInstanceAtTop' | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top` |
+
+### out-of-range select or index -- 19
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`simple_abc9`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/simple_abc9) | dut.sv:88: ERROR: cannot select range of [7:4] from 'reg[3:0]' [-Wrange-oob] | R1 `./slang_coverage_sweep.sh --one simple_abc9` |
+| internal test | [`struct_negative_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_negative_index) | dut.sv:14: ERROR: cannot refer to element -1 of 'bit[3:0][7:0]' [-Windex-oob] | R1 `./slang_coverage_sweep.sh --one struct_negative_index` |
+| internal test | [`svtypes_struct_array`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svtypes_struct_array) | dut.sv:15: ERROR: cannot refer to element -1 of 'bit[5:0][7:0]' [-Windex-oob] | R1 `./slang_coverage_sweep.sh --one svtypes_struct_array` |
 | sweep black-parrot | [`bp_cacc_vdp`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_top/src/v/bp_cacc_vdp.sv#L6) | ERROR: cannot select range of [39:12] from 'logic[38:0]' [-Wrange-oob] | R3 `python3 ext_flow.py black-parrot bp_cacc_vdp` |
+| sweep opentitan-ip | [`rstmgr_crash_info`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_darjeeling/ip_autogen/rstmgr/rtl/rstmgr_crash_info.sv#L8) | ERROR: range of selection [-1:0] from 'logic[3:0]' is reversed [-Wrange-select-reversed] | R3 `python3 ext_flow.py opentitan-ip rstmgr_crash_info` |
 | sweep verilog-ethernet | [`axis_baser_rx_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_baser_rx_64.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet axis_baser_rx_64` |
 | sweep verilog-ethernet | [`axis_xgmii_rx_32`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_xgmii_rx_32.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet axis_xgmii_rx_32` |
 | sweep verilog-ethernet | [`axis_xgmii_rx_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_xgmii_rx_64.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet axis_xgmii_rx_64` |
@@ -173,6 +378,94 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | sweep verilog-ethernet | [`eth_mac_phy_10g`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g` |
 | sweep verilog-ethernet | [`eth_mac_phy_10g_fifo`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_fifo.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_fifo` |
 | sweep verilog-ethernet | [`eth_mac_phy_10g_rx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_rx.v#L34) | ERROR: cannot select range of 96 elements from 'reg[0:0]' [-Wrange-width-oob] | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_rx` |
+| yosys test | [`run/memlib/memlib_9b1B`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_9b1B) | dut.v:66: ERROR: cannot refer to element 1 of 'logic[0:0]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_9b1B` |
+| yosys test | [`run/memlib/memlib_wide_sp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_wide_sp) | dut.v:43: ERROR: cannot select range of [4:0] from 'logic[0:0]' [-Wrange-oob] | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_wide_sp` |
+| yosys test | [`run/simple/mem2reg_bounds_tern`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/mem2reg_bounds_tern) | dut.v:13: ERROR: cannot refer to element 3 of 'reg[0:7]$[3]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/simple/mem2reg_bounds_tern` |
+| yosys test | [`run/simple_abc9/abc9`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple_abc9/abc9) | dut.v:88: ERROR: cannot select range of [7:4] from 'reg[3:0]' [-Wrange-oob] | R2 `./slang_coverage_sweep.sh --one run/simple_abc9/abc9` |
+| yosys test | [`run/svtypes/struct_array`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/struct_array) | dut.sv:15: ERROR: cannot refer to element -1 of 'bit[5:0][7:0]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/svtypes/struct_array` |
+| yosys test | [`run/verilog/mem_bounds`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/mem_bounds) | dut.sv:7: ERROR: cannot refer to element -1 of 'reg[0:7]$[3]' [-Windex-oob] | R2 `./slang_coverage_sweep.sh --one run/verilog/mem_bounds` |
+
+### non-ANSI port declaration in an ANSI module -- 14
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| sweep caliptra-ss | [`kmac_ss_reduced`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/lc_ctrl/rtl/kmac_ss_reduced.sv#L10) | ERROR: implicit named port 'mode_i' of type 'sha3_pkg::sha3_mode_e' connects to value of inequivalent type 'caliptra_ss_sha3_pkg::sha3_mode_e' [-Wimplicit-port-type-mismatch] | R3 `python3 ext_flow.py caliptra-ss kmac_ss_reduced` |
+| sweep cvw | [`ieu`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/ieu.sv#L30) | ERROR: could not find connection for implicit named port 'CSRReadValW' | R3 `python3 ext_flow.py cvw ieu` |
+| yosys test | [`run/arch/xilinx/macc_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/xilinx/macc_tb) | dut.v:8: ERROR: port declaration 'REF_accum_out' does not match any port in the module's port list | R2 `./slang_coverage_sweep.sh --one run/arch/xilinx/macc_tb` |
+| yosys test | [`run/cxxrtl/test_unconnected_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/cxxrtl/test_unconnected_output) | dut.v:3: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/cxxrtl/test_unconnected_output` |
+| yosys test | [`run/lut/map_and`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_and) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_and` |
+| yosys test | [`run/lut/map_cmp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_cmp) | dut.v:8: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_cmp` |
+| yosys test | [`run/lut/map_mux`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_mux) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_mux` |
+| yosys test | [`run/lut/map_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_not) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_not` |
+| yosys test | [`run/lut/map_or`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_or) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_or` |
+| yosys test | [`run/lut/map_xor`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_xor) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/lut/map_xor` |
+| yosys test | [`run/opt/opt_expr_cmp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_expr_cmp) | dut.v:2: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/opt/opt_expr_cmp` |
+| yosys test | [`run/opt/opt_expr_constconn`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_expr_constconn) | dut.v:3: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/opt/opt_expr_constconn` |
+| yosys test | [`run/various/constmsk_testmap`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/constmsk_testmap) | dut.v:7: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/various/constmsk_testmap` |
+| yosys test | [`run/verilog/macro_arg_tromp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/macro_arg_tromp) | dut.sv:18: ERROR: can't use port declaration in module with ANSI style port list | R2 `./slang_coverage_sweep.sh --one run/verilog/macro_arg_tromp` |
+
+### generate-block reference or generate function in a constant expression -- 12
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`fib`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib) | dut.sv:55: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression | R1 `./slang_coverage_sweep.sh --one fib` |
+| internal test | [`func_width_scope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/func_width_scope) | dut.sv:21: ERROR: cannot call a function declared inside a generate block in a constant expression | R1 `./slang_coverage_sweep.sh --one func_width_scope` |
+| internal test | [`genscope_hier_localparam_array_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genscope_hier_localparam_array_index) | dut.sv:29: ERROR: reference to 'IdB' by hierarchical name is not allowed in a constant expression | R1 `./slang_coverage_sweep.sh --one genscope_hier_localparam_array_index` |
+| internal test | [`genvar_loop_decl_1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genvar_loop_decl_1) | dut.sv:8: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R1 `./slang_coverage_sweep.sh --one genvar_loop_decl_1` |
+| internal test | [`module_scope_func`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/module_scope_func) | dut.sv:41: ERROR: cannot call a function declared inside a generate block in a constant expression | R1 `./slang_coverage_sweep.sh --one module_scope_func` |
+| yosys test | [`run/simple/func_width_scope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/func_width_scope) | dut.v:21: ERROR: cannot call a function declared inside a generate block in a constant expression | R2 `./slang_coverage_sweep.sh --one run/simple/func_width_scope` |
+| yosys test | [`run/simple/module_scope_func`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/module_scope_func) | dut.v:41: ERROR: cannot call a function declared inside a generate block in a constant expression | R2 `./slang_coverage_sweep.sh --one run/simple/module_scope_func` |
+| yosys test | [`run/simple/named_genblk`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/named_genblk) | dut.v:20: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R2 `./slang_coverage_sweep.sh --one run/simple/named_genblk` |
+| yosys test | [`run/various/fib`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/fib) | dut.v:55: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression | R2 `./slang_coverage_sweep.sh --one run/various/fib` |
+| yosys test | [`run/various/fib_tern`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/fib_tern) | dut.v:60: ERROR: reference to non-constant variable 'off' is not allowed in a constant expression | R2 `./slang_coverage_sweep.sh --one run/various/fib_tern` |
+| yosys test | [`run/various/gen_if_null`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/gen_if_null) | dut.v:14: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R2 `./slang_coverage_sweep.sh --one run/various/gen_if_null` |
+| yosys test | [`run/verilog/genvar_loop_decl_1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/genvar_loop_decl_1) | dut.sv:8: ERROR: cannot reference unnamed generate block via external name 'genblk1' (use --allow-genblk-reference to allow this) | R2 `./slang_coverage_sweep.sh --one run/verilog/genvar_loop_decl_1` |
+
+### name used before declaration / undeclared -- 12
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`StructParameterInGenScope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/StructParameterInGenScope) | dut.sv:30: ERROR: use of undeclared identifier 'PageW' | R1 `./slang_coverage_sweep.sh --one StructParameterInGenScope` |
+| internal test | [`genfor_unit_param_bound`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genfor_unit_param_bound) | dut.sv:17: ERROR: use of undeclared identifier 'FETCH_WIDTH' | R1 `./slang_coverage_sweep.sh --one genfor_unit_param_bound` |
+| internal test | [`unit_enum_const_child_ref`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/unit_enum_const_child_ref) | child.sv:8: ERROR: use of undeclared identifier 'UWIDTH_BYTE' | R1 `./slang_coverage_sweep.sh --one unit_enum_const_child_ref` |
+| internal test | [`unit_param_unpacked_port_dim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/unit_param_unpacked_port_dim) | dut.sv:16: ERROR: use of undeclared identifier 'W' | R1 `./slang_coverage_sweep.sh --one unit_param_unpacked_port_dim` |
+| sweep hdmi | [`hdmi`](https://github.com/hdl-util/hdmi/blob/83b1c9543a91b776671a44e68e130f81cae437b7/src/hdmi.sv#L4) | ERROR: identifier 'START_X' used before its declaration | R3 `python3 ext_flow.py hdmi hdmi` |
+| sweep opentitan-ip | [`otp_ctrl_token_const`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_darjeeling/ip_autogen/otp_ctrl/rtl/otp_ctrl_token_const.sv#L9) | ERROR: use of undeclared identifier 'digest_const_array_t' | R3 `python3 ext_flow.py opentitan-ip otp_ctrl_token_const` |
+| sweep opentitan-ip | [`rom_ctrl_rom_reg_top`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/rom_ctrl/rtl/rom_ctrl_rom_reg_top.sv#L9) | ERROR: use of undeclared identifier 'tl_reg_d2h'; did you mean 'tl_reg_h2d'? | R3 `python3 ext_flow.py opentitan-ip rom_ctrl_rom_reg_top` |
+| sweep rsd | [`Axi4LiteDualPortBlockRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Memory/Axi4LiteMemory.sv#L11) | ERROR: use of undeclared identifier 'PS_PL_MEMORY_ADDR_BIT_SIZE'; did you mean 'MEMORY_ADDR_BIT_SIZE'? | R3 `python3 ext_flow.py rsd Axi4LiteDualPortBlockRAM` |
+| yosys test | [`run/arch/common/blockram`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/blockram) | dut.v:75: ERROR: identifier 'WORD' used before its declaration | R2 `./slang_coverage_sweep.sh --one run/arch/common/blockram` |
+| yosys test | [`run/svinterfaces/ondemand`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/ondemand) | dut.sv:3: ERROR: use of undeclared identifier 'iface' | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/ondemand` |
+| yosys test | [`run/svtypes/typedef_initial_and_assign`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/typedef_initial_and_assign) | dut.sv:52: ERROR: identifier 'wire_3' used before its declaration | R2 `./slang_coverage_sweep.sh --one run/svtypes/typedef_initial_and_assign` |
+| yosys test | [`run/verific/bounds`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verific/bounds) | dut.sv:10: ERROR: use of undeclared identifier 'my_ifc' | R2 `./slang_coverage_sweep.sh --one run/verific/bounds` |
+
+### implicit conversion needs a cast (enum / struct) -- 10
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`DpiChandle`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/DpiChandle) | dut.sv:12: ERROR: invalid operands to binary expression ('chandle' and 'int') | R1 `./slang_coverage_sweep.sh --one DpiChandle` |
+| internal test | [`EnumBases`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumBases) | dut.sv:10: ERROR: expression width of 2 does not exactly match declared enum type width of 32 | R1 `./slang_coverage_sweep.sh --one EnumBases` |
+| internal test | [`EnumMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumMultirange) | dut.sv:39: ERROR: no implicit conversion from 'int' to 'dec_lc_state_e'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumMultirange` |
+| internal test | [`EnumParameterInNestedModules`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumParameterInNestedModules) | dut.sv:26: ERROR: no implicit conversion from 'top.enum_t' to 'prim_subreg_shadow.enum_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumParameterInNestedModules` |
+| internal test | [`EnumVariantInPackage`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumVariantInPackage) | dut.sv:15: ERROR: no implicit conversion from 'logic' to 'lc_tx_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EnumVariantInPackage` |
+| internal test | [`EscapedIdentifiersInHierPath`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EscapedIdentifiersInHierPath) | dut.sv:19: ERROR: no implicit conversion from 'int' to 'fie_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one EscapedIdentifiersInHierPath` |
+| internal test | [`TypedefAlias`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TypedefAlias) | dut.sv:25: ERROR: no implicit conversion from 'third_alias_t' (aka 'logic[7:0]') to 'alias_t' (aka 'enum_t'); explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one TypedefAlias` |
+| internal test | [`rp32_r5p_csr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_csr) | r5p32_csr_pkg.sv:324: ERROR: no implicit conversion from 'bit[0:0]' to 'csr_vector_t'; explicit conversion exists, are you missing a cast? | R1 `./slang_coverage_sweep.sh --one rp32_r5p_csr` |
+| sweep cve2 | [`cve2_pmp`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_pmp.sv#L9) | ERROR: no implicit conversion from 'logic[1:0]' to 'priv_lvl_e'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py cve2 cve2_pmp` |
+| sweep veer-el2 | [`el2_pmp`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_pmp.sv#L17) | ERROR: no implicit conversion from 'logic[2:0]' to 'el2_pmp_type_pkt_t'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py veer-el2 el2_pmp` |
+
+### assignment to a net in a procedural block -- 9
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`StreamOpInitialAlways`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/StreamOpInitialAlways) | dut.sv:20: ERROR: cannot assign to a net within a procedural context | R1 `./slang_coverage_sweep.sh --one StreamOpInitialAlways` |
+| internal test | [`TaskOutputArgument`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TaskOutputArgument) | dut.sv:9: ERROR: cannot assign to a net within a procedural context | R1 `./slang_coverage_sweep.sh --one TaskOutputArgument` |
+| internal test | [`reg_wire_error`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/reg_wire_error) | dut.sv:26: ERROR: cannot assign to a net within a procedural context | R1 `./slang_coverage_sweep.sh --one reg_wire_error` |
+| internal test | [`synthesis`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/synthesis) | dut.sv:9: ERROR: cannot assign to a net within a procedural context | R1 `./slang_coverage_sweep.sh --one synthesis` |
+| yosys test | [`run/arch/ecp5/rom`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ecp5/rom) | dut.v:9: ERROR: cannot assign to a net within a procedural context | R2 `./slang_coverage_sweep.sh --one run/arch/ecp5/rom` |
+| yosys test | [`run/arch/ice40/rom`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ice40/rom) | dut.v:10: ERROR: cannot assign to a net within a procedural context | R2 `./slang_coverage_sweep.sh --one run/arch/ice40/rom` |
+| yosys test | [`run/arch/ice40/spram`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ice40/spram) | dut.v:19: ERROR: cannot assign to a net within a procedural context | R2 `./slang_coverage_sweep.sh --one run/arch/ice40/spram` |
+| yosys test | [`run/various/reg_wire_error`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/reg_wire_error) | dut.sv:26: ERROR: cannot assign to a net within a procedural context | R2 `./slang_coverage_sweep.sh --one run/various/reg_wire_error` |
+| yosys test | [`run/verilog/wire_and_var`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/wire_and_var) | dut.sv:21: ERROR: cannot assign to a net within a procedural context | R2 `./slang_coverage_sweep.sh --one run/verilog/wire_and_var` |
 
 ### `$fatal` / `$error` raised at elaboration -- the design refuses this configuration -- 7
 
@@ -186,6 +479,17 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | sweep veer-el2 | [`rvdffie`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/lib/beh_lib.sv#L349) | ERROR: $error encountered: rvdffie.genblk1: rvdffie must be WIDTH >= 8 | R3 `python3 ext_flow.py veer-el2 rvdffie` |
 | sweep veer-el2 | [`rvdffiee`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/lib/beh_lib.sv#L395) | ERROR: $error encountered: rvdffiee.genblk1: rvdffie width must be >= 8 | R3 `python3 ext_flow.py veer-el2 rvdffiee` |
 
+### redefinition / duplicate definition -- 6
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`initval`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/initval) | dut.sv:1: ERROR: redefinition of 'foo' [-Wredefinition] | R1 `./slang_coverage_sweep.sh --one initval` |
+| sweep rsd | [`NarrowDistributedMultiPortRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Primitives/RAM_Synplify.sv#L393) | ERROR: duplicate definition of 'BlockDualPortRAM' [-Wduplicate-definition] | R3 `python3 ext_flow.py rsd NarrowDistributedMultiPortRAM` |
+| yosys test | [`run/opt/opt_dff_eqbits_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_dff_eqbits_large) | opt_dff_eqbits_small.sv:1: ERROR: duplicate definition of 'test_case' [-Wduplicate-definition] | R2 `./slang_coverage_sweep.sh --one run/opt/opt_dff_eqbits_large` |
+| yosys test | [`run/opt/opt_dff_eqbits_small`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_dff_eqbits_small) | opt_dff_eqbits_large.sv:1: ERROR: duplicate definition of 'test_case' [-Wduplicate-definition] | R2 `./slang_coverage_sweep.sh --one run/opt/opt_dff_eqbits_small` |
+| yosys test | [`run/sat/initval`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/initval) | dut.v:1: ERROR: redefinition of 'foo' [-Wredefinition] | R2 `./slang_coverage_sweep.sh --one run/sat/initval` |
+| yosys test | [`run/various/pmux2shiftx`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/pmux2shiftx) | dut.v:5: ERROR: redefinition of 'D' [-Wredefinition] | R2 `./slang_coverage_sweep.sh --one run/various/pmux2shiftx` |
+
 ### hierarchical reference inside a constant function call (`$bits(inst.sig)`) -- 6
 
 | set | test | diagnostic | recipe |
@@ -197,65 +501,46 @@ LRM rules slang enforces and the other two frontends relax. The source is what a
 | sweep caliptra-ss | [`mci_mcu_trace_buffer`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/mci/rtl/mci_mcu_trace_buffer.sv#L20) | ERROR: hierarchical references are not allowed in calls to '$bits' | R3 `python3 ext_flow.py caliptra-ss mci_mcu_trace_buffer` |
 | sweep caliptra-ss | [`mcu_mbox`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/mci/rtl/mcu_mbox.sv#L37) | ERROR: hierarchical references are not allowed in calls to '$bits' | R3 `python3 ext_flow.py caliptra-ss mcu_mbox` |
 
-### top-level interface port left unconnected -- 6
+### assignment pattern leaves array elements uncovered / overrides a parameter that does not exist -- 4
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
-| sweep tnoc | [`tnoc_flit_if_dummy_receiver_array`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_flit_if_dummy_receiver_array.sv#L1) | ERROR: top-level module 'tnoc_flit_if_dummy_receiver_array' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_flit_if_dummy_receiver_array` |
-| sweep tnoc | [`tnoc_flit_if_dummy_sender_array`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_flit_if_dummy_sender_array.sv#L1) | ERROR: top-level module 'tnoc_flit_if_dummy_sender_array' has unconnected interface port 'sender_if' | R3 `python3 ext_flow.py tnoc tnoc_flit_if_dummy_sender_array` |
-| sweep tnoc | [`tnoc_if_transposer`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_if_transposer.sv#L1) | ERROR: top-level module 'tnoc_if_transposer' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_if_transposer` |
-| sweep tnoc | [`tnoc_input_block_dummy`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_input_block_dummy.sv#L1) | ERROR: top-level module 'tnoc_input_block_dummy' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_input_block_dummy` |
-| sweep tnoc | [`tnoc_output_block_dummy`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/router/tnoc_output_block_dummy.sv#L1) | ERROR: top-level module 'tnoc_output_block_dummy' has unconnected interface port 'receiver_if' | R3 `python3 ext_flow.py tnoc tnoc_output_block_dummy` |
-| sweep tnoc | [`tnoc_vc_splitter`](https://github.com/taichi-ishitani/tnoc/blob/7e9841ff775ea22fba3f222f7bdfe35668345e00/rtl/common/tnoc_vc_splitter.sv#L1) | ERROR: top-level module 'tnoc_vc_splitter' has unconnected interface port 'types' | R3 `python3 ext_flow.py tnoc tnoc_vc_splitter` |
-
-### non-ANSI port declaration in an ANSI module -- 2
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep caliptra-ss | [`kmac_ss_reduced`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/lc_ctrl/rtl/kmac_ss_reduced.sv#L10) | ERROR: implicit named port 'mode_i' of type 'sha3_pkg::sha3_mode_e' connects to value of inequivalent type 'caliptra_ss_sha3_pkg::sha3_mode_e' [-Wimplicit-port-type-mismatch] | R3 `python3 ext_flow.py caliptra-ss kmac_ss_reduced` |
-| sweep cvw | [`ieu`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/ieu/ieu.sv#L30) | ERROR: could not find connection for implicit named port 'CSRReadValW' | R3 `python3 ext_flow.py cvw ieu` |
-
-### implicit conversion needs a cast (enum / struct) -- 2
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep cve2 | [`cve2_pmp`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_pmp.sv#L9) | ERROR: no implicit conversion from 'logic[1:0]' to 'priv_lvl_e'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py cve2 cve2_pmp` |
-| sweep veer-el2 | [`el2_pmp`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_pmp.sv#L17) | ERROR: no implicit conversion from 'logic[2:0]' to 'el2_pmp_type_pkt_t'; explicit conversion exists, are you missing a cast? | R3 `python3 ext_flow.py veer-el2 el2_pmp` |
-
-### name used before declaration / undeclared -- 2
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep hdmi | [`hdmi`](https://github.com/hdl-util/hdmi/blob/83b1c9543a91b776671a44e68e130f81cae437b7/src/hdmi.sv#L4) | ERROR: identifier 'START_X' used before its declaration | R3 `python3 ext_flow.py hdmi hdmi` |
-| sweep rsd | [`Axi4LiteDualPortBlockRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Memory/Axi4LiteMemory.sv#L11) | ERROR: use of undeclared identifier 'PS_PL_MEMORY_ADDR_BIT_SIZE'; did you mean 'MEMORY_ADDR_BIT_SIZE'? | R3 `python3 ext_flow.py rsd Axi4LiteDualPortBlockRAM` |
-
-### assignment pattern leaves array elements uncovered / overrides a parameter that does not exist -- 1
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
+| sweep axi | [`axi_lite_to_apb`](https://github.com/pulp-platform/axi/blob/70b8e54fd460e3308e58be596ceb3566a6e3576e/src/axi_lite_to_apb.sv#L50) | ERROR: member 'id' is not covered by any assignment pattern key | R3 `python3 ext_flow.py axi axi_lite_to_apb` |
+| sweep axi | [`axi_to_apb`](https://github.com/pulp-platform/axi/blob/70b8e54fd460e3308e58be596ceb3566a6e3576e/src/axi_to_apb.sv#L34) | ERROR: member 'id' is not covered by any assignment pattern key | R3 `python3 ext_flow.py axi axi_to_apb` |
 | sweep verilog-ethernet | [`ssio_sdr_in_diff`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/ssio_sdr_in_diff.v#L34) | ERROR: parameter 'IODDR_STYLE' does not exist in 'ssio_sdr_in' [-Wundefined-param-override] | R3 `python3 ext_flow.py verilog-ethernet ssio_sdr_in_diff` |
-
-### redefinition / duplicate definition -- 1
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep rsd | [`NarrowDistributedMultiPortRAM`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Primitives/RAM_Synplify.sv#L393) | ERROR: duplicate definition of 'BlockDualPortRAM' [-Wduplicate-definition] | R3 `python3 ext_flow.py rsd NarrowDistributedMultiPortRAM` |
+| yosys test | [`run/arch/fabulous/prims`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/prims) | dut.v:128: ERROR: port 'Q' does not exist in 'LUTFF' | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/prims` |
 
 ## synth-limit
 
 Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 
-### read_slang did not finish within the sweep's time budget -- 7
+### `unsupported language feature` -- 12
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
-| sweep verilog-ethernet | [`axis_eth_fcs_insert_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_eth_fcs_insert_64.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet axis_eth_fcs_insert_64` |
-| sweep verilog-ethernet | [`axis_xgmii_tx_64`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/axis_xgmii_tx_64.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet axis_xgmii_tx_64` |
-| sweep verilog-ethernet | [`eth_mac_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_tx` |
-| sweep verilog-ethernet | [`eth_phy_10g`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g` |
-| sweep verilog-ethernet | [`eth_phy_10g_rx_if`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_rx_if.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_rx_if` |
-| sweep verilog-ethernet | [`eth_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_tx` |
-| yosys test | [`run/simple/case_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/case_large) |  | R2 `./slang_coverage_sweep.sh --one run/simple/case_large` |
+| internal test | [`Break`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Break) | dut.sv:5: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one Break` |
+| internal test | [`BreakContinue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/BreakContinue) | dut.sv:5: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one BreakContinue` |
+| internal test | [`BreakNested`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/BreakNested) | dut.sv:5: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one BreakNested` |
+| internal test | [`Continue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Continue) | dut.sv:5: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one Continue` |
+| internal test | [`ContinueNested`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ContinueNested) | dut.sv:5: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one ContinueNested` |
+| internal test | [`EnumFirstInInitial`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumFirstInInitial) | dut.sv:6: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one EnumFirstInInitial` |
+| internal test | [`Repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Repeat) | dut.sv:4: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one Repeat` |
+| internal test | [`TaskReturn`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TaskReturn) | dut.sv:3: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one TaskReturn` |
+| internal test | [`counters_repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/counters_repeat) | dut.sv:29: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one counters_repeat` |
+| yosys test | [`run/memlib/memlib_block_sp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp) | dut.v:77: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp` |
+| yosys test | [`run/memlib/memlib_block_sp_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp_full) | dut.v:78: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp_full` |
+| yosys test | [`run/sat/counters-repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/counters-repeat) | dut.v:29: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/sat/counters-repeat` |
+
+### flip-flop with multiple / non-canonical asynchronous loads -- 6
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`dff_different_styles`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/dff_different_styles) | dut.sv:46: ERROR: polarity of condition doesn't match edge sensitivity | R1 `./slang_coverage_sweep.sh --one dff_different_styles` |
+| internal test | [`dffsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/dffsr) | dut.sv:2: ERROR: multiple asynchronous loads unsupported | R1 `./slang_coverage_sweep.sh --one dffsr` |
+| yosys test | [`run/sim/dffsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/dffsr) | dut.v:2: ERROR: multiple asynchronous loads unsupported | R2 `./slang_coverage_sweep.sh --one run/sim/dffsr` |
+| yosys test | [`run/simple/dff_different_styles`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/dff_different_styles) | dut.v:46: ERROR: polarity of condition doesn't match edge sensitivity | R2 `./slang_coverage_sweep.sh --one run/simple/dff_different_styles` |
+| yosys test | [`run/techmap/dfflibmap-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap-sim) | dut.v:12: ERROR: multiple asynchronous loads unsupported | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap-sim` |
+| yosys test | [`run/techmap/dfflibmap_dffsr_mixedpol-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap_dffsr_mixedpol-sim) | dut.v:3: ERROR: multiple asynchronous loads unsupported | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap_dffsr_mixedpol-sim` |
 
 ### net declaration initializer / `$readmemh` (sv-elab) -- 6
 
@@ -268,19 +553,30 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 | sweep rp32 | [`rp32_r5p_mouse_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | — (no miter: slang $readmemh) | R4 `python3 core_sweep.py rp32 --filter '^rp32_r5p_mouse_soc_top$'` |
 | sweep rp32 | [`rp32_soc_vfriendly`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | — (no miter: slang $readmemh) | R4 `python3 core_sweep.py rp32 --filter '^rp32_soc_vfriendly$'` |
 
-### mixed blocking / non-blocking assignment to one variable -- 3
+### read_slang did not finish within the sweep's time budget -- 5
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| sweep verilog-ethernet | [`eth_mac_phy_10g_tx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_mac_phy_10g_tx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_mac_phy_10g_tx` |
+| sweep verilog-ethernet | [`eth_phy_10g`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g` |
+| sweep verilog-ethernet | [`eth_phy_10g_rx`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_rx.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_rx` |
+| sweep verilog-ethernet | [`eth_phy_10g_tx_if`](https://github.com/alexforencich/verilog-ethernet/blob/77320a9471d19c7dd383914bc049e02d9f4f1ffb/rtl/eth_phy_10g_tx_if.v#L34) | read_slang did not finish within the sweep's 600 s budget | R3 `python3 ext_flow.py verilog-ethernet eth_phy_10g_tx_if` |
+| yosys test | [`run/simple/case_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/case_large) |  | R2 `./slang_coverage_sweep.sh --one run/simple/case_large` |
+
+### mixed blocking / non-blocking assignment to one variable -- 4
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
 | sweep hdmi | [`packet_picker`](https://github.com/hdl-util/hdmi/blob/83b1c9543a91b776671a44e68e130f81cae437b7/src/packet_picker.sv#L4) | ERROR: blocking assignment to variable 'frame_counter' is not supported after previous non-blocking assignment | R3 `python3 ext_flow.py hdmi packet_picker` |
 | sweep verilog-pcie | [`dma_if_axi`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/dma_if_axi.v#L34) | ERROR: blocking assignment to variable 'm_axis_read_desc_status_error_reg' is not supported after previous non-blocking assignment | R3 `python3 ext_flow.py verilog-pcie dma_if_axi` |
 | sweep verilog-pcie | [`dma_if_axi_rd`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/dma_if_axi_rd.v#L34) | ERROR: blocking assignment to variable 'm_axis_read_desc_status_error_reg' is not supported after previous non-blocking assignment | R3 `python3 ext_flow.py verilog-pcie dma_if_axi_rd` |
+| yosys test | [`run/simple/partsel`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/partsel) | dut.v:43: ERROR: non-blocking assignment to variable 'r1' is not supported after previous blocking assignment | R2 `./slang_coverage_sweep.sh --one run/simple/partsel` |
 
 ## bug
 
 read_slang crashed, or produced a netlist that does not behave like the RTL while read_uhdm's does: a defect to report upstream (sv-elab, vendored in third_party/yosys/frontends/slang).
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 28
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 34
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -292,18 +588,24 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep cv32e40p | [`cv32e40p_register_file`](https://github.com/openhwfoundation/cv32e40p/blob/6033d2b1be3295ec774d17ac4cf226faacfdeb08/rtl/cv32e40p_register_file_latch.sv#L32) | ❌ 230 div; read_uhdm ✅ PASS (301 cycles, 271 active) | R3 `python3 ext_flow.py cv32e40p cv32e40p_register_file` |
 | sweep cva6 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6 --filter '^macro_decoder$'` |
 | sweep cva6 | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6 --filter '^miss_handler$'` |
-| sweep cva6-hext | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^macro_decoder$'` |
-| sweep cva6-hext | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^miss_handler$'` |
-| sweep cva6-hpdcache | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^macro_decoder$'` |
-| sweep cva6-hpdcache | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^miss_handler$'` |
-| sweep cva6-rv32 | [`cache_ctrl`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 4 div; read_uhdm ✅ PASS (300 cycles, 298 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cache_ctrl$'` |
-| sweep cva6-rv32 | [`cva6_ptw`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 300 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cva6_ptw$'` |
-| sweep cva6-rv32 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^macro_decoder$'` |
-| sweep cva6-rv32 | [`std_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 30 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_cache_subsystem$'` |
-| sweep cva6-rv32 | [`std_nbdcache`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 100 div; read_uhdm ✅ PASS (300 cycles, 294 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_nbdcache$'` |
+| sweep cva6-hext | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^macro_decoder$'` |
+| sweep cva6-hext | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^miss_handler$'` |
+| sweep cva6-hpdcache | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^macro_decoder$'` |
+| sweep cva6-hpdcache | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^miss_handler$'` |
+| sweep cva6-rv32 | [`cache_ctrl`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/cache_ctrl.sv#L21) | ❌ 4 div; read_uhdm ✅ PASS (300 cycles, 298 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cache_ctrl$'` |
+| sweep cva6-rv32 | [`cva6_ptw`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cva6_mmu/cva6_ptw.sv#L23) | ❌ 300 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cva6_ptw$'` |
+| sweep cva6-rv32 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^macro_decoder$'` |
+| sweep cva6-rv32 | [`std_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_cache_subsystem.sv#L18) | ❌ 30 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_cache_subsystem$'` |
+| sweep cva6-rv32 | [`std_nbdcache`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_nbdcache.sv#L16) | ❌ 100 div; read_uhdm ✅ PASS (300 cycles, 294 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_nbdcache$'` |
 | sweep cvfpu | [`fpnew_fma_multi`](https://github.com/openhwfoundation/cvfpu/blob/77811635cb7e8649f1d9484733ee6a0bdb44a0e6/src/fpnew_fma_multi.sv#L18) | ❌ 19 div; read_uhdm ✅ PASS (301 cycles, 298 active) | R3 `python3 ext_flow.py cvfpu fpnew_fma_multi` |
 | sweep kmac | [`kmac_reduced`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/pavona_kmac_equiv/rtl/kmac/kmac_reduced.sv#L10) | ❌ 62 div; read_uhdm ✅ PASS (300 cycles, 56 active) | R4 `python3 core_sweep.py kmac --filter '^kmac_reduced$'` |
 | sweep opentitan | [`otbn_rnd`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/opentitan_equiv/rtl/otbn/otbn_rnd.sv#L26) | ❌ 296 div; read_uhdm ✅ PASS (300 cycles, 295 active) | R4 `python3 core_sweep.py opentitan --filter '^otbn_rnd$'` |
+| sweep opentitan-ip | [`aes_prng_masking`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/aes/rtl/aes_prng_masking.sv#L13) | ❌ 277 div; read_uhdm ✅ PASS (301 cycles, 239 active) | R3 `python3 ext_flow.py opentitan-ip aes_prng_masking` |
+| sweep opentitan-ip | [`otbn`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/otbn/rtl/otbn.sv#L11) | ❌ 197 div; read_uhdm ✅ PASS (301 cycles, 261 active) | R3 `python3 ext_flow.py opentitan-ip otbn` |
+| sweep opentitan-ip | [`otbn_core`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/otbn/rtl/otbn_core.sv#L15) | ❌ 276 div; read_uhdm ✅ PASS (301 cycles, 150 active) | R3 `python3 ext_flow.py opentitan-ip otbn_core` |
+| sweep opentitan-ip | [`otbn_rnd`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/otbn/rtl/otbn_rnd.sv#L26) | ❌ 275 div; read_uhdm ✅ PASS (301 cycles, 287 active) | R3 `python3 ext_flow.py opentitan-ip otbn_rnd` |
+| sweep opentitan-ip | [`otp_ctrl_dai`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/top_darjeeling/ip_autogen/otp_ctrl/rtl/otp_ctrl_dai.sv#L10) | ❌ 277 div; read_uhdm ✅ PASS (301 cycles, 299 active) | R3 `python3 ext_flow.py opentitan-ip otp_ctrl_dai` |
+| sweep opentitan-ip | [`tlul_adapter_vh`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/tlul/rtl/tlul_adapter_vh.sv#L7) | ❌ 161 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py opentitan-ip tlul_adapter_vh` |
 | sweep rsd | [`ReadyBitTable`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ReadyBitTable.sv#L20) | ❌ 40 div; read_uhdm ✅ PASS (301 cycles, 227 active) | R3 `python3 ext_flow.py rsd ReadyBitTable` |
 | sweep rsd | [`StoreQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreQueue.sv#L19) | ❌ 29 div; read_uhdm ✅ PASS (301 cycles, 294 active) | R3 `python3 ext_flow.py rsd StoreQueue` |
 | sweep rsd | [`WakeupLogic`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/WakeupLogic.sv#L15) | ❌ 5 div; read_uhdm ✅ PASS (301 cycles, 18 active) | R3 `python3 ext_flow.py rsd WakeupLogic` |
@@ -334,7 +636,7 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | yosys test | [`run/memlib/memlib_block_tdp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_tdp) | ERROR: Assert `raw_.size() == 1' failed in third_party/yosys/frontends/slang/lib/src/yosys_plugin/ir.h:231. | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_tdp` |
 | yosys test | [`run/simple/repwhile`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/repwhile) | ERROR: Assert `vbit.variable.kind == Variable::Static' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553. | R2 `./slang_coverage_sweep.sh --one run/simple/repwhile` |
 
-### `Feature unimplemented` -- 7
+### `Feature unimplemented` -- 8
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -344,302 +646,8 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | internal test | [`OneThis`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/OneThis) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/lvalue.cc:132, see AST and code line dump above (failed condition "acc.member.kind == ast::SymbolKind::Field") | R1 `./slang_coverage_sweep.sh --one OneThis` |
 | internal test | [`Shortreal`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Shortreal) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:814, see AST and code line dump above | R1 `./slang_coverage_sweep.sh --one Shortreal` |
 | sweep cvfpu | [`fpnew_top`](https://github.com/openhwfoundation/cvfpu/blob/77811635cb7e8649f1d9484733ee6a0bdb44a0e6/src/fpnew_top.sv#L16) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above | R3 `python3 ext_flow.py cvfpu fpnew_top` |
+| sweep opentitan-ip | [`bkdr_loader`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/bkdr_loader/rtl/bkdr_loader.sv#L9) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:478, see AST and code line dump above (failed condition "!expr.type->isUnpackedArray()") | R3 `python3 ext_flow.py opentitan-ip bkdr_loader` |
 | yosys test | [`run/various/elab_sys_tasks`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/elab_sys_tasks) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above | R2 `./slang_coverage_sweep.sh --one run/various/elab_sys_tasks` |
-
-## unclassified
-
-No rule matched -- add one to CLASSES in test/slang_report.py.
-
-### ERROR: Design elaboration failed; see full log for details -- 256
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| internal test | [`AssignToUnpackedUnionFieldAndReadOtherField`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/AssignToUnpackedUnionFieldAndReadOtherField) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one AssignToUnpackedUnionFieldAndReadOtherField` |
-| internal test | [`Break`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Break) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one Break` |
-| internal test | [`BreakContinue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/BreakContinue) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one BreakContinue` |
-| internal test | [`BreakNested`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/BreakNested) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one BreakNested` |
-| internal test | [`Continue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Continue) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one Continue` |
-| internal test | [`ContinueNested`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ContinueNested) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ContinueNested` |
-| internal test | [`DpiChandle`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/DpiChandle) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one DpiChandle` |
-| internal test | [`EnumBases`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumBases) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EnumBases` |
-| internal test | [`EnumFirstInInitial`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumFirstInInitial) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EnumFirstInInitial` |
-| internal test | [`EnumMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumMultirange) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EnumMultirange` |
-| internal test | [`EnumParameterInNestedModules`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumParameterInNestedModules) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EnumParameterInNestedModules` |
-| internal test | [`EnumVariantInPackage`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EnumVariantInPackage) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EnumVariantInPackage` |
-| internal test | [`EscapedIdentifiersInHierPath`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/EscapedIdentifiersInHierPath) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one EscapedIdentifiersInHierPath` |
-| internal test | [`FunctionOutputArgument`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/FunctionOutputArgument) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one FunctionOutputArgument` |
-| internal test | [`GetC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/GetC) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one GetC` |
-| internal test | [`ImportFunction`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ImportFunction) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ImportFunction` |
-| internal test | [`ImportPackageWithFunction`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ImportPackageWithFunction) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ImportPackageWithFunction` |
-| internal test | [`InterfaceWithPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/InterfaceWithPort) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one InterfaceWithPort` |
-| internal test | [`LargeModuleParameter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/LargeModuleParameter) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one LargeModuleParameter` |
-| internal test | [`MonitorInputPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MonitorInputPort) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one MonitorInputPort` |
-| internal test | [`MultiplePrints`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MultiplePrints) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one MultiplePrints` |
-| internal test | [`NegationAsParameterOfInstance`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/NegationAsParameterOfInstance) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one NegationAsParameterOfInstance` |
-| internal test | [`ParameterRangeUsingDot`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ParameterRangeUsingDot) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ParameterRangeUsingDot` |
-| internal test | [`PatternType`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PatternType) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one PatternType` |
-| internal test | [`PutC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PutC) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one PutC` |
-| internal test | [`ReadmemhInGenblock`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ReadmemhInGenblock) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ReadmemhInGenblock` |
-| internal test | [`RealValue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/RealValue) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one RealValue` |
-| internal test | [`Repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Repeat) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one Repeat` |
-| internal test | [`SizeOfGeneratedWireArray`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/SizeOfGeneratedWireArray) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one SizeOfGeneratedWireArray` |
-| internal test | [`StructParameterInGenScope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/StructParameterInGenScope) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one StructParameterInGenScope` |
-| internal test | [`TaskOutputArgument`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TaskOutputArgument) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one TaskOutputArgument` |
-| internal test | [`TaskReturn`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TaskReturn) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one TaskReturn` |
-| internal test | [`TypedefAlias`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TypedefAlias) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one TypedefAlias` |
-| internal test | [`UnionInPackageWithMultirange`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/UnionInPackageWithMultirange) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one UnionInPackageWithMultirange` |
-| internal test | [`VoidFunction2Returns`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/VoidFunction2Returns) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one VoidFunction2Returns` |
-| internal test | [`array_init_2d`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/array_init_2d) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one array_init_2d` |
-| internal test | [`bitwise_operations`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/bitwise_operations) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one bitwise_operations` |
-| internal test | [`bitwise_operations_reverted_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/bitwise_operations_reverted_range) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one bitwise_operations_reverted_range` |
-| internal test | [`cdc_static_basic`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/cdc_static_basic) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one cdc_static_basic` |
-| internal test | [`clk2fflogic_effects`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/clk2fflogic_effects) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one clk2fflogic_effects` |
-| internal test | [`code_tidbits_fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/code_tidbits_fsm_using_function) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one code_tidbits_fsm_using_function` |
-| internal test | [`conditional_if`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/conditional_if) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one conditional_if` |
-| internal test | [`counters_repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/counters_repeat) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one counters_repeat` |
-| internal test | [`custom_map_incomp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/custom_map_incomp) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one custom_map_incomp` |
-| internal test | [`dff_different_styles`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/dff_different_styles) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one dff_different_styles` |
-| internal test | [`dffsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/dffsr) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one dffsr` |
-| internal test | [`display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/display_lm) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one display_lm` |
-| internal test | [`fib`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fib` |
-| internal test | [`fib_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib_simple) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fib_simple` |
-| internal test | [`fsm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fsm` |
-| internal test | [`fsm_single_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_single_always) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fsm_single_always` |
-| internal test | [`fsm_using_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_using_always) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fsm_using_always` |
-| internal test | [`fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_using_function) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one fsm_using_function` |
-| internal test | [`func_width_scope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/func_width_scope) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one func_width_scope` |
-| internal test | [`function_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/function_output) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one function_output` |
-| internal test | [`genfor_unit_param_bound`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genfor_unit_param_bound) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one genfor_unit_param_bound` |
-| internal test | [`genscope_hier_localparam_array_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genscope_hier_localparam_array_index) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one genscope_hier_localparam_array_index` |
-| internal test | [`genvar_loop_decl_1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/genvar_loop_decl_1) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one genvar_loop_decl_1` |
-| internal test | [`hello-uvm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/hello-uvm) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one hello-uvm` |
-| internal test | [`ibex_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one ibex_top` |
-| internal test | [`iface_array_elem_member_bit_write_genscope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_array_elem_member_bit_write_genscope) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_array_elem_member_bit_write_genscope` |
-| internal test | [`iface_array_port_struct_param_count`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_array_port_struct_param_count) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_array_port_struct_param_count` |
-| internal test | [`iface_member_typedef_via_iface_port_width`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_member_typedef_via_iface_port_width) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_member_typedef_via_iface_port_width` |
-| internal test | [`iface_modport_passthrough`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_modport_passthrough) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_modport_passthrough` |
-| internal test | [`iface_own_iface_port_member_not_signal`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_own_iface_port_member_not_signal) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_own_iface_port_member_not_signal` |
-| internal test | [`iface_port_localparam`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/iface_port_localparam) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one iface_port_localparam` |
-| internal test | [`initial_seq_values`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/initial_seq_values) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one initial_seq_values` |
-| internal test | [`initval`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/initval) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one initval` |
-| internal test | [`logic_ops`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/logic_ops) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one logic_ops` |
-| internal test | [`memwr_two_writes_one_block`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/memwr_two_writes_one_block) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one memwr_two_writes_one_block` |
-| internal test | [`module_scope_func`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/module_scope_func) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one module_scope_func` |
-| internal test | [`mriscv_bind_sva`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/mriscv_bind_sva) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one mriscv_bind_sva` |
-| internal test | [`named_genblk_cascade`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/named_genblk_cascade) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one named_genblk_cascade` |
-| internal test | [`port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/port_sign_extend) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one port_sign_extend` |
-| internal test | [`power_state`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/power_state) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one power_state` |
-| internal test | [`print_trg_mixed_edges`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/print_trg_mixed_edges) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one print_trg_mixed_edges` |
-| internal test | [`print_trg_multi_edge`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/print_trg_multi_edge) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one print_trg_multi_edge` |
-| internal test | [`priority_memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/priority_memory) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one priority_memory` |
-| internal test | [`rand_const`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rand_const) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rand_const` |
-| internal test | [`reg_wire_error`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/reg_wire_error) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one reg_wire_error` |
-| internal test | [`rp32_r5p_csr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_csr) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rp32_r5p_csr` |
-| internal test | [`rp32_r5p_degu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_degu) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rp32_r5p_degu` |
-| internal test | [`rp32_r5p_degu_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_degu_soc_top) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rp32_r5p_degu_soc_top` |
-| internal test | [`rp32_r5p_mouse_soc_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_mouse_soc_top) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rp32_r5p_mouse_soc_top` |
-| internal test | [`rp32_soc_vfriendly`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_soc_vfriendly) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one rp32_soc_vfriendly` |
-| internal test | [`simple_abc9`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/simple_abc9) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one simple_abc9` |
-| internal test | [`sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sizebits) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sizebits` |
-| internal test | [`sp_read_first`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_read_first) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sp_read_first` |
-| internal test | [`sp_read_or_write`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_read_or_write) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sp_read_or_write` |
-| internal test | [`sp_write_first`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sp_write_first) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sp_write_first` |
-| internal test | [`struct_negative_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_negative_index) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one struct_negative_index` |
-| internal test | [`struct_sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_sizebits) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one struct_sizebits` |
-| internal test | [`struct_unpacked_array_member`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/struct_unpacked_array_member) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one struct_unpacked_array_member` |
-| internal test | [`sva_basic00`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic00) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_basic00` |
-| internal test | [`sva_basic01`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic01) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_basic01` |
-| internal test | [`sva_basic02`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic02) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_basic02` |
-| internal test | [`sva_basic03`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_basic03) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_basic03` |
-| internal test | [`sva_counter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_counter) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_counter` |
-| internal test | [`sva_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_not) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_not` |
-| internal test | [`sva_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_range) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_range` |
-| internal test | [`sva_throughout`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_throughout) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_throughout` |
-| internal test | [`sva_value_change_changed`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_changed) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_value_change_changed` |
-| internal test | [`sva_value_change_changed_wide`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_changed_wide) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_value_change_changed_wide` |
-| internal test | [`sva_value_change_rose`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_rose) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_value_change_rose` |
-| internal test | [`sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_sim) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one sva_value_change_sim` |
-| internal test | [`svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface1) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one svinterface1` |
-| internal test | [`svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svinterface_at_top) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one svinterface_at_top` |
-| internal test | [`svtypes_enum_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svtypes_enum_simple) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one svtypes_enum_simple` |
-| internal test | [`svtypes_struct_array`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/svtypes_struct_array) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one svtypes_struct_array` |
-| internal test | [`synthesis`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/synthesis) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one synthesis` |
-| internal test | [`undefined_module_refused`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/undefined_module_refused) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one undefined_module_refused` |
-| internal test | [`union4_repro`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/union4_repro) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one union4_repro` |
-| internal test | [`unit_enum_const_child_ref`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/unit_enum_const_child_ref) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one unit_enum_const_child_ref` |
-| internal test | [`unit_param_unpacked_port_dim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/unit_param_unpacked_port_dim) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one unit_param_unpacked_port_dim` |
-| internal test | [`various_port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/various_port_sign_extend) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one various_port_sign_extend` |
-| internal test | [`various_struct_access`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/various_struct_access) | ERROR: Design elaboration failed; see full log for details | R1 `./slang_coverage_sweep.sh --one various_struct_access` |
-| yosys test | [`run/arch/common/blockram`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/blockram) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/common/blockram` |
-| yosys test | [`run/arch/common/fsm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/fsm) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/common/fsm` |
-| yosys test | [`run/arch/common/logic`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/common/logic) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/common/logic` |
-| yosys test | [`run/arch/ecp5/rom`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ecp5/rom) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/ecp5/rom` |
-| yosys test | [`run/arch/fabulous/custom_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/custom_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/custom_map` |
-| yosys test | [`run/arch/fabulous/ff_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/ff_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/ff_map` |
-| yosys test | [`run/arch/fabulous/io_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/io_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/io_map` |
-| yosys test | [`run/arch/fabulous/latches_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/latches_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/latches_map` |
-| yosys test | [`run/arch/fabulous/prims`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/prims) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/prims` |
-| yosys test | [`run/arch/fabulous/regfile_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/fabulous/regfile_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/fabulous/regfile_map` |
-| yosys test | [`run/arch/ice40/rom`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ice40/rom) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/ice40/rom` |
-| yosys test | [`run/arch/ice40/spram`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/ice40/spram) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/ice40/spram` |
-| yosys test | [`run/arch/quicklogic/qlf_k6n10f/mem_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/quicklogic/qlf_k6n10f/mem_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/quicklogic/qlf_k6n10f/mem_tb` |
-| yosys test | [`run/arch/xilinx/bug3670`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/xilinx/bug3670) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/xilinx/bug3670` |
-| yosys test | [`run/arch/xilinx/macc_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/arch/xilinx/macc_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/arch/xilinx/macc_tb` |
-| yosys test | [`run/asicworld/code_hdl_models_arbiter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_hdl_models_arbiter_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_hdl_models_arbiter_tb` |
-| yosys test | [`run/asicworld/code_tidbits_fsm_using_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_always) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_always` |
-| yosys test | [`run/asicworld/code_tidbits_fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_function) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_function` |
-| yosys test | [`run/asicworld/code_tidbits_fsm_using_single_always`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_tidbits_fsm_using_single_always) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_tidbits_fsm_using_single_always` |
-| yosys test | [`run/asicworld/code_verilog_tutorial_counter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_counter_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_counter_tb` |
-| yosys test | [`run/asicworld/code_verilog_tutorial_first_counter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_first_counter_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_first_counter_tb` |
-| yosys test | [`run/asicworld/code_verilog_tutorial_fsm_full_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_fsm_full_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_fsm_full_tb` |
-| yosys test | [`run/cxxrtl/test_unconnected_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/cxxrtl/test_unconnected_output) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/cxxrtl/test_unconnected_output` |
-| yosys test | [`run/fmt/always_comb_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_comb_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/always_comb_tb` |
-| yosys test | [`run/fmt/always_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_display) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/always_display` |
-| yosys test | [`run/fmt/always_full_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_full_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/always_full_tb` |
-| yosys test | [`run/fmt/display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/display_lm) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/display_lm` |
-| yosys test | [`run/fmt/roundtrip`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/roundtrip) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/roundtrip` |
-| yosys test | [`run/fmt/roundtrip_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/roundtrip_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/roundtrip_tb` |
-| yosys test | [`run/fmt/yosys-always_display-clk_rst-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst-1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst-1` |
-| yosys test | [`run/fmt/yosys-always_display-clk_rst-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst-2) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst-2` |
-| yosys test | [`run/fmt/yosys-always_display-clk_rst_en-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst_en-1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst_en-1` |
-| yosys test | [`run/fmt/yosys-always_display-clk_rst_en-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_display-clk_rst_en-2) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_display-clk_rst_en-2` |
-| yosys test | [`run/fmt/yosys-roundtrip-dec_signed-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_signed-1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_signed-1` |
-| yosys test | [`run/fmt/yosys-roundtrip-dec_signed-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_signed-2) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_signed-2` |
-| yosys test | [`run/fmt/yosys-roundtrip-dec_unsigned-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_unsigned-1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_unsigned-1` |
-| yosys test | [`run/fmt/yosys-roundtrip-dec_unsigned-2`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-roundtrip-dec_unsigned-2) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-roundtrip-dec_unsigned-2` |
-| yosys test | [`run/functional/picorv32_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/functional/picorv32_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/functional/picorv32_tb` |
-| yosys test | [`run/hana/test_parser`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/hana/test_parser) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/hana/test_parser` |
-| yosys test | [`run/hana/test_simulation_vlib`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/hana/test_simulation_vlib) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/hana/test_simulation_vlib` |
-| yosys test | [`run/liberty/small`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/liberty/small) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/liberty/small` |
-| yosys test | [`run/lut/map_and`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_and) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/lut/map_and` |
-| yosys test | [`run/lut/map_mux`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_mux) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/lut/map_mux` |
-| yosys test | [`run/lut/map_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_not) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/lut/map_not` |
-| yosys test | [`run/lut/map_or`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_or) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/lut/map_or` |
-| yosys test | [`run/lut/map_xor`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_xor) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/lut/map_xor` |
-| yosys test | [`run/memfile/memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memfile/memory) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memfile/memory` |
-| yosys test | [`run/memlib/memlib_9b1B`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_9b1B) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_9b1B` |
-| yosys test | [`run/memlib/memlib_block_sp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp` |
-| yosys test | [`run/memlib/memlib_block_sp_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp_full) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp_full` |
-| yosys test | [`run/memlib/memlib_wide_sp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_wide_sp) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_wide_sp` |
-| yosys test | [`run/memories/issue00335`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memories/issue00335) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/memories/issue00335` |
-| yosys test | [`run/opt/opt_dff_eqbits_large`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_dff_eqbits_large) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/opt/opt_dff_eqbits_large` |
-| yosys test | [`run/opt/opt_dff_eqbits_small`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_dff_eqbits_small) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/opt/opt_dff_eqbits_small` |
-| yosys test | [`run/opt/opt_expr_constconn`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_expr_constconn) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/opt/opt_expr_constconn` |
-| yosys test | [`run/opt/opt_share_cat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_share_cat) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/opt/opt_share_cat` |
-| yosys test | [`run/rpc/design`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/rpc/design) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/rpc/design` |
-| yosys test | [`run/sat/alu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/alu) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/alu` |
-| yosys test | [`run/sat/counters-repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/counters-repeat) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/counters-repeat` |
-| yosys test | [`run/sat/grom_computer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/grom_computer) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/grom_computer` |
-| yosys test | [`run/sat/grom_cpu`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/grom_cpu) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/grom_cpu` |
-| yosys test | [`run/sat/initval`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/initval) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/initval` |
-| yosys test | [`run/sat/ram_memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/ram_memory) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/ram_memory` |
-| yosys test | [`run/sat/sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/sizebits) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sat/sizebits` |
-| yosys test | [`run/sim/dffsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/dffsr) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/dffsr` |
-| yosys test | [`run/sim/tb/tb_adff`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_adff) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_adff` |
-| yosys test | [`run/sim/tb/tb_adffe`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_adffe) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_adffe` |
-| yosys test | [`run/sim/tb/tb_adlatch`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_adlatch) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_adlatch` |
-| yosys test | [`run/sim/tb/tb_aldff`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_aldff) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_aldff` |
-| yosys test | [`run/sim/tb/tb_aldffe`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_aldffe) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_aldffe` |
-| yosys test | [`run/sim/tb/tb_dff`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_dff) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_dff` |
-| yosys test | [`run/sim/tb/tb_dffe`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_dffe) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_dffe` |
-| yosys test | [`run/sim/tb/tb_dffsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_dffsr) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_dffsr` |
-| yosys test | [`run/sim/tb/tb_dlatch`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_dlatch) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_dlatch` |
-| yosys test | [`run/sim/tb/tb_dlatchsr`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_dlatchsr) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_dlatchsr` |
-| yosys test | [`run/sim/tb/tb_sdff`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_sdff) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_sdff` |
-| yosys test | [`run/sim/tb/tb_sdffce`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_sdffce) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_sdffce` |
-| yosys test | [`run/sim/tb/tb_sdffe`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sim/tb/tb_sdffe) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sim/tb/tb_sdffe` |
-| yosys test | [`run/simple/dff_different_styles`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/dff_different_styles) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/dff_different_styles` |
-| yosys test | [`run/simple/func_width_scope`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/func_width_scope) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/func_width_scope` |
-| yosys test | [`run/simple/i2c_master_tests`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/i2c_master_tests) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/i2c_master_tests` |
-| yosys test | [`run/simple/mem2reg_bounds_tern`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/mem2reg_bounds_tern) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/mem2reg_bounds_tern` |
-| yosys test | [`run/simple/memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/memory) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/memory` |
-| yosys test | [`run/simple/module_scope_func`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/module_scope_func) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/module_scope_func` |
-| yosys test | [`run/simple/named_genblk`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/named_genblk) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/named_genblk` |
-| yosys test | [`run/simple/partsel`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple/partsel) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple/partsel` |
-| yosys test | [`run/simple_abc9/abc9`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/simple_abc9/abc9) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/simple_abc9/abc9` |
-| yosys test | [`run/sva/basic00`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic00) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic00` |
-| yosys test | [`run/sva/basic01`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic01) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic01` |
-| yosys test | [`run/sva/basic02`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic02) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic02` |
-| yosys test | [`run/sva/basic03`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic03) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic03` |
-| yosys test | [`run/sva/basic04`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic04) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic04` |
-| yosys test | [`run/sva/basic05`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/basic05) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/basic05` |
-| yosys test | [`run/sva/counter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/counter) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/counter` |
-| yosys test | [`run/sva/nested_clk_else`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/nested_clk_else) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/nested_clk_else` |
-| yosys test | [`run/sva/sva_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_not) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_not` |
-| yosys test | [`run/sva/sva_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_range) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_range` |
-| yosys test | [`run/sva/sva_throughout`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_throughout) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_throughout` |
-| yosys test | [`run/sva/sva_value_change_changed`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_changed) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_changed` |
-| yosys test | [`run/sva/sva_value_change_changed_wide`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_changed_wide) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_changed_wide` |
-| yosys test | [`run/sva/sva_value_change_rose`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_rose) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_rose` |
-| yosys test | [`run/sva/sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_sim) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_sim` |
-| yosys test | [`run/svinterfaces/load_and_derive`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/load_and_derive) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/load_and_derive` |
-| yosys test | [`run/svinterfaces/ondemand`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/ondemand) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/ondemand` |
-| yosys test | [`run/svinterfaces/resolve_types`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/resolve_types) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/resolve_types` |
-| yosys test | [`run/svinterfaces/svinterface1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface1` |
-| yosys test | [`run/svinterfaces/svinterface1_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface1_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface1_tb` |
-| yosys test | [`run/svinterfaces/svinterface_at_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top` |
-| yosys test | [`run/svinterfaces/svinterface_at_top_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top_tb` |
-| yosys test | [`run/svinterfaces/svinterface_at_top_tb_wrapper`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top_tb_wrapper) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top_tb_wrapper` |
-| yosys test | [`run/svinterfaces/svinterface_at_top_wrapper`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svinterfaces/svinterface_at_top_wrapper) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svinterfaces/svinterface_at_top_wrapper` |
-| yosys test | [`run/svtypes/enum_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/enum_simple) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svtypes/enum_simple` |
-| yosys test | [`run/svtypes/struct_array`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/struct_array) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svtypes/struct_array` |
-| yosys test | [`run/svtypes/struct_sizebits`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/struct_sizebits) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svtypes/struct_sizebits` |
-| yosys test | [`run/svtypes/typedef_initial_and_assign`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/svtypes/typedef_initial_and_assign) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/svtypes/typedef_initial_and_assign` |
-| yosys test | [`run/symfpu/edges`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/symfpu/edges) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/symfpu/edges` |
-| yosys test | [`run/techmap/dfflibmap-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap-sim) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap-sim` |
-| yosys test | [`run/techmap/dfflibmap_dffsr_mixedpol-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap_dffsr_mixedpol-sim) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap_dffsr_mixedpol-sim` |
-| yosys test | [`run/techmap/lcu_refined`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/lcu_refined) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/lcu_refined` |
-| yosys test | [`run/techmap/mem_simple_4x1_map`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/mem_simple_4x1_map) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/mem_simple_4x1_map` |
-| yosys test | [`run/techmap/mem_simple_4x1_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/mem_simple_4x1_tb) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/mem_simple_4x1_tb` |
-| yosys test | [`run/techmap/recursive`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/recursive) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/techmap/recursive` |
-| yosys test | [`run/various/clk2fflogic_effects`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/clk2fflogic_effects) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/clk2fflogic_effects` |
-| yosys test | [`run/various/constmsk_testmap`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/constmsk_testmap) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/constmsk_testmap` |
-| yosys test | [`run/various/fib`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/fib) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/fib` |
-| yosys test | [`run/various/fib_tern`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/fib_tern) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/fib_tern` |
-| yosys test | [`run/various/gen_if_null`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/gen_if_null) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/gen_if_null` |
-| yosys test | [`run/various/memory_word_as_index`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/memory_word_as_index) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/memory_word_as_index` |
-| yosys test | [`run/various/pmux2shiftx`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/pmux2shiftx) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/pmux2shiftx` |
-| yosys test | [`run/various/port_sign_extend`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/port_sign_extend) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/port_sign_extend` |
-| yosys test | [`run/various/reg_wire_error`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/reg_wire_error) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/reg_wire_error` |
-| yosys test | [`run/various/specify`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/specify) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/specify` |
-| yosys test | [`run/various/struct_access`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/struct_access) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/various/struct_access` |
-| yosys test | [`run/verific/bounds`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verific/bounds) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verific/bounds` |
-| yosys test | [`run/verific/mixed_flist`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verific/mixed_flist) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verific/mixed_flist` |
-| yosys test | [`run/verilog/constparser_f_file`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/constparser_f_file) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verilog/constparser_f_file` |
-| yosys test | [`run/verilog/genvar_loop_decl_1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/genvar_loop_decl_1) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verilog/genvar_loop_decl_1` |
-| yosys test | [`run/verilog/macro_arg_tromp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/macro_arg_tromp) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verilog/macro_arg_tromp` |
-| yosys test | [`run/verilog/mem_bounds`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/mem_bounds) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verilog/mem_bounds` |
-| yosys test | [`run/verilog/wire_and_var`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/wire_and_var) | ERROR: Design elaboration failed; see full log for details | R2 `./slang_coverage_sweep.sh --one run/verilog/wire_and_var` |
-
-### ERROR: too many errors emitted, stopping now [--error-limit=] -- 11
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| internal test | [`StreamOpInitialAlways`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/StreamOpInitialAlways) | ERROR: too many errors emitted, stopping now [--error-limit=] | R1 `./slang_coverage_sweep.sh --one StreamOpInitialAlways` |
-| internal test | [`ibex_top_tracing`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top_tracing) | ERROR: too many errors emitted, stopping now [--error-limit=] | R1 `./slang_coverage_sweep.sh --one ibex_top_tracing` |
-| internal test | [`ibex_tracer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_tracer) | ERROR: too many errors emitted, stopping now [--error-limit=] | R1 `./slang_coverage_sweep.sh --one ibex_tracer` |
-| internal test | [`rp32_r5p_hamster`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/rp32_r5p_hamster) | ERROR: too many errors emitted, stopping now [--error-limit=] | R1 `./slang_coverage_sweep.sh --one rp32_r5p_hamster` |
-| yosys test | [`run/fmt/always_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_full) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/fmt/always_full` |
-| yosys test | [`run/fmt/initial_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/initial_display) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/fmt/initial_display` |
-| yosys test | [`run/fmt/yosys-always_full-1`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/yosys-always_full-1) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/fmt/yosys-always_full-1` |
-| yosys test | [`run/lut/map_cmp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/lut/map_cmp) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/lut/map_cmp` |
-| yosys test | [`run/opt/opt_expr_cmp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_expr_cmp) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/opt/opt_expr_cmp` |
-| yosys test | [`run/opt/opt_rmdff`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_rmdff) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/opt/opt_rmdff` |
-| yosys test | [`run/verilog/dynamic_range_lhs`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/verilog/dynamic_range_lhs) | ERROR: too many errors emitted, stopping now [--error-limit=] | R2 `./slang_coverage_sweep.sh --one run/verilog/dynamic_range_lhs` |
-
-### ERROR: interface port 'el2_mem_export' not connected -- 2
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep caliptra-ss | [`css_mcu0_el2_veer_wrapper`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/src/riscv_core/veer_el2/rtl/design/css_mcu0_el2_veer_wrapper.sv#L24) | ERROR: interface port 'el2_mem_export' not connected | R3 `python3 ext_flow.py caliptra-ss css_mcu0_el2_veer_wrapper` |
-| sweep veer-el2 | [`el2_veer_wrapper`](https://github.com/chipsalliance/Cores-VeeR-EL2/blob/c2ea3a7382dd73ff8ff8c38f257382dfdd91be5e/design/el2_veer_wrapper.sv#L24) | ERROR: interface port 'el2_mem_export' not connected | R3 `python3 ext_flow.py veer-el2 el2_veer_wrapper` |
-
-### ERROR: member 'id' is not covered by any assignment pattern key -- 2
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| sweep axi | [`axi_lite_to_apb`](https://github.com/pulp-platform/axi/blob/70b8e54fd460e3308e58be596ceb3566a6e3576e/src/axi_lite_to_apb.sv#L50) | ERROR: member 'id' is not covered by any assignment pattern key | R3 `python3 ext_flow.py axi axi_lite_to_apb` |
-| sweep axi | [`axi_to_apb`](https://github.com/pulp-platform/axi/blob/70b8e54fd460e3308e58be596ceb3566a6e3576e/src/axi_to_apb.sv#L34) | ERROR: member 'id' is not covered by any assignment pattern key | R3 `python3 ext_flow.py axi axi_to_apb` |
 
 ## The other direction: `read_slang` right, `read_uhdm` wrong
 
@@ -650,12 +658,22 @@ ours; they are OUR defects, tracked in the sweeps, listed here in the same forma
 Measured 2026-10-22, from the sweep artifacts named at the top of this file.
 A row fixed after that date is still listed here until the sweeps are
 re-downloaded and this report regenerated -- check the row before trusting it
-(`R4`-style recipe per row below re-measures it in minutes).
+(`R3`-style recipe per row below re-measures it in minutes).
 
-**2** rows.
+**12** rows.
 
 | set | test | verdicts | recipe |
 |---|---|---|---|
-| sweep cva6-hpdcache | [`cva6_hpdcache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | read_slang ✅ PASS; read_uhdm ❌ 2 div (slang clean) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^cva6_hpdcache_subsystem$'` |
-| sweep cva6-hpdcache | [`cva6_hpdcache_wrapper`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | read_slang ✅ PASS; read_uhdm ❌ 3 div (slang clean) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^cva6_hpdcache_wrapper$'` |
+| sweep cva6-hpdcache | [`cva6_hpdcache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/cva6_hpdcache_subsystem.sv#L15) | read_slang ✅ PASS; read_uhdm ❌ 2 div (slang clean) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^cva6_hpdcache_subsystem$'` |
+| sweep cva6-hpdcache | [`cva6_hpdcache_wrapper`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/cva6_hpdcache_wrapper.sv#L15) | read_slang ✅ PASS; read_uhdm ❌ 3 div (slang clean) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^cva6_hpdcache_wrapper$'` |
+| sweep opentitan-ip | [`aes_control`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/aes/rtl/aes_control.sv#L11) | read_slang ✅ PASS; read_uhdm ❌ 301 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip aes_control` |
+| sweep opentitan-ip | [`cheriot_rmw_filter`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/cheriot/rtl/cheriot_rmw_filter.sv#L7) | read_slang ✅ PASS; read_uhdm ❌ 36 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip cheriot_rmw_filter` |
+| sweep opentitan-ip | [`i3c_ctrl_req_gen`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_ctrl_req_gen.sv#L7) | read_slang ✅ PASS; read_uhdm ❌ 1 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_ctrl_req_gen` |
+| sweep opentitan-ip | [`i3c_stby_cr_regs`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_stby_cr_regs.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 22 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_stby_cr_regs` |
+| sweep opentitan-ip | [`i3c_targ_async_events`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_targ_async_events.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 38 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_targ_async_events` |
+| sweep opentitan-ip | [`prim_gf_mult`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/prim/rtl/prim_gf_mult.sv#L29) | read_slang ✅ PASS; read_uhdm ❌ 300 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip prim_gf_mult` |
+| sweep opentitan-ip | [`prim_sram_arbiter`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/prim/rtl/prim_sram_arbiter.sv#L14) | read_slang ✅ PASS; read_uhdm ❌ 286 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip prim_sram_arbiter` |
+| sweep opentitan-ip | [`rram_ctrl_mp`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/rram_ctrl/rtl/rram_ctrl_mp.sv#L14) | read_slang ✅ PASS; read_uhdm ❌ 1 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip rram_ctrl_mp` |
+| sweep opentitan-ip | [`rram_phy_rd_buf_dep`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/rram_ctrl/rtl/rram_phy_rd_buf_dep.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 73 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip rram_phy_rd_buf_dep` |
+| sweep opentitan-ip | [`rram_scramble`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/rram_ctrl/rtl/rram_scramble.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 56 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip rram_scramble` |
 
