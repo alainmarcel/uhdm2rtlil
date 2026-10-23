@@ -20830,9 +20830,33 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 callee = any_cast<const UHDM::func_call*>(uhdm_stmt)->Function();
             else
                 callee = any_cast<const UHDM::task_call*>(uhdm_stmt)->Task();
-            if (tcall && callee && current_comb_process)
+            if (tcall && callee && current_comb_process) {
                 import_tf_call_comb(tcall, callee, current_comb_process, bridged_task_mapping_, case_rule);
-            else if (mode_debug)
+            } else if (tcall && callee && !current_comb_process &&
+                       (!callee->Io_decls() || callee->Io_decls()->empty()) &&
+                       callee->Stmt()) {
+                // The ASYNC-RESET always_ff path imports its arms with
+                // current_comb_process unset, so a task called as an arm's
+                // statement was dropped SILENTLY here -- OpenTitan
+                // i3c_stby_cr_regs's `if (!rst_ni) reset_registers(); else if
+                // (sw_reset_i) reset_registers();`, a task of non-blocking
+                // writes to the output struct fields: both arms lowered to
+                // EMPTY cases, every register came out of reset at 0 instead
+                // of its RESVAL (22 diverging co-simulated cycles, read_slang
+                // clean).  An argument-less task body is nothing but the
+                // statements written at the call site, so import it as such,
+                // INTO THIS ARM -- not through import_tf_call_comb, whose
+                // body writes to module signals land in the root case and
+                // would apply unconditionally.
+                if (mode_debug)
+                    uhdm_trace("        tf-call in an always_ff arm: inlining the "
+                               "argument-less body into the arm\n");
+                import_statement_comb(callee->Stmt(), case_rule);
+            } else if (tcall && callee && !current_comb_process) {
+                log_warning("Task call '%s' with arguments inside an async-reset "
+                            "always_ff arm is not inlined (dropped)\n",
+                            std::string(callee->VpiName()).c_str());
+            } else if (mode_debug)
                 uhdm_trace("        tf-call in case context without callee / process, dropped\n");
             break;
         }
