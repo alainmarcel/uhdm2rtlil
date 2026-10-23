@@ -1,0 +1,8 @@
+# The VALUE is the gate: without the fix the reset arms are empty and ctl_o
+# is 8'h00 out of reset; with it the task's RESVALs land -- 8'hC2.  Second
+# prove: the synchronous sw_rst arm restores the RESVALs after a write.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; async2sync; opt
+sat -verify -seq 2 -set-init-zero -prove-skip 1 -set rst_n 0 -set sw_rst 0 -set we_a 0 -prove ctl_o 8'hC2
+sat -verify -seq 3 -set-init-zero -prove-skip 2 -set rst_n 1 -set-at 1 we_a 1 -set-at 1 sw_rst 0 -set da 4'h5 -set-at 2 we_a 0 -set-at 2 sw_rst 1 -set-at 3 sw_rst 0 -set-at 3 we_a 0 -prove ctl_o 8'hC2
