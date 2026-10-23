@@ -176,6 +176,16 @@ def main():
         base = re.sub(r"\[[^\]]*\]", "", elem).strip()
         if base in ("logic", "reg", "bit", "wire") or not base:
             ew = "*".join(dim_count(d)[0] for d in pk) if pk else "1"
+        elif pk:
+            # A named element type with declared packed dims on top
+            # (`sp2v_e [NumRegsKey-1:0] key_init_we_o [NumSharesKey]`, OpenTitan
+            # aes_control): `$bits(sp2v_e [NumRegsKey-1:0])` is 24 for
+            # read_slang but 8 for read_uhdm, which sizes the dims-over-typedef
+            # type by its ranges alone (CLAUDE.md "declared dims over a typedef
+            # leaf"), so the flat port came out 16 bits against 48 and the miter
+            # had no matching port.  `$bits(T)` of the bare leaf agrees on both
+            # sides; multiply the declared dims in explicitly.
+            ew = f"($bits({base}))*" + "*".join(f"({dim_count(d)[0]})" for d in pk)
         else:
             ew = f"$bits({elem})"
         arrays.append((dirn, elem, name, "".join(dl), cnt, lo, ew, cls))
