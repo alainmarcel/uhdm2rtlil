@@ -1,0 +1,7 @@
+# The VALUE is the gate (the words are read_slang's for the same vector):
+# without the fix every element is 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set c 8'h35 -set db 8'h20 -set hd 1 -set err 4'h3 -set tid 4'h5 -set left 16'h0203 -set bev 8'hA5 -prove o0 32'd56164352 -prove o1 32'd324018224 -prove o2 32'd709885952

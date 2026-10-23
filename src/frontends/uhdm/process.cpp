@@ -15105,7 +15105,19 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                 }
             }
         }
-        return false;
+        // A nested member path (`arr[i].txdr.code`) on a PER-ELEMENT array
+        // has no flat wire, so the geometry probe above declines; the
+        // simple path below walks the member path through structs AND
+        // unions against the element wires.  Only that exact shape falls
+        // through -- everything else this block did not handle is still
+        // declined here.
+        {
+            const bit_select* bs_ft = any_cast<const bit_select*>(peM[0]);
+            bool flat_ft = bs_ft && module->wire(RTLIL::escape_id(std::string(bs_ft->VpiName())));
+            if (!(nsel == 1 && frf && !has_field_idx && tail_slice_w < 0 &&
+                  field_end == peM.size() && !flat_ft))
+                return false;
+        }
     }
 
     // `s.field[dyn +: w] = rhs` on a plain packed-struct VARIABLE (no array
@@ -15250,6 +15262,14 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     std::string field_name = std::string(field_rf ? field_rf->VpiName()
                                                   : field_bs->VpiName());
     if (base_name.empty() || field_name.empty()) return false;
+    // The member PATH below the element: `arr[i].txdr.code` is
+    // [bit_select, ref_obj, ref_obj]; every level is a named member.
+    std::vector<std::string> fpath{field_name};
+    if (field_rf)
+        for (size_t t = 2; t < pe.size(); t++) {
+            if (pe[t]->UhdmType() != uhdmref_obj) return false;
+            fpath.push_back(std::string(pe[t]->VpiName()));
+        }
 
     // FLAT representation: `\arr` exists as one wide wire (per-element
     // aliases may exist alongside).  PER-ELEMENT-only representation
@@ -15279,21 +15299,40 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     }
     int base_w = base_wire ? base_wire->width : pe_w * pe_n;
 
-    // Element struct typespec via the inner net mapped to the flat wire.
-    const UHDM::struct_typespec* st = nullptr;
+    // Element struct OR UNION typespec via the inner net mapped to the flat
+    // wire.  A packed union element (OpenTitan i3c_targ_async_events'
+    // `i3c_tti_async_event_t async_evt[AsyncEv_Count]`, a union of per-event
+    // descriptor structs) was declined here outright, so every
+    // `async_evt[k].txdr.code = ...` fell through to the READ path and the
+    // array stayed all-zero (38 diverging co-simulated cycles, read_slang
+    // clean).  Union members all sit at offset 0; the member path then
+    // descends into the chosen struct.
+    const UHDM::typespec* st = nullptr;
+    auto ts_members = [](const UHDM::typespec* ts) -> const UHDM::VectorOftypespec_member* {
+        if (!ts) return nullptr;
+        if (ts->UhdmType() == uhdmstruct_typespec)
+            return any_cast<const UHDM::struct_typespec*>(ts)->Members();
+        if (ts->UhdmType() == uhdmunion_typespec)
+            return any_cast<const UHDM::union_typespec*>(ts)->Members();
+        return nullptr;
+    };
+    auto is_struct_or_union = [](const UHDM::typespec* ts) {
+        return ts && (ts->UhdmType() == uhdmstruct_typespec ||
+                      ts->UhdmType() == uhdmunion_typespec);
+    };
     int decl_low_ts = INT_MIN;   // outer-dim declared low, when discoverable
     // Accept the element struct from a PACKED-array typespec too, noting the
     // declared low bound (a `lsu_ctrl_t [1:0] mem_n` net carries a
     // packed_array_typespec, not the bare element struct).
     auto take_ats = [&](const UHDM::typespec* ats) {
         if (!ats) return;
-        if (ats->UhdmType() == uhdmstruct_typespec) {
-            st = any_cast<const UHDM::struct_typespec*>(ats);
+        if (is_struct_or_union(ats)) {
+            st = ats;
         } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {
             if (pt->Elem_typespec() && pt->Elem_typespec()->Actual_typespec()) {
                 auto ets = pt->Elem_typespec()->Actual_typespec();
-                if (ets->UhdmType() == uhdmstruct_typespec)
-                    st = any_cast<const UHDM::struct_typespec*>(ets);
+                if (is_struct_or_union(ets))
+                    st = ets;
             }
             if (st && pt->Ranges() && !pt->Ranges()->empty()) {
                 auto r0 = (*pt->Ranges())[0];
@@ -15321,9 +15360,8 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
         if (pel && !pel->empty())
             if (auto ev = dynamic_cast<const UHDM::expr*>((*pel)[0]))
                 if (ev->Typespec() && ev->Typespec()->Actual_typespec() &&
-                    ev->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec)
-                    st = any_cast<const UHDM::struct_typespec*>(
-                        ev->Typespec()->Actual_typespec());
+                    is_struct_or_union(ev->Typespec()->Actual_typespec()))
+                    st = ev->Typespec()->Actual_typespec();
         if (st && prg && !prg->empty()) {
             auto r0 = (*prg)[0];
             if (r0->Left_expr() && r0->Right_expr()) {
@@ -15396,7 +15434,11 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
                     break;
                 }
     }
-    if (!st || !st->Members()) return false;
+    if (mode_debug)
+        uhdm_trace("    dyn_elem_field_write SIMPLE: base '%s' fpath=%zu st=%s base_wire=%d pe_w=%d pe_n=%d\n",
+            base_name.c_str(), fpath.size(), st ? UHDM::UhdmName(st->UhdmType()).c_str() : "null",
+            base_wire ? 1 : 0, pe_w, pe_n);
+    if (!st || !ts_members(st)) return false;
 
     int elem_w = get_width_from_typespec(st, current_instance);
     if (elem_w <= 0 || base_w % elem_w != 0) return false;
@@ -15419,25 +15461,41 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
     if (array_low < 0 && decl_low_ts != INT_MIN) array_low = decl_low_ts;
     if (array_low < 0) return false;
 
-    // Field offset within the element (last listed member = LSB).
+    // Field offset within the element (last listed member = LSB), summed
+    // over every level of the member path; a UNION level contributes no
+    // offset (all its members overlay at bit 0).
     int field_offset = 0, field_width = 0;
     bool found_field = false;
     const UHDM::typespec* field_ats = nullptr;
-    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
-        auto m = (*st->Members())[i];
-        int mw = 0;
-        const UHDM::typespec* ats3 = nullptr;
-        if (auto mts = m->Typespec())
-            if ((ats3 = mts->Actual_typespec()))
-                mw = get_width_from_typespec(ats3, current_instance);
-        if (std::string(m->VpiName()) == field_name) {
-            field_width = mw;
-            field_ats = ats3;
-            found_field = true;
-            break;
+    const UHDM::typespec* cur_ts = st;
+    for (size_t fi = 0; fi < fpath.size(); fi++) {
+        auto mems = ts_members(cur_ts);
+        if (!mems) { found_field = false; break; }
+        bool level_is_union = cur_ts->UhdmType() == uhdmunion_typespec;
+        found_field = false;
+        for (int i = (int)mems->size() - 1; i >= 0; i--) {
+            auto m = (*mems)[i];
+            int mw = 0;
+            const UHDM::typespec* ats3 = nullptr;
+            if (auto mts = m->Typespec())
+                if ((ats3 = mts->Actual_typespec())) {
+                    ats3 = resolve_type_param_typespec(ats3, current_instance);
+                    mw = get_width_from_typespec(ats3, current_instance);
+                }
+            if (std::string(m->VpiName()) == fpath[fi]) {
+                field_width = mw;
+                field_ats = ats3;
+                found_field = true;
+                break;
+            }
+            if (!level_is_union) field_offset += mw;
         }
-        field_offset += mw;
+        if (!found_field) break;
+        cur_ts = field_ats;
     }
+    if (mode_debug)
+        uhdm_trace("    dyn_elem_field_write SIMPLE: elem_w=%d found=%d off=%d w=%d\n",
+            elem_w, found_field ? 1 : 0, field_offset, field_width);
     if (!found_field || field_width <= 0) return false;
     if (field_offset + field_width > elem_w) return false;
     // With a trailing field index, only the indexed sub-slice is written.
