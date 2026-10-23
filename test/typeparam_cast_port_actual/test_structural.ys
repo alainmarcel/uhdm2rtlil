@@ -1,0 +1,11 @@
+# The VALUE is the gate (read_slang's words): the 3-bit cast of in4+1 reaches
+# the child's port whole.  Without the fix o_dyn is bit 0 only (0 for 0101).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten
+proc
+opt
+sat -verify -set in4 4'b0101 -prove o_dyn 4'b0110 -prove o_dyn2 4'b0110
+sat -verify -set in4 4'b1111 -prove o_dyn 4'b0000 -prove o_dyn2 4'b0000
+sat -verify -set in4 4'b0110 -prove o_dyn 4'b0111 -prove o_dyn2 4'b0111
+sat -verify -set in4 4'b0010 -prove o_dyn 4'b0011 -prove o_dyn2 4'b0011
