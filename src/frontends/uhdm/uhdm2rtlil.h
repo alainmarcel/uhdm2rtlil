@@ -504,6 +504,14 @@ struct UhdmImporter {
     // Current combinational process pointer (non-null during import_always_comb statement processing)
     RTLIL::Process* current_comb_process = nullptr;
 
+    // The case tree a DYNAMIC packed write folds the in-flight value from
+    // (case_inflight_value) when current_comb_process is null -- the
+    // async-reset always_ff path imports its clocked arm with that pointer
+    // unset (setting it would re-route function/task calls and break flags
+    // through the comb machinery), so a second `arr[j] <= v` in a sibling
+    // `if` chained onto the REGISTERED value and discarded the first write.
+    RTLIL::CaseRule* ff_inflight_fold_root_ = nullptr;
+
     // Struct typespec of the function return value currently being inlined, so
     // process_stmt_to_case can map `funcname.field = ...` (a hier_path LHS) to
     // the right slice of the result wire.  Set by generate_function_process
