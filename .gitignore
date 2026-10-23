@@ -35,6 +35,8 @@ compile_commands.json
 
 # Test outputs
 test/**/slpp_all/
+# Surelog scratch anywhere, including a run from the repository root
+**/slpp_all/
 test/**/rtlil_diff.txt
 
 # Large files (>10MB)
