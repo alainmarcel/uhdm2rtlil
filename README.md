@@ -80,9 +80,31 @@ both netlists against the RTL.  Results, scopes and commits are in
 
 ## Contributing
 
-Fork, set the git hooks (`git config core.hooksPath .githooks`), add a test
-next to your change, run `cd test && ./run_parallel.sh 6 --no-cva6`, and open
-a pull request -- details in [docs/development.md](docs/development.md).
+This frontend is developed with an AI coding agent, and that is how we
+prefer contributions too: have your agent (Claude Code is what the project
+uses; the checked-in skill
+[`.claude/skills/verify-uhdm-equivalence`](.claude/skills/verify-uhdm-equivalence/SKILL.md)
+loads automatically in this repository) take a divergence from symptom to a
+fully vetted fix.  A pull request is accepted on the same bar whoever wrote
+it:
+
+- **one change** -- one reader defect, one harness change, or one document;
+- **a test case and/or a sweep**: a `test/<name>/` with a `dut.sv` and its
+  gates (`test_structural.ys` / `test_slang_equiv.ys`) that FAILS without the
+  change and passes with it, and, when the defect came from third-party RTL,
+  the sweep that keeps measuring it (an entry in `test/ext_ip/<family>.json`
+  or a per-core sweep);
+- **vetted with the skill's verification process**: frontend workflow,
+  Verilator co-sim, `equiv_induct`, the sound SAT-from-reset miter, the sweep
+  row re-measured, and a green full local regression
+  (`cd test && ./run_parallel.sh 6 --no-cva6`);
+- a commit message that states symptom, cause, fix, test and row, and ends
+  with `Prepared with the assistance of Claude Code.` (the CLA bot rejects
+  other trailers).
+
+Hand-written contributions are welcome under the same bar.  Setup, the
+debug-to-fix method and the review checklist are in
+[docs/development.md](docs/development.md).
 
 ## License
 
