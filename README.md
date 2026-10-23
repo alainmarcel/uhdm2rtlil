@@ -19,7 +19,7 @@ A Yosys frontend that enables SystemVerilog synthesis through UHDM (Universal Ha
 > divergence so an inductive-proof gap is never mistaken for a real bug.
 > See **[docs/verification.md](docs/verification.md)**.
 
-## Overview
+## Quick Start
 
 `SystemVerilog (.sv) → [Surelog] → UHDM → [UHDM Frontend] → RTLIL → [Yosys] → Netlist`
 
@@ -33,7 +33,7 @@ pre-generated `.uhdm` file):
 git clone --recursive https://github.com/alainmarcel/uhdm2rtlil.git && cd uhdm2rtlil
 git config core.hooksPath .githooks
 make                                  # Surelog, Yosys (+ read_slang) and the plugin
-./out/current/bin/yosys -m uhdm2rtlil.so -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
+./out/current/bin/yosys -m build/uhdm2rtlil.so -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
 ```
 
 Prerequisites (GCC ≥ 11, CMake 3.28–3.31, Verilator 5.x) and the full command
@@ -86,4 +86,4 @@ See `LICENSE` file for details.
 - [sv-elab / yosys-slang](https://github.com/povik/yosys-slang) and [slang](https://github.com/MikePopoloski/slang) - the `read_slang` frontend used as the formal reference for SV-only designs
 - [sv2v](https://github.com/zachjs/sv2v) - SystemVerilog-to-Verilog converter, the third column of the frontend matrix
 - [Verilator](https://github.com/verilator/verilator) - the co-simulation engine behind every co-sim result
-- Verified IP: [Ibex](https://github.com/lowRISC/ibex), [rp32](https://github.com/jeras/rp32), [CVA6](https://github.com/openhwgroup/cva6), [Pavona](https://github.com/pavona/pavona), [Caliptra](https://github.com/chipsalliance/caliptra-rtl)
+- Verified IP (upstream RTL swept nightly, see [docs/supported_ip.md](docs/supported_ip.md)): [Ibex](https://github.com/lowRISC/ibex), [rp32](https://github.com/jeras/rp32), [fx68k](https://github.com/ijor/fx68k), [Syntacore SCR1](https://github.com/syntacore/scr1), [RgGen](https://github.com/rggen/rggen-sv-rtl), [VeeR EH1](https://github.com/chipsalliance/Cores-VeeR-EH1) and [EL2](https://github.com/chipsalliance/Cores-VeeR-EL2), [TNoC](https://github.com/taichi-ishitani/tnoc), [RSD](https://github.com/rsd-devel/rsd), [BlackParrot](https://github.com/black-parrot/black-parrot), [OpenTitan](https://github.com/lowRISC/opentitan), [Pavona](https://github.com/pavona/pavona), [CVA6](https://github.com/openhwgroup/cva6), [Caliptra](https://github.com/chipsalliance/caliptra-rtl) and [caliptra-ss](https://github.com/chipsalliance/caliptra-ss), [XiangShan](https://github.com/OpenXiangShan/XiangShan) and its [Verilog library](https://github.com/OpenXiangShan/XS-Verilog-Library), [CVE2](https://github.com/openhwgroup/cve2), [CV32E40P](https://github.com/openhwfoundation/cv32e40p), [CVFPU](https://github.com/openhwfoundation/cvfpu), [CORE-V Wally](https://github.com/openhwgroup/cvw), [PULP AXI](https://github.com/pulp-platform/axi) and [common_cells](https://github.com/pulp-platform/common_cells), [hdl-util HDMI](https://github.com/hdl-util/hdmi), [verilog-ethernet](https://github.com/alexforencich/verilog-ethernet), [verilog-pcie](https://github.com/alexforencich/verilog-pcie), and the [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) conformance corpus

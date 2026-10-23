@@ -55,7 +55,7 @@ make
 
 ## Basic usage
 
-The plugin (`uhdm2rtlil.so`) registers two Yosys commands for getting
+The plugin (`build/uhdm2rtlil.so` after `make`; every command below runs from the repository root) registers two Yosys commands for getting
 SystemVerilog into RTLIL:
 
 | Command | Input | Surelog run | Intermediate `.uhdm` |
@@ -71,7 +71,7 @@ All arguments are forwarded to Surelog verbatim, exactly as if it were the
 `surelog` executable:
 
 ```bash
-./out/current/bin/yosys -m uhdm2rtlil.so \
+./out/current/bin/yosys -m build/uhdm2rtlil.so \
   -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
 
 # Multi-file / flags work just like the surelog CLI:
@@ -93,7 +93,7 @@ test workflow, or for caching/debugging the `.uhdm`):
 ./build/third_party/Surelog/bin/surelog -parse -d uhdm design.sv
 
 # Step 2: Read the UHDM file with the frontend
-./out/current/bin/yosys -m uhdm2rtlil.so \
+./out/current/bin/yosys -m build/uhdm2rtlil.so \
   -p "read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
 ```
 
