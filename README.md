@@ -33,7 +33,8 @@ pre-generated `.uhdm` file):
 git clone --recursive https://github.com/alainmarcel/uhdm2rtlil.git && cd uhdm2rtlil
 git config core.hooksPath .githooks
 make                                  # Surelog, Yosys (+ read_slang) and the plugin
-./out/current/bin/yosys -m build/uhdm2rtlil.so -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
+# synthesize one of the regression tests (any .sv works the same way)
+./out/current/bin/yosys -m build/uhdm2rtlil.so -p "read_sv -parse -nobuiltin test/simple_counter/dut.sv; synth -top simple_counter"
 ```
 
 Prerequisites (GCC ≥ 11, CMake 3.28–3.31, Verilator 5.x) and the full command

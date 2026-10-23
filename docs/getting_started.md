@@ -71,8 +71,9 @@ All arguments are forwarded to Surelog verbatim, exactly as if it were the
 `surelog` executable:
 
 ```bash
+# From the repository root; test/simple_counter/dut.sv is one of the regression tests.
 ./out/current/bin/yosys -m build/uhdm2rtlil.so \
-  -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
+  -p "read_sv -parse -nobuiltin test/simple_counter/dut.sv; synth -top simple_counter"
 
 # Multi-file / flags work just like the surelog CLI:
 #   read_sv -parse -nobuiltin a.sv b.sv +incdir+inc -DWIDTH=8 -top mytop
@@ -89,12 +90,12 @@ Useful when the UHDM database was produced by a separate Surelog run (e.g. the
 test workflow, or for caching/debugging the `.uhdm`):
 
 ```bash
-# Step 1: Generate UHDM from SystemVerilog
-./build/third_party/Surelog/bin/surelog -parse -d uhdm design.sv
+# Step 1: Generate UHDM from SystemVerilog (writes ./slpp_all/surelog.uhdm)
+./build/third_party/Surelog/bin/surelog -parse -d uhdm test/simple_counter/dut.sv
 
 # Step 2: Read the UHDM file with the frontend
 ./out/current/bin/yosys -m build/uhdm2rtlil.so \
-  -p "read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
+  -p "read_uhdm slpp_all/surelog.uhdm; synth -top simple_counter"
 ```
 
 Options: `-debug`, `-formal`, `-keep_names`, `-allow-undefined-modules`.  An
