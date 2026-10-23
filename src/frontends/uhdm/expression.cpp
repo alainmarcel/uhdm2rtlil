@@ -63,6 +63,23 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// The module instance whose SCOPE an expression node is in.  Walking VpiParent
+// from a port's high_conn reaches the CHILD instance (the port's owner) first;
+// the actual is written in the parent's scope, so step out once more.
+static const UHDM::module_inst* expr_scope_instance(const UHDM::any* n) {
+    bool via_port = false;
+    for (const UHDM::any* p = n ? n->VpiParent() : nullptr; p; p = p->VpiParent()) {
+        if (p->UhdmType() == UHDM::uhdmport) via_port = true;
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(p)) {
+            if (!via_port) return mi;
+            for (const UHDM::any* q = mi->VpiParent(); q; q = q->VpiParent())
+                if (auto pm = dynamic_cast<const UHDM::module_inst*>(q)) return pm;
+            return nullptr;
+        }
+    }
+    return nullptr;
+}
+
 // Helper function to generate consistent source-location-based cell names
 std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type) {
     std::string cell_name;
@@ -10459,8 +10476,54 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                         tn.c_str(), w);
                             }
                         }
+                        // A cast to a TYPE PARAMETER is measured against the
+                        // instance whose scope the EXPRESSION is in, not
+                        // against current_instance.  As a PORT ACTUAL
+                        // (`leaf #(.sid_t(sid_t)) u (.sid_i(sid_t'(in4 + 1)))`,
+                        // HPDcache's per-requester id tagging) the cast is
+                        // imported while the CHILD instance is current, so the
+                        // parent's `sid_t` default (`logic`) matched nothing
+                        // there and the operand was truncated to ONE bit; the
+                        // same cast on a module-level assign resolved fine.
+                        // The expression's own ancestry names the scope: a
+                        // high_conn hangs off the child's port, and its scope
+                        // is that child's PARENT instance.
                         if (target_width <= 0 &&
                             ts->UhdmType() != uhdmvoid_typespec) {
+                            if (const UHDM::module_inst* encl =
+                                    expr_scope_instance(uhdm_op)) {
+                                // The DEFINITION view carries no binding: a
+                                // module whose only parameters are types is
+                                // imported once, in the AllModules pass, with
+                                // the definition as current_instance, and
+                                // its body is never re-imported from the
+                                // hierarchy.  Measure in an elaborated
+                                // instance of it instead (the first one,
+                                // which is also the one the paramod name was
+                                // sized from).
+                                build_elab_index();
+                                bool is_elab = false;
+                                auto eit = elab_insts_by_def_.find(
+                                    std::string(encl->VpiDefName()));
+                                if (eit != elab_insts_by_def_.end())
+                                    for (auto ei : eit->second)
+                                        if (ei == encl) { is_elab = true; break; }
+                                if (!is_elab)
+                                    if (auto ei = find_elab_instance(encl)) encl = ei;
+                                if (encl != current_instance) {
+                                    auto saved_ci = current_instance;
+                                    current_instance = encl;
+                                    const typespec* ts_b =
+                                        resolve_type_param_typespec(ts, encl);
+                                    current_instance = saved_ci;
+                                    if (ts_b && ts_b != ts) {
+                                        if (mode_debug)
+                                            uhdm_trace("    cast type parameter resolved in the expression's scope %s\n",
+                                                std::string(encl->VpiFullName()).c_str());
+                                        ts = ts_b;
+                                    }
+                                }
+                            }
                             int w = get_width_from_typespec(ts, current_instance);
                             if (w > 0) target_width = w;
                         }
