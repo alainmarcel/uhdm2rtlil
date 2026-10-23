@@ -64,6 +64,15 @@ Upstream RTL imported verbatim and swept nightly -- formal equivalence against
 both netlists against the RTL.  Results, scopes and commits are in
 [docs/supported_ip.md](docs/supported_ip.md); the badges above are the sweeps.
 
+**Total tally** (every PR runs the first two; the sweeps run nightly):
+
+| | designs / rows | passing | measured by |
+|---|---:|---:|---|
+| Internal SystemVerilog tests | 1342 | 1305 functional, 0 true failures | the regression (`run_parallel.sh`), [docs/verification.md](docs/verification.md) |
+| Upstream Yosys tests | 514 | 503 functional, 11 recorded failures | the same regression |
+| Sweep rows (18 nightly workflows) | 5957 | 4855 formally proven, 4770 co-sim passes, 12 divergences, 0 undriven | the per-core sweeps, [docs/benchmarking.md](docs/benchmarking.md) |
+| **All** | **7813** | | |
+
 - RISC-V cores: [Ibex](https://github.com/lowRISC/ibex), [rp32](https://github.com/jeras/rp32), [Syntacore SCR1](https://github.com/syntacore/scr1), [VeeR EH1](https://github.com/chipsalliance/Cores-VeeR-EH1), [VeeR EL2](https://github.com/chipsalliance/Cores-VeeR-EL2), [RSD](https://github.com/rsd-devel/rsd), [BlackParrot](https://github.com/black-parrot/black-parrot), [Ariane CVA6](https://github.com/openhwgroup/cva6) (four configurations), [XiangShan core](https://github.com/OpenXiangShan/XiangShan) (Chisel-generated), [CVE2](https://github.com/openhwgroup/cve2), [CV32E40P](https://github.com/openhwfoundation/cv32e40p), [CORE-V Wally](https://github.com/openhwgroup/cvw)
 - Other CPUs and SoCs: [fx68k](https://github.com/ijor/fx68k) (Motorola 68000), [Caliptra](https://github.com/chipsalliance/caliptra-rtl) and [caliptra-ss](https://github.com/chipsalliance/caliptra-ss), [Pavona](https://github.com/pavona/pavona) (27 IPs + 2 full chips)
 - IP libraries: [OpenTitan](https://github.com/lowRISC/opentitan) (OTBN and the 44 other IP blocks), [RgGen](https://github.com/rggen/rggen-sv-rtl), [TNoC](https://github.com/taichi-ishitani/tnoc), [PULP AXI](https://github.com/pulp-platform/axi) and [common_cells](https://github.com/pulp-platform/common_cells), [CVFPU](https://github.com/openhwfoundation/cvfpu), [hdl-util HDMI](https://github.com/hdl-util/hdmi), [verilog-ethernet](https://github.com/alexforencich/verilog-ethernet), [verilog-pcie](https://github.com/alexforencich/verilog-pcie), [XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library)
