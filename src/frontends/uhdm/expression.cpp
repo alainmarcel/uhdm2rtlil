@@ -315,18 +315,28 @@ bool UhdmImporter::struct_member_slice_of_ref(const UHDM::any* base_ref,
                                               const UHDM::struct_typespec* fallback_ts,
                                               int& off, int& width) {
     const UHDM::struct_typespec* st = nullptr;
+    // A formal typed by a TYPE PARAMETER resolves to the instance binding.
+    auto as_struct = [&](const UHDM::typespec* a) -> const UHDM::struct_typespec* {
+        if (!a) return nullptr;
+        a = resolve_type_param_typespec(a, current_instance);
+        return (a && a->UhdmType() == uhdmstruct_typespec)
+                   ? any_cast<const UHDM::struct_typespec*>(a) : nullptr;
+    };
     if (auto bref = dynamic_cast<const UHDM::ref_obj*>(base_ref)) {
         if (auto bts = bref->Typespec())
-            if (auto a = bts->Actual_typespec())
-                if (a->UhdmType() == uhdmstruct_typespec)
-                    st = any_cast<const UHDM::struct_typespec*>(a);
+            st = as_struct(bts->Actual_typespec());
         if (!st)
-            if (auto ag = bref->Actual_group())
-                if (auto ex = dynamic_cast<const UHDM::expr*>(ag))
-                    if (auto ets = ex->Typespec())
-                        if (auto a = ets->Actual_typespec())
-                            if (a->UhdmType() == uhdmstruct_typespec)
-                                st = any_cast<const UHDM::struct_typespec*>(a);
+            if (auto ag = bref->Actual_group()) {
+                const UHDM::ref_typespec* ets = nullptr;
+                if (auto ex = dynamic_cast<const UHDM::expr*>(ag)) ets = ex->Typespec();
+                // A function FORMAL's actual is an io_decl, not an expr: the
+                // field write `req.mem_req_id = {1'b0, ...}` on a struct
+                // formal (HPDcache's hpdcache_req_write_sel_id) found no
+                // typespec here, the inliner dropped it without a trace and
+                // `return req` handed back the UNMODIFIED argument.
+                else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) ets = io->Typespec();
+                if (ets) st = as_struct(ets->Actual_typespec());
+            }
     }
     if (!st) st = fallback_ts;
     if (!st || !st->Members()) return false;
@@ -1925,20 +1935,27 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         st = current_func_return_struct_ts;
                     if (!st)
                         if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0])) {
+                            // A TYPE-PARAMETER typed base resolves to the
+                            // instance binding (HPDcache's formals).
+                            auto as_st = [&](const UHDM::typespec* a) -> const UHDM::struct_typespec* {
+                                if (!a) return nullptr;
+                                a = resolve_type_param_typespec(a, current_instance);
+                                return (a && a->UhdmType() == uhdmstruct_typespec)
+                                           ? any_cast<const UHDM::struct_typespec*>(a) : nullptr;
+                            };
                             if (auto bts = bref->Typespec())
-                                if (auto a = bts->Actual_typespec())
-                                    if (a->UhdmType() == uhdmstruct_typespec)
-                                        st = any_cast<const UHDM::struct_typespec*>(a);
+                                st = as_st(bts->Actual_typespec());
                             // The ref_obj's Typespec is often null for a
                             // function-local struct var; recover it from the
-                            // bound variable (Actual_group).
+                            // bound variable (Actual_group) -- an expr, or a
+                            // formal's io_decl.
                             if (!st)
-                                if (auto ag = bref->Actual_group())
-                                    if (auto e = dynamic_cast<const UHDM::expr*>(ag))
-                                        if (auto ets = e->Typespec())
-                                            if (auto a = ets->Actual_typespec())
-                                                if (a->UhdmType() == uhdmstruct_typespec)
-                                                    st = any_cast<const UHDM::struct_typespec*>(a);
+                                if (auto ag = bref->Actual_group()) {
+                                    const UHDM::ref_typespec* ets = nullptr;
+                                    if (auto e = dynamic_cast<const UHDM::expr*>(ag)) ets = e->Typespec();
+                                    else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) ets = io->Typespec();
+                                    if (ets) st = as_st(ets->Actual_typespec());
+                                }
                         }
                     // Final fallback: `base` is the function's return variable
                     // (`local_t p; p.f = …; return p;`), whose type IS the
@@ -1951,7 +1968,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         int off = 0, w = 0;
                         if (calculate_struct_member_offset(st, member_path, current_instance, off, w) &&
                             w > 0 && off >= 0 && off + w <= base_sig.size()) {
-                            lhs_sig = base_sig.extract(off, w);
+                            // SSA-rename a mapped local / input formal (see
+                            // the single-field case below).
+                            if (!ssa_slice_write(base_name, off, w))
+                                lhs_sig = base_sig.extract(off, w);
                             if (mode_debug)
                                 uhdm_trace("UHDM: nested struct-field write %s.%s -> [%d+:%d]\n",
                                     base_name.c_str(), member_path.c_str(), off, w);
@@ -1975,7 +1995,20 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                         if (found && field_w > 0 &&
                             field_off + field_w <= base_sig.size()) {
-                            lhs_sig = base_sig.extract(field_off, field_w);
+                            // A field write on a mapped LOCAL or INPUT FORMAL
+                            // must SSA-rename the whole local like every other
+                            // slice write here: in place, `req.mem_req_id =
+                            // {1'b0, req.mem_req_id[..]}` inside an `if` arm
+                            // wrote the formal's temp from a read of the same
+                            // temp (a combinational loop `eval` could not
+                            // resolve) and `return req`, staged at root level,
+                            // read the temp BEFORE the arm ran -- HPDcache's
+                            // hpdcache_req_write_sel_id from a continuous
+                            // assign.  ssa_slice_write declines for the return
+                            // variable and output formals, which keep the
+                            // in-place write.
+                            if (!ssa_slice_write(base_name, field_off, field_w))
+                                lhs_sig = base_sig.extract(field_off, field_w);
                             if (mode_debug)
                                 uhdm_trace("UHDM: struct-field return %s.%s -> [%d+:%d]\n",
                                     base_name.c_str(), field_name.c_str(),
@@ -20459,8 +20492,31 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         // found nothing -- or, worse, a same-named module net -- and `h.a`
         // after `h = hdr_t'(v)` inside a function returned X (tnoc's AXI
         // write/read demux `select_route`, header.packet_type).
+        // The LAST element may be a constant select of the member --
+        // `req.mem_req_id[0 +: HPDcacheCfg.u.memIdWidth-1]` in HPDcache's
+        // hpdcache_req_write_sel_id, a formal's field narrowed before being
+        // re-packed.  Only the all-ref_obj shape was accepted, so that read
+        // fell through to the module-wire lookups, found nothing, and became
+        // a constant X ("Could not resolve struct member access") -- the
+        // memory request / response ids of the HPDcache flavour of CVA6
+        // (cva6_hpdcache_wrapper 3 diverging co-simulated cycles,
+        // cva6_hpdcache_subsystem 2).  A plain `[hi:lo]` tail was already
+        // right through another path; `[b +: w]` and `[k]` were not.
         bool all_refs = uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2;
-        if (all_refs) for (auto e : *uhdm_hier->Path_elems()) if (e->UhdmType() != uhdmref_obj) { all_refs = false; break; }
+        const UHDM::any* tail_sel = nullptr;
+        if (all_refs) {
+            auto& pes0 = *uhdm_hier->Path_elems();
+            for (size_t i = 0; i < pes0.size(); i++) {
+                int et = pes0[i]->UhdmType();
+                if (et == uhdmref_obj) continue;
+                if (i == pes0.size() - 1 && i >= 1 &&
+                    (et == uhdmpart_select || et == uhdmindexed_part_select || et == uhdmbit_select)) {
+                    tail_sel = pes0[i];
+                    continue;
+                }
+                all_refs = false; break;
+            }
+        }
         if (input_mapping && input_mapping->count(base_name) && all_refs) {
             std::string member_name;
             for (size_t i = 1; i < uhdm_hier->Path_elems()->size(); i++)
@@ -20475,14 +20531,82 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (ex->Typespec()) lts = ex->Typespec()->Actual_typespec();
             }
             lts = resolve_iface_port_typedef(lts);
+            // A formal declared over a TYPE PARAMETER (HPDcache's
+            // `hpdcache_mem_req_t req`): resolve it to the instance binding.
+            if (lts) lts = resolve_type_param_typespec(lts, inst);
             if (lts && (lts->UhdmType() == uhdmstruct_typespec || lts->UhdmType() == uhdmunion_typespec)) {
                 int off = 0, w = 0;
-                if (calculate_struct_member_offset(lts, member_name, inst, off, w) && w > 0) {
+                const UHDM::typespec* mts_tail = nullptr;
+                if (calculate_struct_member_offset(lts, member_name, inst, off, w, &mts_tail) && w > 0) {
                     RTLIL::SigSpec bv = input_mapping->at(base_name);
-                    if (off >= 0 && off + w <= bv.size()) {
-                        uhdm_trace("    hier_path '%s' -> staged local %s member %s [%d +: %d]\n",
-                            path_name.c_str(), base_name.c_str(), member_name.c_str(), off, w);
-                        return bv.extract(off, w);
+                    // Narrow to the tail select when it is constant.  The
+                    // select counts ELEMENTS of the member's outer packed
+                    // dimension (`C.base[k]` on `logic [2:0][63:0] base`
+                    // is 64 bits, struct_param_func_loop), bits only for a
+                    // plain vector.
+                    int sub_off = 0, sub_w = w;
+                    int ew = 1, olo = 0;
+                    if (tail_sel && mts_tail) {
+                        const UHDM::typespec* mt = resolve_type_param_typespec(mts_tail, inst);
+                        const UHDM::VectorOfrange* rg = nullptr;
+                        bool multi = false;
+                        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(mt)) {
+                            rg = lt->Ranges();
+                            multi = rg && (rg->size() >= 2 || lt->Elem_typespec());
+                        } else if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(mt)) {
+                            rg = pt->Ranges(); multi = rg && !rg->empty();
+                        }
+                        if (multi && rg && !rg->empty() && (*rg)[0]->Left_expr() && (*rg)[0]->Right_expr()) {
+                            RTLIL::SigSpec l0 = import_expression((*rg)[0]->Left_expr(), input_mapping);
+                            RTLIL::SigSpec r0 = import_expression((*rg)[0]->Right_expr(), input_mapping);
+                            if (l0.size() && r0.size() && l0.is_fully_const() && r0.is_fully_const()) {
+                                int li = l0.as_const().as_int(), ri = r0.as_const().as_int();
+                                int n = std::abs(li - ri) + 1;
+                                if (n > 0 && w % n == 0) { ew = w / n; olo = std::min(li, ri); }
+                            }
+                        }
+                    }
+                    bool sel_ok = true;
+                    if (tail_sel) {
+                        sel_ok = false;
+                        if (tail_sel->UhdmType() == uhdmpart_select) {
+                            auto ps = any_cast<const part_select*>(tail_sel);
+                            RTLIL::SigSpec l = ps->Left_range() ? import_expression(
+                                any_cast<const expr*>(ps->Left_range()), input_mapping) : RTLIL::SigSpec();
+                            RTLIL::SigSpec r = ps->Right_range() ? import_expression(
+                                any_cast<const expr*>(ps->Right_range()), input_mapping) : RTLIL::SigSpec();
+                            if (l.size() && r.size() && l.is_fully_const() && r.is_fully_const()) {
+                                int li = l.as_const().as_int(), ri = r.as_const().as_int();
+                                sub_off = (std::min(li, ri) - olo) * ew; sub_w = (std::abs(li - ri) + 1) * ew; sel_ok = true;
+                            }
+                        } else if (tail_sel->UhdmType() == uhdmindexed_part_select) {
+                            auto ips = any_cast<const indexed_part_select*>(tail_sel);
+                            RTLIL::SigSpec b = ips->Base_expr() ? import_expression(
+                                any_cast<const expr*>(ips->Base_expr()), input_mapping) : RTLIL::SigSpec();
+                            RTLIL::SigSpec wd = ips->Width_expr() ? import_expression(
+                                any_cast<const expr*>(ips->Width_expr()), input_mapping) : RTLIL::SigSpec();
+                            if (b.size() && wd.size() && b.is_fully_const() && wd.is_fully_const()) {
+                                int bi = b.as_const().as_int(), wi = wd.as_const().as_int();
+                                if (wi > 0) {
+                                    int o = (ips->VpiIndexedPartSelectType() == vpiNegIndexed) ? bi - wi + 1 : bi;
+                                    sub_off = (o - olo) * ew; sub_w = wi * ew; sel_ok = true;
+                                }
+                            }
+                        } else if (tail_sel->UhdmType() == uhdmbit_select) {
+                            auto bs = any_cast<const bit_select*>(tail_sel);
+                            RTLIL::SigSpec ix = bs->VpiIndex() ? import_expression(
+                                any_cast<const expr*>(bs->VpiIndex()), input_mapping) : RTLIL::SigSpec();
+                            if (ix.size() && ix.is_fully_const()) {
+                                sub_off = (ix.as_const().as_int() - olo) * ew; sub_w = ew; sel_ok = true;
+                            }
+                        }
+                    }
+                    if (sel_ok && sub_off >= 0 && sub_off + sub_w <= w &&
+                        off >= 0 && off + w <= bv.size()) {
+                        uhdm_trace("    hier_path '%s' -> staged local %s member %s [%d +: %d]%s\n",
+                            path_name.c_str(), base_name.c_str(), member_name.c_str(), off + sub_off, sub_w,
+                            tail_sel ? " (tail select)" : "");
+                        return bv.extract(off + sub_off, sub_w);
                     }
                 }
             }
