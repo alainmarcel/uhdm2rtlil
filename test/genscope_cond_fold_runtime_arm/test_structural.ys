@@ -1,0 +1,8 @@
+# The VALUE is the gate (the expected words are read_slang's for the same
+# vector, bit for bit): without the fix the folded arm is 64 bits wide and
+# o0 reads {d[0][12:0], 32'b0, 32'b1} instead of {w[0], a[0], d[0], 32'b1}.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set w 2'b10 -set a 24'h076ABC -set d 64'h1234567889ABCDEF -set m 64'hA5A5A5A55A5A5A5A -prove o0 77'b00000011101100001001000110100010101100111100011111111111111111111111111111111 -prove o1 77'b11010101111001000100110101011110011011110111111111111111111111111111111111111

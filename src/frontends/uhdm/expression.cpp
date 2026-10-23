@@ -8792,10 +8792,42 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             unpacked_array_concat_geometry(uhdm_op, uac_n, uac_ew, uac_asc) &&
             (size_t)uac_n == uhdm_op->Operands()->size();
 
+    // A conditional whose SELECTED arm is a runtime signal must not be
+    // folded either.  `(EnMask) ? req_wmask_i[i] : {SramDw{1'b1}}` inside a
+    // generate loop (OpenTitan prim_sram_arbiter): the condition is a
+    // constant parameter, so ExprEval happily returns the chosen arm -- as
+    // `INT:4294967295` at ITS default width of 64 bits, not the arm's 32.
+    // As the last operand of a 77-bit concat that pushed every other field
+    // up by 32 bits and truncated them: sram_addr_o read wdata bits on
+    // every cycle (286 diverging co-simulated cycles, read_slang clean).
+    // The reader's own conditional import selects the arm and keeps its
+    // declared width, so leave such operations to it.
+    bool has_runtime_cond_arm = false;
+    if (op_type == vpiConditionOp && uhdm_op->Operands() && uhdm_op->Operands()->size() == 3) {
+        auto is_runtime = [&](const UHDM::any* e) -> bool {
+            if (!e) return false;
+            int t = e->VpiType();
+            if (t == vpiBitSelect || t == vpiPartSelect || t == vpiIndexedPartSelect ||
+                t == vpiVarSelect || t == vpiHierPath)
+                return true;
+            if (t == vpiRefObj) {
+                auto ro = any_cast<const ref_obj*>(e);
+                const UHDM::any* ag = ro->Actual_group();
+                if (!ag) return false;
+                int at = ag->UhdmType();
+                return at != uhdmparameter && at != uhdmenum_const && at != uhdmparam_assign;
+            }
+            return false;
+        };
+        has_runtime_cond_arm = is_runtime((*uhdm_op->Operands())[1]) ||
+                               is_runtime((*uhdm_op->Operands())[2]);
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
         !has_struct_param_hier_operand && !has_loop_value_operand &&
         !has_param_replication_count && !has_gen_scope_param_operand &&
-        !has_missized_enum_operand && !has_unpacked_array_concat_target) {
+        !has_missized_enum_operand && !has_unpacked_array_concat_target &&
+        !has_runtime_cond_arm) {
         ExprEval eval;
         // Element select on a multi-dimensional packed PARAMETER
         // (`localparam logic [1:0][31:0] ADDR_MASK_PERI`): ExprEval reads the
