@@ -23,7 +23,17 @@ def count(f):
         s=c[hdr['slang co-sim vs RTL']]; mod=c[hdr['module']]; formal=c[hdr['formal vs slang']]
         opt=c[hdr['opt check (undriven)']]; u=c[hdr['co-sim vs RTL']]
         n['rows']+=1
-        n['s_pass' if s.startswith('✅') else 's_div' if s.startswith('❌') else 's_nc']+=1
+        # A slang divergence is counted the way ours is.  A row where BOTH
+        # netlists diverge from the RTL is a testbench artefact the miter
+        # adjudicates (the uhdm column shows it as '⚠ shared div' or
+        # '⚠ artefact (adjudicated)'), and a row whose RTL is inert under
+        # Verilator has no oracle for either side; neither is a verdict on
+        # slang.  Listing all 125 under one `read_slang` **diverge** column
+        # while ours showed 12 made the two look incomparable: 34 are rows
+        # where ours tracks the RTL and slang's netlist does not.
+        if s.startswith('✅'): n['s_pass']+=1
+        elif s.startswith('❌'): n['s_div' if (u.startswith('✅') or u.startswith('❌')) else 's_shared']+=1
+        else: n['s_nc']+=1
         n['u_pass' if u.startswith('✅') else 'u_div' if u.startswith('❌') else 'u_adj' if u.startswith('⚠') else 'u_nc']+=1
         if '✅ equivalent' in formal: n['proven']+=1
         elif 'differs' in formal: n['differs']+=1
@@ -63,15 +73,15 @@ groups=[
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()
-hdrs=['Core','Rows','Formal proven','`read_slang` co-simulated','pass','**diverge**','`read_uhdm` co-simulated','pass','**diverge**','artefact','Undriven']
+hdrs=['Core','Rows','Formal proven','`read_slang` co-simulated','pass','**diverge**','artefact / no oracle','`read_uhdm` co-simulated','pass','**diverge**','artefact','Undriven']
 print('| '+' | '.join(hdrs)+' |'); print('|---|'+'---:|'*(len(hdrs)-1))
 def row(name,n,bold=False):
     # every co-sim block partitions the rows it ran on: ran = pass + diverge (+ artefact); Rows - ran = no co-sim
-    assert n['s_pass']+n['s_div']+n['s_nc']==n['rows'], (name,'slang',dict(n))
+    assert n['s_pass']+n['s_div']+n['s_shared']+n['s_nc']==n['rows'], (name,'slang',dict(n))
     assert n['u_pass']+n['u_div']+n['u_adj']+n['u_nc']==n['rows'], (name,'uhdm',dict(n))
-    s_ran=n['s_pass']+n['s_div']; u_ran=n['u_pass']+n['u_div']+n['u_adj']
-    v=[n['rows'],n['proven'],s_ran,n['s_pass'],n['s_div'],u_ran,n['u_pass'],n['u_div'],n['u_adj'],n['undriven']]
-    cells=[(f"**{x}**" if (bold or (i in (4,7) and x)) else str(x)) for i,x in enumerate(v)]
+    s_ran=n['s_pass']+n['s_div']+n['s_shared']; u_ran=n['u_pass']+n['u_div']+n['u_adj']
+    v=[n['rows'],n['proven'],s_ran,n['s_pass'],n['s_div'],n['s_shared'],u_ran,n['u_pass'],n['u_div'],n['u_adj'],n['undriven']]
+    cells=[(f"**{x}**" if (bold or (i in (4,8) and x)) else str(x)) for i,x in enumerate(v)]
     print('| '+name+' | '+' | '.join(cells)+' |')
 for name,fams,link in groups:
     n=collections.Counter()
@@ -93,7 +103,7 @@ for name,fams,link in groups:
     # as MISSING above and must not break the column-sum assertion.
     for f in fams:
         if f in rep: colsum.update(rep[f])
-for k in ('rows','proven','s_pass','s_div','s_nc','u_pass','u_div','u_adj','u_nc','undriven'):
+for k in ('rows','proven','s_pass','s_div','s_shared','s_nc','u_pass','u_div','u_adj','u_nc','undriven'):
     assert colsum[k]==tot[k], (k, colsum[k], tot[k])
 # Count the workflows actually MEASURED, not the ones that exist: a core
 # whose first nightly is still running contributes no rows, and labelling
@@ -105,4 +115,4 @@ row(f'**All sweeps** ({measured} workflows)',tot,bold=True)
 print()
 print('# per-report triples (Formal proven/rows, co-sim pass/comparable, opt-clean/opt-rows, differs, budget, err):')
 for k in sorted(rep):
-    n=rep[k]; print(f"{k:22s} formal {n['proven']}/{n['rows']}  cosim {n['u_pass']}/{n['u_pass']+n['u_div']}  opt {n['opt_clean']}/{n['opt_rows']}  differs {n['differs']} budget {n['f_budget']} err {n['f_err']} nc {n['f_nc']}  slang-div {n['s_div']} uhdm-div {n['u_div']} adj {n['u_adj']}")
+    n=rep[k]; print(f"{k:22s} formal {n['proven']}/{n['rows']}  cosim {n['u_pass']}/{n['u_pass']+n['u_div']}  opt {n['opt_clean']}/{n['opt_rows']}  differs {n['differs']} budget {n['f_budget']} err {n['f_err']} nc {n['f_nc']}  slang-div {n['s_div']} slang-shared {n['s_shared']} uhdm-div {n['u_div']} adj {n['u_adj']}")
