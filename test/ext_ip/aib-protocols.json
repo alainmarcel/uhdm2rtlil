@@ -1,0 +1,70 @@
+{
+ "title": "AIB protocols (chipsalliance/aib-protocols)",
+ "url": "https://github.com/chipsalliance/aib-protocols",
+ "_note": "chipsalliance/aib-protocols (Eximius Design, Apache-2.0): the protocol layers riding on the AIB die-to-die PHY -- the logic-link (llink) channel aligner and FIFOs, the AXI4-MM / AXI4-Stream / AXI4-ST-duplex leader+follower generated configurations, the LPIF (CXL/PCIe link-layer PHY interface) tx/rx at every width, the SPI-AIB bridge and the channel-alignment (ca) block.  Roots are the rtl/ directories and the generated configuration directories under axi4-*/; llink/script/premade_examples duplicates 49 of the axi4 modules file-for-file and is excluded as a source, as are the dv/, sims/, backup/ and fpga/ trees.  The full_examples*/common tops are swept as rows on purpose: they are the user-facing integration examples, and a row that cannot close over the AIB PHY models says so in its note.  LPIF modules `include lpif_configs.svh` (localparams over their own parameters).  Closure facts from the first survey: marker_gen and strobe_gen live in common/dv/ but are instantiated by the lpif / lpif_txrx / axi_st RTL, so those two files are roots while the rest of dv/ stays excluded.  Excluded as rows: aximm_aib_top, axist_aib_top and top_aib (multi-die examples instantiating emib_m2s2, a DV interconnect model that lives in aib-phy-hardware's v2.0/rev1/dv) and six axi4-st example tops that instantiate generated configurations no file in the repository defines (axi_st_master_top, axi_st_d256_dual_multichannel_full_*: outputs of llink/script for a user's own parameters).",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/aib-protocols",
+   "commit": "9e308bfbc95b56f41af8aa34376d4122edec001e",
+   "dir": "aib-protocols"
+  }
+ ],
+ "roots": [
+  "aib-protocols/common/rtl/*.sv",
+  "aib-protocols/ca/rtl/*.sv",
+  "aib-protocols/llink/rtl/*.sv",
+  "aib-protocols/lpif/rtl/*.sv",
+  "aib-protocols/lpif/rtl/*/*.sv",
+  "aib-protocols/lpif/rtl/*/*.v",
+  "aib-protocols/lpif/full_examples/common/*.sv",
+  "aib-protocols/spi-aib/rtl/*.sv",
+  "aib-protocols/axi4-mm/*/*.sv",
+  "aib-protocols/axi4-mm/*/*.v",
+  "aib-protocols/axi4-mm/axi_mm_multi/*/*.sv",
+  "aib-protocols/axi4-mm/axi_mm_multi/*/*.v",
+  "aib-protocols/axi4-mm/full_examples/common/*.sv",
+  "aib-protocols/axi4-mm/full_examples/common/*.v",
+  "aib-protocols/axi4-mm/full_examples_gpio/common/*.sv",
+  "aib-protocols/axi4-mm/full_examples_gpio/common/*.v",
+  "aib-protocols/axi4-st/*/*.sv",
+  "aib-protocols/axi4-st/*/*.v",
+  "aib-protocols/axi4-st/full_examples/common/*.sv",
+  "aib-protocols/axi4-st/full_examples/common/*.v",
+  "aib-protocols/axi4-st/full_examples_gpio/common/*.sv",
+  "aib-protocols/axi4-st/full_examples_gpio/common/*.v",
+  "aib-protocols/axi4-st-duplex/*/*.sv",
+  "aib-protocols/common/dv/marker_gen.sv",
+  "aib-protocols/common/dv/strobe_gen.sv"
+ ],
+ "sweep_paths": [
+  "aib-protocols/"
+ ],
+ "incdirs": [
+  "aib-protocols/lpif/rtl",
+  "aib-protocols/common/rtl"
+ ],
+ "exclude_srcs": [
+  "aib-protocols/[^/]+/dv/(?!marker_gen\\.sv$|strobe_gen\\.sv$)",
+  "/sims/",
+  "aib-protocols/backup/",
+  "aib-protocols/llink/script/",
+  "aib-protocols/llink/fpga/"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "_tb_",
+  "^(aximm_aib_top|axist_aib_top|top_aib)$",
+  "^(axi_st_multichannel_h2h_simplex_top|axi_st_simplex_gpio_phy_top|axist_gpiophy_top|axist_aib_h2h_top|axist_aib_dual_top|axi_st_d256_multichannel_f2h_dual_top)$"
+ ],
+ "seq": 3,
+ "timeout": 300,
+ "want": "proven",
+ "slang_flags": [
+  "--single-unit"
+ ]
+}
