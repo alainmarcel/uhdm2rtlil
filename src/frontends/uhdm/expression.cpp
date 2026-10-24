@@ -15927,8 +15927,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 v = eval_bare_iface_param_field(uhdm_hier, pm);
         }
         if (!v.empty()) {
-            int iv = atoi(v.c_str());
-            uhdm_trace("    hier_path: %s -> %d via bare interface struct parameter\n",
+            long long iv = std::strtoll(v.c_str(), nullptr, 10);
+            uhdm_trace("    hier_path: %s -> %lld via bare interface struct parameter\n",
                 path_name.c_str(), iv);
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
@@ -15944,7 +15944,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                       // CVA6Cfg.RVZiCond}` case selector) keep their SV width
         std::string v = eval_param_struct_field(uhdm_hier, &fw);
         if (!v.empty()) {
-            int iv = atoi(v.c_str());
+            // 64-bit: the field is rebuilt at its DECLARED width below, and a
+            // 32-bit `int` sign-extends anything with bit 31 set (36-bit
+            // DATA_ACCESS_ADDR2 = 36'h0A0000000 came out 36'hFA0000000; see
+            // parse_vpi_value_to_int64).
+            long long iv = std::strtoll(v.c_str(), nullptr, 10);
             RTLIL::SigSpec val(RTLIL::Const(iv, fw > 0 ? fw : 32));
             // A SELECT on the field is part of the path, and dropping it
             // returned the whole field at its declared width: cvw fround's
@@ -15976,7 +15980,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (i.is_fully_const() && !i.empty())
                     slice(i.as_const().as_int(), i.as_const().as_int());
             }
-            uhdm_trace("    hier_path: %s -> %d via struct parameter field (w=%d"
+            uhdm_trace("    hier_path: %s -> %lld via struct parameter field (w=%d"
                 "%s)\n", path_name.c_str(), iv, fw,
                 val.size() != (fw > 0 ? fw : 32) ? ", select applied" : "");
             return val;

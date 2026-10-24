@@ -1535,7 +1535,7 @@ bool UhdmImporter::eval_iface_local_const(const interface_inst* iface,
         // parameter directly from the interface scope and walk the fields.
         auto hp = any_cast<const hier_path*>(ve);
         std::string s = eval_param_struct_field(hp);
-        if (!s.empty()) { out = std::stol(s); return true; }
+        if (!s.empty()) { out = std::stoll(s); return true; }
         auto pel = hp->Path_elems();
         if (!pel || pel->size() < 2) return false;
         std::string bnm = std::string((*pel)[0]->VpiName());
@@ -1770,7 +1770,7 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp,
                                     int w = get_width_from_typespec(mts, nullptr);
                                     if (w > 0) *width_out = w;
                                 }
-                            return std::to_string(parse_vpi_value_to_int(
+                            return std::to_string(parse_vpi_value_to_int64(
                                 std::string(c->VpiValue())));
                         }
                         break;
@@ -1799,7 +1799,7 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp,
             int w = get_width_from_typespec(cur_ts, nullptr);
             if (w > 0) *width_out = w;
         }
-        return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
+        return std::to_string(parse_vpi_value_to_int64(std::string(c->VpiValue())));
     }
     return "";
 }
