@@ -110,6 +110,13 @@ jobs:
           # closure-only sources; aib_phy_top alone takes ~16 min.
           - family: aib-phy-hardware
             timeout: 330
+          # chipsalliance/VeeRwolf @ 9a919805 (v0.7.5): the reference SoC around
+          # VeeR EL2, closed through its own FuseSoC build (the manifest's
+          # generate step runs test/ext_ip/veerwolf_setup.sh: pip fusesoc, apt
+          # libbit-vector-perl, fusesoc-cores @ def274ab).  26 rows; the SoC
+          # top's closure carries the whole EL2 core.
+          - family: veerwolf
+            timeout: 330
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

@@ -1,0 +1,109 @@
+{
+ "title": "VeeRwolf (chipsalliance/VeeRwolf)",
+ "url": "https://github.com/chipsalliance/VeeRwolf",
+ "_note": "chipsalliance/VeeRwolf @ 9a919805 (v0.7.5): the reference SoC around the VeeR cores -- AXI interconnect, AXI-to-Wishbone bridge, Wishbone interconnect, system controller, memory wrapper, UART 16550, SPI, over a VeeR EL2 (the `cpu_el2` configuration). It is a FuseSoC project, so the closure is FuseSoC's: the `generate` step runs test/ext_ip/veerwolf_setup.sh, which sets up the `lint` target (= the full veerwolf_core netlist) into VeeRwolf/build and thereby fetches uart16550 1.5.5-r1, simple_spi 1.6.1, wb_intercon 1.4.1 (+ wb_common, verilog-arbiter, cdc_utils), PULP axi 0.25.0 and common_cells 1.20.0 from fusesoc-cores @ def274ab, and GENERATES the AXI / Wishbone interconnects, the EL2 configuration and the version header.  VeeR EL2 1.4 (882027cc, the commit veerwolf.core pins) is cloned by the harness into veer-el2-vw and seeded into FuseSoC's cache, because the GitHub tarball FuseSoC would fetch carries a symlink Python's tarfile refuses.  Rows are VeeRwolf's own modules, the generated interconnects and the Wishbone-side peripherals (uart16550, simple_spi, wb_intercon, wb_common, verilog-arbiter, cdc_utils); the EL2 core, PULP axi and common_cells are closure-only here (they have families of their own).  The board tops (Nexys / Arty / Basys3 / Agilex: Xilinx and Intel primitives, LiteDRAM) are not part of the lint target and are not swept.  Five modules default their width parameters to 0 (\"you must override me\"); the bind values are the SoC's own: IW 4 (the LSU master id width the AXI interconnect is generated with), DW 32 (wb_cdc's 32-bit CDC), SIZE / MEM_SIZE 4096 (BOOTROM_SIZE), num_masters 3 (the three AXI masters ifu / lsu / sb).  read_slang needs --unroll-limit raised: dpram64 / wb_mem_wrapper clear their 4096-entry memory in an initial loop and the default 4000-iteration budget stops at 'unroll limit exhausted'.",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/VeeRwolf",
+   "commit": "9a91980562fcaadd748404af05d2a23361632378",
+   "dir": "VeeRwolf"
+  },
+  {
+   "url": "https://github.com/chipsalliance/Cores-VeeR-EL2",
+   "commit": "882027cc538bf7ef11c763d499877efdb5c827d8",
+   "dir": "veer-el2-vw"
+  }
+ ],
+ "generate": {
+  "cwd": "VeeRwolf",
+  "marker": "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/veerwolf_0.7.5.vc",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "bash \"$EXT_IP_HARNESS/veerwolf_setup.sh\""
+   ]
+  ],
+  "timeout": 3600
+ },
+ "roots": [
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/**/*.v",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/**/*.sv"
+ ],
+ "sweep_paths": [
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf_0.7.5/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-intercon_0.7.5/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-wb_intercon_0.7.5/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/uart16550_1.5.5-r1/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/simple_spi_1.6.1/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/wb_intercon_1.4.1/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/wb_common_1.0.3/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/verilog-arbiter_0-r3/",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/cdc_utils_0.1-r1/"
+ ],
+ "exclude_srcs": [
+  "/deprecated/",
+  "/tb/",
+  "_tb\\.",
+  "/bench/",
+  "/sim/"
+ ],
+ "incdirs": [
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-veer_el2_default_config_0.7.5",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/pulp-platform.org__common_cells_1.20.0/include",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/uart16550_1.5.5-r1/rtl/verilog",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/wb_common_1.0.3",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/pulp-platform.org__axi_0.25.0/include",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-intercon_0.7.5",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-wb_intercon_0.7.5"
+ ],
+ "always_srcs": [
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/veerwolf-veer_el2_default_config_0.7.5/common_defines.vh",
+  "VeeRwolf/build/veerwolf_0.7.5/lint-verilator/src/chipsalliance.org_cores_VeeR_EL2_1.4/design/include/el2_def.sv"
+ ],
+ "defines": [
+  "SYNTHESIS",
+  "VERSION_MAJOR=0",
+  "VERSION_MINOR=7",
+  "VERSION_PATCH=5",
+  "VERSION_REV=0",
+  "VERSION_DIRTY=0",
+  "VERSION_SHA=9a919805"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "slang_flags": [
+  "--single-unit",
+  "--unroll-limit=200000"
+ ],
+ "bind": {
+  "values": [
+   [
+    "^IW$",
+    4
+   ],
+   [
+    "^DW$",
+    32
+   ],
+   [
+    "^SIZE$",
+    4096
+   ],
+   [
+    "^MEM_SIZE$",
+    4096
+   ],
+   [
+    "^num_masters$",
+    3
+   ]
+  ]
+ }
+}
