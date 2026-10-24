@@ -1,0 +1,11 @@
+# The cast constants themselves: a based unsized literal zero-extends, the
+# unbased fill literals replicate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -set h 0 -set w 1 -set d 0 -prove off 3'b011
+sat -verify -set h 1 -set w 0 -set d 0 -prove off 3'b001
+sat -verify -set w 1 -prove mask4 4'b0011
+sat -verify -set w 1 -prove sel 3'b011
+sat -verify -prove ones 3'b111
+sat -verify -prove zeros 3'b000
