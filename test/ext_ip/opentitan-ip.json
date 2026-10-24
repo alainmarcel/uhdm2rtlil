@@ -58,6 +58,18 @@
     "exclude_srcs: dmi_bscane_tap.sv": "a XILINX-only FPGA JTAG tap in the vendored debug module: it instantiates the hard macro `BSCANE2`, which no generic closure defines, and it is an ALTERNATIVE to the tap the generic flow uses rather than something the design needs.  Leaving it in cost lc_ctrl and rv_dm their read_slang reference (\"unknown module 'BSCANE2'\").",
     "^chip_earlgrey_ / ^top_earlgrey$ / ^earlgrey_pd_": "CHIP tops, not IP blocks: this family's scope is the IP library, and a chip top needs its analog model and pad ring, which are deliberately not in this closure (`chip_earlgrey_asic` elab-fails for exactly that reason).  The chip top has its own route -- test/opentitan_equiv/scripts/fusesoc_closure.py resolves `lowrisc:systems:top_earlgrey` to 635 files with 0 unresolved cores and read_uhdm reads it clean -- and wants its own sharded workflow because the read alone peaks at 11.9 GB."
   },
+  "overrides": {
+    "rram_ctrl_mp": {
+      "want": "cex",
+      "cosim": "artefact",
+      "note": "adjudicated 2026-10-23: the miter cex and the 1 co-sim divergence need `if_sel_i = 3`, an encoding of the enum input that its `unique case (if_sel_i)` never lists (LRM: no arm) -- read_slang keeps X, read_uhdm holds; unlisted-enum-selector stimulus, not a reader defect"
+    },
+    "i3c_ctrl_req_gen": {
+      "want": "cex",
+      "cosim": "artefact",
+      "note": "adjudicated 2026-10-23: the miter cex and the 1 co-sim divergence need `state_i = 0x19 / 0x1b`, FSM-state INPUT encodings outside its `case (state_i)` list (no arm) -- same unlisted-enum-selector class as rram_ctrl_mp, not a reader defect"
+    }
+  },
   "seq": 3,
   "timeout": 600,
   "want": "proven",
