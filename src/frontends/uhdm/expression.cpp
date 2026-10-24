@@ -8259,6 +8259,40 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                      ert->Actual_typespec()->UhdmType() == uhdmunion_typespec))
                     elem_struct_ts = ert->Actual_typespec();
             }
+            // Surelog drops the packed dimensions of a parameter declared over
+            // a TYPEDEF ALIAS of a struct -- `typedef pkg::xbar_rule_32_t
+            // rule_t; localparam rule_t [1:0] AddrMap = '{ '{...}, '{...} }`
+            // hands the parameter the bare struct as its typespec (the direct
+            // `pkg::xbar_rule_32_t [1:0]` keeps the range).  A struct cannot
+            // take N positional NESTED patterns unless it has exactly N
+            // members, so N nested patterns against a struct of another member
+            // count are the N ELEMENTS of an array of that struct: size each
+            // to the struct's width and thread the struct as its type.  Sized
+            // as one struct, VeeRwolf axi_intercon's two 96-bit address rules
+            // were split 48/48 and the crossbar decoded every address as an
+            // error (279 diverging co-simulated cycles).
+            if (struct_ts && pat_count > 1 && struct_ts->Members() &&
+                (int)struct_ts->Members()->size() != pat_count) {
+                bool all_nested = true;
+                for (auto operand : *uhdm_op->Operands()) {
+                    if (operand->UhdmType() != uhdmoperation ||
+                        any_cast<const UHDM::operation*>(operand)->VpiOpType() != vpiAssignmentPatternOp) {
+                        all_nested = false;
+                        break;
+                    }
+                }
+                if (all_nested) {
+                    int sw = get_width_from_typespec(struct_ts, inst);
+                    if (sw > 0) {
+                        uhdm_trace("UHDM: AssignmentPatternOp: %d nested patterns against a %zu-member struct "
+                                   "-- an array of %d elements of %d bits (packed dims lost on a typedef alias)\n",
+                                   pat_count, struct_ts->Members()->size(), pat_count, sw);
+                        elem_struct_ts = struct_ts;
+                        struct_ts = nullptr;
+                        pelem_w = sw;
+                    }
+                }
+            }
             int field_idx = 0;
             std::vector<std::string> field_tags;  // tag name per field ("" = untagged)
             for (auto operand : *uhdm_op->Operands()) {
