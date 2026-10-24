@@ -1,0 +1,73 @@
+{
+ "title": "Adams Bridge (chipsalliance/adams-bridge)",
+ "url": "https://github.com/chipsalliance/adams-bridge",
+ "_note": "chipsalliance's post-quantum (ML-DSA / Dilithium) accelerator, SystemVerilog.  Vendored inside caliptra-rtl (submodules/adams-bridge) where only its instances inside caliptra_top are measured; this family scores its own modules: the NTT, samplers, encoders/decoders, SHA3 and the abr_top wrapper.  Pinned at the commit caliptra-ss's caliptra-rtl vendors.  UVMF / testbench trees are excluded as sources.  Two rows are excluded on purpose: bytewrite_tdp_ram_rf is declared inside `ifdef RV_FPGA_OPTIMIZE in abr_1r1w_be_ram.sv (not a module under the sweep's defines), and abr_prim_lc_sync imports lc_ctrl_state_pkg, a Caliptra / OpenTitan package this repository does not carry.  The two SRAM models are always_srcs: abr_mem_top instantiates them only through the `ABR_MEM / `ABR_MEM_BE macros of abr_config_defines.svh, an INCLUDED file the closure's .sv/.v identifier scan never reads (the same route caliptra-ss takes for caliptra_prim_ram_1p_pkg).",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/adams-bridge",
+   "commit": "c4a921cfbc9576dd329dff7492ee8fc8a41a18d8",
+   "dir": "adams-bridge"
+  }
+ ],
+ "roots": [
+  "adams-bridge/src/*/rtl/*.sv",
+  "adams-bridge/src/*/rtl/*.v"
+ ],
+ "sweep_paths": [
+  "adams-bridge/src/"
+ ],
+ "incdirs": [
+  "adams-bridge/src/abr_libs/rtl",
+  "adams-bridge/src/abr_prim/rtl",
+  "adams-bridge/src/abr_prim_generic/rtl",
+  "adams-bridge/src/abr_sampler_top/rtl",
+  "adams-bridge/src/abr_sha3/rtl",
+  "adams-bridge/src/abr_top/rtl",
+  "adams-bridge/src/barrett_reduction/rtl",
+  "adams-bridge/src/cbd_sampler/rtl",
+  "adams-bridge/src/compress/rtl",
+  "adams-bridge/src/decompose/rtl",
+  "adams-bridge/src/decompress/rtl",
+  "adams-bridge/src/exp_mask/rtl",
+  "adams-bridge/src/makehint/rtl",
+  "adams-bridge/src/norm_check/rtl",
+  "adams-bridge/src/ntt_top/rtl",
+  "adams-bridge/src/pk_decode/rtl",
+  "adams-bridge/src/power2round/rtl",
+  "adams-bridge/src/rej_bounded/rtl",
+  "adams-bridge/src/rej_sampler/rtl",
+  "adams-bridge/src/sample_in_ball/rtl",
+  "adams-bridge/src/sig_decode_z/rtl",
+  "adams-bridge/src/sig_encode_z/rtl",
+  "adams-bridge/src/sigdecode_h/rtl",
+  "adams-bridge/src/sk_decode/rtl",
+  "adams-bridge/src/sk_encode/rtl"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "_uvm",
+  "_pkg$",
+  "^bytewrite_tdp_ram_rf$",
+  "^abr_prim_lc_sync$"
+ ],
+ "exclude_srcs": [
+  "adams-bridge/src/[^/]+/uvmf/",
+  "adams-bridge/src/[^/]+/tb/",
+  "adams-bridge/src/[^/]+/sim/"
+ ],
+ "seq": 3,
+ "timeout": 600,
+ "want": "proven",
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "always_srcs": [
+  "adams-bridge/src/abr_libs/rtl/abr_1r1w_ram.sv",
+  "adams-bridge/src/abr_libs/rtl/abr_1r1w_be_ram.sv"
+ ]
+}
