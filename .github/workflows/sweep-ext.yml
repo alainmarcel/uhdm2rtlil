@@ -88,6 +88,15 @@ jobs:
             shards: 8
             timeout: 330
             mem_limit_kb: "7000000"
+          # chipsalliance/adams-bridge @ c4a921cf (the commit caliptra-rtl
+          # vendors): the ML-DSA accelerator's own 117 modules -- NTT, samplers,
+          # encoders / decoders, SHA3, the control block and abr_top.  The
+          # caliptra sweep measures only its instances inside caliptra_top.
+          # Two shards: ~4000 s of row time measured locally, the tops and the
+          # NTT butterflies run their SAT budget out.
+          - family: adams-bridge
+            shards: 2
+            timeout: 330
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
