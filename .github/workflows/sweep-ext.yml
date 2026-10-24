@@ -97,6 +97,13 @@ jobs:
           - family: adams-bridge
             shards: 2
             timeout: 330
+          # chipsalliance/aib-protocols @ 9e308bfb: the AIB die-to-die protocol
+          # layers (logic link, AXI4-MM / AXI4-Stream configurations, LPIF,
+          # SPI-AIB, channel alignment), 397 modules.  Two shards: ~6000 s of
+          # row time measured locally, the largest row 683 s.
+          - family: aib-protocols
+            shards: 2
+            timeout: 330
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
