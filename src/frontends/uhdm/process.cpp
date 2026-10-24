@@ -12578,32 +12578,91 @@ bool UhdmImporter::emit_dynamic_packed_bit_write_sync(const assignment* uhdm_ass
     if (auto rhs_e = dynamic_cast<const expr*>(uhdm_assign->Rhs()))
         rhs = import_expression(rhs_e);
     if (rhs.empty()) return false;
-    RTLIL::SigSpec rbit = rhs.extract(0, 1);
+    // The vector may be a packed ARRAY (`logic [DEPTH-1:0][W-1:0] ram`), in
+    // which case `ram[idx]` is a W-bit ELEMENT at `(idx - low) * W`, not bit
+    // idx.  Written per bit with bit 0 of the data, adams-bridge's
+    // abr_ram_regout (`ram[waddr_i[port]] <= wdata_i[port]` under the write
+    // port loop) stored ONE bit of every word -- 106 diverging co-simulated
+    // cycles, read_slang clean.  Same geometry rule as the constant-index
+    // write (packed_elem_geometry): the wire's packed_elem_width metadata,
+    // else the base typespec's ranges; a plain vector stays elem_w = 1.
+    int elem_w = 1, arr_low = 0;
+    packed_elem_geometry(bs, w, elem_w, arr_low);
+    if (elem_w < 1 || w->width % elem_w != 0) elem_w = 1;
+    int n_elems = w->width / elem_w;
+    if (rhs.size() < elem_w) rhs.extend_u0(elem_w, false);
     RTLIL::SigSpec cond_base;
     if (!current_condition.empty())
         cond_base = RTLIL::SigSpec(cond_as_bool(module, current_condition));
-    for (int k = 0; k < w->width; k++) {
-        RTLIL::SigSpec bit_lhs(w, k, 1);
+    for (int e = 0; e < n_elems; e++) {
         RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
         module->addEq(NEW_ID, idx,
-                      RTLIL::SigSpec(RTLIL::Const(k, GetSize(idx))), sel);
+                      RTLIL::SigSpec(RTLIL::Const(e + arr_low, GetSize(idx))), sel);
         RTLIL::SigSpec full_cond(sel);
         if (!cond_base.empty()) {
             RTLIL::Wire* both = module->addWire(NEW_ID, 1);
             module->addAnd(NEW_ID, cond_base, full_cond, both);
             full_cond = RTLIL::SigSpec(both);
         }
-        RTLIL::SigSpec else_val = pending_sync_assignments.count(bit_lhs)
-                                      ? pending_sync_assignments.at(bit_lhs)
-                                      : pending_inflight(bit_lhs);
-        RTLIL::Wire* mo = module->addWire(NEW_ID, 1);
-        module->addMux(NEW_ID, else_val, rbit, full_cond, mo);
-        pending_sync_assignments[bit_lhs] = RTLIL::SigSpec(mo);
-        note_pending_sync(bit_lhs);
+        for (int j = 0; j < elem_w; j++) {
+            int k = e * elem_w + j;
+            RTLIL::SigSpec bit_lhs(w, k, 1);
+            RTLIL::SigSpec rbit = rhs.extract(j, 1);
+            RTLIL::SigSpec else_val = pending_sync_assignments.count(bit_lhs)
+                                          ? pending_sync_assignments.at(bit_lhs)
+                                          : pending_inflight(bit_lhs);
+            RTLIL::Wire* mo = module->addWire(NEW_ID, 1);
+            module->addMux(NEW_ID, else_val, rbit, full_cond, mo);
+            pending_sync_assignments[bit_lhs] = RTLIL::SigSpec(mo);
+            note_pending_sync(bit_lhs);
+        }
     }
-    uhdm_trace("    dyn_packed_bit_write_sync: %s[dyn] <= %s (%d bits)\n",
-        nm.c_str(), log_signal(rbit), w->width);
+    uhdm_trace("    dyn_packed_bit_write_sync: %s[dyn] <= %s (%d bits, %d elements of %d)\n",
+        nm.c_str(), log_signal(rhs), w->width, n_elems, elem_w);
     return true;
+}
+
+// Geometry of a packed array behind a bit-select write target: the element
+// width and the index of the lowest element.  Prefers the wire's
+// packed_elem_width metadata (set by import_net / import_port with every
+// typespec variant handled), else walks the base typespec's ranges.  A plain
+// vector (`reg [N-1:0] q`) comes out as elem_w = 1, low = 0.
+void UhdmImporter::packed_elem_geometry(const bit_select* bs, RTLIL::Wire* w,
+                                        int& elem_w, int& arr_low) {
+    elem_w = 1; arr_low = 0;
+    if (!w) return;
+    if (w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+        elem_w = w->attributes.at(RTLIL::escape_id("packed_elem_width")).as_int();
+        int pl = w->attributes.count(RTLIL::escape_id("packed_outer_left"))
+            ? w->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int() : 0;
+        int pr = w->attributes.count(RTLIL::escape_id("packed_outer_right"))
+            ? w->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int() : 0;
+        arr_low = std::min(pl, pr);
+    }
+    if (elem_w <= 1 && bs) if (auto a = bs->Actual_group()) {
+        const UHDM::ref_typespec* rts = nullptr;
+        if (auto e = dynamic_cast<const UHDM::expr*>(a)) rts = e->Typespec();
+        if (rts && rts->Actual_typespec() &&
+            rts->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+            auto lt = any_cast<const UHDM::logic_typespec*>(rts->Actual_typespec());
+            if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                elem_w = get_width_from_typespec(
+                    lt->Elem_typespec()->Actual_typespec(), current_instance);
+            if (lt->Ranges() && !lt->Ranges()->empty()) {
+                auto r0 = (*lt->Ranges())[0];
+                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    int lv = l.as_const().as_int(), rv = r.as_const().as_int();
+                    arr_low = std::min(lv, rv);
+                    int outer = std::abs(lv - rv) + 1;
+                    if (elem_w == 1 && outer > 0 && w->width % outer == 0)
+                        elem_w = w->width / outer;
+                }
+            }
+        }
+    }
+    if (elem_w < 1) elem_w = 1;
 }
 
 bool UhdmImporter::emit_dynamic_expanded_elem_write_sync(const assignment* uhdm_assign) {
