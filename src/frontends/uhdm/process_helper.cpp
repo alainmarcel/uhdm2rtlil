@@ -392,7 +392,7 @@ int UhdmImporter::const_cond_value(const any* cond) {
         auto hp = any_cast<const hier_path*>(cond);
         std::string v = eval_param_struct_field(hp);
         if (!v.empty())
-            return atoi(v.c_str()) == 0 ? 0 : 1;
+            return std::strtoll(v.c_str(), nullptr, 10) == 0 ? 0 : 1;
         // eval_param_struct_field walks the typespec itself and gives up on
         // some shapes that import_hier_path still folds — a NESTED field of a
         // deep-hierarchy struct parameter (hpdcache_memctrl's

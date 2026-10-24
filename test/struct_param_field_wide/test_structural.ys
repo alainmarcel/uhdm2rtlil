@@ -1,0 +1,11 @@
+# The folded window base must be the 36-bit value, not a 32-bit one
+# sign-extended: with the defect `base` read 36'hFBFFFFFFF and in_window was
+# constant 0 for every address in the window.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -prove base 36'h0BFFFFFFF
+sat -verify -prove wide 64'hC000000080000001
+sat -verify -prove wide_hi 1'b1
+sat -verify -set addr 32'hA0000000 -prove in_window 1'b1
+sat -verify -set addr 32'h60000000 -prove in_window 1'b0

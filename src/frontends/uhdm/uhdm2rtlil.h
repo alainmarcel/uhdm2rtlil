@@ -115,6 +115,36 @@ static inline int parse_vpi_value_to_int(const std::string& vpi_value) {
     }
 }
 
+// The 64-bit twin, for a value that is to be REBUILT at its declared width
+// rather than used as an index or a count.  A struct-parameter field is
+// resolved to a decimal string by eval_param_struct_field and rebuilt with
+// `RTLIL::Const(value, field_width)`: through the 32-bit parser a 36-bit
+// field holding 36'h0A0000000 (VeeR EH2's DATA_ACCESS_ADDR2) came back as
+// -1610612736 and was sign-extended to 36'hFA0000000, so every
+// `(addr | MASK) == (ADDR | MASK)` window test with bit 31 set in ADDR failed
+// and eh2_lsu_addrcheck flagged an access fault on every non-DCCM access
+// (116 diverging co-simulated cycles; 8 EH2 rows share the parameter).
+static inline long long parse_vpi_value_to_int64(const std::string& vpi_value) {
+    size_t colon_pos = vpi_value.find(':');
+    if (colon_pos == std::string::npos)
+        return std::stoll(vpi_value);
+    std::string type_part = vpi_value.substr(0, colon_pos);
+    std::string value_part = vpi_value.substr(colon_pos + 1);
+    try {
+        if (type_part == "HEX") {
+            if (value_part.size() > 16) value_part = value_part.substr(value_part.size() - 16);
+            return (long long)std::stoull(value_part, nullptr, 16);
+        } else if (type_part == "BIN") {
+            if (value_part.size() > 64) value_part = value_part.substr(value_part.size() - 64);
+            return (long long)std::stoull(value_part, nullptr, 2);
+        } else { // UINT, INT, DEC
+            return std::stoll(value_part);
+        }
+    } catch (const std::exception&) {
+        return 0;
+    }
+}
+
 // Forward declarations
 struct UhdmImporter;
 
