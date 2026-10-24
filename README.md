@@ -68,10 +68,10 @@ both netlists against the RTL.  Results, scopes and commits are in
 
 | | designs / rows | passing | measured by |
 |---|---:|---:|---|
-| Internal SystemVerilog tests | 1342 | 1305 functional, 0 true failures | the regression (`run_parallel.sh`), [docs/verification.md](docs/verification.md) |
+| Internal SystemVerilog tests | 1354 | 1317 functional, 0 true failures | the regression (`run_parallel.sh`), [docs/verification.md](docs/verification.md) |
 | Upstream Yosys tests | 514 | 503 functional, 11 recorded failures | the same regression |
-| Sweep rows (18 nightly workflows) | 5957 | 4855 formally proven, 4770 co-sim passes, 12 divergences, 0 undriven | the per-core sweeps, [docs/benchmarking.md](docs/benchmarking.md) |
-| **All** | **7813** | | |
+| Sweep rows (18 nightly workflows) | 5957 | 4865 formally proven, 4778 co-sim passes, 5 divergences, 0 undriven | the per-core sweeps, [docs/benchmarking.md](docs/benchmarking.md) |
+| **All** | **7825** | | |
 
 - RISC-V cores: [Ibex](https://github.com/lowRISC/ibex), [rp32](https://github.com/jeras/rp32), [Syntacore SCR1](https://github.com/syntacore/scr1), [VeeR EH1](https://github.com/chipsalliance/Cores-VeeR-EH1), [VeeR EL2](https://github.com/chipsalliance/Cores-VeeR-EL2), [RSD](https://github.com/rsd-devel/rsd), [BlackParrot](https://github.com/black-parrot/black-parrot), [Ariane CVA6](https://github.com/openhwgroup/cva6) (four configurations), [XiangShan core](https://github.com/OpenXiangShan/XiangShan) (Chisel-generated), [CVE2](https://github.com/openhwgroup/cve2), [CV32E40P](https://github.com/openhwfoundation/cv32e40p), [CORE-V Wally](https://github.com/openhwgroup/cvw)
 - Other CPUs and SoCs: [fx68k](https://github.com/ijor/fx68k) (Motorola 68000), [Caliptra](https://github.com/chipsalliance/caliptra-rtl) and [caliptra-ss](https://github.com/chipsalliance/caliptra-ss), [Pavona](https://github.com/pavona/pavona) (27 IPs + 2 full chips)
