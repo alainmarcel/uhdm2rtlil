@@ -9355,8 +9355,59 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             bool fl_dynamic_bound = false;
             RTLIL::SigSpec fl_bound_sig;
             int fl_bound_width = 0;
+            // Runtime terms of a CONJUNCTION condition, `for (i = 0; i < N &&
+            // found == 0; i++)`: the comparison on the loop variable bounds the
+            // unrolling, every other term is evaluated per iteration against
+            // the in-flight values and guards that iteration AND all later
+            // ones (the loop exits the first time the condition fails).
+            // Unrecognised, the whole loop was "cannot unroll" and its body
+            // silently dropped: VeeR EH2's leading-zero counter
+            // (eh2_exu_alu_ctl, `for (int i=0; i<pt.XLEN && found==0; i++)`)
+            // returned 0 for every operand, 25 diverging co-simulated cycles.
+            std::vector<const UHDM::expr*> fl_extra_conds;
             if (fl_can_unroll && fl_cond->VpiType() == vpiOperation) {
                 const operation* co = any_cast<const operation*>(fl_cond);
+                if (co->VpiOpType() == vpiLogAndOp && !fl_var.empty()) {
+                    std::vector<const any*> terms;
+                    std::function<void(const any*)> flat = [&](const any* t) {
+                        if (t->VpiType() == vpiOperation) {
+                            auto o = any_cast<const operation*>(t);
+                            if (o->VpiOpType() == vpiLogAndOp && o->Operands()) {
+                                for (auto x : *o->Operands()) flat(x);
+                                return;
+                            }
+                        }
+                        terms.push_back(t);
+                    };
+                    flat(co);
+                    const operation* rel = nullptr;
+                    std::vector<const UHDM::expr*> extras;
+                    for (auto t : terms) {
+                        bool is_rel = false;
+                        if (!rel && t->VpiType() == vpiOperation) {
+                            auto o = any_cast<const operation*>(t);
+                            int ot = o->VpiOpType();
+                            if ((ot == vpiLtOp || ot == vpiLeOp || ot == vpiGtOp || ot == vpiGeOp) &&
+                                o->Operands() && o->Operands()->size() == 2) {
+                                for (auto side : *o->Operands())
+                                    if ((side->VpiType() == vpiRefObj || side->VpiType() == vpiRefVar) &&
+                                        std::string(side->VpiName()) == fl_var)
+                                        is_rel = true;
+                            }
+                            if (is_rel) rel = o;
+                        }
+                        if (!is_rel) {
+                            if (auto e = dynamic_cast<const UHDM::expr*>(t)) extras.push_back(e);
+                            else { rel = nullptr; break; }
+                        }
+                    }
+                    if (rel) {
+                        co = rel;
+                        fl_extra_conds = extras;
+                        uhdm_trace("    Comb for loop: conjunction condition, %zu runtime term(s) guard the iterations\n",
+                                   fl_extra_conds.size());
+                    }
+                }
                 // `0 <= j` (RSD CommitStage's GetInsnPtr `for (int j = i - 1;
                 // 0 <= j; j--)`): the bound is on the LEFT.  Read it as the
                 // mirrored `j >= 0` -- taken literally it was an ASCENDING loop
@@ -9459,6 +9510,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             }
 
+            // Fold this iteration's runtime terms into `live` (a constant 1
+            // until something is not constant).  Each term reads the comb
+            // in-flight values, so `found == 0` sees the writes of the
+            // iterations that ran before it.
+            auto fl_apply_extras = [&](RTLIL::SigSpec& live) {
+                for (auto ex : fl_extra_conds) {
+                    RTLIL::SigSpec g = import_expression(ex, comb_read_map());
+                    if (g.empty()) continue;
+                    if (g.size() != 1) g = module->ReduceBool(NEW_ID, g);
+                    if (g.is_fully_const()) {
+                        if (!g.as_const().as_bool()) live = RTLIL::SigSpec(RTLIL::State::S0);
+                    } else if (live.is_fully_const() && live.as_const().as_bool()) {
+                        live = g;
+                    } else if (live.is_fully_const()) {
+                        // already dead: stays dead
+                    } else {
+                        live = RTLIL::SigSpec(module->And(NEW_ID, live, g));
+                    }
+                }
+            };
             if (fl_can_unroll && fl_dynamic_bound) {
                 // Dynamic bound (synlig#581).  The loop is `for (i = start;
                 // i < bound_sig; i += inc)` where `bound_sig` is a runtime
@@ -9480,6 +9551,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // 2**B - 1 lets `<=` cover its max-bound case too; the
                 // guard suppresses out-of-range iterations.
                 int64_t loop_end = max_iters - 1;
+                RTLIL::SigSpec fl_dyn_live = RTLIL::SigSpec(RTLIL::State::S1);
                 for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
                     loop_values[fl_var] = (int)i;
                     // Build the runtime guard `(i < bound_sig)` (or `<=`).
@@ -9496,9 +9568,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         module->addLe(NEW_ID, lhs_const, rhs_bound, guard);
                     else
                         module->addLt(NEW_ID, lhs_const, rhs_bound, guard);
+                    RTLIL::SigSpec guard_sig(guard);
+                    if (!fl_extra_conds.empty()) {
+                        fl_apply_extras(fl_dyn_live);
+                        guard_sig = fl_dyn_live.is_fully_const()
+                            ? (fl_dyn_live.as_const().as_bool() ? guard_sig : fl_dyn_live)
+                            : RTLIL::SigSpec(module->And(NEW_ID, guard_sig, fl_dyn_live));
+                    }
 
                     RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
-                    sw->signal = RTLIL::SigSpec(guard);
+                    sw->signal = guard_sig;
                     add_src_attribute(sw->attributes, for_loop);
                     RTLIL::CaseRule* cr = new RTLIL::CaseRule;
                     cr->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
@@ -9542,7 +9621,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // the loop variable.
                 std::vector<std::pair<int, RTLIL::SigSpec>> brk_flags;
                 bool brk_idx_emitted = false;
-                if (has_break) {
+                // A conjunction condition's runtime terms take the same
+                // live-guarded route as `break`: an iteration runs only while
+                // every earlier term held (fl_apply_extras).
+                if (has_break || !fl_extra_conds.empty()) {
                     // FORWARD iteration with a `live` guard: iteration i's
                     // body is imported under `switch (live_i)` — exactly the
                     // structure the vpiIfElse comb handler builds — so its
@@ -9568,6 +9650,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         current_break_flag = RTLIL::SigSpec(bw);
                         auto saved_sites = current_break_sites;
                         current_break_sites.clear();
+                        fl_apply_extras(live);
                         bool live_const1 =
                             live.is_fully_const() && live.as_bool();
                         RTLIL::SigSpec bf_eff = RTLIL::SigSpec(bw);

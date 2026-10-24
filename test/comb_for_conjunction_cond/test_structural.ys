@@ -1,0 +1,11 @@
+# Without the fix both loops are dropped and the outputs are constant 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -set a 8'h00 -prove clz 4'd8
+sat -verify -set a 8'h01 -prove clz 4'd7
+sat -verify -set a 8'h20 -prove clz 4'd2
+sat -verify -set a 8'hff -prove clz 4'd0
+sat -verify -set a 8'h00 -prove first_one_plus1 4'd0
+sat -verify -set a 8'h14 -prove first_one_plus1 4'd3
+sat -verify -set a 8'h80 -prove first_one_plus1 4'd8
