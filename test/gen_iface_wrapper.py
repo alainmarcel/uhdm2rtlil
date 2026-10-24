@@ -203,6 +203,39 @@ def module_value_params(txt, name):
     return out
 
 
+def module_imports(txt, name):
+    """The `import pkg::*` entries between `module <name>` and its parameter /
+    port list -- the only imports an ANSI port list can see.
+
+    A copied plain-port declaration may be sized by a name the DUT takes from a
+    package it imports THERE: adams-bridge's abr_ctrl declares `output logic
+    [MsgStrbW-1:0] msg_strobe_o` under `import abr_sha3_pkg::*;` in its header,
+    and the declaration copied verbatim into the wrapper names a constant the
+    wrapper never imported ("use of undeclared identifier 'MsgStrbW'" from
+    read_slang -- the row read `no reference` and nothing was measured).  Only
+    package imports (`::`), the same discriminator the interface scan uses."""
+    for body in txt.values():
+        m = re.search(r"^\s*module\s+" + re.escape(name) + r"\b", body, re.M)
+        if not m:
+            continue
+        out, i = [], m.end()
+        while i < len(body):
+            mm = re.match(r"\s*(?://[^\n]*\n|/\*.*?\*/\s*)*\s*", body[i:], re.S)
+            i += mm.end()
+            if not body.startswith("import", i):
+                break
+            j = body.find(";", i)
+            if j < 0:
+                break
+            for one in body[i + len("import"):j].split(","):
+                one = one.strip()
+                if one and "::" in one and one not in out:
+                    out.append(one)
+            i = j + 1
+        return out
+    return []
+
+
 def module_param_decls(txt, name):
     """[(name, default)] of EVERY entry of the module's parameter port list,
     `localparam` ones included, in declaration order.
@@ -1195,6 +1228,21 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
     for l in dut_param_locals(txt, rtl_top, used, known, dbind):
         if l not in locals_:
             locals_.append(l)
+    # ... or by a name the DUT takes from a package imported in its HEADER
+    # (module_imports).  Added only when a copied declaration names something
+    # neither the wrapper nor the DUT's parameter list declares, so a wrapper
+    # that already reads cleanly is left exactly as it was.  `$bits(...)` /
+    # `$clog2(...)` are not names, and a package-qualified `pkg::X` needs no
+    # import.
+    dut_pnames = {n for n, _ in module_param_decls(txt, rtl_top)}
+    bare = set()
+    for _, rng, _nm in plain:
+        bare |= set(re.findall(r"(?<![\w$:])[A-Za-z_]\w*(?!\s*::)",
+                               re.sub(r"\w+\s*::\s*\w+", "", rng or "")))
+    if any(i not in known and i not in dut_pnames for i in bare):
+        for one in module_imports(txt, rtl_top):
+            if one not in imports:
+                imports.append(one)
     # plain (non-interface) ports of the DUT
     for d, rng, nm in plain:
         decls.append(f"  {d} logic {rng}{nm}")
