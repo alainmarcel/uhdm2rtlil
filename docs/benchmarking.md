@@ -44,35 +44,38 @@ line and in the total:
 | **RgGen** | 25 | 25 | 25 | 25 | 0 | 0 | 25 | 25 | 0 | 0 | 0 |
 | **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 0 | 66 | 66 | 0 | 0 | 0 |
 | **TNoC** | 43 | 16 | 12 | 12 | 0 | 0 | 12 | 12 | 0 | 0 | 0 |
-| **VeeR EL2** | 91 | 77 | 86 | 86 | 0 | 0 | 87 | 87 | 0 | 0 | 0 |
-| **RSD** | 165 | 116 | 144 | 140 | **3** | 1 | 147 | 146 | 0 | 1 | 0 |
+| **VeeR EL2** | 91 | 76 | 86 | 86 | 0 | 0 | 87 | 87 | 0 | 0 | 0 |
+| **RSD** | 165 | 118 | 144 | 140 | **3** | 1 | 147 | 146 | 0 | 1 | 0 |
 | **BlackParrot** | 125 | 50 | 45 | 42 | **2** | 1 | 45 | 44 | 0 | 1 | 0 |
 | **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **1** | 1 | 29 | 28 | 0 | 1 | 0 |
-| **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 521 | 551 | 539 | **6** | 6 | 551 | 537 | **10** | 4 | 0 |
-| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **2** | 9 | 389 | 380 | 0 | 9 | 0 |
-| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **2** | 9 | 135 | 126 | 0 | 9 | 0 |
+| **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 525 | 551 | 539 | **6** | 6 | 551 | 544 | **3** | 4 | 0 |
+| **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 390 | 379 | **2** | 9 | 390 | 381 | 0 | 9 | 0 |
+| **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 227 | 135 | 124 | **2** | 9 | 135 | 126 | 0 | 9 | 0 |
 | **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **9** | 28 | 402 | 372 | **2** | 28 | 0 |
-| **Caliptra** | 22 | 20 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
+| **Caliptra** | 22 | 19 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan core** (香山) | 2002 | 1602 | 1944 | 1941 | **3** | 0 | 1944 | 1944 | 0 | 0 | 0 |
-| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 867 | 893 | 863 | **6** | 24 | 913 | 889 | 0 | 24 | 0 |
+| **XiangShan core** (香山) | 2002 | 1612 | 1943 | 1940 | **3** | 0 | 1944 | 1944 | 0 | 0 | 0 |
+| **External IP** (the other 10 repos; the XiangShan library is the row above) | 1023 | 864 | 893 | 863 | **6** | 24 | 913 | 889 | 0 | 24 | 0 |
 | **chipsalliance/sv-tests** | 527 | 474 | 11 | 11 | 0 | 0 | 12 | 11 | 0 | 1 | 0 |
-| **All sweeps** (18 workflows) | **5957** | **4855** | **4846** | **4721** | **34** | **91** | **4872** | **4770** | **12** | **90** | **0** |
+| **All sweeps** (18 workflows) | **5957** | **4865** | **4846** | **4721** | **34** | **91** | **4873** | **4778** | **5** | **90** | **0** |
 
-**Twelve `read_uhdm` divergences remain, every one new coverage finding new
-defects**: 4770 of the 4872 co-simulated rows pass outright, 90 are divergences
-a SAT miter proved to be simulation artefacts, and the twelve real ones are
-`cva6_hpdcache_subsystem` (2 diverging cycles) and `cva6_hpdcache_wrapper` (3)
-at the HPDcache flavour of CVA6 -- modules that are `dead` at the default
-configuration and were measured for the first time this week -- and ten rows
-of the OpenTitan IP library on its first nightly (`aes_control` 301,
-`prim_gf_mult` 300, `prim_sram_arbiter` 286, `rram_phy_rd_buf_dep` 73,
-`rram_scramble` 56, `i3c_targ_async_events` 38, `cheriot_rmw_filter` 36,
-`i3c_stby_cr_regs` 22, `i3c_ctrl_req_gen` 1, `rram_ctrl_mp` 1), `read_slang`
-clean on all twelve.  `prim_gf_mult` is fixed in #1270.  `read_slang`,
-measured on the same rows under the same stimulus, diverges on 34 of its own
-(81 more rows are divergences both netlists share, 6 the miter adjudicated, 4
-have no oracle).
+**Five `read_uhdm` divergences remained in the 2026-10-23 nightlies, all
+closed since**: 4778 of the 4873 co-simulated rows pass outright, 90 are
+divergences a SAT miter proved to be simulation artefacts, and the five real
+ones were `cva6_hpdcache_subsystem` (2 diverging cycles) and
+`cva6_hpdcache_wrapper` (3) at the HPDcache flavour of CVA6 -- three
+type-parameter folds, two of them Surelog's (#1293, #1294, the bump #1295
+carrying chipsalliance/UHDM#1167 and Surelog#4222 / #4223), both rows
+NO_DIVERGENCE on re-measure -- and three rows of the OpenTitan IP library
+(`aes_control` 301, `i3c_ctrl_req_gen` 1, `rram_ctrl_mp` 1): `aes_control`
+was the flat shim's port width plus a one-bit element read (#1296, #1297,
+now equivalent and PASS), the two one-bit rows are enum inputs driven to
+encodings their `case` never lists, adjudicated in the manifest (#1298).  The
+seven other first-nightly divergences of that library were fixed the day
+before (#1270, #1275, #1276, #1282, #1283, #1284).  `read_slang`, measured on
+the same rows under the same stimulus, diverges on 34 of its own (81 more
+rows are divergences both netlists share, 6 the miter adjudicated, 4 have no
+oracle).
 
 The `read_slang` divergences are listed with their reasons in
 [slang_unsupported.md](slang_unsupported.md).  Counted by
@@ -81,20 +84,19 @@ below.
 
 ### Provenance
 
-The numbers are the **2026-10-22 nightly runs**, one per sweep workflow, 18
-workflows.  Every nightly ran that morning on main at `f65702a6c`, which is
-the tree with the CVA6 flavour sweep (#1267) in it, so the three flavour
-families appear for the first time.  Two rows are not from that morning:
+The numbers are the **2026-10-23 nightly runs**, one per sweep workflow, 18
+workflows, on main at `63a2be657` or the commits just before it (the morning
+of the day the HPDcache and aes_control fixes merged, so those five rows still
+show their divergences above).  Two rows are not from that morning:
 **BlackParrot is its 2026-10-18 run** on `52374ad92` (its nightly has been
 cancelled on the job time limit every day since, and a cancelled run uploads a
-TRUNCATED report, 95 of its 126 rows), and the **External IP** and
-**OpenTitan IP library** rows are the 2026-10-22 ext dispatch on `f9d32e2d0`
-(run 39854252763, the library's first nightly).  Run ids: ibex
-39741501672, rp32 39744204814, fx68k 39784956558, scr1 39743766501, rggen
-39790604505, veer-eh1 39751125305, tnoc 39792360831, veer-el2 39763829282,
-rsd 39756486232, black-parrot 39126191261, opentitan 39777587456, pavona
-39751517757, cva6 39748696611, cva6-flavours 39756605918, caliptra
-39761257260, xiangshan-core 39757172255, sv-tests 39751418334.
+TRUNCATED report), and **sv-tests is the 2026-10-24 dispatch** on `7c48107d7`.
+Run ids: ibex 39918341671, rp32 39921164212, fx68k 39956673196, scr1
+39920781723, rggen 39961951399, veer-eh1 39927241179, tnoc 39963887093,
+veer-el2 39939130087, rsd 39932369061, black-parrot 39126191261, opentitan
+39950413357, ext (External IP + OpenTitan IP library) 39927547137, pavona
+39927582293, cva6 39925100536, cva6-flavours 39932545158, caliptra
+39936446928, xiangshan-core 39933201376, sv-tests 40058509055.
 
 ### Formal-only `differs` rows that are adjudicated non-defects
 
