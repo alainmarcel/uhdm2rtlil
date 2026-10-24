@@ -10615,11 +10615,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             // — `int'(2'b11)` is the value 3, not a fill, so it
                             // zero-extends (logic is unsigned), not all-ones
                             // (BitSelectPartSelectInFunction).
+                            // Surelog gives VpiSize == -1 to EVERY unsized
+                            // literal, the BASED ones included: `'b11` is
+                            // "BIN:11" at size -1 exactly like `'1` is
+                            // "BIN:1".  Only the unbased kind self-replicates;
+                            // a based unsized literal is an ordinary unsigned
+                            // value (LRM 5.7.1: zero-extended), so the test is
+                            // the literal's own text -- ONE digit -- and not
+                            // the size.  `{3{w}} & 3'('b11)` (VeeR EH2
+                            // eh2_lsu_lsc_ctl's address-offset masks, written
+                            // `(pt.BUS_ADDR_OFF)'('b11)`) was cast to 3'b111,
+                            // every store looked like a double-word, and the
+                            // end address / dual-access flags diverged from
+                            // the first load-store on (213 co-simulated
+                            // cycles).
                             bool is_fill_literal = false;
                             if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
                                 if (auto c = dynamic_cast<const UHDM::constant*>(
-                                        uhdm_op->Operands()->at(0)))
-                                    is_fill_literal = (c->VpiSize() == -1);
+                                        uhdm_op->Operands()->at(0))) {
+                                    std::string cv = std::string(c->VpiValue());
+                                    size_t colon = cv.find(':');
+                                    std::string digits = colon == std::string::npos ? cv : cv.substr(colon + 1);
+                                    is_fill_literal = (c->VpiSize() == -1 && digits.size() == 1);
+                                }
                             }
                             RTLIL::State fill = src_signed ? const_val.back()
                                                            : RTLIL::State::S0;
