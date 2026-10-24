@@ -1,0 +1,10 @@
+# The VALUE is the gate (read_slang's words): every element of both shares
+# reaches its 24-bit slice; without the fix the flat output is all zero.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten
+proc
+opt
+sat -verify -set we_i 8'b10100101 -prove we_o_flat 48'b100011100011011100011100100011100011011100011100
+sat -verify -set we_i 8'b00000000 -prove we_o_flat 48'b011011011011011011011011011011011011011011011011
+sat -verify -set we_i 8'b11111111 -prove we_o_flat 48'b100100100100100100100100100100100100100100100100

@@ -13674,6 +13674,49 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
+    // An UNPACKED array whose element is a packed array of a typedef'd leaf
+    // (`sp2v_e [NumRegsKey-1:0] key_init_we_o [NumSharesKey]`, OpenTitan
+    // aes_control): Surelog models it as an array_var / array_net whose own
+    // array_typespec is BARE -- no element typespec, no ranges -- and keeps
+    // the geometry on the first element (a packed_array_var, 24 bits) and
+    // the array's own unpacked range.  Measured from the bare typespec the
+    // element was ONE bit, so `key_init_we_o[g0]` read bit g0 of the 48-bit
+    // flat wire and the flat shim's output was a zero-extended bit (the
+    // aes_control miter and co-sim row).  Take the element width from the
+    // element and the count from the unpacked range; element 0 at the LSB.
+    if (packed_elem_w <= 1 && wire && bsel_obj) {
+        const UHDM::any* elem0 = nullptr;
+        const UHDM::VectorOfrange* urgs = nullptr;
+        if (auto av = dynamic_cast<const UHDM::array_var*>(bsel_obj)) {
+            urgs = av->Ranges();
+            if (av->Variables() && !av->Variables()->empty()) elem0 = (*av->Variables())[0];
+        } else if (auto an = dynamic_cast<const UHDM::array_net*>(bsel_obj)) {
+            urgs = an->Ranges();
+            if (an->Nets() && !an->Nets()->empty()) elem0 = (*an->Nets())[0];
+        }
+        if (elem0 && urgs && urgs->size() == 1) {
+            int ew = get_width(elem0, inst);
+            auto r0 = (*urgs)[0];
+            bool saved_fcf = force_const_fold;
+            force_const_fold = true;
+            RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+            RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+            force_const_fold = saved_fcf;
+            if (ew > 1 && ls.is_fully_const() && rs.is_fully_const()) {
+                int l = ls.as_int(), r = rs.as_int();
+                int cnt = std::abs(l - r) + 1, low = std::min(l, r);
+                if (cnt > 0 && ew * cnt == base.size()) {
+                    packed_elem_w = ew;
+                    packed_outer_l = low + cnt - 1;
+                    packed_outer_r = low;
+                    if (mode_debug)
+                        uhdm_trace("    bit select on an unpacked array of %d-bit packed elements (%d elements)\n",
+                            ew, cnt);
+                }
+            }
+        }
+    }
+
     // Flattened interface unpacked-ARRAY signal (`req_t req_dly [0:DLY]`,
     // materialized as one wide wire in import_interface_instances): `req_dly[i]`
     // selects the i-th element (elem_w bits, 0-based), not bit i.
