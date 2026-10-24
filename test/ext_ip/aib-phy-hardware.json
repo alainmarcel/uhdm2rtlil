@@ -1,0 +1,46 @@
+{
+ "title": "AIB PHY hardware v2.0 (chipsalliance/aib-phy-hardware)",
+ "url": "https://github.com/chipsalliance/aib-phy-hardware",
+ "_note": "chipsalliance/aib-phy-hardware, the AIB 2.0 rev1.1 PHY (Intel, Apache-2.0): the adapter (tx/rx channels, FIFOs, DBI, BERT, shift-register config), the Avalon configuration interface, the CDR / phase-adjust / offset-calibration FSMs, redundancy muxing and the aib_top / aib_channel digital tops, over the behavior/ clock-cell models.  Sources follow rtl/bca/AIB2.0_RTL_filelist.f: src/rtl/**, behavior/ and ana_models/.  ROWS are the src/rtl and behavior modules only (sweep_paths): ana_models/ holds the behavioural IO / DLL / PVT-monitor models (`real` arithmetic, `#` timing controls, non-blocking initials), which read_slang refuses and whose co-sim against a timing model is not a reader verdict -- they stay in the closures of the tops that instantiate them.  Two stale copies at the top of msv_models/ (aibio_rxdll_cbb.sv, aibio_txrx_cbb.sv; the filelist takes DLL/RX_DLL/ and TXRX/) are excluded as sources, otherwise read_slang stops at a duplicate definition.  v1.0/rev1 (the AIB 1.0 PHY) and the maib_rev1.1 FPGA-side wrapper are not in this family.",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/aib-phy-hardware",
+   "commit": "a0295cd2b90768c6cfd0795e5754e86dc2b6f747",
+   "dir": "aib-phy-hardware"
+  }
+ ],
+ "roots": [
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/src/rtl/**/*.v",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/src/rtl/**/*.sv",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/behavior/*.v",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/behavior/*.sv",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/ana_models/**/*.v",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/ana_models/**/*.sv"
+ ],
+ "sweep_paths": [
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/src/",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/behavior/"
+ ],
+ "incdirs": [
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca",
+  "aib-phy-hardware/v2.0/rev1.1/rtl/bca/src/rtl/common"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 3,
+ "timeout": 300,
+ "want": "proven",
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "exclude_srcs": [
+  "rtl/bca/ana_models/msv_models/aibio_rxdll_cbb\\.sv$",
+  "rtl/bca/ana_models/msv_models/aibio_txrx_cbb\\.sv$"
+ ]
+}

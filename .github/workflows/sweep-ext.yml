@@ -104,6 +104,12 @@ jobs:
           - family: aib-protocols
             shards: 2
             timeout: 330
+          # chipsalliance/aib-phy-hardware @ a0295cd2: the AIB 2.0 rev1.1 PHY's
+          # digital RTL (adapter, Avalon config, calibration FSMs, redundancy,
+          # aib_phy_top), 75 rows over the analog behavioural models as
+          # closure-only sources; aib_phy_top alone takes ~16 min.
+          - family: aib-phy-hardware
+            timeout: 330
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
