@@ -1,0 +1,9 @@
+# Without the fix read_uhdm aborts on this module; with it, proc must see
+# BOTH asynchronous controls on both flops (an arst-only lowering would drop
+# the set).  read_slang refuses the shape, so there is no miter here.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+select -assert-count 2 t:$dffsr t:$aldff t:$dffsre t:$aldffe %u %u %u
+select -assert-none t:$adff t:$adffe t:$dff t:$dffe %u %u %u

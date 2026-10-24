@@ -1553,28 +1553,65 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         // the first edge as the primary clock_sig.
                         if (op->Operands() && !op->Operands()->empty()) {
                             current_ff_edges.clear();
-                            for (auto operand : *op->Operands()) {
-                                if (operand->VpiType() != vpiOperation) continue;
-                                const operation* edge_op = any_cast<const operation*>(operand);
-                                if (edge_op->VpiOpType() != vpiPosedgeOp &&
-                                    edge_op->VpiOpType() != vpiNegedgeOp)
-                                    continue;
-                                if (!edge_op->Operands() || edge_op->Operands()->empty())
-                                    continue;
-                                auto sig = import_expression(
-                                    any_cast<const expr*>((*edge_op->Operands())[0]));
-                                bool is_pos = (edge_op->VpiOpType() == vpiPosedgeOp);
-                                current_ff_edges.push_back({sig, is_pos});
-                                if (clock_sig.empty()) {
-                                    clock_sig = sig;
-                                    clock_posedge = is_pos;
-                                    current_ff_clock_sig = sig;
-                                    uhdm_trace("      Edge trigger %s (%s) — first, using as clock\n",
-                                        log_signal(sig), is_pos ? "pos" : "neg");
-                                } else {
-                                    uhdm_trace("      Edge trigger %s (%s) — additional\n",
-                                        log_signal(sig), is_pos ? "pos" : "neg");
+                            // `a or b or c` is NOT one operation with three
+                            // operands: Surelog nests it as `(a or b) or c`,
+                            // an inner vpiEventOrOp under the outer one.  A
+                            // flat walk over the outer operands saw only the
+                            // LAST edge of `posedge clk or negedge rst_n or
+                            // negedge set_n` -- took the SET as the clock,
+                            // found no reset, and aborted the read with
+                            // "Reset signal is empty in async reset handling"
+                            // (aib-protocols levelsync_sr, the AIB 2.0 PHY's
+                            // aibio_dll_top and its six parents up to
+                            // aib_phy_top).  Walk nested event-or / list
+                            // operations too, in source order.
+                            std::function<void(const VectorOfany*)> walk_edges =
+                                [&](const VectorOfany* operands) {
+                                for (auto operand : *operands) {
+                                    if (operand->VpiType() != vpiOperation) continue;
+                                    const operation* edge_op = any_cast<const operation*>(operand);
+                                    if (edge_op->VpiOpType() == vpiEventOrOp ||
+                                        edge_op->VpiOpType() == vpiListOp) {
+                                        if (edge_op->Operands())
+                                            walk_edges(edge_op->Operands());
+                                        continue;
+                                    }
+                                    if (edge_op->VpiOpType() != vpiPosedgeOp &&
+                                        edge_op->VpiOpType() != vpiNegedgeOp)
+                                        continue;
+                                    if (!edge_op->Operands() || edge_op->Operands()->empty())
+                                        continue;
+                                    auto sig = import_expression(
+                                        any_cast<const expr*>((*edge_op->Operands())[0]));
+                                    bool is_pos = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                    current_ff_edges.push_back({sig, is_pos});
+                                    if (clock_sig.empty()) {
+                                        clock_sig = sig;
+                                        clock_posedge = is_pos;
+                                        current_ff_clock_sig = sig;
+                                        uhdm_trace("      Edge trigger %s (%s) — first, using as clock\n",
+                                            log_signal(sig), is_pos ? "pos" : "neg");
+                                    } else {
+                                        uhdm_trace("      Edge trigger %s (%s) — additional\n",
+                                            log_signal(sig), is_pos ? "pos" : "neg");
+                                    }
                                 }
+                            };
+                            walk_edges(op->Operands());
+                            // Three or more edges: a flop with more than one
+                            // asynchronous control (reset AND set).  Take the
+                            // same route the vpiListOp shape below already
+                            // takes -- one sync rule per edge, all updating
+                            // from the staged temps, which is exactly the
+                            // process read_verilog builds and proc lowers to
+                            // $dffsr / $aldff.
+                            if (current_ff_edges.size() > 2) {
+                                reset_sig = current_ff_edges[1].first;
+                                reset_posedge = current_ff_edges[1].second;
+                                all_edge_triggers = current_ff_edges;
+                                yosys_proc->attributes[ID("is_sr_ff")] = RTLIL::Const(1);
+                                uhdm_trace("      %zu edge triggers (set/reset flop): sync rules for all of them\n",
+                                    current_ff_edges.size());
                             }
                         }
                     } else if (op->VpiOpType() == vpiPosedgeOp) {
