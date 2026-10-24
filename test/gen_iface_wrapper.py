@@ -515,6 +515,70 @@ def iface_header_end(src, start, stop):
     return src.find(";", start)        # unchanged fallback
 
 
+def expand_local_macros(src):
+    """Expand the invocations of the function-like macros `src` ITSELF defines.
+
+    adams-bridge's abr_mem_if declares every member and every modport entry
+    through token-pasting macros defined at the top of the same file:
+
+        `define ABR_MEM_IF_SIGNALS(_PARAM_PREFIX, _signal_prefix)\\
+        logic ``_signal_prefix``_we_i;\\
+        logic [``_PARAM_PREFIX``_ADDR_W-1:0] ``_signal_prefix``_waddr_i;\\
+        ...
+        interface abr_mem_if;
+          `ABR_MEM_IF_SIGNALS(ABR_MEM_W1, w1_mem)
+          modport req ( `ABR_MEM_IF_REQ_PORTS(w1_mem), ... );
+
+    Unexpanded, the body has NO member declarations (the wrapper exposed 16 of
+    the DUT's ports and none of the memory channels) and the invocations were
+    taken for PULP-style type macros and re-emitted at file scope -- where the
+    modport macro expands to `output pk_mem_we_i, ...` and Surelog stops at
+    "mismatched input 'output' expecting <EOF>" (abr_top and abr_mem_top, the
+    two top rows of the family, `elab-fail`).  Expanded, they are ordinary
+    declarations and modports and every existing path applies.
+
+    Only macros defined in THIS file: a macro that comes from an `include
+    (PULP's AXI_TYPEDEF_*) keeps the file-scope re-emission path.  The `define
+    lines themselves are left alone.  Line continuations become newlines so the
+    line-based parsers see one declaration per line; `` ``x`` `` is the
+    token-paste operator on a formal, and whatever `` `` `` survive are the
+    paste operator on literals, which the preprocessor simply removes."""
+    defs = {}
+    for m in re.finditer(r"^[ \t]*`define[ \t]+(\w+)\(([^)\n]*)\)"
+                         r"((?:[^\n]*\\\n)*[^\n]*)", src, re.M):
+        formals = [a.strip() for a in m.group(2).split(",") if a.strip()]
+        defs[m.group(1)] = (formals, re.sub(r"\\\n", "\n", m.group(3)))
+    if not defs:
+        return src
+    def one(mm):
+        name = mm.group(1)
+        if name not in defs:
+            return mm.group(0)
+        formals, body = defs[name]
+        actuals = [a.strip() for a in mm.group(2).split(",")]
+        if len(actuals) != len(formals):
+            return mm.group(0)
+        out = body
+        for f, a in zip(formals, actuals):
+            out = re.sub(r"``" + re.escape(f) + r"``", a, out)
+            out = re.sub(r"``" + re.escape(f) + r"\b", a, out)
+            out = re.sub(r"\b" + re.escape(f) + r"``", a, out)
+            out = re.sub(r"(?<![\w$`])" + re.escape(f) + r"(?!\w)", a, out)
+        return out.replace("``", "")
+    lines, in_def, res = src.split("\n"), False, []
+    for line in lines:
+        if in_def:
+            in_def = line.endswith("\\")
+            res.append(line)
+            continue
+        if re.match(r"^[ \t]*`define\b", line):
+            in_def = line.endswith("\\")
+            res.append(line)
+            continue
+        res.append(re.sub(r"`(\w+)\s*\(([^()\n]*)\)", one, line))
+    return "\n".join(res)
+
+
 def iface_body(txt, iface):
     """(header, body) text of `interface <iface> ... endinterface`.
 
@@ -525,6 +589,8 @@ def iface_body(txt, iface):
         m = re.search(r"^\s*interface\s+" + re.escape(iface) + r"\b", src, re.M)
         if not m:
             continue
+        src = expand_local_macros(src)
+        m = re.search(r"^\s*interface\s+" + re.escape(iface) + r"\b", src, re.M)
         end = re.search(r"^\s*endinterface\b", src[m.end():], re.M)
         stop = m.end() + (end.start() if end else len(src) - m.end())
         semi = iface_header_end(src, m.end(), stop)
@@ -1095,7 +1161,16 @@ def emit_from_decl(txt, rtl_top, ifaces, out, iface_params, dut_params,
         # copied into the wrapper then name constants only that package
         # declares ("use of undeclared identifier
         # 'TNOC_DEFAULT_PACKET_CONFIG'" from read_slang).
-        for im in re.findall(r"^\s*import\s+([^;]+);", (hdr or "") + "\n" + body, re.M):
+        # ... and a file may import its packages at FILE scope, before the
+        # interface keyword (abr_mem_if.sv: `import abr_params_pkg::*;` at the
+        # top, the `ABR_MEM_W1_ADDR_W` member widths come from it).  Verilator
+        # compiles each file as its own unit, so the wrapper has to restate
+        # them; the scan stops at the first design unit so another interface's
+        # own imports in the same file are not taken along.
+        fs = re.split(r"^\s*(?:interface|module|package|program|checker)\b",
+                      src_of_iface, 1, re.M)[0]
+        for im in re.findall(r"^\s*import\s+([^;]+);",
+                             (hdr or "") + "\n" + body + "\n" + fs, re.M):
             for one in im.split(","):
                 one = one.strip()
                 if one and "::" in one and one not in imports:
