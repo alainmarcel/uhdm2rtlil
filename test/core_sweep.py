@@ -1709,6 +1709,11 @@ def _generate_ext(family, man, root):
         return
     cwd = root / g["cwd"]
     env = dict(os.environ, **g.get("env", {}))
+    # Where the harness keeps a family's own helper scripts (test/ext_ip/):
+    # VeeRwolf's closure is produced by FuseSoC and the recipe is too long for
+    # an inline `bash -c`, so its manifest runs
+    # `bash "$EXT_IP_HARNESS/veerwolf_setup.sh"`.
+    env.setdefault("EXT_IP_HARNESS", str(Path(__file__).resolve().parent / "ext_ip"))
     t0 = time.time()
     for c in g["cmds"]:
         print(f"# generate {family}: {' '.join(c)}  (cwd {cwd})", flush=True)
