@@ -1,0 +1,68 @@
+{
+ "title": "VeeR EH2 (chipsalliance/Cores-VeeR-EH2)",
+ "url": "https://github.com/chipsalliance/Cores-VeeR-EH2",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/Cores-VeeR-EH2",
+   "commit": "32bdfe24c0194a5b625a70624144e4c6dec5f682",
+   "dir": "veer-eh2"
+  }
+ ],
+ "generate": {
+  "cwd": "veer-eh2",
+  "marker": "veer-eh2/config/common_defines.vh",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "RV_ROOT=$PWD BUILD_PATH=$PWD/config perl configs/veer.config -target=default"
+   ]
+  ],
+  "timeout": 600
+ },
+ "roots": [
+  "veer-eh2/design/*.sv",
+  "veer-eh2/design/dbg/*.sv",
+  "veer-eh2/design/dec/*.sv",
+  "veer-eh2/design/dmi/*.sv",
+  "veer-eh2/design/dmi/*.v",
+  "veer-eh2/design/exu/*.sv",
+  "veer-eh2/design/ifu/*.sv",
+  "veer-eh2/design/lib/*.sv",
+  "veer-eh2/design/lsu/*.sv"
+ ],
+ "incdirs": [
+  "veer-eh2/config",
+  "veer-eh2/design/include",
+  "veer-eh2/design/lib",
+  "veer-eh2/design/dmi"
+ ],
+ "defines": [
+  "SYNTHESIS",
+  "VERILATOR"
+ ],
+ "modules": "auto",
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "always_srcs": [
+  "veer-eh2/config/common_defines.vh",
+  "veer-eh2/config/eh2_pdef.vh",
+  "veer-eh2/design/include/eh2_def.sv",
+  "veer-eh2/design/lib/mem_lib.sv"
+ ],
+ "slang_flags": [
+  "--single-unit"
+ ],
+ "exclude": [
+  "^ram_\\d+x\\d+$",
+  "^rvclkhdr$",
+  "^eh2_ifu_iccm_mem$",
+  "^eh2_lsu_dccm_mem$",
+  "^eh2_ifu_ic_mem$",
+  "^eh2_ifu_tb_memread$",
+  "_tb$",
+  "^tb_"
+ ],
+ "_note": "chipsalliance/Cores-VeeR-EH2: the dual-threaded successor of VeeR EH1 (swept as veer-eh1) and sibling of EL2 (veer-el2).  Same tree shape as EH1: design/{dbg,dec,dmi,exu,ifu,lib,lsu}, the configs/veer.config perl generator emits config/common_defines.vh (BUILD_PATH), design/include/eh2_def.sv carries the packages.  Excluded as rows: the technology memory wrappers (ram_*, the ICCM/DCCM/IC memory banks) and rvclkhdr, as for EH1.  Three closure facts: (1) the `eh2_param_t` struct typedef lives in the GENERATED config/eh2_pdef.vh, which nothing `include`s -- VeeR's own Makefile lists it as a $unit-scope source between eh2_def.sv and the design, so it is an always_src here (without it Surelog records `pt` with an unsupported typespec and read_slang stops at 'undeclared identifier eh2_param_t').  (2) VERILATOR is defined on purpose: the non-Verilator arm of eh2_lsu_dccm_mem declares `` `define DCCM_BANK (depth, width) `` with a SPACE before the argument list, which the LRM (22.5.1) makes an argument-less macro whose body starts with `(depth, width)` -- Surelog reports it as a syntax error and the wrapper never elaborates; the VERILATOR arm instantiates the technology cell (`RV_DCCM_DATA_CELL) / the parameterised eh2_ram directly.  The only other VERILATOR sites are the ICCM banks (same shape) and beh_lib's clock-gate latch.  (3) design/lib/mem_lib.sv declares every ram_<d>x<w> / ram_be_<d>x<w> model through token-pasting macros (`` module ram_be_``depth``x``width ``), names the closure's module index cannot see, so it is an always_src too (EH2_IC_TAG / EH2_IC_DATA / eh2_ifu_btb_mem instantiate them)."
+}
