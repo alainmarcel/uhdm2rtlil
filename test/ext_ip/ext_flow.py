@@ -32,12 +32,15 @@ Manifest keys:
   modules:  "auto" | [{"name", "seq", "timeout", "want", "top"?}]
   exclude:  [regex, ...]                 module names to skip in auto mode
   seq / timeout / want:                  defaults for auto mode
-  overrides: {name: {"want", "seq", "timeout", "note"}}
+  overrides: {name: {"want", "seq", "timeout", "note", "cosim"}}
                                          per-module entries merged into the auto
                                          list: a row that is NOT a reader defect
                                          (unique-case violation stimulus, a
                                          latch-vs-X class) keeps its verdict
-                                         and says why in the note column
+                                         and says why in the note column;
+                                         "cosim": "artefact" renders its
+                                         `N div (slang clean)` as
+                                         `⚠ artefact (N div, adjudicated)`
 """
 import argparse, concurrent.futures as cf, glob, json, os, re, shlex, subprocess, sys, time
 from pathlib import Path
@@ -1257,6 +1260,16 @@ def main():
             ico = "✅"
         if x.get("note") and not r.get("note"):
             r["note"] = x["note"]
+        # A co-sim divergence the campaign ADJUDICATED as stimulus the RTL
+        # never defines (an enum input driven to an encoding its `unique case`
+        # does not list, an FSM state input outside the state list): the
+        # module keeps its verdict, rendered the way core_sweep renders a
+        # local sim_equiv_analyzed entry, so sweep_table counts it as
+        # adjudicated instead of as a reader defect.  Opt-in per module.
+        if x.get("cosim") == "artefact":
+            ma = re.match(r"❌ (\d+) div \(slang clean\)$", r.get("cosim") or "")
+            if ma:
+                r["cosim"] = f"⚠ artefact ({ma.group(1)} div, adjudicated)"
         print(f"  {ico} {r['module']:<34} {r['formal']:<28} {r['check']:<16} {r['cosim']:<32} "
               f"{r.get('note','')[:60]}  [{time.time() - t0:.0f}s]", flush=True)
         return r
