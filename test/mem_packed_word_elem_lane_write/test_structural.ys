@@ -1,0 +1,6 @@
+# The four lane writes must still collapse into ONE memory (one write port
+# with byte enables), not per-bit registers; the miter is the value gate.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast; memory_dff; memory_collect
+select -assert-count 1 t:$mem_v2

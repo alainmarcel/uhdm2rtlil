@@ -1983,10 +1983,28 @@ bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
     }
     if (!addr_expr) return false;
     if (!sel) {
-        // No range selector: `mem[addr][bit]` — a constant-evaluable single bit.
+        // No range selector: `mem[addr][j]`.  On a memory whose WORD is a
+        // packed array (`logic [3:0][7:0] ram [DEPTH-1:0]`, recorded as
+        // packed_outer_dim) `j` picks a whole ELEMENT -- the byte lane of
+        // adams-bridge's abr_1r1w_be_ram, written `ram[waddr_i][i] <=
+        // wdata_i[i]` under the strobe loop.  Taken as a single BIT, lane i
+        // wrote one bit at bit i and the word read back as 0...0100 (98
+        // diverging co-simulated cycles, read_slang clean).  A plain word
+        // (no packed_outer_dim) keeps the single-bit meaning.
         if (!second) return false;
         RTLIL::SigSpec b = import_expression(second);
         if (!b.is_fully_const()) return false;
+        int outer = 0;
+        if (memp) {
+            auto it = memp->attributes.find(ID(packed_outer_dim));
+            if (it != memp->attributes.end()) outer = it->second.as_int();
+        }
+        if (outer > 1 && mem_word_width > 0 && mem_word_width % outer == 0) {
+            int stride = mem_word_width / outer;
+            lo = b.as_int() * stride;
+            hi = lo + stride - 1;
+            return lo >= 0 && hi < mem_word_width;
+        }
         lo = hi = b.as_int();
         return true;
     }
