@@ -59,6 +59,7 @@ groups=[
  ('**VeeR EH1**',['veer-eh1'],'[veer-eh1]('+W+'sweep-veer-eh1.yml)'),
  ('**TNoC**',['tnoc'],'[tnoc]('+W+'sweep-tnoc.yml)'),
  ('**VeeR EL2**',['veer-el2'],'[veer-el2]('+W+'sweep-veer-el2.yml)'),
+ ('**VeeR EH2**',['veer-eh2'],'[veer-eh2]('+W+'sweep-veer-eh2.yml)'),
  ('**RSD**',['rsd'],'[rsd]('+W+'sweep-rsd.yml)'),
  ('**BlackParrot**',['black-parrot'],'[black-parrot]('+W+'sweep-black-parrot.yml)'),
  ('**OpenTitan** (upstream)',['opentitan'],'[opentitan]('+W+'sweep-opentitan.yml)'),
@@ -69,7 +70,7 @@ groups=[
  ('**Caliptra**',['caliptra'],'[caliptra]('+W+'sweep-caliptra.yml)'),
  ('**XiangShan** (香山)',['xiangshan'],'[ext]('+W+'sweep-ext.yml)'),
  ('**XiangShan core** (香山)',['xiangshan-core-full'],'[xiangshan]('+W+'sweep-xiangshan.yml)'),
- ('**External IP** (the other 10 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie'],'[ext]('+W+'sweep-ext.yml)'),
+ ('**External IP** (the other 14 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','adams-bridge','aib-protocols','aib-phy-hardware','veerwolf'],'[ext]('+W+'sweep-ext.yml)'),
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()

@@ -1,7 +1,7 @@
 # To do: cores and IP to bring under the sweeps
 
-What is swept today is in [supported_ip.md](supported_ip.md) (18 nightly
-workflows, 5957 rows).  This page is the queue of what is **not** yet: named in
+What is swept today is in [supported_ip.md](supported_ip.md) (19 nightly
+workflows, 6275 rows).  This page is the queue of what is **not** yet: named in
 earlier planning, or popular open-source RTL we have no row for.  Each entry
 says what it is, what blocks it, and how it would be swept.  The rule from the
 external-IP campaign still holds: land the manifest and read the first nightly
