@@ -697,6 +697,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array,
 
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
+    import_attributes(memory->attributes, uhdm_array);
 
     // Add memory to module
     module->memories[mem_id] = memory;
@@ -908,6 +909,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array,
 
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
+    import_attributes(memory->attributes, uhdm_array);
 
     // Add memory to module
     module->memories[mem_id] = memory;

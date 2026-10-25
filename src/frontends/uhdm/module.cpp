@@ -1501,6 +1501,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         
         // Add source attribute
         add_src_attribute(memory->attributes, uhdm_net);
+        import_attributes(memory->attributes, uhdm_net);
         
         // Add memory to module
         module->memories[mem_id] = memory;
@@ -5291,6 +5292,45 @@ void UhdmImporter::add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attrib
     std::string src = get_src_attribute(uhdm_obj);
     if (!src.empty()) {
         attributes[ID::src] = RTLIL::Const(src);
+    }
+}
+
+// Copy the attributes written on a declaration --
+//     (* no_rw_check, ram_style = "block" *) reg [31:0] banks_0 [0:1023];
+// -- onto an RTLIL object's attributes, as read_verilog and read_slang do.
+// Surelog hangs them on the object that carries the declaration: for an
+// unpacked array that is the array_net / array_var itself OR the element
+// logic_net / logic_var it wraps (the VexRiscv I-cache banks arrive on the
+// element net), so both are consulted.
+//
+// A memory that loses them is treated differently by yosys's own passes:
+// memory_dff marks a read-during-write collision on a `no_rw_check` memory as
+// don't-care (RD_COLLISION_X_MASK), so against the read_slang netlist the
+// miter had a FREE value on one side and the old word on ours, and the LiteX /
+// VexRiscv `InstructionCache` row read `differs` on a design whose
+// co-simulation agreed on every cycle.
+void UhdmImporter::import_attributes(dict<RTLIL::IdString, RTLIL::Const>& attributes, const any* uhdm_obj) {
+    if (!uhdm_obj) return;
+    auto copy = [&](const UHDM::VectorOfattribute* attrs) {
+        if (!attrs) return;
+        for (auto attr : *attrs) {
+            std::string name = std::string(attr->VpiName());
+            if (name.empty()) continue;
+            attributes[RTLIL::escape_id(name)] = import_attribute_value(attr);
+        }
+    };
+    if (auto an = any_cast<const array_net*>(uhdm_obj)) {
+        copy(an->Attributes());
+        if (an->Nets())
+            for (auto n : *an->Nets()) copy(n->Attributes());
+    } else if (auto av = any_cast<const array_var*>(uhdm_obj)) {
+        copy(av->Attributes());
+        if (av->Variables())
+            for (auto v : *av->Variables()) copy(v->Attributes());
+    } else if (auto n = any_cast<const net*>(uhdm_obj)) {
+        copy(n->Attributes());
+    } else if (auto v = any_cast<const variables*>(uhdm_obj)) {
+        copy(v->Attributes());
     }
 }
 
