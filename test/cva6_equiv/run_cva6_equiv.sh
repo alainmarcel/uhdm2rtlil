@@ -156,13 +156,13 @@ run_one() {
   cat > miter.ys <<EOF
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $top
-flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; opt_clean; setundef -init -zero; memory; opt -fast; async2sync; setundef -undriven -zero
 delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gold
 design -stash gold
 read_slang --ignore-assertions -f $FLIST $wrap --top $top
 hierarchy -check -top $top
-flatten; proc; memory; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; opt_clean; setundef -init -zero; memory; opt -fast; async2sync; setundef -undriven -zero
 delete t:\$check t:\$assert t:\$assume t:\$print
 rename $top gate
 design -stash gate
