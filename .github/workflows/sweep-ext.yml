@@ -117,6 +117,10 @@ jobs:
           # top's closure carries the whole EL2 core.
           - family: veerwolf
             timeout: 330
+          # olofk/serv @ f200eb2e: the bit-serial RISC-V core, the servant SoC and
+          # its peripherals; the board tops that instantiate vendor PLL / IO
+          # primitives are excluded in the manifest.  29 rows, ~2 min of row time.
+          - family: serv
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
