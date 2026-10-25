@@ -279,7 +279,7 @@ wt_dcache_ctrl                         4   180   proven
 # out reports SOFT (inconclusive, tolerated), whereas an unexpected `cex` is a
 # hard failure by policy.  OPEN: the counterexample itself is unfixed.
 
-wt_dcache_mem                           4   180   timeout  # SAT capacity under the 12 GB cap since #975 (full-width byte enables); without the cap the miter still finds the known cex: the reference has no SRAM contents
+wt_dcache_mem                           4   180   cex      # the reference has no SRAM contents (read_slang drops the tc_sram array) -- a known counterexample that the SAT budget used to hide under the 12 GB cap (#975, full-width byte enables); since the miter sets the flop init before its first `opt` the solver reaches it within budget, so `cex` is the stable expectation (a slower machine still times out and reports SOFT)
 wt_dcache_missunit                     4  3600   proven   # PROVEN 2026-08-24 (3600s SAT; budget-sensitive under load): dyn bit-write in function body was dropped (way_bin2oh)
 # Was `cex`.  The counterexample was Surelog duplicating the always blocks of
 # sibling unnamed generate constructs (chipsalliance/Surelog#4183, bumped in

@@ -1006,11 +1006,11 @@ def run_module(fam, cl, m, seq, tmo, want, incs, defines, cycles, do_cosim, surv
     # --- miter
     (w / "miter.ys").write_text(f"""read_rtlil uhdm_hier.il
 hierarchy -top {top}
-flatten; proc; tribuf -formal; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -undriven -init -zero; opt; async2sync; delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
+flatten; proc; opt_clean; setundef -init -zero; tribuf -formal; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -undriven -init -zero; opt; async2sync; delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
 rename {top} gold; design -stash gold
 read_rtlil slang_hier.il
 hierarchy -top {top}
-flatten; proc; tribuf -formal; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -undriven -init -zero; opt; async2sync; delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
+flatten; proc; opt_clean; setundef -init -zero; tribuf -formal; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -undriven -init -zero; opt; async2sync; delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
 rename {top} gate; design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate
