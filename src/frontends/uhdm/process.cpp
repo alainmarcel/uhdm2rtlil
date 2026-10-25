@@ -1832,6 +1832,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // does the same — block-locals in always_ff retain their value).
             if (stmt) {
                 block_local_promoted.clear();
+        block_local_var_wire_.clear();
                 block_local_epoch++;   // one promotion scope per process
                 create_block_local_wires(stmt);
             }
@@ -3901,6 +3902,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // tripping the RTLIL chunk-width assert (CVA6 csr_regfile).  The
         // always_ff path already does this.
         block_local_promoted.clear();
+        block_local_var_wire_.clear();
         block_local_epoch++;   // one promotion scope per process
         create_block_local_wires(actual_stmt);
         dyn_elem_write_arrays.clear();
@@ -4992,10 +4994,24 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
                 // same name): leave it alone, as before.
                 if (ep == block_local_wire_epoch.end()) continue;
                 // Already promoted by THIS process (the recursion visits
-                // nested blocks): nothing to do.
-                if (ep->second == block_local_epoch) continue;
-                // Another process's local of the same name — give this one
-                // its own wire, or every such block drives the shared one.
+                // nested blocks): nothing to do -- unless it is a DIFFERENT
+                // variable of the same name whose width differs.  CVA6's
+                // csr_regfile declares `automatic logic [3:0] index` in its
+                // PMPCFG read arm and `automatic logic [11:0] index` in the
+                // PMPCFG / PMPADDR write arms, all in one always_comb; bound
+                // to the first one's 4-bit wire, the write index was taken
+                // modulo 16 and a write to pmpaddr35 landed on pmpaddr3.
+                if (ep->second == block_local_epoch) {
+                    int pw = module->wire(wname)->width;
+                    int vw = get_width(v, current_instance);
+                    if (vw <= 0) vw = 1;
+                    auto vo = block_local_var_objs.find(base_key);
+                    bool same_var = vo != block_local_var_objs.end() && vo->second == v;
+                    if (same_var || pw == vw) continue;
+                }
+                // Another process's local of the same name (or this process's
+                // same-named local of another width) — give this one its own
+                // wire, or every such block drives the shared one.
                 int n = 1;
                 do {
                     wire_name = base_key + "$" + std::to_string(++n);
@@ -5016,9 +5032,15 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
                 }
             }
             add_src_attribute(wire->attributes, v);
-            name_map[vname] = wire;
+            block_local_var_wire_[v] = wire;
+            // A same-process sibling (wire_name != base_key) keeps the bare
+            // name pointing at the FIRST local; its own block finds its wire
+            // through block_local_var_wire_.
+            if (wire_name == base_key || !name_map.count(vname)) {
+                name_map[vname] = wire;
+                block_local_var_objs[vname] = v;
+            }
             block_local_promoted.insert(vname);
-            block_local_var_objs[vname] = v;
             for (const std::string& alias : {base_key, wire_name}) {
                 if (alias == vname) continue;
                 name_map[alias] = wire;
@@ -9893,7 +9915,9 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
                 // next_c` in its 32-bit ones, so the wide ones were truncated
                 // to one bit and 20 registers never latched their value.
                 RTLIL::Wire* pre = nullptr;
-                if (name_map.count(var_name) && name_map[var_name]->width == width)
+                if (auto bw = block_local_var_wire_.find(var); bw != block_local_var_wire_.end())
+                    pre = bw->second;   // THIS variable's own promoted wire
+                if (!pre && name_map.count(var_name) && name_map[var_name]->width == width)
                     pre = name_map[var_name];
                 std::string sc = get_current_gen_scope();
                 if (!pre && !sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));
@@ -20426,7 +20450,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         // may belong to another process's same-named local of a
                         // DIFFERENT width.
                         RTLIL::Wire* pre = nullptr;
-                        if (name_map.count(var_name) && name_map[var_name]->width == width)
+                        if (auto bw = block_local_var_wire_.find(var); bw != block_local_var_wire_.end())
+                            pre = bw->second;   // THIS variable's own promoted wire
+                        if (!pre && name_map.count(var_name) && name_map[var_name]->width == width)
                             pre = name_map[var_name];
                         std::string sc = get_current_gen_scope();
                         if (!pre && !sc.empty()) pre = module->wire(RTLIL::escape_id(sc + "." + var_name));

@@ -1,0 +1,11 @@
+# Wrong VALUE: the 12-bit write index was truncated to the 4-bit sibling's
+# width, so prove which element the write lands on.  addr 0x3D3 - 0x3B0 = 35:
+# element 35 (bits 35*8 = 280..287) gets wdata[7:0] = 0xA5 and element 3
+# (bits 24..31, where the truncated index put it) stays 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set addr 12'h3d3 -set sel 1 -set wdata 32'h000000A5 -set arr_q 512'h0 -prove arr_d[287:280] 8'hA5 -prove arr_d[31:24] 8'h00
+sat -verify -set addr 12'h3b3 -set sel 1 -set wdata 32'h000000A5 -set arr_q 512'h0 -prove arr_d[31:24] 8'hA5 -prove arr_d[287:280] 8'h00
+sat -verify -set addr 12'h3a7 -set sel 0 -prove sm 4'h7
