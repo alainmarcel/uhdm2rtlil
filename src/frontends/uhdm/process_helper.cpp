@@ -2480,6 +2480,89 @@ const assignment* UhdmImporter::find_assignment_for_lhs(const any* stmt, const e
 
 
 // Check if an array is accessed only with constant indices
+// Does the body of an async-reset process (two or more edges in its event
+// control) write `array_name` inside its FIRST `if` arm -- the reset arm?
+// Only that arm matters: a memory written in the clocked arm alone is a
+// legitimate $mem whose reset leaves the storage untouched.
+static bool stmt_writes_array_(const UHDM::any* st, const std::string& name) {
+    if (!st) return false;
+    switch (st->VpiType()) {
+        case vpiAssignment: {
+            auto as = any_cast<const UHDM::assignment*>(st);
+            const UHDM::any* lhs = as ? as->Lhs() : nullptr;
+            if (!lhs) return false;
+            int t = lhs->VpiType();
+            if (t == vpiBitSelect || t == vpiVarSelect || t == vpiRefObj ||
+                t == vpiPartSelect || t == vpiIndexedPartSelect)
+                return std::string(lhs->VpiName()) == name;
+            return false;
+        }
+        case vpiBegin: {
+            auto b = any_cast<const UHDM::begin*>(st);
+            if (b && b->Stmts()) for (auto x : *b->Stmts()) if (stmt_writes_array_(x, name)) return true;
+            return false;
+        }
+        case vpiNamedBegin: {
+            auto b = any_cast<const UHDM::named_begin*>(st);
+            if (b && b->Stmts()) for (auto x : *b->Stmts()) if (stmt_writes_array_(x, name)) return true;
+            return false;
+        }
+        case vpiIfElse: {
+            auto i = any_cast<const UHDM::if_else*>(st);
+            return i && (stmt_writes_array_(i->VpiStmt(), name) || stmt_writes_array_(i->VpiElseStmt(), name));
+        }
+        case vpiIf: {
+            auto i = any_cast<const UHDM::if_stmt*>(st);
+            return i && stmt_writes_array_(i->VpiStmt(), name);
+        }
+        case vpiCase: {
+            auto c = any_cast<const UHDM::case_stmt*>(st);
+            if (c && c->Case_items()) for (auto it : *c->Case_items()) if (stmt_writes_array_(it, name)) return true;
+            return false;
+        }
+        case vpiCaseItem: {
+            auto ci = any_cast<const UHDM::case_item*>(st);
+            return ci && stmt_writes_array_(ci->Stmt(), name);
+        }
+        case vpiFor: {
+            auto f = any_cast<const UHDM::for_stmt*>(st);
+            return f && stmt_writes_array_(f->VpiStmt(), name);
+        }
+        default: return false;
+    }
+}
+
+static int count_edge_events_(const UHDM::any* e) {
+    if (!e || e->VpiType() != vpiOperation) return 0;
+    auto op = any_cast<const UHDM::operation*>(e);
+    int t = op->VpiOpType();
+    if (t == vpiPosedgeOp || t == vpiNegedgeOp) return 1;
+    int n = 0;
+    if (op->Operands()) for (auto x : *op->Operands()) n += count_edge_events_(x);
+    return n;
+}
+
+bool UhdmImporter::async_reset_arm_writes_array(const UHDM::any* proc_stmt, const std::string& array_name) {
+    auto ec = dynamic_cast<const UHDM::event_control*>(proc_stmt);
+    if (!ec || count_edge_events_(ec->VpiCondition()) < 2) return false;
+    const UHDM::any* body = ec->Stmt();
+    // unwrap a begin block to its first statement
+    for (int guard = 0; body && guard < 4; guard++) {
+        if (body->VpiType() == vpiBegin) {
+            auto b = any_cast<const UHDM::begin*>(body);
+            body = (b && b->Stmts() && !b->Stmts()->empty()) ? b->Stmts()->front() : nullptr;
+        } else if (body->VpiType() == vpiNamedBegin) {
+            auto b = any_cast<const UHDM::named_begin*>(body);
+            body = (b && b->Stmts() && !b->Stmts()->empty()) ? b->Stmts()->front() : nullptr;
+        } else break;
+    }
+    if (!body) return false;
+    const UHDM::any* arm = nullptr;
+    if (body->VpiType() == vpiIfElse) arm = any_cast<const UHDM::if_else*>(body)->VpiStmt();
+    else if (body->VpiType() == vpiIf) arm = any_cast<const UHDM::if_stmt*>(body)->VpiStmt();
+    return arm && stmt_writes_array_(arm, array_name);
+}
+
 bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_name) {
     if (!module) return false;
     
@@ -2826,6 +2909,24 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 if (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysComb ||
                     proc->VpiType() == vpiAlwaysFF || proc->VpiType() == vpiInitial) {
                     auto always_proc = any_cast<const process_stmt*>(proc);
+                    // An array CLEARED in the RESET ARM of an async-reset
+                    // process (`always @(posedge clk or posedge rst) if (rst)
+                    // begin fifo[0] <= 0; ... end else fifo[top] <= d;`,
+                    // uart16550's uart_rfifo info array) cannot be a $mem:
+                    // a memory has no asynchronous write, so the clears were
+                    // dropped and the FIFO kept its contents through a reset
+                    // (the miter's counterexample: a reset two cycles after
+                    // the first push).  read_verilog and read_slang both expand
+                    // such an array into per-element async-reset registers;
+                    // report it constant-indexed so the callers do the same.
+                    if (always_proc && always_proc->Stmt() &&
+                        (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysFF) &&
+                        async_reset_arm_writes_array(always_proc->Stmt(), array_name)) {
+                        uhdm_trace("UHDM: array '%s' is written in an async-reset arm -- registers, not a $mem\n",
+                                   array_name.c_str());
+                        scanning_initial = false;
+                        return true;
+                    }
                     scanning_initial = (proc->VpiType() == vpiInitial);
                     if (always_proc && always_proc->Stmt() &&
                         !check_array_access(always_proc->Stmt(), 1)) {
