@@ -1,0 +1,8 @@
+# With the defect every element of enc was constant 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -set c 80'h00000000000000000401 -prove enc[23:0] 24'h002000
+sat -verify -set c 80'h00000000000000000401 -prove enc[47:24] 24'h002000
+sat -verify -set c 80'h000000000000000003ff -prove enc[23:0] 24'h7fe000
+sat -verify -set a 10'h001 -prove direct 24'h002000

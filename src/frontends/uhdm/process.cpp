@@ -17253,8 +17253,16 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     if (ew) {
                         RTLIL::SigSpec rhs_e;
                         if (auto rhs_any = uhdm_assign->Rhs())
-                            if (auto re = dynamic_cast<const expr*>(rhs_any))
+                            if (auto re = dynamic_cast<const expr*>(rhs_any)) {
+                                // The element is the assignment target: import
+                                // the right-hand side under ITS width, as every
+                                // other assignment path does (see the cast-of-a-
+                                // shift note at the packed-element write below).
+                                int saved_ctx_w = expression_context_width;
+                                expression_context_width = ew->width;
                                 rhs_e = import_expression(re, comb_read_map());
+                                expression_context_width = saved_ctx_w;
+                            }
                         if (rhs_e.size() > 0) {
                             rhs_e = fold_compound(RTLIL::SigSpec(ew), rhs_e);
                             emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
@@ -17324,8 +17332,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         if (RTLIL::Wire* ew = find_wire_in_scope(en)) {
                             RTLIL::SigSpec rhs_e;
                             if (auto rhs_any = uhdm_assign->Rhs())
-                                if (auto re = dynamic_cast<const expr*>(rhs_any))
+                                if (auto re = dynamic_cast<const expr*>(rhs_any)) {
+                                    int saved_ctx_w = expression_context_width;
+                                    expression_context_width = ew->width;
                                     rhs_e = import_expression(re, comb_read_map());
+                                    expression_context_width = saved_ctx_w;
+                                }
                             rhs_e = fold_compound(RTLIL::SigSpec(ew), rhs_e);
                             emit_comb_assign(RTLIL::SigSpec(ew), rhs_e, proc);
                             return;
@@ -17377,8 +17389,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         RTLIL::SigSpec lhs_bit(w, off, elem_w);
                         RTLIL::SigSpec rhs_bit;
                         if (auto rhs_any = uhdm_assign->Rhs())
-                            if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                            if (auto rhs_e = dynamic_cast<const expr*>(rhs_any)) {
+                                // Import the right-hand side under the
+                                // ELEMENT's width.  With no context a
+                                // self-determined operand kept its own
+                                // width: `enc[i] = 24'(c[i] << 13)`
+                                // (adams-bridge pkdecode) shifted the 10-bit
+                                // coefficient out of itself before the cast
+                                // widened it, and every encoded coefficient
+                                // was 0 (84 diverging co-simulated cycles).
+                                // The same cast assigned to a plain 24-bit
+                                // wire was right, because the continuous
+                                // assign sets the context.
+                                int saved_ctx_w = expression_context_width;
+                                expression_context_width = elem_w;
                                 rhs_bit = import_expression(rhs_e, comb_read_map());
+                                expression_context_width = saved_ctx_w;
+                            }
                         // emit_comb_assign sizes the RHS to the elem_w-bit LHS.
                         rhs_bit = fold_compound(lhs_bit, rhs_bit);
                         emit_comb_assign(lhs_bit, rhs_bit, proc);
