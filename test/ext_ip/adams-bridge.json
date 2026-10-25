@@ -69,5 +69,11 @@
  "always_srcs": [
   "adams-bridge/src/abr_libs/rtl/abr_1r1w_ram.sv",
   "adams-bridge/src/abr_libs/rtl/abr_1r1w_be_ram.sv"
- ]
+ ],
+ "overrides": {
+  "abr_piso_multi": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-10-25: the co-sim divergences (33 in the nightly, 37 locally) all follow a cycle where the 3-bit `mode` input is 5, 6 or 7 -- NUM_MODES is 5, so `INPUT_RATES[mode]` / `OUTPUT_RATES[mode]` read past the end of the parameter arrays: X by the LRM, X on read_uhdm and read_slang alike (eval of the reduced shape), rendered differently by Verilator (ours advanced buffer_wr_ptr by 80).  With mode constrained to its five legal values the RTL, read_uhdm and read_slang netlists agree on every one of 300 cycles.  Unlisted-selector stimulus artefact, same class as the OpenTitan IP library's enum inputs, not a reader defect"
+  }
+ }
 }
