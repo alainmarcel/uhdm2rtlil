@@ -1,0 +1,8 @@
+# The array cleared in the async-reset arm must become registers (as
+# read_verilog and read_slang make it), not a $mem whose reset leaves the
+# storage untouched: no memory, and an async-reset flop per element + top.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast; memory_dff; memory_collect
+select -assert-count 0 t:$mem_v2
+select -assert-min 5 t:$adff t:$adffe %u
