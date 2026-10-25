@@ -1062,7 +1062,29 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
 
             // Phi-merge: for every variable an arm renamed, drive one join
             // wire from both arms and point the outer mapping at it.
-            for (auto& pm : pre_map) {
+            //
+            // A FUNCTION-LEVEL local whose first write is a select INSIDE an
+            // arm (`if (BUS_WIDTH == 128) size[2:0] = ...; else size[2:0] =
+            // ...; return size[2:0];`, VeeR EH2's axi4_to_ahb get_write_size)
+            // is mapped lazily by func_local_base_for_select on the arm's
+            // COPY of the mapping, so it is in then_map / else_map and not in
+            // pre_map.  Walking pre_map alone dropped it: after the if the
+            // outer mapping had no `size`, the return read "Base signal
+            // 'size' not found" and the function returned 0 for every
+            // operand.  Merge those too, taking the local's declared-width
+            // base wire -- what the lazy mapping would have produced before
+            // the if -- as the value of an arm that did not write it.
+            std::map<std::string, RTLIL::SigSpec> merge_from = pre_map;
+            for (auto* am : {&then_map, &else_map})
+                for (auto& kv : *am)
+                    if (!merge_from.count(kv.first)) {
+                        std::map<std::string, RTLIL::SigSpec> scratch;
+                        RTLIL::SigSpec base = func_local_base_for_select(
+                            kv.first, scratch, func_call_context, local_var_widths);
+                        if (base.size() == kv.second.size())
+                            merge_from[kv.first] = base;
+                    }
+            for (auto& pm : merge_from) {
                 const std::string& nm = pm.first;
                 auto ti = then_map.find(nm);
                 auto ei = else_map.find(nm);

@@ -1,0 +1,12 @@
+# Wrong VALUE, not wrong shape: without the fix both functions return 3'b000
+# for every byte-enable pattern (the local written inside the if/else arm is
+# lost after the if), so prove the sizes the RTL computes.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set byteen 8'hff -prove size_sel 3'b011 -prove size_whole 3'b011
+sat -verify -set byteen 8'hf0 -prove size_sel 3'b010 -prove size_whole 3'b010
+sat -verify -set byteen 8'h0f -prove size_sel 3'b010 -prove size_whole 3'b010
+sat -verify -set byteen 8'h03 -prove size_sel 3'b001 -prove size_whole 3'b000
+sat -verify -set byteen 8'h00 -prove size_sel 3'b000 -prove size_whole 3'b000
