@@ -66,5 +66,27 @@
  "want": "proven",
  "slang_flags": [
   "--single-unit"
- ]
+ ],
+ "overrides": {
+  "axi_st_patchkr_top": {
+   "want": "error",
+   "note": "read-fail is the SOURCE: `always @(posedge wrclk or negedge rst_n) if (!rst_n || patchkr_en)` gates the asynchronous reset arm with a synchronous enable, which no synthesis frontend accepts -- read_verilog stops at the same 'Multiple edge sensitive events', read_slang at 'condition cannot be matched to any signal from the event list'."
+  },
+  "axi_st_patchkr_h2f_top": {
+   "want": "error",
+   "note": "read-fail is the SOURCE: `always @(posedge wrclk or negedge rst_n) if (!rst_n || patchkr_en)` gates the asynchronous reset arm with a synchronous enable, which no synthesis frontend accepts -- read_verilog stops at the same 'Multiple edge sensitive events', read_slang at 'condition cannot be matched to any signal from the event list'."
+  },
+  "axi_st_patchkr_f2h_top": {
+   "want": "error",
+   "note": "read-fail is the SOURCE: `always @(posedge wrclk or negedge rst_n) if (!rst_n || patchkr_en)` gates the asynchronous reset arm with a synchronous enable, which no synthesis frontend accepts -- read_verilog stops at the same 'Multiple edge sensitive events', read_slang at 'condition cannot be matched to any signal from the event list'."
+  },
+  "axi_st_patgen_dual_top": {
+   "want": "error",
+   "note": "`error` is the SOURCE: `assign patgen_dout[255:240] = ...` sits inside the `for (i)` generate without depending on i, so every iteration drives the same bits; read_verilog stops at the same 'Y port signal already driven', read_slang merges the identical drivers.  Co-sim PASS."
+  },
+  "axi_st_h2h_patgen_top": {
+   "want": "error",
+   "note": "`error` is the SOURCE: `assign patgen_dout[255:240] = ...` sits inside the `for (i)` generate without depending on i, so every iteration drives the same bits; read_verilog stops at the same 'Y port signal already driven', read_slang merges the identical drivers.  Co-sim PASS."
+  }
+ }
 }
