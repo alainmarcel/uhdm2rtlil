@@ -55,7 +55,6 @@ reference are in [docs/getting_started.md](docs/getting_started.md).
 | [Test catalog](docs/test-cases.md) | every internal test, incl. the UHDM-only list |
 | [sv-tests coverage](docs/sv_tests_coverage.md) | chipsalliance/sv-tests per test: read_uhdm vs read_verilog vs read_slang |
 | [What `read_slang` cannot read](docs/slang_unsupported.md) · [incomplete test cases](docs/incomplete_testcases.md) | the reference frontend's failures with reproduce recipes; tests no frontend can be judged on |
-| [Pavona per-IP table](docs/pavona_sweep.md) · [External IP families](docs/ext_ip.md) | the two sub-tables behind their sweep rows |
 | [To do: cores and IP to bring under the sweeps](docs/todo.md) | what is not swept yet, what blocks each, and how it would be swept |
 
 ## Supported core IP
