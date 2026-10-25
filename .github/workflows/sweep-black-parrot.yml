@@ -47,9 +47,13 @@ jobs:
       # another.  Measured locally, reading the full bp_unicore `wrapper` peaks
       # at 11.5 GB -- just under the 12 GB `ulimit -v` the reusable workflow
       # defaults to -- so the near-top rows sit right at that ceiling.  125
-      # rows over four shards, each serialising; the first nightly will show
-      # which of the top rows exceed the limit, and those get an `overrides`
-      # entry or a documented skip rather than a raised ulimit (16 GB would
-      # OOM the runner itself).
-      shards: 4
+      # rows over EIGHT shards, each serialising.  Four was not enough: the
+      # rows average 8 minutes on the runner (the slowest 20), so a 31-row
+      # shard needs 3.2-5.0 h and the fourth one went past the 5 h job limit
+      # on every nightly from 10-22 to 10-24 -- cancelled with no rows, and
+      # the merge job published a 94-row report.  Eight shards of ~16 rows
+      # sit around 2 h each.  Top rows that exceed the memory limit get an
+      # `overrides` entry or a documented skip rather than a raised ulimit
+      # (16 GB would OOM the runner itself).
+      shards: 8
       jobs: "1"
