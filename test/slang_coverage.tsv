@@ -79,8 +79,11 @@ AssignToUnpackedUnionFieldAndReadOtherField	FAIL	dut.sv:5: ERROR: value of type 
 AssignTypedefedFunctionCall	OK	
 asym_ram_sdp_read_wider	OK	
 asym_ram_sdp_write_wider	OK	
+async_ff_arm_task_call	OK	
+async_reset_arm_array	OK	
 async_reset_eq_zero_wide_const	OK	
 async_reset_partsel	OK	
+async_set_reset_ff	FAIL	dut.sv:21: ERROR: multiple asynchronous loads unsupported
 automatic_local_case_arm_latch	OK	
 bind_hier	OK	
 BindModule	OK	
@@ -113,6 +116,7 @@ blocking_temp_ff	OK
 blocking_temp_select	OK	
 block_local_packed_struct_array_dyn_write	OK	
 block_local_per_process	OK	
+block_local_same_name_width	OK	
 block_local_same_name_widths	OK	
 blocklocal_struct_width	OK	
 blockrom	OK	
@@ -146,6 +150,7 @@ CastStruct	OK
 CastToSumOfConstants	OK	
 CastToSumWithParameterIn2InstancesOfSubmodule	OK	
 CastToSumWithParameterInSubmodule	OK	
+cast_unsized_based_literal	OK	
 CastWidthFromPackage	OK	
 cdc_static_basic	FAIL	dut.sv:6: ERROR: value of type 'real' is unsupported for conversion to bits in this context
 CellNamedLikeModule	OK	
@@ -174,6 +179,7 @@ comb_dyn_bit_write_elem_confined	OK
 comb_elem_field_write_inflight_read	OK	
 comb_field_write_after_switch	OK	
 comb_flag_after_case	OK	
+comb_for_conjunction_cond	OK	
 comb_if_both_arms_value	OK	
 comb_if_local_temp	OK	
 comb_local_index_fold	OK	
@@ -248,6 +254,7 @@ dyn_elem_read_inflight	OK
 dyn_elem_write_after_bit_reset	OK	
 dyn_field_select	OK	
 dyn_index_wide_out_of_range	OK	
+dyn_packed_elem_write_sync	OK	
 dyn_packed_multidim	OK	
 dyn_packed_row_nonzero_lsb_idx	OK	
 dyn_packed_row_write_ff	OK	
@@ -255,6 +262,7 @@ dynslice	OK
 dyn_write_1bit_unpacked_array	OK	
 elem_copy_field_write_alias	OK	
 elem_field_idx_write	OK	
+elem_write_cast_shift_ctx	OK	
 empty_port_connection	OK	
 EmptyTask	OK	
 EnumArrayListedElements	OK	
@@ -287,6 +295,7 @@ expr_width_cast	OK
 fail_detect_width	OK	
 ff_array_reset_default_elem_writes	OK	
 ff_async_reset_struct_field_procs	OK	
+ff_async_two_dyn_elem_writes	OK	
 ff_blocking_module_reg_temp	OK	
 ff_conditional_reset	OK	
 ff_dead_both_branches	OK	
@@ -340,8 +349,10 @@ func_casez_wildcard_items	OK
 func_clog2_const_eval	OK	
 func_clog2_partsel	OK	
 func_concat_formal_width_probe	OK	
+func_concat_lhs_local_comb_call	OK	
 func_concat_lhs_local	OK	
 func_concat_lhs_return	OK	
+func_const_ifelse_local_select	OK	
 func_const_table_packed_elem_select	OK	
 func_downward_loop	OK	
 func_eval_wide_ops	OK	
@@ -350,6 +361,7 @@ func_formal_packed_dyn_bitselect	OK
 func_formal_shadowed_by_array	OK	
 func_formal_shadowed_by_genvar	OK	
 func_formal_shadows_module	OK	
+func_formal_struct_field_select_rmw	OK	
 func_if_cond_self_determined	OK	
 func_incomplete_case_default	OK	
 func_inline_selfloop	OK	
@@ -364,6 +376,7 @@ func_local_decl_init	OK
 func_local_decl_width_assign	OK	
 func_local_localparam_inlined	OK	
 func_local_nested_struct_field_write	OK	
+func_local_packed2d_outer_partselect	OK	
 func_localparam_2darray_index	OK	
 func_local_read_before_write_loop	OK	
 func_local_shadows_genvar	OK	
@@ -450,6 +463,7 @@ genscope_cells	OK
 genscope_comb_arrays	OK	
 genscope_comb_automatic_local	OK	
 genscope_comb_local_thread	OK	
+genscope_cond_fold_runtime_arm	OK	
 genscope_enum_array_port	OK	
 genscope_enum_const	OK	
 genscope_fifo_dyn_write	OK	
@@ -746,6 +760,7 @@ MemoryInGenblock	OK
 MemoryPort	OK	
 MemorySlice	OK	
 mem_packed_2d_byte_write	OK	
+mem_packed_word_elem_lane_write	OK	
 mem_read_reg	OK	
 mem_sub_plain	OK	
 mem_write_dead_branch	OK	
@@ -1661,6 +1676,7 @@ StringLocalParamInitByConcatenation	FAIL	ERROR: Internal frontend error at /home
 StringWithBackslash	FAIL	ERROR: Internal frontend error at /home/alain/uhdm2rtlil/third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above
 struct_3d_packed_array	OK	
 struct_access	OK	
+struct_alias_array_pattern	OK	
 struct_array_2d_elem_member_field	OK	
 struct_array_elem_field_read	OK	
 struct_arrayfield_nested_read	OK	
@@ -1696,6 +1712,7 @@ StructParameterInGenScope	FAIL	dut.sv:30: ERROR: use of undeclared identifier 'P
 StructParameterInitializedWithPatternAndReferenced	OK	
 StructParameter	OK	
 struct_param_field_shift	OK	
+struct_param_field_wide	OK	
 struct_param_func_arg	OK	
 struct_param_func_config	OK	
 struct_param_func_loop	OK	
@@ -1785,7 +1802,10 @@ TypedefVariableDimensions	OK
 TypedefWithParameter	OK	
 typed_named_pattern	OK	
 typed_net_packed_struct_array	OK	
+typeparam_bits_ancestor_member	OK	
+typeparam_cast_bound_type	OK	
 typeparam_cast_in_genblock	OK	
+typeparam_cast_port_actual	OK	
 typeparam_default_twin_inst	OK	
 TypeParameterAsPortTypeWithEnumOfParametrizedWidth	OK	
 TypeParameterAsPortTypeWithEnum	OK	
@@ -1793,6 +1813,7 @@ TypeParameterAsPortTypeWithLogicAnonymous	OK
 TypeParameterAsPortTypeWithLogic	OK	
 TypeParameterAsPortTypeWithStruct	OK	
 typeparam_genscope_struct	OK	
+typeparam_nested_member_port_actual	OK	
 type_param_override_elem_sel	OK	
 typeparam_packed_array_outer_dims	OK	
 type_param_packed_dim	OK	
@@ -1811,6 +1832,7 @@ unbased_unsized_param	OK
 unbased_unsized_shift	OK	
 undefined_module_refused	FAIL	dut.sv:10: ERROR: unknown module 'prim_clock_buf'
 union4_repro	FAIL	dut.sv:3: ERROR: all members of a packed union must have the same width; 'raw' has width of 32, previously seen width was 29
+union_array_elem_member_write	OK	
 UnionCustomTypeMultirange	OK	
 union_field_partsel	OK	
 UnionInPackageWithMultirange	FAIL	dut.sv:30: ERROR: cannot reference compilation unit item from within a package
@@ -1837,6 +1859,7 @@ unpacked_3d_subarray_actual	OK
 UnpackedArray	OK	
 unpacked_array_shift_ff	OK	
 unpacked_array_slice_shift_ff	OK	
+unpacked_array_typedef_packed_elem	OK	
 unpacked_asc_field	OK	
 unpacked_elem_packed_row_range_write	OK	
 unpacked_elem_packed_row_select	OK	
