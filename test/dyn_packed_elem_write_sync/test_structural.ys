@@ -1,0 +1,7 @@
+# The dynamic write must drive every bit of the element from the matching
+# data bit: with the defect only ram[0] (bit 0 of the array) had a data path
+# and the other 31 bits of the array were fed back from themselves.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast; opt_clean
+select -assert-min 8 w:wdata %co* t:$mux %i

@@ -1227,6 +1227,7 @@ struct UhdmImporter {
     // per-BIT conditional writes keyed into pending_sync_assignments, so
     // repeated writes accumulate through pending_inflight().
     bool emit_dynamic_packed_bit_write_sync(const assignment* uhdm_assign);
+    void packed_elem_geometry(const UHDM::bit_select* bs, RTLIL::Wire* w, int& elem_w, int& arr_low);
     // `arr[idx].field <= rhs` with a DYNAMIC index on an EXPANDED array of
     // packed structs, under the always_ff loop path (RSD StoreQueue).
     bool emit_dynamic_expanded_elem_field_write_sync(const assignment* uhdm_assign);
