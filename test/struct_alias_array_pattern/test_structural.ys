@@ -1,0 +1,7 @@
+# The folded table: element 1 = {0, 32'h80000000, 32'h80004000}, element 0 =
+# {1, 32'h0, 32'h08000000}; with the defect it read 80'h80004000000008000000.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove m_local 192'h8000000080004000000000010000000008000000
+sat -verify -prove m_child 192'h8000000080004000000000010000000008000000
