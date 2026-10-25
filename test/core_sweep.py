@@ -21,8 +21,10 @@ import glob
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -121,6 +123,39 @@ def sh(cmd, cwd=None, timeout=None, env=None):
         if isinstance(out, bytes):
             out = out.decode(errors="replace")
         return 124, out + "\n[timeout]"
+
+
+def sh_stream(cmd, cwd=None, timeout=None, env=None):
+    """Run a command, relaying its combined output line by line as it
+    arrives (flushed, so a CI log shows progress), and kill its whole process
+    group at the deadline -- from a timer, because a child that has gone
+    silent never delivers the line a read loop would check the clock on.
+    Returns the exit code (124 on timeout)."""
+    p = subprocess.Popen(cmd, cwd=cwd, text=True, env=env, errors="replace",
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                         start_new_session=True)
+    fired = []
+
+    def _kill():
+        fired.append(True)
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except OSError:
+            pass
+    timer = threading.Timer(timeout, _kill) if timeout else None
+    if timer:
+        timer.start()
+    try:
+        for line in p.stdout:
+            print(line, end="", flush=True)
+        rc = p.wait()
+    finally:
+        if timer:
+            timer.cancel()
+    if fired:
+        print("[timeout]", flush=True)
+        return 124
+    return rc
 
 
 def read_names_file(path):
@@ -1756,8 +1791,11 @@ def sweep_ext(family, jobs, cycles=300, flt=None):
            "--cycles", str(cycles), "--out", str(out_json)]
     if flt and not mods:
         cmd += ["--filter", flt]
-    rc, out = sh(cmd, timeout=6 * 3600)
-    print(out or "", flush=True)
+    # Relay ext_flow's output LINE BY LINE rather than after it exits: a shard
+    # the runner cancels at the job limit (black-parrot's shard 3, four
+    # nightlies in a row, 5 h with nothing in the log after `# fetched`) left
+    # no trace of which rows had finished and which one it was on.
+    sh_stream(cmd, timeout=6 * 3600)
     rows = json.loads(out_json.read_text()) if out_json.exists() else []
     for r in rows:
         r.pop("formal_raw", None)
