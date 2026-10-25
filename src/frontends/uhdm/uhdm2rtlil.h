@@ -623,6 +623,12 @@ struct UhdmImporter {
     // packed dims (`slot_t [N-1:0] slots;` inside an always_comb — the
     // element clear was applied at the whole-array width).
     std::map<std::string, const UHDM::any*> block_local_var_objs;
+    // The promoted wire of EACH block-local variable object: two begin
+    // blocks of one process may declare same-named locals of different
+    // widths (CVA6 csr_regfile's `automatic logic [3:0] index` and
+    // `automatic logic [11:0] index`), and a name-keyed lookup hands the
+    // second one the first one's wire.
+    std::map<const UHDM::any*, RTLIL::Wire*> block_local_var_wire_;
     // Which PROCESS promoted each block-local name.  Two always_comb blocks
     // that each declare `automatic logic next_c` are separate variables: a
     // shared `\next_c` wire is driven by every one of them (PeakRDL register
