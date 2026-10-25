@@ -3,7 +3,9 @@
 Real-world (System)Verilog IP swept end-to-end through the UHDM frontend, with
 the measured result of every family.  Back to the [README](../README.md);
 the co-simulation table per core and the comparison with `read_slang` are in
-[benchmarking.md](benchmarking.md).
+[benchmarking.md](benchmarking.md).  Two rows of the table below stand for a
+whole sub-table of their own: the [Pavona per-IP table](pavona_sweep.md) and
+the [external IP families](ext_ip.md).
 
 ## The families
 
