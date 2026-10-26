@@ -28,7 +28,7 @@ most likely to expose new reader cases.
 |---|---|---|
 | **OpenC910 / OpenE906** | XUANTIE-RV/openc910, opene906 | T-Head's 64-bit and 32-bit cores, hand-written Verilog; their FPU pieces are already vendored under `cvfpu` and read.  Large (C910 ~ 1.7k files). |
 | **Rocket Chip / BOOM** | chipsalliance/rocket-chip, riscv-boom/riscv-boom | Chisel generators (3.9k★): emit the SystemVerilog with firtool, then the XiangShan-core flow.  Needs a generator run in the harness or a vendored emitted tree with its provenance note, as XiangShan has. |
-| **VexRiscv / NaxRiscv** | SpinalHDL/VexRiscv, SpinalHDL/NaxRiscv | SpinalHDL output, one Verilog file per configuration; small, quick rows. |
+| **VexRiscv / NaxRiscv** | SpinalHDL/VexRiscv, SpinalHDL/NaxRiscv | VexRiscv **Swept** (`test/ext_ip/vexriscv.json`, a `sweep-ext.yml` family) at baf7dc82: the GenFull core and its two caches, 3 rows; first local sweep 2026-10-25: 3 / 3 proven, 3 / 3 co-sim PASS, 0 divergences (the LiteX family sweeps the LiteX-shipped VexRiscv build as well). NaxRiscv not started. |
 | **Hazard3** | Wren6991/Hazard3 | RV32IMAC core (the RP2350 core), hand-written SystemVerilog, small. |
 | **SERV** | olofk/serv | **Swept** (`test/ext_ip/serv.json`, a `sweep-ext.yml` family) at f200eb2e: the core, the servant SoC and its peripherals, 29 rows; first local sweep 2026-10-25: 27 / 27 comparable proven, 27 co-sim PASS, 0 divergences. |
 | **biRISC-V, uriscv, ultraembedded cores** | ultraembedded/biriscv, ultraembedded/core_* | Hand-written Verilog cores and I/O blocks (USB, SD, UART); each repo one manifest. |

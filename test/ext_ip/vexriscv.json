@@ -1,0 +1,45 @@
+{
+ "title": "VexRiscv (SpinalHDL/VexRiscv)",
+ "url": "https://github.com/SpinalHDL/VexRiscv",
+ "repos": [
+  {
+   "url": "https://github.com/SpinalHDL/VexRiscv",
+   "commit": "baf7dc82f855eddaf5b0a20a6802c526f127e38a",
+   "dir": "VexRiscv"
+  }
+ ],
+ "generate": {
+  "cwd": "VexRiscv",
+  "marker": "VexRiscv/VexRiscv.v",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "bash $EXT_IP_HARNESS/vexriscv_setup.sh"
+   ]
+  ],
+  "timeout": 3600
+ },
+ "roots": [
+  "VexRiscv/VexRiscv.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "SpinalHDL emits VexRiscv.v from `sbt runMain vexriscv.demo.GenFull` (the",
+  "repository no longer ships pre-generated Verilog): the GenFull configuration",
+  "-- MMU, caches, debug, mul/div, CSRs -- as one file holding the core and its",
+  "cache / FIFO submodules.  test/ext_ip/vexriscv_setup.sh installs sbt",
+  "user-locally when missing and runs the generation; a JDK is the one",
+  "prerequisite assumed present.  3 rows: the core and its two caches.",
+  "First local sweep 2026-10-25: 3 / 3 proven, 3 / 3 co-sim PASS, 0 divergences."
+ ]
+}
