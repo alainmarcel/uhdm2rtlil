@@ -4659,6 +4659,85 @@ static bool statement_contains_control_flow(const any* stmt) {
     return false;
 }
 
+// Helper: is every expression an initial block READS a compile-time constant?
+// Parameters, localparams, enum constants, literals and operations over them
+// -- no net or variable anywhere on a condition or a right-hand side.
+//
+//     initial if (OPT_INITIAL) o_data = 0;      // every ZipCPU register
+//
+// is an `initial` with CONTROL FLOW, so the dispatch below sent it to the comb
+// path, whose result is a process with a `sync always` rule: a CONTINUOUS
+// driver of the constant.  The register's own always_ff then lost to it --
+// `opt` folded `o_data` to 8'0 and removed the flop (skidbuffer: 300 of 301
+// co-simulated cycles wrong, and five ZipCPU tops failed their miter with
+// "Conflicting init values" on the same registers).  read_verilog folds the
+// constant `if` at the AST and emits `sync init` with the literal, which is
+// what the interpreted path produces; the block only has to be decidable at
+// compile time to go there.  `case` is excluded because the interpreter has
+// no case support; a `case` on a parameter keeps the old path.
+static bool expr_is_compile_time(const any* e) {
+    if (!e) return false;
+    switch (e->UhdmType()) {
+        case uhdmconstant:
+            return true;
+        case uhdmoperation: {
+            auto op = any_cast<const operation*>(e);
+            if (!op->Operands()) return false;
+            for (auto o : *op->Operands())
+                if (!expr_is_compile_time(o)) return false;
+            return true;
+        }
+        case uhdmref_obj: {
+            auto ref = any_cast<const ref_obj*>(e);
+            const any* actual = ref->Actual_group();
+            if (!actual) return false;
+            return actual->UhdmType() == uhdmparameter ||
+                   actual->UhdmType() == uhdmenum_const;
+        }
+        default:
+            return false;
+    }
+}
+
+static bool initial_is_compile_time(const any* stmt) {
+    if (!stmt) return false;
+    switch (stmt->VpiType()) {
+        case vpiBegin: {
+            auto b = any_cast<const UHDM::begin*>(stmt);
+            if (b->Stmts())
+                for (auto child : *b->Stmts())
+                    if (!initial_is_compile_time(child)) return false;
+            return true;
+        }
+        case vpiNamedBegin: {
+            auto b = any_cast<const UHDM::named_begin*>(stmt);
+            if (b->Stmts())
+                for (auto child : *b->Stmts())
+                    if (!initial_is_compile_time(child)) return false;
+            return true;
+        }
+        case vpiIf: {
+            auto s = any_cast<const if_stmt*>(stmt);
+            return expr_is_compile_time(s->VpiCondition()) &&
+                   initial_is_compile_time(s->VpiStmt());
+        }
+        case vpiIfElse: {
+            auto s = any_cast<const if_else*>(stmt);
+            return expr_is_compile_time(s->VpiCondition()) &&
+                   initial_is_compile_time(s->VpiStmt()) &&
+                   initial_is_compile_time(s->VpiElseStmt());
+        }
+        case vpiAssignment: {
+            auto a = any_cast<const assignment*>(stmt);
+            // Only a whole-signal target: the interpreter writes wires, not slices.
+            return a->Lhs() && a->Lhs()->VpiType() == vpiRefObj &&
+                   expr_is_compile_time(a->Rhs());
+        }
+        default:
+            return false;
+    }
+}
+
 // Helper: does the initial block contain a partial-write LHS (hier_path
 // into a struct field, bit_select, part_select, indexed_part_select)?
 // The sync-init driver path emits one STa-process per *full SigSpec*, so
@@ -5497,7 +5576,14 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     bool has_compound_assign = uhdm_process->Stmt() &&
         statement_has_compound_assignment(uhdm_process->Stmt());
 
-    if (has_for_decl || has_local_vars || has_scalar_ctrl_loop ||
+    // Control flow decided entirely by parameters (`initial if (OPT_INITIAL)
+    // q = 0;`) is a compile-time value, not hardware: interpret it so the
+    // block becomes `sync init`, as read_verilog does, instead of a comb
+    // process whose `sync always` would drive the register continuously.
+    bool const_control_flow = use_comb_approach && uhdm_process->Stmt() &&
+                              initial_is_compile_time(uhdm_process->Stmt());
+
+    if (has_for_decl || has_local_vars || has_scalar_ctrl_loop || const_control_flow ||
         (has_compound_assign && !use_comb_approach && !has_partial_write)) {
         import_initial_interpreted(uhdm_process, yosys_proc);
     } else if (use_comb_approach || has_task_call || has_partial_write) {
