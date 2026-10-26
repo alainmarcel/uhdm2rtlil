@@ -1446,6 +1446,11 @@ void UhdmImporter::ff_simple_eval(const UHDM::any* stmt,
 }
 
 // Import always_ff block
+static void collect_block_local_decl_names(const any* stmt, std::set<std::string>& out);
+static void drop_block_local_assigned(const any* stmt, std::vector<UhdmImporter::AssignedSignal>& sigs,
+                                      const std::map<std::string, RTLIL::Wire*>& name_map,
+                                      RTLIL::Module* module);
+
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     current_ff_iff_cond = RTLIL::SigSpec();
     uhdm_trace("    Importing always_ff block\n");
@@ -1840,6 +1845,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Extract assigned signals from the statement
             if (stmt) {
                 extract_assigned_signals(stmt, assigned_signals);
+                drop_block_local_assigned(stmt, assigned_signals, name_map, module);
                 // A for-loop control variable (`for (i=0; i<N; i=i+1) mem[i]<=0`
                 // in the reset branch) is collected as an assigned signal so the
                 // comb path can drive its post-loop value, but it is NOT a
@@ -3366,6 +3372,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // skipped — those are handled by the memwr control wires.
                     std::vector<AssignedSignal> ff_reg_signals;
                     extract_assigned_signals(stmt, ff_reg_signals);
+                    drop_block_local_assigned(stmt, ff_reg_signals, name_map, module);
                     std::map<const UHDM::expr*, RTLIL::Wire*> ff_reg_temp_map;
                     std::map<std::string, RTLIL::Wire*> ff_reg_temps;
                     std::map<std::string, RTLIL::SigSpec> ff_reg_specs;
@@ -3550,6 +3557,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                     std::vector<AssignedSignal> assigned_signals;
                     extract_assigned_signals(stmt, assigned_signals);
+                    drop_block_local_assigned(stmt, assigned_signals, name_map, module);
 
                     std::map<std::string, RTLIL::SigSpec> blk, nb;
                     ff_simple_eval(stmt, blk, nb);
@@ -3587,6 +3595,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Extract signals assigned in the always_ff body
                     std::vector<AssignedSignal> assigned_signals;
                     extract_assigned_signals(stmt, assigned_signals);
+                    drop_block_local_assigned(stmt, assigned_signals, name_map, module);
                     fold_whole_array_writes_onto_elements(assigned_signals);
 
                     // Create $0\ temp wires for each uniquely assigned signal (same logic as import_always_comb)
@@ -5042,6 +5051,80 @@ static bool statement_has_compound_assignment(const any* stmt) {
 
 // Helper: check if a UHDM statement tree contains block-local variable declarations
 // that require the interpreter approach for proper scoping
+// Collect the names of the variables declared inside the begin blocks of a
+// process body, through if / else / case / for arms.
+static void collect_block_local_decl_names(const any* stmt, std::set<std::string>& out) {
+    if (!stmt) return;
+    switch (stmt->VpiType()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            // scope is a non-final base: any_cast does not resolve it (see the
+            // dynamic_cast in inline_task_body_comb).
+            const UHDM::scope* sc = dynamic_cast<const UHDM::scope*>(stmt);
+            if (!sc) return;
+            if (sc->Variables())
+                for (auto v : *sc->Variables())
+                    out.insert(std::string(v->VpiName()));
+            VectorOfany* stmts = nullptr;
+            if (stmt->VpiType() == vpiBegin)
+                stmts = any_cast<const UHDM::begin*>(stmt)->Stmts();
+            else
+                stmts = any_cast<const UHDM::named_begin*>(stmt)->Stmts();
+            if (stmts)
+                for (auto child : *stmts) collect_block_local_decl_names(child, out);
+            return;
+        }
+        case vpiIf: {
+            auto s = any_cast<const if_stmt*>(stmt);
+            collect_block_local_decl_names(s->VpiStmt(), out);
+            return;
+        }
+        case vpiIfElse: {
+            auto s = any_cast<const if_else*>(stmt);
+            collect_block_local_decl_names(s->VpiStmt(), out);
+            collect_block_local_decl_names(s->VpiElseStmt(), out);
+            return;
+        }
+        case vpiCase: {
+            auto s = any_cast<const case_stmt*>(stmt);
+            if (s->Case_items())
+                for (auto it : *s->Case_items())
+                    collect_block_local_decl_names(it->Stmt(), out);
+            return;
+        }
+        case vpiFor: {
+            auto s = any_cast<const for_stmt*>(stmt);
+            collect_block_local_decl_names(s->VpiStmt(), out);
+            return;
+        }
+        default:
+            return;
+    }
+}
+
+// Drop from an always_ff register set the names declared as BLOCK-LOCAL
+// variables inside the body (`automatic logic _GEN;`, firtool's shape for
+// every register update).  They are not module signals: every temp-wire loop
+// imports each assigned LHS, and doing that before the begin block has created
+// the scoped `$unnamed_block$1._GEN` wire fabricated a module-level `\_GEN`
+// with a hold-only flop of its own.  The begin-block import gives such a
+// variable its temp.  A name that is also a real module wire is kept.
+static void drop_block_local_assigned(const any* stmt, std::vector<UhdmImporter::AssignedSignal>& sigs,
+                                      const std::map<std::string, RTLIL::Wire*>& name_map,
+                                      RTLIL::Module* module) {
+    std::set<std::string> block_local_names;
+    collect_block_local_decl_names(stmt, block_local_names);
+    if (block_local_names.empty()) return;
+    std::vector<UhdmImporter::AssignedSignal> kept;
+    for (const auto& sig : sigs) {
+        if (block_local_names.count(sig.name) && !name_map.count(sig.name) &&
+            !module->wire(RTLIL::escape_id(sig.name)))
+            continue;
+        kept.push_back(sig);
+    }
+    sigs.swap(kept);
+}
+
 static bool block_has_local_variables(const any* stmt) {
     if (!stmt) return false;
     int type = stmt->VpiType();

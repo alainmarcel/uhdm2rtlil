@@ -1,0 +1,13 @@
+# Two registers (full, saved_opcode) and nothing else: the block-local _GEN is
+# a value inside the block, not a flop, and no module-level wire of its name
+# may be fabricated.  The formal check against read_verilog fails without the
+# fix as well (full is computed from the stale _GEN of the previous cycle).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 0 w:_GEN
+proc
+opt_clean
+select -assert-count 2 t:$dff t:$dffe t:$sdff t:$sdffe t:$adff %u
+# _GEN's blocking value feeds the `full` update in the same cycle: with
+# io_repeat & io_enq_valid & io_deq_ready & ~full, full must rise next edge.
+sat -verify -seq 2 -set-init-zero -set-at 1 reset 0 -set-at 1 io_repeat 1 -set-at 1 io_enq_valid 1 -set-at 1 io_deq_ready 1 -prove-skip 1 -prove full 1
