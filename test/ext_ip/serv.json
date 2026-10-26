@@ -1,0 +1,73 @@
+{
+ "title": "SERV (olofk/serv)",
+ "url": "https://github.com/olofk/serv",
+ "repos": [
+  {
+   "url": "https://github.com/olofk/serv",
+   "commit": "f200eb2ed7b69ac1c6b8eddd47654522aeee5ce8",
+   "dir": "serv"
+  }
+ ],
+ "roots": [
+  "serv/rtl/*.v",
+  "serv/servant/*.v",
+  "serv/servile/*.v",
+  "serv/serving/*.v"
+ ],
+ "incdirs": [
+  "serv/rtl",
+  "serv/servant"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^(ecp5_evn_pll|pll|ice40_pll)$",
+  "^servant_ac701$",
+  "^servant_ax309$",
+  "^servant_cmod_a7$",
+  "^servant_ecp5$",
+  "^servant_ecp5_evn$",
+  "^servant_gmm7550$",
+  "^servant_ice40_cm36$",
+  "^servant_lx9$",
+  "^servant_md_kolibri$",
+  "^servant_orangecrab$",
+  "^servant_pf$",
+  "^servant_tangnano9k$",
+  "^servant_te0802$",
+  "^servant_upduino2$",
+  "^servax$",
+  "^servclone10$",
+  "^servde1_soc_revF$",
+  "^service$",
+  "^service_go_board$",
+  "^servis$",
+  "^servive$",
+  "^servix$",
+  "^servix_ebaz4205$",
+  "^servus$",
+  "^tb_",
+  "_clock_gen$",
+  "_sim$",
+  "_tb$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The bit-serial RISC-V core (rtl/), the servant reference SoC with its many",
+  "board tops (servant/), the servile convenience wrapper and the serving",
+  "SoC.  FuseSoC is only the packaging; the Verilog needs no generation.",
+  "define (IBUFDS, CC_USR_RSTN, CLKINT / GND / VCC, SB_HFOSC); every other",
+  "Board tops (servant_<board>, their *_clock_gen wrappers and the PLL wrappers)",
+  "instantiate vendor PLL / IO primitives (EHXPLLL, PLL_BASE, MMCME2_BASE, SB_HFOSC,",
+  "IBUFDS, CLKINT ...) that no file of the repository defines, so they have no",
+  "read_slang reference; they are excluded and the family is the core, the servant",
+  "SoC and its peripherals.  `servant` itself reads and co-simulates but has no",
+  "read_slang reference because its memfile parameter names zephyr_hello.hex",
+  "relative to the build directory."
+ ]
+}
