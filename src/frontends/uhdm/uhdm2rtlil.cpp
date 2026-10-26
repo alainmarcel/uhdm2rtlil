@@ -490,7 +490,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                                     
                                     if (value_type == "STRING") {
                                         // Handle string parameters
-                                        param_module_name += "\\" + param_name + "=\"" + val_str + "\"";
+                                        param_module_name += "\\" + param_name + "=\"" + param_value_for_name(val_str) + "\"";
                                     } else {
                                         // Handle numeric parameters (x/z-safe)
                                         param_module_name += "\\" + param_name + "=s32'"
@@ -2488,7 +2488,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         if (param_value.find("STRING:") == 0) {
                             // Handle string parameter
                             std::string str_value = param_value.substr(7); // Skip "STRING:"
-                            yosys_modname += "\\" + param_name + "=\"" + str_value + "\"";
+                            yosys_modname += "\\" + param_name + "=\"" + param_value_for_name(str_value) + "\"";
                         } else {
                             // Handle numeric parameter
                             // Remove type prefix if present and determine base
@@ -2693,7 +2693,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     // the module definition (blackbox → wrong
                                     // synth top, e.g. rp32 r5p_hamster's gpr).
                                     if (!value_to_use.empty())
-                                        cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
+                                        cell_type += "\\" + param_name + "=\"" + param_value_for_name(value_to_use) + "\"";
                                 } else if (!value_to_use.empty()) {
                                     // Skip EMPTY-value params: the module-def name
                                     // builder (import_module) drops them (its
@@ -4136,7 +4136,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             if (value_type == "STRING") {
                                 // Handle string parameters
                                 // For string parameters, just use the string value directly
-                                param_string += "\\" + param_name + "=\"" + val_str + "\"";
+                                param_string += "\\" + param_name + "=\"" + param_value_for_name(val_str) + "\"";
                             } else {
                                 // Handle numeric parameters
                                 // Convert to Yosys format

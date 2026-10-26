@@ -1,0 +1,10 @@
+# The read must succeed, the specialisation must carry a VALID name, and the
+# parameter must keep its real value (only the name is digested).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 1 t:$paramod*child*
+select -assert-count 1 c:u r:msg="a message with spaces" %i
+proc
+opt_clean
+check -assert
+select -assert-count 1 t:$paramod*child*

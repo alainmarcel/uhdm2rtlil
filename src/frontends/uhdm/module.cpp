@@ -3016,7 +3016,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         // turning the cell into a blackbox so synth picked the
                         // wrong top.  Keep both namings identical.
                         if (!val_str.empty()) {
-                            param_string += "\\" + param_name + "=\"" + val_str + "\"";
+                            param_string += "\\" + param_name + "=\"" + param_value_for_name(val_str) + "\"";
                             has_params = true;
                         }
                     } else if (!val_str.empty()) {
@@ -5288,6 +5288,30 @@ std::string UhdmImporter::get_src_attribute(const any* uhdm_obj) {
 }
 
 // Add source attribute to RTLIL object
+// A STRING parameter's value is part of the specialised module's NAME
+// (`$paramod\<mod>\MSG="..."`), and an RTLIL identifier may hold neither a
+// space nor a control character: NVDLA's assertion wrappers pass a message
+// string, and read_uhdm aborted with
+//   Found control character or space (0x20) in string
+//   '$paramod\nv_assert_no_x\severity_level=...\message="..."'
+// on 7 of its blocks (NV_NVDLA_BDMA_csb, _cq, _load, _store, the BDMA FIFOs).
+// Such a value is replaced by a digest of itself: the name stays valid and
+// still distinguishes two instances with different strings.  The PARAMETER
+// keeps its real value -- only the name is digested -- and every site that
+// builds such a name calls this, so the module definition and the instance's
+// cell type still agree.
+std::string UhdmImporter::param_value_for_name(const std::string& value) {
+    bool clean = true;
+    for (unsigned char c : value)
+        if (c <= 0x20 || c == 0x7f || c == '\\' || c == '"') { clean = false; break; }
+    if (clean) return value;
+    uint64_t h = 1469598103934665603ULL;        // FNV-1a over the whole value
+    for (unsigned char c : value) { h ^= c; h *= 1099511628211ULL; }
+    char buf[32];
+    snprintf(buf, sizeof(buf), "str%016llx", (unsigned long long)h);
+    return std::string(buf);
+}
+
 void UhdmImporter::add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const any* uhdm_obj) {
     std::string src = get_src_attribute(uhdm_obj);
     if (!src.empty()) {
