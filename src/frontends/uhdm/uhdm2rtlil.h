@@ -1520,6 +1520,7 @@ struct UhdmImporter {
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
     std::string get_src_attribute(const UHDM::any* uhdm_obj);
+    static std::string param_value_for_name(const std::string& value);
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     UHDM::VectorOfany *begin_block_stmts(const any *stmt);
     void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
