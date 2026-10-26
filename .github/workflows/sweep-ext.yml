@@ -142,6 +142,11 @@ jobs:
             shards: 4
             timeout: 600
             mem_limit_kb: "7000000"
+          # ultraembedded/biriscv @ be4b5d3b: the dual-issue RV32 core, its
+          # caches and their RAMs, the TCM and the two SoC tops.  44 rows,
+          # ~50 min of row time measured locally.
+          - family: biriscv
+            timeout: 480
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

@@ -1,0 +1,57 @@
+{
+ "title": "biRISC-V (ultraembedded/biriscv)",
+ "url": "https://github.com/ultraembedded/biriscv",
+ "repos": [
+  {
+   "url": "https://github.com/ultraembedded/biriscv",
+   "commit": "6af9c4be5a0807d368eaad5e49af52322e31d073",
+   "dir": "biriscv"
+  }
+ ],
+ "roots": [
+  "biriscv/src/core/*.v",
+  "biriscv/src/dcache/*.v",
+  "biriscv/src/icache/*.v",
+  "biriscv/src/tcm/*.v",
+  "biriscv/src/top/*.v"
+ ],
+ "incdirs": [
+  "biriscv/src/core"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^biriscv_xilinx_2r1w$",
+  "^RAM16X1D$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The dual-issue superscalar RV32IMZicsr core: core, instruction / data caches,",
+  "tightly-coupled memory and the two tops (riscv_top with caches, riscv_tcm_top).",
+  "biriscv_xilinx_2r1w wraps the Xilinx RAM16X1D primitive the repository does not define; excluded with it.",
+  "biriscv_fetch uses the PRIV_* macros of src/core/biriscv_defs.v without including it (the FuseSoC core compiles the defs file first): always_srcs puts it in every closure.",
+  "",
+  "First local sweep 2026-10-26 (44 rows): 28 / 40 comparable proven, 37 / 40",
+  "elaborate, 0 undriven, every co-simulated row PASS.  Left: 6 SAT-budget rows",
+  "(the multiplier, the register file, the caches\u2019 RAMs and riscv_tcm_top, which",
+  "runs over the memory cap), 3 rows whose miter cannot run (the two single-port",
+  "RAM wrappers reach a $mem_v2 satgen has no model for, biriscv_trace_sim is",
+  "simulation-only), 4 rows without a read_slang reference (it rejects biRISC-V\u2019s",
+  "use-before-declaration in the caches), and four `differs` rows -- biriscv_exec,",
+  "_frontend, _npc and dcache_core_tag_ram -- all with a clean co-simulation: the",
+  "branch-predictor leads tracked from the first sweep."
+ ],
+ "always_srcs": [
+  "biriscv/src/core/biriscv_defs.v"
+ ],
+ "slang_flags": [
+  "--single-unit"
+ ]
+}
