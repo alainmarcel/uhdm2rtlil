@@ -541,6 +541,10 @@ struct UhdmImporter {
     // through the comb machinery), so a second `arr[j] <= v` in a sibling
     // `if` chained onto the REGISTERED value and discarded the first write.
     RTLIL::CaseRule* ff_inflight_fold_root_ = nullptr;
+    // Cases whose if / else arms are being imported right now (outermost
+    // first): their already-emitted sibling switches are not reachable from
+    // the root until the enclosing switch is attached, after the arm.
+    std::vector<RTLIL::CaseRule*> fold_enclosing_cases_;
 
     // Struct typespec of the function return value currently being inlined, so
     // process_stmt_to_case can map `funcname.field = ...` (a hier_path LHS) to
@@ -1341,7 +1345,8 @@ struct UhdmImporter {
     // the read-modify-write base of a DYNAMIC packed write inside an
     // always_ff body, where current_comb_values is empty by design.
     RTLIL::SigSpec case_inflight_value(RTLIL::CaseRule* root,
-                                       const RTLIL::SigSpec& tgt);
+                                       const RTLIL::SigSpec& tgt,
+                                       const RTLIL::SigSpec* base = nullptr);
     bool emit_dynamic_packed_select_write(
         const UHDM::any* lhs_e,
         const UHDM::any* rhs_any,

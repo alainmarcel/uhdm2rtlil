@@ -13896,6 +13896,9 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
 // Shared implementation.  `slice_off >= 0` writes only `[slice_off +: slice_w]`
 // of the selected element (`mem[addr][i*8 +: 8] <= wdata[...]`, the byte-enable
 // register bank); otherwise the whole element is written.
+static bool case_tree_contains(const RTLIL::CaseRule* root, const RTLIL::CaseRule* needle);
+static bool case_tree_writes_target(const RTLIL::CaseRule* root, const RTLIL::SigSpec& tgt);
+
 bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
         const std::string& base_name,
         const UHDM::any* idx_expr,
@@ -14021,6 +14024,39 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
             else {
                 RTLIL::Wire* tw0 = module->wire("$0\\" + ename);
                 want = tw0 ? RTLIL::SigSpec(tw0) : RTLIL::SigSpec(ew);
+            }
+            // ... and a write in a SIBLING arm earlier in the same body
+            // (`if (push_w) valid0_q[wr_ptr_q] <= 1'b1;  if (pop1_w)
+            // valid0_q[rd_ptr_q] <= 1'b0;` -- biRISC-V's fetch_fifo): the
+            // pending action lives in the other arm's case, not this one.
+            // Fold the element's value-so-far from the process's switches, as
+            // emit_dynamic_packed_select_write does; the async-reset path
+            // hands the fold root over in ff_inflight_fold_root_.  Without it
+            // the pop arm's muxes started from the REGISTERED element and,
+            // both arms firing in one cycle, the push was dropped.
+            RTLIL::CaseRule* fold_root = current_comb_process
+                ? &current_comb_process->root_case : ff_inflight_fold_root_;
+            if (fold_root && want.size() == elem_w &&
+                (case_tree_writes_target(fold_root, want) ||
+                 std::any_of(fold_enclosing_cases_.begin(), fold_enclosing_cases_.end(),
+                             [&](RTLIL::CaseRule* c) { return case_tree_writes_target(c, want); }))) {
+                RTLIL::SigSpec fold = case_tree_writes_target(fold_root, want)
+                                          ? case_inflight_value(fold_root, want)
+                                          : RTLIL::SigSpec(want);
+                // A switch is attached to its parent case only AFTER its arms
+                // are imported, so inside an `else if (flush_i) ... else`
+                // arm the ENCLOSING case -- the one holding the sibling
+                // `if (push_w)` switch already emitted -- is not reachable
+                // from the root yet.  The if handlers record the cases whose
+                // arms are being imported; fold those on top of the root
+                // fold (fetch_fifo: reset for-loop clear, flush arm, push /
+                // pop in one cycle).
+                for (RTLIL::CaseRule* enc : fold_enclosing_cases_)
+                    if (!case_tree_contains(fold_root, enc) &&
+                        case_tree_writes_target(enc, want))
+                        fold = case_inflight_value(enc, want, &fold);
+                if (fold.size() == elem_w && fold != want)
+                    cur = fold;
             }
             for (int ai = (int)case_rule->actions.size() - 1; ai >= 0; ai--) {
                 if (case_rule->actions[ai].first == want &&
@@ -16082,9 +16118,38 @@ bool UhdmImporter::emit_dynamic_array_elem_field_write(
 // chaining onto the previous write UNCONDITIONALLY is wrong too: iteration 1
 // must start from `wr[0] ? v0 : raw`, not from v0.  Fold the emitted
 // structure instead, which carries exactly those conditions.
+// Does any action in this case tree assign exactly `tgt`?  case_inflight_value
+// returns `tgt` itself when nothing matches, but it still builds one Mux per
+// switch on the way -- muxes whose inputs are the target, so using that value
+// as the write's "current" makes the temp read itself: a combinational loop
+// through `$0\<sig>` (dyn_write_1bit_unpacked_array / overlapping_dyn_vector
+// _writes, whose FLAT array temp no action names per element).  Fold only when
+// there is really an earlier write to chain onto.
+static bool case_tree_writes_target(const RTLIL::CaseRule* root, const RTLIL::SigSpec& tgt) {
+    if (!root) return false;
+    for (auto& a : root->actions)
+        if (a.first == tgt && a.second.size() == tgt.size())
+            return true;
+    for (auto sw : root->switches)
+        for (auto cs : sw->cases)
+            if (case_tree_writes_target(cs, tgt)) return true;
+    return false;
+}
+
+// Is `needle` reachable from `root` through its switches' cases?
+static bool case_tree_contains(const RTLIL::CaseRule* root, const RTLIL::CaseRule* needle) {
+    if (!root || !needle) return false;
+    if (root == needle) return true;
+    for (auto sw : root->switches)
+        for (auto cs : sw->cases)
+            if (case_tree_contains(cs, needle)) return true;
+    return false;
+}
+
 RTLIL::SigSpec UhdmImporter::case_inflight_value(RTLIL::CaseRule* root,
-                                                 const RTLIL::SigSpec& tgt) {
-    RTLIL::SigSpec acc = tgt;
+                                                 const RTLIL::SigSpec& tgt,
+                                                 const RTLIL::SigSpec* base) {
+    RTLIL::SigSpec acc = base ? *base : tgt;
     if (!root) return acc;
     std::function<void(RTLIL::CaseRule*, RTLIL::SigSpec&)> walk =
         [&](RTLIL::CaseRule* c, RTLIL::SigSpec& cur) {
@@ -21018,7 +21083,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 if (auto then_stmt = if_stmt->VpiStmt()) {
                     if (mode_debug)
                         uhdm_trace("        Importing then statement in case\n");
+                    fold_enclosing_cases_.push_back(case_rule);
                     import_statement_comb(then_stmt, true_case);
+                    fold_enclosing_cases_.pop_back();
                 }
                 auto then_ccv = current_comb_values;
                 current_comb_values = saved_ccv;
@@ -21102,7 +21169,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
                     if (mode_debug)
                         uhdm_trace("        Importing then statement in case\n");
+                    fold_enclosing_cases_.push_back(case_rule);
                     import_statement_comb(then_stmt, true_case);
+                    fold_enclosing_cases_.pop_back();
                 }
 
                 sw->cases.push_back(true_case);
@@ -21120,7 +21189,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     if (mode_debug)
                         uhdm_trace("        Importing else statement in case (type=%s)\n",
                             UhdmName(else_stmt->UhdmType()).c_str());
+                    fold_enclosing_cases_.push_back(case_rule);
                     import_statement_comb(else_stmt, else_case);
+                    fold_enclosing_cases_.pop_back();
                     else_ccv = current_comb_values;
                     current_comb_values = saved_ccv;
 
