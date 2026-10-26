@@ -1,0 +1,9 @@
+# Push and pop in the same cycle at different indexes: the pushed element must
+# read 1 on the next cycle.  Value proof, independent of read_verilog; the
+# formal check against read_verilog fails without the fix as well.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+async2sync
+sat -verify -seq 2 -set-init-zero -set-at 1 rst_i 0 -set-at 2 rst_i 0 -set-at 1 flush_i 0 -set-at 2 flush_i 0 -set-at 1 push_w 1 -set-at 1 pop1_w 1 -set-at 1 wr_ptr_q 1 -set-at 1 rd_ptr_q 0 -set-at 2 rd_ptr_q 1 -prove-skip 1 -prove valid0_o 1
