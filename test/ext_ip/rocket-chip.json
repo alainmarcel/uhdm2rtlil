@@ -1,0 +1,72 @@
+{
+ "title": "Rocket Chip (chipsalliance/rocket-chip) -- DefaultConfig",
+ "url": "https://github.com/chipsalliance/rocket-chip",
+ "repos": [
+  {
+   "url": "https://github.com/chipsalliance/rocket-chip",
+   "commit": "ece7b9ad544b07df39cd13b6fd7236562a26355d",
+   "dir": "rocket-chip",
+   "submodules": "recursive"
+  }
+ ],
+ "generate": {
+  "cwd": "rocket-chip",
+  "marker": "rocket-chip/out/emulator/freechips.rocketchip.system.TestHarness/freechips.rocketchip.system.DefaultConfig/mfccompiler/compile.dest/filelist.f",
+  "cmds": [
+   [
+    "bash",
+    "$EXT_IP_HARNESS/rocket_setup.sh"
+   ]
+  ],
+  "timeout": 5400
+ },
+ "roots": [
+  "rocket-chip/out/emulator/freechips.rocketchip.system.TestHarness/freechips.rocketchip.system.DefaultConfig/mfccompiler/compile.dest/*.sv"
+ ],
+ "always_srcs": [
+  "rocket-chip/src/main/resources/vsrc/plusarg_reader.v",
+  "rocket-chip/src/main/resources/vsrc/EICG_wrapper.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^TestHarness$",
+  "^SimDTM$",
+  "^SimAXIMem(_\\d+)?$",
+  "^TLMonitor(_\\d+)?$",
+  "^plusarg_reader$",
+  "^PlusArgTimeout$",
+  "^mem_33554432x64$",
+  "^AXI4RAM$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The Chisel generator's DefaultConfig (one Rocket core with FPU, L1 caches,",
+  "PTW, TileLink fabric, debug module, PLIC / CLINT) emitted by firtool as one",
+  "SystemVerilog file per module -- the same shape as the XiangShan core flow.",
+  "The generation runs test/ext_ip/rocket_setup.sh (mill, firtool, dtc, the",
+  "submodules, `make verilog`); JDK 17 is the one prerequisite assumed present.",
+  "Excluded: the TestHarness and its simulation-only models (SimDTM, SimAXIMem,",
+  "plusarg_reader / PlusArgTimeout) and the TLMonitor assertion checkers, which",
+  "are verification scaffolding, not hardware.",
+  "",
+  "always_srcs: the two Verilog blackboxes the generated modules instantiate",
+  "(plusarg_reader in 36 modules, EICG_wrapper in 1) live in src/main/resources/vsrc,",
+  "not in compile.dest; without them read_slang has no reference for 54 rows.",
+  "Excluded mem_33554432x64 / AXI4RAM: the TestHarness-scale AXI backing memory",
+  "(33554432 x 64 = 2 Gbit); read_uhdm stops on RTLIL::WIDTH_LIMIT reading it --",
+  "a reader lead, kept out of the family until it is fixed.",
+  "",
+  "First local sweep 2026-10-25 (235 rows): 176 / 235 proven, 235 / 235 elaborate,",
+  "189 co-sim PASS, 43 rows with read_uhdm co-sim divergences (slang clean) --",
+  "the DivSqrt*_small, Repeater_TLBundleA_*, TLInterconnectCoupler_* and the",
+  "AXI4 fragmenter / deinterleaver families among them: a firtool-pattern lead,",
+  "landed with the manifest and worked from the nightly."
+ ]
+}
