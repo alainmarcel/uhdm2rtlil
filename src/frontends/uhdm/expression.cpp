@@ -11063,6 +11063,24 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         auto bt = ff_blocking_temps.find(ref_name);
         if (bt != ff_blocking_temps.end())
             return bt->second;
+        // A BLOCK-LOCAL variable (`automatic logic _GEN;` at the top of the
+        // always block, which is how firtool writes every register update)
+        // is registered under its SCOPED wire name, `$unnamed_block$1._GEN`,
+        // because the write resolved the LHS through name_map to that wire.
+        // A read inside an if / else arm arrives here with the bare name,
+        // missed the entry and fell back to the wire -- the value of the
+        // PREVIOUS cycle, since the block wire is sync-updated like a
+        // register.  Rocket Chip's Repeater computed `full <= ... (_GEN |
+        // full)` from the stale _GEN (70 co-simulated divergences; the same
+        // shape in its TLFragmenter, DivSqrt and AXI4 modules).
+        auto nm = name_map.find(ref_name);
+        if (nm != name_map.end() && nm->second) {
+            std::string wn = nm->second->name.str();
+            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+            auto bt2 = ff_blocking_temps.find(wn);
+            if (bt2 != ff_blocking_temps.end())
+                return bt2->second;
+        }
     }
 
     // Unrolled loop variable: substitute its current value.  This must run
