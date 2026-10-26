@@ -17796,8 +17796,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 //   stall_raw[0] = xrej ? 0 : stall_rs1[0]||stall_rs2[0]||...
                 // still lost to `if (rs1_has_raw) stall_raw[i] = 1'b1` in the
                 // unrolled loop above it.
-                if (!in_always_ff_body_mode && !in_always_ff_context)
-                    remove_target_from_switches(&proc->root_case, mapped);
+                //
+                // In an always_ff body too: a later non-blocking write to the
+                // same bits wins (LRM 9.4.2, the last NBA scheduled in a time
+                // step), exactly as the whole-wire branch above already
+                // applies.  This branch alone kept an always_ff guard, so
+                // ZipCPU's pffifo
+                //     if (i_reset) o_pc <= 0; else if (...) o_pc <= ...;
+                //     o_pc[$clog2(INSN_WIDTH/8)-1:0] <= 0;
+                // left the full-width conditional writes in the switch, which
+                // RTLIL applies AFTER the root action: the low bits were never
+                // cleared (103 co-simulated divergences, slang clean).
+                remove_target_from_switches(&proc->root_case, mapped);
                 proc->root_case.actions.push_back(RTLIL::SigSig(mapped, rhs));
                 // In always_ff, a same-cycle BLOCKING write to a bit/part-select
                 // must be visible to later reads of the same signal (e.g. the

@@ -1,0 +1,7 @@
+# The two low bits of o_pc are cleared by the trailing write on EVERY clock,
+# whatever the branch taken.  Without the fix they follow i_pc after i_new_pc.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+sat -verify -seq 3 -set-init-zero -prove-skip 1 -prove o_pc[1:0] 2'b00
