@@ -1,0 +1,12 @@
+# The flops must survive and carry the initial block's value as `init`.  A
+# formal check against read_verilog fails without the fix too (the register is
+# a constant), but this names the defect: a continuous driver where there
+# should be an init attribute.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+select -assert-count 3 t:$dff t:$dffe t:$sdff t:$sdffe t:$adff %u
+select -assert-count 1 w:q a:init=8'b00000000 %i
+select -assert-count 1 w:r a:init=8'b01011010 %i
+select -assert-count 1 w:v a:init=1'b1 %i

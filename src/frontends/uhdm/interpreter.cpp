@@ -61,6 +61,33 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
                 }
             }
 
+            // A PARAMETER (`initial if (OPT_INITIAL) q = 0;`, `r = RESET_VALUE`):
+            // the instance's own value first -- it lives in
+            // module->parameter_default_values, and an override is not in the
+            // UHDM parameter's VpiValue -- then the declaration's value.  Until
+            // this a parameter read 0 here, so a parameter-guarded `if` took the
+            // wrong arm and a parameter on the right-hand side initialised to 0.
+            if (const any* actual = ref->Actual_group()) {
+                if (actual->UhdmType() == uhdmparameter) {
+                    RTLIL::IdString pid = RTLIL::escape_id(name);
+                    if (module && module->parameter_default_values.count(pid) &&
+                        module->parameter_default_values.at(pid).size() > 0) {
+                        return module->parameter_default_values.at(pid).as_int();
+                    }
+                    auto param = any_cast<const parameter*>(actual);
+                    if (param && !param->VpiValue().empty()) {
+                        RTLIL::Const c = extract_const_from_value(std::string(param->VpiValue()));
+                        if (c.size() > 0) return c.as_int();
+                    }
+                } else if (actual->UhdmType() == uhdmenum_const) {
+                    auto ec = any_cast<const enum_const*>(actual);
+                    if (ec && !ec->VpiValue().empty()) {
+                        RTLIL::Const c = extract_const_from_value(std::string(ec->VpiValue()));
+                        if (c.size() > 0) return c.as_int();
+                    }
+                }
+            }
+
             return 0;
         }
 
