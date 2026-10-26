@@ -1,0 +1,20 @@
+# The declaration attributes must reach the RTLIL memories.  The formal check
+# against read_verilog cannot see this: both sides are then prepared by the
+# SAME passes, so a dropped `no_rw_check` is dropped on neither side of that
+# miter.  Only the slang miter and the sweeps' read_slang comparison exposed
+# it (LiteX / VexRiscv InstructionCache).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 2 m:* a:no_rw_check %i
+select -assert-count 2 m:* a:ram_style=block %i
+# ... and memory_dff must therefore act on them: once the read-data register is
+# merged into the read port (the sweeps' `opt; memory_dff` order), a
+# read-during-write collision on a no_rw_check memory is don't-care.
+proc
+opt_clean
+opt
+memory_dff
+memory_collect
+select -assert-count 2 t:$mem_v2 a:no_rw_check %i
+select -assert-count 2 t:$mem_v2 r:RD_CLK_ENABLE=1'1 %i
+select -assert-count 2 t:$mem_v2 r:RD_COLLISION_X_MASK=1'1 %i
