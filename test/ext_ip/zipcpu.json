@@ -1,0 +1,48 @@
+{
+ "title": "ZipCPU (ZipCPU/zipcpu)",
+ "url": "https://github.com/ZipCPU/zipcpu",
+ "repos": [
+  {
+   "url": "https://github.com/ZipCPU/zipcpu",
+   "commit": "42606d2d6ef55df313772232977621b2d72f0159",
+   "dir": "zipcpu"
+  }
+ ],
+ "roots": [
+  "zipcpu/rtl/core/*.v",
+  "zipcpu/rtl/ex/*.v",
+  "zipcpu/rtl/peripherals/*.v",
+  "zipcpu/rtl/zipdma/*.v",
+  "zipcpu/rtl/*.v"
+ ],
+ "incdirs": [
+  "zipcpu/rtl",
+  "zipcpu/rtl/core"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "ZipCPU core (rtl/core), its execution units (rtl/ex), peripherals and DMA, and the",
+  "wrappers in rtl/.  The formal properties live under `ifdef FORMAL and are not",
+  "compiled; sim/rtl holds simulation-only models and is left out.",
+  "",
+  "First local sweep 2026-10-26 (51 rows): 47 / 50 comparable proven, 50 / 50",
+  "elaborate, 0 undriven, 49 co-sim PASS.  Open: two SAT-budget rows (cpuops,",
+  "mpyop -- the 32-bit multiplier and its operand mux, both co-sim PASS) and",
+  "zipmmu, whose 20 co-simulated divergences are a SURELOG defect, not a reader",
+  "one: an always block inside a bare `generate ... endgenerate` region that",
+  "also declares a variable (`generate integer i; always @(posedge) ...`) is",
+  "dropped from UHDM entirely, so the TLB priority encoder has no driver.",
+  "zipwb has no read_slang reference ($finish in a non-simulation path)."
+ ]
+}

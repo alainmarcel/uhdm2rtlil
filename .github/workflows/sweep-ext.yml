@@ -147,6 +147,11 @@ jobs:
           # ~50 min of row time measured locally.
           - family: biriscv
             timeout: 480
+          # ZipCPU (dgisselq/zipcpu @ 7f1f0b4a): the CPU core, its caches, the
+          # Wishbone / AXI peripherals and the four SoC tops.  51 rows, ~40 min
+          # of row time measured locally.
+          - family: zipcpu
+            timeout: 420
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
