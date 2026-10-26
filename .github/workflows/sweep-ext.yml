@@ -152,6 +152,10 @@ jobs:
           # of row time measured locally.
           - family: zipcpu
             timeout: 420
+          # Wren6991/Hazard3 @ 8af99293: the RV32 core, its ALU / multipliers,
+          # the AHB / APB / AXI front-ends and the debug module.  25 rows,
+          # ~15 min of row time measured locally.
+          - family: hazard3
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
