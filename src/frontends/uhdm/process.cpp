@@ -4745,6 +4745,58 @@ static bool initial_is_compile_time(const any* stmt) {
 // end up as two competing drivers and the second one is dropped.  The
 // comb path uses a single `$0\s` temp wire and sequences the slice
 // writes correctly — route any initial block with partial writes to it.
+// Is every statement of the block a plain assignment of a compile-time
+// constant to a whole signal or to a CONSTANT slice of one (`initial
+// r_op_pc[0] = 1'b0;`, `initial begin s = '0; s[7:4] = 4'hA; end`)?  Such a
+// block is a set of init values, which the sync path emits as `init`
+// attributes plus one init-only driver per wire; the comb path would make a
+// continuous driver of each slice.
+static bool initial_is_const_slice_writes(const any* stmt) {
+    if (!stmt) return false;
+    switch (stmt->VpiType()) {
+        case vpiBegin: {
+            auto b = any_cast<const UHDM::begin*>(stmt);
+            if (b->Stmts())
+                for (auto child : *b->Stmts())
+                    if (!initial_is_const_slice_writes(child)) return false;
+            return true;
+        }
+        case vpiNamedBegin: {
+            auto b = any_cast<const UHDM::named_begin*>(stmt);
+            if (b->Stmts())
+                for (auto child : *b->Stmts())
+                    if (!initial_is_const_slice_writes(child)) return false;
+            return true;
+        }
+        case vpiAssignment: {
+            auto a = any_cast<const assignment*>(stmt);
+            if (!a->Lhs() || !expr_is_compile_time(a->Rhs())) return false;
+            switch (a->Lhs()->VpiType()) {
+                case vpiRefObj:
+                    return true;
+                case vpiBitSelect: {
+                    auto bs = any_cast<const bit_select*>(a->Lhs());
+                    return expr_is_compile_time(bs->VpiIndex());
+                }
+                case vpiPartSelect: {
+                    auto ps = any_cast<const part_select*>(a->Lhs());
+                    return expr_is_compile_time(ps->Left_range()) &&
+                           expr_is_compile_time(ps->Right_range());
+                }
+                case vpiIndexedPartSelect: {
+                    auto ips = any_cast<const indexed_part_select*>(a->Lhs());
+                    return expr_is_compile_time(ips->Base_expr()) &&
+                           expr_is_compile_time(ips->Width_expr());
+                }
+                default:
+                    return false;
+            }
+        }
+        default:
+            return false;
+    }
+}
+
 static bool statement_has_partial_write(const any* stmt) {
     if (!stmt) return false;
     int type = stmt->VpiType();
@@ -5583,10 +5635,20 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     bool const_control_flow = use_comb_approach && uhdm_process->Stmt() &&
                               initial_is_compile_time(uhdm_process->Stmt());
 
+    // A block of constant writes to whole signals and CONSTANT slices
+    // (`initial r_op_pc[0] = 1'b0;`, ZipCPU) is a set of init values: the
+    // sync path merges the slices into one `init` per wire.  The comb path
+    // made each slice a continuous driver that fought the register's flop
+    // (five ZipCPU tops: "Conflicting init values" / driver-driver conflicts).
+    bool const_slice_writes = has_partial_write && !use_comb_approach &&
+                              uhdm_process->Stmt() &&
+                              initial_is_const_slice_writes(uhdm_process->Stmt());
+
     if (has_for_decl || has_local_vars || has_scalar_ctrl_loop || const_control_flow ||
         (has_compound_assign && !use_comb_approach && !has_partial_write)) {
         import_initial_interpreted(uhdm_process, yosys_proc);
-    } else if (use_comb_approach || has_task_call || has_partial_write) {
+    } else if (use_comb_approach || has_task_call ||
+               (has_partial_write && !const_slice_writes)) {
         import_initial_comb(uhdm_process, yosys_proc);
     } else {
         import_initial_sync(uhdm_process, yosys_proc);
@@ -5621,9 +5683,15 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         import_statement_sync(stmt, sync_init, false);
     }
 
-    // Flush pending sync assignments to the sync rule
+    // Flush pending sync assignments to the sync rule, in the order the map
+    // gives them -- which is NOT program order (the map is keyed by LHS), but
+    // which decides who wins when two drivers overlap, so it must not change.
+    // Each action's program position is kept aside for the merge below.
+    std::map<RTLIL::SigSpec, uint64_t> init_seq;
     for (const auto& [lhs, rhs] : pending_sync_assignments) {
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
+        auto it = pending_sync_seq.find(lhs);
+        init_seq[lhs] = it != pending_sync_seq.end() ? it->second : 0;
     }
     pending_sync_assignments.clear();
     pending_sync_seq.clear(); sync_blocking_values.clear();
@@ -5740,8 +5808,64 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         initial_signal_assignments[sig_name] = info;
     };
 
-    for (auto& action : sync_init->actions) {
-        emit_driver(action.first, action.second);
+    // Constant writes to ONE wire -- whole or slices -- are one init value:
+    // `initial begin s = '0; s[7:4] = 4'hA; end` is init 8'hA0, and `initial
+    // r_op_pc[0] = 1'b0;` is init 1'b0 on bit 0 with the other bits
+    // undefined.  Emitting a driver per action gave the wire two init-only
+    // drivers (or one on a SLICE that the register's flop then fought:
+    // driver-driver conflict, "Conflicting init values" in the sweeps' miter
+    // on five ZipCPU tops).  The merge applies that wire's writes in PROGRAM
+    // order (the sequence note_pending_sync() recorded) and emits one driver
+    // where the wire's first action stood, so the order drivers are emitted in
+    // -- which is what decides an overlap -- does not change.
+    //
+    // A wire with an action this cannot merge -- a non-constant value, or a
+    // CONCATENATION of selects (`{o[1:0], o[2]} = 3'b111`, sv-tests
+    // AssignmentToConcatenationWithSelect) -- is left entirely alone.
+    {
+        auto qualifies = [](const RTLIL::SigSig& a) {
+            return a.second.is_fully_const() && a.first.chunks().size() == 1 &&
+                   a.first.chunks().begin()->wire != nullptr &&
+                   a.first.size() == a.second.size();
+        };
+        std::set<const RTLIL::Wire*> excluded;
+        for (auto& action : sync_init->actions)
+            if (!qualifies(action))
+                for (const auto& ch : action.first.chunks())
+                    if (ch.wire) excluded.insert(ch.wire);
+        // Group the RESOLVED actions (the loop above turned `b = a` into a
+        // constant) by wire, in the program order note_pending_sync() recorded.
+        std::map<const RTLIL::Wire*, std::vector<std::pair<uint64_t, RTLIL::SigSig>>> by_wire;
+        for (auto& action : sync_init->actions) {
+            if (!qualifies(action)) continue;
+            const RTLIL::Wire* w = action.first.chunks().begin()->wire;
+            if (excluded.count(w)) continue;
+            auto it = init_seq.find(action.first);
+            by_wire[w].push_back({it != init_seq.end() ? it->second : 0, action});
+        }
+        std::map<const RTLIL::Wire*, RTLIL::SigSpec> merged;
+        for (auto& [w, acts] : by_wire) {
+            std::stable_sort(acts.begin(), acts.end(),
+                             [](const auto& a, const auto& b) { return a.first < b.first; });
+            RTLIL::SigSpec val = (w->attributes.count(ID::init) &&
+                                  w->attributes.at(ID::init).size() == w->width)
+                                     ? RTLIL::SigSpec(w->attributes.at(ID::init))
+                                     : RTLIL::SigSpec(RTLIL::State::Sx, w->width);
+            for (auto& [seq, a] : acts)
+                val.replace(a.first.chunks().begin()->offset, a.second);
+            merged[w] = val;
+        }
+        std::set<const RTLIL::Wire*> emitted;
+        for (auto& action : sync_init->actions) {
+            const RTLIL::Wire* w = action.first.chunks().size() == 1
+                                       ? action.first.chunks().begin()->wire : nullptr;
+            if (w && merged.count(w)) {
+                if (emitted.insert(w).second)
+                    emit_driver(RTLIL::SigSpec(const_cast<RTLIL::Wire*>(w)), merged[w]);
+                continue;
+            }
+            emit_driver(action.first, action.second);
+        }
     }
     delete sync_always;
     delete sync_init;

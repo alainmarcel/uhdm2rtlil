@@ -1,0 +1,11 @@
+# The flops must survive with no second driver on their slices, and carry the
+# merged init values.  Without the fix `check -assert` finds the driver
+# conflicts and only one flop is left.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert
+select -assert-count 2 t:$dff t:$dffe t:$sdff t:$sdffe t:$adff %u
+select -assert-count 1 w:r a:init=4'bxxx0 %i
+select -assert-count 1 w:s a:init=8'b10100000 %i
