@@ -31,7 +31,7 @@ most likely to expose new reader cases.
 | **VexRiscv / NaxRiscv** | SpinalHDL/VexRiscv, SpinalHDL/NaxRiscv | VexRiscv **Swept** (`test/ext_ip/vexriscv.json`, a `sweep-ext.yml` family) at baf7dc82: the GenFull core and its two caches, 3 rows; first local sweep 2026-10-25: 3 / 3 proven, 3 / 3 co-sim PASS, 0 divergences (the LiteX family sweeps the LiteX-shipped VexRiscv build as well). NaxRiscv not started. |
 | **Hazard3** | Wren6991/Hazard3 | RV32IMAC core (the RP2350 core), hand-written SystemVerilog, small. |
 | **SERV** | olofk/serv | **Swept** (`test/ext_ip/serv.json`, a `sweep-ext.yml` family) at f200eb2e: the core, the servant SoC and its peripherals, 29 rows; first local sweep 2026-10-25: 27 / 27 comparable proven, 27 co-sim PASS, 0 divergences. |
-| **biRISC-V, uriscv, ultraembedded cores** | ultraembedded/biriscv, ultraembedded/core_* | Hand-written Verilog cores and I/O blocks (USB, SD, UART); each repo one manifest. |
+| **biRISC-V** | ultraembedded/biriscv | **Swept** (`test/ext_ip/biriscv.json`, a `sweep-ext.yml` family) at be4b5d3b: the dual-issue core, its caches and RAMs, the TCM and the two SoC tops, 44 rows; first local sweep 2026-10-26: 28 / 40 proven, every co-simulated row PASS, 0 undriven (6 SAT-budget rows, 4 branch-predictor `differs` leads). |
 | **SweRVolf / Caravel SweRV** | chipsalliance/VeeRwolf, caravel-swerv-el2 | SoC harnesses around cores we prove; see above. |
 | **OpenPiton** | PrincetonUniversity/openpiton | Manycore framework hosting Ariane (our CVA6); the uncore (NoC, L1.5 / L2 caches) is hand-written Verilog with many `ifdef`s -- the config closure is the work. |
 | **PULPissimo** | pulp-platform/pulpissimo | PULP's single-core microcontroller platform; Bender closure as for Snitch. |
