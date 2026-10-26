@@ -1,0 +1,65 @@
+{
+ "title": "NVDLA (nvdla/hw)",
+ "url": "https://github.com/nvdla/hw",
+ "repos": [
+  {
+   "url": "https://github.com/nvdla/hw",
+   "commit": "8e06b1b9d85aab65b40d43d08eec5ea4681ff715",
+   "dir": "nvdla-hw"
+  }
+ ],
+ "roots": [
+  "nvdla-hw/vmod/nvdla/*/*.v"
+ ],
+ "always_srcs": [
+  "nvdla-hw/vmod/vlibs/*.v",
+  "nvdla-hw/vmod/vlibs/*.vlib",
+  "nvdla-hw/vmod/rams/synth/*.v",
+  "nvdla-hw/vmod/rams/model/*.v"
+ ],
+ "incdirs": [
+  "nvdla-hw/vmod/include",
+  "nvdla-hw/vmod/vlibs",
+  "nvdla-hw/vmod/nvdla/apb2csb",
+  "nvdla-hw/vmod/rams/model",
+  "nvdla-hw/vmod/rams/synth"
+ ],
+ "defines": [
+  "SYNTHESIS",
+  "DESIGNWARE_NOEXIST"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^vmw_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "nvdla/hw master = the nv_full configuration as shipped in vmod/ (the",
+  "template-generated Verilog is checked in, so no tmake step).  vmod/nvdla is",
+  "(DW_minmax, DW_lsd) library, vmod/rams/model the behavioural RAM models;",
+  "vmod/rams/synth defines the same nv_ram_* names as synthesis models and is",
+  "left out so each RAM has one definition.",
+  "",
+  "The gate / flop / RAM libraries NVDLA instantiates -- vmod/vlibs (the",
+  "`nv_assert_no_x` assertion wrappers and the GTECH-style cells) and",
+  "vmod/rams (the nv_ram_rws_* wrappers and their behavioural models) -- are",
+  "always_srcs, not roots: every design module needs them to elaborate (107",
+  "rows read-failed on \"no definition for nv_assert_no_x\" without them) but",
+  "they are library cells, not rows to sweep.",
+  "",
+  "Excluded `^vmw_`: the flop-RAM wrappers NVDLA declares under `ifdef EMU`",
+  "(emulation only, 39 of them).  They appear in the module list because the",
+  "harness reads the source text, but no definition of them is elaborated.",
+  "",
+  "First local survey 2026-10-26 (914 rows after that exclusion): 907 read with",
+  "0 undriven.  The 7 that do not: the whole-accelerator rows NV_nvdla,",
+  "NV_NVDLA_partition_a / _o, NV_NVDLA_cacc, NV_NVDLA_cbuf and",
+  "NV_NVDLA_CACC_assembly_buffer, which run past the row budget (the assembly",
+  "buffer alone spends 900 s expanding its 32x288 RAM banks into per-bit",
+  "latches) -- the same whole-core class as BlackParrot -- and NV_NVDLA_ssync3d,",
+  "which instantiates `p_STRICTSYNC3DOTM`, a synchroniser cell no file in the repository defines."
+ ]
+}

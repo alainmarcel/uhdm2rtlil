@@ -156,6 +156,14 @@ jobs:
           # the AHB / APB / AXI front-ends and the debug module.  25 rows,
           # ~15 min of row time measured locally.
           - family: hazard3
+          # nvdla/hw @ 8e06b1b9: NVDLA's own RTL -- the convolution, SDP, PDP,
+          # CDP and BDMA pipelines, the CSB / APB interfaces and the glue.
+          # The gate / flop / RAM libraries it instantiates (vmod/vlibs,
+          # vmod/rams) are always_srcs, not rows.  953 rows: eight shards.
+          - family: nvdla
+            shards: 8
+            timeout: 330
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
