@@ -8953,7 +8953,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // cast) returns a GARBAGE constant with invalidValue=true — CVA6
         // decoder folded every INTERRUPTS.* field to 1'b1 through this.
         if (res && !invalidValue && res->UhdmType() == uhdmconstant) {
-            return import_constant(dynamic_cast<const UHDM::constant*>(res));
+            RTLIL::SigSpec folded = import_constant(dynamic_cast<const UHDM::constant*>(res));
+            // ExprEval sizes a folded result as a 64-bit integer when the
+            // operation carries no typespec of its own.  A reduction, logical
+            // or relational operator is ONE bit by definition (LRM 11.6.1),
+            // whatever its operands' widths: `|EXTENSION_ZCMP` over a
+            // parameter came back as 64'1, so Hazard3's
+            // `casez ({is_32bit, |EXTENSION_ZCMP, instr[15:0]})` compared an
+            // 81-bit selector against 18-bit patterns -- the 32-bit-instruction
+            // arm could never match and every 32-bit rs1 predecode fell to the
+            // default (245 co-simulated divergences on hazard3_frontend).
+            switch (op_type) {
+                case vpiNotOp: case vpiUnaryAndOp: case vpiUnaryNandOp:
+                case vpiUnaryOrOp: case vpiUnaryNorOp: case vpiUnaryXorOp:
+                case vpiUnaryXNorOp: case vpiEqOp: case vpiNeqOp:
+                case vpiCaseEqOp: case vpiCaseNeqOp: case vpiGtOp: case vpiGeOp:
+                case vpiLtOp: case vpiLeOp: case vpiLogAndOp: case vpiLogOrOp:
+                    if (folded.size() > 1)
+                        folded = folded.extract(0, 1);
+                    break;
+                default:
+                    break;
+            }
+            return folded;
         }
     }
 

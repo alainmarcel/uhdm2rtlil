@@ -1,0 +1,11 @@
+# Value assertions, independent of read_verilog: the folded operators must be
+# one bit wide, so the concatenations line up.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+sat -verify -prove y[3] a -prove y[2] 1'b1 -prove y[1:0] b
+sat -verify -prove w 5'b00101
+sat -verify -set a 1 -set b 0 -prove z 4'b0001
+sat -verify -set a 0 -set b 3 -prove z 4'b0010
+sat -verify -set a 1 -set b 3 -prove z 4'b0000
