@@ -121,6 +121,12 @@ jobs:
           # its peripherals; the board tops that instantiate vendor PLL / IO
           # primitives are excluded in the manifest.  29 rows, ~2 min of row time.
           - family: serv
+          # enjoy-digital/litex @ 7457e137 (release 2026.08): the litex_sim SoC
+          # around VexRiscv, emitted by Migen; the manifest's generate step runs
+          # litex_setup.py (clones + installs the LiteX ecosystem at the release
+          # tag, ~1 GB) and litex_sim --no-compile.  4 rows, ~9 min of row time.
+          - family: litex
+            timeout: 600
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

@@ -35,7 +35,7 @@ most likely to expose new reader cases.
 | **SweRVolf / Caravel SweRV** | chipsalliance/VeeRwolf, caravel-swerv-el2 | SoC harnesses around cores we prove; see above. |
 | **OpenPiton** | PrincetonUniversity/openpiton | Manycore framework hosting Ariane (our CVA6); the uncore (NoC, L1.5 / L2 caches) is hand-written Verilog with many `ifdef`s -- the config closure is the work. |
 | **PULPissimo** | pulp-platform/pulpissimo | PULP's single-core microcontroller platform; Bender closure as for Snitch. |
-| **LiteX** | enjoy-digital/litex | Migen-generated SoCs: emit one Verilog file per configuration, then sweep; the peripheral library (LiteDRAM, LiteEth) comes with it. |
+| **LiteX** | enjoy-digital/litex | **Swept** (`test/ext_ip/litex.json`, a `sweep-ext.yml` family) at release 2026.08: the litex_sim SoC around VexRiscv emitted by Migen plus the VexRiscv core, 4 rows; first local sweep 2026-10-25: 3 / 4 proven, 4 / 4 co-sim PASS, 0 divergences (InstructionCache `differs` formal-only). Other CPU types (picorv32, ibex, serv, femtorv) and board targets are one `--cpu-type` / target each. |
 | **ZipCPU + wishbone peripherals** | ZipCPU/zipcpu, wbuart32, sdspi, ... | Hand-written Verilog with formal properties already in the source (`ifdef FORMAL`); several small repos, one manifest each. |
 | **NVDLA** | nvdla/hw | The largest open accelerator (7k★), Verilog generated from a template language; the emitted `outdir/*/vmod` tree is what to sweep. |
 | **Gemmini, VTA** | ucb-bar/gemmini, apache/tvm-vta | Chisel accelerators; emitted SystemVerilog through the XiangShan-core flow. |

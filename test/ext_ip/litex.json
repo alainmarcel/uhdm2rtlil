@@ -1,0 +1,49 @@
+{
+ "title": "LiteX (enjoy-digital/litex) -- the simulation SoC around VexRiscv",
+ "url": "https://github.com/enjoy-digital/litex",
+ "repos": [
+  {
+   "url": "https://github.com/enjoy-digital/litex",
+   "commit": "7457e13793c688736becc5c584ad5c1bf3376a8c",
+   "dir": "litex/litex"
+  }
+ ],
+ "generate": {
+  "cwd": "litex",
+  "marker": "litex/build/sim_vexriscv/gateware/sim.v",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "python3 litex/litex_setup.py --init --install --user --tag 2026.08 && export PATH=$HOME/.local/bin:$PATH && litex_sim --cpu-type=vexriscv --output-dir=build/sim_vexriscv --no-compile"
+   ]
+  ],
+  "timeout": 3600
+ },
+ "roots": [
+  "litex/build/sim_vexriscv/gateware/sim.v",
+  "litex/pythondata-cpu-vexriscv/pythondata_cpu_vexriscv/verilog/VexRiscv.v"
+ ],
+ "incdirs": [
+  "litex/build/sim_vexriscv/gateware"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "Migen emits one flat Verilog module per SoC: `sim` is the litex_sim SoC (CPU",
+  "wrapper, wishbone / CSR interconnect, UART, timer, SRAM / ROM with their",
+  "$readmemh init files) generated with `litex_sim --cpu-type=vexriscv",
+  "--no-compile` at release 2026.08; the CPU comes from the pythondata-cpu-vexriscv",
+  "package litex_setup clones next to litex (VexRiscv.v, the GenFull-like",
+  "configuration LiteX ships).  litex_setup --init clones the LiteX ecosystem",
+  "(migen, litedram, liteeth, ...) into the generate cwd and --install adds them",
+  "to the user site; --tag pins every repository to the release."
+ ]
+}
