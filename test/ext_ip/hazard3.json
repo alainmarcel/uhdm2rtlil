@@ -1,0 +1,46 @@
+{
+ "title": "Hazard3 (Wren6991/Hazard3)",
+ "url": "https://github.com/Wren6991/Hazard3",
+ "repos": [
+  {
+   "url": "https://github.com/Wren6991/Hazard3",
+   "commit": "8af992930f71a69b0e06c38734c1094f41a05ca0",
+   "dir": "Hazard3"
+  }
+ ],
+ "roots": [
+  "Hazard3/hdl/*.v",
+  "Hazard3/hdl/arith/*.v",
+  "Hazard3/hdl/debug/dtm/*.v",
+  "Hazard3/hdl/debug/dm/*.v"
+ ],
+ "incdirs": [
+  "Hazard3/hdl"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^hazard3_ecp5_jtag_dtm$",
+  "^hazard3_xilinx7_jtag_dtm$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The RP2350's RV32IMAC core: the core, its 1-port and 2-port CPU wrappers, the",
+  "arithmetic units and the debug module / transport.  Configuration comes",
+  "from hdl/hazard3_config.vh at its defaults.",
+  "The two vendor JTAG DTM wrappers instantiate FPGA primitives (JTAGG, BUFG) the repository does not define; excluded.",
+  "",
+  "First local sweep 2026-10-26 (25 rows): 21 / 22 comparable proven, 22 / 22",
+  "elaborate, 0 undriven, every co-simulated row PASS.  Left: hazard3_mul_fast",
+  "on the SAT budget (co-sim PASS), and the three rows read_slang cannot give a",
+  "reference for -- the vendor JTAG DTMs and the interrupt controller, whose",
+  "`{0{...}}` replication read_slang rejects."
+ ]
+}
