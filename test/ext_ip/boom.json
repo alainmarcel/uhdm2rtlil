@@ -1,0 +1,113 @@
+{
+ "title": "BOOM (riscv-boom/riscv-boom) -- LargeBoomV4 on rocket-chip DefaultConfig",
+ "url": "https://github.com/riscv-boom/riscv-boom",
+ "repos": [
+  {
+   "url": "https://github.com/riscv-boom/riscv-boom",
+   "commit": "ba03175e0a3cf5c0d5a7f14d385ac1c8998c4428",
+   "dir": "riscv-boom"
+  },
+  {
+   "url": "https://github.com/chipsalliance/rocket-chip",
+   "commit": "ece7b9ad544b07df39cd13b6fd7236562a26355d",
+   "dir": "rocket-chip",
+   "submodules": "recursive"
+  }
+ ],
+ "generate": {
+  "cwd": "riscv-boom",
+  "marker": "riscv-boom/boom_sv/sv/BoomCore.sv",
+  "cmds": [
+   [
+    "bash",
+    "$EXT_IP_HARNESS/boom_setup.sh"
+   ]
+  ],
+  "timeout": 7200
+ },
+ "roots": [
+  "riscv-boom/boom_sv/sv/*.sv"
+ ],
+ "always_srcs": [
+  "rocket-chip/src/main/resources/vsrc/plusarg_reader.v",
+  "rocket-chip/src/main/resources/vsrc/EICG_wrapper.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^TestHarness$",
+  "^SimDTM$",
+  "^SimAXIMem(_\\d+)?$",
+  "^TLMonitor(_\\d+)?$",
+  "^plusarg_reader$",
+  "^PlusArgTimeout$",
+  "^mem_33554432x64$",
+  "^AXI4RAM(_\\d+)?$"
+ ],
+ "seq": 4,
+ "timeout": 420,
+ "want": "proven",
+ "_note": [
+  "",
+  "BOOM v4's LargeBoom core (the out-of-order fetch / rename / issue / execute /",
+  "commit pipeline, its non-blocking D$ with the MSHR file, the TAGE-SC-L and",
+  "BIM / BTB predictors and the load-store unit) inside rocket-chip's",
+  "DefaultConfig SoC, emitted by firtool as one SystemVerilog file per module --",
+  "the same shape as the rocket-chip and XiangShan families.",
+  "",
+  "Why generation is not simply `mill` in the BOOM checkout.  BOOM is a Chisel",
+  "LIBRARY with no elaboration target, and three separate things block the",
+  "obvious routes, all measured on 2026-10-26:",
+  "",
+  " * Its own build.sc resolves rocketchip / cde / hardfloat / diplomacy as",
+  "   `1.6-snapshot` ivy artifacts that are NOT published on Maven Central --",
+  "   `mill boom.compile` fails on all three (chipyard gets them from a local",
+  "   publishLocal).  So boom_setup.sh compiles BOOM as an extra module INSIDE",
+  "   the rocket-chip checkout, which this family clones alongside and which the",
+  "   rocket-chip family already elaborates; mill, firtool 1.162.0 and dtc are",
+  "   installed by rocket_setup.sh under $ROCKET_TOOLS.",
+  " * Only the v4 tree is compiled.  BOOM v3's common/ imports a `pmu` package",
+  "   (CanHavePMUEvents, PMUParams, PMURegistry, PMUScopeKey, PMUTileLink) that",
+  "   lives in chipyard and in neither checkout: all 19 errors of a whole-tree",
+  "   build come from those seven v3 files, while v4 produces only warnings.",
+  " * BOOM ships no elaborable config: every core mixin is",
+  "   `WithNLargeBooms(n: Int = 1)`, and a Scala DEFAULT ARGUMENT is not a",
+  "   no-argument constructor, so the reflection-based loader behind the",
+  "   generator's `--config` cannot instantiate one.  boom_harness/boomsweep/",
+  "   BoomSweepConfigs.scala owns the no-arg wrappers, the way chipyard does,",
+  "   so the family needs no chipyard checkout.",
+  "",
+  "always_srcs: the two Verilog blackboxes the generated modules instantiate",
+  "(plusarg_reader, EICG_wrapper) ship in rocket-chip's src/main/resources/vsrc,",
+  "not in the firtool output -- without them read_slang has no reference.",
+  "Excluded, as in the rocket-chip family: the TestHarness and its",
+  "simulation-only models, the TLMonitor assertion checkers, and the",
+  "TestHarness-scale AXI backing memory (mem_33554432x64 / AXI4RAM), which",
+  "read_uhdm stops on at RTLIL::WIDTH_LIMIT.",
+  "",
+  "First local sweep 2026-10-27 (422 rows, MEM_LIMIT_KB=7000000 as the nightly",
+  "uses): 326 / 422 comparable proven, 418 / 422 elaborate, 379 co-sim PASS,",
+  "0 undriven on every row that elaborated, 9.6 h of row time (hence eight",
+  "shards).",
+  "",
+  "Open: 68 rows exhaust the SAT budget (48 timeout, 20 over the memory cap),",
+  "every one with a clean co-simulation; 4 rows cannot elaborate under the 7 GB",
+  "cap at all -- BoomCore, BoomTile, TilePRCIDomain_1 and ExampleRocketSystem,",
+  "whose source closures are 64 to 108 MB and which abort in Surelog with",
+  "std::bad_alloc, the same whole-core class as BlackParrot; and 24 `differs`",
+  "rows of which 23 also diverge in co-simulation with read_slang clean.",
+  "",
+  "Those divergences are ONE reader defect, fixed alongside this manifest: a",
+  "block-local declared with an initialiser in a clocked always block",
+  "(`automatic logic _GEN = a & b;`, which is how firtool stages every shared",
+  "sub-expression of a register update) had its write dropped, so the scoped",
+  "wire was undriven and every `x <= _GEN ? a : b` in the block held forever.",
+  "DivUnit, ALUExeUnit and BranchKillableQueue were re-measured against the fix",
+  "and are proven with a clean co-simulation; the same defect was behind all",
+  "four of the rocket-chip family's named open leads (BTB, CSRFile, Frontend,",
+  "ITLB).  test/ff_block_local_decl_init is the ratchet."
+ ]
+}
