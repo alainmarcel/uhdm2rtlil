@@ -192,6 +192,16 @@ jobs:
             shards: 6
             timeout: 480
             mem_limit_kb: "7000000"
+          # PrincetonUniversity/openpiton @ 1c6bfd2d: the manycore tile (its
+          # OpenSPARC T1-derived core, the L1.5 / L2 caches, the dynamic-node
+          # NoC routers), the chip bridge, JTAG, the chipset and the common
+          # cells.  test/ext_ip/openpiton_setup.sh runs the PyHP templates
+          # first; see the manifest note for the two leads it exposes.
+          # 852 rows, ~3.3 h of row time measured locally.
+          - family: openpiton
+            shards: 4
+            timeout: 420
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
