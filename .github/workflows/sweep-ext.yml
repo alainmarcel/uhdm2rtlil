@@ -183,6 +183,15 @@ jobs:
             shards: 8
             timeout: 480
             mem_limit_kb: "7000000"
+          # ucb-bar/gemmini @ 8c3f992: Gemmini's LeanGemmini systolic-array
+          # accelerator as a RoCC on rocket-chip's DefaultConfig, elaborated by
+          # test/ext_ip/gemmini_setup.sh (compiled as an extra module in the
+          # rocket-chip checkout; see the manifest note for the FireSim shim,
+          # the no-arg configs and the firtool annotation trap).  384 rows.
+          - family: gemmini
+            shards: 6
+            timeout: 480
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
