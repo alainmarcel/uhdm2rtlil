@@ -174,6 +174,15 @@ jobs:
             shards: 8
             timeout: 480
             mem_limit_kb: "7000000"
+          # riscv-boom/riscv-boom @ ba03175e: BOOM v4's LargeBoom core inside
+          # rocket-chip's DefaultConfig SoC, elaborated by
+          # test/ext_ip/boom_setup.sh (BOOM compiles as an extra module in the
+          # rocket-chip checkout; see the manifest note for why).  422 rows,
+          # ~9.6 h of row time measured locally: eight shards.
+          - family: boom
+            shards: 8
+            timeout: 480
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
