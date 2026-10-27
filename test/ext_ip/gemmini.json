@@ -1,0 +1,119 @@
+{
+ "title": "Gemmini (ucb-bar/gemmini) -- LeanGemmini on rocket-chip DefaultConfig",
+ "url": "https://github.com/ucb-bar/gemmini",
+ "repos": [
+  {
+   "url": "https://github.com/ucb-bar/gemmini",
+   "commit": "8c3f9923a44a2fe2c7930587be297d6d4f8c09ca",
+   "dir": "gemmini"
+  },
+  {
+   "url": "https://github.com/chipsalliance/rocket-chip",
+   "commit": "ece7b9ad544b07df39cd13b6fd7236562a26355d",
+   "dir": "rocket-chip",
+   "submodules": "recursive"
+  }
+ ],
+ "generate": {
+  "cwd": "gemmini",
+  "marker": "gemmini/gemmini_sv/sv/Gemmini.sv",
+  "cmds": [
+   [
+    "bash",
+    "$EXT_IP_HARNESS/gemmini_setup.sh"
+   ]
+  ],
+  "timeout": 7200
+ },
+ "roots": [
+  "gemmini/gemmini_sv/sv/*.sv"
+ ],
+ "always_srcs": [
+  "rocket-chip/src/main/resources/vsrc/plusarg_reader.v",
+  "rocket-chip/src/main/resources/vsrc/EICG_wrapper.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^TestHarness$",
+  "^SimDTM$",
+  "^SimAXIMem(_\\d+)?$",
+  "^TLMonitor(_\\d+)?$",
+  "^plusarg_reader$",
+  "^PlusArgTimeout$",
+  "^mem_33554432x64$",
+  "^AXI4RAM(_\\d+)?$"
+ ],
+ "seq": 4,
+ "timeout": 420,
+ "want": "proven",
+ "_note": [
+  "",
+  "Gemmini's LeanGemmini systolic-array accelerator -- the Mesh of PEs with its",
+  "delay registers, the scratchpad and accumulator memories with their scaling",
+  "pipelines, the DMA, the TLB, the reservation station, the loop-matmul",
+  "unrollers and the transposer -- attached as a RoCC accelerator to",
+  "rocket-chip's DefaultConfig SoC and emitted by firtool as one SystemVerilog",
+  "file per module, the same shape as the rocket-chip and boom families.",
+  "",
+  "Why generation is not simply `mill` or `sbt` in the Gemmini checkout.",
+  "Gemmini is a Chisel LIBRARY with no elaboration target, normally built inside",
+  "chipyard, and four things stand between the checkout and a row -- all",
+  "measured on 2026-10-27 and all recorded in test/ext_ip/gemmini_setup.sh:",
+  "",
+  " * It needs rocket-chip on the classpath, so it is compiled as an extra",
+  "   module APPENDED to the rocket-chip checkout's build.sc, which this family",
+  "   clones alongside and the rocket-chip family already elaborates (the same",
+  "   route as boom_setup.sh).  mill, firtool 1.162.0 and dtc come from",
+  "   rocket_setup.sh.",
+  " * Gemmini's build.sbt pins chisel3 3.6.0 against that checkout's 6.7.0, and",
+  "   it costs NOTHING: a bare compile raises not one Chisel-version error.",
+  " * All 38 errors of that bare compile are TWO symbols from FireSim's",
+  "   annotation library, midas.targetutils.PerfCounter and .SynthesizePrintf,",
+  "   which live in firesim and reach Gemmini only through chipyard.  Both are",
+  "   pure instrumentation for FPGA-accelerated simulation and carry no",
+  "   hardware, so gemmini_harness/midas/targetutils/ shims them -- a no-op",
+  "   counter and the plain Printable the printf needs.",
+  " * No Gemmini config can be instantiated by the generator: every accelerator",
+  "   mixin is `class LeanGemminiConfig[T <: Data : Arithmetic, U, V](",
+  "   gemminiConfig: ... = GemminiConfigs.leanConfig)` -- type parameters with a",
+  "   context bound AND a defaulted argument -- while the generator reflects on",
+  "   each --config.  gemmini_harness/gemminisweep/ owns the no-arg wrappers",
+  "   over rocket-chip's DefaultConfig, with the system bus widened to 128 bits",
+  "   exactly as chipyard's own GemminiRocketConfig does (the default 16x16",
+  "   8-bit array moves 16 bytes a beat and the 8-byte default bus cannot carry",
+  "   it).",
+  "",
+  "One firtool trap: Chisel stamps an EnumComponentAnnotation on every",
+  "enum-typed signal purely so waveform tooling can name the enumerators, and",
+  "where such a signal is a field of a MEMORY PORT -- Gemmini's",
+  "Queue6_TagWithIdAndTotalRows, whose entries hold a NormCmd enum -- firtool",
+  "cannot resolve the target and HARD-ERRORS even under",
+  "--disable-annotation-unknown.  The setup script drops exactly those (16 of",
+  "1006 annotations, both the `io_deq_bits_MPORT` read-port and the bare",
+  "`MPORT` write-port spellings) and leaves DontTouch / BlackBoxInline /",
+  "Inline / DecodeTable untouched, so the emitted RTL is unchanged.",
+  "",
+  "always_srcs: the two Verilog blackboxes the generated modules instantiate",
+  "(plusarg_reader, EICG_wrapper) ship in rocket-chip's src/main/resources/vsrc,",
+  "not in the firtool output.  Excluded, as in the rocket-chip and boom",
+  "families: the TestHarness and its simulation-only models, the TLMonitor",
+  "assertion checkers, and the TestHarness-scale AXI backing memory.",
+  "",
+  "First local sweep 2026-10-27 (384 rows, MEM_LIMIT_KB=7000000 as the nightly",
+  "uses): 340 / 384 comparable proven, 383 / 384 elaborate, 380 co-sim PASS,",
+  "0 undriven on every row that elaborated, and ZERO `differs` rows and ZERO",
+  "co-simulated divergences -- the cleanest first sweep of any family in this",
+  "campaign.  7.1 h of row time over six shards.",
+  "",
+  "Open: 43 rows exhaust the SAT budget (27 timeout, 16 over the memory cap),",
+  "each with a clean co-simulation -- the systolic-array rows (Mesh,",
+  "MeshWithDelays), the scratchpad / accumulator memories and the wide",
+  "TileLink crossbars; and ExampleRocketSystem, the whole-SoC row, cannot",
+  "elaborate under the 7 GB cap at all (a 43 MB source closure, aborting in",
+  "Surelog), the same whole-core class as BlackParrot and boom's four."
+ ]
+}
