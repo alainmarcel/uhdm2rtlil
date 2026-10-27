@@ -248,6 +248,36 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
                     if (module->wire(RTLIL::escape_id(elem))) sig.name = elem;
                 }
             }
+            // The element index of a concat operand need not be a LITERAL: a
+            // GENVAR arrives as a ref_obj bound to the per-generate-instance
+            // `parameter` that carries the iteration value, so only
+            // import_expression resolves it.  OpenC910's ct_prio writes its
+            // whole priority matrix that way --
+            //   for (i = 0; i < NUM; i = i + 1) begin : PRIO_MATRIX_GEN
+            //     always @(posedge clk or negedge rst_b)
+            //       if (!rst_b)
+            //         {prio[i][NUM-1:0], unused[i][NUM-1:0]} <= ... << i;
+            // -- and with the index unresolved the BARE array name was
+            // reported.  `prio` is a per-element array (every access has a
+            // constant index, so it is not a $mem and there is no \prio wire),
+            // so the async-reset temp-wire setup aborted the whole read with
+            // "Signal prio not found in module": 9 ct_ciu_* rows.  The
+            // non-concat path in extract_assigned_signals already folds the
+            // index this way; gate on the array being expanded so a base that
+            // IS a wire or a memory keeps the old behaviour and no name is
+            // handed to import_expression that could be fabricated.
+            if (sig.name.empty() && !base.empty() && expanded_array_low(base) >= 0 &&
+                !module->wire(RTLIL::escape_id(base)) &&
+                !module->memories.count(RTLIL::escape_id(base))) {
+                RTLIL::SigSpec idx;
+                if (auto ie = dynamic_cast<const expr*>((*vs->Exprs())[0]))
+                    idx = import_expression(ie);
+                if (idx.size() > 0 && idx.is_fully_const()) {
+                    std::string elem = base + "[" + std::to_string(idx.as_const().as_int()) + "]";
+                    if (module->wire(RTLIL::escape_id(elem)) || find_wire_in_scope(elem))
+                        sig.name = elem;
+                }
+            }
         }
         if (sig.name.empty()) sig.name = base;
         signals.push_back(sig);
