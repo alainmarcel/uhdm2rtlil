@@ -1,0 +1,25 @@
+# read_verilog cannot parse a declaration-with-initialiser inside an always
+# block at all ("Invalid nesting of always blocks and/or initializations"), so
+# the ordinary verilog-vs-uhdm comparison is vacuous and the read_slang miter
+# is the only real gate -- the same situation as
+# test/typeparam_struct_member_width.
+#
+# Without the fix the block-local `_GEN` is an undriven scoped wire, so
+# `setundef -undriven -zero` freezes every update's select at 0 and the
+# registers hold forever: the miter finds a counterexample on the first cycle
+# where ready & valid is true.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top ff_block_local_decl_init
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename ff_block_local_decl_init gold
+design -stash gold
+read_slang dut.sv --top ff_block_local_decl_init
+hierarchy -check -top ff_block_local_decl_init
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename ff_block_local_decl_init gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 4 -set-init-zero miter

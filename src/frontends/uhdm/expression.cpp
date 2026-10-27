@@ -5728,6 +5728,44 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         if (nfound == 1)
                             return RTLIL::SigSpec(only);
                     }
+                    // A BLOCK-LOCAL of the always block being imported.
+                    // Surelog lowers `automatic logic _GEN = ready & valid;`
+                    // -- how firtool stages every shared sub-expression of a
+                    // register update -- into a blocking ASSIGNMENT whose Lhs
+                    // is the `logic_var` ITSELF, not a ref_obj, so the LHS
+                    // import landed here and returned EMPTY: the action came
+                    // out as `assign { } { }`, the initialiser's cell was
+                    // orphaned, and every read of _GEN took the scoped wire
+                    // `$unnamed_block$N._GEN`, which nothing drives.  Under
+                    // the sweeps' `setundef -undriven -init -zero` that froze
+                    // at 0, so each `x <= _GEN ? a : b` in the block held
+                    // forever: BOOM's DivUnit kept io_resp_bits_uop_* at 0
+                    // from cycle 2 (299 of 301 co-simulated cycles,
+                    // read_slang clean), and the same shape is behind the
+                    // ALUExeUnit / BranchKillableQueue / FetchBuffer / ITLB /
+                    // BTB / CSRFile / Frontend rows of the boom and
+                    // rocket-chip families.  The async-reset arm already
+                    // worked, because there the local becomes a plain `\_GEN`.
+                    //
+                    // Resolve it through name_map, and ONLY when the mapped
+                    // wire is the block-scoped spelling `$unnamed_block$N.<v>`
+                    // -- that is what the begin-block import created for this
+                    // declaration, it cannot be a module signal (the prefix is
+                    // $-generated), and it cannot be an interface member, so
+                    // the plain-name hazard below does not apply.
+                    if (module) {
+                        auto nm = name_map.find(vname);
+                        if (nm != name_map.end() && nm->second) {
+                            std::string wn = nm->second->name.str();
+                            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                            const std::string pfx = "$unnamed_block$";
+                            const std::string tail = "." + vname;
+                            if (wn.size() > pfx.size() + tail.size() &&
+                                wn.compare(0, pfx.size(), pfx) == 0 &&
+                                wn.compare(wn.size() - tail.size(), tail.size(), tail) == 0)
+                                return RTLIL::SigSpec(nm->second);
+                        }
+                    }
                     // No plain-name lookup here: a bare `haddr` var would hit
                     // the module's own 608-bit `haddr` array instead of the
                     // interface member `ahb_lite_initiator.haddr` that the
