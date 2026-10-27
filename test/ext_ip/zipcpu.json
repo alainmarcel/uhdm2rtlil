@@ -38,11 +38,14 @@
   "",
   "First local sweep 2026-10-26 (51 rows): 47 / 50 comparable proven, 50 / 50",
   "elaborate, 0 undriven, 49 co-sim PASS.  Open: two SAT-budget rows (cpuops,",
-  "mpyop -- the 32-bit multiplier and its operand mux, both co-sim PASS) and",
-  "zipmmu, whose 20 co-simulated divergences are a SURELOG defect, not a reader",
-  "one: an always block inside a bare `generate ... endgenerate` region that",
-  "also declares a variable (`generate integer i; always @(posedge) ...`) is",
-  "dropped from UHDM entirely, so the TLB priority encoder has no driver.",
-  "zipwb has no read_slang reference ($finish in a non-simulation path)."
+  "mpyop -- the 32-bit multiplier and its operand mux, both co-sim PASS).",
+  "zipwb has no read_slang reference ($finish in a non-simulation path).",
+  "",
+  "zipmmu's 20 co-simulated divergences on that first sweep were a SURELOG",
+  "defect, fixed upstream in chipsalliance/Surelog#4228: a bare",
+  "`generate ... endgenerate` region compiled only its FIRST item, so",
+  "`generate integer i; always @(posedge i_clk) ... endgenerate` lost the always",
+  "block entirely and the TLB priority encoder had no driver (no error was",
+  "reported).  Re-measured against the fix the row is proven with co-sim PASS."
  ]
 }
