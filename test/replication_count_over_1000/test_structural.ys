@@ -1,0 +1,8 @@
+# The mask must be the FULL width.  Without the fix the `$and`'s B input is a
+# 1001-bit constant (1000 ones) instead of 1024 (1023 ones), so assert that no
+# AND in the design has a B operand narrower than its Y -- which is exactly the
+# zero-extension that loses the top bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top replication_count_over_1000
+select -assert-count 0 t:$and r:B_WIDTH=1001 %i
+select -assert-count 2 t:$and r:B_WIDTH=1024 %i

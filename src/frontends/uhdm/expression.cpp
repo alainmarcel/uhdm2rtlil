@@ -8839,11 +8839,78 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 auto op2 = any_cast<const operation*>(e);
                 if (op2->VpiOpType() == vpiMultiConcatOp && op2->Operands() &&
                     !op2->Operands()->empty()) {
-                    const UHDM::any* cnt = (*op2->Operands())[0];
-                    if (cnt && cnt->VpiType() == vpiRefObj &&
-                        module->parameter_default_values.count(
-                            RTLIL::escape_id(std::string(cnt->VpiName()))))
+                    // The count need not be a BARE parameter reference: it is
+                    // very often an expression over one, and `{{(N-1){1'b1}},
+                    // 1'b0}` -- the standard "all ones but bit 0" mask -- is
+                    // the common case.  UHDM's ExprEval CLAMPS a replication
+                    // count above 1000 to 1000
+                    // (templates/ExprEval.cpp, `if (n > 1000) n = 1000; //
+                    // Must be -1 or something silly`), a guard against a
+                    // garbage count that silently truncates every legitimate
+                    // wide one.  OpenC910's PLIC has INT_NUM = 1024, so its
+                    // per-hart interrupt-enable mask folded to 1001 bits
+                    // instead of 1024; yosys zero-extended it to the 1024-bit
+                    // AND, forcing the TOP 23 BITS of hart_[ms]ie_flop_msk_zero
+                    // to 0, and hreg_arbx_int_en was wrong for every
+                    // interrupt above 1000 (plic_hreg_busif, 5 co-simulated
+                    // divergences with read_slang clean).  Recurse into the
+                    // count so any parameter reference inside it takes the
+                    // operand-wise path, which resolves the parameter through
+                    // import_ref_obj and replicates the count OURSELVES.
+                    std::function<bool(const UHDM::any*)> cnt_refs_param =
+                        [&](const UHDM::any* c) -> bool {
+                            if (!c) return false;
+                            if (c->VpiType() == vpiRefObj) {
+                                if (module->parameter_default_values.count(
+                                        RTLIL::escape_id(std::string(c->VpiName()))))
+                                    return true;
+                                auto ro = any_cast<const ref_obj*>(c);
+                                const UHDM::any* ag = ro->Actual_group();
+                                return ag && (ag->UhdmType() == uhdmparameter ||
+                                              ag->UhdmType() == uhdmparam_assign);
+                            }
+                            if (c->VpiType() == vpiOperation) {
+                                auto co = any_cast<const operation*>(c);
+                                if (co->Operands())
+                                    for (auto o : *co->Operands())
+                                        if (cnt_refs_param(o)) return true;
+                            }
+                            return false;
+                        };
+                    if (cnt_refs_param((*op2->Operands())[0]))
                         return true;
+                    // ...and the count does not have to mention a parameter at
+                    // all for the clamp to bite.  Inside a GENERATE SCOPE
+                    // Surelog has already substituted the parameter's value, so
+                    // OpenC910's mask arrives as the literal `1024 - 1` and the
+                    // test above finds nothing -- yet ExprEval still clamps it
+                    // to 1000.  So also take the operand-wise path whenever the
+                    // count is a CONSTANT EXPRESSION that exceeds the clamp.
+                    // The walk requires every leaf to be a constant before
+                    // evaluating, so no name is ever handed to
+                    // import_expression here.
+                    std::function<bool(const UHDM::any*)> all_const =
+                        [&](const UHDM::any* c) -> bool {
+                            if (!c) return false;
+                            if (c->VpiType() == vpiConstant) return true;
+                            if (c->VpiType() == vpiOperation) {
+                                auto co = any_cast<const operation*>(c);
+                                if (!co->Operands() || co->Operands()->empty()) return false;
+                                for (auto o : *co->Operands())
+                                    if (!all_const(o)) return false;
+                                return true;
+                            }
+                            return false;
+                        };
+                    const UHDM::any* cnt0 = (*op2->Operands())[0];
+                    if (all_const(cnt0)) {
+                        if (auto ce = dynamic_cast<const UHDM::expr*>(cnt0)) {
+                            RTLIL::SigSpec cv = import_expression(ce);
+                            if (cv.is_fully_const() && cv.size() > 0 &&
+                                cv.as_const().as_int() > 1000)
+                                return true;
+                        }
+                    }
                 }
                 if (op2->Operands())
                     for (auto o2 : *op2->Operands())
