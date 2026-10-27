@@ -164,6 +164,16 @@ jobs:
             shards: 8
             timeout: 330
             mem_limit_kb: "7000000"
+          # XUANTIE-RV/openc910 @ b91c9093: T-Head's XuanTie C910, the 64-bit
+          # out-of-order RV64GCV core -- its pipeline, vector-FP units, L2
+          # cache, bus / coherency units, CLINT / PLIC / PMP / PMU and the
+          # smart_run integration platform around it.  The 41 ct_f_spsram_*
+          # behavioural RAMs of gen_rtl/fpga/rtl are always_srcs, not rows.
+          # 482 rows: eight shards.
+          - family: openc910
+            shards: 8
+            timeout: 480
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
