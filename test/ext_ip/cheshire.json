@@ -113,21 +113,58 @@
   "it landed in every closure it cost every row its reference.  The axi family",
   "itself never trips this because its own closure does not pull the file.  axi_slave_compare.sv goes with it: it is the only file that imports axi_test, and is itself a verification comparator.",
   "",
-  "First local sweep 2026-10-28 (266 rows after exclusions): 62 / 78",
-  "comparable proven, 71 / 78 elaborate, 61 co-sim PASS, 102 rows with 0",
-  "undriven, 0.8 h of row time.",
+  "First local sweep 2026-10-28, WITH the `bind` section (266 rows): 97 / 139",
+  "comparable proven, 123 / 139 elaborate, 98 co-sim PASS, 169 rows with 0",
+  "undriven, 1.3 h of row time.",
   "",
-  "READ THE SKIP RATE BEFORE THE SCORE: 158 of the 266 rows -- 59% -- are",
-  "`skip (defaults don't elaborate)`, and 30 more have no read_slang reference,",
-  "so only 78 rows are comparable at all.  That is a property of the IP, not of",
-  "the reader: PULP's AXI-generic blocks are type-parameterised",
-  "(`parameter type axi_req_t = logic`), and at their DEFAULTS a type parameter",
-  "is plain `logic`, so member access is invalid and nothing elaborates --",
-  "`invalid member access for type 'desc_t' (aka 'logic')`.  Binding those type",
-  "parameters (the harness already has a config-wrapper path for some shapes)",
-  "is the single biggest lever on this family and would move far more rows than",
-  "any reader fix; it is the same unbound-type-parameter class as the cvw",
-  "struct-parameter rows.",
+  "What `bind` is worth, measured on the same 266 rows:",
+  "",
+  "                        unbound   bound",
+  "   comparable rows           78     139",
+  "   formally proven           62      97",
+  "   skip (default params)    158      82",
+  "   co-sim PASS               61      98",
+  "   rows with 0 undriven     102     169",
+  "   `differs` (new leads)      5      18",
+  "",
+  "76 rows left the skip bucket, 61 more became comparable, 35 more are proven,",
+  "and 13 formal-only `differs` rows that were previously INVISIBLE are now",
+  "visible -- a row that skips can never surface a defect, so those matter as",
+  "much as the proven count.",
+  "",
+  "How it binds, and three things that cost a measurement each:",
+  "",
+  " * The types come from each package's OWN typedef macros (axi/typedef.svh,",
+  "   register_interface/typedef.svh, obi/typedef.svh), not hand-written",
+  "   structs, so the shapes stay in step with upstream.",
+  " * RULE ORDER matters: the obi_* rules sit BEFORE the generic",
+  "   `(^|_)req_t$` / `rsp_t$` ones.  Behind them, `sbr_port_obi_req_t` is bound",
+  "   to an AXI type and obi_mux fails with `no member named 'req'`.",
+  " * Three rules map to NULL, which DECLINES to bind: iDMA's internal datapath",
+  "   types (r_dp_req_t / w_dp_req_t and their responses, the meta channels,",
+  "   idma_mut_tf_opt_t) are generated per configuration inside the backend and",
+  "   carry members -- `offset`, `tailer`, an `axi` wrapper -- that no shared",
+  "   macro describes.  Bound by the generic rule they fail with",
+  "   `no member named 'offset'`, which reads as a read_slang limitation and is",
+  "   really the wrapper's fault; declined, the row reports an honest",
+  "   `skip (defaults don't elaborate)`.  Inventing those structs would mean",
+  "   measuring a netlist built from a shape nobody verified.",
+  " * An iDMA PRELUDE was tried and reverted: `IDMA_TYPEDEF_FULL_REQ_T` expands",
+  "   to types referencing `idma_pkg`, which is not in the closure of a row that",
+  "   has nothing to do with iDMA -- so it made EVERY bound row fail with",
+  "   `unknown class or package 'idma_pkg'`, including axi_vga and obi_err_sbr",
+  "   which the AXI / OBI rules had just turned green.  A prelude is shared by",
+  "   every wrapper in the family, so it may only name types every closure can",
+  "   see.  Caught by re-probing two known-good rows, not by the aggregate.",
+  "",
+  "82 rows still skip: iDMA's declined datapath types, axi_llc's `desc_t` /",
+  "`way_inp_t`, and a CVA6 FP-format enum (`member 'XF8ALT' is not covered by",
+  "any assignment`).",
+  "",
+  "exclude_srcs also drops idma/target/rtl/idma_generated.sv: an AGGREGATE of 39",
+  "modules and packages the checkout also ships individually, so compiling both",
+  "gave `duplicate definition of 'idma_desc64_reg_pkg'` and cost 14 rows their",
+  "reference.  The individual files are kept -- they make better rows anyway.",
   "",
   "Leads worth working, in order:",
   " * apb_uart: `differs` with 5 slang-clean co-simulated divergences -- the",
@@ -150,6 +187,172 @@
   "/dram_rtl_sim/src/.*_sim",
   "/\\.bender_resolved/[^/]+/test/",
   "/tb/",
-  "_tb\\.sv$"
- ]
+  "_tb\\.sv$",
+  "/idma/target/rtl/idma_generated\\.sv$"
+ ],
+ "bind": {
+  "prelude_raw": [
+   "`include \"axi/typedef.svh\"",
+   "`include \"register_interface/typedef.svh\"",
+   "`include \"obi/typedef.svh\""
+  ],
+  "prelude": [
+   "typedef logic [31:0] addr_t;",
+   "typedef logic [3:0]  id_t;",
+   "typedef logic [63:0] data_t;",
+   "typedef logic [7:0]  strb_t;",
+   "typedef logic [1:0]  user_t;",
+   "typedef logic [7:0]  byte_t;",
+   "`AXI_TYPEDEF_ALL(axi, addr_t, id_t, data_t, strb_t, user_t)",
+   "`AXI_LITE_TYPEDEF_ALL(axi_lite, addr_t, data_t, strb_t)",
+   "`REG_BUS_TYPEDEF_ALL(reg_bus, addr_t, data_t, strb_t)",
+   "typedef axi_pkg::xbar_rule_32_t rule_t;",
+   "`OBI_TYPEDEF_MINIMAL_A_OPTIONAL(obi_a_optional_t)",
+   "`OBI_TYPEDEF_MINIMAL_R_OPTIONAL(obi_r_optional_t)",
+   "`OBI_TYPEDEF_TYPE_A_CHAN_T(obi_a_chan_t, addr_t, data_t, strb_t, id_t, obi_a_optional_t)",
+   "`OBI_TYPEDEF_TYPE_R_CHAN_T(obi_r_chan_t, data_t, id_t, obi_r_optional_t)",
+   "`OBI_TYPEDEF_REQ_T(obi_req_t, obi_a_chan_t)",
+   "`OBI_TYPEDEF_RSP_T(obi_rsp_t, obi_r_chan_t)"
+  ],
+  "types": [
+   [
+    "^[rw]_dp_(req|rsp)_t$",
+    null
+   ],
+   [
+    "^(read|write)_meta_channel_t$",
+    null
+   ],
+   [
+    "^idma_mut_tf_opt_t$",
+    null
+   ],
+   [
+    "obi_req_t$",
+    "obi_req_t"
+   ],
+   [
+    "obi_rsp_t$",
+    "obi_rsp_t"
+   ],
+   [
+    "obi_a_chan_t$",
+    "obi_a_chan_t"
+   ],
+   [
+    "obi_r_chan_t$",
+    "obi_r_chan_t"
+   ],
+   [
+    "(^|_)reg_req_t$",
+    "reg_bus_req_t"
+   ],
+   [
+    "(^|_)reg_rsp_t$",
+    "reg_bus_rsp_t"
+   ],
+   [
+    "(^|_)reg_resp_t$",
+    "reg_bus_rsp_t"
+   ],
+   [
+    "lite_req_t$",
+    "axi_lite_req_t"
+   ],
+   [
+    "lite_resp_t$",
+    "axi_lite_resp_t"
+   ],
+   [
+    "lite_rsp_t$",
+    "axi_lite_resp_t"
+   ],
+   [
+    "(^|_)aw_chan_t$",
+    "axi_aw_chan_t"
+   ],
+   [
+    "(^|_)w_chan_t$",
+    "axi_w_chan_t"
+   ],
+   [
+    "(^|_)b_chan_t$",
+    "axi_b_chan_t"
+   ],
+   [
+    "(^|_)ar_chan_t$",
+    "axi_ar_chan_t"
+   ],
+   [
+    "(^|_)r_chan_t$",
+    "axi_r_chan_t"
+   ],
+   [
+    "(^|_)chan_t$",
+    "axi_aw_chan_t"
+   ],
+   [
+    "(^|_)rule_t$",
+    "rule_t"
+   ],
+   [
+    "(^|_)req_t$",
+    "axi_req_t"
+   ],
+   [
+    "(^|_)resp_t$",
+    "axi_resp_t"
+   ],
+   [
+    "(^|_)rsp_t$",
+    "axi_resp_t"
+   ],
+   [
+    "(^|_)addr_t$",
+    "addr_t"
+   ],
+   [
+    "(^|_)id_t$",
+    "id_t"
+   ],
+   [
+    "(^|_)data_t$",
+    "data_t"
+   ],
+   [
+    "(^|_)strb_t$",
+    "strb_t"
+   ],
+   [
+    "(^|_)user_t$",
+    "user_t"
+   ],
+   [
+    "(^|_)byte_t$",
+    "byte_t"
+   ]
+  ],
+  "values": [
+   [
+    "(?i)addr_?width$",
+    32
+   ],
+   [
+    "(?i)data_?width$",
+    64
+   ],
+   [
+    "(?i)id_?width$",
+    4
+   ],
+   [
+    "(?i)user_?width$",
+    2
+   ],
+   [
+    "(?i)strb_?width$",
+    8
+   ]
+  ]
+ }
 }
