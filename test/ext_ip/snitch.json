@@ -1,0 +1,131 @@
+{
+ "title": "Snitch cluster (pulp-platform/snitch_cluster)",
+ "url": "https://github.com/pulp-platform/snitch_cluster",
+ "repos": [
+  {
+   "url": "https://github.com/pulp-platform/snitch_cluster",
+   "commit": "ccde489fb287543e548e844fc6cb4943eee4797a",
+   "dir": "snitch_cluster"
+  }
+ ],
+ "generate": {
+  "cwd": "snitch_cluster",
+  "marker": "snitch_cluster/.bender_resolved/sources.flist",
+  "cmds": [
+   [
+    "bash",
+    "$EXT_IP_HARNESS/bender_setup.sh"
+   ]
+  ],
+  "timeout": 3600
+ },
+ "roots": [
+  "snitch_cluster/hw/**/*.sv",
+  "snitch_cluster/hw/**/*.v",
+  "snitch_cluster/.bender_resolved/*/**/*.sv",
+  "snitch_cluster/.bender_resolved/*/**/*.v"
+ ],
+ "incdirs": [
+  "snitch_cluster/.bender_resolved/apb/include",
+  "snitch_cluster/.bender_resolved/axi/include",
+  "snitch_cluster/.bender_resolved/axi_stream/include",
+  "snitch_cluster/.bender_resolved/common_cells/include",
+  "snitch_cluster/.bender_resolved/core_ips/include",
+  "snitch_cluster/.bender_resolved/idma/src/include",
+  "snitch_cluster/.bender_resolved/idma/target/rtl/include",
+  "snitch_cluster/.bender_resolved/idma/test",
+  "snitch_cluster/.bender_resolved/obi/include",
+  "snitch_cluster/.bender_resolved/register_interface/include",
+  "snitch_cluster/.bender_resolved/reqrsp_interface/include",
+  "snitch_cluster/hw/mem_interface/include",
+  "snitch_cluster/hw/snitch/include",
+  "snitch_cluster/hw/snitch_ssr/include",
+  "snitch_cluster/hw/tcdm_interface/include"
+ ],
+ "defines": [
+  "SYNTHESIS",
+  "TARGET_RTL",
+  "TARGET_SYNTHESIS"
+ ],
+ "modules": "auto",
+ "sweep_paths": [
+  "snitch_cluster/hw",
+  "snitch_cluster/.bender_resolved/cluster_icache",
+  "snitch_cluster/.bender_resolved/core_ips",
+  "snitch_cluster/.bender_resolved/core_v_xif",
+  "snitch_cluster/.bender_resolved/reqrsp_interface",
+  "snitch_cluster/.bender_resolved/scm",
+  "snitch_cluster/.bender_resolved/spatz_vpu"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "_test$",
+  "^test_",
+  "^tb$"
+ ],
+ "exclude_srcs": [
+  "/axi_test\\.sv$",
+  "/axi_slave_compare\\.sv$",
+  "/common_verification/src/",
+  "/\\.bender_resolved/[^/]+/test/",
+  "/tb/",
+  "_tb\\.sv$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "PULP's many-core Snitch cluster: the Snitch integer core and its compute",
+  "core wrapper, the FP subsystem, the IPU, the SSR streamer, the VM / TLB, the",
+  "memory interface and the cluster itself, plus the dependency IP that is not",
+  "already a family of its own -- the cluster i-cache, core_ips, the CORE-V",
+  "XIF, the reqrsp interface, the SCM register files and the Spatz vector unit.",
+  "",
+  "Closure by the SHARED test/ext_ip/bender_setup.sh, the third family to use",
+  "it unchanged after pulpissimo and cheshire: bender installed as a prebuilt",
+  "binary, `bender checkout` against the checked-in Bender.lock so all 19",
+  "dependencies are pinned, and .bender_resolved/<package> symlinks so the",
+  "hash-suffixed checkout directories stay out of roots and incdirs.  Like",
+  "cheshire it needed no per-dependency patching.",
+  "",
+  "exclude_srcs carries cheshire's verification exclusions for the same reason:",
+  "Bender lists axi/src/axi_test.sv (testbench utilities, queues formatted with",
+  "`%h` that read_slang rejects) as a package source, and it would otherwise",
+  "land in every closure.",
+  "",
+  "sweep_paths covers the cluster's own hw/ and the new packages only; axi,",
+  "common_cells, fpnew (swept as cvfpu), register_interface, apb,",
+  "tech_cells_generic, common_verification, riscv-dbg, fpu_div_sqrt_mvp, idma,",
+  "obi, axi_stream and axi_riscv_atomics stay available to every closure but",
+  "are not counted twice.",
+  "",
+  "First local sweep 2026-10-28 (104 rows): 29 / 49 comparable proven, 44 / 49",
+  "elaborate, 38 co-sim PASS, 60 rows with 0 undriven, 1.3 h of row time.",
+  "",
+  "Same caveat as cheshire, and for the same reason: 39 rows skip because",
+  "PULP's type parameters do not elaborate at their DEFAULTS and 16 more have",
+  "no read_slang reference, so only 49 of the 104 rows are comparable.  The",
+  "`snitch` core itself is one of the unreferenced rows -- its load-store unit",
+  "(which genuinely lives in the core_ips package; the closure picks the right",
+  "file) forms the REVERSED part-select `caq_qaddr_i[2:3]` once CaqTagWidth",
+  "defaults to 0, and read_slang rejects a reversed range where Surelog",
+  "tolerates it.  Nothing to fix on our side: at a non-zero CaqTagWidth the",
+  "select is legal, so this is a default-parameter artefact, not a source bug",
+  "to patch.",
+  "",
+  "Leads worth working, all slang-CLEAN so all adjudicated:",
+  " * spatz_vfu: 170 co-simulated divergences (the Spatz vector functional",
+  "   unit) -- the biggest adjudicated lead this family brings.",
+  " * spatz_ipu: 77.",
+  " * register_file_3r_2w_be: 265, and its miter runs out of memory, so the",
+  "   co-sim is the only oracle -- the same row shape pulpissimo also flags.",
+  " * spatz_simd_lane: 1.",
+  "Formal-only `differs` with no co-sim divergence: dspu,",
+  "snitch_cluster_peripheral_reg and two register-file test wrappers.",
+  "",
+  "Three rows cannot elaborate: snitch_cluster (the whole cluster) and the two",
+  "interface shims lsu_to_tcdm_intf / tcdm_mux_intf."
+ ]
+}

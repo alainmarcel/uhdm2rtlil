@@ -70,7 +70,7 @@ groups=[
  ('**Caliptra**',['caliptra'],'[caliptra]('+W+'sweep-caliptra.yml)'),
  ('**XiangShan** (香山)',['xiangshan'],'[ext]('+W+'sweep-ext.yml)'),
  ('**XiangShan core** (香山)',['xiangshan-core-full'],'[xiangshan]('+W+'sweep-xiangshan.yml)'),
- ('**External IP** (the other 28 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','adams-bridge','aib-protocols','aib-phy-hardware','veerwolf','serv','litex','vexriscv','rocket-chip','biriscv','zipcpu','hazard3','nvdla','openc910','boom','gemmini','openpiton','pulpissimo','cheshire'],'[ext]('+W+'sweep-ext.yml)'),
+ ('**External IP** (the other 29 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','adams-bridge','aib-protocols','aib-phy-hardware','veerwolf','serv','litex','vexriscv','rocket-chip','biriscv','zipcpu','hazard3','nvdla','openc910','boom','gemmini','openpiton','pulpissimo','cheshire','snitch'],'[ext]('+W+'sweep-ext.yml)'),
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()
