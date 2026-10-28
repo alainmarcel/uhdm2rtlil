@@ -1,0 +1,78 @@
+{
+ "title": "NaxRiscv (SpinalHDL/NaxRiscv)",
+ "url": "https://github.com/SpinalHDL/NaxRiscv",
+ "repos": [
+  {
+   "url": "https://github.com/SpinalHDL/NaxRiscv",
+   "commit": "9f452d50560d02fb391bc8039f5453c54e0911af",
+   "dir": "NaxRiscv"
+  }
+ ],
+ "generate": {
+  "cwd": "NaxRiscv",
+  "marker": "NaxRiscv/NaxRiscv.v",
+  "cmds": [
+   [
+    "bash",
+    "-c",
+    "bash $EXT_IP_HARNESS/naxriscv_setup.sh"
+   ]
+  ],
+  "timeout": 5400
+ },
+ "roots": [
+  "NaxRiscv/NaxRiscv.v"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "NaxRiscv is SpinalHDL's out-of-order superscalar RV32 core: `sbt runMain",
+  "naxriscv.Gen` elaborates the default configuration -- 2 ALUs, 2-wide decode,",
+  "an LSU2 load / store unit with 16-entry LQ and SQ, MMU, branch prediction,",
+  "perf counters, M + S + U -- into ONE NaxRiscv.v holding the core and its 23",
+  "submodules: the data cache, the issue queue and its dependency storage, the",
+  "multi-port register files and their multi-write RAMs (the",
+  "RamAsyncMwXor / RamAsyncMwMux families, from the MultiPortWritesSymplifier",
+  "transformation phase), the radix-4 divider, the MMU translator and the",
+  "stream FIFOs.  24 rows.",
+  "",
+  "test/ext_ip/naxriscv_setup.sh runs the generation.  Unlike VexRiscv, the",
+  "build takes SpinalHDL FROM SOURCE -- build.sbt sets",
+  "`val spinalVersion = \"dev\"` and reaches core / lib / sim / idslplugin",
+  "through `ProjectRef(file(\"ext/SpinalHDL\"), ...)` -- so the SpinalHDL",
+  "submodule is a build input, not a resolved artifact, and ext/rvls has to be",
+  "cloned too because `Compile / unmanagedSourceDirectories` puts its JNI",
+  "bindings on the Scala source path.  The other two submodules (NaxSoftware,",
+  "riscv-isa-sim) are simulation-only and are NOT cloned: NaxSoftware alone is",
+  "several GB of pre-built test binaries.",
+  "",
+  "The generation also writes NaxRiscvSynt.v, which is NOT a root: it is the",
+  "same 24 modules wrapped for area benchmarking (`Rtl.xorOutputs(Rtl.ffIo(c))`",
+  "registers and XOR-reduces every port, so the wrapper's logic is not the",
+  "core's), and compiling both would duplicate every module name.",
+  "",
+  "First local sweep 2026-10-28: 24 / 24 elaborate, 17 / 24 proven, 24 / 24",
+  "co-sim PASS, 24 / 24 with 0 undriven, 0 `read_uhdm` divergences, 0 `differs`",
+  "and no read-fails -- the family landed with no open reader lead.  The 7",
+  "unproven rows are all SAT budget on datapaths this miter depth cannot close:",
+  "DataCache and the NaxRiscv top go over the memory cap, and DependencyStorage,",
+  "RamAsyncMwMux_3, RamAsyncMwXor_11, RegFileAsync and TranslatorWithRollback",
+  "time out at 300 s.",
+  "",
+  "Two co-sim rows are weak by construction and the numbers say so:",
+  "PrefetchPredictor reports 0 ACTIVE cycles because prefetching is off in this",
+  "configuration and SpinalHDL emits it as a stub (`io_prediction_cmd_valid =",
+  "1'b0`, payload all-X), and the NaxRiscv top reports 1, because nothing in the",
+  "core moves until its instruction and data buses are answered and random",
+  "stimulus never does.  Neither is evidence of anything; the formal column is",
+  "the real check on those two."
+ ]
+}

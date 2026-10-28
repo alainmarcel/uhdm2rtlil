@@ -93,6 +93,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | SERV | [olofk/serv](https://github.com/olofk/serv) | [`f200eb2e`](https://github.com/olofk/serv/commit/f200eb2e) | **27 / 29** | 2 of 29 | 0 |
 | LiteX | [enjoy-digital/litex](https://github.com/enjoy-digital/litex) | [`7457e137`](https://github.com/enjoy-digital/litex/commit/7457e137) | **3 / 3** | 0 of 3 | 0 |
 | VexRiscv | [SpinalHDL/VexRiscv](https://github.com/SpinalHDL/VexRiscv) | [`baf7dc82`](https://github.com/SpinalHDL/VexRiscv/commit/baf7dc82) | **3 / 3** | 0 of 3 | 0 |
+| NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | [`9f452d50`](https://github.com/SpinalHDL/NaxRiscv/commit/9f452d50) | **17 / 24** (first local sweep 2026-10-28; first nightly pending) | 0 of 24 | 0 |
 | Rocket Chip | [chipsalliance/rocket-chip](https://github.com/chipsalliance/rocket-chip) | [`ece7b9ad`](https://github.com/chipsalliance/rocket-chip/commit/ece7b9ad) | **176 / 235 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 235 | 0 |
 | biRISC-V | [ultraembedded/biriscv](https://github.com/ultraembedded/biriscv) | [`6af9c4be`](https://github.com/ultraembedded/biriscv/commit/6af9c4be) | **28 / 44** | 7 of 44 | 0 |
 | ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | [`42606d2d`](https://github.com/ZipCPU/zipcpu/commit/42606d2d) | **46 / 51** | 1 of 51 | 0 |
