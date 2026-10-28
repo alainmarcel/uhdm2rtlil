@@ -68,15 +68,20 @@ artefacts, and the 73 break down as
 | family | divergences | oracle |
 |---|---:|---|
 | NVDLA | 70 | **none** — `read_slang` reads not one of its 914 modules (`use of undeclared identifier 'assertion_error'`), so nothing adjudicates them |
-| OpenC910 | 2 | `read_slang` clean |
-| biRISC-V | 1 | `read_slang` clean |
+| OpenC910 | 2 | one (`plic_hreg_busif`) has a clean `read_slang` reference and is **already fixed** by #1355, which merged after this nightly started |
+| biRISC-V | 1 | `read_slang` clean — `riscv_core`, 201 cycles |
 
 NVDLA is a brand-new family (914 rows, its first nightly) and its rows are
 read-clean and opt-clean — 908 of 908 with 0 undriven — so the 70 are the next
 thing to triage, not a regression in anything that was passing.  The three with
 a clean `read_slang` reference are the real reader leads.  VeeR EH2's
 `eh2_ifu_mem_ctl` and adams-bridge's `abr_piso_multi`, the two open leads of the
-2026-10-25 nightlies, are both clean in this run.  `read_slang`, measured on the
+2026-10-25 nightlies, still diverge (150 and 38 cycles) but are now ADJUDICATED
+ARTEFACTS rather than counted defects: each one's miter proves equivalence as
+far as its budget reaches (seq 4 and seq 3) and the divergence is deeper than
+that, so the sweep classes them as artefacts and they are no longer in the
+`read_uhdm` diverge column.  That is a reclassification, not a fix -- the two
+rows still want a deeper miter.  `read_slang`, measured on the
 same rows under the same stimulus, diverges on 38 of its own (92 more rows are
 divergences both netlists share, the miter adjudicated, or have no oracle).
 
