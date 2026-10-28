@@ -212,6 +212,16 @@ jobs:
             shards: 4
             timeout: 420
             mem_limit_kb: "7000000"
+          # pulp-platform/cheshire @ a315a828: PULP's Linux-capable host SoC and
+          # the dependency IP that is not a family of its own -- the AXI
+          # last-level cache, iDMA, CLIC / CLINT, the OBI fabric, the serial
+          # link, the vendored OpenTitan peripherals.  Bender closure via the
+          # shared test/ext_ip/bender_setup.sh.  266 rows, ~0.8 h locally; most
+          # rows skip because PULP's type parameters do not elaborate at their
+          # defaults (see the manifest note).
+          - family: cheshire
+            timeout: 420
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

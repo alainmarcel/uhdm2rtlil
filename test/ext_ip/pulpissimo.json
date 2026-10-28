@@ -14,7 +14,7 @@
   "cmds": [
    [
     "bash",
-    "$EXT_IP_HARNESS/pulpissimo_setup.sh"
+    "$EXT_IP_HARNESS/bender_setup.sh"
    ]
   ],
   "timeout": 3600
@@ -109,7 +109,7 @@
   "the FPU divider.",
   "",
   "The closure IS the work here, and it is Bender's, not a glob:",
-  "test/ext_ip/pulpissimo_setup.sh installs bender (one prebuilt release",
+  "the shared test/ext_ip/bender_setup.sh installs bender (one prebuilt release",
   "binary, as rocket_setup.sh does for mill / firtool / dtc) and runs",
   "`bender checkout`, which fetches all 38 dependencies at the revisions the",
   "checked-in Bender.lock PINS -- so the closure is reproducible rather than",
