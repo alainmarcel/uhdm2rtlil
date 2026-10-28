@@ -202,6 +202,16 @@ jobs:
             shards: 4
             timeout: 420
             mem_limit_kb: "7000000"
+          # pulp-platform/pulpissimo @ bfc3d9a1: the PULPissimo microcontroller
+          # platform and the 26 dependency packages that are not families of
+          # their own -- pulp_soc, the uDMA peripherals, the HWPE accelerator
+          # blocks, the cluster interconnect, the APB peripherals, JTAG and
+          # debug.  test/ext_ip/pulpissimo_setup.sh resolves the Bender closure
+          # first.  327 rows, ~3.1 h of row time measured locally.
+          - family: pulpissimo
+            shards: 4
+            timeout: 420
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:
