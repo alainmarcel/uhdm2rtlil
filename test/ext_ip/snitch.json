@@ -126,6 +126,21 @@
   "snitch_cluster_peripheral_reg and two register-file test wrappers.",
   "",
   "Three rows cannot elaborate: snitch_cluster (the whole cluster) and the two",
-  "interface shims lsu_to_tcdm_intf / tcdm_mux_intf."
+  "interface shims lsu_to_tcdm_intf / tcdm_mux_intf.",
+  "",
+  "A `bind` section was written for this family and REMOVED again, because it",
+  "was measured and bought nothing.  Cheshire's equivalent takes that family",
+  "from 62 to 97 proven, so the same treatment looked obvious here -- but",
+  "snitch's 24 skipped rows need types the cluster defines in its OWN packages",
+  "(the TCDM interface, the intersection unit, the SRAM configuration structs,",
+  "the CORE-V XIF transaction types), and only axi_req_t / axi_rsp_t / addr_t /",
+  "data_t are shapes a shared macro describes.  Binding just those left the",
+  "score IDENTICAL -- 29 / 49 proven and 44 / 49 elaborate both before and after",
+  "-- and merely moved 7 rows from an honest `skip (defaults don't elaborate)`",
+  "to `no reference`, which reads WORSE because the row then looks like a",
+  "read_slang limitation.  The remaining types would have to be invented, and a",
+  "netlist measured against a struct nobody verified is worth less than an",
+  "unmeasured row.  If someone binds them later, take the shapes from the",
+  "cluster's own packages, not from a guess."
  ]
 }
