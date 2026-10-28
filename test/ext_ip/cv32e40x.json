@@ -1,0 +1,83 @@
+{
+ "title": "OpenHW CV32E40X",
+ "url": "https://github.com/openhwfoundation/cv32e40x",
+ "repos": [
+  {
+   "url": "https://github.com/openhwfoundation/cv32e40x",
+   "commit": "d952cd63bc1b4eb58cd893c28ef8283c781e345e",
+   "dir": "cv32e40x"
+  }
+ ],
+ "roots": [
+  "cv32e40x/rtl/include/*.sv",
+  "cv32e40x/rtl/*.sv",
+  "cv32e40x/bhv/cv32e40x_sim_clock_gate.sv"
+ ],
+ "incdirs": [
+  "cv32e40x/rtl/include",
+  "cv32e40x/bhv",
+  "cv32e40x/bhv/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "cv32e40x/rtl/"
+ ],
+ "exclude": [
+  "^(?!cv32e40x_)",
+  "_tb$",
+  "^tb_",
+  "^cv32e40x_sim_",
+  "^cv32e40x_dbg_",
+  "^cv32e40x_core_log$",
+  "^cv32e40x_rvfi",
+  "_sva$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The CORE-V CV32E40X: the 4-stage RV32 core with the B and M extensions, the",
+  "optional A extension, CLIC interrupts, PMA / MPU, watchpoint triggers and the",
+  "eXtension interface (CORE-V XIF).  Its own cv32e40x_manifest.flist is the",
+  "closure: rtl/include/cv32e40x_pkg.sv, every rtl/*.sv, and bhv's simulation",
+  "clock gate (the only bhv file the core instantiates).",
+  "",
+  "Not rows: the RVFI tracer and its OBI shims, cv32e40x_core_log and",
+  "cv32e40x_dbg_helper (simulation-only), the sva/ assertion modules bound into",
+  "the core, and the wrapper that binds them.",
+  "",
+  "SIX of the 42 rows could not be read AT ALL until Surelog acb31e60 (#4229):",
+  "cv32e40x_pma declares",
+  "`parameter pma_cfg_t PMA_CFG[PMA_NUM_REGIONS-1:0] = '{default: PMA_R_DEFAULT}`",
+  "-- an unpacked-array parameter whose element is a packed struct, defaulted",
+  "with a struct-valued expression -- and Surelog SEGFAULTED on it, so pma, mpu,",
+  "write_buffer, if_stage, load_store_unit and cv32e40x_core itself produced no",
+  "UHDM.  Probing this family is what found that defect.",
+  "",
+  "First local sweep 2026-10-28: 42 rows, 35 comparable, **30 proven**, 42 / 42",
+  "with 0 undriven, 32 co-sim PASS, and **0 `read_uhdm`-only co-sim**",
+  "**divergences**.  What is left:",
+  "",
+  "  * SEVEN rows have NO REFERENCE because `read_slang` cannot read them, not",
+  "    because we cannot: align_check, controller, controller_fsm, if_stage,",
+  "    load_store_unit and the two obi_interface modules fail with",
+  "    `'obi_inst_req_t' cannot be used in an expression` or `no member named",
+  "    'we' in 'REQ_TYPE'` -- the OBI request / response STRUCT TYPE PARAMETERS",
+  "    the core passes down.  read_uhdm reads all seven with 0 undriven.  These",
+  "    belong in docs/slang_unsupported.md.",
+  "  * THREE formal-only `differs` leads: cs_registers (co-sim diverges on BOTH",
+  "    readers, 301 vs 161 cycles -- a shared artefact, not ours), core (no",
+  "    co-sim: its top has escaped interface ports from the CORE-V XIF), and",
+  "    sequencer (co-sim PASS over 300 active cycles).  sequencer and core each",
+  "    report `0 undriven (4 never assigned in the source)`, which is exactly",
+  "    the shape that folds a miter trigger to a constant -- dump the optimised",
+  "    miter before calling either a reader defect.",
+  "  * TWO SAT-budget rows: ex_stage (whose co-sim divergence is SHARED, 273",
+  "    cycles on both readers) and mult.",
+  "",
+  "cv32e40s / cv32e41p / core-v-mcu are separate checkouts of the same shape and",
+  "are still to do."
+ ]
+}
