@@ -1185,8 +1185,15 @@ def main():
     UNIT_IMPORTS = list(man.get("unit_imports", []))
     SLANG_FLAGS = " ".join(man.get("slang_flags", []))
     MAX_CLOSURE_BYTES = int(float(man.get("max_closure_mb", 0)) * (1 << 20))
+    # "exclude_srcs" applies to always_srcs too, not just the roots: a family
+    # that supplies a harness stand-in for one file of a GLOBBED library has to
+    # drop the checkout's copy, or both are compiled and the modules collide.
+    # nvdla globs vmod/vlibs/*.v (50 files) and needs 5 of them replaced, which
+    # an explicit list of the other 45 would express badly.
+    _esrc = [re.compile(x) for x in man.get("exclude_srcs", [])]
     ALWAYS_SRCS = sorted({f for g in man.get("always_srcs", [])
-                          for f in glob.glob(str(EXT / g), recursive=True) if os.path.isfile(f)})
+                          for f in glob.glob(str(EXT / g), recursive=True)
+                          if os.path.isfile(f) and not any(x.search(f) for x in _esrc)})
     # A macro header used WITHOUT being included -- caliptra-ss's adc.sv and
     # ast.sv write `ASSERT(...) with no `include "prim_assert.sv"` anywhere, and
     # its i3c files use `I3C_ASSERT the same way -- only resolves if the header
