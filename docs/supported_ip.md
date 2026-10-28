@@ -100,6 +100,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | [`42606d2d`](https://github.com/ZipCPU/zipcpu/commit/42606d2d) | **46 / 51** | 1 of 51 | 0 |
 | Hazard3 | [Wren6991/Hazard3](https://github.com/Wren6991/Hazard3) | [`8af99293`](https://github.com/Wren6991/Hazard3/commit/8af99293) | **21 / 25** | 3 of 25 | 0 |
 | NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **775 / 911** (local re-sweep 2026-10-28 with the #1360 stand-ins; first nightly with them pending) | 3 of 914 | 0 |
+| OpenE906 | [XUANTIE-RV/opene906](https://github.com/XUANTIE-RV/opene906) | [`c5b87895`](https://github.com/XUANTIE-RV/opene906/commit/c5b87895) | **203 / 255** (first local sweep 2026-10-28; first nightly pending) | 0 of 255 | 0 |
 | OpenC910 | [XUANTIE-RV/openc910](https://github.com/XUANTIE-RV/openc910) | [`b91c9093`](https://github.com/XUANTIE-RV/openc910/commit/b91c9093) | **360 / 482** | 5 of 482 | 0 |
 | BOOM | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | [`ba03175e`](https://github.com/riscv-boom/riscv-boom/commit/ba03175e) | **326 / 422 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 422 | 0 |
 | Gemmini | [ucb-bar/gemmini](https://github.com/ucb-bar/gemmini) | [`8c3f9923`](https://github.com/ucb-bar/gemmini/commit/8c3f9923) | **340 / 384 (first local sweep 2026-10-27; first nightly pending)** | 0 of 384 | 0 |
