@@ -67,7 +67,7 @@ artefacts, and the 73 break down as
 
 | family | divergences | oracle |
 |---|---:|---|
-| NVDLA | 70 | **none** — `read_slang` reads not one of its 914 modules (`use of undeclared identifier 'assertion_error'`), so nothing adjudicates them |
+| NVDLA | 70 | **was none** — `read_slang` could not read one of its 914 modules; #1360's stand-ins fixed that, and a local re-sweep (2026-10-28) gives the family 775 / 911 proven with 41 divergences that are now slang-CLEAN and 3 rows still unreferenced.  The nightly below predates the fix |
 | OpenC910 | 2 | one (`plic_hreg_busif`) has a clean `read_slang` reference and is **already fixed** by #1355, which merged after this nightly started |
 | biRISC-V | 1 | `read_slang` clean — `riscv_core`, 201 cycles |
 

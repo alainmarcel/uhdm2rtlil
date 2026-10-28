@@ -46,11 +46,13 @@ the `read_slang` netlist, so the reference is measured by the same yardstick:
 over the 2026-10-27 nightlies, **8024 rows, 5827 formally proven, `read_uhdm`
 6599 co-sim passes / 73 divergences / 95 adjudicated artefacts, `read_slang`
 5719 / 38 / 92** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
-**70 of the 73** `read_uhdm` divergences are NVDLA rows, and they are
-UNADJUDICATED rather than confirmed defects: `read_slang` reads not one NVDLA
-module (`use of undeclared identifier 'assertion_error'`), so there is no
-oracle to tell a reader defect from an RTL-side simulation artefact; 2 are
-OpenC910 and 1 biRISC-V.  Four families in the table below are at their first
+**70 of the 73** `read_uhdm` divergences were NVDLA rows with NO oracle --
+`read_slang` could not read one of its 914 modules.  #1360 fixed that with five
+stand-in library files, and a local re-sweep on 2026-10-28 turns the family
+from 0 comparable rows into **775 / 911 proven** with 3 rows unreferenced; 41
+divergences remain and they are now slang-CLEAN, i.e. real reader leads.  The
+nightly has not run with the stand-ins yet, so the totals above still carry the
+pre-fix figures.  Four families in the table below are at their first
 LOCAL sweep because the external-IP nightly has not completed since they
 landed, and each is marked as such.  The per-core table, the provenance of
 every number, the reference frontend's own record and the nightly 4-frontend
@@ -95,7 +97,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | biRISC-V | [ultraembedded/biriscv](https://github.com/ultraembedded/biriscv) | [`6af9c4be`](https://github.com/ultraembedded/biriscv/commit/6af9c4be) | **28 / 44** | 7 of 44 | 0 |
 | ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | [`42606d2d`](https://github.com/ZipCPU/zipcpu/commit/42606d2d) | **46 / 51** | 1 of 51 | 0 |
 | Hazard3 | [Wren6991/Hazard3](https://github.com/Wren6991/Hazard3) | [`8af99293`](https://github.com/Wren6991/Hazard3/commit/8af99293) | **21 / 25** | 3 of 25 | 0 |
-| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **— (`read_slang` reads no row: `use of undeclared identifier 'assertion_error'`, so nothing is comparable)** | 914 of 914 | 0 (908 opt-checked) |
+| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **775 / 911** (local re-sweep 2026-10-28 with the #1360 stand-ins; first nightly with them pending) | 3 of 914 | 0 |
 | OpenC910 | [XUANTIE-RV/openc910](https://github.com/XUANTIE-RV/openc910) | [`b91c9093`](https://github.com/XUANTIE-RV/openc910/commit/b91c9093) | **360 / 482** | 5 of 482 | 0 |
 | BOOM | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | [`ba03175e`](https://github.com/riscv-boom/riscv-boom/commit/ba03175e) | **326 / 422 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 422 | 0 |
 | Gemmini | [ucb-bar/gemmini](https://github.com/ucb-bar/gemmini) | [`8c3f9923`](https://github.com/ucb-bar/gemmini/commit/8c3f9923) | **340 / 384 (first local sweep 2026-10-27; first nightly pending)** | 0 of 384 | 0 |
