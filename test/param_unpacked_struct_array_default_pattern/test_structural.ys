@@ -1,0 +1,11 @@
+# Without the Surelog fix this script is never reached: the elaborator
+# segfaults and no UHDM file is produced.  With it, the module reads and the
+# struct parameter folds.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt -full
+check -assert
+select -assert-count 1 w:y
+sat -verify -prove y 9'h14b -set en 1'b1
+sat -verify -prove y 9'h000 -set en 1'b0
