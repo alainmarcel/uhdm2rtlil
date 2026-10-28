@@ -231,6 +231,14 @@ jobs:
           - family: snitch
             timeout: 420
             mem_limit_kb: "7000000"
+          # apache/tvm-vta @ d4a15f62: Apache TVM's Versatile Tensor
+          # Accelerator -- the fetch / load / compute / store pipeline, the
+          # GEMM core, the tensor ALU and the VME / VCR interfaces.  Chisel
+          # 3.5, so test/ext_ip/vta_setup.sh uses VTA's own `make verilog`
+          # (sbt + the Scala FIRRTL compiler, no firtool).  66 rows, ~1 h.
+          - family: vta
+            timeout: 420
+            mem_limit_kb: "7000000"
     name: ext - ${{ matrix.family }}
     uses: ./.github/workflows/core-sweep.yml
     with:

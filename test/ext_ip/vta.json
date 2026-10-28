@@ -1,0 +1,78 @@
+{
+ "title": "VTA (apache/tvm-vta) -- the DefaultDe10Config accelerator",
+ "url": "https://github.com/apache/tvm-vta",
+ "repos": [
+  {
+   "url": "https://github.com/apache/tvm-vta",
+   "commit": "d4a15f627d5cc9762a82270d1be60a136e6af9c2",
+   "dir": "tvm-vta"
+  }
+ ],
+ "generate": {
+  "cwd": "tvm-vta",
+  "marker": "tvm-vta/build/chisel/VTA.DefaultDe10Config.sv",
+  "cmds": [
+   [
+    "bash",
+    "$EXT_IP_HARNESS/vta_setup.sh"
+   ]
+  ],
+  "timeout": 3600
+ },
+ "roots": [
+  "tvm-vta/build/chisel/VTA.DefaultDe10Config.sv"
+ ],
+ "incdirs": [],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "exclude": [
+  "^IntelShell$",
+  "_tb$",
+  "^tb_"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "Apache TVM's VTA, the Versatile Tensor Accelerator: the fetch / load /",
+  "compute / store pipeline, the GEMM core (TensorGemm, DotProduct, MAC, the",
+  "adder tree), the tensor ALU, the VME and VCR bus / register interfaces, the",
+  "tensor load / store paths and their queues -- 66 rows.",
+  "",
+  "VTA is Chisel, but it pins **chisel3 3.5.0**, which predates the",
+  "org.chipsalliance Chisel 6 line that rocket-chip / BOOM / Gemmini use, so it",
+  "cannot be compiled against the rocket-chip checkout's modules the way",
+  "boom_setup.sh and gemmini_setup.sh do.  It does not need to be: VTA ships a",
+  "`make verilog` target, and Chisel 3.5 emits SystemVerilog through the Scala",
+  "FIRRTL compiler with no firtool involved.  test/ext_ip/vta_setup.sh installs",
+  "sbt (one launcher tarball, as the other setups install mill / firtool /",
+  "bender) and runs that target; the artifacts resolve from Maven Central and",
+  "the build works on the JDK 17 already present.",
+  "",
+  "The emitted file is ONE SystemVerilog file holding every module",
+  "(build/chisel/VTA.DefaultDe10Config.sv, 23.6k lines, 67 modules), not one",
+  "file per module as firtool produces -- so every row's closure is that whole",
+  "file, which at 1.3 MB costs nothing.",
+  "",
+  "Only `IntelShell` is excluded: it is the DE10 board wrapper and the sole",
+  "vendor-specific module in the file; everything else is vendor-neutral VTA",
+  "RTL.  DefaultPynqConfig (Xilinx) and DefaultF1Config are the other two",
+  "configurations the repository defines -- one VTA_CONFIG away if the shell",
+  "ever matters.",
+  "",
+  "First local sweep 2026-10-28 (66 rows): 47 / 66 proven, **66 / 66",
+  "elaborate, 66 / 66 co-sim PASS, 66 rows with 0 undriven, 0 divergences, 0",
+  "`differs`, 0 read-fails and not one row without a read_slang reference**.",
+  "1.0 h of row time.",
+  "",
+  "Every one of the 19 unproven rows is a SAT-BUDGET row (15 over the memory",
+  "cap, 4 timeout) and every one of them co-simulates clean: Core, Compute,",
+  "Load, Store, LoadUopTop, DotProduct and the other wide datapath blocks.  So",
+  "the family has no open reader lead at all -- the cleanest of the campaign,",
+  "cleaner even than gemmini (which had the same zero divergences but 1",
+  "elab-fail)."
+ ]
+}
