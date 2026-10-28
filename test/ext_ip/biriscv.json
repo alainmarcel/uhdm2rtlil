@@ -46,7 +46,15 @@
   "simulation-only), 4 rows without a read_slang reference (it rejects biRISC-V\u2019s",
   "use-before-declaration in the caches), and four `differs` rows -- biriscv_exec,",
   "_frontend, _npc and dcache_core_tag_ram -- all with a clean co-simulation: the",
-  "branch-predictor leads tracked from the first sweep."
+  "branch-predictor leads tracked from the first sweep.",
+  "",
+  "First NIGHTLY 2026-10-27 (run 40480115156): 28 / 44 proven, 42 / 43 co-sim",
+  "pass, 44 / 44 opt-clean with 0 undriven, 7 rows not comparable -- and ONE",
+  "read_uhdm co-simulated divergence with read_slang CLEAN, so unlike NVDLA's",
+  "70 this one IS adjudicated and is a genuine reader lead.  It sits beside the",
+  "four `differs` rows already tracked above (biriscv_exec, _frontend, _npc,",
+  "dcache_core_tag_ram), two of which -- _exec and _npc -- were re-measured",
+  "against main on 2026-10-27 and still differ with a clean co-simulation."
  ],
  "always_srcs": [
   "biriscv/src/core/biriscv_defs.v"
