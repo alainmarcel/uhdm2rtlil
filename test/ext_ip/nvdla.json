@@ -17,6 +17,13 @@
   "nvdla-hw/vmod/rams/synth/*.v",
   "nvdla-hw/vmod/rams/model/*.v"
  ],
+ "harness_srcs": [
+  "nvdla_harness/nv_assert_fifo.vlib",
+  "nvdla_harness/nv_assert_hold_throughout_event_interval.vlib",
+  "nvdla_harness/nv_assert_vld_credit_max.vlib",
+  "nvdla_harness/p_SSYNC3DO_C_PPP.v",
+  "nvdla_harness/p_SSYNC3DO_S_PPP.v"
+ ],
  "incdirs": [
   "nvdla-hw/vmod/include",
   "nvdla-hw/vmod/vlibs",
@@ -25,8 +32,8 @@
   "nvdla-hw/vmod/rams/synth"
  ],
  "defines": [
-  "SYNTHESIS",
-  "DESIGNWARE_NOEXIST"
+  "DESIGNWARE_NOEXIST",
+  "SYNTHESIS"
  ],
  "modules": "auto",
  "exclude": [
@@ -60,6 +67,40 @@
   "NV_NVDLA_CACC_assembly_buffer, which run past the row budget (the assembly",
   "buffer alone spends 900 s expanding its 32x288 RAM banks into per-bit",
   "latches) -- the same whole-core class as BlackParrot -- and NV_NVDLA_ssync3d,",
-  "which instantiates `p_STRICTSYNC3DOTM`, a synchroniser cell no file in the repository defines."
+  "which instantiates `p_STRICTSYNC3DOTM`, a synchroniser cell no file in the repository defines.",
+  "",
+  "WHY THERE IS NO ORACLE, exactly -- and the dead end not to retry.",
+  "`read_slang` stops on `use of undeclared identifier 'assertion_error'` in",
+  "vmod/vlibs/nv_assert_{fifo,hold_throughout_event_interval,vld_credit_max}.vlib.",
+  "`assertion_error` is a TASK that vlibs declare by `include \"assertion_task.h\"`",
+  "INSIDE an `ifndef SYNTHESIS` block -- and in nv_assert_always.vlib the CALL is",
+  "inside that same block, so -DSYNTHESIS removes both and the file is consistent.",
+  "In those three (and nv_assert_vld_credit_max) the call is NOT under SYNTHESIS:",
+  "its only guards are `ifndef EMU` and the ELSE of `ifdef FV_ASSERT_ON`, so a",
+  "synthesis build keeps the CALL and drops the DECLARATION.  That is an upstream",
+  "packaging inconsistency, not a frontend limitation: Surelog tolerates the",
+  "undeclared task call (read_uhdm reads all 914 rows), slang does not, and",
+  "because the file is in every row's closure ALL 914 lose their reference.",
+  "",
+  "DEAD END, measured 2026-10-27: adding -DFV_ASSERT_ON takes the other branch",
+  "and does skip the task call -- and then every vlib fails on",
+  "`'common_sva_assert.sva': No such file or directory`, because that include is",
+  "referenced by the FV branch of nv_assert_{always,one_hot,zero_one_hot,no_x}",
+  "and IS NOT SHIPPED anywhere in the repository.  The FV branch was never",
+  "packaged; do not reach for that define again.",
+  "",
+  "The route that should work is a HARNESS STAND-IN for those four .vlib files,",
+  "the mechanism openpiton uses for its flop library: put the call under",
+  "`ifndef SYNTHESIS` exactly as nv_assert_always.vlib already does, keep the",
+  "originals in exclude_srcs, and the change is additive and reviewable.  That",
+  "would give all 914 rows a read_slang reference and finally adjudicate the 70",
+  "co-simulated divergences."
+ ],
+ "exclude_srcs": [
+  "/vmod/vlibs/nv_assert_fifo\\.vlib$",
+  "/vmod/vlibs/nv_assert_hold_throughout_event_interval\\.vlib$",
+  "/vmod/vlibs/nv_assert_vld_credit_max\\.vlib$",
+  "/vmod/vlibs/p_SSYNC3DO_C_PPP\\.v$",
+  "/vmod/vlibs/p_SSYNC3DO_S_PPP\\.v$"
  ]
 }
