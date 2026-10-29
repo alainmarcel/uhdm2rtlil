@@ -12021,6 +12021,53 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         // `mult_state_d = MULL` — ibex_multdiv_fast's gen_mult_single_cycle).
         // Resolve it from the design-wide enum-constant map instead of leaving a
         // fabricated undriven wire that `check` flags.
+        // A parameter declared in a FUNCTION's own declaration section --
+        //
+        //     function [width_z-1:0] fshl_u_1;
+        //        input [width_a:0] arg1;
+        //        parameter olen = width_z;        // <- here
+        //        parameter ilen = width_a+1;
+        //        reg [len-1:0] result;
+        //
+        // lives on that function's Param_assigns(), which nothing consulted:
+        // the module-parameter path looks at the enclosing module_inst, and
+        // the block-scoped path only sees a `vpiParamAssign` STATEMENT inside
+        // a begin block.  A declaration-section parameter is neither, so every
+        // reference fabricated a 1-bit undriven wire -- which then silently
+        // degraded everything measured against it: `reg [len-1:0] result_t`
+        // became ONE BIT ("Part-select LHS result_t[4:0] out of bounds
+        // (base_size=1)"), `{(len){sbit}}` became a "Non-constant replication
+        // count", and the function returned X.
+        //
+        // Catapult-generated shift cells write their widths exactly this way,
+        // so this took out NVDLA's whole *_mgc_shift_* family (CDMA, CSC, SDP)
+        // and everything instantiating them: 41 slang-clean co-sim
+        // divergences, the largest block of reader leads in the sweeps.
+        // Nothing structural flagged it -- the fabricated wire is never
+        // assigned in the source either, so the undriven check classified it
+        // as "never assigned in the source" and the row read 0 undriven.
+        for (const UHDM::any* anc = uhdm_ref->VpiParent(); anc;
+             anc = anc->VpiParent()) {
+            const UHDM::VectorOfparam_assign* pas = nullptr;
+            if (anc->UhdmType() == uhdmfunction)
+                pas = any_cast<const UHDM::function*>(anc)->Param_assigns();
+            else if (anc->UhdmType() == uhdmtask)
+                pas = any_cast<const UHDM::task*>(anc)->Param_assigns();
+            if (!pas) continue;
+            for (auto pa : *pas) {
+                if (!pa->Lhs() || !pa->Rhs()) continue;
+                if (std::string(pa->Lhs()->VpiName()) != ref_name) continue;
+                RTLIL::SigSpec pv = import_expression(
+                    any_cast<const UHDM::expr*>(pa->Rhs()));
+                if (pv.is_fully_const()) {
+                    if (mode_debug)
+                        uhdm_trace("    ref_obj '%s' resolved as a function-local "
+                            "parameter = %s\n", ref_name.c_str(),
+                            pv.as_const().as_string().c_str());
+                    return pv;
+                }
+            }
+        }
         build_enum_const_map();
         auto ecit = enum_const_values_.find(ref_name);
         if (ecit != enum_const_values_.end() &&
