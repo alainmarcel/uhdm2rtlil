@@ -36,7 +36,6 @@ line and in the total:
   The script asserts both identities before printing.
 
 | Core | Rows | Formal proven | `read_slang` co-simulated | pass | **diverge** | artefact / no oracle | `read_uhdm` co-simulated | pass | **diverge** | artefact | Undriven |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **Ibex** | 28 | 22 | 23 | 20 | 0 | 3 | 24 | 20 | 0 | 4 | 0 |
 | **rp32 (R5P)** | 13 | 6 | 5 | 2 | 0 | 3 | 7 | 3 | 0 | 4 | 0 |
 | **fx68k** | 22 | 18 | 12 | 6 | 0 | 6 | 10 | 6 | 0 | 4 | 0 |
@@ -44,37 +43,41 @@ line and in the total:
 | **RgGen** | 25 | 25 | 25 | 25 | 0 | 0 | 25 | 25 | 0 | 0 | 0 |
 | **VeeR EH1** | 67 | 55 | 66 | 66 | 0 | 0 | 66 | 66 | 0 | 0 | 0 |
 | **TNoC** | 43 | 18 | 12 | 12 | 0 | 0 | 12 | 12 | 0 | 0 | 0 |
-| **VeeR EL2** | 91 | 79 | 86 | 86 | 0 | 0 | 87 | 87 | 0 | 0 | 0 |
+| **VeeR EL2** | 91 | 77 | 86 | 86 | 0 | 0 | 87 | 87 | 0 | 0 | 0 |
 | **VeeR EH2** | 100 | 81 | 96 | 94 | **2** | 0 | 96 | 95 | 0 | 1 | 0 |
-| **RSD** | 165 | 115 | 137 | 133 | **3** | 1 | 140 | 139 | 0 | 1 | 0 |
-| **BlackParrot** | 125 | 49 | 45 | 42 | **2** | 1 | 45 | 44 | 0 | 1 | 0 |
+| **RSD** | 165 | 116 | 137 | 133 | **3** | 1 | 140 | 139 | 0 | 1 | 0 |
+| **BlackParrot** | 125 | 48 | 45 | 42 | **3** | 0 | 45 | 45 | 0 | 0 | 0 |
 | **OpenTitan** (upstream) | 32 | 28 | 29 | 27 | **1** | 1 | 29 | 28 | 0 | 1 | 0 |
 | **OpenTitan IP library** (upstream, the other 44 blocks) | 605 | 526 | 551 | 539 | **6** | 6 | 551 | 545 | 0 | 6 | 0 |
 | **Pavona** (300 modules + 100 chip instances) | 400 | 381 | 389 | 378 | **2** | 9 | 389 | 380 | 0 | 9 | 0 |
 | **Ariane CVA6** (142 modules + 138 core instantiations, the latter formal-only) | 280 | 228 | 135 | 124 | **2** | 9 | 135 | 126 | 0 | 9 | 0 |
-| **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 300 | 402 | 365 | **9** | 28 | 402 | 374 | 0 | 28 | 0 |
+| **Ariane CVA6 flavours** (the three other sv-tests configurations: HPDcache, H-extension, RV32) | 429 | 301 | 402 | 365 | **9** | 28 | 402 | 374 | 0 | 28 | 0 |
 | **Caliptra** | 22 | 19 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
 | **XiangShan** (香山) | 21 | 19 | 21 | 21 | 0 | 0 | 21 | 21 | 0 | 0 | 0 |
-| **XiangShan core** (香山) | 2002 | 1609 | 1945 | 1942 | **3** | 0 | 1945 | 1945 | 0 | 0 | 0 |
-| **External IP** (the other 26 repos; the XiangShan library is the row above) | 2990 | 1746 | 1806 | 1773 | **8** | 25 | 2718 | 2619 | **73** | 26 | 0 |
+| **XiangShan core** (香山) | 2002 | 1607 | 1944 | 1941 | **3** | 0 | 1945 | 1945 | 0 | 0 | 0 |
+| **External IP** (the other 30 repos; the XiangShan library is the row above) | 3752 | 3084 | 3118 | 3081 | **10** | 27 | 3219 | 3113 | **78** | 28 | 0 |
 | **chipsalliance/sv-tests** | 527 | 475 | 11 | 11 | 0 | 0 | 12 | 11 | 0 | 1 | 0 |
-| **All sweeps** (19 workflows) | **8024** | **5827** | **5849** | **5719** | **38** | **92** | **6767** | **6599** | **73** | **95** | **0** |
+| **All sweeps** (19 workflows) | **8786** | **7162** | **7160** | **7026** | **41** | **93** | **7268** | **7094** | **78** | **96** | **0** |
 
-**73 `read_uhdm` divergences in the 2026-10-27 nightlies, and 70 of them are
-UNADJUDICATED rather than confirmed defects**: 6599 of the 6767 co-simulated
-rows pass outright, 95 are divergences a SAT miter proved to be simulation
-artefacts, and the 73 break down as
+**78 `read_uhdm` divergences in the 2026-10-28 nightlies, and 41 of them are
+now COMPARABLE leads rather than rows with no oracle**: 7094 of the 7268
+co-simulated rows pass outright, 96 are divergences a SAT miter proved to be
+simulation artefacts, and the 78 break down as
 
 | family | divergences | oracle |
 |---|---:|---|
-| NVDLA | 70 | **was none** — `read_slang` could not read one of its 914 modules; #1360's stand-ins fixed that, and a local re-sweep (2026-10-28) gives the family 775 / 911 proven with 41 divergences that are now slang-CLEAN and 3 rows still unreferenced.  The nightly below predates the fix |
-| OpenC910 | 2 | one (`plic_hreg_busif`) has a clean `read_slang` reference and is **already fixed** by #1355, which merged after this nightly started |
-| biRISC-V | 1 | `read_slang` clean — `riscv_core`, 201 cycles |
+| NVDLA | 70 | **now has one.**  #1360's five stand-in library files gave the family a `read_slang` reference and this is the first nightly to carry them: **41 of the 70 are slang-CLEAN**, i.e. real reader leads, and 29 are rows whose netlist `read_slang` still cannot lower (`slang n/a`).  Earlier revisions of this file called all 70 "unadjudicated"; that is no longer true of the 41 |
+| OpenPiton | 7 | its first nightly; to triage |
+| OpenC910 | 1 | down from 2 -- `plic_hreg_busif` is fixed by #1355 |
 
-NVDLA is a brand-new family (914 rows, its first nightly) and its rows are
-read-clean and opt-clean — 908 of 908 with 0 undriven — so the 70 are the next
-thing to triage, not a regression in anything that was passing.  The three with
-a clean `read_slang` reference are the real reader leads.  VeeR EH2's
+NVDLA's rows are read-clean and opt-clean -- 908 of 908 with 0 undriven -- so
+its 70 are a triage queue, not a regression in anything that was passing; and
+with the stand-ins in place **41 of them now have a clean `read_slang`
+reference, which makes them the largest block of real reader leads in the
+project**.  The `*_mgc_shift_*` modules (CDMA_mgc_shift_l / _r,
+CSC_mgc_shift_bl / _l / _r) are the obvious starting point: each diverges for
+228-278 cycles while read_slang passes.
+VeeR EH2's
 `eh2_ifu_mem_ctl` and adams-bridge's `abr_piso_multi`, the two open leads of the
 2026-10-25 nightlies, still diverge (150 and 38 cycles) but are now ADJUDICATED
 ARTEFACTS rather than counted defects: each one's miter proves equivalence as
@@ -93,23 +96,32 @@ below.
 ### Provenance
 
 The numbers are the **latest completed run of each sweep workflow as of
-2026-10-27**, 19 workflows.  Two are not from that day: **XiangShan core**
-(40308319307) is its 2026-10-26 run, and the **External IP** run
-(40480115156) is 2026-10-27 but FAILED as a whole -- 126 of its 141 jobs
-succeeded and the per-family reports of those are used, while rocket-chip
-(4 shards) and boom (8 shards) produced no report at all, so those two
-families are tabulated from their first LOCAL sweep in
-[supported_ip.md](supported_ip.md) and are not counted here.  **Gemmini and
-OpenPiton have no nightly yet** -- both landed on 2026-10-27 after that run
-started -- and are likewise local-only in supported_ip.md and absent from the
-totals above, so the 8024 rows UNDERSTATE the corpus by those four families.
-Run ids: ibex 40469632038, rp32 40473047687, fx68k 40513846368, scr1
-40472663669, rggen 40522637950, veer-eh1 40479697067, tnoc 40525298344,
-veer-el2 40491656223, veer-eh2 40483100193, rsd 40485068107, black-parrot
-40512753201, opentitan 40505307933, ext (External IP + OpenTitan IP library)
-40480115156, pavona 40480185190, cva6 40477095658, cva6-flavours
-40485166111, caliptra 40489600265, xiangshan-core 40308319307, sv-tests
-40480083244.
+2026-10-28**, 19 workflows, refreshed with `test/sweep_table.py`.  The
+**External IP** run (40668825086) FAILED as a whole: 148 of its 168 jobs
+succeeded and the per-family reports of those are used, but
+
+  * **BOOM (8 shards), Gemmini (6), Rocket Chip (4) and biRISC-V (1) produced
+    no usable report** -- their report directories are empty -- so those four
+    families contribute ZERO rows here and are tabulated from their first LOCAL
+    sweep in [supported_ip.md](supported_ip.md);
+  * **aib-protocols** reported 198 of its 397 rows and **OpenPiton** 756 of its
+    852, so both keep local numbers there too;
+  * **Cheshire** reported 30 rows against the 266 its local sweep measures --
+    the CI run swept only the vendored `UsbOhciAxi4` modules.  That is an open
+    harness question, not a result, and its row keeps the local figures;
+  * **NaxRiscv, CV32E40X, CV32E40S and OpenE906** landed after the run started
+    and have no nightly at all.
+
+So the 8786 rows UNDERSTATE the corpus, by roughly the 1085 rows of those four
+empty families plus the partial ones.
+
+Run ids: ibex 40657392141, rp32 40660737218, fx68k 40706997811, scr1
+40660315121, rggen 40713316491, veer-eh1 40668403252, tnoc 40715474861,
+veer-el2 40680816053, veer-eh2 40672561668, rsd 40674691974, black-parrot
+40705798747, opentitan 40696877896, ext (External IP + OpenTitan IP library)
+40668825086, pavona 40668876232, cva6 40665596784, cva6-flavours
+40674858534, caliptra 40679258861, xiangshan-core 40675391360, sv-tests
+40668827529.
 
 ### Formal-only `differs` rows that are adjudicated non-defects
 
