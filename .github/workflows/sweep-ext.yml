@@ -146,6 +146,14 @@ jobs:
           # Its own cv32e40x_manifest.flist is the closure.  42 rows.
           - family: cv32e40x
             timeout: 330
+          # openhwfoundation/cv32e40s @ 9d9cae78: the SECURITY variant of the
+          # same 4-stage RV32 core -- PMP / Smepmp, hardened CSRs with shadow
+          # copies, dummy-instruction and PC hardening, integrity-checked OBI.
+          # Needs three bhv files as sources, not one: cv32e40s_csr
+          # instantiates cv32e40s_sffs / sffr and only bhv defines them.
+          # 48 rows.
+          - family: cv32e40s
+            timeout: 330
           # XUANTIE-RV/opene906 @ c5b87895: T-Head's XuanTie E906, the 32-bit
           # RV32 embedded core -- ifu / idu / iu / lsu / rtu / cp0, the FPU and
           # its falu / fdsu / fmau datapaths, the CLIC / CLINT, PMP / PMU, the
