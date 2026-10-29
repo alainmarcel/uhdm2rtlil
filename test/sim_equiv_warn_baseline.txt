@@ -134,3 +134,12 @@ range_case
 genblk_wire
 latch_002
 extnets
+# func_local_accumulator_in_ff -- TRIAGED, not untriaged: a function-local
+# accumulator in a clocked process is bound by the inliner to ONE staging
+# wire, so `result = result | x` reads the wire being written (9 comb loops;
+# read_slang 0; 120 in NVDLA NV_NVDLA_SDP_CORE_Y_cvt_core).  The co-sim is the
+# ONLY oracle: the miter proves UHDM == Verilog because a comb loop makes the
+# netlist unevaluatable rather than wrong.  Baselined so the suite reports it
+# without gating; the structural check in structural_expected_fail.txt is the
+# ratchet that fires when it is fixed.
+func_local_accumulator_in_ff
