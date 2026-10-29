@@ -1,0 +1,25 @@
+# Tests whose `test_structural.ys` is EXPECTED to fail: the reader defect it
+# asserts against is known and tracked, and the check is kept so the shape is
+# measured every run rather than re-derived when someone returns to it.
+#
+# This is a RATCHET, exactly like failing_tests.txt and
+# slang_miter_expected_fail.txt: a listed check that starts PASSING is reported
+# as an UNEXPECTED SUCCESS, so the entry must be removed in the same commit
+# that fixes the defect.
+#
+# Use this list ONLY for a structural check.  A test whose whole run fails
+# belongs in failing_tests.txt; a read_uhdm-vs-read_slang miter counterexample
+# belongs in slang_miter_expected_fail.txt.
+
+# A function-local `reg` accumulated into by successive blocking assignments
+# (`result = result | x`) is bound by the function-call inliner to ONE staging
+# wire with no SSA staging between the statements.  In a comb context the
+# current_comb_values threading rewrites each read onto the previous value and
+# hides it; inside a CLOCKED process that threading is suppressed on purpose
+# (in_always_ff_body_mode, so a register read observes its pre-edge value) and
+# the wire's own `$or` cell reads the wire being written -- 9 combinational
+# loops here, 120 in NVDLA's NV_NVDLA_SDP_CORE_Y_cvt_core against read_slang's
+# 0.  The test READS fine and is formally fine against read_verilog, so only
+# the structural check fails; dut.v records the three narrowing experiments and
+# the three fix sites already measured as wrong.
+func_local_accumulator_in_ff

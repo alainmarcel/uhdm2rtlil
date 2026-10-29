@@ -1,0 +1,8 @@
+# The inlined function body must not close a combinational loop: a local read
+# on the RHS of its own re-assignment has to see the previous statement's
+# value, not the wire being written.  `check -assert` fails on the loop.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert

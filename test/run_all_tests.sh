@@ -251,6 +251,7 @@ run_slang_miter() {
 
 STRUCT_CHECK_RUN=0
 STRUCT_CHECK_FAILED_TESTS=0
+STRUCT_CHECK_KNOWN_FAIL=0
 STRUCT_CHECK_FAILED_TEST_NAMES=()
 
 # Structural check: an OPTIONAL per-test `test_structural.ys` asserting a
@@ -269,7 +270,19 @@ run_structural_check() {
     STRUCT_CHECK_RUN=$((STRUCT_CHECK_RUN + 1))
     if (cd "$d" && timeout 300 "$YOSYS_BIN" -m "$UHDM_PLUGIN" ./test_structural.ys \
             > structural.log 2>&1); then
-        echo "    ✅ Structural: read_uhdm netlist matches the expected shape"
+        if grep -qxF "$test_dir" "$SCRIPT_DIR/structural_expected_fail.txt" 2>/dev/null; then
+            # A listed check that PASSES is the ratchet firing: the defect is
+            # fixed and the entry must go in the same commit.
+            echo "    ❗ Structural UNEXPECTEDLY PASSED - remove $test_dir from structural_expected_fail.txt"
+            STRUCT_CHECK_FAILED_TESTS=$((STRUCT_CHECK_FAILED_TESTS + 1))
+            STRUCT_CHECK_FAILED_TEST_NAMES+=("$test_dir (unexpected success)")
+            UNEXPECTED_FAILURES+=("$test_dir (structural unexpected success)")
+        else
+            echo "    ✅ Structural: read_uhdm netlist matches the expected shape"
+        fi
+    elif grep -qxF "$test_dir" "$SCRIPT_DIR/structural_expected_fail.txt" 2>/dev/null; then
+        echo "    ⚠️  Structural FAILED (known — see structural_expected_fail.txt)"
+        STRUCT_CHECK_KNOWN_FAIL=$((STRUCT_CHECK_KNOWN_FAIL + 1))
     else
         echo "    ❌ Structural FAILED - see structural.log"
         STRUCT_CHECK_FAILED_TESTS=$((STRUCT_CHECK_FAILED_TESTS + 1))
@@ -1375,7 +1388,7 @@ dump_results_file() {
                  YOSYS_FAILED YOSYS_SKIPPED YOSYS_UHDM_ONLY \
                  EQUIV_FAILED_TESTS MITER_FAILED_TESTS \
                  SLANG_MITER_RUN SLANG_MITER_FAILED_TESTS SLANG_MITER_KNOWN_FAIL \
-                 STRUCT_CHECK_RUN STRUCT_CHECK_FAILED_TESTS \
+                 STRUCT_CHECK_RUN STRUCT_CHECK_FAILED_TESTS STRUCT_CHECK_KNOWN_FAIL \
                  MEMCHECK_RUN MEMCHECK_SKIPPED MEMCHECK_FAILED_TESTS \
                  QUIET_CHECK_RUN QUIET_CHECK_FAILED_TESTS \
                  SIM_EQUIV_WARN_TESTS \
@@ -1526,7 +1539,7 @@ if [ "${SLANG_COSIM_RUN:-0}" -gt 0 ]; then
     echo "     (a read_slang defect, not ours — collected in docs/slang_unsupported.md)"
 fi
 if [ "${STRUCT_CHECK_RUN:-0}" -gt 0 ]; then
-    echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_FAILED_TESTS unexpected"
+    echo "  🧱 Structural (netlist shape): $((STRUCT_CHECK_RUN - STRUCT_CHECK_FAILED_TESTS - STRUCT_CHECK_KNOWN_FAIL))/$STRUCT_CHECK_RUN passed, $STRUCT_CHECK_KNOWN_FAIL known-fail, $STRUCT_CHECK_FAILED_TESTS unexpected"
     for t_ in "${STRUCT_CHECK_FAILED_TEST_NAMES[@]}"; do
         echo "      - $t_"
     done

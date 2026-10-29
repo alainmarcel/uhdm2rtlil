@@ -21,6 +21,7 @@ COUNTS = [
     "MITER_FAILED_TESTS", "SIM_EQUIV_WARN_TESTS", "SIM_EQUIV_KNOWN_WARN_TESTS",
     "SIM_EQUIV_ANALYZED_TESTS", "SIM_EQUIV_ARTEFACT_TESTS",
     "SIM_EQUIV_UNCLASS_TESTS", "SLANG_MITER_RUN", "SLANG_MITER_FAILED_TESTS", "SLANG_MITER_KNOWN_FAIL",
+    "STRUCT_CHECK_KNOWN_FAIL",
 ]
 
 def collect(paths):
@@ -119,7 +120,9 @@ def main():
             print(f"      - {t_}")
     if counts.get("STRUCT_CHECK_RUN"):
         sr, sf = counts["STRUCT_CHECK_RUN"], counts["STRUCT_CHECK_FAILED_TESTS"]
-        print(f"  🧱 Structural (netlist shape): {sr - sf}/{sr} passed, {sf} unexpected")
+        sk = counts.get("STRUCT_CHECK_KNOWN_FAIL", 0)
+        print(f"  🧱 Structural (netlist shape): {sr - sf - sk}/{sr} passed, "
+              f"{sk} known-fail, {sf} unexpected")
         for t_ in names(lists, "STRUCT_CHECK_FAILED_TEST_NAMES"):
             print(f"      - {t_}")
     if counts.get("MEMCHECK_RUN") or counts.get("MEMCHECK_SKIPPED"):
