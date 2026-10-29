@@ -51,8 +51,11 @@ The 2026-10-28 nightly is the FIRST to include NVDLA's #1360 stand-ins, and it
 confirms what the local re-sweep predicted rather than softening it: the family
 reads **776 / 914 proven**, and its 70 `read_uhdm` co-sim divergences split
 **41 slang-CLEAN -- real reader leads -- and 29 with no slang oracle** (the
-`netlist not lowerable` rows).  Those 41 are the biggest open lead in the
-project; the remaining 8 divergences in the totals are OpenPiton 7 and
+`netlist not lowerable` rows).  Those 41 WERE the biggest open lead in the
+project, and 38 of them turned out to be one defect -- a parameter declared in
+a function's own declaration section resolving to a fabricated 1-bit undriven
+wire -- now fixed; 3 remain (`SDP_CORE_Y_cvt`, `_cvt_core`, `MRDMA_EG_dout`).
+The totals above predate that fix; the remaining 8 divergences in the totals are OpenPiton 7 and
 OpenC910 1.  Earlier revisions of this file said the 70 were "rows with no
 oracle"; with the stand-ins in place that is no longer true of most of them.
 
@@ -110,7 +113,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | biRISC-V | [ultraembedded/biriscv](https://github.com/ultraembedded/biriscv) | [`6af9c4be`](https://github.com/ultraembedded/biriscv/commit/6af9c4be) | **28 / 44** | 7 of 44 | 0 |
 | ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | [`42606d2d`](https://github.com/ZipCPU/zipcpu/commit/42606d2d) | **46 / 50** | 1 of 51 | 0 |
 | Hazard3 | [Wren6991/Hazard3](https://github.com/Wren6991/Hazard3) | [`8af99293`](https://github.com/Wren6991/Hazard3/commit/8af99293) | **21 / 22** | 3 of 25 | 0 |
-| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **776 / 835** (2026-10-28 nightly, the first with the #1360 stand-ins) | 79 of 914 | 0 — but **70 `read_uhdm` co-sim divergences, 41 of them slang-clean**: the project's largest open lead |
+| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **776 / 835** (2026-10-28 nightly, the first with the #1360 stand-ins) | 79 of 914 | 0 — 70 `read_uhdm` co-sim divergences at that nightly, 41 slang-clean; **38 are since fixed**, 3 remain |
 | OpenE906 | [XUANTIE-RV/opene906](https://github.com/XUANTIE-RV/opene906) | [`c5b87895`](https://github.com/XUANTIE-RV/opene906/commit/c5b87895) | **203 / 255** (first local sweep 2026-10-28; first nightly pending) | 0 of 255 | 0 |
 | OpenC910 | [XUANTIE-RV/openc910](https://github.com/XUANTIE-RV/openc910) | [`b91c9093`](https://github.com/XUANTIE-RV/openc910/commit/b91c9093) | **359 / 477** | 5 of 482 | 0 |
 | BOOM | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | [`ba03175e`](https://github.com/riscv-boom/riscv-boom/commit/ba03175e) | **326 / 422 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 422 | 0 |

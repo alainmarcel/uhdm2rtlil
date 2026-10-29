@@ -1,0 +1,16 @@
+# The function must FOLD its declaration-section parameters, so no wire is
+# fabricated for them and the shift computes a real value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt -full
+check -assert
+# no fabricated wires for the function-local parameters
+select -assert-count 0 w:olen
+select -assert-count 0 w:ilen
+select -assert-count 0 w:len
+# and the value is right: a=4'b0101 shifted left by s
+sat -verify -prove z 8'b00000101 -set a 4'b0101 -set s 2'd0
+sat -verify -prove z 8'b00001010 -set a 4'b0101 -set s 2'd1
+sat -verify -prove z 8'b00010100 -set a 4'b0101 -set s 2'd2
+sat -verify -prove z 8'b01111000 -set a 4'b1111 -set s 2'd3

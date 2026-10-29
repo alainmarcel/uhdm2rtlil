@@ -66,17 +66,22 @@ simulation artefacts, and the 78 break down as
 
 | family | divergences | oracle |
 |---|---:|---|
-| NVDLA | 70 | **now has one.**  #1360's five stand-in library files gave the family a `read_slang` reference and this is the first nightly to carry them: **41 of the 70 are slang-CLEAN**, i.e. real reader leads, and 29 are rows whose netlist `read_slang` still cannot lower (`slang n/a`).  Earlier revisions of this file called all 70 "unadjudicated"; that is no longer true of the 41 |
+| NVDLA | 70 (**38 since fixed**) | **now has one.**  #1360's five stand-in library files gave the family a `read_slang` reference and this is the first nightly to carry them: **41 of the 70 are slang-CLEAN**, i.e. real reader leads, and 29 are rows whose netlist `read_slang` still cannot lower (`slang n/a`).  Earlier revisions of this file called all 70 "unadjudicated"; that is no longer true of the 41 |
 | OpenPiton | 7 | its first nightly; to triage |
 | OpenC910 | 1 | down from 2 -- `plic_hreg_busif` is fixed by #1355 |
 
 NVDLA's rows are read-clean and opt-clean -- 908 of 908 with 0 undriven -- so
 its 70 are a triage queue, not a regression in anything that was passing; and
 with the stand-ins in place **41 of them now have a clean `read_slang`
-reference, which makes them the largest block of real reader leads in the
-project**.  The `*_mgc_shift_*` modules (CDMA_mgc_shift_l / _r,
-CSC_mgc_shift_bl / _l / _r) are the obvious starting point: each diverges for
-228-278 cycles while read_slang passes.
+reference, which made them the largest block of real reader leads in the
+project** -- and then named a single defect.  The `*_mgc_shift_*` modules
+(CDMA_mgc_shift_l / _r, CSC_mgc_shift_bl / _l / _r) all diverged 228-278 cycles
+while read_slang passed, because a parameter declared in a FUNCTION's own
+declaration section resolved to a fabricated 1-bit undriven wire, so the
+function returned X.  Fixing that resolver closed **38 of the 41**, measured
+against a control plugin.  THREE remain and are not that defect:
+`NV_NVDLA_SDP_CORE_Y_cvt` (16 cycles), `_cvt_core` (7) and
+`NV_NVDLA_SDP_MRDMA_EG_dout`.  The totals in the table above predate the fix.
 VeeR EH2's
 `eh2_ifu_mem_ctl` and adams-bridge's `abr_piso_multi`, the two open leads of the
 2026-10-25 nightlies, still diverge (150 and 38 cycles) but are now ADJUDICATED
