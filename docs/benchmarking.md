@@ -66,7 +66,7 @@ simulation artefacts, and the 78 break down as
 
 | family | divergences | status |
 |---|---:|---|
-| NVDLA | 70 | **1 open lead** (`MRDMA_EG_dout`, 67 cycles) -- `SDP_CORE_Y_cvt` (16) and `_cvt_core` (7) are CLOSED: a self-accumulated function return variable was aliased onto the function's result staging wire, closing a combinational loop in every clocked call site of a Catapult MUX1HOT_* helper (120 logic loops in `_cvt_core` alone).  `MRDMA_EG_dout` survived the fix and has no logic loops, so it is a SEPARATE defect -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
+| NVDLA | 70 | **0 open leads** -- all three are CLOSED, and they were TWO defects, not one.  `SDP_CORE_Y_cvt` (16 cycles) and `_cvt_core` (7, with 120 logic loops) were a self-accumulated function return variable aliased onto the function's result staging wire, which closes a combinational loop in every clocked call site of a Catapult MUX1HOT_* helper.  `MRDMA_EG_dout` (67) survived that fix with 0 logic loops -- which is what proved it separate -- and was a function-scope local first written inside an if-arm: the phi merge never published it in the outer mapping, so the `{o_sign,o_expo,o_mant}` return concat read two FABRICATED 1-bit wires and `z[1:0]` had no driver.  All three rows are now proven with co-sim PASS -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
 | OpenPiton | 7 | to triage |
 | OpenC910 | 1 | to triage |
 

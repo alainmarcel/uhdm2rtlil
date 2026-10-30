@@ -1196,7 +1196,26 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 auto ei = else_map.find(nm);
                 RTLIL::SigSpec tv = (ti != then_map.end()) ? ti->second : pm.second;
                 RTLIL::SigSpec ev = (ei != else_map.end()) ? ei->second : pm.second;
-                if (tv == pm.second && ev == pm.second) continue;
+                if (tv == pm.second && ev == pm.second) {
+                    // No phi is needed -- both arms left the name at the base
+                    // value.  But a name that was NOT in pre_map (its FIRST
+                    // write is inside an arm) has no OUTER mapping at all, and
+                    // returning here left it unmapped: a read AFTER the if then
+                    // fell through to import_ref_obj's unknown-signal fallback,
+                    // which FABRICATES a 1-bit module wire.
+                    //
+                    // NVDLA's func_fp16_to_fp32 returns
+                    // `{o_sign, o_expo, o_mant}`, and only `o_sign` is assigned
+                    // before the if -- so the concat read two fabricated 1-bit
+                    // wires and `z[1:0]` had NO DRIVER
+                    // ("Reference to unknown signal: o_expo / o_mant").  That
+                    // was NV_NVDLA_SDP_MRDMA_EG_dout's 67 diverging cycles.
+                    // Publishing the base is enough and is strictly additive:
+                    // it only ever adds a mapping that was absent.
+                    if (!input_mapping.count(nm))
+                        input_mapping[nm] = pm.second;
+                    continue;
+                }
                 if (pm.second.is_wire() && pm.second.as_wire() == result_wire) continue;
                 RTLIL::Wire* join = module->addWire(
                     RTLIL::escape_id(stringf("$%s$phi_%s_%d",

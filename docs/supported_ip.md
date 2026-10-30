@@ -48,9 +48,11 @@ over the 2026-10-28 nightlies, **8786 rows, 7162 formally proven, `read_uhdm`
 7026 / 41 / 93** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
 
 NVDLA's own figure is **776 / 914 proven**, and its 70 `read_uhdm` co-sim
-divergences are **1 open lead** (`MRDMA_EG_dout`, 67 cycles; `SDP_CORE_Y_cvt`
-and `_cvt_core` are closed by the self-accumulated-return-variable fix, which
-test/func_local_accumulator_in_ff now gates as a passing test) plus **29 rows
+divergences are **0 open leads** (all three are closed, and they were TWO
+defects: `SDP_CORE_Y_cvt` and `_cvt_core` by the self-accumulated-return-variable
+fix, `MRDMA_EG_dout` by the arm-first-write phi-publish fix -- gated by
+test/func_local_accumulator_in_ff and
+test/func_local_arm_first_write_concat) plus **29 rows
 with no `read_slang` oracle** -- the `netlist not lowerable` ones.  The other 8
 divergences in the totals are OpenPiton 7 and OpenC910 1, and all eight are now closed or adjudicated: four OpenPiton FPU rows were one defect (octal literals read as X), and OpenPiton's three remaining divergent rows and OpenC910's `axi2ahb` are adjudicated NON-defects: read_slang refuses all four, so each was co-simulated against the GOLDEN `read_verilog` netlist instead, and every one diverges at the same cycle on the same signal by the same count (SHARED_DIVERGENCE) -- an `assign #1` delay on `axi2ahb`, a ternary asynchronous reset on the three OpenPiton flop primitives, neither expressible by any yosys frontend.
 
