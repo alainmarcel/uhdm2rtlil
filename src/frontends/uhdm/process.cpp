@@ -14192,6 +14192,48 @@ bool UhdmImporter::emit_dynamic_unpacked_array_write(
 static bool case_tree_contains(const RTLIL::CaseRule* root, const RTLIL::CaseRule* needle);
 static bool case_tree_writes_target(const RTLIL::CaseRule* root, const RTLIL::SigSpec& tgt);
 
+// Give a per-element array write a `$0\<elem>` staging temp inside a
+// LEVEL-SENSITIVE process, the way the Verilog frontend does: a hold default in
+// the root case, the write into the temp, and an STa `update <elem> $0\<elem>`.
+// Without it the element's own driver reads the element (read-modify-write) and
+// `proc` cannot tell a latch from a combinational loop.
+//
+// Returns nullptr when there is nothing to stage INTO -- no enclosing
+// combinational process, or an edge-triggered one, whose sync already breaks
+// the loop and whose direct write must not be disturbed.
+// Is the process these actions land in LEVEL-sensitive -- an `always @(a or b)`
+// whose only sync is STa -- rather than edge-triggered?  An edge's sync rule
+// breaks a self-referencing element write; a level's does not.
+bool UhdmImporter::level_sensitive_comb_process() const {
+    if (!current_comb_process) return false;
+    bool sta = false;
+    for (auto* sy : current_comb_process->syncs) {
+        if (sy->type == RTLIL::SyncType::STa) sta = true;
+        else return false;        // any edge / reset sync: not level-sensitive
+    }
+    return sta;
+}
+
+RTLIL::Wire* UhdmImporter::stage_level_sensitive_elem(RTLIL::Wire* ew,
+                                                      const std::string& ename) {
+    if (!ew || !module || !current_comb_process) return nullptr;
+    RTLIL::SyncRule* sta = nullptr;
+    for (auto* sy : current_comb_process->syncs)
+        if (sy->type == RTLIL::SyncType::STa) { sta = sy; break; }
+    if (!sta) return nullptr;
+    std::string temp_name = "$0\\" + ename;
+    if (RTLIL::Wire* ex = module->wire(temp_name)) return ex;
+    RTLIL::Wire* tw = module->addWire(RTLIL::escape_id(temp_name), ew->width);
+    tw->attributes = ew->attributes;
+    // hold default, then the STa update -- the pair proc_dlatch looks for
+    current_comb_process->root_case.actions.push_back(
+        RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(ew)));
+    sta->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(ew), RTLIL::SigSpec(tw)));
+    uhdm_trace("      staged level-sensitive element write %s through %s\n",
+               ename.c_str(), temp_name.c_str());
+    return tw;
+}
+
 bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
         const std::string& base_name,
         const UHDM::any* idx_expr,
@@ -14395,10 +14437,47 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
         } else if (case_rule) {
             std::string temp_name = "$0\\" + ename;
             RTLIL::Wire* tw = module->wire(temp_name);
+            // No staging temp yet, and the enclosing process is LEVEL-sensitive
+            // (an `always @(a or b)` with an STa sync, not an edge): writing the
+            // element wire DIRECTLY closes a combinational loop, because the
+            // value being written is a read-modify-write that reads that very
+            // wire (`sel ? rhs : cur`, cur = the element).  An edge-triggered
+            // process is safe -- its sync breaks the loop -- which is why this
+            // only shows up on a latch-style array write:
+            //
+            //     always @(wrclk or wadr or wrdata)
+            //       if (wrclk) arr[wadr] <= wrdata;     // NVDLA's RAM models
+            //
+            // read_verilog stages every element through `$0\arr[k]` with a hold
+            // default and lets proc_dlatch infer a latch; we emitted 20480
+            // logic loops instead (80 words x 256 bits), so the array never
+            // held data and every read came back 0.  That was
+            // NV_NVDLA_RUBIK_dr2drc's 291 diverging co-simulated cycles --
+            // invisible until the row was given a read_verilog oracle, because
+            // read_slang cannot lower its netlist for Verilator.
+            bool level = level_sensitive_comb_process();
+            if (!tw && level) tw = stage_level_sensitive_elem(ew, ename);
             RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew);
             tgt = tgt.extract(slice_off, slice_w);
             remove_target_from_switches(case_rule, tgt);
-            case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
+            if (level) {
+                // Write the element ONLY when it is the addressed one, and let
+                // the root case's hold default cover the rest.  The
+                // unconditional `sel ? rhs : cur` form below reads the element
+                // it drives, so in a level-sensitive process the inferred
+                // latch's D depends on its own Q -- a combinational loop per
+                // bit, which is what read_verilog avoids by assigning just the
+                // selected element (one latch, D = rhs, EN = arm && sel).
+                RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                sw->signal = RTLIL::SigSpec(sel);
+                RTLIL::CaseRule* hit = new RTLIL::CaseRule;
+                hit->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                hit->actions.push_back(RTLIL::SigSig(tgt, rhs));
+                sw->cases.push_back(hit);
+                case_rule->switches.push_back(sw);
+            } else {
+                case_rule->actions.push_back(RTLIL::SigSig(tgt, RTLIL::SigSpec(nv)));
+            }
         }
         if (!nb_mode) {
             RTLIL::SigSpec cv = cur;

@@ -1,0 +1,9 @@
+# The array elements must be STAGED, so each one latches instead of closing a
+# combinational loop on itself.  `check -assert` fails on the loop.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+check -assert
+# the write must latch: one $dlatch per element bit, none of them dangling
+select -assert-min 1 t:$dlatch

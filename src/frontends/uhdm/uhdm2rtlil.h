@@ -1364,6 +1364,12 @@ struct UhdmImporter {
         RTLIL::CaseRule* case_rule);
     // Shared implementation.  slice_off >= 0 writes only [slice_off +: slice_w]
     // of the selected element (`mem[addr][i*8 +: 8] <= ...`).
+    // True when the enclosing process is level-sensitive (STa sync only).
+    bool level_sensitive_comb_process() const;
+    // Staging temp for a per-element array write inside a level-sensitive
+    // process; nullptr when there is nothing to stage into.
+    RTLIL::Wire* stage_level_sensitive_elem(RTLIL::Wire* ew,
+                                            const std::string& ename);
     bool emit_dynamic_unpacked_array_elem_write(
         const std::string& base_name,
         const UHDM::any* idx_expr,
