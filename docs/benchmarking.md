@@ -73,6 +73,11 @@ simulation artefacts, and the 78 break down as
 NVDLA's rows are read-clean and opt-clean (908 of 908 with 0 undriven), so its
 divergences are a triage queue rather than a regression.
 
+**These 78 are only the rows inside that nightly total, which is a floor.**
+BOOM, Gemmini, Rocket Chip and biRISC-V contributed no rows (failed shards),
+aib-protocols and Cheshire only part of theirs, so open leads exist outside the
+78 — 13 families name them in [ext_ip.md](ext_ip.md).
+
 VeeR EH2's
 `eh2_ifu_mem_ctl` and adams-bridge's `abr_piso_multi`, the two open leads of the
 2026-10-25 nightlies, still diverge (150 and 38 cycles) but are now ADJUDICATED
