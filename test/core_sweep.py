@@ -1718,6 +1718,18 @@ def _fetch_ext(family):
     return root
 
 
+def _expand_env_tokens(tok, env):
+    """Expand `$VAR` / `${VAR}` in one argv token against `env`.
+
+    `sh()` deliberately runs a token list without a shell, so nothing else
+    expands these.  An unknown name is left alone rather than blanked, so a
+    typo shows up in the command line the log prints instead of silently
+    becoming an empty path.
+    """
+    return re.sub(r"\$(\w+)|\$\{(\w+)\}",
+                  lambda m: env.get(m.group(1) or m.group(2), m.group(0)), str(tok))
+
+
 def _generate_ext(family, man, root):
     """Optional RTL-GENERATION step, for families whose RTL is not checked in.
 
@@ -1751,15 +1763,32 @@ def _generate_ext(family, man, root):
     env.setdefault("EXT_IP_HARNESS", str(Path(__file__).resolve().parent / "ext_ip"))
     t0 = time.time()
     for c in g["cmds"]:
+        # `sh()` runs the token LIST without a shell, so a `$VAR` inside a token
+        # is passed through literally.  Eight manifests spell their generator
+        # `["bash", "$EXT_IP_HARNESS/<x>_setup.sh"]` (no `-c`), and bash was
+        # being handed that string as a FILENAME: exit 127 in 0 s, every night.
+        # The families whose RTL is entirely generated (boom, gemmini,
+        # rocket-chip, vta) then had no sources at all and their jobs failed;
+        # the ones with some checked-in RTL (openpiton, cheshire, pulpissimo,
+        # snitch) silently swept only that -- which is why Cheshire reported 30
+        # rows of its 266 and OpenPiton 756 of its 852.  Expand against `env`
+        # so `bash -c` and the bare form behave the same.
+        c = [_expand_env_tokens(tok, env) for tok in c]
         print(f"# generate {family}: {' '.join(c)}  (cwd {cwd})", flush=True)
         rc, out = sh(c, cwd=str(cwd), timeout=g.get("timeout", 4 * 3600), env=env)
         if rc:
             print(f"# generate {family} FAILED (exit {rc}) after {time.time() - t0:.0f}s:\n"
                   + (out or "")[-4000:], flush=True)
-            return
+            break
     if not marker.exists():
-        print(f"# generate {family}: commands succeeded but {g['marker']} is missing", flush=True)
-        return
+        # A family whose generator did not run has no rows worth reporting, and
+        # reporting a FRACTION of them as if complete is worse than failing:
+        # it is how four families' partial sweeps were read as results for
+        # weeks.  Fail loudly instead.
+        print(f"# generate {family}: {g['marker']} is MISSING -- the generator did "
+              f"not produce it, so this sweep would measure an incomplete or empty "
+              f"source set.  Failing instead of reporting partial rows.", flush=True)
+        raise SystemExit(2)
     n = len(list(marker.parent.glob("*.sv"))) + len(list(marker.parent.glob("*.v")))
     print(f"# generate {family}: OK in {time.time() - t0:.0f}s, {n} RTL file(s) in {marker.parent}", flush=True)
 
