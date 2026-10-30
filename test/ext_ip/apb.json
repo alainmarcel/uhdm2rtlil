@@ -1,0 +1,133 @@
+{
+ "title": "PULP APB",
+ "url": "https://github.com/pulp-platform/apb",
+ "repos": [
+  {
+   "url": "https://github.com/pulp-platform/apb",
+   "commit": "4821618d652cb2b219483f037395b902771a44dd",
+   "dir": "apb"
+  },
+  {
+   "url": "https://github.com/pulp-platform/common_cells",
+   "commit": "121182eaa0fa06c0ee4f16c2e3b5fc7f2e3b4a9e",
+   "dir": "common_cells"
+  },
+  {
+   "url": "https://github.com/pulp-platform/tech_cells_generic",
+   "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
+   "dir": "tech_cells_generic"
+  }
+ ],
+ "roots": [
+  "apb/src/*.sv",
+  "common_cells/src/*.sv",
+  "common_cells/src/deprecated/*.sv",
+  "tech_cells_generic/src/rtl/*.sv"
+ ],
+ "incdirs": [
+  "apb/include",
+  "common_cells/include",
+  "tech_cells_generic/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "apb/src/"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^apb_test$",
+  "_test$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "bind": {
+  "prelude_raw": [
+   "`include \"apb/typedef.svh\""
+  ],
+  "prelude": [
+   "typedef logic [31:0] addr_t;",
+   "typedef logic [31:0] data_t;",
+   "typedef logic [3:0]  strb_t;",
+   "`APB_TYPEDEF_ALL(apb, addr_t, data_t, strb_t)",
+   "typedef logic [1:0]  sel_t;"
+  ],
+  "types": [
+   [
+    "^select_t$",
+    "sel_t"
+   ],
+   [
+    "^apb_addr_t$",
+    "addr_t"
+   ],
+   [
+    "^reg_data_t$",
+    "data_t"
+   ],
+   [
+    "^addr_t$",
+    "addr_t"
+   ],
+   [
+    "^data_t$",
+    "data_t"
+   ],
+   [
+    "^strb_t$",
+    "strb_t"
+   ],
+   [
+    "(^|_)req_t$",
+    "apb_req_t"
+   ],
+   [
+    "(^|_)resp_t$",
+    "apb_resp_t"
+   ]
+  ],
+  "values": [
+   [
+    "(?i)addr_?width$",
+    32
+   ],
+   [
+    "(?i)data_?width$",
+    32
+   ],
+   [
+    "(?i)strb_?width$",
+    4
+   ],
+   [
+    "(?i)no_?(regs|slaves|masters)$",
+    2
+   ]
+  ]
+ },
+ "_note": [
+  "",
+  "PULP's APB library: the APB4 types and the pieces around them -- apb_cdc,",
+  "apb_demux, apb_err_slv and apb_regs, plus the interface and package.  The",
+  "last of the small PULP libraries this campaign carried as closure-only roots",
+  "(axi, common_cells, register_interface and tech_cells_generic are the",
+  "others); common_cells and tech_cells_generic are closure-only here and have",
+  "their own families.",
+  "",
+  "Every module takes its bus as a type parameter, so a `bind` section is what",
+  "makes the rows comparable at all -- register_interface.json records the same",
+  "and the measurement to go with it.  Here the prelude CAN include",
+  "apb/typedef.svh, because every row in this family has apb_pkg in its closure",
+  "by construction: `APB_TYPEDEF_REQ_T` names `apb_pkg::prot_t`, which is",
+  "exactly why register_interface's shared prelude could NOT include it.",
+  "",
+  "common_cells/src/deprecated is a closure root for the cdc_2phase cells",
+  "apb_cdc instantiates; its module names do not intersect src/ (checked).",
+  "",
+  "First local sweep 2026-10-29: **8 / 8 proven, 8 / 8 elaborate, 8 / 8 co-sim",
+  "PASS, 8 / 8 with 0 undriven, 0 divergences** -- the family closed clean with",
+  "no open lead."
+ ]
+}
