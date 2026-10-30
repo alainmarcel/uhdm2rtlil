@@ -1,0 +1,19 @@
+# Every octal literal must carry its value, not X.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt -full
+check -assert
+# no X anywhere in the constant drivers
+select -assert-count 0 a:unassigned
+# the literals themselves
+sat -verify -prove o7 3'b111
+sat -verify -prove w6 6'b101010
+sat -verify -prove trunc 4'b1111
+sat -verify -prove wide 8'b00000111
+# and the OpenPiton decode is one-hot on the selected slot
+sat -verify -prove dec 8'b00000001 -set id 5'b00000
+sat -verify -prove dec 8'b00000001 -set id 5'b00011
+sat -verify -prove dec 8'b00000010 -set id 5'b00100
+sat -verify -prove dec 8'b00100000 -set id 5'b10100
+sat -verify -prove dec 8'b10000000 -set id 5'b11100
