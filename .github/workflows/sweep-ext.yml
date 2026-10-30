@@ -183,6 +183,12 @@ jobs:
           # and generated-ROM rows are excluded.  37 rows.
           - family: sonata-system
             timeout: 330
+          # pulp-platform/apb @ 4821618d: the APB4 types and the pieces around
+          # them (apb_cdc, apb_demux, apb_err_slv, apb_regs).  Every module
+          # takes its bus as a type parameter, so the manifest's `bind` is what
+          # makes the rows comparable.  8 rows.
+          - family: apb
+            timeout: 330
           # XUANTIE-RV/opene906 @ c5b87895: T-Head's XuanTie E906, the 32-bit
           # RV32 embedded core -- ifu / idu / iu / lsu / rtu / cp0, the FPU and
           # its falu / fdsu / fmau datapaths, the CLIC / CLINT, PMP / PMU, the

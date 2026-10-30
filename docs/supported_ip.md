@@ -100,6 +100,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | SERV | [olofk/serv](https://github.com/olofk/serv) | [`f200eb2e`](https://github.com/olofk/serv/commit/f200eb2e) | **27 / 27** | 2 of 29 | 0 |
 | LiteX | [enjoy-digital/litex](https://github.com/enjoy-digital/litex) | [`7457e137`](https://github.com/enjoy-digital/litex/commit/7457e137) | **3 / 3** | 0 of 3 | 0 |
 | VexRiscv | [SpinalHDL/VexRiscv](https://github.com/SpinalHDL/VexRiscv) | [`baf7dc82`](https://github.com/SpinalHDL/VexRiscv/commit/baf7dc82) | **3 / 3** | 0 of 3 | 0 |
+| PULP APB | [pulp-platform/apb](https://github.com/pulp-platform/apb) | [`4821618d`](https://github.com/pulp-platform/apb/commit/4821618d) | **8 / 8** (first local sweep 2026-10-29; first nightly pending) | 0 of 8 | 0 |
 | lowRISC Sonata | [lowRISC/sonata-system](https://github.com/lowRISC/sonata-system) | [`21e84afb`](https://github.com/lowRISC/sonata-system/commit/21e84afb) | first survey: 36 / 37 read (nightly pending) | 0 of 37 | 0 |
 | PULP tech_cells_generic | [pulp-platform/tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic) | [`55cb5451`](https://github.com/pulp-platform/tech_cells_generic/commit/55cb5451) | **44 / 50** (first local sweep 2026-10-29; first nightly pending) | 3 of 53 | 0 |
 | PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | [`d6e1d4cd`](https://github.com/pulp-platform/register_interface/commit/d6e1d4cd) | **11 / 11** (first local sweep 2026-10-29; first nightly pending) | 8 of 19 | 0 |
