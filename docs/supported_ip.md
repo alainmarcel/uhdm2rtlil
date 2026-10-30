@@ -51,7 +51,7 @@ NVDLA's own figure is **776 / 914 proven**, and its 70 `read_uhdm` co-sim
 divergences are **3 open leads** (`SDP_CORE_Y_cvt`, `_cvt_core`,
 `MRDMA_EG_dout`, tracked by test/func_local_accumulator_in_ff) plus **29 rows
 with no `read_slang` oracle** -- the `netlist not lowerable` ones.  The other 8
-divergences in the totals are OpenPiton 7 (four since closed) and OpenC910 1.
+divergences in the totals are OpenPiton 7 and OpenC910 1, and all eight are now closed or adjudicated: four OpenPiton FPU rows were one defect (octal literals read as X), and OpenPiton's three remaining divergent rows and OpenC910's `axi2ahb` are adjudicated NON-defects: read_slang refuses all four, so each was co-simulated against the GOLDEN `read_verilog` netlist instead, and every one diverges at the same cycle on the same signal by the same count (SHARED_DIVERGENCE) -- an `assign #1` delay on `axi2ahb`, a ternary asynchronous reset on the three OpenPiton flop primitives, neither expressible by any yosys frontend.
 
 **What the 2026-10-28 totals do NOT contain.**  BOOM, Gemmini, Rocket Chip and
 biRISC-V contributed ZERO rows: their shards failed in that external-IP run, so

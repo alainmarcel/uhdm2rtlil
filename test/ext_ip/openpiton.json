@@ -161,5 +161,19 @@
  ],
  "exclude_srcs": [
   "/piton/design/chip/tile/common/rtl/swrvr_clib\\.v$"
- ]
+ ],
+ "overrides": {
+  "zsoffasr_prim": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-10-29: not a reader defect. This is OpenPiton's flop library writing the ASYNCHRONOUS RESET as a TERNARY, which yosys cannot infer from ANY frontend -- the same class that cost 61 rows and is closed elsewhere by the `YOSYS` define plus the swrvr_clib.v stand-in, but these primitives are the stand-in's own subjects. read_slang refuses them outright (`multiple asynchronous loads unsupported`), so the row had no reference and no verdict. Co-simulated against the GOLDEN read_verilog netlist instead: it diverges at the SAME cycle on the SAME signal for the SAME count (FIRST-SLANG cycle 2 q rtl=0, slang_vs_rtl=27), i.e. SHARED_DIVERGENCE -- both frontends build the identical netlist and the RTL's asynchronous reset is what neither can express"
+  },
+  "bw_u1_soffasr_2x": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-10-29: not a reader defect. This is OpenPiton's flop library writing the ASYNCHRONOUS RESET as a TERNARY, which yosys cannot infer from ANY frontend -- the same class that cost 61 rows and is closed elsewhere by the `YOSYS` define plus the swrvr_clib.v stand-in, but these primitives are the stand-in's own subjects. read_slang refuses them outright (`multiple asynchronous loads unsupported`), so the row had no reference and no verdict. Co-simulated against the GOLDEN read_verilog netlist instead: it diverges at the SAME cycle on the SAME signal for the SAME count (FIRST-SLANG cycle 2 q rtl=0, slang_vs_rtl=27), i.e. SHARED_DIVERGENCE -- both frontends build the identical netlist and the RTL's asynchronous reset is what neither can express"
+  },
+  "synchronizer_asr": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-10-29: not a reader defect. This is OpenPiton's flop library writing the ASYNCHRONOUS RESET as a TERNARY, which yosys cannot infer from ANY frontend -- the same class that cost 61 rows and is closed elsewhere by the `YOSYS` define plus the swrvr_clib.v stand-in, but these primitives are the stand-in's own subjects. read_slang refuses them outright (`multiple asynchronous loads unsupported`), so the row had no reference and no verdict. Co-simulated against the GOLDEN read_verilog netlist instead: it diverges at the SAME cycle on the SAME signal for the SAME count (FIRST-SLANG cycle 11 sync_out rtl=1, slang_vs_rtl=13), i.e. SHARED_DIVERGENCE -- both frontends build the identical netlist and the RTL's asynchronous reset is what neither can express"
+  }
+ }
 }
