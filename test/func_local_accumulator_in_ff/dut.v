@@ -1,57 +1,46 @@
-// EXPECTED FAIL -- a tracked reproducer, not a passing test.
-//
 // A function-local `reg` ACCUMULATED into by successive blocking assignments
 //
 //     result = input_0 & {9{sel[0]}};
 //     result = result | (input_1 & {9{sel[1]}});   // <- reads itself
 //     result = result | (input_2 & {9{sel[2]}});
 //
-// is bound by the function-call inliner to ONE staging wire with no SSA
-// staging between the statements.  In a COMB context the current_comb_values
-// threading hides that -- each read is rewritten onto the previously computed
-// value -- but inside a CLOCKED process that threading is deliberately
-// suppressed (`in_always_ff_body_mode`, so a register read observes its
-// pre-edge value), and with nothing rewriting the read the wire's own `$or`
-// cell reads the wire being written: a combinational loop.
+// called from a CLOCKED process.
 //
-// MEASURED:
-//   * read_uhdm emits 9 logic loops here; read_slang emits 0.
-//   * NVDLA's NV_NVDLA_SDP_CORE_Y_cvt_core has 120 of them against
-//     read_slang's 0, and co-simulates wrong from cycle 14 on
-//     `chn_out_rsc_z`.  Catapult writes every MUX1HOT_* helper this way, so
-//     NV_NVDLA_SDP_CORE_Y_cvt (16 diverging cycles), _cvt_core (7) and
-//     NV_NVDLA_SDP_MRDMA_EG_dout are the three NVDLA leads that the
-//     function-declaration-section parameter fix did NOT close.
+// `scan_for_return_variables` treats a local assigned to the function name
+// (`MUX1HOT = result;`) as a RETURN VARIABLE and ALIASES it onto the
+// function's single result staging wire, so the `MUX1HOT = result` copy costs
+// nothing.  That is sound for a write-once local and wrong for an
+// accumulator: every statement then writes that one wire and the statement's
+// own `$or` cell reads it back.  A comb call site hides it, because the
+// current_comb_values threading rewrites each read onto the previous value;
+// inside a clocked process that threading is deliberately suppressed
+// (`in_always_ff_body_mode`, so a register read observes its pre-edge value)
+// and what is left is a COMBINATIONAL LOOP -- 9 of them here, against
+// read_slang's 0.
 //
-// WHAT NARROWS IT (all measured, so the next attempt need not re-derive it):
-//   * a continuous `assign z = MUX1HOT(...)` call site is CLEAN (0 loops) --
-//     the clocked / non-blocking context is required;
-//   * the async-reset arm is NOT required: `always @(posedge clk)` with a
-//     plain `if (en)` still gives 9 loops;
-//   * rewriting the body to use DISTINCT locals (`r2 = result | ...;
-//     r3 = r2 | ...`) gives 0 loops, which pins the defect to the read of a
-//     local on the RHS of its OWN re-assignment.
+// Catapult writes every MUX1HOT_* helper this way, so NVDLA paid for it:
+// NV_NVDLA_SDP_CORE_Y_cvt diverged on 16 co-simulated cycles and
+// NV_NVDLA_SDP_CORE_Y_cvt_core on 7 (with 120 logic loops), both read_slang
+// clean.  Aliasing is now skipped for a self-accumulated return variable, so
+// the ordinary SSA renaming applies and the explicit return assignment
+// copies the final value onto the result chain.
 //
-// WHERE IT IS NOT.  THREE fixes were tried and all three REVERTED after
-// measuring no change -- the loop count stayed at 9 every time:
+// GATES: `test_structural.ys` runs `check -assert`, which fails on the loop;
+// the value is gated by this test's ordinary read_verilog equivalence check.
 //
-//   1. thread tf locals in `emit_comb_assign` and stop suppressing them in
-//      `remap_inflight_read` (keyed on the unmapped `\<fn>.result` name);
-//   2. same, re-keyed on the MAPPED `$0\...$func$...` spelling that
-//      `mapped_inflight()` consults;
-//   3. record the value in `import_assignment_comb` right after the RHS is
-//      size-matched (keyed on the LHS wire's own `$func$` name) AND relax
-//      `mapped_inflight()` to accept the inliner's `$1\` prefix as well as
-//      `$0\`.
-//
-// So neither `emit_comb_assign` nor `import_assignment_comb` carries these
-// writes, and the read is not reaching `mapped_inflight()` either.  The next
-// attempt should stop patching candidate sites and first PROVE which emitter
-// produces the three `assign $1\<call>.$result$<n> ...` actions -- the
-// staging wires are allocated by the function-call inliner at
-// functions.cpp:2395, so instrument there and follow the body statements down.
-// That is the same mistake-shape as the documented FP32PipelinedOther concat
-// fix, which also took three wrong sites before the real one.
+// THREE earlier fix attempts were reverted after measuring no change (the
+// loop count stayed at 9 every time): threading tf locals in
+// `emit_comb_assign` / `remap_inflight_read` keyed on the unmapped name, the
+// same re-keyed on the mapped `$0\...$func$...` spelling, and recording the
+// value in `import_assignment_comb` with a relaxed `mapped_inflight()`
+// prefix.  None of those sites carries these writes.  What found it was
+// instrumenting the ONE emitter that does -- `process_stmt_to_case`'s
+// assignment case -- and printing the LHS name beside its mapped wire:
+//     SSAENTER lhs='result' mapped=$1\MUX1HOT$func$dut.v:63$3.$result$10
+//     SSAPROBE lhs=result   excluded=1
+// which showed the local was bound to the RESULT wire and that SSA renaming
+// was then declined by the `.$result` NAME test.  Probe the emitter, do not
+// patch the candidates.
 module dut(clk, rst_n, en, i0, i1, i2, sel, q);
    input clk, rst_n, en;
    input  [8:0] i0, i1, i2;
