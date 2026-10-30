@@ -1,65 +1,94 @@
-# To do: cores and IP to bring under the sweeps
+# Coverage: what is done, and what is left
 
-What is swept today is in [supported_ip.md](supported_ip.md) (19 nightly
-workflows, 6275 rows).  This page is the queue of what is **not** yet: named in
-earlier planning, or popular open-source RTL we have no row for.  Each entry
-says what it is, what blocks it, and how it would be swept.  The rule from the
-external-IP campaign still holds: land the manifest and read the first nightly
-before fixing anything it finds.
+**Swept means supported.**  A design in the DONE table has a landed manifest,
+runs in a nightly workflow, and its CURRENT numbers live in
+[supported_ip.md](supported_ip.md) and [ext_ip.md](ext_ip.md).
 
-## Named in earlier planning, not started
+This page tracks **coverage only** — which designs are under the sweeps at all.
+It is not a defect tracker: each family's open leads and SAT-budget rows are
+recorded beside that family's numbers.
 
-| Candidate | Repo | What it is | Status / what it needs |
-|---|---|---|---|
-| **OpenTitan `top_earlgrey`** | lowRISC/opentitan | The full chip: the 44 IP blocks we sweep per module, wired up | Closure solved 2026-10-21 by walking the CAPI=2 `.core` graph directly (635 files, 0 unresolved, 0 syntax errors with `-DSYNTHESIS`; one Surelog error, `alert_handler` `AsyncOn`); `read_uhdm` reads it clean at **11.9 GB**, 13.5 GB with flatten+check, so a 16 GB nightly runner cannot hold it: needs its own sharded workflow and a flat shim for its interface-free top before it gets a formal and a co-sim column.  10 `Reference to unknown signal` warnings (type names, loop variables, parameters) are untriaged. |
-| **i3c-core** | chipsalliance/i3c-core | MIPI I3C target/controller core | **Already measured twice**: the caliptra-ss family sweeps its vendored copy (`caliptra-ss/third_party/i3c-core`, commit 067bfe14 of 2026-08-03) and the OpenTitan library its own (`i3c_*` rows, where `i3c_target_fsm` is `differs` with no co-sim oracle and `i3c_phy` read-fails with `$mux Y already driven`).  A standalone row set at the upstream head (e33a8bbc, 2026-09-15) only adds freshness; low priority. |
-| **cv32e41p** | openhwfoundation | The OpenHW cores not yet swept (cv32e40p, cv32e40x, cv32e40s, core-v-mcu, cvfpu, cve2, cva6, Wally are) | cv32e40x **Swept** (`test/ext_ip/cv32e40x.json`, a `sweep-ext.yml` family) at d952cd63: 42 rows; first local sweep 2026-10-28: 30 / 35 comparable proven, 42 / 42 with 0 undriven, 32 co-sim PASS, 0 `read_uhdm`-only divergences.  Probing it found a Surelog SEGFAULT (#4229) that had made 6 of its rows -- the core among them -- unreadable.  Of its 7 no-reference rows only **4** are a read_slang limit (Verilator lints them clean); the other 3 are rejected by Verilator too, so they are the `parameter type` default class, not slang's fault.  3 formal-only `differs` leads remain (`cs_registers` shared, `core` XIF-ports, `sequencer`).  cv32e40s **Swept** too (`test/ext_ip/cv32e40s.json`) at 9d9cae78: 48 rows, 36 / 42 proven, 48 / 48 with 0 undriven, 0 `read_uhdm`-only divergences; it needs THREE bhv files as sources (cv32e40s_csr instantiates cv32e40s_sffs / sffr and only bhv defines them) and its 6 no-reference rows split 4 / 2 under Verilator -- a DIFFERENT 4 / 2 from cv32e40x's, so the classification cannot be carried between variants.  core-v-mcu **Swept** too (`test/ext_ip/core-v-mcu.json`, 2 shards) at 61fe7db2: ~380 rows, first local survey 2026-10-29 reads every row with 0 undriven and the nightly adds the formal / co-sim columns; its three exclusion families (duplicate Xilinx tech-cell flavours, the protected-source QuickLogic eFPGA subtree, vendor PLL macros) are each recorded in the manifest.  cv32e41p (27 stars) is the same manifest shape over a separate checkout; cv32e40x's own top needed no interface shim (its XIF ports flatten, so it has no co-sim but a sound miter). |
-| **Snitch cluster, Cheshire** | pulp-platform/snitch_cluster, pulp-platform/cheshire | PULP's many-core cluster and its Linux-capable host SoC | **The Bender blocker is gone**: `test/ext_ip/bender_setup.sh` is shared by pulpissimo and cheshire -- it installs the prebuilt bender binary, runs `bender checkout` against the committed `Bender.lock` so every dependency is pinned, normalises a trailing comma some dependencies ship in their own file lists, and symlinks the hash-suffixed checkouts to stable names.  Cheshire **Swept** (`test/ext_ip/cheshire.json`, a `sweep-ext.yml` family) at a315a828, 266 rows; first local sweep 2026-10-28 with its `bind` section: **97 / 139 comparable proven**, 1.3 h of row time.  PULP's default type parameters had skipped 158 of 266 rows; binding them through each package's own typedef macros took the family from 78 comparable / 62 proven to 139 / 97 and made 13 formal-only leads visible.  82 rows still skip on types no shared macro describes.  **The same treatment was measured on snitch and removed again** -- it left that score identical and only relabelled 7 skips as `no reference`.  Snitch **Swept** too (`test/ext_ip/snitch.json`) at ccde489f, 104 rows; first local sweep 2026-10-28: 29 / 49 comparable proven, 1.3 h of row time, with the same default-type-parameter skip rate (39 rows) and the `snitch` core unreferenced because its LSU's `caq_qaddr_i[2:3]` reverses once `CaqTagWidth` defaults to 0.  Its best adjudicated leads are the Spatz vector unit rows (`spatz_vfu` 170 divergences, `spatz_ipu` 77).  **All three Bender families are now swept**, and the script needed no change for cheshire or snitch. |
-| **~~apb~~ (done)** | pulp-platform | Small PULP libraries we already clone as closure roots for axi / common_cells | register_interface **Swept** (`test/ext_ip/register_interface.json`) at d6e1d4cd: 19 rows, 11 / 11 comparable proven, 11 co-sim PASS, 0 undriven, 0 divergences.  It is the purest default-type-parameter case yet -- unbound, **all 19 rows skipped and the family measured nothing** -- so its `bind` section is the whole result; 8 rows still decline by design because a shared prelude cannot name `axi_pkg` / `apb_pkg` without breaking every row whose closure lacks them.  tech_cells_generic **Swept** too (`test/ext_ip/tech_cells_generic.json`) at 55cb5451: 53 rows, 44 / 50 comparable proven, 53 / 53 with 0 undriven, no reader lead -- the library cells every other PULP family had been compiling as closure-only roots all along.  apb **Swept** too (`test/ext_ip/apb.json`) at 4821618d: 8 rows, **8 / 8 proven**, 8 co-sim PASS, 0 undriven, 0 divergences -- closed clean.  That is every small PULP library done: axi, common_cells, register_interface, tech_cells_generic and apb. |
+## Done — swept and supported
 
-## Popular open-source RTL with no row yet
+59 designs: 41 external-IP families in `sweep-ext.yml` (manifests are
+`test/ext_ip/<name>.json`) and 18 with a workflow of their own.
 
-Grouped by what the sweep would reuse.  Generated RTL (Chisel, SpinalHDL,
-Migen) goes through the XiangShan-core flow (one `.sv` tree, modules swept per
-module, `--single-unit` for read_slang); hand-written Verilog is the class
-most likely to expose new reader cases.
-
-| Candidate | Repo | Notes |
+| Design | Repo | Swept by |
 |---|---|---|
-| **OpenC910 / OpenE906** | XUANTIE-RV/openc910, opene906 | OpenC910 **Swept** (`test/ext_ip/openc910.json`, a `sweep-ext.yml` family, 8 shards) at b91c9093: the 64-bit RV64GCV out-of-order core, its vector-FP units, the L2 cache, the bus / coherency units, the CLINT / PLIC / PMP / PMU and the smart_run integration platform, 482 rows; first local sweep 2026-10-26: 355 / 481 proven, 356 co-sim PASS, 0 undriven, 0 read-fails, 9.5 h of row time (the 11 read-fails all reached `ct_prio` and are closed by #1350; 113 SAT-budget rows remain; the one co-sim divergence left, `axi2ahb` (274), is an adjudicated NON-defect -- `assign #1` delayed continuous assignments, which Verilator lowers to non-blocking while any netlist drops the delay, and the GOLDEN read_verilog netlist diverges identically).  The checked-in `C910_asic_rtl.fl` needs no generation; the family reads `--single-unit` because `cpu_cfig.h` is a define-only SOURCE no file `include`s.  OpenE906 **Swept** (`test/ext_ip/opene906.json`, a `sweep-ext.yml` family, 2 shards) at c5b87895: the 32-bit RV32 embedded core, its FPU datapaths, CLIC / CLINT / PMP / PMU, the debug transport and trace blocks and the smart_run platform, 255 rows; first local sweep 2026-10-28: 203 / 255 proven, 255 / 255 with 0 undriven, 207 co-sim PASS, 0 `read_uhdm`-only divergences.  Two closure facts beyond C910's: SIX define-only headers (not two), one of them in a SECOND filelist (`tdt_dmi_top_rtl.fl`) without which four `tdt_*` rows die on `Unknown macro "TDT_DMI_IDLE_CYCLE"`; and `pa_cpu_top_golden_port` is excluded as a 105-port module with no logic.  Open: 50 SAT-budget rows and 2 formal-only `differs` (`gpio`, `pmu`, both with only 2 active co-sim cycles). |
-| **Rocket Chip / BOOM** | chipsalliance/rocket-chip, riscv-boom/riscv-boom | Rocket Chip **Swept** (`test/ext_ip/rocket-chip.json`, a `sweep-ext.yml` family) at ece7b9ad: the DefaultConfig core, caches, PTW, TileLink fabric, debug / PLIC / CLINT generated by mill + firtool through `test/ext_ip/rocket_setup.sh`, 235 rows; first local sweep 2026-10-25: 176 / 235 proven, 189 co-sim PASS, 43 slang-clean co-sim divergence rows (one firtool-pattern lead, worked from the nightly). BOOM **Swept** (`test/ext_ip/boom.json`, a `sweep-ext.yml` family, 8 shards) at ba03175e: BOOM v4's LargeBoom core inside rocket-chip's DefaultConfig SoC, 422 rows; first local sweep 2026-10-27: 326 / 422 proven, 379 co-sim PASS, 0 undriven, 9.6 h of row time (68 SAT-budget rows, 4 whole-core rows over the 7 GB cap, and 23 slang-clean divergence rows that are all one reader defect, now ratcheted by `test/ff_block_local_decl_init`).  `test/ext_ip/boom_setup.sh` records why BOOM needs the rocket-chip checkout to elaborate at all: unpublished ivy snapshots, v3's chipyard-only `pmu` package, and no config reflection can instantiate. |
-| **VexRiscv / NaxRiscv** | SpinalHDL/VexRiscv, SpinalHDL/NaxRiscv | VexRiscv **Swept** (`test/ext_ip/vexriscv.json`, a `sweep-ext.yml` family) at baf7dc82: the GenFull core and its two caches, 3 rows; first local sweep 2026-10-25: 3 / 3 proven, 3 / 3 co-sim PASS, 0 divergences (the LiteX family sweeps the LiteX-shipped VexRiscv build as well).  NaxRiscv **Swept** (`test/ext_ip/naxriscv.json`, a `sweep-ext.yml` family) at 9f452d50: the out-of-order superscalar RV32 core and its 23 submodules, 24 rows; first local sweep 2026-10-28: 17 / 24 proven, 24 / 24 co-sim PASS, 24 / 24 with 0 undriven, 0 divergences and no read-fails -- the 7 unproven rows are all SAT budget, so the family closed with no open reader lead.  Unlike VexRiscv its build takes SpinalHDL from SOURCE (build.sbt reaches it through `ProjectRef`), and `ext/rvls` has to be cloned too for its JNI bindings' source directory. |
-| **Hazard3** | Wren6991/Hazard3 | **Swept** (`test/ext_ip/hazard3.json`, a `sweep-ext.yml` family) at 8af99293: the RV32IMC core, its multipliers, the AHB / APB / AXI front-ends and the debug module, 25 rows; first local sweep 2026-10-26: 21 / 22 proven, every co-simulated row PASS, 0 undriven (1 SAT-budget row; 3 rows have no read_slang reference). |
-| **SERV** | olofk/serv | **Swept** (`test/ext_ip/serv.json`, a `sweep-ext.yml` family) at f200eb2e: the core, the servant SoC and its peripherals, 29 rows; first local sweep 2026-10-25: 27 / 27 comparable proven, 27 co-sim PASS, 0 divergences. |
-| **biRISC-V** | ultraembedded/biriscv | **Swept** (`test/ext_ip/biriscv.json`, a `sweep-ext.yml` family) at be4b5d3b: the dual-issue core, its caches and RAMs, the TCM and the two SoC tops, 44 rows; first local sweep 2026-10-26: 28 / 40 proven, every co-simulated row PASS, 0 undriven (6 SAT-budget rows, 4 branch-predictor `differs` leads). |
-| **SweRVolf / Caravel SweRV** | chipsalliance/VeeRwolf, caravel-swerv-el2 | SoC harnesses around cores we prove; see above. |
-| **OpenPiton** | PrincetonUniversity/openpiton | **Swept** (`test/ext_ip/openpiton.json`, a `sweep-ext.yml` family, 4 shards) at 1c6bfd2d: the tile, caches, NoC routers, chip bridge, JTAG, chipset and common cells, 852 rows; first local sweep 2026-10-27: 694 / 838 proven, 602 co-sim PASS, 742 rows with 0 undriven, 3.3 h of row time.  The closure was NOT the `ifdef`s: 91 files are PyHP templates `test/ext_ip/openpiton_setup.sh` runs.  Its flop library writes the async reset as a TERNARY, which yosys cannot infer from any frontend and which cost 61 rows; `YOSYS` in `defines` (OpenPiton's own guard) plus the `openpiton_harness/swrvr_clib.v` stand-in close 60 of them.  Left: 78 elaboration failures tracing to a Surelog `Recursive macro definition` false positive on a macro defined exactly once, 21 read-fails, and 15 `differs` rows.  Its co-sim lead is CLOSED: the four FPU rows (853 diverging cycles) were all one defect -- octal literals read as X -- and are proven with co-sim PASS; the three remaining divergent rows are adjudicated non-defects (the ternary async reset, SHARED_DIVERGENCE against the golden read_verilog netlist). |
-| **PULPissimo** | pulp-platform/pulpissimo | **Swept** (`test/ext_ip/pulpissimo.json`, a `sweep-ext.yml` family, 4 shards) at bfc3d9a1: the platform plus the 26 dependency packages that are not families of their own, 327 rows; first local sweep 2026-10-27: 205 / 278 proven, 221 co-sim PASS, 266 rows with 0 undriven, 3.1 h of row time.  **The Bender closure is solved** and the recipe is reusable for Snitch / Cheshire: `test/ext_ip/pulpissimo_setup.sh` installs the prebuilt bender binary, runs `bender checkout` against the committed `Bender.lock` (so all 38 dependencies are pinned), patches a TRAILING COMMA in adv_dbg_if's own `Bender.yml` that otherwise kills the whole resolution, and symlinks the hash-suffixed checkouts to stable names.  Open: 3 slang-clean divergence rows, one 18-row cluster losing its reference to `undeclared identifier 'DATA_WIDTH'`, 9 read-fails and 18 elaboration failures. |
-| **LiteX** | enjoy-digital/litex | **Swept** (`test/ext_ip/litex.json`, a `sweep-ext.yml` family) at release 2026.08: the litex_sim SoC around VexRiscv emitted by Migen plus the VexRiscv core, 4 rows; first local sweep 2026-10-25: 3 / 4 proven, 4 / 4 co-sim PASS, 0 divergences (InstructionCache `differs` formal-only). Other CPU types (picorv32, ibex, serv, femtorv) and board targets are one `--cpu-type` / target each. |
-| **ZipCPU + wishbone peripherals** | ZipCPU/zipcpu, wbuart32, sdspi, ... | ZipCPU itself **Swept** (`test/ext_ip/zipcpu.json`, a `sweep-ext.yml` family) at 7f1f0b4a: the core, caches, MMU, Wishbone / AXI peripherals and the four SoC tops, 51 rows; first local sweep 2026-10-26: 47 / 50 proven, 49 co-sim PASS, 0 undriven (2 SAT-budget rows).  `zipmmu`'s 20 divergences on that sweep were a Surelog generate-region defect, fixed upstream in chipsalliance/Surelog#4228; the row is proven with a clean co-sim against the fix. The separate peripheral repositories (wbuart32, sdspi, ...) are not started. |
-| **NVDLA** | nvdla/hw | **Swept** (`test/ext_ip/nvdla.json`, a `sweep-ext.yml` family, 8 shards) at 8e06b1b9: the convolution, SDP, PDP, CDP, RUBIK and BDMA pipelines, the CSB / APB / MCIF / CVIF interfaces and the glue -- 914 rows, the libraries as always_srcs; first local survey 2026-10-26: 907 / 914 read with 0 undriven (6 whole-accelerator rows over the budget, 1 undefined vendor cell). The `outdir/*/vmod` tree a template run emits is not needed: the checked-in `vmod` reads as it is.  **#1360 gave the family a read_slang oracle**: five stand-in library files fixed two upstream packaging faults (an assertion task declared only in the non-synthesis branch; three byte-identical copies of one helper module), taking `no reference` from 914 rows to 3.  Local re-sweep 2026-10-28: **775 / 911 proven**, 815 co-sim PASS, 907 rows with 0 undriven, 41 slang-clean divergence leads, and 75 rows whose miter cannot run for want of a SAT model for NVDLA's RAM cell. |
-| **Gemmini, VTA** | ucb-bar/gemmini, apache/tvm-vta | Gemmini **Swept** (`test/ext_ip/gemmini.json`, a `sweep-ext.yml` family, 6 shards) at 8c3f9923: the LeanGemmini systolic array as a RoCC on rocket-chip's DefaultConfig SoC, 384 rows; first local sweep 2026-10-27: 340 / 384 proven, 380 co-sim PASS, 0 undriven, **0 differs and 0 divergences**, 7.1 h of row time (43 SAT-budget rows and the whole-SoC row over the 7 GB cap).  `test/ext_ip/gemmini_setup.sh` records the four things between the checkout and a row: it needs rocket-chip on the classpath (chisel3 3.6 vs 6.7 costs nothing), two FireSim annotation symbols reach it only through chipyard and are shimmed, no config is instantiable by reflection, and firtool hard-errors on Chisel's enum-naming annotation where the signal is a memory-port field.  VTA **Swept** (`test/ext_ip/vta.json`, a `sweep-ext.yml` family) at d4a15f62, 66 rows; first local sweep 2026-10-28: 47 / 66 proven and otherwise spotless -- 66 / 66 elaborate, 66 / 66 co-sim PASS, 0 undriven, **0 divergences and no open reader lead**, every unproven row a SAT-budget one.  It pins chisel3 3.5.0, too old for the rocket-chip route BOOM / Gemmini use, so `test/ext_ip/vta_setup.sh` installs sbt and runs VTA's own `make verilog` (Scala FIRRTL, no firtool). |
-| **Ibex-based SoCs** | lowRISC | Sonata **Swept** (`test/ext_ip/sonata-system.json`) at 21e84afb: 37 rows, 37 / 37 elaborate, 0 undriven, first survey 2026-10-29.  No FuseSoC run is needed -- the three Mako-generated files are committed.  The survey's one reader abort (`gpio`, `Assert 'offset >= 0'`) is CLOSED -- an element select of an unpacked-array parameter read bit 0 of its folded value, so `[GpiInstWidths[i]-1:0]` became `[-1:0]`. |
-| **NEORV32** | stnolting/neorv32 | VHDL only -- out of scope for a SystemVerilog frontend; listed so it is not asked about again. |
+| Adams Bridge | [chipsalliance/adams-bridge](https://github.com/chipsalliance/adams-bridge) | `adams-bridge.json` (`sweep-ext.yml`) |
+| AIB PHY hardware v2.0 | [chipsalliance/aib-phy-hardware](https://github.com/chipsalliance/aib-phy-hardware) | `aib-phy-hardware.json` (`sweep-ext.yml`) |
+| AIB protocols | [chipsalliance/aib-protocols](https://github.com/chipsalliance/aib-protocols) | `aib-protocols.json` (`sweep-ext.yml`) |
+| Alex Forencich verilog-ethernet | [alexforencich/verilog-ethernet](https://github.com/alexforencich/verilog-ethernet) | `verilog-ethernet.json` (`sweep-ext.yml`) |
+| Alex Forencich verilog-pcie | [alexforencich/verilog-pcie](https://github.com/alexforencich/verilog-pcie) | `verilog-pcie.json` (`sweep-ext.yml`) |
+| Ariane CVA6 | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | `sweep-cva6.yml` |
+| Ariane CVA6 (3 other configurations) | [openhwgroup/cva6](https://github.com/openhwgroup/cva6) | `sweep-cva6-flavours.yml` |
+| biRISC-V | [ultraembedded/biriscv](https://github.com/ultraembedded/biriscv) | `biriscv.json` (`sweep-ext.yml`) |
+| BlackParrot | [black-parrot/black-parrot](https://github.com/black-parrot/black-parrot) | `sweep-black-parrot.yml` |
+| BOOM — LargeBoomV4 on rocket-chip DefaultConfig | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | `boom.json` (`sweep-ext.yml`) |
+| Caliptra | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | `sweep-caliptra.yml` |
+| Caliptra Subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | `caliptra-ss.json` (`sweep-ext.yml`) |
+| Cheshire | [pulp-platform/cheshire](https://github.com/pulp-platform/cheshire) | `cheshire.json` (`sweep-ext.yml`) |
+| chipsalliance/sv-tests conformance corpus | [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) | `sweep-sv-tests.yml` |
+| fx68k (68000) | [ijor/fx68k](https://github.com/ijor/fx68k) | `sweep-fx68k.yml` |
+| Gemmini — LeanGemmini on rocket-chip DefaultConfig | [ucb-bar/gemmini](https://github.com/ucb-bar/gemmini) | `gemmini.json` (`sweep-ext.yml`) |
+| Hazard3 | [Wren6991/Hazard3](https://github.com/Wren6991/Hazard3) | `hazard3.json` (`sweep-ext.yml`) |
+| hdl-util hdmi | [hdl-util/hdmi](https://github.com/hdl-util/hdmi) | `hdmi.json` (`sweep-ext.yml`) |
+| Ibex | [lowRISC/ibex](https://github.com/lowRISC/ibex) | `sweep-ibex.yml` |
+| LiteX — the simulation SoC around VexRiscv | [enjoy-digital/litex](https://github.com/enjoy-digital/litex) | `litex.json` (`sweep-ext.yml`) |
+| lowRISC Sonata system (CHERIoT-Ibex SoC) | [lowRISC/sonata-system](https://github.com/lowRISC/sonata-system) | `sonata-system.json` (`sweep-ext.yml`) |
+| NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | `naxriscv.json` (`sweep-ext.yml`) |
+| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | `nvdla.json` (`sweep-ext.yml`) |
+| OpenC910 | [XUANTIE-RV/openc910](https://github.com/XUANTIE-RV/openc910) | `openc910.json` (`sweep-ext.yml`) |
+| OpenE906 | [XUANTIE-RV/opene906](https://github.com/XUANTIE-RV/opene906) | `opene906.json` (`sweep-ext.yml`) |
+| OpenHW CORE-V MCU | [openhwfoundation/core-v-mcu](https://github.com/openhwfoundation/core-v-mcu) | `core-v-mcu.json` (`sweep-ext.yml`) |
+| OpenHW CORE-V Wally | [openhwgroup/cvw](https://github.com/openhwgroup/cvw) | `cvw.json` (`sweep-ext.yml`) |
+| OpenHW CV32E40P | [openhwfoundation/cv32e40p](https://github.com/openhwfoundation/cv32e40p) | `cv32e40p.json` (`sweep-ext.yml`) |
+| OpenHW CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | `cv32e40s.json` (`sweep-ext.yml`) |
+| OpenHW CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | `cv32e40x.json` (`sweep-ext.yml`) |
+| OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | `cve2.json` (`sweep-ext.yml`) |
+| OpenHW CVFPU | [openhwfoundation/cvfpu](https://github.com/openhwfoundation/cvfpu) | `cvfpu.json` (`sweep-ext.yml`) |
+| OpenPiton | [PrincetonUniversity/openpiton](https://github.com/PrincetonUniversity/openpiton) | `openpiton.json` (`sweep-ext.yml`) |
+| OpenTitan (vendored blocks) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) | `sweep-opentitan.yml` |
+| OpenTitan IP blocks (upstream) | [lowRISC/opentitan.git](https://github.com/lowRISC/opentitan.git) | `opentitan-ip.json` (`sweep-ext.yml`) |
+| Pavona (OpenTitan fork) | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) | `sweep-pavona.yml` |
+| PULP APB | [pulp-platform/apb](https://github.com/pulp-platform/apb) | `apb.json` (`sweep-ext.yml`) |
+| PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | `axi.json` (`sweep-ext.yml`) |
+| PULP common_cells | [pulp-platform/common_cells](https://github.com/pulp-platform/common_cells) | `common_cells.json` (`sweep-ext.yml`) |
+| PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | `register_interface.json` (`sweep-ext.yml`) |
+| PULP tech_cells_generic | [pulp-platform/tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic) | `tech_cells_generic.json` (`sweep-ext.yml`) |
+| PULPissimo | [pulp-platform/pulpissimo](https://github.com/pulp-platform/pulpissimo) | `pulpissimo.json` (`sweep-ext.yml`) |
+| RgGen | [rggen/rggen-sv-rtl](https://github.com/rggen/rggen-sv-rtl) | `sweep-rggen.yml` |
+| Rocket Chip — DefaultConfig | [chipsalliance/rocket-chip](https://github.com/chipsalliance/rocket-chip) | `rocket-chip.json` (`sweep-ext.yml`) |
+| rp32 | [jeras/rp32](https://github.com/jeras/rp32) | `sweep-rp32.yml` |
+| RSD | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) | `sweep-rsd.yml` |
+| SERV | [olofk/serv](https://github.com/olofk/serv) | `serv.json` (`sweep-ext.yml`) |
+| Snitch cluster | [pulp-platform/snitch_cluster](https://github.com/pulp-platform/snitch_cluster) | `snitch.json` (`sweep-ext.yml`) |
+| Syntacore SCR1 | [syntacore/scr1](https://github.com/syntacore/scr1) | `sweep-scr1.yml` |
+| TNoC | [taichi-ishitani/tnoc](https://github.com/taichi-ishitani/tnoc) | `sweep-tnoc.yml` |
+| VeeR EH1 | [chipsalliance/Cores-VeeR-EH1](https://github.com/chipsalliance/Cores-VeeR-EH1) | `sweep-veer-eh1.yml` |
+| VeeR EH2 | [chipsalliance/Cores-VeeR-EH2](https://github.com/chipsalliance/Cores-VeeR-EH2) | `sweep-veer-eh2.yml` |
+| VeeR EL2 | [chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2) | `sweep-veer-el2.yml` |
+| VeeRwolf | [chipsalliance/VeeRwolf](https://github.com/chipsalliance/VeeRwolf) | `veerwolf.json` (`sweep-ext.yml`) |
+| VexRiscv | [SpinalHDL/VexRiscv](https://github.com/SpinalHDL/VexRiscv) | `vexriscv.json` (`sweep-ext.yml`) |
+| VTA — the DefaultDe10Config accelerator | [apache/tvm-vta](https://github.com/apache/tvm-vta) | `vta.json` (`sweep-ext.yml`) |
+| XiangShan Kunminghu core (Chisel-generated) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) | `sweep-xiangshan.yml` |
+| XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | `xiangshan.json` (`sweep-ext.yml`) |
+| ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | `zipcpu.json` (`sweep-ext.yml`) |
 
-## Already covered -- do not duplicate
+## To do
 
-Ibex (`test/ibex` and inside Pavona), CVA6 with HPDcache and its three other
-configurations, all 45 OpenTitan IP blocks, Pavona, Caliptra and caliptra-ss,
-VeeR EH1, EL2 and EH2, VeeRwolf, SCR1, rp32, fx68k, RgGen, TNoC, RSD,
-BlackParrot, the XiangShan core and its arithmetic library, PULP axi and
-common_cells, OpenHW cve2 / cv32e40p / cvfpu / Wally, verilog-ethernet,
-verilog-pcie, hdl-util HDMI, the chipsalliance AIB PHY and protocol layers
-and adams-bridge, and the chipsalliance/sv-tests conformance corpus.
+| Candidate | Repo | What it needs |
+|---|---|---|
+| **cv32e41p** | [openhwfoundation/cv32e41p](https://github.com/openhwfoundation/cv32e41p) | The manifest is written (`test/ext_ip/cv32e41p.json`, the cv32e40x shape over a separate checkout) and the survey reads 23 / 23 with 0 undriven — but it is **not committed and not in the matrix**.  The next thing to land. |
+| **OpenTitan `top_earlgrey`** | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) | Closure is solved — walk the CAPI=2 `.core` graph directly (635 files, 0 unresolved, 0 syntax errors with `-DSYNTHESIS`; one Surelog error on `alert_handler`'s `AsyncOn`).  The blocker is size: `read_uhdm` needs **11.9 GB** to read it, 13.5 GB with flatten+check, so a 16 GB nightly runner cannot hold it.  Needs its own sharded workflow and a flat shim for its interface-free top before it can carry formal and co-sim columns.  10 `Reference to unknown signal` warnings are untriaged. |
+| **BlackParrot whole-core rows** | [black-parrot/black-parrot](https://github.com/black-parrot/black-parrot) | Twelve rows (`bp_processor`, `bp_unicore*`, `bp_core*`, `bp_multicore`, `bp_cacc_tile_node`) exceed the runner's 12 GB Surelog cap.  Measured and unresolved; the family's per-module rows are swept. |
+| **NVDLA's 29 no-oracle divergences** | [nvdla/hw](https://github.com/nvdla/hw) | They diverge with no `read_slang` reference, so the sweep cannot adjudicate them either way.  Being worked by co-simulating the golden `read_verilog` netlist in the reference slot — the method OpenC910's and OpenPiton's no-oracle rows already use. |
+| **i3c-core (standalone)** | [chipsalliance/i3c-core](https://github.com/chipsalliance/i3c-core) | **Low priority — already measured twice**: caliptra-ss sweeps its vendored copy and the OpenTitan library its own `i3c_*` rows.  A standalone row set at upstream head adds only freshness. |
+| **NEORV32** | [stnolting/neorv32](https://github.com/stnolting/neorv32) | **Out of scope**: VHDL only, which a SystemVerilog frontend cannot read.  Listed so it is not asked about again. |
+| **SweRVolf / Caravel SweRV** | [chipsalliance/VeeRwolf](https://github.com/chipsalliance/VeeRwolf) | **Covered**: SoC harnesses around cores already swept, and VeeRwolf itself is in the DONE table. |
 
-The four chipsalliance repositories brought in during the week of 2026-10-20
-(VeeR EH2 with its own `sweep-veer-eh2.yml`; VeeRwolf, aib-protocols,
-aib-phy-hardware and adams-bridge as `sweep-ext.yml` families) have had their
-first nightlies and their rows in [supported_ip.md](supported_ip.md) and
-[ext_ip.md](ext_ip.md) carry the nightly numbers -- except aib-protocols,
-whose 2026-10-25 nightly lost a shard to a runner shutdown and still shows
-its first local sweep.  Every reader defect those first sweeps found is
-fixed or adjudicated (#1307 - #1328); what remains on them is SAT budget.
-BlackParrot's twelve whole-core rows (`bp_processor`, `bp_unicore*`,
-`bp_core*`, `bp_multicore`, `bp_cacc_tile_node`) exceed the runner's 12 GB
-Surelog cap and are the one measured-but-unresolved block left.
+## The rule that still holds
+
+Land the manifest and read the first nightly **before** fixing anything it
+finds.  A first sweep's value is the inventory it produces, and a defect a row
+finds is cheaper to fix once that row is reproducible in CI.
