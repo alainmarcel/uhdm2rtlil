@@ -3001,6 +3001,37 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
                 bits[base + b] = (v & (1 << b)) ? RTLIL::State::S1 : RTLIL::State::S0;
         }
         return RTLIL::Const(bits);
+    } else if (value_str.substr(0, 4) == "OCT:") {
+        // An OCTAL literal, three bits per digit.  Surelog stores `3'o7` as
+        // `OCT:7` with vpiConstType 4 (vpiOctConst), and NOTHING handled it:
+        // import_constant warned "Unsupported constant type: 4" and returned
+        // all-X, so every octal literal in any design read as X.  OpenPiton's
+        // OpenSPARC FPU writes its pipeline-ID decode entirely in octal --
+        //     {(m5stg_id[4:2]==3'o7), ..., (m5stg_id[4:2]==3'o0)}
+        // so all eight comparisons compared against the same X and
+        // fpu_add / fpu_add_ctl / fpu_mul / fpu_mul_ctl diverged on 853
+        // co-simulated cycles between them, read_slang clean.
+        // Same digit rules as the hex branch: an x / z / `?` digit covers all
+        // three of its bits (IEEE 1800-2017 5.7.1).
+        std::string oct_str = value_str.substr(4);
+        int width = oct_str.length() * 3;
+        std::vector<RTLIL::State> bits(width, RTLIL::State::S0);
+        for (size_t i = 0; i < oct_str.length(); i++) {
+            char c = oct_str[oct_str.length() - 1 - i];   // LSB digit first
+            size_t base = i * 3;
+            if (c == 'x' || c == 'X') {
+                for (int b = 0; b < 3; b++) bits[base + b] = RTLIL::State::Sx;
+                continue;
+            }
+            if (c == 'z' || c == 'Z' || c == '?') {
+                for (int b = 0; b < 3; b++) bits[base + b] = RTLIL::State::Sz;
+                continue;
+            }
+            int v = (c >= '0' && c <= '7') ? c - '0' : 0;
+            for (int b = 0; b < 3; b++)
+                bits[base + b] = (v & (1 << b)) ? RTLIL::State::S1 : RTLIL::State::S0;
+        }
+        return RTLIL::Const(bits);
     } else if (value_str.substr(0, 7) == "STRING:") {
         // Handle string constants - convert to binary representation
         std::string str_val = value_str.substr(7);
@@ -7171,6 +7202,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         else if (value.substr(0, 4) == "BIN:") const_type = vpiBinaryConst;
         else if (value.substr(0, 4) == "HEX:") const_type = vpiHexConst;
         else if (value.substr(0, 4) == "DEC:") const_type = vpiDecConst;
+        else if (value.substr(0, 4) == "OCT:") const_type = vpiOctConst;
         else if (value.substr(0, 7) == "STRING:") const_type = vpiStringConst;
         if (const_type != 0)
             uhdm_trace("UHDM: Inferred constant type %d from value prefix\n", const_type);
@@ -7287,6 +7319,28 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                     const_val = const_val.extract(0, target, pad);
                 return RTLIL::SigSpec(const_val);
             }
+        }
+        case vpiOctConst: {
+            if (mode_debug)
+                uhdm_trace("    vpiOctConst: value='%s', size=%d\n", value.c_str(), size);
+            std::string oct_str =
+                (value.substr(0, 4) == "OCT:") ? value.substr(4) : value;
+            RTLIL::Const const_val = extract_const_from_value("OCT:" + oct_str);
+            int target = size > 0 ? size : const_val.size();
+            // A literal whose leftmost digit is x / z / `?` extends with that
+            // digit (IEEE 1800-2017 5.7.1), exactly as the hex path does;
+            // three bits per digit means the declared size is rarely a
+            // multiple of it, so the extract below both pads and TRUNCATES.
+            RTLIL::State pad = RTLIL::State::S0;
+            if (const_val.size() > 0 && const_val.size() < target) {
+                RTLIL::State msb = const_val[const_val.size() - 1];
+                if (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz ||
+                    msb == RTLIL::State::Sa)
+                    pad = msb;
+            }
+            if (const_val.size() != target)
+                const_val = const_val.extract(0, target, pad);
+            return RTLIL::SigSpec(const_val);
         }
         case vpiDecConst: {
             std::string dec_str = value.substr(4);
