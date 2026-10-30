@@ -66,7 +66,7 @@ simulation artefacts, and the 78 break down as
 
 | family | divergences | status |
 |---|---:|---|
-| NVDLA | 70 | **3 open leads** -- `SDP_CORE_Y_cvt` (16 cycles), `_cvt_core` (7) and `MRDMA_EG_dout`, all one defect tracked by test/func_local_accumulator_in_ff -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
+| NVDLA | 70 | **1 open lead** (`MRDMA_EG_dout`, 67 cycles) -- `SDP_CORE_Y_cvt` (16) and `_cvt_core` (7) are CLOSED: a self-accumulated function return variable was aliased onto the function's result staging wire, closing a combinational loop in every clocked call site of a Catapult MUX1HOT_* helper (120 logic loops in `_cvt_core` alone).  `MRDMA_EG_dout` survived the fix and has no logic loops, so it is a SEPARATE defect -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
 | OpenPiton | 7 | to triage |
 | OpenC910 | 1 | to triage |
 

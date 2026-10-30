@@ -2449,6 +2449,23 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     // The prescanning found these intermediate variables
     // We already filtered out input parameters in scan_for_return_variables
     for (const auto& var : return_vars) {
+        // A local ACCUMULATED into (`result = result | x;`) must keep its OWN
+        // wire: the alias binds it to the single result staging wire, so each
+        // statement writes that wire and its own cell reads it back -- a
+        // combinational loop once the clocked context suppresses the
+        // current_comb_values threading that hides it in a comb call site.
+        // Left aliased, NVDLA's Catapult-generated MUX1HOT_* helpers closed
+        // 120 logic loops in NV_NVDLA_SDP_CORE_Y_cvt_core alone.  Without the
+        // alias the ordinary SSA renaming in process_stmt_to_case applies and
+        // the body's explicit `<func> = <local>` return assignment copies the
+        // final value onto the result chain.
+        if (func_def->Stmt() &&
+            stmt_self_accumulates_name(func_def->Stmt(), var)) {
+            uhdm_trace("UHDM: Return variable '%s' of %s is self-accumulated — "
+                       "keeping its own wire instead of aliasing the result\n",
+                       var.c_str(), func_name.c_str());
+            continue;
+        }
         input_mapping[var] = temp_result1_wire;
         uhdm_trace("UHDM: Mapping return variable '%s' to result wire for function %s\n",
             var.c_str(), func_name.c_str());

@@ -116,6 +116,112 @@ std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const st
 // left `assign $22\…$result$22 $25\…$result$25` with nothing driving `$25\`
 // (many_functions / function_mixed out_mixed).  Only allocate the intermediate
 // when the branch really writes the result variable.
+// Does `s` contain an assignment to `nm` whose RHS also READS `nm`?  That is
+// the shape of an ACCUMULATOR -- `result = result | (in & mask);` -- and it is
+// the one shape a return-variable ALIAS cannot express: aliasing binds the
+// local to the function's single result staging wire, so every statement
+// writes that one wire and the statement's own cell reads it back.  In a comb
+// call site the `current_comb_values` threading rewrites each read onto the
+// previous value and hides it; inside a CLOCKED process that threading is
+// deliberately suppressed (`in_always_ff_body_mode`, so a register read sees
+// its pre-edge value) and what is left is a COMBINATIONAL LOOP.
+//
+// Catapult writes every MUX1HOT_* helper this way, which is why NVDLA's
+// NV_NVDLA_SDP_CORE_Y_cvt (16 diverging co-simulated cycles), _cvt_core (7,
+// with 120 logic loops against read_slang's 0) and NV_NVDLA_SDP_MRDMA_EG_dout
+// (67) all diverged on it.
+bool UhdmImporter::stmt_self_accumulates_name(const UHDM::any* s,
+                                              const std::string& nm, int depth) {
+    if (!s || nm.empty() || depth > 48) return false;
+    // Does an expression tree mention `nm`?  Every select flavour carries the
+    // base name in VpiName, so one name test covers ref_obj, bit_select,
+    // part_select, var_select and hier_path alike.
+    std::function<bool(const UHDM::any*, int)> reads =
+        [&](const UHDM::any* e, int d) -> bool {
+            if (!e || d > 48) return false;
+            if (std::string(e->VpiName()) == nm) return true;
+            if (e->UhdmType() == uhdmoperation) {
+                auto op = any_cast<const operation*>(e);
+                if (op && op->Operands())
+                    for (auto o : *op->Operands())
+                        if (reads(o, d + 1)) return true;
+            } else if (e->UhdmType() == uhdmpart_select) {
+                auto ps = any_cast<const part_select*>(e);
+                if (ps && (reads(ps->Left_range(), d + 1) ||
+                           reads(ps->Right_range(), d + 1))) return true;
+            } else if (e->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const bit_select*>(e);
+                if (bs && reads(bs->VpiIndex(), d + 1)) return true;
+            } else if (e->UhdmType() == uhdmvar_select) {
+                auto vs = any_cast<const var_select*>(e);
+                if (vs && vs->Exprs())
+                    for (auto x : *vs->Exprs())
+                        if (reads(x, d + 1)) return true;
+            } else if (e->UhdmType() == uhdmfunc_call) {
+                auto fc2 = any_cast<const func_call*>(e);
+                if (fc2 && fc2->Tf_call_args())
+                    for (auto a : *fc2->Tf_call_args())
+                        if (reads(a, d + 1)) return true;
+            }
+            return false;
+        };
+    switch (s->UhdmType()) {
+    case uhdmassignment: {
+        auto as = any_cast<const assignment*>(s);
+        if (!as || !as->Lhs() || !as->Rhs()) return false;
+        std::string ln;
+        if (auto r = dynamic_cast<const ref_obj*>(as->Lhs()))
+            ln = std::string(r->VpiName());
+        else
+            ln = std::string(as->Lhs()->VpiName());
+        return ln == nm && reads(as->Rhs(), 0);
+    }
+    case uhdmbegin: {
+        auto bg = any_cast<const begin*>(s);
+        if (bg && bg->Stmts())
+            for (auto c : *bg->Stmts())
+                if (stmt_self_accumulates_name(c, nm, depth + 1)) return true;
+        return false;
+    }
+    case uhdmnamed_begin: {
+        auto nb = any_cast<const named_begin*>(s);
+        if (nb && nb->Stmts())
+            for (auto c : *nb->Stmts())
+                if (stmt_self_accumulates_name(c, nm, depth + 1)) return true;
+        return false;
+    }
+    case uhdmif_stmt: {
+        auto is2 = any_cast<const if_stmt*>(s);
+        return is2 && stmt_self_accumulates_name(is2->VpiStmt(), nm, depth + 1);
+    }
+    case uhdmif_else: {
+        auto ie = any_cast<const if_else*>(s);
+        return ie && (stmt_self_accumulates_name(ie->VpiStmt(), nm, depth + 1) ||
+                      stmt_self_accumulates_name(ie->VpiElseStmt(), nm, depth + 1));
+    }
+    case uhdmcase_stmt: {
+        auto cs = any_cast<const case_stmt*>(s);
+        if (cs && cs->Case_items())
+            for (auto ci : *cs->Case_items()) {
+                auto item = any_cast<const case_item*>(ci);
+                if (item && stmt_self_accumulates_name(item->Stmt(), nm, depth + 1))
+                    return true;
+            }
+        return false;
+    }
+    case uhdmfor_stmt: {
+        auto fs = any_cast<const for_stmt*>(s);
+        return fs && stmt_self_accumulates_name(fs->VpiStmt(), nm, depth + 1);
+    }
+    case uhdmwhile_stmt: {
+        auto ws = any_cast<const while_stmt*>(s);
+        return ws && stmt_self_accumulates_name(ws->VpiStmt(), nm, depth + 1);
+    }
+    default:
+        return false;
+    }
+}
+
 bool UhdmImporter::stmt_assigns_name(const UHDM::any* s, const std::string& nm, int depth) {
     if (!s || nm.empty() || depth > 48) return false;
     switch (s->UhdmType()) {

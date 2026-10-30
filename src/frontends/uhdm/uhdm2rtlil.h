@@ -1614,6 +1614,10 @@ struct UhdmImporter {
     // their own breaks and are not descended into.
     bool stmt_contains_break(const UHDM::any* s, int depth = 0);
     bool stmt_assigns_name(const UHDM::any* s, const std::string& nm, int depth = 0);
+    // An assignment to `nm` whose RHS also reads `nm` (an ACCUMULATOR): such a
+    // local must NOT be aliased onto the function's result staging wire.
+    bool stmt_self_accumulates_name(const UHDM::any* s, const std::string& nm,
+                                    int depth = 0);
     // Process `stmt` only while none of the SSA guard values named by
     // `guard_keys` ("$__ret_taken$": the function has returned;
     // "$__brk_taken$": the enclosing unrolled loop has broken) is set.
