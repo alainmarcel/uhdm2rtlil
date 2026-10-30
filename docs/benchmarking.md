@@ -66,7 +66,7 @@ simulation artefacts, and the 78 break down as
 
 | family | divergences | status |
 |---|---:|---|
-| NVDLA | 70 | 41 were slang-CLEAN and are all **closed**; the other **29 have no `read_slang` oracle** (their netlist does not lower for Verilator) and are not yet adjudicated |
+| NVDLA | 70 | 41 were slang-CLEAN and are all **closed**; the other 29 have no `read_slang` oracle (their netlist does not lower for Verilator) and are adjudicated against the golden `read_verilog` netlist instead — **2 closed**, 27 artefacts diverging by the same count as the golden netlist |
 | OpenPiton | 7 | **closed or adjudicated**: the 4 slang-clean FPU rows are proven with co-sim PASS; the 3 read_slang refuses diverge identically on the golden `read_verilog` netlist (ternary asynchronous reset) |
 | OpenC910 | 1 | **adjudicated**: `axi2ahb`'s `assign #1` delays diverge identically on the golden `read_verilog` netlist |
 

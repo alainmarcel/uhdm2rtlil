@@ -1280,7 +1280,12 @@ def main():
             # OpenC910's axi2ahb for its `assign #1` delays, so the row could
             # never be adjudicated by the automatic route and the suffix-only
             # pattern silently declined the override.  Accept both forms.
-            ma = re.match(r"❌ (\d+) div(?: \(slang clean\))?$", r.get("cosim") or "")
+            # `(slang n/a)` is the no-ORACLE spelling (read_slang read the
+            # module but its netlist would not lower for Verilator) and
+            # `(slang clean)` the oracle-is-clean one; a bare `N div` has no
+            # suffix at all.  All three can need a manual adjudication, and the
+            # 27 NVDLA DMA/FIFO rows are all `(slang n/a)`.
+            ma = re.match(r"❌ (\d+) div(?: \(slang (?:clean|n/a)\))?$", r.get("cosim") or "")
             if ma:
                 r["cosim"] = f"⚠ artefact ({ma.group(1)} div, adjudicated)"
         print(f"  {ico} {r['module']:<34} {r['formal']:<28} {r['check']:<16} {r['cosim']:<32} "
