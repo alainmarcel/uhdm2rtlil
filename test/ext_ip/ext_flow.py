@@ -1274,7 +1274,13 @@ def main():
         # local sim_equiv_analyzed entry, so sweep_table counts it as
         # adjudicated instead of as a reader defect.  Opt-in per module.
         if x.get("cosim") == "artefact":
-            ma = re.match(r"❌ (\d+) div \(slang clean\)$", r.get("cosim") or "")
+            # The `(slang clean)` suffix is only present when there IS a slang
+            # reference, and a row with NO reference at all is precisely the
+            # one that most needs a manual adjudication -- read_slang refuses
+            # OpenC910's axi2ahb for its `assign #1` delays, so the row could
+            # never be adjudicated by the automatic route and the suffix-only
+            # pattern silently declined the override.  Accept both forms.
+            ma = re.match(r"❌ (\d+) div(?: \(slang clean\))?$", r.get("cosim") or "")
             if ma:
                 r["cosim"] = f"⚠ artefact ({ma.group(1)} div, adjudicated)"
         print(f"  {ico} {r['module']:<34} {r['formal']:<28} {r['check']:<16} {r['cosim']:<32} "

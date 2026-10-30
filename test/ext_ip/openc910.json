@@ -114,5 +114,11 @@
   "(`Can't find gold module`), and ct_spsram_2048x88's `dumped core` is the",
   "300 s timeout killing a miter mid-write, not a read failure -- it reads with",
   "0 undriven and co-simulates clean."
- ]
+ ],
+ "overrides": {
+  "axi2ahb": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-10-29: the 274 co-sim divergences are a DELAY artefact, not a reader defect. axi2ahb drives its FSM through three DELAYED continuous assignments -- `assign #1 nxt_st_dly[8:0] = nxt_st[8:0];` (axi2ahb.v:318) plus readaxi_last_data (:477) and db_wr (:561). Verilator lowers `assign #1` to a NON-BLOCKING assignment, so the RTL's nxt_st_dly lags a delta; any synthesis netlist drops the delay and makes it combinational. read_slang refuses the file outright for the same construct (`unsynthesizable timing control`), which is why the row had no reference and no verdict. Mitered and co-simulated against the GOLDEN read_verilog netlist instead: it diverges at the SAME cycle on the SAME signal for the SAME count (FIRST-SLANG cycle 25 pad_biu_wready rtl=1 slang=0, slang_vs_rtl=274), so the harness reports SHARED_DIVERGENCE -- both frontends agree and the RTL's delay is the difference"
+  }
+ }
 }
