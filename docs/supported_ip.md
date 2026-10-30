@@ -48,8 +48,10 @@ over the 2026-10-28 nightlies, **8786 rows, 7162 formally proven, `read_uhdm`
 7026 / 41 / 93** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
 
 NVDLA's own figure is **776 / 914 proven**.  Its 41 slang-CLEAN co-sim
-divergences are closed; **29 rows still diverge with no `read_slang` oracle**
-(their netlist does not lower for Verilator) and are not yet adjudicated.
+divergences are closed, and so are its 29 rows with no `read_slang` oracle:
+**2 were real defects** (`RUBIK_dr2drc`, `PDP_rdma`, both co-sim PASS now) and
+27 are artefacts that diverge from the RTL by exactly the same count as the
+golden `read_verilog` netlist.
 OpenPiton and OpenC910 have no open reader lead: their rows that read_slang
 refuses are adjudicated against the golden `read_verilog` netlist, which
 diverges identically on each (an `assign #1` delay on OpenC910's `axi2ahb`, a
