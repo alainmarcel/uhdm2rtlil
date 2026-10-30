@@ -100,6 +100,7 @@ failure.  `undriven` likewise counts comparable rows only.
 | SERV | [olofk/serv](https://github.com/olofk/serv) | [`f200eb2e`](https://github.com/olofk/serv/commit/f200eb2e) | **27 / 27** | 2 of 29 | 0 |
 | LiteX | [enjoy-digital/litex](https://github.com/enjoy-digital/litex) | [`7457e137`](https://github.com/enjoy-digital/litex/commit/7457e137) | **3 / 3** | 0 of 3 | 0 |
 | VexRiscv | [SpinalHDL/VexRiscv](https://github.com/SpinalHDL/VexRiscv) | [`baf7dc82`](https://github.com/SpinalHDL/VexRiscv/commit/baf7dc82) | **3 / 3** | 0 of 3 | 0 |
+| PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | [`d6e1d4cd`](https://github.com/pulp-platform/register_interface/commit/d6e1d4cd) | **11 / 11** (first local sweep 2026-10-29; first nightly pending) | 8 of 19 | 0 |
 | CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | [`9d9cae78`](https://github.com/openhwfoundation/cv32e40s/commit/9d9cae78) | **36 / 42** (first local sweep 2026-10-28; first nightly pending) | 6 of 48 | 0 |
 | CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | [`d952cd63`](https://github.com/openhwfoundation/cv32e40x/commit/d952cd63) | **30 / 35** (first local sweep 2026-10-28; first nightly pending) | 7 of 42 | 0 |
 | NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | [`9f452d50`](https://github.com/SpinalHDL/NaxRiscv/commit/9f452d50) | **17 / 24** (first local sweep 2026-10-28; first nightly pending) | 0 of 24 | 0 |

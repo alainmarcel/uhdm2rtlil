@@ -1,0 +1,188 @@
+{
+ "title": "PULP register_interface",
+ "url": "https://github.com/pulp-platform/register_interface",
+ "repos": [
+  {
+   "url": "https://github.com/pulp-platform/register_interface",
+   "commit": "d6e1d4cdaab7870f4faf3f88a1c788eaf5ac129d",
+   "dir": "register_interface"
+  },
+  {
+   "url": "https://github.com/pulp-platform/axi",
+   "commit": "70b8e54fd4609f8b3a3c9fb7b4e4e1ecbc5a7b03",
+   "dir": "axi"
+  },
+  {
+   "url": "https://github.com/pulp-platform/apb",
+   "commit": "4821618d652cb2b219483f037395b902771a44dd",
+   "dir": "apb"
+  },
+  {
+   "url": "https://github.com/pulp-platform/common_cells",
+   "commit": "121182eaa0fa06c0ee4f16c2e3b5fc7f2e3b4a9e",
+   "dir": "common_cells"
+  },
+  {
+   "url": "https://github.com/pulp-platform/tech_cells_generic",
+   "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
+   "dir": "tech_cells_generic"
+  }
+ ],
+ "roots": [
+  "register_interface/src/*.sv",
+  "axi/src/*.sv",
+  "apb/src/*.sv",
+  "common_cells/src/*.sv",
+  "common_cells/src/deprecated/*.sv",
+  "tech_cells_generic/src/rtl/*.sv"
+ ],
+ "incdirs": [
+  "register_interface/include",
+  "axi/include",
+  "apb/include",
+  "common_cells/include",
+  "tech_cells_generic/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "register_interface/src/"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^reg_test$",
+  "_test$"
+ ],
+ "exclude_srcs": [
+  "/register_interface/src/deprecated/",
+  "/register_interface/src/test/"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "PULP's register_interface: the `reg_bus` protocol and every bridge around it",
+  "-- APB / AXI-Lite / AXI / periph / TileLink / memory converters in both",
+  "directions, plus the fabric pieces (reg_mux, reg_demux, reg_cut, reg_cdc,",
+  "reg_uniform, reg_filter_empty_writes, reg_err_slv).  Only its own src/ is",
+  "swept; axi, apb and common_cells are closure-only and have their own",
+  "families.",
+  "",
+  "src/deprecated and src/test are not sources: the first holds the superseded",
+  "v1 bridges, the second the verification components.",
+  "",
+  "EVERY row skips without a bind: all 19 modules take their bus as",
+  "`parameter type req_t = logic`, so at their defaults member access on it is",
+  "invalid and the family measures NOTHING.  Binding is the whole exercise here,",
+  "not a refinement.",
+  "",
+  "The prelude carries ONLY register_interface/typedef.svh and plain logic",
+  "typedefs, and that limit is deliberate: axi/typedef.svh makes 21 references",
+  "to `axi_pkg` and apb/typedef.svh one to `apb_pkg`, and a prelude is shared by",
+  "EVERY wrapper in the family -- so naming either package would fail every row",
+  "whose closure has no axi or apb in it (cheshire.json records the same trap",
+  "with iDMA).  register_interface/typedef.svh references no package at all.",
+  "",
+  "So the four bridge rows that genuinely need a foreign bus type -- the AXI,",
+  "AXI-Lite and APB converters -- plus reg_to_tlul, whose TileLink types live in",
+  "OpenTitan's tlul_pkg and not in this repository at all, DECLINE to bind (a",
+  "null mapping) and stay honest skips.  Inventing those structs would mean",
+  "measuring a netlist built from a shape nobody verified.",
+  "",
+  "common_cells/src/deprecated is a closure root as well: reg_cdc and its",
+  "src / dst halves instantiate `cdc_2phase_src` / `cdc_2phase_dst`, which live",
+  "only there, and a non-recursive `src/*.sv` glob left three rows reporting",
+  "`unknown module`.  Checked first that it introduces no DUPLICATE definition",
+  "-- the module names in src/ and src/deprecated/ do not intersect -- because",
+  "core-v-mcu.json records the opposite case, where three flavours of the same",
+  "vendored cells collide.",
+  "",
+  "tech_cells_generic is a closure root too, for `tc_sync`: without it reg_cdc",
+  "and its src / dst halves read fine but read_slang stops at",
+  "`unknown module 'tc_sync'`, so the rows had no REFERENCE and could not be",
+  "compared.  Only the generic src/rtl flavour is taken -- core-v-mcu.json",
+  "records what happens when the fpga / deprecated flavours come along too.",
+  "",
+  "First local sweep 2026-10-29: of 19 rows, **11 comparable and 11 / 11",
+  "proven**, 11 co-sim PASS, 11 / 11 with 0 undriven, 0 `read_uhdm`",
+  "divergences.  The 8 that remain are the honest skips above -- the AXI,",
+  "AXI-Lite and APB bridges, reg_to_tlul, and reg_to_mem / reg_uniform /",
+  "apb_to_reg_intf / axi_lite_to_reg_intf, whose remaining type parameters have",
+  "no shape a shared prelude can give them."
+ ],
+ "bind": {
+  "prelude_raw": [
+   "`include \"register_interface/typedef.svh\""
+  ],
+  "prelude": [
+   "typedef logic [31:0] addr_t;",
+   "typedef logic [31:0] data_t;",
+   "typedef logic [3:0]  strb_t;",
+   "`REG_BUS_TYPEDEF_ALL(reg_bus, addr_t, data_t, strb_t)",
+   "typedef logic [1:0]  sel_t;",
+   "typedef logic [3:0]  aid_t;"
+  ],
+  "types": [
+   [
+    "^(tl_h2d_t|tl_d2h_t|tl_a_user_t|tl_a_op_e)$",
+    null
+   ],
+   [
+    "^axi_lite_(req|rsp)_t$",
+    null
+   ],
+   [
+    "^axi_(req|rsp)_t$",
+    null
+   ],
+   [
+    "^apb_(req|rsp)_t$",
+    null
+   ],
+   [
+    "^select_t$",
+    "sel_t"
+   ],
+   [
+    "^id_t$",
+    "aid_t"
+   ],
+   [
+    "^reg_req_t$",
+    "reg_bus_req_t"
+   ],
+   [
+    "^reg_rsp_t$",
+    "reg_bus_rsp_t"
+   ],
+   [
+    "(^|_)req_t$",
+    "reg_bus_req_t"
+   ],
+   [
+    "(^|_)rsp_t$",
+    "reg_bus_rsp_t"
+   ]
+  ],
+  "values": [
+   [
+    "(?i)addr_?width$",
+    32
+   ],
+   [
+    "(?i)data_?width$",
+    32
+   ],
+   [
+    "(?i)strb_?width$",
+    4
+   ],
+   [
+    "(?i)id_?width$",
+    4
+   ]
+  ]
+ }
+}

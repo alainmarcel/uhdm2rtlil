@@ -163,6 +163,12 @@ jobs:
             shards: 2
             timeout: 330
             mem_limit_kb: "7000000"
+          # pulp-platform/register_interface @ d6e1d4cd: the reg_bus protocol
+          # and its bridges.  EVERY row needs the manifest's `bind` section --
+          # unbound, all 19 take their bus as `parameter type req_t = logic`
+          # and the family measures nothing.  19 rows.
+          - family: register_interface
+            timeout: 330
           # XUANTIE-RV/opene906 @ c5b87895: T-Head's XuanTie E906, the 32-bit
           # RV32 embedded core -- ifu / idu / iu / lsu / rtu / cp0, the FPU and
           # its falu / fdsu / fmau datapaths, the CLIC / CLINT, PMP / PMU, the
