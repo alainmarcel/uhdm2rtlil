@@ -59,29 +59,19 @@ line and in the total:
 | **chipsalliance/sv-tests** | 527 | 475 | 11 | 11 | 0 | 0 | 12 | 11 | 0 | 1 | 0 |
 | **All sweeps** (19 workflows) | **8786** | **7162** | **7160** | **7026** | **41** | **93** | **7268** | **7094** | **78** | **96** | **0** |
 
-**78 `read_uhdm` divergences in the 2026-10-28 nightlies, and 41 of them are
-now COMPARABLE leads rather than rows with no oracle**: 7094 of the 7268
+**78 `read_uhdm` divergences in the 2026-10-28 nightlies**: 7094 of the 7268
 co-simulated rows pass outright, 96 are divergences a SAT miter proved to be
 simulation artefacts, and the 78 break down as
 
-| family | divergences | oracle |
+| family | divergences | status |
 |---|---:|---|
-| NVDLA | 70 (**38 since fixed**) | **now has one.**  #1360's five stand-in library files gave the family a `read_slang` reference and this is the first nightly to carry them: **41 of the 70 are slang-CLEAN**, i.e. real reader leads, and 29 are rows whose netlist `read_slang` still cannot lower (`slang n/a`).  Earlier revisions of this file called all 70 "unadjudicated"; that is no longer true of the 41 |
-| OpenPiton | 7 | its first nightly; to triage |
-| OpenC910 | 1 | down from 2 -- `plic_hreg_busif` is fixed by #1355 |
+| NVDLA | 70 | **3 open leads** -- `SDP_CORE_Y_cvt` (16 cycles), `_cvt_core` (7) and `MRDMA_EG_dout`, all one defect tracked by test/func_local_accumulator_in_ff -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
+| OpenPiton | 7 | to triage |
+| OpenC910 | 1 | to triage |
 
-NVDLA's rows are read-clean and opt-clean -- 908 of 908 with 0 undriven -- so
-its 70 are a triage queue, not a regression in anything that was passing; and
-with the stand-ins in place **41 of them now have a clean `read_slang`
-reference, which made them the largest block of real reader leads in the
-project** -- and then named a single defect.  The `*_mgc_shift_*` modules
-(CDMA_mgc_shift_l / _r, CSC_mgc_shift_bl / _l / _r) all diverged 228-278 cycles
-while read_slang passed, because a parameter declared in a FUNCTION's own
-declaration section resolved to a fabricated 1-bit undriven wire, so the
-function returned X.  Fixing that resolver closed **38 of the 41**, measured
-against a control plugin.  THREE remain and are not that defect:
-`NV_NVDLA_SDP_CORE_Y_cvt` (16 cycles), `_cvt_core` (7) and
-`NV_NVDLA_SDP_MRDMA_EG_dout`.  The totals in the table above predate the fix.
+NVDLA's rows are read-clean and opt-clean (908 of 908 with 0 undriven), so its
+divergences are a triage queue rather than a regression.
+
 VeeR EH2's
 `eh2_ifu_mem_ctl` and adams-bridge's `abr_piso_multi`, the two open leads of the
 2026-10-25 nightlies, still diverge (150 and 38 cycles) but are now ADJUDICATED

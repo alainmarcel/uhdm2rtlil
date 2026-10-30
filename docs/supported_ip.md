@@ -47,17 +47,11 @@ over the 2026-10-28 nightlies, **8786 rows, 7162 formally proven, `read_uhdm`
 7094 co-sim passes / 78 divergences / 96 adjudicated artefacts, `read_slang`
 7026 / 41 / 93** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
 
-The 2026-10-28 nightly is the FIRST to include NVDLA's #1360 stand-ins, and it
-confirms what the local re-sweep predicted rather than softening it: the family
-reads **776 / 914 proven**, and its 70 `read_uhdm` co-sim divergences split
-**41 slang-CLEAN -- real reader leads -- and 29 with no slang oracle** (the
-`netlist not lowerable` rows).  Those 41 WERE the biggest open lead in the
-project, and 38 of them turned out to be one defect -- a parameter declared in
-a function's own declaration section resolving to a fabricated 1-bit undriven
-wire -- now fixed; 3 remain (`SDP_CORE_Y_cvt`, `_cvt_core`, `MRDMA_EG_dout`).
-The totals above predate that fix; the remaining 8 divergences in the totals are OpenPiton 7 and
-OpenC910 1.  Earlier revisions of this file said the 70 were "rows with no
-oracle"; with the stand-ins in place that is no longer true of most of them.
+NVDLA's own figure is **776 / 914 proven**, and its 70 `read_uhdm` co-sim
+divergences are **3 open leads** (`SDP_CORE_Y_cvt`, `_cvt_core`,
+`MRDMA_EG_dout`, tracked by test/func_local_accumulator_in_ff) plus **29 rows
+with no `read_slang` oracle** -- the `netlist not lowerable` ones.  The other 8
+divergences in the totals are OpenPiton 7 and OpenC910 1.
 
 **What the 2026-10-28 totals do NOT contain.**  BOOM, Gemmini, Rocket Chip and
 biRISC-V contributed ZERO rows: their shards failed in that external-IP run, so
