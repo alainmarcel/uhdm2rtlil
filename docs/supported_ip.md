@@ -38,7 +38,7 @@ proof gap is never mistaken for a bug.
 | **Caliptra** | [chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl) | Root-of-trust SoC: VeeR EL2, AXI, mailbox, SHA/HMAC/ECC/Ascon, ML-DSA/ML-KEM; 867 modules, 172 instances | **19 / 22 instances proven** · 21 / 21 co-sim, 0 divergences · 21 / 21 opt-clean, 0 driver conflicts · full-chip co-sim NO_DIVERGENCE over 401 cycles | [caliptra](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-caliptra.yml) |
 | **XiangShan** (香山) | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) @ [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | the project's **hand-written** SystemVerilog arithmetic library — SRT dividers, radix-2/4/16 FP divide-sqrt, LZC, CSA, QDS; 21 modules.  **Not the core**, which is Chisel | **19 / 21 proven** · 21 / 21 co-sim, 0 divergences · 21 / 21 opt-clean · 2 SAT timeouts (64-bit divide datapaths) | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **XiangShan core** (香山) | [OpenXiangShan/XiangShan](https://github.com/OpenXiangShan/XiangShan) @ [`e4566c29`](https://github.com/OpenXiangShan/XiangShan/commit/e4566c29e251c60159c6796db60a2569dd7700f2) | Kunminghu out-of-order RV64 core, `CONFIG=DefaultConfig`.  **There is no Verilog to read**: the RTL is the Chisel generator's output (1980 `.sv` + 22 `.v`, 3.2 M lines, 2002 modules, one per file), published as the release asset [`xiangshan-rtl-e4566c29`](https://github.com/alainmarcel/uhdm2rtlil/releases/tag/xiangshan-rtl-e4566c29) and swept module by module in 16 CI shards | whole core elaborates clean (1981 modules / 6.52 M cells, 1 warning) · per-module **1607 / 2002 proven** · 1945 / 1945 co-sim, 0 divergences · 1994 / 1994 opt-clean · 386 over the SAT budget · `read_slang` diverges on 3 | [xiangshan](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-xiangshan.yml) |
-| **External IP** (49 families) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **3084 / 3752 rows proven** (the XiangShan library's 21 rows have their own line) · 3113 / 3219 co-sim, **78 `read_uhdm` divergences** -- NVDLA 70 (41 of them slang-CLEAN and so real leads), OpenPiton 7, OpenC910 1; 28 adjudicated artefacts.  Four of OpenPiton's seven are CLOSED since that nightly (`fpu_add`, `fpu_add_ctl`, `fpu_mul`, `fpu_mul_ctl`, 853 diverging cycles between them, all four now proven with co-sim PASS: octal literals read as X), leaving three rows `read_slang` cannot read either · 0 undriven.  2026-10-28 nightly, and it is INCOMPLETE: BOOM, Gemmini, Rocket Chip and biRISC-V contributed no rows (failed shards), aib-protocols reported 198 of its 397, and Cheshire reported 30 of its 266 -- so this is a floor, not the family total · 84 rows not comparable · aib-protocols (397 rows) is not in this tally: a runner shutdown killed one shard of its 2026-10-25 nightly and its row below keeps the first local sweep | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
+| **External IP** (49 families) | see table below | Breadth sweep over third-party (System)Verilog *not* covered above — no vendored copy, each repo fetched at a pinned commit (`test/ext_ip/<family>.json`) | **3084 / 3752 rows proven** (the XiangShan library's 21 rows have their own line) · 3113 / 3219 co-sim · 0 undriven · 84 rows not comparable.  **No open reader lead on a row with a `read_slang` oracle**: every slang-clean co-sim divergence is closed, and the rows read_slang cannot read are adjudicated against the golden `read_verilog` netlist — except **29 NVDLA rows**, which still diverge with no oracle and are not yet adjudicated.  The row total is a FLOOR: BOOM, Gemmini, Rocket Chip and biRISC-V contribute no rows to it (failed shards), aib-protocols reports 198 of its 397 and Cheshire 30 of its 266, so their own lines below carry their real figures | [ext](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-ext.yml) |
 | **chipsalliance/sv-tests** | [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) @ [`db159ad8`](https://github.com/chipsalliance/sv-tests/commit/db159ad8e9cbbd62036569d240153f753258f640) | The LRM-chapter conformance corpus, not a design: 708 synthesizable tests of its own local suite (`tests/chapter-*`, `generic`, `sanity.sv`). The cores it also defines are swept per core | **read_uhdm 689 / 708** vs read_verilog 364, read_slang 682 · 474 / 527 proven · 527 / 527 opt-clean, 0 conflicts · co-sim on 12 rows, **0 divergences** (`force` / `release`, which has no synthesis semantics on either side, is adjudicated in `test/sv_tests_cosim_analyzed.txt`) | [sv-tests](https://github.com/alainmarcel/uhdm2rtlil/actions/workflows/sweep-sv-tests.yml) · [per-test table](sv_tests_coverage.md) |
 
 **Benchmarking against the reference frontend.**  Every row also co-simulates
@@ -47,24 +47,23 @@ over the 2026-10-28 nightlies, **8786 rows, 7162 formally proven, `read_uhdm`
 7094 co-sim passes / 78 divergences / 96 adjudicated artefacts, `read_slang`
 7026 / 41 / 93** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
 
-NVDLA's own figure is **776 / 914 proven**, and its 70 `read_uhdm` co-sim
-divergences are **0 open leads** (all three are closed, and they were TWO
-defects: `SDP_CORE_Y_cvt` and `_cvt_core` by the self-accumulated-return-variable
-fix, `MRDMA_EG_dout` by the arm-first-write phi-publish fix -- gated by
-test/func_local_accumulator_in_ff and
-test/func_local_arm_first_write_concat) plus **29 rows
-with no `read_slang` oracle** -- the `netlist not lowerable` ones.  The other 8
-divergences in the totals are OpenPiton 7 and OpenC910 1, and all eight are now closed or adjudicated: four OpenPiton FPU rows were one defect (octal literals read as X), and OpenPiton's three remaining divergent rows and OpenC910's `axi2ahb` are adjudicated NON-defects: read_slang refuses all four, so each was co-simulated against the GOLDEN `read_verilog` netlist instead, and every one diverges at the same cycle on the same signal by the same count (SHARED_DIVERGENCE) -- an `assign #1` delay on `axi2ahb`, a ternary asynchronous reset on the three OpenPiton flop primitives, neither expressible by any yosys frontend.
+NVDLA's own figure is **776 / 914 proven**.  Its 41 slang-CLEAN co-sim
+divergences are closed; **29 rows still diverge with no `read_slang` oracle**
+(their netlist does not lower for Verilator) and are not yet adjudicated.
+OpenPiton and OpenC910 have no open reader lead: their rows that read_slang
+refuses are adjudicated against the golden `read_verilog` netlist, which
+diverges identically on each (an `assign #1` delay on OpenC910's `axi2ahb`, a
+ternary asynchronous reset on three OpenPiton flop primitives — neither
+expressible by any yosys frontend).
 
-**What the 2026-10-28 totals do NOT contain.**  BOOM, Gemmini, Rocket Chip and
-biRISC-V contributed ZERO rows: their shards failed in that external-IP run, so
-their reports are empty and their entries below keep their first LOCAL sweep.
-Cheshire's nightly reports only 30 rows against the 266 its local sweep
-measures -- the CI run swept just the vendored `UsbOhciAxi4` modules -- so its
-entry keeps the local numbers too, and the discrepancy is an open harness
-question rather than a result.  Four families in the table below are at their first
-LOCAL sweep because the external-IP nightly has not completed since they
-landed, and each is marked as such.  The per-core table, the provenance of
+**What the aggregate does NOT contain.**  BOOM, Gemmini, Rocket Chip and
+biRISC-V contribute ZERO rows to it: their external-IP shards fail, so their
+reports are empty and their entries below carry local figures.  Cheshire's
+nightly reports only 30 rows against the 266 its local sweep measures -- the CI
+run sweeps just the vendored `UsbOhciAxi4` modules -- so its entry carries the
+local numbers too, and the discrepancy is an open harness question rather than
+a result.  Rows whose figure is a local sweep are marked **(local)**.  The
+per-core table, the provenance of
 every number, the reference frontend's own record and the nightly 4-frontend
 matrix (`uhdm` / `sv2v` / `slang` / `verilog`, 1847 tests: `uhdm` reads 1815,
 669 of them designs `read_verilog` cannot read at all) are in
@@ -83,6 +82,10 @@ do not give a legal elaboration, or that `read_slang` cannot read, has no
 reference to be judged against and is excluded rather than counted as a
 failure.  `undriven` likewise counts comparable rows only.
 
+Every figure is the family's CURRENT state, from its latest nightly — except
+where it is marked **(local)**, which is a local sweep whose first nightly has
+not landed yet.
+
 | Family | Upstream repo | Commit | Proven | Not comparable | Undriven |
 |---|---|---|---|---|---|
 | PULP AXI | [pulp-platform/axi](https://github.com/pulp-platform/axi) | [`70b8e54f`](https://github.com/pulp-platform/axi/commit/70b8e54fd460) | **92 / 93** | 15 of 108 | 0 (`axi_lfsr` and `axi_lite_lfsr` carry 64 bits each the source never assigns — an unconnected `data_i` on the read-side LFSR — reported as such, not as dropped drivers) |
@@ -97,29 +100,29 @@ failure.  `undriven` likewise counts comparable rows only.
 | XiangShan XS-Verilog-Library | [OpenXiangShan/XS-Verilog-Library](https://github.com/OpenXiangShan/XS-Verilog-Library) | [`ffc9cee4`](https://github.com/OpenXiangShan/XS-Verilog-Library/commit/ffc9cee4387c3c795335f5fadc94029d0fd9d3b5) | **19 / 21** | 0 of 21 | 0 |
 | Caliptra subsystem | [chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss) | [`dfa6c631`](https://github.com/chipsalliance/caliptra-ss/commit/dfa6c631dbfc) | **241 / 257** | 16 of 273 | 0 |
 | chipsalliance Adams Bridge | [chipsalliance/adams-bridge](https://github.com/chipsalliance/adams-bridge) | [`c4a921cf`](https://github.com/chipsalliance/adams-bridge/commit/c4a921cf) | **112 / 117** | 0 of 117 | 0 |
-| chipsalliance AIB protocols | [chipsalliance/aib-protocols](https://github.com/chipsalliance/aib-protocols) | [`9e308bfb`](https://github.com/chipsalliance/aib-protocols/commit/9e308bfb) | **379 / 397** (first local sweep, 2026-10-24; the 2026-10-25 nightly lost a shard to a runner shutdown) | 0 of 397 | 0 |
+| chipsalliance AIB protocols | [chipsalliance/aib-protocols](https://github.com/chipsalliance/aib-protocols) | [`9e308bfb`](https://github.com/chipsalliance/aib-protocols/commit/9e308bfb) | **379 / 397** (local) | 0 of 397 | 0 |
 | chipsalliance AIB PHY | [chipsalliance/aib-phy-hardware](https://github.com/chipsalliance/aib-phy-hardware) | [`a0295cd2`](https://github.com/chipsalliance/aib-phy-hardware/commit/a0295cd2) | **72 / 72** | 3 of 75 | 0 |
 | chipsalliance VeeRwolf | [chipsalliance/VeeRwolf](https://github.com/chipsalliance/VeeRwolf) | [`9a919805`](https://github.com/chipsalliance/VeeRwolf/commit/9a919805) | **22 / 24** | 2 of 26 | 0 |
 | SERV | [olofk/serv](https://github.com/olofk/serv) | [`f200eb2e`](https://github.com/olofk/serv/commit/f200eb2e) | **27 / 27** | 2 of 29 | 0 |
 | LiteX | [enjoy-digital/litex](https://github.com/enjoy-digital/litex) | [`7457e137`](https://github.com/enjoy-digital/litex/commit/7457e137) | **3 / 3** | 0 of 3 | 0 |
 | VexRiscv | [SpinalHDL/VexRiscv](https://github.com/SpinalHDL/VexRiscv) | [`baf7dc82`](https://github.com/SpinalHDL/VexRiscv/commit/baf7dc82) | **3 / 3** | 0 of 3 | 0 |
-| PULP APB | [pulp-platform/apb](https://github.com/pulp-platform/apb) | [`4821618d`](https://github.com/pulp-platform/apb/commit/4821618d) | **8 / 8** (first local sweep 2026-10-29; first nightly pending) | 0 of 8 | 0 |
-| lowRISC Sonata | [lowRISC/sonata-system](https://github.com/lowRISC/sonata-system) | [`21e84afb`](https://github.com/lowRISC/sonata-system/commit/21e84afb) | first survey: 37 / 37 read (nightly pending) | 0 of 37 | 0 |
-| PULP tech_cells_generic | [pulp-platform/tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic) | [`55cb5451`](https://github.com/pulp-platform/tech_cells_generic/commit/55cb5451) | **44 / 50** (first local sweep 2026-10-29; first nightly pending) | 3 of 53 | 0 |
-| PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | [`d6e1d4cd`](https://github.com/pulp-platform/register_interface/commit/d6e1d4cd) | **11 / 11** (first local sweep 2026-10-29; first nightly pending) | 8 of 19 | 0 |
-| CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | [`9d9cae78`](https://github.com/openhwfoundation/cv32e40s/commit/9d9cae78) | **36 / 42** (first local sweep 2026-10-28; first nightly pending) | 6 of 48 | 0 |
-| CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | [`d952cd63`](https://github.com/openhwfoundation/cv32e40x/commit/d952cd63) | **30 / 35** (first local sweep 2026-10-28; first nightly pending) | 7 of 42 | 0 |
-| NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | [`9f452d50`](https://github.com/SpinalHDL/NaxRiscv/commit/9f452d50) | **17 / 24** (first local sweep 2026-10-28; first nightly pending) | 0 of 24 | 0 |
-| Rocket Chip | [chipsalliance/rocket-chip](https://github.com/chipsalliance/rocket-chip) | [`ece7b9ad`](https://github.com/chipsalliance/rocket-chip/commit/ece7b9ad) | **176 / 235 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 235 | 0 |
+| PULP APB | [pulp-platform/apb](https://github.com/pulp-platform/apb) | [`4821618d`](https://github.com/pulp-platform/apb/commit/4821618d) | **8 / 8** (local) | 0 of 8 | 0 |
+| lowRISC Sonata | [lowRISC/sonata-system](https://github.com/lowRISC/sonata-system) | [`21e84afb`](https://github.com/lowRISC/sonata-system/commit/21e84afb) | 37 / 37 read (local) | 0 of 37 | 0 |
+| PULP tech_cells_generic | [pulp-platform/tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic) | [`55cb5451`](https://github.com/pulp-platform/tech_cells_generic/commit/55cb5451) | **44 / 50** (local) | 3 of 53 | 0 |
+| PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | [`d6e1d4cd`](https://github.com/pulp-platform/register_interface/commit/d6e1d4cd) | **11 / 11** (local) | 8 of 19 | 0 |
+| CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | [`9d9cae78`](https://github.com/openhwfoundation/cv32e40s/commit/9d9cae78) | **36 / 42** (local) | 6 of 48 | 0 |
+| CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | [`d952cd63`](https://github.com/openhwfoundation/cv32e40x/commit/d952cd63) | **30 / 35** (local) | 7 of 42 | 0 |
+| NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | [`9f452d50`](https://github.com/SpinalHDL/NaxRiscv/commit/9f452d50) | **17 / 24** (local) | 0 of 24 | 0 |
+| Rocket Chip | [chipsalliance/rocket-chip](https://github.com/chipsalliance/rocket-chip) | [`ece7b9ad`](https://github.com/chipsalliance/rocket-chip/commit/ece7b9ad) | **176 / 235** (local) | 0 of 235 | 0 |
 | biRISC-V | [ultraembedded/biriscv](https://github.com/ultraembedded/biriscv) | [`6af9c4be`](https://github.com/ultraembedded/biriscv/commit/6af9c4be) | **28 / 44** | 7 of 44 | 0 |
 | ZipCPU | [ZipCPU/zipcpu](https://github.com/ZipCPU/zipcpu) | [`42606d2d`](https://github.com/ZipCPU/zipcpu/commit/42606d2d) | **46 / 50** | 1 of 51 | 0 |
 | Hazard3 | [Wren6991/Hazard3](https://github.com/Wren6991/Hazard3) | [`8af99293`](https://github.com/Wren6991/Hazard3/commit/8af99293) | **21 / 22** | 3 of 25 | 0 |
-| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **776 / 835** (2026-10-28 nightly, the first with the #1360 stand-ins) | 79 of 914 | 0 — 70 `read_uhdm` co-sim divergences at that nightly, 41 slang-clean; **38 are since fixed**, 3 remain |
-| OpenE906 | [XUANTIE-RV/opene906](https://github.com/XUANTIE-RV/opene906) | [`c5b87895`](https://github.com/XUANTIE-RV/opene906/commit/c5b87895) | **203 / 255** (first local sweep 2026-10-28; first nightly pending) | 0 of 255 | 0 |
+| NVDLA | [nvdla/hw](https://github.com/nvdla/hw) | [`8e06b1b9`](https://github.com/nvdla/hw/commit/8e06b1b9) | **776 / 835** | 79 of 914 | 0 — 70 `read_uhdm` co-sim divergences at that nightly, 41 slang-clean; **38 are since fixed**, 3 remain |
+| OpenE906 | [XUANTIE-RV/opene906](https://github.com/XUANTIE-RV/opene906) | [`c5b87895`](https://github.com/XUANTIE-RV/opene906/commit/c5b87895) | **203 / 255** (local) | 0 of 255 | 0 |
 | OpenC910 | [XUANTIE-RV/openc910](https://github.com/XUANTIE-RV/openc910) | [`b91c9093`](https://github.com/XUANTIE-RV/openc910/commit/b91c9093) | **359 / 477** | 5 of 482 | 0 |
-| BOOM | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | [`ba03175e`](https://github.com/riscv-boom/riscv-boom/commit/ba03175e) | **326 / 422 (first local sweep; nightly pending — its shards have failed since the family landed)** | 0 of 422 | 0 |
-| Gemmini | [ucb-bar/gemmini](https://github.com/ucb-bar/gemmini) | [`8c3f9923`](https://github.com/ucb-bar/gemmini/commit/8c3f9923) | **340 / 384 (first local sweep 2026-10-27; first nightly pending)** | 0 of 384 | 0 |
-| OpenPiton | [PrincetonUniversity/openpiton](https://github.com/PrincetonUniversity/openpiton) | [`1c6bfd2d`](https://github.com/PrincetonUniversity/openpiton/commit/1c6bfd2d) | **694 / 838 (first local sweep 2026-10-27; first nightly pending)**, plus the four FPU rows closed 2026-10-29 | 14 of 852 | 0 |
+| BOOM | [riscv-boom/riscv-boom](https://github.com/riscv-boom/riscv-boom) | [`ba03175e`](https://github.com/riscv-boom/riscv-boom/commit/ba03175e) | **326 / 422** (local) | 0 of 422 | 0 |
+| Gemmini | [ucb-bar/gemmini](https://github.com/ucb-bar/gemmini) | [`8c3f9923`](https://github.com/ucb-bar/gemmini/commit/8c3f9923) | **340 / 384** (local) | 0 of 384 | 0 |
+| OpenPiton | [PrincetonUniversity/openpiton](https://github.com/PrincetonUniversity/openpiton) | [`1c6bfd2d`](https://github.com/PrincetonUniversity/openpiton/commit/1c6bfd2d) | **694 / 838** (local) | 14 of 852 | 0 |
 
 ## Generated IP: the XiangShan core
 
