@@ -5546,11 +5546,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 if (mlo >= 0 && mhi >= 0)
                                     offset = std::min(mlo, mhi);
                             }
-                            if (offset + width <= element_sig.size()) {
+                            if (offset >= 0 && width > 0 &&
+                                offset + width <= element_sig.size()) {
                                 result = element_sig.extract(offset, width);
                             } else {
-                                log_warning("vpiVarSelect: part select [%d:%d] out of range for %d-bit element of '%s'\n",
-                                    left_val, right_val, element_sig.size(), base_name.c_str());
+                                log_warning("vpiVarSelect: part select [%d:%d] out of range for %d-bit element of '%s' (offset=%d width=%d)\n",
+                                    left_val, right_val, element_sig.size(), base_name.c_str(), offset, width);
                             }
                         } else {
                             log_warning("vpiVarSelect: non-constant part select on '%s'\n", base_name.c_str());
@@ -9034,11 +9035,48 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                is_runtime((*uhdm_op->Operands())[2]);
     }
 
+    // An element select of an UNPACKED-ARRAY parameter
+    // (`parameter int unsigned GpiInstWidths[NumInstances] = {8}`, lowRISC
+    // Sonata's gpio): ExprEval reads the parameter's FOLDED value,
+    // which is one packed constant with the unpacked dimension gone, so it
+    // degrades `W[0]` to BIT 0 -- `{8}` folds to 64'd8, whose bit 0 is 0.
+    // The whole bound then folds to a constant -1 BEFORE the reader's own
+    // bit-select path (which reads the element width off the array_typespec)
+    // ever runs, and `gp_i[i][W[i]-1:0]` became the degenerate [-1:0]:
+    // SigSpec::extract ABORTED the read -- the sweep's one unreadable Sonata
+    // row.  Only the CONCATENATION initializer form does this: written
+    // `'{8}` the parameter keeps enough annotation that ExprEval is right.
+    // setGetTypespecFunctor cures the PACKED flavour of this; an
+    // array_typespec is unpacked and ExprEval has no element geometry for
+    // it at all, so keep such operations out of the fold entirely.
+    bool has_unpacked_array_param_elem = false;
+    if (uhdm_op->Operands()) {
+        std::function<bool(const UHDM::any*)> refs_uap =
+            [&](const UHDM::any* e) -> bool {
+                if (!e) return false;
+                int t = e->VpiType();
+                if (t == vpiBitSelect || t == vpiVarSelect) {
+                    const UHDM::any* ts = find_param_decl_typespec(
+                        e->VpiName(), e->VpiParent() ? e->VpiParent() : (const UHDM::any*)inst);
+                    if (ts && ts->UhdmType() == uhdmarray_typespec) return true;
+                    return false;
+                }
+                if (t == vpiOperation) {
+                    auto op2 = any_cast<const operation*>(e);
+                    if (op2->Operands())
+                        for (auto o2 : *op2->Operands())
+                            if (refs_uap(o2)) return true;
+                }
+                return false;
+            };
+        has_unpacked_array_param_elem = refs_uap(uhdm_op);
+    }
+
     if (op_type != vpiCastOp && !has_unsized_fill_operand &&
         !has_struct_param_hier_operand && !has_loop_value_operand &&
         !has_param_replication_count && !has_gen_scope_param_operand &&
         !has_missized_enum_operand && !has_unpacked_array_concat_target &&
-        !has_runtime_cond_arm) {
+        !has_runtime_cond_arm && !has_unpacked_array_param_elem) {
         ExprEval eval;
         // Element select on a multi-dimensional packed PARAMETER
         // (`localparam logic [1:0][31:0] ADDR_MASK_PERI`): ExprEval reads the

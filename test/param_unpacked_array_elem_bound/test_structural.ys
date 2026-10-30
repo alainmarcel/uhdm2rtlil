@@ -1,0 +1,13 @@
+# `Widths[k]` is the k-th ELEMENT of an unpacked-array parameter ('{8, 4}),
+# not bit k of its folded packed value.  Bit 0 of 8 is 0, so every bound
+# folded to the degenerate [-1:0] and the read ABORTED in SigSpec::extract.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt -full
+check -assert
+# bus[0] is read 8 bits wide and bus[1] only 4, so a bit just above either
+# window must not reach the output ...
+sat -verify -prove o 2'b00 -set bus 32'h0010_0100
+# ... while the top bit of each window must.
+sat -verify -prove o 2'b11 -set bus 32'h000f_0080
