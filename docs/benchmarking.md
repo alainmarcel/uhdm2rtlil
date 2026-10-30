@@ -66,9 +66,9 @@ simulation artefacts, and the 78 break down as
 
 | family | divergences | status |
 |---|---:|---|
-| NVDLA | 70 | **0 open leads** -- all three are CLOSED, and they were TWO defects, not one.  `SDP_CORE_Y_cvt` (16 cycles) and `_cvt_core` (7, with 120 logic loops) were a self-accumulated function return variable aliased onto the function's result staging wire, which closes a combinational loop in every clocked call site of a Catapult MUX1HOT_* helper.  `MRDMA_EG_dout` (67) survived that fix with 0 logic loops -- which is what proved it separate -- and was a function-scope local first written inside an if-arm: the phi merge never published it in the outer mapping, so the `{o_sign,o_expo,o_mant}` return concat read two FABRICATED 1-bit wires and `z[1:0]` had no driver.  All three rows are now proven with co-sim PASS -- plus 29 rows whose netlist `read_slang` cannot lower (`slang n/a`), which have no oracle either way |
-| OpenPiton | 7 | to triage |
-| OpenC910 | 1 | to triage |
+| NVDLA | 70 | 41 were slang-CLEAN and are all **closed**; the other **29 have no `read_slang` oracle** (their netlist does not lower for Verilator) and are not yet adjudicated |
+| OpenPiton | 7 | **closed or adjudicated**: the 4 slang-clean FPU rows are proven with co-sim PASS; the 3 read_slang refuses diverge identically on the golden `read_verilog` netlist (ternary asynchronous reset) |
+| OpenC910 | 1 | **adjudicated**: `axi2ahb`'s `assign #1` delays diverge identically on the golden `read_verilog` netlist |
 
 NVDLA's rows are read-clean and opt-clean (908 of 908 with 0 undriven), so its
 divergences are a triage queue rather than a regression.
