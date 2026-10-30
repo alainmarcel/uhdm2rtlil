@@ -169,6 +169,13 @@ jobs:
           # and the family measures nothing.  19 rows.
           - family: register_interface
             timeout: 330
+          # pulp-platform/tech_cells_generic @ 55cb5451: the behavioural
+          # technology cells every other PULP family carries as closure-only
+          # roots -- clock gating / muxing, SRAM, power management, and the
+          # deprecated pulp_clock_* / pad / memory cells.  src/fpga is excluded
+          # (duplicate module names + an undefined Xilinx BUFGMUX).  53 rows.
+          - family: tech_cells_generic
+            timeout: 330
           # XUANTIE-RV/opene906 @ c5b87895: T-Head's XuanTie E906, the 32-bit
           # RV32 embedded core -- ifu / idu / iu / lsu / rtu / cp0, the FPU and
           # its falu / fdsu / fmau datapaths, the CLIC / CLINT, PMP / PMU, the

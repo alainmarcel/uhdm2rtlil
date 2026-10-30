@@ -1,0 +1,77 @@
+{
+ "title": "PULP tech_cells_generic",
+ "url": "https://github.com/pulp-platform/tech_cells_generic",
+ "repos": [
+  {
+   "url": "https://github.com/pulp-platform/tech_cells_generic",
+   "commit": "55cb54513e2d426be5992d311cb9d5dbcad10c78",
+   "dir": "tech_cells_generic"
+  }
+ ],
+ "roots": [
+  "tech_cells_generic/src/rtl/*.sv",
+  "tech_cells_generic/src/tc_pwr.sv",
+  "tech_cells_generic/src/deprecated/*.sv"
+ ],
+ "incdirs": [
+  "tech_cells_generic/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "tech_cells_generic/src/"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "^tc_sram_blackbox$"
+ ],
+ "exclude_srcs": [
+  "/tech_cells_generic/src/fpga/"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "PULP's technology-cell wrappers: the behavioural stand-ins every PULP design",
+  "instantiates for clock gating, clock muxing, SRAM and power management, plus",
+  "the deprecated `pulp_clock_*` / `cluster_clock_*` / pad / memory cells that",
+  "older IP still uses.  These are the LIBRARY CELLS the other PULP families",
+  "(axi, common_cells, register_interface, cheshire, snitch, pulpissimo) carry",
+  "as closure-only roots, so this family measures them directly for once.",
+  "",
+  "src/fpga is excluded, and the reason is recorded in core-v-mcu.json too:",
+  "tc_clk_xilinx.sv and tc_sram_xilinx.sv define THE SAME module names as",
+  "src/rtl/tc_clk.sv and src/rtl/tc_sram.sv (tc_clk_gating, tc_clk_mux2,",
+  "tc_sram, ...), so compiling both is a duplicate definition, and the Xilinx",
+  "flavour instantiates `BUFGMUX`, a vendor primitive the repository never",
+  "defines.  src/deprecated is KEPT -- unlike the copy core-v-mcu vendors, this",
+  "checkout's deprecated directory holds no *_xilinx.sv files, and its module",
+  "names do not intersect src/rtl's (checked, not assumed).",
+  "",
+  "tc_sram_blackbox is excluded: it is a BLACK BOX declaration with no logic, so",
+  "synth yields an empty module and the miter reports `Can't find gold module",
+  "\\\\gold` (core-v-mcu.json records the same shape for a 105-port module with",
+  "no body).  Measuring it proves nothing either way.",
+  "",
+  "First local sweep 2026-10-29: 53 rows, 49 / 50 elaborate, **44 / 50 proven**,",
+  "46 co-sim PASS and **53 / 53 with 0 undriven** -- every row in the family,",
+  "including the ones that are not comparable.  What is left is all accounted",
+  "for and none of it is a reader lead:",
+  "",
+  "  * THREE SAT-budget rows -- tc_sram, tc_sram_impl and generic_memory go over",
+  "    the memory cap, which is what a 1024 x 128 memory array does to a miter.",
+  "  * TWO rows have no read_slang reference because they are SIM-ONLY timing",
+  "    cells: tc_clk_delay and pulp_clock_delay are `assign #(Delay) out_o =",
+  "    in_i;`, and read_slang refuses `'tc_clk_delay' is not a valid top-level",
+  "    module`.  generic_rom is the third, for its memory initialisation.",
+  "  * pad_functional_pd and pad_functional_pu report `differs`, and it is a",
+  "    MITER SOUNDNESS limit rather than a reader defect: both are bidirectional",
+  "    pads driving `inout wire PAD` to 1'bz with pull-high / pull-low",
+  "    resistors, and a miter over tri-state needs `tribuf -formal` to mean",
+  "    anything (caliptra-ss's spi_host_axi_synth is recorded the same way).",
+  "    Neither co-simulates, so there is no second opinion either; they are not",
+  "    counted as leads."
+ ]
+}
