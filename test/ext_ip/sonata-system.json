@@ -1,0 +1,96 @@
+{
+ "title": "lowRISC Sonata system (CHERIoT-Ibex SoC)",
+ "url": "https://github.com/lowRISC/sonata-system",
+ "repos": [
+  {
+   "url": "https://github.com/lowRISC/sonata-system",
+   "commit": "21e84afbbe13cb6722fe6363b0f913a7a214364b",
+   "dir": "sonata-system"
+  }
+ ],
+ "roots": [
+  "sonata-system/rtl/system/**/*.sv",
+  "sonata-system/rtl/bus/*.sv",
+  "sonata-system/rtl/ip/**/rtl/*.sv",
+  "sonata-system/vendor/lowrisc_ibex/rtl/*.sv",
+  "sonata-system/vendor/lowrisc_ibex/vendor/lowrisc_ip/ip/prim/rtl/*.sv",
+  "sonata-system/vendor/lowrisc_ibex/vendor/lowrisc_ip/ip/prim_generic/**/rtl/*.sv",
+  "sonata-system/vendor/lowrisc_ip/ip/**/rtl/*.sv",
+  "sonata-system/vendor/cheriot_debug_module/src/*.sv",
+  "sonata-system/vendor/display_drivers/rtl/*.sv",
+  "sonata-system/vendor/open_hbmc/*.v",
+  "sonata-system/vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/*.sv"
+ ],
+ "incdirs": [
+  "sonata-system/rtl/system",
+  "sonata-system/vendor/lowrisc_ibex/rtl",
+  "sonata-system/vendor/lowrisc_ibex/vendor/lowrisc_ip/ip/prim/rtl",
+  "sonata-system/vendor/lowrisc_ip/ip/tlul/rtl"
+ ],
+ "defines": [
+  "SYNTHESIS"
+ ],
+ "modules": "auto",
+ "sweep_paths": [
+  "sonata-system/rtl/"
+ ],
+ "exclude": [
+  "_tb$",
+  "^tb_",
+  "_sva$",
+  "_bind$",
+  "^(sonata_system|dm_top|xadc)$"
+ ],
+ "exclude_srcs": [
+  "/formal/",
+  "/prim_xilinx/",
+  "/dv/(?!uvm/core_ibex/common/prim/)",
+  "/rtl/ip/[a-z_]+/dv/"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "lowRISC's Sonata: the CHERIoT-Ibex SoC -- the system top and its pinmux, the",
+  "TL-UL crossbar, and the peripheral set (GPIO, UART, SPI, I2C, PWM, timers,",
+  "the HyperRAM controller, the USB device and the display drivers), over",
+  "vendored Ibex, the lowRISC prim / prim_generic / tlul libraries and the",
+  "CHERIoT debug module.  Only sonata-system's own rtl/ is swept; the vendored",
+  "trees are closure-only (OpenTitan's prim and tlul have their own families).",
+  "",
+  "No generation step is needed, and that was CHECKED rather than assumed:",
+  "rtl/templates holds Mako templates for pinmux.sv, sonata_pkg.sv and",
+  "sonata_xbar_main.sv, but all three OUTPUTS are committed (rtl/system/ and",
+  "rtl/bus/), so FuseSoC never has to run.  core-v-mcu.json records the same",
+  "check; cv32e40x shows what assuming it costs.",
+  "",
+  "THREE rows are excluded because they need things this repository does not",
+  "contain, which is the class SERV excludes its board tops for:",
+  "sonata_system (the SoC top) and dm_top instantiate the Xilinx JTAG primitive",
+  "`BSCANE2` and the GENERATED debug ROMs (`debug_rom_ch`, `debug_rom_rv`, from",
+  "OpenTitan / CHERIoT ipgen), and xadc instantiates the Xilinx XADC macro.",
+  "",
+  "Two closure facts that cost a measurement each, both found from a failing",
+  "row's own log:",
+  "  * the prim packages are in a NESTED vendor tree --",
+  "    vendor/lowrisc_ibex/vendor/lowrisc_ip/ip/prim -- not the top-level",
+  "    vendor/lowrisc_ip, which holds only i2c / tlul / top_pkg / uart / usbdev.",
+  "    Pointing at the wrong one left 8 rows short of their prim_util_pkg and",
+  "    prim_mubi_pkg.  prim_xilinx sits beside prim_generic there, so it is",
+  "    excluded for the duplicate-flavour reason tech_cells_generic.json and",
+  "    core-v-mcu.json both record.",
+  "  * `prim_flop` has no concrete definition in the RTL at all: the only one is",
+  "    vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_flop.sv, so the",
+  "    `/dv/` source exclusion has to spare exactly that directory, and",
+  "    open_hbmc (hbmc_ctrl.v) is its own vendor root.",
+  "",
+  "First local survey 2026-10-29: 37 rows, 36 / 37 elaborate, every elaborating",
+  "row with 0 undriven.  ONE open reader lead: `gpio` aborts the reader with",
+  "`Assert 'offset >= 0' failed`, and `xbar_main` aborted the same way with",
+  "`Assert 'length >= 0'` before the nested-prim fix -- both downstream of",
+  "`Unhandled system function call: $clog2`, which leaves a parameter at 0 so a",
+  "`[W-1:0]` range becomes the degenerate `[-1:0]` and the geometry goes",
+  "negative.  The formal and co-sim columns come from the first nightly."
+ ]
+}

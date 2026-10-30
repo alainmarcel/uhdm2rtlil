@@ -176,6 +176,13 @@ jobs:
           # (duplicate module names + an undefined Xilinx BUFGMUX).  53 rows.
           - family: tech_cells_generic
             timeout: 330
+          # lowRISC/sonata-system @ 21e84afb: the CHERIoT-Ibex SoC -- the
+          # system and its pinmux, the TL-UL crossbars and the peripheral set,
+          # over vendored Ibex and the lowRISC prim / tlul libraries.  The
+          # prim packages live in a NESTED vendor tree; the Xilinx-primitive
+          # and generated-ROM rows are excluded.  37 rows.
+          - family: sonata-system
+            timeout: 330
           # XUANTIE-RV/opene906 @ c5b87895: T-Head's XuanTie E906, the 32-bit
           # RV32 embedded core -- ifu / idu / iu / lsu / rtu / cp0, the FPU and
           # its falu / fdsu / fmau datapaths, the CLIC / CLINT, PMP / PMU, the
