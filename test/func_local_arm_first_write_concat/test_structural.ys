@@ -1,0 +1,14 @@
+# The locals must resolve to their function-local wires, so no 1-bit module
+# wire is fabricated for them and every bit of the concat has a driver.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+prep -top dut
+check -assert
+# no fabricated module wires for the function locals
+select -assert-count 0 w:hi
+select -assert-count 0 w:lo
+# and both arms produce the right concatenation
+sat -verify -prove z 8'b00110101 -set a 4'b0011
+sat -verify -prove z 8'b10101011 -set a 4'b1011
+sat -verify -prove z 8'b00000101 -set a 4'b0000
+sat -verify -prove z 8'b10101111 -set a 4'b1111
