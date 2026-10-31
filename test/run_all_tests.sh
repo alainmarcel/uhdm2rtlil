@@ -387,7 +387,12 @@ SIM_EQUIV_UNCLASS_NAMES=()
 declare -A SIM_EQUIV_ANALYZED_SET
 if [ -f "$SCRIPT_DIR/sim_equiv_analyzed.txt" ]; then
     while IFS= read -r line; do
-        if [[ "$line" =~ ^Test:[[:space:]]*([A-Za-z0-9_-]+) ]]; then
+        # The character class must admit '.' and '+': an sv_tests directory is
+        # named after its upstream test, which carries a chapter number
+        # (22.5.1--define_expansion_20).  Truncating at the first '.' captured
+        # "22", so no such entry ever matched and its divergence was reported as
+        # a NEW warning however carefully it had been adjudicated.
+        if [[ "$line" =~ ^Test:[[:space:]]*([A-Za-z0-9_.+-]+) ]]; then
             SIM_EQUIV_ANALYZED_SET[${BASH_REMATCH[1]}]=1
         fi
     done < "$SCRIPT_DIR/sim_equiv_analyzed.txt"
