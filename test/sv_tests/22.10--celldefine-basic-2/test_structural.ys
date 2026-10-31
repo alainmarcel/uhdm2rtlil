@@ -1,0 +1,8 @@
+# The construct under test must be observable: prove the output values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove inv 8'h00 -set a 8'hff
+sat -verify -prove inv 8'h5a -set a 8'ha5
