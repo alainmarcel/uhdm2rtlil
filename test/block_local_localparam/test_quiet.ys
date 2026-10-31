@@ -1,0 +1,3 @@
+# The block-local localparam must resolve, not warn.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut

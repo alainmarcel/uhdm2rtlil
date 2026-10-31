@@ -1,0 +1,10 @@
+# The localparam must carry its value (NumPresentRounds = 31), so the loop
+# computes `a ^ 31` twice and ORs it.  Gated as a VALUE: the defect left the
+# constant undriven, which `eval` could not evaluate at all.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+prep -top dut
+check -assert
+sat -verify -prove o 32'h000000ef -set a 32'h000000f0
+sat -verify -prove o 32'h0000001f -set a 32'h00000000
+sat -verify -prove o 32'hffffffe0 -set a 32'hffffffff

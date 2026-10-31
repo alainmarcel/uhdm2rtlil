@@ -6444,6 +6444,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             // the whole dmem width/command/exception-code path went X).
             // Dropping the wire lets import_ref_obj fall through to the
             // design-wide enum-constant map.
+            // A BLOCK-LOCAL localparam Surelog also fabricated as an
+            // implicit net: importing it leaves an UNDRIVEN bit where the
+            // reference needs the constant (otp_ctrl_scrmbl's NumRounds).
+            if (is_block_localparam_net(net, net_name)) {
+                uhdm_trace("UHDM: net '%s' is a BLOCK-LOCAL localparam fabricated as an "
+                    "implicit net -- not importing it as a wire\n", net_name.c_str());
+                net_index++;
+                continue;
+            }
             if (is_unit_enum_const_net(net, net_name)) {
                 uhdm_trace("UHDM: net '%s' is a $unit enum CONSTANT fabricated as an "
                     "implicit net -- not importing it as a wire\n",
