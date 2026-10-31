@@ -1,0 +1,18 @@
+# The size cast must carry its value: `prefix` holds the 88-bit encoded
+# strings, not zero.  Gated as a VALUE, because this class produced a wrong
+# CONSTANT rather than only a warning.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+prep -top dut
+flatten
+opt_clean
+check -assert
+# o = {prefix[255:0], en_unsup_comb, session_cfg[6:0]} (if_type/masked truncated)
+#   session_cfg = {prefix_mode 1, mode AppCShake 01, kstrength L256 010, en_xof 0}
+sat -verify -prove o[7:0]    8'h54
+# the cast payload: {EncodedStringLcCtrl, EncodedStringEmpty} = 88'h4c5254435f434c38010001
+sat -verify -prove o[39:8]  32'h38010001
+sat -verify -prove o[71:40] 32'h435f434c
+sat -verify -prove o[95:72] 24'h4c5254
+# and the cast is 256 bits wide, so everything above the payload is zero
+sat -verify -prove o[127:96] 32'h0
