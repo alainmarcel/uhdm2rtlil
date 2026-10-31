@@ -346,15 +346,24 @@ run_quietcheck() {
     QUIETCHECK_DONE="$test_dir"
     QUIET_CHECK_RUN=$((QUIET_CHECK_RUN + 1))
     (cd "$d" && timeout 300 "$YOSYS_BIN" -m "$UHDM_PLUGIN" ./test_quiet.ys > quiet.log 2>&1)
-    local n
+    local n u
     n=$(grep -cE '^(UHDM:|    UHDM|    Uhdm)' "$d/quiet.log" 2>/dev/null || true)
-    if [ "${n:-0}" -gt 0 ]; then
-        echo "    ❌ Quiet check FAILED - $n ungated debug line(s) without -debug, see quiet.log"
+    # A TYPE reference reported as an unknown SIGNAL is the second invariant
+    # this hook carries.  `$bits(some_t)` on a module-local typedef or a type
+    # parameter used to warn "Reference to unknown signal", three times in
+    # OpenTitan's top_earlgrey alone.  The values were right -- the fabricated
+    # 1-bit wire is discarded with the definition-view module -- so there is
+    # nothing in the NETLIST to assert and `logger -expect` cannot express an
+    # expected count of 0.  Grep the captured read instead, as above.
+    u=$(grep -cE 'Reference to unknown signal' "$d/quiet.log" 2>/dev/null || true)
+    if [ "${n:-0}" -gt 0 ] || [ "${u:-0}" -gt 0 ]; then
+        [ "${n:-0}" -gt 0 ] && echo "    ❌ Quiet check FAILED - $n ungated debug line(s) without -debug, see quiet.log"
+        [ "${u:-0}" -gt 0 ] && echo "    ❌ Quiet check FAILED - $u 'Reference to unknown signal' warning(s), see quiet.log"
         QUIET_CHECK_FAILED_TESTS=$((QUIET_CHECK_FAILED_TESTS + 1))
         QUIET_CHECK_FAILED_TEST_NAMES+=("$test_dir")
         UNEXPECTED_FAILURES+=("$test_dir (quiet check)")
     else
-        echo "    ✅ Quiet check: no debug trace without -debug"
+        echo "    ✅ Quiet check: no debug trace, no unknown-signal warning"
     fi
 }
 

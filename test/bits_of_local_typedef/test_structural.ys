@@ -1,0 +1,10 @@
+# $bits of the module-local typedef must give the struct width (4 + 1 = 5),
+# so the slice is 5 bits and the zero-extension above it is exact.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+prep -top dut
+flatten
+opt_clean
+check -assert
+sat -verify -prove o 64'h000000000000001f -set a 32'hffffffff
+sat -verify -prove o 64'h0000000000000015 -set a 32'h55555555

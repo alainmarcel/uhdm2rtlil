@@ -11282,6 +11282,42 @@ const UHDM::instance* UhdmImporter::find_iface_instance_by_name(const std::strin
     return found;
 }
 
+// Does `nm` name a TYPE visible from this reference -- a package typedef, a
+// module-local typedef, a type PARAMETER, or a `$unit` typespec -- rather than
+// a signal?  `$bits(<type>)` is the construct that brings one here, and the
+// scope to search is both the importer's current instance and the reference's
+// own ancestry (the definition-view pass has no current_instance).
+bool UhdmImporter::ref_names_a_visible_type(const std::string& nm,
+                                            const UHDM::any* ref) const {
+    if (nm.empty()) return false;
+    if (package_typespec_map.count(nm)) return true;
+    auto holds = [&](auto* v) {
+        if (!v) return false;
+        for (auto ts : *v) {
+            if (!ts) continue;
+            std::string tn(ts->VpiName());
+            size_t cc = tn.rfind("::");          // `pkg::some_t` -> `some_t`
+            if (cc != std::string::npos) tn = tn.substr(cc + 2);
+            if (tn == nm) return true;
+        }
+        return false;
+    };
+    if (uhdm_design && holds(uhdm_design->Typespecs())) return true;
+    auto scope_has = [&](const UHDM::any* start) {
+        for (const UHDM::any* sc = start; sc; sc = sc->VpiParent()) {
+            if (auto sp = dynamic_cast<const UHDM::scope*>(sc))
+                if (holds(sp->Typespecs())) return true;
+            if (auto mi = dynamic_cast<const UHDM::module_inst*>(sc))
+                if (mi->Parameters())
+                    for (auto p : *mi->Parameters())
+                        if (p && p->UhdmType() == uhdmtype_parameter &&
+                            std::string(p->VpiName()) == nm) return true;
+        }
+        return false;
+    };
+    return scope_has(current_instance) || scope_has(ref);
+}
+
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Break reference CYCLES.  A parameter whose value resolves back to itself
     // (directly, or around a chain of parameters) recursed through
@@ -12294,12 +12330,26 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                     ref_name.c_str(), ecit->second.as_string().c_str());
             return RTLIL::SigSpec(ecit->second);
         }
-        // A `$bits(pk::some_t)` argument is a TYPE, not a signal.  Warning
-        // about it trains the eye to ignore this message, and the sweeps gate
-        // on the reader's own warning stream.
-        if (package_typespec_map.count(ref_name)) {
+        // A `$bits(some_t)` argument is a TYPE, not a signal.  Warning about it
+        // trains the eye to ignore this message, and the sweeps gate on the
+        // reader's own warning stream.
+        //
+        // The package_typespec_map test alone covered only `pkg::some_t`.  A
+        // MODULE-LOCAL typedef or a TYPE PARAMETER is just as legal an
+        // argument, and OpenTitan writes its widths that way --
+        //     typedef struct packed { ... } sram_req_t;
+        //     localparam int SramReqWidth = $bits(sram_req_t);
+        // so reading top_earlgrey warned three times (`sram_req_t` in
+        // tlul_adapter_sram, `lfsr_data_t` in ibex_dummy_instr, `addr_t`, a
+        // type PARAMETER, in cheriot_tag_filter).  The VALUES were right --
+        // the warning comes from the definition-view pass, whose fabricated
+        // 1-bit wire nothing consumes, while the paramod copy resolves the
+        // width properly -- so this is noise, not a miscompile.  It still has
+        // to go: a false warning in the stream the sweeps gate on costs more
+        // than it says.
+        if (ref_names_a_visible_type(ref_name, uhdm_ref)) {
             if (mode_debug)
-                uhdm_trace("    ref_obj '%s' names a package TYPE, not a signal\n",
+                uhdm_trace("    ref_obj '%s' names a TYPE, not a signal\n",
                     ref_name.c_str());
         } else {
             log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
