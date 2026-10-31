@@ -1619,6 +1619,10 @@ struct UhdmImporter {
     // A `break` that belongs to the loop whose body `s` is: nested loops own
     // their own breaks and are not descended into.
     bool stmt_contains_break(const UHDM::any* s, int depth = 0);
+    // True when `nm` names a TYPE visible from `ref` (package / module-local
+    // typedef, type parameter, `$unit`) rather than a signal.
+    bool ref_names_a_visible_type(const std::string& nm,
+                                  const UHDM::any* ref) const;
     bool stmt_assigns_name(const UHDM::any* s, const std::string& nm, int depth = 0);
     // An assignment to `nm` whose RHS also reads `nm` (an ACCUMULATOR): such a
     // local must NOT be aliased onto the function's result staging wire.
