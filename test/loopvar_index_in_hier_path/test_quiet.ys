@@ -1,0 +1,6 @@
+# A for-loop variable must never be reported as an unknown SIGNAL.
+# run_all_tests.sh's run_quietcheck hook greps this run's output and fails on
+# any "Reference to unknown signal" line.  (yosys's `logger -expect` cannot
+# express this: it rejects an expected count of 0, see passes/cmds/logger.cc.)
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut

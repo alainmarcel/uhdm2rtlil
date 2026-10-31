@@ -1,0 +1,15 @@
+# The element-field writes under the unrolled loop must match read_slang
+# exactly -- read_verilog cannot read this construct, so slang is the oracle.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+prep -top dut; async2sync
+rename dut gold; design -stash g1
+read_slang --ignore-assertions dut.sv --top dut
+hierarchy -top dut
+prep -top dut; async2sync
+rename dut gate; design -stash g2
+design -copy-from g1 -as gold gold
+design -copy-from g2 -as gate gate
+miter -equiv -flatten -make_assert gold gate m
+hierarchy -top m
+sat -verify -prove-asserts -seq 4 -set-init-zero m
