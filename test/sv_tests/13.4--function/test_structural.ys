@@ -1,0 +1,9 @@
+# The function's `return` must carry the value: result == val + 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove result 32'd2          -set val 32'd1
+sat -verify -prove result 32'd0          -set val 32'hffffffff
+sat -verify -prove result 32'h80000000   -set val 32'h7fffffff

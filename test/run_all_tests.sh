@@ -678,7 +678,13 @@ if [ "$RUN_LOCAL" = true ]; then
         fi
     elif [ "$RUN_YOSYS" = false ] || [ -z "$SPECIFIC_TEST" ]; then
         # Find all test directories
-        for dir in */; do
+        # test/sv_tests/<name>/ holds the chipsalliance/sv-tests local corpus,
+        # one directory per upstream test, named by its `:name:` metadata.  The
+        # verbatim upstream file is `orig.sv`, which is NOT a test source -- a
+        # directory joins the regression only once it has been CONVERTED into a
+        # real synthesizable `dut.sv` with ports and an observable construct.
+        # So this glob costs nothing until a test is actually converted.
+        for dir in */ sv_tests/*/; do
             if [ -d "$dir" ] && has_test_sources "${dir%/}"; then
                 # Remove trailing slash from directory name
                 TEST_NAME="${dir%/}"

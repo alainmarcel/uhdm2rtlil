@@ -1,0 +1,1015 @@
+# dir	sv-tests :name:	upstream path	:type:	:tags:
+proc_assignment__bad	proc_assignment__bad	chapter-10/10.3--proc-assignment--bad.sv	simulation elaboration	10.3
+net_decl_assignment	net_decl_assignment	chapter-10/10.3.1--net-decl-assignment.sv		10.3.1
+one_net_assign	one_net_assign	chapter-10/10.3.1--one-net.sv	simulation elaboration parsing	10.3.1
+cont_assignment	cont_assignment	chapter-10/10.3.2--cont-assignment.sv		10.3.2
+cont_assignment_delay	cont_assignment_delay	chapter-10/10.3.3--cont-assignment-delay.sv		10.3.3
+cont_assignment_net_delay	cont_assignment_net_delay	chapter-10/10.3.3--cont-assignment-net-delay.sv		10.3.3
+blocking_assignment	blocking_assignment	chapter-10/10.4.1--blocking-assignment.sv	simulation elaboration parsing	10.4.1
+non_blocking_assignment	non_blocking_assignment	chapter-10/10.4.2--non-blocking-assignment.sv		10.4.2
+assign_deassign	assign_deassign	chapter-10/10.6.1--assign-deassign.sv		10.6.1
+force_release	force_release	chapter-10/10.6.2--force-release.sv		10.6.2
+string_bit_array_sim	string_bit_array_sim	chapter-11/11.10--string_bit_array-sim.sv	simulation elaboration parsing	11.10
+string_bit_array	string_bit_array	chapter-11/11.10--string_bit_array.sv		11.10
+string_compare	string_compare	chapter-11/11.10.1--string_compare.sv	simulation elaboration parsing	11.10.1
+string_concat	string_concat	chapter-11/11.10.1--string_concat.sv	simulation elaboration parsing	11.10.1
+string_copy	string_copy	chapter-11/11.10.1--string_copy.sv	simulation elaboration parsing	11.10.1
+empty_string_sim	empty_string_sim	chapter-11/11.10.3--empty_string-sim.sv	simulation elaboration parsing	11.10.3
+empty_string	empty_string	chapter-11/11.10.3--empty_string.sv		11.10.3
+min_max_avg_delay	min_max_avg_delay	chapter-11/11.11--min_max_avg_delay.sv		11.11
+let_construct	let_construct	chapter-11/11.12--let_construct.sv		11.12
+expr_short_circuit	expr_short_circuit	chapter-11/11.3.5--expr_short_circuit.sv	simulation elaboration parsing	11.3.5
+assign_in_exp_sim	assign_in_exp_sim	chapter-11/11.3.6--assign_in_exp-sim.sv	simulation elaboration parsing	11.3.6
+assign_in_exp	assign_in_exp	chapter-11/11.3.6--assign_in_exp.sv		11.3.6
+assign_in_expr_sim	assign_in_expr_sim	chapter-11/11.3.6--assign_in_expr-sim.sv	simulation elaboration parsing	11.3.6
+assign_in_expr	assign_in_expr	chapter-11/11.3.6--assign_in_expr.sv		11.3.6
+assign_in_expr_inv	assign_in_expr_inv	chapter-11/11.3.6--assign_in_expr_inv.sv		11.3.6
+assign_in_expression_sim	assign_in_expression_sim	chapter-11/11.3.6--assign_in_expression-sim.sv	simulation elaboration parsing	11.3.6
+assign_in_expression	assign_in_expression	chapter-11/11.3.6--assign_in_expression.sv		11.3.6
+assignment_in_expression_sim	assignment_in_expression_sim	chapter-11/11.3.6--assignment_in_expression-sim.sv	simulation elaboration parsing	11.3.6
+assignment_in_expression	assignment_in_expression	chapter-11/11.3.6--assignment_in_expression.sv		11.3.6
+two_assignments_in_expression_sim	two_assignments_in_expression_sim	chapter-11/11.3.6--two_assign_in_expr-sim.sv	simulation elaboration parsing	11.3.6
+two_assignments_in_expression	two_assignments_in_expression	chapter-11/11.3.6--two_assign_in_expr.sv		11.3.6
+assignment_sim	assignment_sim	chapter-11/11.4.1--assignment-sim.sv	simulation elaboration parsing	11.4.1
+arith_shift_assignment_signed	arith_shift_assignment_signed	chapter-11/11.4.10--arith-shift-assignment-signed.sv	simulation elaboration parsing	11.4.10
+arith_shift_assignment_unsigned	arith_shift_assignment_unsigned	chapter-11/11.4.10--arith-shift-assignment-unsigned.sv	simulation elaboration parsing	11.4.10
+arith_shift_signed	arith_shift_signed	chapter-11/11.4.10--arith-shift-signed.sv	simulation elaboration parsing	11.4.10
+arith_shift_unsigned	arith_shift_unsigned	chapter-11/11.4.10--arith-shift-unsigned.sv	simulation elaboration parsing	11.4.10
+cond_op_sim	cond_op_sim	chapter-11/11.4.11--cond_op-sim.sv	simulation elaboration parsing	11.4.11
+cond_op	cond_op	chapter-11/11.4.11--cond_op.sv		11.4.11
+concat_op-bit_select	concat_op-bit_select	chapter-11/11.4.12--concat_op-bit_select.sv		11.4.12
+concat_op_sim	concat_op_sim	chapter-11/11.4.12--concat_op-sim.sv	simulation elaboration parsing	11.4.12
+concat_op	concat_op	chapter-11/11.4.12--concat_op.sv		11.4.12
+nested_repl_op_sim	nested_repl_op_sim	chapter-11/11.4.12.1--nested_repl_op-sim.sv	simulation elaboration parsing	11.4.12.1
+nested_repl_op	nested_repl_op	chapter-11/11.4.12.1--nested_repl_op.sv		11.4.12.1
+repl_op_sim	repl_op_sim	chapter-11/11.4.12.1--repl_op-sim.sv	simulation elaboration parsing	11.4.12.1
+repl_op	repl_op	chapter-11/11.4.12.1--repl_op.sv		11.4.12.1
+string_concat_op	string_concat_op	chapter-11/11.4.12.2--string_concat_op.sv	simulation elaboration parsing	11.4.12.2
+string_repl_op	string_repl_op	chapter-11/11.4.12.2--string_repl_op.sv	simulation elaboration parsing	11.4.12.2
+set_member_sim	set_member_sim	chapter-11/11.4.13--set_member-sim.sv	simulation elaboration parsing	11.4.13
+set_member	set_member	chapter-11/11.4.13--set_member.sv		11.4.13
+stream_concat_sim	stream_concat_sim	chapter-11/11.4.14.1--stream_concat-sim.sv	simulation elaboration parsing	11.4.14.1
+stream_concat	stream_concat	chapter-11/11.4.14.1--stream_concat.sv		11.4.14.1
+reorder_stream_sim	reorder_stream_sim	chapter-11/11.4.14.2--reorder_stream-sim.sv	simulation elaboration parsing	11.4.14.2
+reorder_stream	reorder_stream	chapter-11/11.4.14.2--reorder_stream.sv		11.4.14.2
+reorder_stream_byte_sim	reorder_stream_byte_sim	chapter-11/11.4.14.2--reorder_stream_byte-sim.sv	simulation elaboration parsing	11.4.14.2
+reorder_stream_byte	reorder_stream_byte	chapter-11/11.4.14.2--reorder_stream_byte.sv		11.4.14.2
+unpack_stream_sim	unpack_stream_sim	chapter-11/11.4.14.3--unpack_stream-sim.sv	simulation elaboration parsing	11.4.14.3
+unpack_stream	unpack_stream	chapter-11/11.4.14.3--unpack_stream.sv		11.4.14.3
+unpack_stream_inv	unpack_stream_inv	chapter-11/11.4.14.3--unpack_stream_inv.sv	simulation elaboration	11.4.14.3
+unpack_stream_pad_sim	unpack_stream_pad_sim	chapter-11/11.4.14.3--unpack_stream_pad-sim.sv	simulation elaboration parsing	11.4.14.3
+unpack_stream_pad	unpack_stream_pad	chapter-11/11.4.14.3--unpack_stream_pad.sv		11.4.14.3
+dynamic_array_unpack_stream_sim	dynamic_array_unpack_stream_sim	chapter-11/11.4.14.4--dynamic_array_stream-sim.sv	simulation elaboration parsing	11.4.14.4
+dynamic_array_unpack_stream	dynamic_array_unpack_stream	chapter-11/11.4.14.4--dynamic_array_stream.sv		11.4.14.4
+dynamic_array_unpack_stream_with	dynamic_array_unpack_stream_with	chapter-11/11.4.14.4--dynamic_array_stream_with.sv		11.4.14.4
+unary_op_dec_sim	unary_op_dec_sim	chapter-11/11.4.2--unary_op_dec-sim.sv		11.4.2
+unary_op_dec	unary_op_dec	chapter-11/11.4.2--unary_op_dec.sv		11.4.2
+unary_op_inc_sim	unary_op_inc_sim	chapter-11/11.4.2--unary_op_inc-sim.sv		11.4.2
+unary_op_inc	unary_op_inc	chapter-11/11.4.2--unary_op_inc.sv		11.4.2
+equality_op	equality_op	chapter-11/11.4.5--equality-op.sv	simulation elaboration parsing	11.4.5
+idx_neg_part_select_sim	idx_neg_part_select_sim	chapter-11/11.5.1--idx_neg_part_select-sim.sv	simulation elaboration parsing	11.5.1
+idx_neg_part_select	idx_neg_part_select	chapter-11/11.5.1--idx_neg_part_select.sv		11.5.1
+idx_pos_part_select_sim	idx_pos_part_select_sim	chapter-11/11.5.1--idx_pos_part_select-sim.sv	simulation elaboration parsing	11.5.1
+idx_pos_part_select	idx_pos_part_select	chapter-11/11.5.1--idx_pos_part_select.sv		11.5.1
+idx_select_sim	idx_select_sim	chapter-11/11.5.1--idx_select-sim.sv	simulation elaboration parsing	11.5.1
+idx_select	idx_select	chapter-11/11.5.1--idx_select.sv		11.5.1
+non_idx_part_select_sim	non_idx_part_select_sim	chapter-11/11.5.1--non_idx_part_select-sim.sv	simulation elaboration parsing	11.5.1
+non_idx_part_select	non_idx_part_select	chapter-11/11.5.1--non_idx_part_select.sv		11.5.1
+array_addressing_sim	array_addressing_sim	chapter-11/11.5.2--array_addressing-sim.sv	simulation elaboration parsing	11.5.2
+array_addressing	array_addressing	chapter-11/11.5.2--array_addressing.sv		11.5.2
+multi_dim_array_addressing_sim	multi_dim_array_addressing_sim	chapter-11/11.5.2--multi_dim_array_addressing-sim.sv	simulation elaboration parsing	11.5.2
+multi_dim_array_addressing	multi_dim_array_addressing	chapter-11/11.5.2--multi_dim_array_addressing.sv		11.5.2
+signed_func_sim	signed_func_sim	chapter-11/11.7--signed_func-sim.sv	simulation elaboration parsing	11.7
+signed_func	signed_func	chapter-11/11.7--signed_func.sv		11.7
+unsigned_func_sim	unsigned_func_sim	chapter-11/11.7--unsigned_func-sim.sv	simulation elaboration parsing	11.7
+unsigned_func	unsigned_func	chapter-11/11.7--unsigned_func.sv		11.7
+tagged_union	tagged_union	chapter-11/11.9--tagged_union.sv		11.9
+tagged_union_member_access_sim	tagged_union_member_access_sim	chapter-11/11.9--tagged_union_member_access-sim.sv	simulation elaboration parsing	11.9
+tagged_union_member_access	tagged_union_member_access	chapter-11/11.9--tagged_union_member_access.sv		11.9
+tagged_union_member_access_inv	tagged_union_member_access_inv	chapter-11/11.9--tagged_union_member_access_inv.sv	simulation	11.9
+simple_cond_op_sim	simple_cond_op_sim	chapter-11/simple/11.4.11--simple_cond_op-sim.sv	simulation elaboration parsing	11.4.11
+simple_concat_op_sim	simple_concat_op_sim	chapter-11/simple/11.4.12--simple_concat_op-sim.sv	simulation elaboration parsing	11.4.12
+simple_repl_op_sim	simple_repl_op_sim	chapter-11/simple/11.4.12.1--simple_repl_op-sim.sv	simulation elaboration parsing	11.4.12.1
+simple_set_member_sim	simple_set_member_sim	chapter-11/simple/11.4.13--simple_set_member-sim.sv	simulation elaboration parsing	11.4.13
+simple_unpack_stream_sim	simple_unpack_stream_sim	chapter-11/simple/11.4.14.3--simple_unpack_stream-sim.sv	simulation elaboration parsing	11.4.14.3
+simple_idx_neg_part_select_sim	simple_idx_neg_part_select_sim	chapter-11/simple/11.5.1--simple_idx_neg_part_select-sim.sv	simulation elaboration parsing	11.5.1
+simple_idx_pos_part_select_sim	simple_idx_pos_part_select_sim	chapter-11/simple/11.5.1--simple_idx_pos_part_select-sim.sv	simulation elaboration parsing	11.5.1
+simple_idx_select_sim	simple_idx_select_sim	chapter-11/simple/11.5.1--simple_idx_select-sim.sv	simulation elaboration parsing	11.5.1
+simple_non_idx_part_select_sim	simple_non_idx_part_select_sim	chapter-11/simple/11.5.1--simple_non_idx_part_select-sim.sv	simulation elaboration parsing	11.5.1
+simple_array_addressing_sim	simple_array_addressing_sim	chapter-11/simple/11.5.2--simple_array_addressing-sim.sv	simulation elaboration parsing	11.5.2
+if	if	chapter-12/12.4--if.sv		12.4
+if_else	if_else	chapter-12/12.4--if_else.sv		12.4
+if_else_if	if_else_if	chapter-12/12.4.1--if_else_if.sv		12.4.1
+priority_if	priority_if	chapter-12/12.4.2--priority_if.sv		12.4.2
+unique0_if	unique0_if	chapter-12/12.4.2--unique0_if.sv		12.4.2
+unique_if	unique_if	chapter-12/12.4.2--unique_if.sv		12.4.2
+case	case	chapter-12/12.5--case.sv		12.5
+casex	casex	chapter-12/12.5.1--casex.sv		12.5.1
+casez	casez	chapter-12/12.5.1--casez.sv		12.5.1
+case_constant	case_constant	chapter-12/12.5.2--case_const.sv		12.5.2
+case_set	case_set	chapter-12/12.5.4--case_set.sv		12.5.4
+case_pattern	case_pattern	chapter-12/12.6.1--case_pattern.sv		12.6.1
+casex_pattern	casex_pattern	chapter-12/12.6.1--casex_pattern.sv		12.6.1
+casez_pattern	casez_pattern	chapter-12/12.6.1--casez_pattern.sv		12.6.1
+if_pattern	if_pattern	chapter-12/12.6.2--if_pattern.sv		12.6.2
+conditional_pattern	conditional_pattern	chapter-12/12.6.3--conditional_pattern.sv		12.6.3
+for_loop	for_loop	chapter-12/12.7.1--for.sv		12.7.1
+repeat_loop	repeat_loop	chapter-12/12.7.2--repeat.sv		12.7.2
+foreach_loop_synth	foreach_loop_synth	chapter-12/12.7.3--foreach-synth.sv		12.7.3
+foreach_loop	foreach_loop	chapter-12/12.7.3--foreach.sv		12.7.3
+while_loop	while_loop	chapter-12/12.7.4--while.sv		12.7.4
+dowhile_loop	dowhile_loop	chapter-12/12.7.5--dowhile.sv		12.7.5
+forever_loop	forever_loop	chapter-12/12.7.6--forever.sv		12.7.6
+jump_break	jump_break	chapter-12/12.8--break.sv	simulation elaboration parsing	12.8
+jump_continue	jump_continue	chapter-12/12.8--continue.sv	simulation elaboration parsing	12.8
+jump_return	jump_return	chapter-12/12.8--return.sv		12.8
+jump_return_expr	jump_return_expr	chapter-12/12.8--return_val.sv		12.8
+task-label	task-label	chapter-13/13.3--task-label.sv	simulation elaboration parsing	13.3
+task	task	chapter-13/13.3--task.sv	simulation elaboration parsing	13.3
+task_automatic	task_automatic	chapter-13/13.3.1--task-automatic.sv	simulation elaboration parsing	13.3.1
+task_static	task_static	chapter-13/13.3.1--task-static.sv	simulation elaboration parsing	13.3.1
+13.4--function-label	function	chapter-13/13.4--function-label.sv	simulation elaboration parsing	13.4
+13.4--function	function	chapter-13/13.4--function.sv	simulation elaboration parsing	13.4
+function_return_assignment	function_return_assignment	chapter-13/13.4.1--function-return-assignment.sv	simulation elaboration parsing	13.4.1
+function_return	function_return	chapter-13/13.4.1--function-return.sv	simulation elaboration parsing	13.4.1
+function_void_return	function_void_return	chapter-13/13.4.1--function-void-return.sv	simulation elaboration	13.4.1
+function_automatic	function_automatic	chapter-13/13.4.2--function-automatic.sv	simulation elaboration parsing	13.4.2
+function_recursive	function_recursive	chapter-13/13.4.2--function-recursive.sv	simulation elaboration parsing	13.4.2
+function_static	function_static	chapter-13/13.4.2--function-static.sv		13.4.2
+const_function	const_function	chapter-13/13.4.3--const-function.sv	simulation elaboration parsing	13.4.3
+function_fork_invalid	function_fork_invalid	chapter-13/13.4.4--fork-invalid.sv	simulation elaboration	13.4.4
+function_fork_valid	function_fork_valid	chapter-13/13.4.4--fork-valid.sv	simulation elaboration parsing	13.4.4
+clocking_block_signals_fail	clocking_block_signals_fail	chapter-14/14.3--clocking-block-signals-error.sv	simulation elaboration	14.3
+clocking_block_signals	clocking_block_signals	chapter-14/14.3--clocking-block-signals.sv		14.3
+clocking_block	clocking_block	chapter-14/14.3--clocking-block.sv		14.3
+default_clocking_block	default_clocking_block	chapter-14/14.3--default-clocking-block.sv		14.3
+global_clocking_block	global_clocking_block	chapter-14/14.3--global-clocking-block.sv		14.3
+mailbox_blocking	mailbox_blocking	chapter-15/15.4--mailbox-blocking.sv	simulation elaboration parsing	15.4
+mailbox_non_blocking	mailbox_non_blocking	chapter-15/15.4--mailbox-non-blocking.sv	simulation elaboration parsing	15.4
+named_event_trigger_blocking	named_event_trigger_blocking	chapter-15/15.5.1--named-event-trigger-blocking.sv		15.5
+named_event_trigger_non_blocking	named_event_trigger_non_blocking	chapter-15/15.5.1--named-event-trigger-non-blocking.sv		15.5
+named_event_wait	named_event_wait	chapter-15/15.5.2--named-event-wait.sv		15.5
+property_local_var_fail_test	property_local_var_fail_test	chapter-16/16.10--property-local-var-fail.sv	simulation	16.10
+property_local_var_test_uvm	property_local_var_test_uvm	chapter-16/16.10--property-local-var-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_local_var_test	property_local_var_test	chapter-16/16.10--property-local-var.sv	simulation elaboration parsing	16.10
+sequence_local_var_fail_test	sequence_local_var_fail_test	chapter-16/16.10--sequence-local-var-fail.sv	simulation	16.10
+sequence_local_var_test_uvm	sequence_local_var_test_uvm	chapter-16/16.10--sequence-local-var-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_local_var_test	sequence_local_var_test	chapter-16/16.10--sequence-local-var.sv	simulation elaboration parsing	16.10
+sequence_subroutine_test_uvm	sequence_subroutine_test_uvm	chapter-16/16.11--sequence-subroutine-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_disable_iff_min_test	property_disable_iff_min_test	chapter-16/16.12--property-disable-iff.sv		16.12
+property_disj_test	property_disj_test	chapter-16/16.12--property-disj.sv		16.12
+property_iff_test	property_iff_test	chapter-16/16.12--property-iff.sv		16.12
+property_interface_prec_test_uvm	property_interface_prec_test_uvm	chapter-16/16.12--property-interface-prec-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_interface_test_uvm	property_interface_test_uvm	chapter-16/16.12--property-interface-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_prec_test_uvm	property_prec_test_uvm	chapter-16/16.12--property-prec-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_prec_test	property_prec_test	chapter-16/16.12--property-prec.sv		16.12
+property_test_uvm	property_test_uvm	chapter-16/16.12--property-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+property_test	property_test	chapter-16/16.12--property.sv		16.12
+sequence_multiclock_test_uvm	sequence_multiclock_test_uvm	chapter-16/16.13--sequence-multiclock-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assume_property_test_uvm	assume_property_test_uvm	chapter-16/16.14--assume-property-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assume_property_test	assume_property_test	chapter-16/16.14--assume-property.sv		16.14
+property_disable_iff_fail_test	property_disable_iff_fail_test	chapter-16/16.15--property-disable-iff-fail.sv	simulation	16.15
+property_disable_iff_test	property_disable_iff_test	chapter-16/16.15--property-disable-iff.sv	simulation elaboration parsing	16.15
+property_disable_iff_test_uvm	property_disable_iff_test_uvm	chapter-16/16.15--property-iff-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+expect_test_uvm	expect_test_uvm	chapter-16/16.17--expect-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+expect_test	expect_test	chapter-16/16.17--expect.sv		16.17
+assert_final_test_uvm	assert_final_test_uvm	chapter-16/16.2--assert-final-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assert_final_test	assert_final_test	chapter-16/16.2--assert-final.sv		16.4
+assert_test_uvm	assert_test_uvm	chapter-16/16.2--assert-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assert_test	assert_test	chapter-16/16.2--assert.sv		16.2
+assert0_test_uvm	assert0_test_uvm	chapter-16/16.2--assert0-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assert0_test	assert0_test	chapter-16/16.2--assert0.sv		16.4
+assume_final_test	assume_final_test	chapter-16/16.2--assume-final.sv		16.4
+assume_test_uvm	assume_test_uvm	chapter-16/16.2--assume-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+assume_test	assume_test	chapter-16/16.2--assume.sv		16.2
+assume0_test	assume0_test	chapter-16/16.2--assume0.sv		16.4
+cover_final_test	cover_final_test	chapter-16/16.2--cover-final.sv		16.4
+cover_test	cover_test	chapter-16/16.2--cover.sv		16.2
+cover0_test	cover0_test	chapter-16/16.2--cover0.sv		16.4
+sequence_range_and_op_test_uvm	sequence_range_and_op_test_uvm	chapter-16/16.7--sequence-and-range-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_and_op_test_uvm	sequence_and_op_test_uvm	chapter-16/16.7--sequence-and-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_intersect_op_test_uvm	sequence_intersect_op_test_uvm	chapter-16/16.7--sequence-intersect-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_or_op_test_uvm	sequence_or_op_test_uvm	chapter-16/16.7--sequence-or-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_throughout_op_test_uvm	sequence_throughout_op_test_uvm	chapter-16/16.7--sequence-throughout-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_test_uvm	sequence_test_uvm	chapter-16/16.7--sequence-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_test	sequence_test	chapter-16/16.7--sequence.sv		16.7
+sequence_changed_test_uvm	sequence_changed_test_uvm	chapter-16/16.9--sequence-changed-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_consecutive_repetition_test	sequence_consecutive_repetition_test	chapter-16/16.9--sequence-cons-repetition.sv		16.9
+sequence_fell_test_uvm	sequence_fell_test_uvm	chapter-16/16.9--sequence-fell-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_goto_repetition_test	sequence_goto_repetition_test	chapter-16/16.9--sequence-goto-repetition.sv		16.9
+sequence_nonconsecutive_repetition_test	sequence_nonconsecutive_repetition_test	chapter-16/16.9--sequence-noncons-repetition.sv		16.9
+sequence_past_test_uvm	sequence_past_test_uvm	chapter-16/16.9--sequence-past-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_rose_test_uvm	sequence_rose_test_uvm	chapter-16/16.9--sequence-rose-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+sequence_stable_test_uvm	sequence_stable_test_uvm	chapter-16/16.9--sequence-stable-uvm.sv	simulation elaboration parsing	uvm uvm-assertions
+dynamic_constraint_modification_0	dynamic_constraint_modification_0	chapter-18/18.10--dynamic-constraint-modification_0.sv		uvm-random uvm
+in-line_random_variable-control_0	in-line_random_variable-control_0	chapter-18/18.11--in-line-random-variable-control_0.sv		uvm-random uvm
+in-line_random_variable-control_1	in-line_random_variable-control_1	chapter-18/18.11--in-line-random-variable-control_1.sv		uvm-random uvm
+in-line_constraint_checker_0	in-line_constraint_checker_0	chapter-18/18.11.1--in-line-constraint-checker_0.sv		uvm-random uvm
+in-line_constraint_checker_1	in-line_constraint_checker_1	chapter-18/18.11.1--in-line-constraint-checker_1.sv		uvm-random uvm
+randomization_of_scope_variables_0	randomization_of_scope_variables_0	chapter-18/18.12--randomization-of-scope-variables_0.sv		18.12
+randomization_of_scope_variables_1	randomization_of_scope_variables_1	chapter-18/18.12--randomization-of-scope-variables_1.sv		uvm-random uvm
+adding_constraints_to_scope_variables_0	adding_constraints_to_scope_variables_0	chapter-18/18.12.1--adding-constraints-to-scope-variables_0.sv		18.12.1
+adding_constraints_to_scope_variables_1	adding_constraints_to_scope_variables_1	chapter-18/18.12.1--adding-constraints-to-scope-variables_1.sv		uvm-random uvm
+urandom_0	urandom_0	chapter-18/18.13.1--urandom_0.sv		18.13.1
+urandom_1	urandom_1	chapter-18/18.13.1--urandom_1.sv		uvm-random uvm
+urandom_2	urandom_2	chapter-18/18.13.1--urandom_2.sv		18.13.1
+urandom_3	urandom_3	chapter-18/18.13.1--urandom_3.sv		uvm-random uvm
+urandom_range_0	urandom_range_0	chapter-18/18.13.2--urandom_range_0.sv		18.13.2
+urandom_range_1	urandom_range_1	chapter-18/18.13.2--urandom_range_1.sv		uvm-random uvm
+urandom_range_2	urandom_range_2	chapter-18/18.13.2--urandom_range_2.sv		uvm-random uvm
+urandom_range_3	urandom_range_3	chapter-18/18.13.2--urandom_range_3.sv		uvm-random uvm
+srandom_0	srandom_0	chapter-18/18.13.3--srandom_0.sv		uvm-random uvm
+get_randstate_0	get_randstate_0	chapter-18/18.13.4--get_randstate_0.sv		uvm-random uvm
+set_randstate_0	set_randstate_0	chapter-18/18.13.5--set_randstate_0.sv		uvm-random uvm
+random_stability_0	random_stability_0	chapter-18/18.14--random-stability_0.sv		uvm-random uvm
+random_stability_1	random_stability_1	chapter-18/18.14--random-stability_1.sv		uvm-random uvm
+random_stability_2	random_stability_2	chapter-18/18.14--random-stability_2.sv		uvm-random uvm
+random_stability_3	random_stability_3	chapter-18/18.14--random-stability_3.sv		uvm-random uvm
+thread_stability_0	thread_stability_0	chapter-18/18.14.2--thread-stability_0.sv		uvm-random uvm
+thread_stability_1	thread_stability_1	chapter-18/18.14.2--thread-stability_1.sv		uvm-random uvm
+object_stability_0	object_stability_0	chapter-18/18.14.3--object-stability_0.sv		uvm-random uvm
+object_stability_1	object_stability_1	chapter-18/18.14.3--object-stability_1.sv		uvm-random uvm
+manually_seeding_randomize_0	manually_seeding_randomize_0	chapter-18/18.15--manually-seeding-randomize_0.sv		18.15
+manually_seeding_randomize_1	manually_seeding_randomize_1	chapter-18/18.15--manually-seeding-randomize_1.sv		uvm-random uvm
+random_weighted_case_randcase_0	random_weighted_case_randcase_0	chapter-18/18.16--random-weighted-case-randcase_0.sv	simulation elaboration parsing	18.16
+random_weighted_case_randcase_2	random_weighted_case_randcase_2	chapter-18/18.16--random-weighted-case-randcase_2.sv	simulation elaboration parsing	18.16
+random_sequence_generation_randsequence_0	random_sequence_generation_randsequence_0	chapter-18/18.17--random-sequence-generation-randsequence_0.sv	simulation elaboration parsing	18.17
+random_sequence_generation_randsequence_2	random_sequence_generation_randsequence_2	chapter-18/18.17--random-sequence-generation-randsequence_2.sv	simulation elaboration parsing	18.17
+random_production_weights_0	random_production_weights_0	chapter-18/18.17.1--random-production-weights_0.sv	simulation elaboration parsing	18.17.1
+if_else_production_statements_0	if_else_production_statements_0	chapter-18/18.17.2--if-else-production-statements_0.sv	simulation elaboration parsing	18.17.2
+if_else_production_statements_0_fail	if_else_production_statements_0_fail	chapter-18/18.17.2--if-else-production-statements_0_fail.sv	elaboration	18.17.2
+if_else_production_statements_2	if_else_production_statements_2	chapter-18/18.17.2--if-else-production-statements_2.sv	simulation elaboration parsing	18.17.2
+if_else_production_statements_2_fail	if_else_production_statements_2_fail	chapter-18/18.17.2--if-else-production-statements_2_fail.sv	elaboration	18.17.2
+case_production_statements_0	case_production_statements_0	chapter-18/18.17.3--case-production-statements_0.sv	simulation elaboration parsing	18.17.3
+case_production_statements_0_fail	case_production_statements_0_fail	chapter-18/18.17.3--case-production-statements_0_fail.sv	elaboration	18.17.3
+repeat_production_statements_0	repeat_production_statements_0	chapter-18/18.17.4--repeat-production-statements_0.sv	simulation elaboration parsing	18.17.4
+interleaving_productions_rand_join_0	interleaving_productions_rand_join_0	chapter-18/18.17.5--interleaving-productions-rand-join_0.sv	simulation elaboration parsing	18.17.5
+interleaving_productions_rand_join_2	interleaving_productions_rand_join_2	chapter-18/18.17.5--interleaving-productions-rand-join_2.sv	simulation elaboration parsing	18.17.5
+aborting_productions_break_and_return_0	aborting_productions_break_and_return_0	chapter-18/18.17.6--aborting-productions-break-and-return_0.sv	simulation elaboration parsing	18.17.6
+aborting_productions_break_and_return_2	aborting_productions_break_and_return_2	chapter-18/18.17.6--aborting-productions-break-and-return_2.sv	simulation elaboration parsing	18.17.6
+aborting_productions_break_and_return_2_fail	aborting_productions_break_and_return_2_fail	chapter-18/18.17.6--aborting-productions-break-and-return_2_fail.sv	elaboration	18.17.6
+value_passing_between_productions_0	value_passing_between_productions_0	chapter-18/18.17.7--value-passing-between-productions_0.sv	simulation elaboration parsing	18.17.7
+rand_modifier	rand_modifier	chapter-18/18.4.1--rand-modifier.sv		18.4.1
+randc_modifier	randc_modifier	chapter-18/18.4.2--randc-modifier.sv		18.4.2
+constraint_blocks_0	constraint_blocks_0	chapter-18/18.5--constraint-blocks_0.sv		18.5
+constraint_blocks_1	constraint_blocks_1	chapter-18/18.5--constraint-blocks_1.sv		uvm-random uvm
+explicit_external_constraint_0	explicit_external_constraint_0	chapter-18/18.5.1--explicit-external-constraint_0.sv		18.5.1
+explicit_external_constraint_1	explicit_external_constraint_1	chapter-18/18.5.1--explicit-external-constraint_1.sv	simulation elaboration	18.5.1
+explicit_external_constraint_2	explicit_external_constraint_2	chapter-18/18.5.1--explicit-external-constraint_2.sv		uvm-random uvm
+implicit_external_constraint_0	implicit_external_constraint_0	chapter-18/18.5.1--implicit-external-constraint_0.sv		18.5.1
+implicit_external_constraint_1	implicit_external_constraint_1	chapter-18/18.5.1--implicit-external-constraint_1.sv		18.5.1
+implicit_external_constraint_2	implicit_external_constraint_2	chapter-18/18.5.1--implicit-external-constraint_2.sv		uvm-random uvm
+variable_ordering_0	variable_ordering_0	chapter-18/18.5.10--variable-ordering_0.sv		18.5.10
+variable_ordering_1	variable_ordering_1	chapter-18/18.5.10--variable-ordering_1.sv	simulation elaboration	18.5.10
+static_constraint_blocks_0	static_constraint_blocks_0	chapter-18/18.5.11--static-constraint-blocks_0.sv		18.5.11
+static_constraint_blocks_1	static_constraint_blocks_1	chapter-18/18.5.11--static-constraint-blocks_1.sv		uvm-random uvm
+functions_in_constraints_0	functions_in_constraints_0	chapter-18/18.5.12--functions-in-constraint_0.sv		18.5.12
+functions_in_constraint_1	functions_in_constraint_1	chapter-18/18.5.12--functions-in-constraint_1.sv		uvm-random uvm
+constraint_guards_0	constraint_guards_0	chapter-18/18.5.13--constraint-guards_0.sv		18.5.13
+constraint_guards_1	constraint_guards_1	chapter-18/18.5.13--constraint-guards_1.sv		uvm-random uvm
+soft_constraints_0	soft_constraints_0	chapter-18/18.5.14--soft-constraints_0.sv		18.5.14
+soft_constraints_1	soft_constraints_1	chapter-18/18.5.14--soft-constraints_1.sv		uvm-random uvm
+soft_constraints_2	soft_constraints_2	chapter-18/18.5.14--soft-constraints_2.sv	simulation elaboration	18.5.14
+soft_constraint_priorities_0	soft_constraint_priorities_0	chapter-18/18.5.14.1--soft-constraint-priorities_0.sv		18.5.14.1
+soft_constraint_priorities_1	soft_constraint_priorities_1	chapter-18/18.5.14.1--soft-constraint-priorities_1.sv		uvm-random uvm
+soft_constraint_priorities_2	soft_constraint_priorities_2	chapter-18/18.5.14.1--soft-constraint-priorities_2.sv		18.5.14.1
+soft_constraint_priorities_3	soft_constraint_priorities_3	chapter-18/18.5.14.1--soft-constraint-priorities_3.sv		uvm-random uvm
+soft_constraint_priorities_4	soft_constraint_priorities_4	chapter-18/18.5.14.1--soft-constraint-priorities_4.sv		uvm-random uvm
+discarding_soft_constraints_0	discarding_soft_constraints_0	chapter-18/18.5.14.2--discarding-soft-constraints_0.sv		18.5.14.2
+discarding_soft_constraints_1	discarding_soft_constraints_1	chapter-18/18.5.14.2--discarding-soft-constraints_1.sv		uvm-random uvm
+discarding_soft_constraints_2	discarding_soft_constraints_2	chapter-18/18.5.14.2--discarding-soft-constraints_2.sv		18.5.14.2
+discarding_soft_constraints_3	discarding_soft_constraints_3	chapter-18/18.5.14.2--discarding-soft-constraints_3.sv		uvm-random uvm
+discarding_soft_constraints_5	discarding_soft_constraints_5	chapter-18/18.5.14.2--discarding-soft-constraints_5.sv		uvm-random uvm
+constraint_inheritance_0	constraint_inheritance_0	chapter-18/18.5.2--constraint-inheritance_0.sv		18.5.2
+constraint_inheritance_1	constraint_inheritance_1	chapter-18/18.5.2--constraint-inheritance_1.sv		uvm-random uvm
+pure_constraint_0	pure_constraint_0	chapter-18/18.5.2--pure-constraint_0.sv		18.5.2
+pure_constraint_1	pure_constraint_1	chapter-18/18.5.2--pure-constraint_1.sv		uvm-random uvm
+pure_constraint_2	pure_constraint_2	chapter-18/18.5.2--pure-constraint_2.sv	simulation elaboration	18.5.2
+pure_constraint_3	pure_constraint_3	chapter-18/18.5.2--pure-constraint_3.sv		18.5.2
+set_membership_0	set_membership_0	chapter-18/18.5.3--set-membership_0.sv		18.5.3
+set_membership_1	set_membership_1	chapter-18/18.5.3--set-membership_1.sv		uvm-random uvm
+distribution_0	distribution_0	chapter-18/18.5.4--distribution_0.sv		18.5.4
+distribution_1	distribution_1	chapter-18/18.5.4--distribution_1.sv		uvm-random uvm
+distribution_2	distribution_2	chapter-18/18.5.4--distribution_2.sv	simulation elaboration	18.5.4
+uniqueness_constraints_0	uniqueness_constraints_0	chapter-18/18.5.5--uniqueness-constraints_0.sv		18.5.5
+uniqueness_constraints_1	uniqueness_constraints_1	chapter-18/18.5.5--uniqueness-constraints_1.sv		uvm-random uvm
+implication_0	implication_0	chapter-18/18.5.6--implication_0.sv		18.5.6
+implication_1	implication_1	chapter-18/18.5.6--implication_1.sv		uvm-random uvm
+if_else_constraints_0	if_else_constraints_0	chapter-18/18.5.7--if-else-constraints_0.sv		18.5.7
+if_else_constraints_1	if_else_constraints_1	chapter-18/18.5.7--if-else-constraints_1.sv		18.5.7
+if_else_constraints_2	if_else_constraints_2	chapter-18/18.5.7--if-else-constraints_2.sv		18.5.7
+if_else_constraints_3	if_else_constraints_3	chapter-18/18.5.7--if-else-constraints_3.sv		18.5.7
+if_else_constraints_4	if_else_constraints_4	chapter-18/18.5.7--if-else-constraints_4.sv		uvm-random uvm
+foreach_iterative_constraints_0	foreach_iterative_constraints_0	chapter-18/18.5.8.1--foreach-iterative-constraints_0.sv		18.5.8.1
+foreach_iterative_constraints_1	foreach_iterative_constraints_1	chapter-18/18.5.8.1--foreach-iterative-constraints_1.sv		uvm-random uvm
+array_reduction_iterative_constraints_0	array_reduction_iterative_constraints_0	chapter-18/18.5.8.2--array-reduction-iterative-constraints_0.sv		18.5.8.2
+array_reduction_iterative_constraints_1	array_reduction_iterative_constraints_1	chapter-18/18.5.8.2--array-reduction-iterative-constraints_1.sv		uvm-random uvm
+global_constraints_0	global_constraints_0	chapter-18/18.5.9--global-constraints_0.sv		18.5.9
+global_constraints_1	global_constraints_1	chapter-18/18.5.9--global-constraints_1.sv		uvm-random uvm
+randomize_method_0	randomize_method_0	chapter-18/18.6.1--randomize-method_0.sv		uvm-random uvm
+post_randomize_method_0	post_randomize_method_0	chapter-18/18.6.2--post-randomize_method_0.sv		18.6.2
+post_randomize_method_1	post_randomize_method_1	chapter-18/18.6.2--post-randomize_method_1.sv		uvm-random uvm
+pre_randomize_method_0	pre_randomize_method_0	chapter-18/18.6.2--pre-randomize-method_0.sv		18.6.2
+pre_randomize_method_1	pre_randomize_method_1	chapter-18/18.6.2--pre-randomize-method_1.sv		uvm-random uvm
+behavior_of_randomization_methods_0	behavior_of_randomization_methods_0	chapter-18/18.6.3--behavior-of-randomization-methods_0.sv		18.6.3
+behavior_of_randomization_methods_1	behavior_of_randomization_methods_1	chapter-18/18.6.3--behavior-of-randomization-methods_1.sv		uvm-random uvm
+behavior_of_randomization_methods_2	behavior_of_randomization_methods_2	chapter-18/18.6.3--behavior-of-randomization-methods_2.sv		uvm-random uvm
+behavior_of_randomization_methods_3	behavior_of_randomization_methods_3	chapter-18/18.6.3--behavior-of-randomization-methods_3.sv		uvm-random uvm
+behavior_of_randomization_methods_4	behavior_of_randomization_methods_4	chapter-18/18.6.3--behavior-of-randomization-methods_4.sv	simulation elaboration	18.6.3
+behavior_of_randomization_methods_5	behavior_of_randomization_methods_5	chapter-18/18.6.3--behavior-of-randomization-methods_5.sv	simulation elaboration	uvm-random uvm
+in-line_constraints--randomize_0	in-line_constraints--randomize_0	chapter-18/18.7--in-line-constraints--randomize_0.sv		uvm-random uvm
+in-line_constraints--randomize_1	in-line_constraints--randomize_1	chapter-18/18.7--in-line-constraints--randomize_1.sv		18.7
+in-line_constraints--randomize_2	in-line_constraints--randomize_2	chapter-18/18.7--in-line-constraints--randomize_2.sv		uvm-random uvm
+in-line_constraints--randomize_3	in-line_constraints--randomize_3	chapter-18/18.7--in-line-constraints--randomize_3.sv		18.7
+in-line_constraints--randomize_4	in-line_constraints--randomize_4	chapter-18/18.7--in-line-constraints--randomize_4.sv		uvm-random uvm
+in-line_constraints--randomize_5	in-line_constraints--randomize_5	chapter-18/18.7--in-line-constraints--randomize_5.sv		18.7
+in-line_constraints--randomize_6	in-line_constraints--randomize_6	chapter-18/18.7--in-line-constraints--randomize_6.sv		uvm-random uvm
+local_scope_resolution_0	local_scope_resolution_0	chapter-18/18.7.1--local-scope-resolution_0.sv		18.7.1
+local_scope_resolution_1	local_scope_resolution_1	chapter-18/18.7.1--local-scope-resolution_1.sv		uvm-random uvm
+disabling-random-variables-with-rand_mode_0	disabling-random-variables-with-rand_mode_0	chapter-18/18.8--disabling-random-variables-with-rand_mode_0.sv		uvm-random uvm
+disabling-random-variables-with-rand_mode_1	disabling-random-variables-with-rand_mode_1	chapter-18/18.8--disabling-random-variables-with-rand_mode_1.sv		uvm-random uvm
+disabling-random-variables-with-rand_mode_2	disabling-random-variables-with-rand_mode_2	chapter-18/18.8--disabling-random-variables-with-rand_mode_2.sv		uvm-random uvm
+disabling-random-variables-with-rand_mode_3	disabling-random-variables-with-rand_mode_3	chapter-18/18.8--disabling-random-variables-with-rand_mode_3.sv		uvm-random uvm
+disabling-random-variables-with-rand_mode_4	disabling-random-variables-with-rand_mode_4	chapter-18/18.8--disabling-random-variables-with-rand_mode_4.sv	simulation elaboration	18.8
+disabling-random-variables-with-rand_mode_5	disabling-random-variables-with-rand_mode_5	chapter-18/18.8--disabling-random-variables-with-rand_mode_5.sv	simulation elaboration	uvm-random uvm
+controlling-constraints-with-constraint_mode_0	controlling-constraints-with-constraint_mode_0	chapter-18/18.9--controlling-constraints-with-constraint_mode_0.sv		uvm-random uvm
+controlling_constraints_with_constraint_mode_1	controlling_constraints_with_constraint_mode_1	chapter-18/18.9--controlling-constraints-with-constraint_mode_1.sv	simulation elaboration	18.8
+controlling-constraints-with-constraint_mode_2	controlling-constraints-with-constraint_mode_2	chapter-18/18.9--controlling-constraints-with-constraint_mode_2.sv	simulation elaboration	uvm-random uvm
+error_task	error_task	chapter-20/20.10--error.sv	parsing	20.10
+fatal_task	fatal_task	chapter-20/20.10--fatal.sv	parsing	20.10
+info_task	info_task	chapter-20/20.10--info.sv	simulation elaboration parsing	20.10
+warning_task	warning_task	chapter-20/20.10--warning.sv	parsing	20.10
+coverage_routines	coverage_routines	chapter-20/20.14--coverage.sv	simulation elaboration parsing	20.14
+dist_chi_square_function	dist_chi_square_function	chapter-20/20.15--dist_chi_square.sv	simulation elaboration parsing	20.15
+dist_erlang_function	dist_erlang_function	chapter-20/20.15--dist_erlang.sv	simulation elaboration parsing	20.15
+dist_exponential_function	dist_exponential_function	chapter-20/20.15--dist_exponential.sv	simulation elaboration parsing	20.15
+dist_normal_function	dist_normal_function	chapter-20/20.15--dist_normal.sv	simulation elaboration parsing	20.15
+dist_poisson_function	dist_poisson_function	chapter-20/20.15--dist_poisson.sv	simulation elaboration parsing	20.15
+dist_t_function	dist_t_function	chapter-20/20.15--dist_t.sv	simulation elaboration parsing	20.15
+dist_uniform_function	dist_uniform_function	chapter-20/20.15--dist_uniform.sv	simulation elaboration parsing	20.15
+random_function	random_function	chapter-20/20.15--random.sv	simulation elaboration parsing	20.15
+exit_task	exit_task	chapter-20/20.2--exit.sv		20.2
+finish_task	finish_task	chapter-20/20.2--finish.sv		20.2
+stop_task	stop_task	chapter-20/20.2--stop.sv		20.2
+realtime_task	realtime_task	chapter-20/20.3--realtime.sv		20.3
+stime_task	stime_task	chapter-20/20.3--stime.sv		20.3
+time_task	time_task	chapter-20/20.3--time.sv		20.3
+printtimescale_hier_task	printtimescale_hier_task	chapter-20/20.4--printtimescale-hier.sv	simulation elaboration parsing	20.4
+printtimescale_task	printtimescale_task	chapter-20/20.4--printtimescale.sv	simulation elaboration parsing	20.4
+timeformat_task	timeformat_task	chapter-20/20.4--timeformat.sv	simulation elaboration parsing	20.4
+itor_function	itor_function	chapter-20/20.5--itor.sv	simulation elaboration parsing	20.5
+realtobits_bitstoreal_functions	realtobits_bitstoreal_functions	chapter-20/20.5--real-bits-conv.sv	simulation elaboration parsing	20.5
+rtoi_function	rtoi_function	chapter-20/20.5--rtoi.sv	simulation elaboration parsing	20.5
+shortrealtobits_bitstoshortreal_functions	shortrealtobits_bitstoshortreal_functions	chapter-20/20.5--shortreal-bits-conv.sv	simulation elaboration parsing	20.5
+bits_function	bits_function	chapter-20/20.6--bits.sv	simulation elaboration parsing	20.6
+bits_type_function	bits_type_function	chapter-20/20.6--bits_type.sv	simulation elaboration parsing	20.6
+isunbounded_function	isunbounded_function	chapter-20/20.6--isunbounded.sv	simulation elaboration parsing	20.6
+typename_function	typename_function	chapter-20/20.6--typename.sv	simulation elaboration parsing	20.6
+typename_type_function	typename_type_function	chapter-20/20.6--typename_type.sv	simulation elaboration parsing	20.6
+array_queries_multi_dim	array_queries_multi_dim	chapter-20/20.7--array-queries-multi-dim.sv	simulation elaboration parsing	20.7
+array_queries	array_queries	chapter-20/20.7--array-queries.sv	simulation elaboration parsing	20.7
+atan2_function	atan2_function	chapter-20/20.8--atan2.sv	simulation elaboration parsing	20.8
+ceil_function	ceil_function	chapter-20/20.8--ceil.sv	simulation elaboration parsing	20.8
+clog2_function	clog2_function	chapter-20/20.8--clog2.sv	simulation elaboration parsing	20.8
+exp_function	exp_function	chapter-20/20.8--exp.sv	simulation elaboration parsing	20.8
+floor_function	floor_function	chapter-20/20.8--floor.sv	simulation elaboration parsing	20.8
+hypot_function	hypot_function	chapter-20/20.8--hypot.sv	simulation elaboration parsing	20.8
+ln_function	ln_function	chapter-20/20.8--ln.sv	simulation elaboration parsing	20.8
+log10_function	log10_function	chapter-20/20.8--log10.sv	simulation elaboration parsing	20.8
+pow_function	pow_function	chapter-20/20.8--pow.sv	simulation elaboration parsing	20.8
+sqrt_function	sqrt_function	chapter-20/20.8--sqrt.sv	simulation elaboration parsing	20.8
+countbits_function	countbits_function	chapter-20/20.9--countbits.sv	simulation elaboration parsing	20.9
+isunknown_function	isunknown_function	chapter-20/20.9--isunknown.sv	simulation elaboration parsing	20.9
+onehot_function	onehot_function	chapter-20/20.9--onehot.sv	simulation elaboration parsing	20.9
+onehot0_function	onehot0_function	chapter-20/20.9--onehot0.sv	simulation elaboration parsing	20.9
+display_boh	display_boh	chapter-21/21.2--display-boh.sv	simulation elaboration parsing	21.2
+display_task	display_task	chapter-21/21.2--display.sv	simulation elaboration parsing	21.2
+monitor_task	monitor_task	chapter-21/21.2--monitor.sv	simulation elaboration parsing	21.2
+strobe_task	strobe_task	chapter-21/21.2--strobe.sv	simulation elaboration parsing	21.2
+write_boh	write_boh	chapter-21/21.2--write-boh.sv	simulation elaboration parsing	21.2
+write_task	write_task	chapter-21/21.2--write.sv	simulation elaboration parsing	21.2
+fdisplay_boh	fdisplay_boh	chapter-21/21.3--fdisplay-boh.sv	simulation elaboration parsing	21.3
+fdisplay_task	fdisplay_task	chapter-21/21.3--fdisplay.sv	simulation elaboration parsing	21.3
+feof_function	feof_function	chapter-21/21.3--feof.sv	simulation elaboration parsing	21.3
+ferror_function	ferror_function	chapter-21/21.3--ferror.sv	simulation elaboration parsing	21.3
+fflush_task	fflush_task	chapter-21/21.3--fflush.sv	simulation elaboration parsing	21.3
+fgetc_function	fgetc_function	chapter-21/21.3--fgetc.sv	simulation elaboration parsing	21.3
+fgets_function	fgets_function	chapter-21/21.3--fgets.sv	simulation elaboration parsing	21.3
+file_tasks	file_tasks	chapter-21/21.3--file.sv	simulation elaboration parsing	21.3
+fmonitor_task	fmonitor_task	chapter-21/21.3--fmonitor.sv	simulation elaboration parsing	21.3
+file_pos_tasks	file_pos_tasks	chapter-21/21.3--fpos.sv	simulation elaboration parsing	21.3
+fread_task	fread_task	chapter-21/21.3--fread.sv	simulation elaboration parsing	21.3
+fscanf_task	fscanf_task	chapter-21/21.3--fscanf.sv	simulation elaboration parsing	21.3
+fstrobe_task	fstrobe_task	chapter-21/21.3--fstrobe.sv	simulation elaboration parsing	21.3
+fwrite_boh	fwrite_boh	chapter-21/21.3--fwrite-boh.sv	simulation elaboration parsing	21.3
+fwrite_task	fwrite_task	chapter-21/21.3--fwrite.sv	simulation elaboration parsing	21.3
+sscanf_task	sscanf_task	chapter-21/21.3--sscanf.sv	simulation elaboration parsing	21.3
+ungetc_function	ungetc_function	chapter-21/21.3--ungetc.sv	simulation elaboration parsing	21.3
+readmemb_task	readmemb_task	chapter-21/21.4--readmemb.sv	parsing	21.4
+readmemh_task	readmemh_task	chapter-21/21.4--readmemh.sv	parsing	21.4
+test_plusargs	test_plusargs	chapter-21/21.6--test.sv	simulation elaboration parsing	21.6
+value_plusargs	value_plusargs	chapter-21/21.6--value.sv	simulation elaboration parsing	21.6
+vcd_dump_test	vcd_dump_test	chapter-21/21.7--dumpfile.sv	simulation elaboration parsing	21.7
+vcd_dumpports_test	vcd_dumpports_test	chapter-21/21.7--dumpports.sv	simulation elaboration parsing	21.7
+22.10--celldefine-basic-1	22.10--celldefine-basic-1	chapter-22/22.10--celldefine-basic-1.sv	preprocessing	22.10
+22.10--celldefine-basic-2	22.10--celldefine-basic-2	chapter-22/22.10--celldefine-basic-2.sv	preprocessing	22.10
+22.11--pragma-basic	22.11--pragma-basic	chapter-22/22.11--pragma-basic.sv	preprocessing	22.11
+22.11--pragma-complex	22.11--pragma-complex	chapter-22/22.11--pragma-complex.sv	preprocessing	22.11
+22.11--pragma-invalid	22.11--pragma-invalid	chapter-22/22.11--pragma-invalid.sv	preprocessing	22.11
+22.11--pragma-nested	22.11--pragma-nested	chapter-22/22.11--pragma-nested.sv	preprocessing	22.11
+22.11--pragma-number-multi	22.11--pragma-number-multi	chapter-22/22.11--pragma-number-multi.sv	preprocessing	22.11
+22.11--pragma-number	22.11--pragma-number	chapter-22/22.11--pragma-number.sv	preprocessing	22.11
+22.12--line-basic	22.12--line-basic	chapter-22/22.12--line-basic.sv	preprocessing	22.12
+22.12--line-complex	22.12--line-complex	chapter-22/22.12--line-complex.sv	preprocessing	22.12
+22.12--line-illegal-1	22.12--line-illegal-1	chapter-22/22.12--line-illegal-1.sv	preprocessing	22.12
+22.12--line-illegal-2	22.12--line-illegal-2	chapter-22/22.12--line-illegal-2.sv	preprocessing	22.12
+22.12--line-illegal-3	22.12--line-illegal-3	chapter-22/22.12--line-illegal-3.sv	preprocessing	22.12
+22.12--line-illegal-4	22.12--line-illegal-4	chapter-22/22.12--line-illegal-4.sv	preprocessing	22.12
+22.12--line-illegal-5	22.12--line-illegal-5	chapter-22/22.12--line-illegal-5.sv	preprocessing	22.12
+22.3--resetall_basic	22.3--resetall_basic	chapter-22/22.3--resetall_basic.sv	preprocessing parsing	22.3
+22.3--resetall_illegal	22.3--resetall_illegal	chapter-22/22.3--resetall_illegal.sv	preprocessing parsing	22.3
+22.3--resetall_multiple	22.3--resetall_multiple	chapter-22/22.3--resetall_multiple.sv	preprocessing parsing	22.3
+22.4--check_included_definitions	22.4--check_included_definitions	chapter-22/22.4--check_included_definitions.sv	preprocessing parsing	22.4
+22.4--include_basic	22.4--include_basic	chapter-22/22.4--include_basic.sv	preprocessing parsing	22.4
+22.4--include_basic_rpath	22.4--include_basic_rpath	chapter-22/22.4--include_basic_rpath.sv	preprocessing parsing	22.4
+22.4--include_from_other_directory	22.4--include_from_other_directory	chapter-22/22.4--include_from_other_directory.sv	preprocessing parsing	22.4
+22.4--include_via_define	22.4--include_via_define	chapter-22/22.4--include_via_define.sv	preprocessing parsing	22.4
+22.4--include_with_comment	22.4--include_with_comment	chapter-22/22.4--include_with_comment.sv	preprocessing parsing	22.4
+22.5.1--define_expansion_1	22.5.1--define_expansion_1	chapter-22/22.5.1--define-expansion_1.sv	preprocessing	22.5.1
+22.5.1--define_expansion_10	22.5.1--define_expansion_10	chapter-22/22.5.1--define-expansion_10.sv	preprocessing	22.5.1
+22.5.1--define_expansion_11	22.5.1--define_expansion_11	chapter-22/22.5.1--define-expansion_11.sv	preprocessing	22.5.1
+22.5.1--define_expansion_12	22.5.1--define_expansion_12	chapter-22/22.5.1--define-expansion_12.sv	preprocessing	22.5.1
+22.5.1--define_expansion_13	22.5.1--define_expansion_13	chapter-22/22.5.1--define-expansion_13.sv	preprocessing	22.5.1
+22.5.1--define_expansion_14	22.5.1--define_expansion_14	chapter-22/22.5.1--define-expansion_14.sv	preprocessing	22.5.1
+22.5.1--define_expansion_15	22.5.1--define_expansion_15	chapter-22/22.5.1--define-expansion_15.sv	preprocessing	22.5.1
+22.5.1--define_expansion_16	22.5.1--define_expansion_16	chapter-22/22.5.1--define-expansion_16.sv	preprocessing	22.5.1
+22.5.1--define_expansion_17	22.5.1--define_expansion_17	chapter-22/22.5.1--define-expansion_17.sv	preprocessing	22.5.1
+22.5.1--define_expansion_18	22.5.1--define_expansion_18	chapter-22/22.5.1--define-expansion_18.sv	preprocessing	22.5.1
+22.5.1--define_expansion_19	22.5.1--define_expansion_19	chapter-22/22.5.1--define-expansion_19.sv	preprocessing	22.5.1
+22.5.1--define_expansion_2	22.5.1--define_expansion_2	chapter-22/22.5.1--define-expansion_2.sv	preprocessing	22.5.1
+22.5.1--define_expansion_20	22.5.1--define_expansion_20	chapter-22/22.5.1--define-expansion_20.sv	preprocessing	22.5.1
+22.5.1--define_expansion_21	22.5.1--define_expansion_21	chapter-22/22.5.1--define-expansion_21.sv	preprocessing	22.5.1
+22.5.1--define_expansion_22	22.5.1--define_expansion_22	chapter-22/22.5.1--define-expansion_22.sv	preprocessing	22.5.1
+22.5.1--define_expansion_23	22.5.1--define_expansion_23	chapter-22/22.5.1--define-expansion_23.sv	preprocessing	22.5.1
+22.5.1--define_expansion_24	22.5.1--define_expansion_24	chapter-22/22.5.1--define-expansion_24.sv	preprocessing	22.5.1
+22.5.1--define_expansion_25	22.5.1--define_expansion_25	chapter-22/22.5.1--define-expansion_25.sv	preprocessing	22.5.1
+22.5.1--define_expansion_26	22.5.1--define_expansion_26	chapter-22/22.5.1--define-expansion_26.sv	preprocessing	22.5.1
+22.5.1--define_expansion_3	22.5.1--define_expansion_3	chapter-22/22.5.1--define-expansion_3.sv	preprocessing	22.5.1
+22.5.1--define_expansion_4	22.5.1--define_expansion_4	chapter-22/22.5.1--define-expansion_4.sv	preprocessing	22.5.1
+22.5.1--define_expansion_5	22.5.1--define_expansion_5	chapter-22/22.5.1--define-expansion_5.sv	preprocessing	22.5.1
+22.5.1--define_expansion_6	22.5.1--define_expansion_6	chapter-22/22.5.1--define-expansion_6.sv	preprocessing	22.5.1
+22.5.1--define_expansion_7	22.5.1--define_expansion_7	chapter-22/22.5.1--define-expansion_7.sv	preprocessing	22.5.1
+22.5.1--define_expansion_8	22.5.1--define_expansion_8	chapter-22/22.5.1--define-expansion_8.sv	preprocessing	22.5.1
+22.5.1--define_expansion_9	22.5.1--define_expansion_9	chapter-22/22.5.1--define-expansion_9.sv	preprocessing	22.5.1
+22.5.1--define	22.5.1--define	chapter-22/22.5.1--define.sv	preprocessing	22.5.1
+22.5.1--define_and_resetall	22.5.1--define_and_resetall	chapter-22/22.5.1--define_and_resetall.sv	simulation elaboration preprocessing	22.5.1
+22.5.1--include-define-expansion	22.5.1--include-define-expansion	chapter-22/22.5.1--include-define-expansion.sv	preprocessing	22.5.1
+22.5.2--undef-basic	22.5.2--undef-basic	chapter-22/22.5.2--undef-basic.sv	preprocessing	22.5.2
+22.5.2--undef-nonexisting	22.5.2--undef-nonexisting	chapter-22/22.5.2--undef-nonexisting.sv	preprocessing	22.5.2
+22.5.3--undefineall-and-redefine	22.5.3--undefineall-and-redefine	chapter-22/22.5.3--undefineall-and-redefine.sv	preprocessing	22.5.3
+22.5.3--undefineall-basic	22.5.3--undefineall-basic	chapter-22/22.5.3--undefineall-basic.sv	preprocessing	22.5.3
+22.6--ifdef-behavioral	22.6--ifdef-behavioral	chapter-22/22.6--ifdef-behavioral.sv	preprocessing	22.6
+22.6--ifdef-chained-nested	22.6--ifdef-chained-nested	chapter-22/22.6--ifdef-chained-nested.sv	preprocessing	22.6
+22.6--ifdef-nested	22.6--ifdef-nested	chapter-22/22.6--ifdef-nested.sv	preprocessing	22.6
+22.7--timescale-basic-1	22.7--timescale-basic-1	chapter-22/22.7--timescale-basic-1.sv	preprocessing	22.7
+22.7--timescale-basic-2	22.7--timescale-basic-2	chapter-22/22.7--timescale-basic-2.sv	preprocessing	22.7
+22.7--timescale-basic-3	22.7--timescale-basic-3	chapter-22/22.7--timescale-basic-3.sv	simulation elaboration	22.7
+22.7--timescale-basic-4	22.7--timescale-basic-4	chapter-22/22.7--timescale-basic-4.sv	simulation elaboration	22.7
+22.7--timescale-module	22.7--timescale-module	chapter-22/22.7--timescale-module.sv	preprocessing	22.7
+22.7--timescale-reset	22.7--timescale-reset	chapter-22/22.7--timescale-reset.sv	preprocessing	22.7
+22.8--default_nettype-redefinition	22.8--default_nettype-redefinition	chapter-22/22.8--default_nettype-redefinition.sv	preprocessing	22.8
+22.8--default_nettype	22.8--default_nettype	chapter-22/22.8--default_nettype.sv	preprocessing	22.8
+22.9--unconnected_drive-basic-2	22.9--unconnected_drive-basic-2	chapter-22/22.9--unconnected_drive-basic-2.sv	preprocessing	22.9
+22.9--unconnected_drive-basic	22.9--unconnected_drive-basic	chapter-22/22.9--unconnected_drive-basic.sv	preprocessing	22.9
+22.9--unconnected_drive-invalid-1	22.9--unconnected_drive-invalid-1	chapter-22/22.9--unconnected_drive-invalid-1.sv	simulation elaboration	22.9
+22.9--unconnected_drive-invalid-2	22.9--unconnected_drive-invalid-2	chapter-22/22.9--unconnected_drive-invalid-2.sv	simulation elaboration	22.9
+22.9--unconnected_drive-invalid-3	22.9--unconnected_drive-invalid-3	chapter-22/22.9--unconnected_drive-invalid-3.sv	simulation elaboration	22.9
+dummy_include	dummy_include	chapter-22/dummy_include.sv	preprocessing	22.4
+defs	defs	chapter-22/include_directory/defs.sv	preprocessing	22.4
+macromodule_definition	macromodule_definition	chapter-23/23.2--macromodule-definition.sv		23.2
+23.2--module-definition	module_definition	chapter-23/23.2--module-definition.sv		23.2
+23.2--module-label	module_definition	chapter-23/23.2--module-label.sv	simulation elaboration parsing	23.2
+program_construct	program_construct	chapter-24/24.3--program.sv	simulation elaboration parsing	24.3
+interface	interface	chapter-25/25.3-interface.sv		25.3
+package_decl	package_decl	chapter-26/26.2--package-decl.sv		26.2
+package_ref	package_ref	chapter-26/26.3--package-ref.sv	simulation elaboration parsing	26.3
+structure-arrays-illegal	structure-arrays-illegal	chapter-5/5.10-structure-arrays-illegal.sv	simulation elaboration	5.10
+structure-arrays	structure-arrays	chapter-5/5.10-structure-arrays.sv		5.10
+structure-replication	structure-replication	chapter-5/5.10-structure-replication.sv		5.10
+structure	structure	chapter-5/5.10-structures.sv		5.10
+arrays-key-index	arrays-key-index	chapter-5/5.11-arrays-key-index.sv		5.11
+arrays-replication	arrays-replication	chapter-5/5.11-arrays-replication.sv		5.11
+arrays	arrays	chapter-5/5.11-arrays.sv		5.11
+attributes-case	attributes-case	chapter-5/5.12-attributes-case.sv		5.12
+attributes-conditional	attributes-conditional	chapter-5/5.12-attributes-conditional.sv		5.12
+attributes-module	attributes-module	chapter-5/5.12-attributes-module.sv		5.12
+attributes-operator	attributes-operator	chapter-5/5.12-attributes-operator.sv		5.12
+attributes-variable	attributes-variable	chapter-5/5.12-attributes-variable.sv		5.12
+builtin-methods-string	builtin-methods-string	chapter-5/5.13-builtin-methods-strings.sv		5.13
+comments	comments	chapter-5/5.4--coments.sv		5.4
+identifiers	identifiers	chapter-5/5.6--identifiers.sv		5.6
+wrong-identifiers	wrong-identifiers	chapter-5/5.6--wrong-identifiers.sv		5.6
+escaped-identifiers	escaped-identifiers	chapter-5/5.6.1--escaped-identifiers.sv		5.6.1
+nonescaped-access	nonescaped-access	chapter-5/5.6.1--nonescaped-access.sv		5.6.1
+system-functions	system-functions	chapter-5/5.6.3--system-functions.sv		5.6.3
+begin-keywords	begin-keywords	chapter-5/5.6.4--compiler-directives-begin-keywords.sv		5.6.4
+celldefine	celldefine	chapter-5/5.6.4--compiler-directives-celldefine.sv		5.6.4
+debug-line	debug-line	chapter-5/5.6.4--compiler-directives-debug-line.sv		5.6.4
+debug-directives	debug-directives	chapter-5/5.6.4--compiler-directives-debug.sv		5.6.4
+default-nettype	default-nettype	chapter-5/5.6.4--compiler-directives-default-nettype.sv		5.6.4
+define-directive	define-directive	chapter-5/5.6.4--compiler-directives-define.sv		5.6.4
+include-directive	include-directive	chapter-5/5.6.4--compiler-directives-include.sv		5.6.4
+pragma-directive	pragma-directive	chapter-5/5.6.4--compiler-directives-pragma.sv		5.6.4
+compiler_directives_preprocessor_macro_0	compiler_directives_preprocessor_macro_0	chapter-5/5.6.4--compiler-directives-preprocessor-macro_0.sv	preprocessing	5.6.4
+compiler_directives_preprocessor_macro_1	compiler_directives_preprocessor_macro_1	chapter-5/5.6.4--compiler-directives-preprocessor-macro_1.sv		5.6.4
+resetall-directive	resetall-directive	chapter-5/5.6.4--compiler-directives-resetall.sv		5.6.4
+timescale-directive	timescale-directive	chapter-5/5.6.4--compiler-directives-timescale.sv		5.6.4
+unconnected-drive	unconnected-drive	chapter-5/5.6.4--compiler-directives-unconnected-drive.sv	preprocessing	5.6.4
+integers-left-padding-bit	integers-left-padding-bit	chapter-5/5.7.1--integers-left-padding-bit.sv		5.7.1
+integers-left-padding	integers-left-padding	chapter-5/5.7.1--integers-left-padding.sv		5.7.1
+integers-sized-illegal	integers-sized-illegal	chapter-5/5.7.1--integers-signed-illegal.sv		5.7.1
+integers-signed	integers-signed	chapter-5/5.7.1--integers-signed.sv		5.7.1
+integers-sized	integers-sized	chapter-5/5.7.1--integers-sized.sv		5.7.1
+integers-token	integers-token	chapter-5/5.7.1--integers-token.sv		5.7.1
+integers-underscores	integers-underscores	chapter-5/5.7.1--integers-underscores.sv		5.7.1
+integers-unsized-illegal	integers-unsized-illegal	chapter-5/5.7.1--integers-unsized-illegal.sv		5.7.1
+integers-unsized	integers-unsized	chapter-5/5.7.1--integers-unsized.sv		5.7.1
+real-constants-illegal	real-constants-illegal	chapter-5/5.7.2-real-constants-illegal.sv		5.7.2
+real-constants	real-constants	chapter-5/5.7.2-real-constants.sv		5.7.2
+real-token	real-token	chapter-5/5.7.2-real-token.sv		5.7.2
+time-literals	time-literals	chapter-5/5.8-time-literals.sv		5.8
+string-assignment	string-assignment	chapter-5/5.9-string-assignment.sv		5.9
+string-basic	string-basic	chapter-5/5.9-string-basics.sv		5.9 5.3
+string-broken-line	string-broken-line	chapter-5/5.9-string-broken-line.sv		5.9
+string-word-assignment	string-word-assignment	chapter-5/5.9-string-word-assignment.sv		5.9
+string-special-chars	string-special-chars	chapter-5/5.9.1-string-special-chars.sv		5.9.1
+implicit_continuous_assignment	implicit_continuous_assignment	chapter-6/6.10--implicit_continuous_assignment.sv		6.10
+implicit_port	implicit_port	chapter-6/6.10--implicit_port.sv		6.10
+implicit_port_connection	implicit_port_connection	chapter-6/6.10--implicit_port_connection.sv		6.10
+real	real	chapter-6/6.12--real.sv		6.12
+real_idx	real_idx	chapter-6/6.12--real_bit_select.sv	simulation elaboration	6.12
+real_bit_select	real_bit_select	chapter-6/6.12--real_bit_select_idx.sv	simulation elaboration	6.12
+real_edge	real_edge	chapter-6/6.12--real_edge.sv	simulation elaboration	6.12
+realtime	realtime	chapter-6/6.12--realtime.sv		6.12
+shortreal	shortreal	chapter-6/6.12--shortreal.sv		6.12
+void	void	chapter-6/6.13--void.sv	simulation elaboration parsing	6.13
+chandle	chandle	chapter-6/6.14--chandle.sv		6.14
+string	string	chapter-6/6.16--string.sv		6.16
+string_len	string_len	chapter-6/6.16.1--string_len.sv		6.16.1
+string_atoreal	string_atoreal	chapter-6/6.16.10--string_atoreal.sv		6.16.10
+string_itoa	string_itoa	chapter-6/6.16.11--string_itoa.sv		6.16.11
+string_hextoa	string_hextoa	chapter-6/6.16.12--string_hextoa.sv		6.16.12
+string_octtoa	string_octtoa	chapter-6/6.16.13--string_octtoa.sv		6.16.13
+string_bintoa	string_bintoa	chapter-6/6.16.14--string_bintoa.sv		6.16.14
+string_realtoa	string_realtoa	chapter-6/6.16.15--string_realtoa.sv		6.16.15
+string_putc	string_putc	chapter-6/6.16.2--string_putc.sv		6.16.2
+string_getc	string_getc	chapter-6/6.16.3--string_getc.sv		6.16.3
+string_toupper	string_toupper	chapter-6/6.16.4--string_toupper.sv		6.16.4
+string_tolower	string_tolower	chapter-6/6.16.5--string_tolower.sv		6.16.5
+string_compare_fn	string_compare_fn	chapter-6/6.16.6--string_compare.sv		6.16.6
+string_icompare	string_icompare	chapter-6/6.16.7--string_icompare.sv		6.16.7
+string_substr	string_substr	chapter-6/6.16.8--string_substr.sv		6.16.8
+string_atobin	string_atobin	chapter-6/6.16.9--string_atobin.sv		6.16.9
+string_atohex	string_atohex	chapter-6/6.16.9--string_atohex.sv		6.16.9
+string_atoi	string_atoi	chapter-6/6.16.9--string_atoi.sv		6.16.9
+string_atooct	string_atooct	chapter-6/6.16.9--string_atooct.sv		6.16.9
+event	event	chapter-6/6.17--event.sv		6.17
+typedef	typedef	chapter-6/6.18--typedef.sv		6.18
+enum_anon	enum_anon	chapter-6/6.19--enum_anon.sv		6.19
+enum_value_inv	enum_value_inv	chapter-6/6.19--enum_value_inv.sv	simulation elaboration	6.19
+enum_xx	enum_xx	chapter-6/6.19--enum_xx.sv		6.19
+enum_xx_inv	enum_xx_inv	chapter-6/6.19--enum_xx_inv.sv	simulation elaboration	6.19
+enum_xx_inv_order	enum_xx_inv_order	chapter-6/6.19--enum_xx_inv_order.sv	simulation elaboration	6.19
+enum_typedef	enum_typedef	chapter-6/6.19.1--enum_typedef.sv		6.19.1
+enum_sequence	enum_sequence	chapter-6/6.19.2--enum_sequence.sv		6.19.2
+enum_sequence_range	enum_sequence_range	chapter-6/6.19.2--enum_sequence_range.sv		6.19.2
+enum_type_checking	enum_type_checking	chapter-6/6.19.3--enum_type_checking.sv		6.19.3
+enum_type_checking_inv	enum_type_checking_inv	chapter-6/6.19.3--enum_type_checking_inv.sv	simulation elaboration	6.19.3
+enum_numerical_expr	enum_numerical_expr	chapter-6/6.19.4--enum_numerical_expr.sv		6.19.4
+enum_numerical_expr_cast	enum_numerical_expr_cast	chapter-6/6.19.4--enum_numerical_expr_cast.sv		6.19.4
+enum_numerical_expr_no_cast	enum_numerical_expr_no_cast	chapter-6/6.19.4--enum_numerical_expr_no_cast.sv	simulation elaboration	6.19.4
+enum_first	enum_first	chapter-6/6.19.5.1--enum_first.sv		6.19.5.1
+enum_last	enum_last	chapter-6/6.19.5.2--enum_last.sv		6.19.5.2
+enum_next	enum_next	chapter-6/6.19.5.3--enum_next.sv		6.19.5.3
+enum_prev	enum_prev	chapter-6/6.19.5.4--enum_prev.sv		6.19.5.4
+enum_num	enum_num	chapter-6/6.19.5.5--enum_num.sv		6.19.5.5
+enum_name	enum_name	chapter-6/6.19.5.6--enum_name.sv		6.19.5.6
+parameter	parameter	chapter-6/6.20.2--parameter.sv		6.20.2
+parameter_aggregate	parameter_aggregate	chapter-6/6.20.2--parameter_aggregate.sv		6.20.2
+parameter_dep	parameter_dep	chapter-6/6.20.2--parameter_dep.sv		6.20.2
+parameter_port_list	parameter_port_list	chapter-6/6.20.2--parameter_port_list.sv		6.20.2
+parameter_range	parameter_range	chapter-6/6.20.2--parameter_range.sv		6.20.2
+parameter_real	parameter_real	chapter-6/6.20.2--parameter_real.sv		6.20.2
+parameter_type	parameter_type	chapter-6/6.20.3--parameter_type.sv		6.20.3
+localparam	localparam	chapter-6/6.20.4--localparam.sv		6.20.4
+localparam_int	localparam_int	chapter-6/6.20.4--localparam_int.sv		6.20.4
+localparam_logic	localparam_logic	chapter-6/6.20.4--localparam_logic.sv		6.20.4
+localparam_string	localparam_string	chapter-6/6.20.4--localparam_string.sv		6.20.4
+localparam_uint	localparam_uint	chapter-6/6.20.4--localparam_unsigned_int.sv		6.20.4
+specparam	specparam	chapter-6/6.20.5--specparam.sv		6.20.5
+specparam_inv	specparam_inv	chapter-6/6.20.5--specparam_inv.sv	simulation elaboration	6.20.5
+const	const	chapter-6/6.20.6--const.sv		6.20.6
+localparam_type_decl	localparam_type_decl	chapter-6/6.23--localparam_type_decl.sv		6.23
+type_op	type_op	chapter-6/6.23--type_op.sv		6.23
+type_op_compare	type_op_compare	chapter-6/6.23--type_op_compare.sv		6.23
+cast_op	cast_op	chapter-6/6.24.1--cast_op.sv		6.24.1
+cast_fn	cast_fn	chapter-6/6.24.2--cast_fn.sv		6.24.2
+cast_task	cast_task	chapter-6/6.24.2--cast_task.sv		6.24.2 8.16
+bitstream_cast	bitstream_cast	chapter-6/6.24.3--bitstream_cast.sv		6.24.3
+variable_assignment	variable_assignment	chapter-6/6.5--variable_assignment.sv		6.5
+variable_mixed_assignments	variable_mixed_assignments	chapter-6/6.5--variable_mixed_assignments.sv	simulation elaboration	6.5
+variable_multiple_assignments	variable_multiple_assignments	chapter-6/6.5--variable_multiple_assignments.sv	simulation elaboration	6.5
+variable_redeclare	variable_redeclare	chapter-6/6.5--variable_redeclare.sv	simulation elaboration	6.5
+nettype	nettype	chapter-6/6.6.7--nettype.sv		6.6.7
+nettype_resolution_fn	nettype_resolution_fn	chapter-6/6.6.7--nettype_resolution_fn.sv		6.6.7
+interconnect	interconnect	chapter-6/6.6.8--interconnect.sv		6.6.8
+logic_vector	logic_vector	chapter-6/6.9.1--logic_vector.sv		6.9.1
+vector_scalared	vector_scalared	chapter-6/6.9.2--vector_scalared.sv		6.9.2
+vector_vectored	vector_vectored	chapter-6/6.9.2--vector_vectored.sv		6.9.2
+vector_vectored_inv	vector_vectored_inv	chapter-6/6.9.2--vector_vectored_inv.sv		6.9.2
+associative-arrays-allocating-elements	associative-arrays-allocating-elements	chapter-7/arrays/associative/alloc.sv	simulation elaboration parsing	7.8.7 7.8 7.9.1
+associative-arrays-as-arguments	associative-arrays-as-arguments	chapter-7/arrays/associative/arguments.sv	simulation elaboration parsing	7.9.10 7.8
+associative-arrays-assignment	associative-arrays-assignment	chapter-7/arrays/associative/assignment.sv	simulation elaboration parsing	7.9.9 7.8
+associative-arrays-class	associative-arrays-class	chapter-7/arrays/associative/class.sv		7.8.3 7.8
+associative-arrays-integral	associative-arrays-integral	chapter-7/arrays/associative/integral.sv		7.8.4 7.8
+associative-arrays-literals	associative-arrays-literals	chapter-7/arrays/associative/literals.sv	simulation elaboration parsing	7.9.11 7.8
+array-locator-methods-find-first-index	array-locator-methods-find-first-index	chapter-7/arrays/associative/locator-methods/find-first-index.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-find-first	array-locator-methods-find-first	chapter-7/arrays/associative/locator-methods/find-first.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-find-index	array-locator-methods-find-index	chapter-7/arrays/associative/locator-methods/find-index.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-find-last-index	array-locator-methods-find-last-index	chapter-7/arrays/associative/locator-methods/find-last-index.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-find-last	array-locator-methods-find-last	chapter-7/arrays/associative/locator-methods/find-last.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-find	array-locator-methods-find	chapter-7/arrays/associative/locator-methods/find.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-max	array-locator-methods-max	chapter-7/arrays/associative/locator-methods/max.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-min	array-locator-methods-min	chapter-7/arrays/associative/locator-methods/min.sv	simulation elaboration parsing	7.12.1 7.12 7.10
+array-locator-methods-unique-index	array-locator-methods-unique-index	chapter-7/arrays/associative/locator-methods/unique-index.sv	simulation elaboration parsing	7.12.1 7.12 7.10 7.12.2
+array-locator-methods-unique	array-locator-methods-unique	chapter-7/arrays/associative/locator-methods/unique.sv	simulation elaboration parsing	7.12.1 7.12 7.10 7.12.2
+associative-arrays-delete	associative-arrays-delete	chapter-7/arrays/associative/methods/delete.sv	simulation elaboration parsing	7.9.2 7.9
+associative-arrays-exists	associative-arrays-exists	chapter-7/arrays/associative/methods/exists.sv	simulation elaboration parsing	7.9.3 7.9
+associative-arrays-first	associative-arrays-first	chapter-7/arrays/associative/methods/first.sv	simulation elaboration parsing	7.9.4 7.9
+associative-arrays-last	associative-arrays-last	chapter-7/arrays/associative/methods/last.sv	simulation elaboration parsing	7.9.5 7.9
+associative-arrays-next	associative-arrays-next	chapter-7/arrays/associative/methods/next.sv	simulation elaboration parsing	7.9.6 7.9
+associative-arrays-num	associative-arrays-num	chapter-7/arrays/associative/methods/num.sv	simulation elaboration parsing	7.9.1 7.9
+associative-arrays-prev	associative-arrays-prev	chapter-7/arrays/associative/methods/prev.sv	simulation elaboration parsing	7.9.7 7.9
+associative-arrays-size	associative-arrays-size	chapter-7/arrays/associative/methods/size.sv	simulation elaboration parsing	7.9.1 7.9
+associative-arrays-arg-traversal	associative-arrays-arg-traversal	chapter-7/arrays/associative/methods/traversal.sv	simulation elaboration parsing	7.9.8 7.9
+associative-arrays-access-nonexistent	associative-arrays-access-nonexistent	chapter-7/arrays/associative/nonexistent.sv	simulation elaboration parsing	7.8.6 7.9.1
+associative-arrays-other-types	associative-arrays-other-types	chapter-7/arrays/associative/other.sv		7.8.1
+associative-arrays-string	associative-arrays-string	chapter-7/arrays/associative/string.sv		7.8.2 7.8
+associative-arrays-wildcard	associative-arrays-wildcard	chapter-7/arrays/associative/wildcard.sv		7.8.1
+dyn-arr-basic	dyn-arr-basic	chapter-7/arrays/dynamic/basic.sv		7.5
+dynamic-arrays-op-delete	dynamic-arrays-op-delete	chapter-7/arrays/dynamic/op-delete.sv	simulation elaboration parsing	7.5.3
+dynamic-arrays-op-new	dynamic-arrays-op-new	chapter-7/arrays/dynamic/op-new.sv	simulation elaboration parsing	7.5.1
+dynamic-arrays-op-size	dynamic-arrays-op-size	chapter-7/arrays/dynamic/op-size.sv	simulation elaboration parsing	7.5.2
+multi-dim-basic	multi-dim-basic	chapter-7/arrays/multidimensional/basic.sv		7.4.5
+copy	copy	chapter-7/arrays/multidimensional/copy.sv	simulation elaboration parsing	7.4.5
+multi-declaration	multi-declaration	chapter-7/arrays/multidimensional/multi.sv		7.4.5
+subarrays	subarrays	chapter-7/arrays/multidimensional/subarrays.sv	simulation elaboration parsing	7.4.5
+basic-packed	basic-packed	chapter-7/arrays/packed/basic.sv		7.4.1 7.4
+operations-on-packed-arrays-equality	operations-on-packed-arrays-equality	chapter-7/arrays/packed/equality.sv	simulation elaboration parsing	7.4.3
+operations-on-packed-arrays-one-bit	operations-on-packed-arrays-one-bit	chapter-7/arrays/packed/onebit.sv	simulation elaboration parsing	7.4.3
+operations-on-packed-arrays-rw	operations-on-packed-arrays-rw	chapter-7/arrays/packed/operations.sv	simulation elaboration parsing	7.4.3
+arrays-packed-quering-functions-dimensions	arrays-packed-quering-functions-dimensions	chapter-7/arrays/packed/querying-functions/dimensions.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-high	arrays-packed-quering-functions-high	chapter-7/arrays/packed/querying-functions/high.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-increment	arrays-packed-quering-functions-increment	chapter-7/arrays/packed/querying-functions/increment.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-left	arrays-packed-quering-functions-left	chapter-7/arrays/packed/querying-functions/left.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-low	arrays-packed-quering-functions-low	chapter-7/arrays/packed/querying-functions/low.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-right	arrays-packed-quering-functions-right	chapter-7/arrays/packed/querying-functions/right.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-size	arrays-packed-quering-functions-size	chapter-7/arrays/packed/querying-functions/size.sv	simulation elaboration parsing	7.11 7.4.1
+arrays-packed-quering-functions-unpacked-dimensions	arrays-packed-quering-functions-unpacked-dimensions	chapter-7/arrays/packed/querying-functions/unpacked-dimensions.sv	simulation elaboration parsing	7.11 7.4.1
+operations-on-packed-arrays-slice-equality	operations-on-packed-arrays-slice-equality	chapter-7/arrays/packed/slice-equality.sv	simulation elaboration parsing	7.4.3
+operations-on-packed-arrays-slice-rw	operations-on-packed-arrays-slice-rw	chapter-7/arrays/packed/slice.sv	simulation elaboration parsing	7.4.3
+operations-on-arrays-treat-as-integer	operations-on-arrays-treat-as-integer	chapter-7/arrays/packed/treat-as-integer.sv	simulation elaboration parsing	7.4.3
+operations-on-arrays-variable-slice-zero-rw	operations-on-arrays-variable-slice-zero-rw	chapter-7/arrays/packed/variable-slice-zero.sv	simulation elaboration	7.4.3
+operations-on-packed-arrays-variable-slice-rw	operations-on-packed-arrays-variable-slice-rw	chapter-7/arrays/packed/variable-slice.sv	simulation elaboration parsing	7.4.3 7.4.6
+array-unpacked-assignments	array-unpacked-assignments	chapter-7/arrays/unpacked/assignments.sv	simulation elaboration parsing	7.6 7.4.2
+basic-unpacked	basic-unpacked	chapter-7/arrays/unpacked/basic.sv		7.4.2 7.4
+operations-on-unpacked-arrays-equality	operations-on-unpacked-arrays-equality	chapter-7/arrays/unpacked/equality.sv	simulation elaboration parsing	7.4.3
+unpacked-array-iterator-index-querying	unpacked-array-iterator-index-querying	chapter-7/arrays/unpacked/index.sv	simulation elaboration parsing	7.12.4 7.4.2 7.10 7.12.1
+operations-on-unpacked-arrays-one-bit	operations-on-unpacked-arrays-one-bit	chapter-7/arrays/unpacked/onebit.sv	simulation elaboration parsing	7.4.3
+operations-on-unpacked-arrays-rw	operations-on-unpacked-arrays-rw	chapter-7/arrays/unpacked/operations.sv	simulation elaboration parsing	7.4.3
+ordering-methods-reverse	ordering-methods-reverse	chapter-7/arrays/unpacked/ordering-methods/reverse.sv	simulation elaboration parsing	7.12.2 7.4.2
+ordering-methods-rsort	ordering-methods-rsort	chapter-7/arrays/unpacked/ordering-methods/rsort.sv	simulation elaboration parsing	7.12.2 7.4.2
+ordering-methods-shuffle	ordering-methods-shuffle	chapter-7/arrays/unpacked/ordering-methods/shuffle.sv	simulation elaboration parsing	7.12.2 7.4.2
+ordering-methods-sort	ordering-methods-sort	chapter-7/arrays/unpacked/ordering-methods/sort.sv	simulation elaboration parsing	7.12.2 7.4.2
+unpacked-array-reduction-method-and	unpacked-array-reduction-method-and	chapter-7/arrays/unpacked/reduction-methods/and.sv	simulation elaboration parsing	7.12.3 7.4.2
+unpacked-array-reduction-method-or	unpacked-array-reduction-method-or	chapter-7/arrays/unpacked/reduction-methods/or.sv	simulation elaboration parsing	7.12.3 7.4.2
+unpacked-array-reduction-method-product	unpacked-array-reduction-method-product	chapter-7/arrays/unpacked/reduction-methods/product.sv	simulation elaboration parsing	7.12.3 7.4.2
+unpacked-array-reduction-method-sum	unpacked-array-reduction-method-sum	chapter-7/arrays/unpacked/reduction-methods/sum.sv	simulation elaboration parsing	7.12.3 7.4.2
+unpacked-array-reduction-method-xor	unpacked-array-reduction-method-xor	chapter-7/arrays/unpacked/reduction-methods/xor.sv	simulation elaboration parsing	7.12.3 7.4.2
+operations-on-unpacked-arrays-slice-equality	operations-on-unpacked-arrays-slice-equality	chapter-7/arrays/unpacked/slice-equality.sv	simulation elaboration parsing	7.4.3
+operations-on-unpacked-arrays-slice-rw	operations-on-unpacked-arrays-slice-rw	chapter-7/arrays/unpacked/slice.sv	simulation elaboration parsing	7.4.3
+unpacked-arrays-as-arguments-to-subroutines	unpacked-arrays-as-arguments-to-subroutines	chapter-7/arrays/unpacked/subroutines.sv	simulation elaboration parsing	7.7 7.4.2
+operations-on-unpacked-arrays-variable-slice-rw	operations-on-unpacked-arrays-variable-slice-rw	chapter-7/arrays/unpacked/variable-slice.sv	simulation elaboration parsing	7.4.3 7.4.6
+memories-basic	memories-basic	chapter-7/memories/basic.sv		7.4.4
+memories-read-write	memories-read-write	chapter-7/memories/read-write.sv	simulation elaboration parsing	7.4.4
+queues-basic	queues-basic	chapter-7/queues/basic.sv		7.10
+bounded-queues	bounded-queues	chapter-7/queues/bounded.sv	simulation elaboration parsing	7.10.5 7.10 7.10.2.7 7.10.2.1
+delete	delete	chapter-7/queues/delete.sv	simulation elaboration parsing	7.10.2.3 7.10.2
+delete-assign	delete-assign	chapter-7/queues/delete_assign.sv	simulation elaboration parsing	7.10.4
+insert	insert	chapter-7/queues/insert.sv	simulation elaboration parsing	7.10.2.2 7.10.2
+insert-assign	insert-assign	chapter-7/queues/insert_assign.sv	simulation elaboration parsing	7.10.4
+max-size	max-size	chapter-7/queues/max-size.sv	simulation elaboration parsing	7.10.1 7.10.2
+queues-elements-persistence	queues-elements-persistence	chapter-7/queues/persistence.sv	simulation elaboration parsing	7.10.3
+pop_back	pop_back	chapter-7/queues/pop_back.sv	simulation elaboration parsing	7.10.2.5 7.10.2
+pop_back-assign	pop_back-assign	chapter-7/queues/pop_back_assing.sv	simulation elaboration parsing	7.10.4
+pop_front	pop_front	chapter-7/queues/pop_front.sv	simulation elaboration parsing	7.10.2.4 7.10.2
+pop_front-assign	pop_front-assign	chapter-7/queues/pop_front_assign.sv	simulation elaboration parsing	7.10.4
+push_back	push_back	chapter-7/queues/push_back.sv	simulation elaboration parsing	7.10.2.7 7.10.2
+push_back_assign	push_back_assign	chapter-7/queues/push_back_assign.sv	simulation elaboration parsing	7.10.4
+push_front	push_front	chapter-7/queues/push_front.sv	simulation elaboration parsing	7.10.2.6 7.10.2
+push_front_assign	push_front_assign	chapter-7/queues/push_front_assign.sv	simulation elaboration parsing	7.10.4
+size	size	chapter-7/queues/size.sv	simulation elaboration parsing	7.10.2.1 7.10.2
+slice	slice	chapter-7/queues/slice.sv	simulation elaboration parsing	7.10.1 7.10.2
+basic-packed-structures	basic-packed-structures	chapter-7/structures/packed/basic.sv	simulation elaboration parsing	7.2.1 7.2 7.1
+packed-structures-default-members-value	packed-structures-default-members-value	chapter-7/structures/packed/default-value.sv	simulation elaboration	7.2.2
+packed-and-signed-structures	packed-and-signed-structures	chapter-7/structures/packed/signed.sv	simulation elaboration parsing	7.2.1 7.2
+packed-and-unsigned-structures	packed-and-unsigned-structures	chapter-7/structures/packed/unsigned.sv	simulation elaboration parsing	7.2.1 7.2
+basic-unpacked-structures	basic-unpacked-structures	chapter-7/structures/unpacked/basic.sv	simulation elaboration parsing	7.2 7.1
+unpacked-structures-members-default-value	unpacked-structures-members-default-value	chapter-7/structures/unpacked/default-value.sv	simulation elaboration parsing	7.2.2
+basic-packed-unions	basic-packed-unions	chapter-7/unions/packed/basic.sv	simulation elaboration parsing	7.3.1
+basic-tagged-union	basic-tagged-union	chapter-7/unions/tagged/basic.sv	simulation elaboration parsing	7.3.2
+basic-tagged-packed-union	basic-tagged-packed-union	chapter-7/unions/tagged/packed.sv	simulation elaboration parsing	7.3.2
+basic-union	basic-union	chapter-7/unions/unpacked/basic.sv	simulation elaboration parsing	7.3
+static_methods	static_methods	chapter-8/8.10--static_methods.sv		8.10
+this	this	chapter-8/8.11--this.sv		8.11
+assignment	assignment	chapter-8/8.12--assignment.sv		8.12
+shallow_copy	shallow_copy	chapter-8/8.12--shallow_copy.sv		8.12
+inheritance	inheritance	chapter-8/8.13--inheritance.sv		8.13
+override_member	override_member	chapter-8/8.14--override_member.sv		8.14
+super-def-new	super-def-new	chapter-8/8.15--super-default-new.sv		8.15
+super	super	chapter-8/8.15--super.sv		8.15
+cast_func	cast_func	chapter-8/8.16--cast_func.sv		8.16
+constructor_const_arg	constructor_const_arg	chapter-8/8.17--constructor_const_arg.sv		8.17
+var_local	var_local	chapter-8/8.18--var_local.sv		8.18
+var_protected	var_protected	chapter-8/8.18--var_protected.sv		8.18
+global_constant	global_constant	chapter-8/8.19--global_constant.sv		8.19
+instance_constant	instance_constant	chapter-8/8.19--instance_constant.sv		8.19
+virtual_method	virtual_method	chapter-8/8.20--virtual_method.sv		8.20
+abstract_class	abstract_class	chapter-8/8.21--abstract_class.sv		8.21
+abstract_class_inst	abstract_class_inst	chapter-8/8.21--abstract_class_inst.sv	simulation elaboration	8.21
+dynamic_method_lookup	dynamic_method_lookup	chapter-8/8.22--dynamic_method_lookup.sv		8.22
+scope_resolution	scope_resolution	chapter-8/8.23--scope_resolution.sv		8.23
+out_of_block_methods	out_of_block_methods	chapter-8/8.24--out_of_block_methods.sv		8.24
+parametrized_class_extend	parametrized_class_extend	chapter-8/8.25--parametrized_class_extend.sv		8.25
+parametrized_class_invalid_scope_resolution	parametrized_class_invalid_scope_resolution	chapter-8/8.25.1--parametrized_class_invalid_scope_resolution.sv	simulation elaboration	8.25.1
+parametrized_class_scope_resolution	parametrized_class_scope_resolution	chapter-8/8.25.1--parametrized_class_scope_resolution.sv		8.25.1
+implements	implements	chapter-8/8.26.2--implements.sv		8.26.2
+implements_extends	implements_extends	chapter-8/8.26.2--implements_extends.sv		8.26.2
+implements_multiple	implements_multiple	chapter-8/8.26.2--implements_multiple.sv		8.26.2
+type_access_extends	type_access_extends	chapter-8/8.26.3--type_access_extends.sv		8.26.3
+type_access_implements	type_access_implements	chapter-8/8.26.3--type_access_implements.sv	simulation elaboration parsing	8.26.3
+type_access_implements_invalid	type_access_implements_invalid	chapter-8/8.26.3--type_access_implements_invalid.sv	simulation elaboration	8.26.3
+illegal_forward_def_implements	illegal_forward_def_implements	chapter-8/8.26.4--illegal_forward_def_implements.sv	simulation elaboration	8.26.4
+illegal_implements_parameter	illegal_implements_parameter	chapter-8/8.26.4--illegal_implements_parameter.sv	simulation elaboration	8.26.4
+cast_between_interface_classes	cast_between_interface_classes	chapter-8/8.26.5--cast_between_interface_classes.sv		8.26.2
+implemented_class_handle	implemented_class_handle	chapter-8/8.26.5--implemented_class_handle.sv		8.26.5
+interface_instantiation	interface_instantiation	chapter-8/8.26.5--invalid_interface_instantiation.sv	simulation elaboration	8.26.5
+name_conflict_resolved	name_conflict_resolved	chapter-8/8.26.6.1--name_conflict_resolved.sv	simulation elaboration parsing	8.26.6.1
+name_conflict_unresolved	name_conflict_unresolved	chapter-8/8.26.6.1--name_conflict_unresolved.sv	simulation elaboration	8.26.6.1
+parameter_type_conflict	parameter_type_conflict	chapter-8/8.26.6.2--parameter_type_conflict.sv		8.26.6.2
+parameter_type_conflict_unresolved	parameter_type_conflict_unresolved	chapter-8/8.26.6.2--parameter_type_conflict_unresolved.sv	simulation elaboration	8.26.6.2
+diamond_relationship	diamond_relationship	chapter-8/8.26.6.3--diamond_relationship.sv		8.26.6.3
+diamond_relationship_parametrized	diamond_relationship_parametrized	chapter-8/8.26.6.3--diamond_relationship_parametrized.sv	simulation elaboration	8.26.6.3
+partial_implementation	partial_implementation	chapter-8/8.26.7--partial_implementation.sv		8.26.7
+forward_declaration	forward_declaration	chapter-8/8.27--forward_declaration.sv		8.27
+instantiation	instantiation	chapter-8/8.4--instantiation.sv		8.4
+parameters	parameters	chapter-8/8.5--parameters.sv	simulation elaboration parsing	8.5 8.25
+properties	properties	chapter-8/8.5--properties.sv	simulation elaboration parsing	8.5
+properties_enum	properties_enum	chapter-8/8.5--properties_enum.sv		8.5
+methods	methods	chapter-8/8.6--methods.sv		8.6
+constructor	constructor	chapter-8/8.7--constructor.sv	simulation elaboration parsing	8.7
+constructor_param	constructor_param	chapter-8/8.7--constructor_param.sv	simulation elaboration parsing	8.7
+constructor_super	constructor_super	chapter-8/8.7--constructor_super.sv		8.7 8.17
+typed_constructor	typed_constructor	chapter-8/8.8--typed_constructor.sv		8.8
+typed_constructor_param	typed_constructor_param	chapter-8/8.8--typed_constructor_param.sv		8.8
+static_properties	static_properties	chapter-8/8.9--static_properties.sv		8.9
+initial	initial	chapter-9/9.2.1--initial.sv		9.2.1
+always	always	chapter-9/9.2.2.1--always.sv		9.2.2.1 9.4.1
+always_comb	always_comb	chapter-9/9.2.2.2--always_comb.sv		9.2.2.2
+always_latch_expr	always_latch_expr	chapter-9/9.2.2.3--always_latch.sv		9.2.2.3
+always_ff	always_ff	chapter-9/9.2.2.4--always_ff.sv		9.2.2.4
+final	final	chapter-9/9.2.3--final.sv		9.2.3
+sequential_block	sequential_block	chapter-9/9.3.1--sequential_block.sv		9.3.1
+parallel_block_join	parallel_block_join	chapter-9/9.3.2--parallel_block_join.sv		9.3.2
+parallel_block_join_any	parallel_block_join_any	chapter-9/9.3.2--parallel_block_join_any.sv		9.3.2
+parallel_block_join_none	parallel_block_join_none	chapter-9/9.3.2--parallel_block_join_none.sv		9.3.2
+block_start_finish	block_start_finish	chapter-9/9.3.3--block_start_finish.sv		9.3.3
+event_order	event_order	chapter-9/9.3.3--event.sv		9.3.3
+fork_return	fork_return	chapter-9/9.3.3--fork_return.sv	simulation elaboration	9.3.3
+block_names_par	block_names_par	chapter-9/9.3.4--block_names_par.sv		9.3.4
+block_names_seq	block_names_seq	chapter-9/9.3.4--block_names_seq.sv		9.3.4
+statement_labels_par	statement_labels_par	chapter-9/9.3.5--statement_labels_par.sv		9.3.5
+statement_labels_seq	statement_labels_seq	chapter-9/9.3.5--statement_labels_seq.sv		9.3.5
+delay_control_sim	delay_control_sim	chapter-9/9.4.1--delay_control-sim.sv	simulation elaboration	9.4.1
+delay_control_two_blocks_sim	delay_control_two_blocks_sim	chapter-9/9.4.1--delay_control-two-blocks-sim.sv	simulation elaboration	9.4.1
+delay_control	delay_control	chapter-9/9.4.1--delay_control.sv		9.4.1
+event_control_edge	event_control_edge	chapter-9/9.4.2--event_control_edge.sv		9.4.2
+event_control_negedge	event_control_negedge	chapter-9/9.4.2--event_control_negedge.sv		9.4.2
+event_control_posedge	event_control_posedge	chapter-9/9.4.2--event_control_posedge.sv		9.4.2
+event_control_simulation	event_control_simulation	chapter-9/9.4.2--event_control_sim.sv	simulation elaboration	9.4.2
+event_control_simulation_minimal	event_control_simulation_minimal	chapter-9/9.4.2--event_control_sim_minimal.sv	simulation elaboration	9.4.2
+event_comma_op	event_comma_op	chapter-9/9.4.2.1--event_comma_op.sv		9.4.2.1
+event_or_op	event_or_op	chapter-9/9.4.2.1--event_or_op.sv		9.4.2.1
+event_implicit	event_implicit	chapter-9/9.4.2.2--event_implicit.sv		9.4.2.2
+event_conditional	event_conditional	chapter-9/9.4.2.3--event_conditional.sv		9.4.2.3
+event_sequence	event_sequence	chapter-9/9.4.2.4--event_sequence.sv	simulation elaboration parsing	9.4.2.4
+event_sequence_controls	event_sequence_controls	chapter-9/9.4.3--event_sequence_controls.sv		9.4.3
+event_blocking_assignment_delay	event_blocking_assignment_delay	chapter-9/9.4.5--event_blocking_assignment_delay.sv		9.4.5
+event_nonblocking_assignment_delay	event_nonblocking_assignment_delay	chapter-9/9.4.5--event_nonblocking_assignment_delay.sv		9.4.5
+event_nonblocking_assignment_event	event_nonblocking_assignment_event	chapter-9/9.4.5--event_nonblocking_assignment_event.sv		9.4.5
+event_nonblocking_assignment_repeat	event_nonblocking_assignment_repeat	chapter-9/9.4.5--event_nonblocking_assignment_repeat.sv		9.4.5
+event_nonblocking_assignment_repeat_int	event_nonblocking_assignment_repeat_int	chapter-9/9.4.5--event_nonblocking_assignment_repeat_int.sv		9.4.5
+event_nonblocking_assignment_repeat_int_neg	event_nonblocking_assignment_repeat_int_neg	chapter-9/9.4.5--event_nonblocking_assignment_repeat_int_neg.sv		9.4.5
+event_nonblocking_assignment_repeat_neg	event_nonblocking_assignment_repeat_neg	chapter-9/9.4.5--event_nonblocking_assignment_repeat_neg.sv		9.4.5
+wait_fork	wait_fork	chapter-9/9.6.1--wait_fork.sv		9.6.1
+disable	disable	chapter-9/9.6.2--disable.sv		9.6.2
+disable_other	disable_other	chapter-9/9.6.2--disable_other.sv		9.6.2
+disable_fork	disable_fork	chapter-9/9.6.3--disable_fork.sv		9.6.3
+process_cls_await	process_cls_await	chapter-9/9.7--process_cls_await.sv		9.7
+process_cls_kill	process_cls_kill	chapter-9/9.7--process_cls_kill.sv		9.7
+process_cls_self	process_cls_self	chapter-9/9.7--process_cls_self.sv		9.7
+process_control	process_control	chapter-9/9.7--process_cls_suspend_resume.sv		9.7
+class_test_0	class_test_0	generic/class/class_test_0.sv		6.15 8.3
+class_test_1	class_test_1	generic/class/class_test_1.sv		6.15 8.3
+class_test_11	class_test_11	generic/class/class_test_11.sv		6.15 8.3
+class_test_12	class_test_12	generic/class/class_test_12.sv		6.15 8.3
+class_test_13	class_test_13	generic/class/class_test_13.sv		6.15 8.3
+class_test_17	class_test_17	generic/class/class_test_17.sv		6.15 8.3
+class_test_18	class_test_18	generic/class/class_test_18.sv		6.15 8.3
+class_test_19	class_test_19	generic/class/class_test_19.sv		6.15 8.3
+class_test_21	class_test_21	generic/class/class_test_21.sv		6.15 8.3
+class_test_25	class_test_25	generic/class/class_test_25.sv		6.15 8.3
+class_test_26	class_test_26	generic/class/class_test_26.sv		6.15 8.3
+class_test_27	class_test_27	generic/class/class_test_27.sv		6.15 8.3
+class_test_28	class_test_28	generic/class/class_test_28.sv		6.15 8.3
+class_test_29	class_test_29	generic/class/class_test_29.sv		6.15 8.3
+class_test_30	class_test_30	generic/class/class_test_30.sv		6.15 8.3
+class_test_4	class_test_4	generic/class/class_test_4.sv		6.15 8.3
+class_test_48	class_test_48	generic/class/class_test_48.sv		6.15 8.3
+class_test_49	class_test_49	generic/class/class_test_49.sv		6.15 8.3
+class_test_51	class_test_51	generic/class/class_test_51.sv		6.15 8.3
+class_test_52	class_test_52	generic/class/class_test_52.sv		6.15 8.3
+class_test_53	class_test_53	generic/class/class_test_53.sv		6.15 8.3
+class_test_54	class_test_54	generic/class/class_test_54.sv		6.15 8.3
+class_test_55	class_test_55	generic/class/class_test_55.sv		6.15 8.3
+class_test_56	class_test_56	generic/class/class_test_56.sv		6.15 8.3
+class_test_57	class_test_57	generic/class/class_test_57.sv		6.15 8.3
+class_test_58	class_test_58	generic/class/class_test_58.sv		6.15 8.3
+class_test_59	class_test_59	generic/class/class_test_59.sv		6.15 8.3
+class_test_6	class_test_6	generic/class/class_test_6.sv		6.15 8.3
+class_test_60	class_test_60	generic/class/class_test_60.sv		6.15 8.3
+class_test_61	class_test_61	generic/class/class_test_61.sv		6.15 8.3
+class_test_62	class_test_62	generic/class/class_test_62.sv		6.15 8.3
+class_test_63	class_test_63	generic/class/class_test_63.sv		6.15 8.3
+class_test_64	class_test_64	generic/class/class_test_64.sv		6.15 8.3
+class_test_65	class_test_65	generic/class/class_test_65.sv		6.15 8.3
+class_test_66	class_test_66	generic/class/class_test_66.sv		6.15 8.3
+class_test_67	class_test_67	generic/class/class_test_67.sv		6.15 8.3
+class_test_68	class_test_68	generic/class/class_test_68.sv		6.15 8.3
+class_test_69	class_test_69	generic/class/class_test_69.sv		6.15 8.3
+class_test_7	class_test_7	generic/class/class_test_7.sv		6.15 8.3
+class_test_8	class_test_8	generic/class/class_test_8.sv		6.15 8.3
+class_test_9	class_test_9	generic/class/class_test_9.sv		6.15 8.3
+desc_test_0	desc_test_0	generic/desc/desc_test_0.sv	preprocessing	5.6.4
+desc_test_1	desc_test_1	generic/desc/desc_test_1.sv	preprocessing	5.6.4
+desc_test_10	desc_test_10	generic/desc/desc_test_10.sv	preprocessing	5.6.4
+desc_test_15	desc_test_15	generic/desc/desc_test_15.sv	preprocessing	5.6.4
+desc_test_16	desc_test_16	generic/desc/desc_test_16.sv	preprocessing	5.6.4
+desc_test_17	desc_test_17	generic/desc/desc_test_17.sv	preprocessing	5.6.4
+desc_test_18	desc_test_18	generic/desc/desc_test_18.sv	preprocessing	5.6.4
+desc_test_2	desc_test_2	generic/desc/desc_test_2.sv	preprocessing	5.6.4
+desc_test_3	desc_test_3	generic/desc/desc_test_3.sv	preprocessing	5.6.4
+desc_test_4	desc_test_4	generic/desc/desc_test_4.sv	preprocessing	5.6.4
+desc_test_5	desc_test_5	generic/desc/desc_test_5.sv	preprocessing	5.6.4
+desc_test_6	desc_test_6	generic/desc/desc_test_6.sv	preprocessing	5.6.4
+desc_test_7	desc_test_7	generic/desc/desc_test_7.sv	preprocessing	5.6.4
+desc_test_8	desc_test_8	generic/desc/desc_test_8.sv	preprocessing	5.6.4
+desc_test_9	desc_test_9	generic/desc/desc_test_9.sv	preprocessing	5.6.4
+empty_test_0	empty_test_0	generic/empty/empty_test_0.sv	preprocessing	5.3 5.4
+empty_test_1	empty_test_1	generic/empty/empty_test_1.sv	preprocessing	5.3 5.4
+empty_test_2	empty_test_2	generic/empty/empty_test_2.sv	preprocessing	5.3 5.4
+empty_test_3	empty_test_3	generic/empty/empty_test_3.sv	preprocessing	5.3 5.4
+empty_test_4	empty_test_4	generic/empty/empty_test_4.sv	preprocessing	5.3 5.4
+empty_test_5	empty_test_5	generic/empty/empty_test_5.sv	preprocessing	5.3 5.4
+iface_class_test_0	iface_class_test_0	generic/iface/iface_class_test_0.sv		8.3 8.26
+iface_class_test_1	iface_class_test_1	generic/iface/iface_class_test_1.sv		8.3 8.26
+iface_class_test_10	iface_class_test_10	generic/iface/iface_class_test_10.sv		8.3 8.26
+iface_class_test_2	iface_class_test_2	generic/iface/iface_class_test_2.sv		8.3 8.26
+iface_class_test_9	iface_class_test_9	generic/iface/iface_class_test_9.sv		8.3 8.26
+class_member_test_0	class_member_test_0	generic/member/class_member_test_0.sv		8.3
+class_member_test_10	class_member_test_10	generic/member/class_member_test_10.sv		8.3
+class_member_test_11	class_member_test_11	generic/member/class_member_test_11.sv		8.3
+class_member_test_12	class_member_test_12	generic/member/class_member_test_12.sv		8.3
+class_member_test_14	class_member_test_14	generic/member/class_member_test_14.sv		8.3
+class_member_test_15	class_member_test_15	generic/member/class_member_test_15.sv		8.3
+class_member_test_18	class_member_test_18	generic/member/class_member_test_18.sv		8.3
+class_member_test_19	class_member_test_19	generic/member/class_member_test_19.sv		8.3
+class_member_test_2	class_member_test_2	generic/member/class_member_test_2.sv		8.3
+class_member_test_25	class_member_test_25	generic/member/class_member_test_25.sv		8.3
+class_member_test_26	class_member_test_26	generic/member/class_member_test_26.sv		8.3
+class_member_test_27	class_member_test_27	generic/member/class_member_test_27.sv		8.3
+class_member_test_3	class_member_test_3	generic/member/class_member_test_3.sv		8.3
+class_member_test_31	class_member_test_31	generic/member/class_member_test_31.sv		8.3
+class_member_test_32	class_member_test_32	generic/member/class_member_test_32.sv		8.3
+class_member_test_39	class_member_test_39	generic/member/class_member_test_39.sv		8.3
+class_member_test_4	class_member_test_4	generic/member/class_member_test_4.sv		8.3
+class_member_test_40	class_member_test_40	generic/member/class_member_test_40.sv		8.3
+class_member_test_41	class_member_test_41	generic/member/class_member_test_41.sv		8.3
+class_member_test_5	class_member_test_5	generic/member/class_member_test_5.sv	elaboration	8.3
+class_member_test_6	class_member_test_6	generic/member/class_member_test_6.sv		8.3
+class_member_test_7	class_member_test_7	generic/member/class_member_test_7.sv		8.3
+class_member_test_8	class_member_test_8	generic/member/class_member_test_8.sv		8.3
+class_member_test_9	class_member_test_9	generic/member/class_member_test_9.sv		8.3
+number_test_0	number_test_0	generic/number/number_test_0.sv		5.6.4 5.7.1 5.7.2
+number_test_1	number_test_1	generic/number/number_test_1.sv		5.6.4 5.7.1 5.7.2
+number_test_10	number_test_10	generic/number/number_test_10.sv		5.6.4 5.7.1 5.7.2
+number_test_11	number_test_11	generic/number/number_test_11.sv		5.6.4 5.7.1 5.7.2
+number_test_12	number_test_12	generic/number/number_test_12.sv		5.6.4 5.7.1 5.7.2
+number_test_13	number_test_13	generic/number/number_test_13.sv		5.6.4 5.7.1 5.7.2
+number_test_14	number_test_14	generic/number/number_test_14.sv		5.6.4 5.7.1 5.7.2
+number_test_15	number_test_15	generic/number/number_test_15.sv		5.6.4 5.7.1 5.7.2
+number_test_16	number_test_16	generic/number/number_test_16.sv		5.6.4 5.7.1 5.7.2
+number_test_2	number_test_2	generic/number/number_test_2.sv		5.6.4 5.7.1 5.7.2
+number_test_24	number_test_24	generic/number/number_test_24.sv		5.6.4 5.7.1 5.7.2
+number_test_25	number_test_25	generic/number/number_test_25.sv		5.6.4 5.7.1 5.7.2
+number_test_26	number_test_26	generic/number/number_test_26.sv		5.6.4 5.7.1 5.7.2
+number_test_27	number_test_27	generic/number/number_test_27.sv		5.6.4 5.7.1 5.7.2
+number_test_28	number_test_28	generic/number/number_test_28.sv		5.6.4 5.7.1 5.7.2
+number_test_29	number_test_29	generic/number/number_test_29.sv		5.6.4 5.7.1 5.7.2
+number_test_3	number_test_3	generic/number/number_test_3.sv		5.6.4 5.7.1 5.7.2
+number_test_30	number_test_30	generic/number/number_test_30.sv		5.6.4 5.7.1 5.7.2
+number_test_31	number_test_31	generic/number/number_test_31.sv		5.6.4 5.7.1 5.7.2
+number_test_32	number_test_32	generic/number/number_test_32.sv		5.6.4 5.7.1 5.7.2
+number_test_33	number_test_33	generic/number/number_test_33.sv		5.6.4 5.7.1 5.7.2
+number_test_34	number_test_34	generic/number/number_test_34.sv		5.6.4 5.7.1 5.7.2
+number_test_35	number_test_35	generic/number/number_test_35.sv		5.6.4 5.7.1 5.7.2
+number_test_36	number_test_36	generic/number/number_test_36.sv		5.6.4 5.7.1 5.7.2
+number_test_4	number_test_4	generic/number/number_test_4.sv		5.6.4 5.7.1 5.7.2
+number_test_42	number_test_42	generic/number/number_test_42.sv		5.6.4 5.7.1 5.7.2
+number_test_43	number_test_43	generic/number/number_test_43.sv		5.6.4 5.7.1 5.7.2
+number_test_44	number_test_44	generic/number/number_test_44.sv		5.6.4 5.7.1 5.7.2
+number_test_45	number_test_45	generic/number/number_test_45.sv		5.6.4 5.7.1 5.7.2
+number_test_46	number_test_46	generic/number/number_test_46.sv		5.6.4 5.7.1 5.7.2
+number_test_47	number_test_47	generic/number/number_test_47.sv		5.6.4 5.7.1 5.7.2
+number_test_48	number_test_48	generic/number/number_test_48.sv		5.6.4 5.7.1 5.7.2
+number_test_49	number_test_49	generic/number/number_test_49.sv		5.6.4 5.7.1 5.7.2
+number_test_5	number_test_5	generic/number/number_test_5.sv		5.6.4 5.7.1 5.7.2
+number_test_50	number_test_50	generic/number/number_test_50.sv		5.6.4 5.7.1 5.7.2
+number_test_51	number_test_51	generic/number/number_test_51.sv		5.6.4 5.7.1 5.7.2
+number_test_52	number_test_52	generic/number/number_test_52.sv		5.6.4 5.7.1 5.7.2
+number_test_53	number_test_53	generic/number/number_test_53.sv		5.6.4 5.7.1 5.7.2
+number_test_59	number_test_59	generic/number/number_test_59.sv		5.6.4 5.7.1 5.7.2
+number_test_6	number_test_6	generic/number/number_test_6.sv		5.6.4 5.7.1 5.7.2
+number_test_60	number_test_60	generic/number/number_test_60.sv		5.6.4 5.7.1 5.7.2
+number_test_61	number_test_61	generic/number/number_test_61.sv		5.6.4 5.7.1 5.7.2
+number_test_62	number_test_62	generic/number/number_test_62.sv		5.6.4 5.7.1 5.7.2
+number_test_64	number_test_64	generic/number/number_test_64.sv		5.6.4 5.7.1 5.7.2
+number_test_65	number_test_65	generic/number/number_test_65.sv		5.6.4 5.7.1 5.7.2
+number_test_66	number_test_66	generic/number/number_test_66.sv		5.6.4 5.7.1 5.7.2
+number_test_67	number_test_67	generic/number/number_test_67.sv		5.6.4 5.7.1 5.7.2
+number_test_68	number_test_68	generic/number/number_test_68.sv		5.6.4 5.7.1 5.7.2
+number_test_69	number_test_69	generic/number/number_test_69.sv		5.6.4 5.7.1 5.7.2
+number_test_7	number_test_7	generic/number/number_test_7.sv		5.6.4 5.7.1 5.7.2
+number_test_70	number_test_70	generic/number/number_test_70.sv		5.6.4 5.7.1 5.7.2
+number_test_71	number_test_71	generic/number/number_test_71.sv		5.6.4 5.7.1 5.7.2
+number_test_72	number_test_72	generic/number/number_test_72.sv		5.6.4 5.7.1 5.7.2
+number_test_8	number_test_8	generic/number/number_test_8.sv		5.6.4 5.7.1 5.7.2
+number_test_9	number_test_9	generic/number/number_test_9.sv		5.6.4 5.7.1 5.7.2
+preproc_test_0	preproc_test_0	generic/preproc/preproc_test_0.sv	preprocessing	5.6.4
+preproc_test_2	preproc_test_2	generic/preproc/preproc_test_2.sv	preprocessing	5.6.4
+preproc_test_4	preproc_test_4	generic/preproc/preproc_test_4.sv	preprocessing	5.6.4
+preproc_test_5	preproc_test_5	generic/preproc/preproc_test_5.sv	preprocessing	5.6.4
+preproc_test_6	preproc_test_6	generic/preproc/preproc_test_6.sv	preprocessing	5.6.4
+preproc_test_7	preproc_test_7	generic/preproc/preproc_test_7.sv	preprocessing	5.6.4
+preproc_test_8	preproc_test_8	generic/preproc/preproc_test_8.sv	preprocessing	5.6.4
+struct_test_0	struct_test_0	generic/struct/struct_test_0.sv		7.2
+typedef_test_0	typedef_test_0	generic/typedef/typedef_test_0.sv		6.18
+typedef_test_1	typedef_test_1	generic/typedef/typedef_test_1.sv		6.18
+typedef_test_10	typedef_test_10	generic/typedef/typedef_test_10.sv		6.18
+typedef_test_11	typedef_test_11	generic/typedef/typedef_test_11.sv		6.18
+typedef_test_12	typedef_test_12	generic/typedef/typedef_test_12.sv		6.18
+typedef_test_13	typedef_test_13	generic/typedef/typedef_test_13.sv		6.18
+typedef_test_14	typedef_test_14	generic/typedef/typedef_test_14.sv		6.18
+typedef_test_16	typedef_test_16	generic/typedef/typedef_test_16.sv		6.18
+typedef_test_18	typedef_test_18	generic/typedef/typedef_test_18.sv		6.18
+typedef_test_19	typedef_test_19	generic/typedef/typedef_test_19.sv		6.18
+typedef_test_2	typedef_test_2	generic/typedef/typedef_test_2.sv		6.18
+typedef_test_20	typedef_test_20	generic/typedef/typedef_test_20.sv		6.18
+typedef_test_21	typedef_test_21	generic/typedef/typedef_test_21.sv		6.18
+typedef_test_22	typedef_test_22	generic/typedef/typedef_test_22.sv		6.18
+typedef_test_23	typedef_test_23	generic/typedef/typedef_test_23.sv		6.18
+typedef_test_24	typedef_test_24	generic/typedef/typedef_test_24.sv		6.18
+typedef_test_25	typedef_test_25	generic/typedef/typedef_test_25.sv		6.18
+typedef_test_25__bad	typedef_test_25__bad	generic/typedef/typedef_test_25__bad.sv	simulation elaboration	6.18
+typedef_test_26	typedef_test_26	generic/typedef/typedef_test_26.sv		6.18
+typedef_test_27	typedef_test_27	generic/typedef/typedef_test_27.sv		6.18
+typedef_test_28__bad	typedef_test_28__bad	generic/typedef/typedef_test_28__bad.sv	simulation elaboration	6.18
+typedef_test_3	typedef_test_3	generic/typedef/typedef_test_3.sv		6.18
+typedef_test_4	typedef_test_4	generic/typedef/typedef_test_4.sv		6.18
+typedef_test_5	typedef_test_5	generic/typedef/typedef_test_5.sv		6.18
+typedef_test_6	typedef_test_6	generic/typedef/typedef_test_6.sv		6.18
+typedef_test_7	typedef_test_7	generic/typedef/typedef_test_7.sv		6.18
+typedef_test_8	typedef_test_8	generic/typedef/typedef_test_8.sv		6.18
+typedef_test_8__bad	typedef_test_8__bad	generic/typedef/typedef_test_8__bad.sv	simulation elaboration	6.18
+typedef_test_9	typedef_test_9	generic/typedef/typedef_test_9.sv		6.18
+union_test_0	union_test_0	generic/union/union_test_0.sv		7.3

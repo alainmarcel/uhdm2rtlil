@@ -21,6 +21,13 @@ if [ ! -d "$TEST_DIR" ]; then
     exit 1
 fi
 
+# The test directory may be NESTED (test/sv_tests/<name>/ holds the
+# chipsalliance/sv-tests corpus, one dir per upstream test), so every path out
+# of it is resolved from an ABSOLUTE root instead of a fixed number of `..`
+# hops.  TEST_ROOT is the directory holding this script, i.e. test/.
+TEST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$TEST_ROOT/.." && pwd)"
+
 # Change to test directory
 cd "$TEST_DIR"
 
@@ -39,14 +46,14 @@ echo "Module Name: $MODULE_NAME"
 echo
 
 # Set up paths (relative to test directory)
-SURELOG_BIN="../../build/third_party/Surelog/bin/surelog"
-YOSYS_BIN="../../out/current/bin/yosys"
+SURELOG_BIN="$REPO_ROOT/build/third_party/Surelog/bin/surelog"
+YOSYS_BIN="$REPO_ROOT/out/current/bin/yosys"
 
 # Compose the source-file list and language flags.  Single-file tests
 # (the long-established convention: one `dut.sv` or `dut.v` per dir)
 # are auto-picked.  Multi-file projects opt in by adding a `project.f`
 # filelist; see ../project_files.sh for the format.
-source ../project_files.sh
+source "$TEST_ROOT/project_files.sh"
 
 # Keep the legacy SV_FILE variable pointing at the FIRST source — used
 # downstream for naming output IL files / -sv vs -v flag detection.
@@ -121,7 +128,7 @@ fi
 
 cat > test_uhdm_read.ys << EOF
 # Test script to read UHDM file in Yosys
-plugin -i ../../build/uhdm2rtlil.so
+plugin -i $REPO_ROOT/build/uhdm2rtlil.so
 read_uhdm $UHDM_READ_FLAG slpp_all/surelog.uhdm
 # `(* uhdm_src_lhs *)` is sweep bookkeeping (a wire the source assigns); it
 # must not reach the synthesised Verilog the equivalence flow compares.
@@ -187,7 +194,7 @@ echo
 
 # Check if this test is in the failing tests list
 IS_FAILING_TEST=0
-if [ -f "../failing_tests.txt" ] && grep -q "^$TEST_DIR$" "../failing_tests.txt"; then
+if [ -f "$TEST_ROOT/failing_tests.txt" ] && grep -q "^$TEST_DIR$" "$TEST_ROOT/failing_tests.txt"; then
     IS_FAILING_TEST=1
     echo "   Note: This test is in the failing_tests.txt list"
 fi
@@ -366,7 +373,7 @@ echo "Generated files:"
 ls -la *.uhdm *.il *.ys *.txt *.log *_synth.v 2>/dev/null || echo "  Files may not have been generated"
 
 # Return to original directory
-cd ..
+cd "$TEST_ROOT"
 
 # Exit with appropriate code
 exit $RESULT
