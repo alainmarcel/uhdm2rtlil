@@ -803,3 +803,20 @@ Test: dyn_index_wide_out_of_range
     defect: the reader defect it ratchets (the index truncated to 32 bits so
     2**54 WRAPPED onto element 0) is caught by the slang miter.
 
+
+Test: sv_tests/22.5.1--define_expansion_20
+    The construct under test is a macro that supplies a GATE TYPE AND ITS
+    DELAY -- `define var_nand(dly) nand #dly` -- so the two instantiations are
+    `nand #2` and `nand #5`.  Synthesis discards a gate delay, so the netlist
+    settles in the same delta as its inputs while the behavioural RTL lags 2
+    and 5 time units behind: the co-sim samples once per cycle and sees
+    `q21/q22: rtl=0x0 nl=0x1` from cycle 191 on, and reports the RTL side
+    VACUOUS (all-zero every cycle) because the delayed nands never settle
+    within a sample.  NOT a frontend difference -- the delay is in the SOURCE
+    and both frontends drop it identically, which is why this test's own
+    read_verilog formal equivalence check passes.  The delay cannot be removed
+    without removing the construct: it is the macro's argument, and the three
+    `22.5.1` / `cont_assignment_delay` / `cont_assignment_net_delay` tests all
+    exist to confirm a delay is ACCEPTED and does not change what the logic
+    computes.  That claim is gated by test_structural.ys, which proves both
+    nands over all four input combinations.

@@ -1,0 +1,6 @@
+# The real-valued parameter must reach the netlist with its value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+sat -verify -prove o 9'd155

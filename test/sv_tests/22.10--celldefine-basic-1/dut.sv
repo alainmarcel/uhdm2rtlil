@@ -1,10 +1,14 @@
-// Converted from sv-tests chapter-22/22.10--celldefine-basic-1.sv
-// (:type: preprocessing).  Upstream is ONLY the two directives and contains no
-// module, so nothing about it is observable.  The directives are kept and now
-// bracket real logic: if `celldefine`/`endcelldefine` perturbed compilation the
-// adder would not survive, so the construct's effect IS observable.
+// Converted from chipsalliance/sv-tests (22.10--celldefine-basic-1, :type: preprocessing).
+// Upstream is the directive alone, so nothing about it is observable.
+// The directive is kept VERBATIM below and now brackets real logic: if it
+// perturbed compilation the proven adder/subtractor would not survive.
+// The whole directive group shares this body on purpose -- the directive form is
+// the only variable, so a failure localises to it.  Upstream kept as orig.sv.
 `celldefine
-module top(input logic [7:0] a, input logic [7:0] b, output logic [8:0] sum);
-  assign sum = a + b;
+module top(input logic [7:0] a, input logic [7:0] b, input logic sel,
+           output logic [8:0] y);
+  // One observable body for the whole directive group: the directive above is
+  // the only variable, so a failure localises to it.
+  assign y = sel ? (a + b) : (a - b);
 endmodule
 `endcelldefine

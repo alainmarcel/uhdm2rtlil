@@ -1,9 +1,10 @@
-# The construct under test must be observable: prove the output values.
+# The directive must be accepted and must not perturb compilation: the logic
+# below still proves.
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -auto-top
 proc
 opt -full
 check -assert
-sat -verify -prove sum 9'd300 -set a 8'd200 -set b 8'd100
-sat -verify -prove sum 9'd0 -set a 8'd0 -set b 8'd0
-sat -verify -prove sum 9'd510 -set a 8'd255 -set b 8'd255
+sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1
+sat -verify -prove y 9'd100 -set a 8'd200 -set b 8'd100 -set sel 1'b0
+sat -verify -prove y 9'd511 -set a 8'd0   -set b 8'd1   -set sel 1'b0
