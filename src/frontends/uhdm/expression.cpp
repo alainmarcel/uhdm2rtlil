@@ -11282,6 +11282,43 @@ const UHDM::instance* UhdmImporter::find_iface_instance_by_name(const std::strin
     return found;
 }
 
+// Does `nm` name the loop VARIABLE of a `for` statement enclosing this
+// reference?  `loop_values` answers that during the unroll, but the pre-scan
+// that collects a process's assigned signals (extract_assigned_signals) imports
+// the LHS expression BEFORE any unrolling, so a loop variable used as an index
+// reaches the unknown-signal fallback there with `loop_values` still empty.
+// OpenTitan's pinmux writes
+//     for (int kk = 0; kk < NDioPads; kk++)
+//       dio_pad_attr_q[kk].drive_strength <= ...;
+// and top_earlgrey warned on `i`, `j`, `k`, `kk` and `cycle` that way.  The
+// VALUES are right (read_uhdm is formally equivalent to read_slang on the
+// reduced shape), so this suppresses a FALSE warning only.
+bool UhdmImporter::ref_names_an_enclosing_loop_var(const std::string& nm,
+                                                   const UHDM::any* ref) const {
+    if (nm.empty() || !ref) return false;
+    auto init_assigns = [&](const UHDM::any* st) {
+        if (!st) return false;
+        if (st->UhdmType() != uhdmassignment) return false;
+        auto as = any_cast<const UHDM::assignment*>(st);
+        if (!as || !as->Lhs()) return false;
+        return std::string(as->Lhs()->VpiName()) == nm;
+    };
+    for (const UHDM::any* sc = ref; sc; sc = sc->VpiParent()) {
+        if (sc->UhdmType() != uhdmfor_stmt) continue;
+        auto fs = any_cast<const UHDM::for_stmt*>(sc);
+        if (!fs) continue;
+        // `for (int kk = ...)` declares the variable on the for itself
+        if (fs->Variables())
+            for (auto v : *fs->Variables())
+                if (v && std::string(v->VpiName()) == nm) return true;
+        if (init_assigns(fs->VpiForInitStmt())) return true;
+        if (fs->VpiForInitStmts())
+            for (auto st : *fs->VpiForInitStmts())
+                if (init_assigns(st)) return true;
+    }
+    return false;
+}
+
 // Does `nm` name a TYPE visible from this reference -- a package typedef, a
 // module-local typedef, a type PARAMETER, or a `$unit` typespec -- rather than
 // a signal?  `$bits(<type>)` is the construct that brings one here, and the
@@ -12351,6 +12388,10 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             if (mode_debug)
                 uhdm_trace("    ref_obj '%s' names a TYPE, not a signal\n",
                     ref_name.c_str());
+        } else if (ref_names_an_enclosing_loop_var(ref_name, uhdm_ref)) {
+            if (mode_debug)
+                uhdm_trace("    ref_obj '%s' is an enclosing for-loop variable; "
+                    "resolved by loop_values during the unroll\n", ref_name.c_str());
         } else {
             log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
         }

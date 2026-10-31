@@ -369,3 +369,22 @@ techmap/mem_simple_4x1_map.v
 # them with 0 errors.
 asicworld/code_hdl_models_uart.v
 arch/quicklogic/qlf_k6n10f/meminit.v
+
+# loopvar_index_in_hier_path -- the UHDM-vs-read_verilog equivalence check is
+# INVALID for this test, because read_verilog mishandles the construct itself:
+# for a packed array of packed structs written by field under a loop index
+#     attr_t [3:0] attr_q;
+#     for (int kk = 0; kk < 4; kk++) if (qe[kk]) attr_q[kk].drive <= d;
+# it implicitly declares wires literally named `\attr_q[0].drive` ("Identifier
+# `\attr_q[0].drive' is implicitly declared", four of them) and the resulting
+# netlist is not the design.  An UNPACKED array of the same structs does not
+# reproduce the reader warning this test exists to ratchet, so the construct
+# cannot be traded for one read_verilog handles.
+#
+# The gates that ARE valid all pass and still run for an expected-fail test:
+# the SLANG miter proves read_uhdm == read_slang from reset (seq 4), the
+# Verilator co-sim PASSES, and `test_quiet.ys` is the actual ratchet -- it
+# fails on a plugin built before the enclosing-loop-variable fix.
+# If read_verilog ever learns this construct, this entry becomes an UNEXPECTED
+# SUCCESS and should be removed.
+loopvar_index_in_hier_path
