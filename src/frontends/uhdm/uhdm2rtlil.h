@@ -411,6 +411,19 @@ struct UhdmImporter {
     // implicit net and binds the reference to it, so the net import has to
     // recognise and drop those.
     std::set<std::string> unit_enum_const_names_;
+    // Block-local `localparam`s (declared inside a begin/for body).  Surelog
+    // ALSO fabricates a same-named 1-bit implicit net on the module, so the
+    // net is dropped and references resolve through this map instead.
+    std::map<std::string, RTLIL::Const> block_localparam_values_;
+    std::set<std::string> block_localparam_ambiguous_;
+    // Which instance the map was built for.  These localparams are PER
+    // MODULE, unlike the design-wide enum-constant map -- a single "built"
+    // flag made the map stick to whichever module was imported first, so on a
+    // multi-module design every later module saw an empty map.
+    const UHDM::any* block_localparam_built_for_ = nullptr;
+    bool block_localparam_built_valid_ = false;
+    void build_block_localparam_map();
+    bool is_block_localparam_net(const UHDM::net* n, const std::string& name);
     bool is_unit_enum_const_net(const UHDM::net* n, const std::string& name);
     // Outer (unpacked/packed) element count of a package parameter that is an
     // array/table (e.g. prim_cipher_pkg::PRESENT_SBOX4 `logic [15:0][3:0]` -> 16),

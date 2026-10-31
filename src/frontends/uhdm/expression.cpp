@@ -11219,6 +11219,138 @@ void UhdmImporter::build_enum_const_map() {
 // file of the design, so it can never legally also be a net; require the net to
 // carry no typespec of its own so a genuine declaration (which would have one)
 // is never dropped.
+// Collect the module's BLOCK-LOCAL `localparam`s -- those declared inside a
+// `begin` / `for` body rather than at module scope.  Surelog keeps the real
+// parameter under a `param_assign` in that block AND fabricates a same-named
+// 1-bit implicit `logic_net` on the module; importing the net leaves an
+// UNDRIVEN bit where the reference needs the constant.  OpenTitan's
+// otp_ctrl_scrmbl does this:
+//
+//     for (int k = 0; k < NumScrmblKeys; k++) begin
+//       localparam logic [4:0] NumRounds = 5'(unsigned'(NumPresentRounds));
+//       otp_dec_key_lut[k] = prim_cipher_pkg::present_get_dec_key128(
+//                                rnd_cnst_key_anchor[k], NumRounds);
+//     end
+//
+// so `NumRounds` read an undriven bit and the decryption-key LUT could not be
+// evaluated at all ("Missing value for \NumRounds").  Same class as the $unit
+// enum constant that is_unit_enum_const_net() already drops.
+void UhdmImporter::build_block_localparam_map() {
+    if (block_localparam_built_valid_ &&
+        block_localparam_built_for_ == current_instance) return;
+    block_localparam_built_for_ = current_instance;
+    block_localparam_built_valid_ = true;
+    block_localparam_values_.clear();
+    block_localparam_ambiguous_.clear();
+    auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+    if (!mi || !mi->Process()) return;
+    auto take = [&](const UHDM::scope* sc) {
+        if (!sc || !sc->Param_assigns()) return;
+        for (auto pa : *sc->Param_assigns()) {
+            if (!pa || !pa->Lhs() || !pa->Rhs()) continue;
+            auto pp = dynamic_cast<const UHDM::parameter*>(pa->Lhs());
+            if (!pp || !pp->VpiLocalParam()) continue;
+            std::string nm(pp->VpiName());
+            size_t cc = nm.rfind("::");
+            if (cc != std::string::npos) nm = nm.substr(cc + 2);
+            if (nm.empty()) continue;
+            bool sf = force_const_fold;
+            force_const_fold = true;
+            RTLIL::SigSpec v = import_expression(
+                dynamic_cast<const UHDM::expr*>(pa->Rhs()));
+            force_const_fold = sf;
+            if (!v.is_fully_const() || v.size() == 0) continue;
+            auto it = block_localparam_values_.find(nm);
+            if (it != block_localparam_values_.end()) {
+                // two blocks, same name, different value: refuse to guess
+                if (!(it->second == v.as_const()))
+                    block_localparam_ambiguous_.insert(nm);
+            } else {
+                block_localparam_values_[nm] = v.as_const();
+            }
+        }
+    };
+    // Surelog puts the localparam in the block's STATEMENT list as a bare
+    // `param_assign` node -- not in the enclosing scope's Param_assigns() --
+    // so the walk has to recognise it there.
+    auto take_stmt = [&](const UHDM::any* st) {
+        if (!st || st->UhdmType() != uhdmparam_assign) return;
+        auto pa = any_cast<const UHDM::param_assign*>(st);
+        if (!pa || !pa->Lhs() || !pa->Rhs()) return;
+        auto pp = dynamic_cast<const UHDM::parameter*>(pa->Lhs());
+        if (!pp) return;
+        std::string nm(pp->VpiName());
+        size_t cc = nm.rfind("::");
+        if (cc != std::string::npos) nm = nm.substr(cc + 2);
+        if (nm.empty()) return;
+        bool sf = force_const_fold;
+        force_const_fold = true;
+        RTLIL::SigSpec v = import_expression(
+            dynamic_cast<const UHDM::expr*>(pa->Rhs()));
+        force_const_fold = sf;
+        if (!v.is_fully_const() || v.size() == 0) return;
+        auto it = block_localparam_values_.find(nm);
+        if (it != block_localparam_values_.end()) {
+            if (!(it->second == v.as_const()))
+                block_localparam_ambiguous_.insert(nm);
+        } else {
+            block_localparam_values_[nm] = v.as_const();
+        }
+    };
+    std::function<void(const UHDM::any*)> walk = [&](const UHDM::any* st) {
+        if (!st) return;
+        if (auto sc = dynamic_cast<const UHDM::scope*>(st)) take(sc);
+        take_stmt(st);
+        switch (st->UhdmType()) {
+        case uhdmbegin:
+            if (auto b = any_cast<const UHDM::begin*>(st))
+                if (b->Stmts()) for (auto c : *b->Stmts()) walk(c);
+            break;
+        case uhdmnamed_begin:
+            if (auto nb = any_cast<const UHDM::named_begin*>(st))
+                if (nb->Stmts()) for (auto c : *nb->Stmts()) walk(c);
+            break;
+        case uhdmfor_stmt:
+            if (auto f = any_cast<const UHDM::for_stmt*>(st)) walk(f->VpiStmt());
+            break;
+        case uhdmif_stmt:
+            if (auto i2 = any_cast<const UHDM::if_stmt*>(st)) walk(i2->VpiStmt());
+            break;
+        case uhdmif_else:
+            if (auto ie = any_cast<const UHDM::if_else*>(st)) {
+                walk(ie->VpiStmt()); walk(ie->VpiElseStmt());
+            }
+            break;
+        case uhdmcase_stmt:
+            if (auto cs = any_cast<const UHDM::case_stmt*>(st))
+                if (cs->Case_items())
+                    for (auto ci : *cs->Case_items())
+                        if (auto it2 = any_cast<const UHDM::case_item*>(ci)) walk(it2->Stmt());
+            break;
+        case uhdmwhile_stmt:
+            if (auto w = any_cast<const UHDM::while_stmt*>(st)) walk(w->VpiStmt());
+            break;
+        default: break;
+        }
+    };
+    for (auto pr : *mi->Process()) {
+        if (!pr) continue;
+        if (auto pa2 = dynamic_cast<const UHDM::always*>(pr)) walk(pa2->Stmt());
+        else if (auto ini = dynamic_cast<const UHDM::initial*>(pr)) walk(ini->Stmt());
+    }
+}
+
+// A typespec-less implicit net that is really a BLOCK-LOCAL localparam of the
+// same name: drop it so the reference resolves through the map above.
+bool UhdmImporter::is_block_localparam_net(const UHDM::net* n, const std::string& name) {
+    if (!n || name.empty()) return false;
+    auto ln = dynamic_cast<const UHDM::logic_net*>(n);
+    if (!ln || ln->Typespec()) return false;
+    build_block_localparam_map();
+    if (block_localparam_ambiguous_.count(name)) return false;
+    return block_localparam_values_.count(name) > 0;
+}
+
 bool UhdmImporter::is_unit_enum_const_net(const UHDM::net* n, const std::string& name) {
     if (name.empty() || !n) return false;
     build_enum_const_map();
@@ -12396,6 +12528,15 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                     return pv;
                 }
             }
+        }
+        build_block_localparam_map();
+        auto blit = block_localparam_values_.find(ref_name);
+        if (blit != block_localparam_values_.end() &&
+            !block_localparam_ambiguous_.count(ref_name)) {
+            if (mode_debug)
+                uhdm_trace("    ref_obj '%s' resolved as a BLOCK-LOCAL localparam = %s\n",
+                    ref_name.c_str(), blit->second.as_string().c_str());
+            return RTLIL::SigSpec(blit->second);
         }
         build_enum_const_map();
         auto ecit = enum_const_values_.find(ref_name);
