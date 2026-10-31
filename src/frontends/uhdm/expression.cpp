@@ -11994,6 +11994,45 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // SigSpec that zero-extended to a wrong 0.
     {
         auto upit = package_parameter_map.find(ref_name);
+        // The map may hold the parameter ONLY under its qualified
+        // `pkg::NAME` spelling, while the reference is bare.  That happens
+        // when the reference is imported OUTSIDE its own package -- a size
+        // cast in a package parameter's value, re-evaluated in the scope of
+        // the module that names the parameter:
+        //
+        //   package kmac_pkg;
+        //     parameter int unsigned NSPrefixW = sha3_pkg::NSRegisterSize*8;
+        //     parameter app_config_t AppCfgLcCtrl = '{
+        //       prefix: NSPrefixW'({EncodedStringLcCtrl, EncodedStringEmpty}), ... };
+        //   module earlgrey_pd_main #(parameter kmac_pkg::app_config_t
+        //     KmacAppCfg[KmacNumAppIntf] = '{kmac_pkg::AppCfgLcCtrl, ...});
+        //
+        // Unresolved, the CAST produced nothing and `prefix` came out ZERO --
+        // read_slang carries the 88-bit encoded strings there.  In OpenTitan's
+        // top_earlgrey that silently blanks the compile-time cSHAKE / KMAC
+        // domain-separation prefix of every static KMAC application interface.
+        //
+        // Accept the qualified spelling only when it is UNIQUE: two packages
+        // may each define the name, and picking one would be a guess.
+        if (upit == package_parameter_map.end()) {
+            const std::string suffix = "::" + ref_name;
+            const RTLIL::Const* found = nullptr;
+            bool ambiguous = false;
+            for (const auto& kv : package_parameter_map) {
+                if (kv.first.size() <= suffix.size()) continue;
+                if (kv.first.compare(kv.first.size() - suffix.size(),
+                                     suffix.size(), suffix) != 0) continue;
+                if (found && !(kv.second == *found)) { ambiguous = true; break; }
+                if (!found) found = &kv.second;
+            }
+            if (found && !ambiguous) {
+                if (mode_debug)
+                    uhdm_trace("    ref_obj '%s' resolved as package parameter via its "
+                        "qualified spelling = %s\n",
+                        ref_name.c_str(), found->as_string().c_str());
+                return RTLIL::SigSpec(*found);
+            }
+        }
         if (upit != package_parameter_map.end()) {
             if (mode_debug)
                 uhdm_trace("    ref_obj '%s' resolved as $unit/package parameter = %s\n",
