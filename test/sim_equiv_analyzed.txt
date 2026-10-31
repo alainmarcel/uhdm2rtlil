@@ -804,7 +804,7 @@ Test: dyn_index_wide_out_of_range
     2**54 WRAPPED onto element 0) is caught by the slang miter.
 
 
-Test: sv_tests/22.5.1--define_expansion_20
+Test: 22.5.1--define_expansion_20
     The construct under test is a macro that supplies a GATE TYPE AND ITS
     DELAY -- `define var_nand(dly) nand #dly` -- so the two instantiations are
     `nand #2` and `nand #5`.  Synthesis discards a gate delay, so the netlist
