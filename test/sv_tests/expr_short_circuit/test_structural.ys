@@ -1,0 +1,10 @@
+# The expression must compute a && (b || c) over every input: upstream's own asserted value is the a=1,b=1,c=0 case.  Whether the call was SHORT-CIRCUITED is a simulation-time property -- a netlist evaluates both arms structurally -- so the value is all a netlist can show; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove d 1'b1 -set a 1'b1 -set b 1'b1 -set c 1'b0
+sat -verify -prove d 1'b0 -set a 1'b0 -set b 1'b1 -set c 1'b1
+sat -verify -prove d 1'b1 -set a 1'b1 -set b 1'b0 -set c 1'b1
+sat -verify -prove d 1'b0 -set a 1'b1 -set b 1'b0 -set c 1'b0

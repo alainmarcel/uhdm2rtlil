@@ -1,0 +1,9 @@
+# A chain of assignments inside an expression must give all three the same value -- upstream's 5.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_o 32'sd5 -set x 32'sd5
+sat -verify -prove b_o 32'sd5 -set x 32'sd5
+sat -verify -prove c_o 32'sd5 -set x 32'sd5

@@ -1,0 +1,10 @@
+# At upstream's 16'h1000 bit 12 must be 1 and bit 5 must be 0 -- the two bits upstream asserts -- and swapping the indices fails the second vector.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set a 16'h1000
+sat -verify -prove c 1'b0 -set a 16'h1000
+sat -verify -prove c 1'b1 -set a 16'h0020
+sat -verify -prove b 1'b0 -set a 16'h0020

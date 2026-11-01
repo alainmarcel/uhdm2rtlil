@@ -1,0 +1,13 @@
+# Each arm's z wildcards must make it match on its leading bits alone, and 0 must fall to the default.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top case_tb
+proc
+opt -full
+check -assert
+sat -verify -prove b 4'd1 -set a 4'b1000
+sat -verify -prove b 4'd1 -set a 4'b1111
+sat -verify -prove b 4'd2 -set a 4'b0100
+sat -verify -prove b 4'd2 -set a 4'b0111
+sat -verify -prove b 4'd3 -set a 4'b0010
+sat -verify -prove b 4'd4 -set a 4'b0001
+sat -verify -prove b 4'd0 -set a 4'b0000

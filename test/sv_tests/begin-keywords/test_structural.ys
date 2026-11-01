@@ -1,0 +1,8 @@
+# The variable named `logic` must exist and carry bit 0 of the input.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top b_kw
+proc
+opt -full
+check -assert
+sat -verify -prove y 8'd1 -set x 8'hA5
+sat -verify -prove y 8'd0 -set x 8'hA4

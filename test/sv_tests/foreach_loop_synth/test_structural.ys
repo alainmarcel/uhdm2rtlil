@@ -1,0 +1,10 @@
+# Every element must be copied to the SAME index: a foreach that skipped one, or reversed the order, moves the port value off element 2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove c0 16'h1111 -set x 16'hBEEF
+sat -verify -prove c1 16'h2222 -set x 16'hBEEF
+sat -verify -prove c2 16'hBEEF -set x 16'hBEEF
+sat -verify -prove c3 16'h4444 -set x 16'hBEEF

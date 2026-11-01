@@ -1,0 +1,8 @@
+# `$onehot(val0)` must be 1 for upstream's one-hot 4'b0100, and must distinguish the cases a pass-through of the operand cannot.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 1'b1 -set val0 4'b0100
+sat -verify -prove o 1'b0 -set val0 4'b0110

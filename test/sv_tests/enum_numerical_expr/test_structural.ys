@@ -1,0 +1,10 @@
+# The enum must contribute its ordinal to the arithmetic.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove i 32'sd0  -set x 2'd0
+sat -verify -prove i 32'sd4  -set x 2'd1
+sat -verify -prove i 32'sd8  -set x 2'd2
+sat -verify -prove i 32'sd12 -set x 2'd3

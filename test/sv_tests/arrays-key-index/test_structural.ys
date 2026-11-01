@@ -1,0 +1,9 @@
+# The keyed element must be 1 and both defaulted ones 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b1 32'sd1
+sat -verify -prove b2 32'sd0
+sat -verify -prove b3 32'sd0

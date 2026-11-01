@@ -1,0 +1,8 @@
+# $bits of the packed struct type must be upstream's 9 (1 + 8), and a value of that type must pack into exactly those 9 bits with val1 on top.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd9
+sat -verify -prove packed_o 9'b1_10100101 -set x 1'b1 -set y 8'hA5

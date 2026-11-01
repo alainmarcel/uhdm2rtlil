@@ -820,3 +820,35 @@ Test: 22.5.1--define_expansion_20
     exist to confirm a delay is ACCEPTED and does not change what the logic
     computes.  That claim is gated by test_structural.ys, which proves both
     nands over all four input combinations.
+
+Test: cont_assignment_delay
+    The construct under test is a DELAY on a continuous assignment
+    (`assign #10 w = a & b;`).  Synthesis discards it, so the netlist settles in
+    the same delta as its inputs while the behavioural RTL lags 10 time units
+    behind, and the co-sim -- which samples once per cycle -- sees
+    `w: rtl=0x0 nl=0x1` wherever the input changed within the last delay.  The
+    delay is in the SOURCE and both frontends drop it identically, so the miter
+    classifies it ARTEFACT.  It cannot be removed without removing the construct:
+    the test exists to confirm a delay is ACCEPTED and does not change what the
+    logic computes, which its test_structural.ys proves over both input
+    combinations.  Same class as 22.5.1--define_expansion_20 (a gate delay) and
+    cont_assignment_net_delay (a delay on the net declaration).
+
+Test: cont_assignment_net_delay
+    As cont_assignment_delay, with the delay on the NET DECLARATION
+    (`wire #10 w;`) instead of on the assignment.  Synthesis discards it; the
+    claim is that it is accepted and does not change the logic, proven by
+    test_structural.ys.
+
+Test: array_addressing_sim
+    The test writes one constant element of a 1024-entry memory under a write
+    enable and reads it back.  At cycle 0 -- before any clock edge -- the
+    behavioural RTL's memory is UNINITIALISED while the synthesized netlist has
+    already resolved the element (read_uhdm emits `assign \mem[123] = 8'h7d`,
+    read_verilog leaves 1024 x-valued element wires), so the co-sim reports one
+    mismatch at cycle 0 and agrees for all 199 cycles after it.  That is the
+    power-up state of an uninitialised memory, which synthesis does not carry and
+    no netlist can show; the two frontends are formally equivalent here (the
+    test's own Induct-Formal check passes), so the miter classifies it ARTEFACT.
+    The round trip itself is proven by test_structural.ys with the written VALUE
+    coming from a port, so the proof cannot be satisfied by a folded constant.

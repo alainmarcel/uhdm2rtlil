@@ -1,0 +1,8 @@
+# The narrow member must alias the LOW bits of the wide one: 140 through v1 is upstream's 12 through v2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove v1_o 8'd140 -set x 8'd140
+sat -verify -prove v2_o 4'd12  -set x 8'd140

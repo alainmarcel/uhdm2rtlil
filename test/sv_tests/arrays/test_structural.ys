@@ -1,0 +1,12 @@
+# Row 1 is 0,1,2 and row 2 is the replication '{3{4}} = 4,4,4.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove e11 32'sd0
+sat -verify -prove e12 32'sd1
+sat -verify -prove e13 32'sd2
+sat -verify -prove e21 32'sd4
+sat -verify -prove e22 32'sd4
+sat -verify -prove e23 32'sd4

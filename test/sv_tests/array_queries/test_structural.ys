@@ -1,0 +1,15 @@
+# All eight queries must give upstream's answers for a packed [31:0].
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove q_unpacked_dims 32'sd0
+sat -verify -prove q_dims 32'sd1
+sat -verify -prove q_incr 32'sd1
+sat -verify -prove q_right 32'sd0
+sat -verify -prove q_left 32'sd31
+sat -verify -prove q_low 32'sd0
+sat -verify -prove q_high 32'sd31
+sat -verify -prove q_size 32'sd32
+sat -verify -prove arr_o 32'hDEADBEEF -set a 32'hDEADBEEF

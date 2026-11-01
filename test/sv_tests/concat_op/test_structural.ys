@@ -1,0 +1,8 @@
+# The first operand must become the HIGH byte: upstream's 10101100/01010011 pair.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'b10101100_01010011 -set b 8'b10101100 -set c 8'b01010011
+sat -verify -prove a 16'h1234 -set b 8'h12 -set c 8'h34

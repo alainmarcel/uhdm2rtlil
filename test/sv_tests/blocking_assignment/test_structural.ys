@@ -1,0 +1,9 @@
+# b must equal a, for both values -- a non-blocking read would leave b stale.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set x 1'b1
+sat -verify -prove b 1'b0 -set x 1'b0
+sat -verify -prove a 1'b1 -set x 1'b1

@@ -33,6 +33,10 @@ CLASSES = [
     ("file I/O",
      r"\$fopen|\$fclose|\$fwrite|\$fdisplay|\$fscanf|\$fgets|\$feof|\$sformatf|\$sscanf",
      "File and string-formatting system tasks are simulation services."),
+    ("chandle",
+     r"^\s*chandle\b",
+     "A `chandle` is an opaque pointer to foreign (DPI) data: there is nothing to "
+     "elaborate."),
     ("program block",
      r"^\s*program\b",
      "A `program` block is a testbench construct, not hardware."),
@@ -40,7 +44,11 @@ CLASSES = [
      r"^\s*(default\s+)?clocking\b",
      "A `clocking` block schedules testbench sampling; it is not hardware."),
     ("dynamic array / queue",
-     r"\[\s*\$\s*\]|\bnew\s*\[|\[\s*string\s*\]|\[\s*\*\s*\]",
+     # An ASSOCIATIVE array's index is a TYPE, not a range: `int arr [ int ]`.
+     # Spell the integral and string index types out, so a packed range
+     # (`arr [7:0]`) and a sized unpacked array (`arr [4]`) are untouched.
+     r"\[\s*\$\s*\]|\bnew\s*\[|\[\s*\*\s*\]"
+     r"|\[\s*(?:string|int|integer|bit|logic|byte|shortint|longint|chandle)\s*\]",
      "Queues, dynamic arrays and associative arrays are unbounded at elaboration time."),
     ("delay control",
      r"^\s*#\d|\s#\d+\s*\w+\s*(<?=)|\bforever\b|\bwait\b",

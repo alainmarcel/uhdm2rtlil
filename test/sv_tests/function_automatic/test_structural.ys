@@ -1,0 +1,9 @@
+# Every call must return its argument alone -- upstream's 5 -- not a running total.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o1 32'sd5 -set x 32'sd5
+sat -verify -prove o2 32'sd5 -set x 32'sd5
+sat -verify -prove o3 32'sd5 -set x 32'sd5

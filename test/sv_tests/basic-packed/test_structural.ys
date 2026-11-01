@@ -1,0 +1,9 @@
+# All three packed kinds must carry eight bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove bit_o 8'hA5 -set x 8'hA5
+sat -verify -prove logic_o 8'hA5 -set x 8'hA5
+sat -verify -prove reg_o 8'hA5 -set x 8'hA5

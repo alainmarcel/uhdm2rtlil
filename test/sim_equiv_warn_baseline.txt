@@ -143,3 +143,50 @@ extnets
 # without gating; the structural check in structural_expected_fail.txt is the
 # ratchet that fires when it is fixed.
 func_local_accumulator_in_ff
+# ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
+# Six conversions whose co-sim divergence is a DIRECT CONSEQUENCE of a reader
+# defect that is already tracked, with its measurement, in
+# structural_expected_fail.txt and slang_miter_expected_fail.txt.  They are
+# listed here rather than in sim_equiv_analyzed.txt because the miter correctly
+# calls them a BUG, which would hard-fail the test: the divergence is real and
+# the netlist is wrong.  All three lists must lose the entry in the commit that
+# fixes the defect.
+arith_shift_assignment_signed
+array-unpacked-assignments
+array_queries_multi_dim
+arrays
+arrays-key-index
+arrays-replication
+enum_sequence
+# ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
+# Co-sim divergences that are a DIRECT CONSEQUENCE of a reader defect already
+# tracked, with its measurement, in structural_expected_fail.txt (and in
+# slang_miter_expected_fail.txt where read_slang is the oracle).  Listed here
+# rather than in sim_equiv_analyzed.txt because the miter correctly calls them a
+# BUG, which would hard-fail the test: the divergence is real and the netlist is
+# wrong.  Every list must lose the entry in the commit that fixes the defect.
+#   assign_in_exp*/assignment_in_expression* : a compound assignment used as an
+#                                              expression yields the RHS alone
+#   concat_op-bit_select                     : a select on a concatenation takes
+#                                              the wrong bits (188 of 200 cycles)
+#   foreach_loop*                            : `foreach` is not unrolled in a
+#                                              comb context -- the body is lost
+#   *_function                               : the system function is not
+#                                              implemented; the reader returns
+#                                              its first argument
+assign_in_exp
+assign_in_exp_sim
+assignment_in_expression
+assignment_in_expression_sim
+concat_op-bit_select
+foreach_loop
+foreach_loop_synth
+atan2_function
+exp_function
+hypot_function
+ln_function
+log10_function
+onehot0_function
+onehot_function
+pow_function
+sqrt_function

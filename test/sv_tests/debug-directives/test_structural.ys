@@ -1,0 +1,8 @@
+# `__LINE__ must be the line of the assignment that uses it, and `__FILE__ must end in this file's name.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top directives
+proc
+opt -full
+check -assert
+sat -verify -prove lineno 32'sd14
+sat -verify -prove file_ok 1'b1

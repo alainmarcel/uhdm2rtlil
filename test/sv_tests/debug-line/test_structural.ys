@@ -1,0 +1,7 @@
+# A `line directive in the middle of a module body must not perturb the logic after it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top directives
+proc
+opt -full
+check -assert
+sat -verify -prove y 9'd11 -set x 8'd10

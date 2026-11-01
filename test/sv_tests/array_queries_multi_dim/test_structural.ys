@@ -1,0 +1,16 @@
+# Every query must give upstream's answer, and dimension 1 must be the UNPACKED [15:0] while dimension 2 is the packed [31:0] -- swapping them changes q_left1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove q_dims 32'sd2
+sat -verify -prove q_incr2 32'sd1
+sat -verify -prove q_right2 32'sd0
+sat -verify -prove q_left2 32'sd31
+sat -verify -prove q_right1 32'sd0
+sat -verify -prove q_left1 32'sd15
+sat -verify -prove q_low2 32'sd0
+sat -verify -prove q_high2 32'sd31
+sat -verify -prove q_size2 32'sd32
+sat -verify -prove arr_o 32'hDEADBEEF -set a 32'hDEADBEEF

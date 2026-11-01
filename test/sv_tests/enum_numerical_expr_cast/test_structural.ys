@@ -1,0 +1,9 @@
+# The arithmetic must happen and the cast back to the enum type must keep the result, wrapping within the enum's two bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 2'd1 -set x 2'd0
+sat -verify -prove o 2'd3 -set x 2'd2
+sat -verify -prove o 2'd0 -set x 2'd3

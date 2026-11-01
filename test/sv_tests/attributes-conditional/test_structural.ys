@@ -1,0 +1,8 @@
+# The attributed conditional must still select c when b is 1 and d when b is 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 1'b1 -set b 1'b1 -set c 1'b1 -set d 1'b0
+sat -verify -prove a 1'b0 -set b 1'b0 -set c 1'b1 -set d 1'b0

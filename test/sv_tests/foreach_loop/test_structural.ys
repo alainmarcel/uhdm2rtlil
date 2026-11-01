@@ -1,0 +1,8 @@
+# All four elements must be visited exactly once: 4 visits and 111+222+333+444 = 1110.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top foreach_tb
+proc
+opt -full
+check -assert
+sat -verify -prove n 32'sd4
+sat -verify -prove sum 32'sd1110

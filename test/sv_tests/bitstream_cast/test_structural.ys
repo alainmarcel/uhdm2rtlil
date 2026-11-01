@@ -1,0 +1,7 @@
+# The 32-bit struct casts to an integer with member a in the high byte and c in the low half-word.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'shAABBCCDD -set a 8'hAA -set b 8'hBB -set c 16'hCCDD

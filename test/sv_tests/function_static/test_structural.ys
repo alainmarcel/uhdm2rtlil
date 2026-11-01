@@ -1,0 +1,8 @@
+# A single call to the static function must return its argument.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd5  -set x 32'sd5
+sat -verify -prove o 32'sd77 -set x 32'sd77

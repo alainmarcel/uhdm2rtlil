@@ -1,0 +1,10 @@
+# A whole-array assignment copies by POSITION, not by index, so B[0] takes A[3] -- which is exactly what upstream's print of B[3],B[2],B[1],B[0] as 0,1,2,3 asserts.  read_verilog and read_slang both do that; read_uhdm copies by INDEX (b0 = 0), which is why this test is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b0 32'sd3 -set a0 32'sd0 -set a1 32'sd1 -set a2 32'sd2 -set a3 32'sd3
+sat -verify -prove b1 32'sd2 -set a0 32'sd0 -set a1 32'sd1 -set a2 32'sd2 -set a3 32'sd3
+sat -verify -prove b2 32'sd1 -set a0 32'sd0 -set a1 32'sd1 -set a2 32'sd2 -set a3 32'sd3
+sat -verify -prove b3 32'sd0 -set a0 32'sd0 -set a1 32'sd1 -set a2 32'sd2 -set a3 32'sd3

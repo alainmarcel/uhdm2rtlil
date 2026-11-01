@@ -1,0 +1,7 @@
+# The real product must be computed in real arithmetic and ROUNDED by the cast: 8.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd8

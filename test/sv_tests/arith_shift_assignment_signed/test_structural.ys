@@ -1,0 +1,9 @@
+# At a = -120 the compound arithmetic shifts must give upstream's 64 and -15.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 8'h40 -set a 8'h88
+sat -verify -prove c 8'hf1 -set a 8'h88
+sat -verify -prove c 8'hff -set a 8'hf8

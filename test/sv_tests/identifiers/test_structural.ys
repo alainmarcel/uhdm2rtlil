@@ -1,0 +1,9 @@
+# All eight names must be distinct signals, and `sensitive` must not be the same signal as `Sensitive`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top identifiers
+proc
+opt -full
+check -assert
+sat -verify -prove y 9'b0_01000000 -set x 9'b0_01000000
+sat -verify -prove y 9'b0_10000000 -set x 9'b0_10000000
+sat -verify -prove y 9'b0_10101010 -set x 9'b0_10101010

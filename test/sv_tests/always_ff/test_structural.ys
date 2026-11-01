@@ -1,0 +1,10 @@
+# The block must become exactly one edge-triggered register, and it must capture its input on the clock edge.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top always_tb
+proc
+opt -full
+check -assert
+select -assert-count 1 t:$dff
+select -assert-any t:$dff %ci:+[CLK] w:clk %i
+select -assert-any t:$dff %ci:+[D] w:b %i
+select -assert-any t:$dff %co:+[Q] w:q %i
