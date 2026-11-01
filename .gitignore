@@ -78,3 +78,31 @@ test/pavona_periph5_equiv/work/
 .claude/*.lock
 .claude/RESUME.md
 .claude/settings.local.json
+
+# ---------------------------------------------------------------------------
+# Harness output under test/.  Every one of these is written by
+# test/test_uhdm_workflow.sh, test/run_all_tests.sh or test/test_equivalence.sh
+# on each run, and nothing reads a committed copy -- every reference in the tree
+# is a `write_rtlil` / `write_verilog`, or a read of a file the same run just
+# produced.  They were tracked for a long time (7526 files, more than half of
+# everything under test/), which made every regression dirty the working tree and
+# every test-adding commit carry hundreds of files of compiler output.
+# ---------------------------------------------------------------------------
+test/**/*_from_uhdm.il
+test/**/*_from_uhdm_nohier.il
+test/**/*_from_uhdm_synth.v
+test/**/*_from_verilog.il
+test/**/*_from_verilog_nohier.il
+test/**/*_from_verilog_synth.v
+test/**/netlist_diff.txt
+test/**/test_uhdm_read.ys
+test/**/test_verilog_read.ys
+test/**/test_equiv.ys
+# Three more, found by the same sweep: test_equivalence.sh writes
+# test_equiv_sat.ys, run_cva6_configs.sh writes check_undriven.ys and
+# core_sweep.py writes auto_slang_equiv.ys.
+test/**/test_equiv_sat.ys
+test/**/check_undriven.ys
+test/**/auto_slang_equiv.ys
+# run_parallel.sh's per-shard logs and merged result files.
+test/parallel_results/
