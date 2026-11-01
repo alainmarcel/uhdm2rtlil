@@ -3377,34 +3377,196 @@ endmodule
     ["sat -verify -prove nbits 32'sd1", "sat -verify -prove o 1'b1 -set x 1'b1",
      "sat -verify -prove o 1'b0 -set x 1'b0"])
 
-add("type_op_compare",
-    "Upstream compares `type(T)` against several types inside an `initial` block and "
-    "reports a mismatch with `$stop`, which synthesis does not evaluate -- so none of "
-    "the four comparisons is checked.",
-    """module top #( parameter type T = type(logic[11:0]) )
-   (output logic eq_same, output logic eq_other, output logic ne_same,
-    output logic case_hit, output logic signed [31:0] nbits);
-   // Each type comparison drives its own output, so WHICH of them the elaborator
-   // got wrong is a value rather than a `$stop`.
-   assign eq_same  = (type(T) == type(logic[11:0]));
-   assign eq_other = (type(T) == type(logic[12:0]));
-   assign ne_same  = (type(T) != type(logic[11:0]));
-   assign nbits    = $bits(T);
-   always_comb
-     case (type(T))
-       type(logic[11:0]) : case_hit = 1'b1;
-       default           : case_hit = 1'b0;
-     endcase
+# type_op_compare is NOT in this table: Surelog cannot parse `type()` in an
+# expression, so there is nothing for read_uhdm to get right or wrong.  See its
+# NOTE.md for the two syntax errors.
+
+# --------------------------------------------------------------------------
+# number_test_*: 55 cases of `parameter <type> foo = <literal>;` at $unit scope
+# followed by an EMPTY module.  The literal's VALUE is the construct and nothing
+# reads it, so each conversion keeps the parameter declaration VERBATIM and
+# brings its value out on a port.  The expected values below were MEASURED with
+# read_verilog, the golden frontend, one literal at a time.
+#
+# Nineteen of the literals have x or z bits, which `sat -verify -prove` cannot
+# express (a proof constant is two-state).  Those prove only the witness and
+# leave the value to the uhdm-vs-read_verilog netlist comparison, which compares
+# x and z exactly; their NOTE.md says so.
+# --------------------------------------------------------------------------
+_NUM_XZ_NOTE = """CONVERTED, with the literal's value out of reach of a proof.
+
+This literal has x or z bits and `sat -verify -prove` takes a two-state constant,
+so the parameter's value cannot be the subject of a proof.  It is still an OUTPUT,
+and the uhdm-vs-`read_verilog` netlist comparison compares x and z exactly, so the
+value IS gated -- just not by SAT.  The witness output is proven so the co-sim has
+activity to compare (a netlist whose every output is a constant is reported
+VACUOUS).
+
+`read_slang` is not a reference here either: it normalises z to x, so a miter
+against it fails on a difference that is not ours.  read_verilog agrees with
+read_uhdm on x and z and is this test's reference.
+"""
+
+
+# Four of the x/z literals have their MEASURED difference written out, because it is
+# the evidence that number_test_9's extension defect and the x/z behaviour are one
+# bug.  These override the generic note above.
+_NUM_MEASURED = {
+    'number_test_10': ("1'bx", "32'0000000000000000000000000000000x", "32'-------------------------------- (all don't-care)"),
+    'number_test_11': ("1 'b x", "32'0000000000000000000000000000000x", "32'-------------------------------- (all don't-care)"),
+    'number_test_12': ("1'bz", "32'0000000000000000000000000000000z", "32'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),
+    'number_test_14': ("4'bzzzz", "32'0000000000000000000000000000zzzz", "32'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),
+}
+
+_NUM_MEASURED_NOTE = """RATCHET-ADJACENT -- the same sign/fill-EXTENSION defect as number_test_9, in its
+x/z form, but this test's gates cannot see it.
+
+`parameter int foo = {lit};` must ZERO-extend into the 32-bit `int`, leaving the
+literal's own bits at the bottom.  Measured 2026-11-01:
+
+    read_verilog : {rv}
+    read_uhdm    : {uh}
+
+So read_uhdm extends the x (or z) bit across the WHOLE width instead of
+zero-extending -- the same wrong path that turns `1'b1` into all-ones
+(see number_test_9/NOTE.md, which carries the full measured table).
+
+Why this test is not in the ratchet lists: `sat -verify -prove` takes a two-state
+constant, so the value cannot be proven; `read_slang` normalises x/z differently
+again (it reports 0 for `4'bxxxx`), so the miter is not a reference; and the
+netlist is pure wiring, so the workflow's gate-count comparison reports
+"functionally equivalent" on ZERO gates.  `number_test_13` is the one case where
+the Induct-Formal check does fire, so that is the entry that ratchets this
+defect's x/z half -- fix it and this test's measurement changes with it.
+"""
+
+for _nm, _decl, _val in [
+    ('number_test_0', 'parameter foo = 0;', 0),
+    ('number_test_1', 'parameter int foo = 0;', 0),
+    ('number_test_2', "parameter int foo = '0;", 0),
+    ('number_test_3', "parameter int foo = '1;", -1),
+    ('number_test_4', "parameter int foo = 'b0;", 0),
+    ('number_test_5', "parameter int foo = 'b 0;", 0),
+    ('number_test_6', "parameter int foo = 1'b0;", 0),
+    ('number_test_7', "parameter int foo = 1'B0;", 0),
+    ('number_test_8', "parameter int foo = 1 'b 0;", 0),
+    ('number_test_9', "parameter int foo = 1'b1;", 1),
+    ('number_test_10', "parameter int foo = 1'bx;", None),
+    ('number_test_11', "parameter int foo = 1 'b x;", None),
+    ('number_test_12', "parameter int foo = 1'bz;", None),
+    ('number_test_13', "parameter int foo = 4'bxxxx;", None),
+    ('number_test_14', "parameter int foo = 4'bzzzz;", None),
+    ('number_test_15', "parameter int foo = 4'sb1111;", -1),
+    ('number_test_16', "parameter int foo = 4'Sb0000;", 0),
+    ('number_test_24', "parameter int foo = 'd0;", 0),
+    ('number_test_25', "parameter int foo = 'd 0;", 0),
+    ('number_test_26', "parameter int foo = 32'd1;", 1),
+    ('number_test_27', "parameter int foo = 32'D1;", 1),
+    ('number_test_28', "parameter int foo = 32 'd 1;", 1),
+    ('number_test_29', "parameter int foo = 32'sd1;", 1),
+    ('number_test_30', "parameter int foo = 32'Sd1;", 1),
+    ('number_test_31', "parameter int foo = 32'dx;", None),
+    ('number_test_32', "parameter int foo = 32'dx_;", None),
+    ('number_test_33', "parameter int foo = 32'dx__;", None),
+    ('number_test_34', "parameter int foo = 32'dX;", None),
+    ('number_test_35', "parameter int foo = 32'dz;", None),
+    ('number_test_36', "parameter int foo = 32'dZ;", None),
+    ('number_test_42', "parameter int foo = 'o0;", 0),
+    ('number_test_43', "parameter int foo = 'o 0;", 0),
+    ('number_test_44', "parameter int foo = 32'o7;", 7),
+    ('number_test_45', "parameter int foo = 32'o7_7_7;", 511),
+    ('number_test_46', "parameter int foo = 32'O7;", 7),
+    ('number_test_47', "parameter int foo = 32 'o 7;", 7),
+    ('number_test_48', "parameter int foo = 32'so7;", 7),
+    ('number_test_49', "parameter int foo = 32'So7;", 7),
+    ('number_test_50', "parameter int foo = 32'oxxx;", None),
+    ('number_test_51', "parameter int foo = 32'oXX;", None),
+    ('number_test_52', "parameter int foo = 32'ozz;", None),
+    ('number_test_53', "parameter int foo = 32'oZZ;", None),
+    ('number_test_59', "parameter int foo = 'h0;", 0),
+    ('number_test_60', "parameter int foo = 'h 0;", 0),
+    ('number_test_61', "parameter int foo = 32'h7;", 7),
+    ('number_test_62', "parameter int foo = 32'H7fFF;", 32767),
+    ('number_test_64', "parameter int foo = 32'hdeadbeef;", -559038737),
+    ('number_test_65', "parameter int foo = 32'hFEEDFACE;", -17958194),
+    ('number_test_66', "parameter int foo = 32 'h 7;", 7),
+    ('number_test_67', "parameter int foo = 32'sh7;", 7),
+    ('number_test_68', "parameter int foo = 32'Sh7;", 7),
+    ('number_test_69', "parameter int foo = 32'hxxx;", None),
+    ('number_test_70', "parameter int foo = 32'hXX;", None),
+    ('number_test_71', "parameter int foo = 32'hzz;", None),
+    ('number_test_72', "parameter int foo = 32'hZZ;", None),
+]:
+    add(_nm,
+        "Upstream declares the parameter at $unit scope and leaves the module EMPTY, so "
+        "the literal's value reaches nothing.",
+        f"""{_decl}
+module test(input logic signed [31:0] x, output logic signed [31:0] o,
+            output logic signed [31:0] w);
+  // The parameter declaration is kept verbatim; its value is an output now.
+  assign o = foo;
+  // A port-driven witness: many of these literals are 0, and a netlist whose every
+  // output is constant zero makes the co-sim VACUOUS rather than comparing.
+  assign w = x;
 endmodule
 """,
-    "The type operator must compare EQUAL to the identical type and unequal to a "
-    "different-width one, the case over `type(T)` must take the matching arm, and "
-    "$bits(T) must be 12 -- exactly the four claims upstream reports with $stop.",
-    ["sat -verify -prove eq_same 1'b1", "sat -verify -prove eq_other 1'b0",
-     "sat -verify -prove ne_same 1'b0", "sat -verify -prove case_hit 1'b1",
-     "sat -verify -prove nbits 32'sd12"])
+        (f"The literal must carry the value read_verilog gives it, {_val}."
+         if _val is not None else
+         "The literal has x or z bits, so its value cannot be proven; see NOTE.md."),
+        # `sat -prove` takes a BIT PATTERN, not a signed decimal, so a negative
+        # golden value is spelled in hex (32'sd-1 is not accepted).
+        ([f"sat -verify -prove o 32'h{_val & 0xFFFFFFFF:08x}"]
+         if _val is not None else [])
+        + ["sat -verify -prove w 32'sd7 -set x 32'sd7"],
+        top="test",
+        # read_slang normalises x and z differently from read_verilog and
+        # read_uhdm, so a miter over an x/z literal fails on a difference that is
+        # not ours; those tests are gated on read_verilog instead.
+        slang=_val is not None,
+        note=(None if _val is not None else
+              _NUM_MEASURED_NOTE.format(
+                  lit=_NUM_MEASURED[_nm][0], rv=_NUM_MEASURED[_nm][1],
+                  uh=_NUM_MEASURED[_nm][2])
+              if _nm in _NUM_MEASURED else _NUM_XZ_NOTE))
 
 
+
+# --------------------------------------------------------------------------
+# packed-array operations, net declarations, part-selects
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+for nm, sel, exp1, exp2 in [
+    ("non_idx_part_select",     "a[11:8]", "4'h2", "4'hb"),
+    ("non_idx_part_select_sim", "a[11:8]", "4'h2", "4'hb"),
+]:
+    add(nm,
+        "Upstream takes the part-select inside an `initial` block and drops (or prints) "
+        "the result.",
+        f"""module top(input logic [15:0] a, output logic [3:0] b);
+  assign b = {sel};
+endmodule
+""",
+        f"The part-select must take bits 11:8: at upstream's 16'h1234 that is {exp1}, and "
+        "a second vector pins the offset.",
+        [f"sat -verify -prove b {exp1} -set a 16'h1234",
+         f"sat -verify -prove b {exp2} -set a 16'habcd"])
+
+# --------------------------------------------------------------------------
+# operations-on-UNPACKED-arrays: the mirror of the packed group above.  Upstream
+# fills each array with an assignment pattern inside an `initial` block and prints
+# the elements one at a time, so nothing is observable.  Each conversion drives
+# the elements from a port vector and reads them back the same way, so an UNPACKED
+# array's element ORDER -- `'{a7, a6, ... a0}` fills index 7 first -- is pinned.
+# --------------------------------------------------------------------------
+_UNP_IN = """  // An assignment pattern fills the array MSB-index first, so bit i of the port
+  // vector has to reach element i for the round trip below to hold.
+  always_comb
+    for (int i = 0; i < 8; i++) arr_a[i] = x[i];
+"""
+
+# --------------------------------------------------------------------------
+# parameters, packages, loops and a few operators
+# --------------------------------------------------------------------------
 def write_all(only=None):
     n = 0
     for name, (why, dut, claim, proofs, top, flatten, slang, note, extra,

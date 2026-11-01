@@ -1,0 +1,10 @@
+# A single element of the two-dimensional array must reduce to one enabled register carrying `wd` to `a` under `we`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:wd %i
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:we %i

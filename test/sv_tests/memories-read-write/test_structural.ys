@@ -1,0 +1,10 @@
+# Only one element of the 256 is touched, so the array must reduce to a single ENABLED register carrying `wd` to `rd` under `we` -- not a memory, and not 256 registers.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:wd %i
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:we %i

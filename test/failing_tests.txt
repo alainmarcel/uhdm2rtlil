@@ -428,3 +428,35 @@ sv_tests/onehot0_function
 sv_tests/onehot_function
 sv_tests/pow_function
 sv_tests/sqrt_function
+
+# ---- sv-tests conversion campaign, batch 6 (2026-11-01) -------------------
+# The SECOND UNPACKED DIMENSION is folded into the element, so the array has the
+# wrong geometry.  `logic [7:0] mem [0:1023][0:3]` must flatten to 4096 elements
+# of 8 bits, which read_verilog does; read_uhdm produces 1024 elements of 32 bits
+# (`connect \mem[1023] 32'x`).  The equivalence check reports it as
+# "UHDM synthesized netlist contains X assignments not present in Verilog",
+# which is really a count difference: 1025 wide X wires against 4095 narrow ones.
+#
+# This is the SAME root cause as the $bits/$dimensions-of-an-element entries in
+# structural_expected_fail.txt and as array_queries_multi_dim: the inner unpacked
+# dimension is absorbed into the element everywhere.  One fix should close all of
+# them; remove every entry together.
+#
+# Note the test's OWN gates pass -- the shape assertion (one enabled register)
+# and the co-sim both hold, because `mem[123][2]` still selects the right byte out
+# of read_uhdm's 32-bit element.  Only the geometry is wrong, which is exactly why
+# a test like this is worth having.
+sv_tests/multi-declaration
+sv_tests/multi-dim-basic
+sv_tests/multi_dim_array_addressing_sim
+
+# ---- sv-tests conversion campaign, batch 7 (2026-11-01) -------------------
+# One defect, two entries: an unsigned BINARY literal is extended by its MSB
+# instead of zero-extended when it reaches a wider signed parameter.
+#   number_test_9  : `1'b1`    -> all-ones where both references give 1
+#   number_test_13 : `4'bxxxx` -> all-x where read_verilog gives 0000...xxxx
+# number_test_10/_11/_12/_14 share the defect but their gates cannot see it;
+# each carries the measurement in its NOTE.md.  See number_test_9/NOTE.md for the
+# full table and for the sibling tests that pin the boundary.
+sv_tests/number_test_9
+sv_tests/number_test_13

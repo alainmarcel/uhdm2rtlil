@@ -1,0 +1,7 @@
+# The literal has x or z bits, so its value cannot be proven; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove w 32'sd7 -set x 32'sd7

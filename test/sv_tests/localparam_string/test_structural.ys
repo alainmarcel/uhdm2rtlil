@@ -1,0 +1,8 @@
+# Both localparams must carry their string value, typed and untyped alike.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove s1_ok 1'b1
+sat -verify -prove s2_ok 1'b1

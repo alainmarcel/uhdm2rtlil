@@ -1,0 +1,10 @@
+# Both names must share the packed geometry (8x32 = 256 bits per element) while keeping their own unpacked dimensions, and each element must round-trip.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_bits 32'sd256
+sat -verify -prove b_bits 32'sd256
+sat -verify -prove a_o 256'hA5 -set x 256'hA5
+sat -verify -prove b_o 256'h5A -set y 256'h5A

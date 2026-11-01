@@ -1,0 +1,8 @@
+# The inner concatenation must be replicated as a UNIT: at upstream's b=2'b10, c=2'b01, d=4'b1111 the result is 1001 1001 1001 1111, which a replication of either operand alone would not give.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'b1001100110011111 -set b 2'b10 -set c 2'b01 -set d 4'b1111
+sat -verify -prove a 16'b0110011001100000 -set b 2'b01 -set c 2'b10 -set d 4'b0000
