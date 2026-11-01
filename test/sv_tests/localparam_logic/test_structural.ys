@@ -1,0 +1,8 @@
+# Both the untyped and the `logic`-typed ranged localparam must hold 1 << 5 = 32, in eleven bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd32
+sat -verify -prove w 32'sd32

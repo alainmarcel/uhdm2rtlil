@@ -1,0 +1,7 @@
+# A dual-edge sensitivity must not produce COMBINATIONAL FEEDBACK.  read_uhdm builds a `$not` whose output feeds its own input -- four logic loops, one per bit -- so `check -assert` fails, which is why this is a RATCHET; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_tb
+proc
+opt -full
+check -assert
+select -assert-count 0 t:$not

@@ -1,0 +1,8 @@
+# The fill literals must REPLICATE to the full width, not sit in bit 0: '0 is 16'h0000 and '1 is 16'hFFFF.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'h0000
+sat -verify -prove b 16'hFFFF

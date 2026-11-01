@@ -1,0 +1,9 @@
+# The underscores must be ignored: 27195000, 16'h351F and 32'h12ABF001.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 32'd27195000
+sat -verify -prove b 16'h351F
+sat -verify -prove c 32'h12ABF001

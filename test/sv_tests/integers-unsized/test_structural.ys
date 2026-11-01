@@ -1,0 +1,9 @@
+# All three unsized literals must carry their value in 32 bits: 659, 0x837FF and 0o7460 = 3888.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_dec 32'd659
+sat -verify -prove a_hex 32'h000837FF
+sat -verify -prove a_oct 32'd3888

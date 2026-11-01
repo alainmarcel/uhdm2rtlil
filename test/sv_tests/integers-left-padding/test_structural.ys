@@ -1,0 +1,10 @@
+# A literal shorter than its target is padded with its own LEFT-MOST digit when that digit is x or z, and with zeros otherwise: 'h 3x pads to 03x (so bits 11:4 are 8'h03) and 'h 0z3 pads to 0z3 (so bits 11:8 are 0 and bits 3:0 are 3), while 'h5 in 85 bits is zero-extended.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b[11:4] 8'h03
+sat -verify -prove d[11:8] 4'h0
+sat -verify -prove d[3:0] 4'h3
+sat -verify -prove e 85'h5

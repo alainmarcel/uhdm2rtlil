@@ -1,0 +1,9 @@
+# Each literal must carry exactly the value upstream's comment gives it: -8'd6 is 8'hFA, 4'shf is 4'b1111, and -4'sd15 is 4'b0001 -- NOT 4'b1111, because negating a 4-bit signed 15 (which is -1) gives +1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 8'hFA
+sat -verify -prove b 4'b1111
+sat -verify -prove c 4'b0001

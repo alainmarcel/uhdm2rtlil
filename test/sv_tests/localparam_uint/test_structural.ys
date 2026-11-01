@@ -1,0 +1,7 @@
+# The `int unsigned` localparam must carry upstream's 123.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd123

@@ -1,0 +1,10 @@
+# start is 10 and the ranged members carry their index: stop11 = 11 through stop13 = 13.  read_slang does that; read_uhdm fabricates a wire for each generated name, which is why this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove st 32'sd10
+sat -verify -prove s11 32'sd11
+sat -verify -prove s12 32'sd12
+sat -verify -prove s13 32'sd13

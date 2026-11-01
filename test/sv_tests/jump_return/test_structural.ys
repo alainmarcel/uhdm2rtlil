@@ -1,0 +1,8 @@
+# The bare `return` must skip the rest of the body: at upstream's 21 the result is the first value, and at any other argument the second.  read_slang does that; read_uhdm reaches the second write either way, which is why this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top jump_tb
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd1 -set a 32'sd21
+sat -verify -prove o 32'sd2 -set a 32'sd20

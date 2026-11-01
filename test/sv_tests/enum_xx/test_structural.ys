@@ -1,0 +1,8 @@
+# The explicit members must be 0 and 1.  The all-x member's comparison is an output too, but not a proof: see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove oa 32'sd0
+sat -verify -prove oc 32'sd1

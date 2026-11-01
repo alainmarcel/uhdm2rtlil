@@ -37,6 +37,42 @@ CLASSES = [
      r"^\s*chandle\b",
      "A `chandle` is an opaque pointer to foreign (DPI) data: there is nothing to "
      "elaborate."),
+    # NOTE: $stop and $finish are deliberately NOT here.  They appear as
+    # incidental failure reporting inside tests whose real subject IS
+    # synthesizable -- type_op_compare uses them to report a failed `type()`
+    # comparison -- so they are handled separately below, and only when the task
+    # is the whole module.
+    ("simulation control task",
+     r"\$exit\b|\$fatal\b|\$info\b|\$warning\b"
+     r"|\$monitor|\$strobe|\$coverage_|\$get_coverage|\$set_coverage",
+     "A simulation control or reporting task ends, pauses or instruments the RUN; "
+     "there is no netlist counterpart."),
+    ("random distribution",
+     r"\$dist_\w+|\$random\b|\$urandom_range",
+     "A random distribution is a simulation service and is not deterministic, so a "
+     "netlist cannot carry its answer."),
+    ("SVA expect",
+     r"^\s*expect\s*\(|\bexpect\s*\(\s*@",
+     "`expect` blocks the executing process until a sequence matches: it is a "
+     "testbench construct with no netlist form."),
+    ("intra-assignment timing control",
+     r"<?=\s*(#\d|#\(|repeat\s*\(|@\s*\()",
+     "An intra-assignment delay, repeat or event control schedules WHEN the write "
+     "lands, which synthesis discards entirely."),
+    ("min:typ:max delay",
+     r"#\s*\(\s*\d+\s*:\s*\d+\s*:\s*\d+\s*\)",
+     "A min:typ:max delay triple is a timing annotation with no netlist form."),
+    ("global clocking",
+     r"^\s*global\s+clocking\b",
+     "A `global clocking` block names a simulation sampling clock; it declares no "
+     "hardware."),
+    ("event variable",
+     r"^\s*event\s+\w+\s*;",
+     "An `event` is a synchronisation object triggered and waited on at simulation "
+     "time."),
+    ("bounded queue",
+     r"\[\s*\$\s*:",
+     "A bounded queue is still a queue: its size varies at simulation time."),
     ("program block",
      r"^\s*program\b",
      "A `program` block is a testbench construct, not hardware."),
@@ -74,7 +110,32 @@ def body_of(text: str) -> str:
     return re.sub(r"\A.*?^\*/\n", "", text, flags=re.S | re.M)
 
 
+STOP_ONLY = re.compile(r"\$(stop|finish)\s*(\(|;)")
+
+
 def classify(body: str):
+    # An EMPTY file (or one holding only comments) is testing that an empty input
+    # is ACCEPTED.  Adding a module to make it observable would destroy exactly
+    # the construct under test, so it is classified rather than converted.
+    if not [l for l in body.splitlines()
+            if l.strip() and not l.strip().startswith(("//", "/*", "*", "*/"))]:
+        return ("empty input",
+                "The file is empty (or holds only comments).  The construct under test "
+                "IS the absence of content, so adding a module to make it observable "
+                "would destroy it.",
+                "    <no declarations at all>")
+    # A module whose ONLY statement is $stop or $finish is a test OF that task;
+    # one that merely reports a failure with it is not.
+    if STOP_ONLY.search(body):
+        stmts = [l.strip() for l in body.splitlines()
+                 if l.strip() and not l.strip().startswith(("//", "/*", "*", "*/"))
+                 and not re.match(r"^(module|endmodule|initial|begin|end)\b", l.strip())]
+        if len(stmts) <= 1:
+            return ("simulation control task",
+                    "A simulation control task ends or pauses the RUN; there is no "
+                    "netlist counterpart, and here it is the whole module.",
+                    "\n".join(f"    {l}" for l in stmts))
+
     for cls, pat, why in CLASSES:
         m = re.search(pat, body, re.M)
         if m:

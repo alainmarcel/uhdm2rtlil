@@ -1,0 +1,8 @@
+# None of the names is defined, so the preprocessor must take the arm coded 3 below.  Any other arm compiling gives a different code, and an `ifdef that swallowed the arms would not compile at all.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arm 4'd3
+sat -verify -prove y 9'd30 -set a 8'd10 -set b 8'd20

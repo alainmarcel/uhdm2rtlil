@@ -63,12 +63,12 @@ T: dict[str, tuple] = {}
 
 
 def add(name, why, dut, claim, proofs, top="top", flatten=False, slang=True,
-        note=None, extra="", seq=0, slang_extra=""):
+        note=None, extra="", seq=0, slang_extra="", sim_config=None):
     """slang=False where read_slang cannot read the construct at all: a miter it
     refuses to build is not a gate, and shipping one would fail for a reason
     that is not ours.  `note` records such a ceiling next to the test."""
     T[name] = (why, dut, claim, proofs, top, flatten, slang, note, extra, seq,
-               slang_extra)
+               slang_extra, sim_config)
 
 
 # --------------------------------------------------------------------------
@@ -2063,42 +2063,94 @@ proof are its gates.  An upstream yosys capability gap, not a reader defect.
 # legitimately emit different numbers of cells for the same form, and what the
 # test is for is that the assertion is not DROPPED.
 # --------------------------------------------------------------------------
-for nm, stmt, what in [
-    ("assert_test",       "initial assert (a != 0);",   "an immediate `assert` in an initial block"),
-    ("assert0_test",      "assert #0 (a != 0);",        "a deferred `assert #0`"),
-    ("assert_final_test", "assert final (a != 0);",     "a final `assert final`"),
-    ("assume_test",       "initial assume (a != 0);",   "an immediate `assume`"),
-    ("assume0_test",      "assume #0 (a != 0);",        "a deferred `assume #0`"),
-    ("assume_final_test", "assume final (a != 0);",     "a final `assume final`"),
-    ("cover_test",        "initial cover (a != 0);",    "an immediate `cover`"),
-    ("cover0_test",       "cover #0 (a != 0);",         "a deferred `cover #0`"),
-    ("cover_final_test",  "cover final (a != 0);",      "a final `cover final`"),
+# Measured 2026-10-31, $check cells after `proc; opt -full`:
+#
+#   form                              read_verilog  read_slang  read_uhdm
+#   initial assert                         1             0*         1
+#   initial cover                          1             0*         1
+#   initial assume                         1             0*         0   <- defect
+#   assert/assume/cover #0                 -             0          0
+#   assert/assume/cover final              -             0          0
+#   assume property                        -             0          0
+#
+#   * read_slang is read with --ignore-assertions in the miter, so it emits none
+#     by construction; `-` means read_verilog cannot PARSE the form at all.
+#
+# So only three of the ten forms reach a netlist anywhere.  `initial assume` is a
+# read_uhdm defect with read_verilog as the oracle; the deferred, `final` and
+# concurrent-property forms are emitted by NONE of the three, so those tests
+# claim only what is true -- the form is accepted and the surrounding logic
+# survives -- and say so in their NOTE.
+_ASSERT_CELL_NOTE = """CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A miter is not a gate for an assertion: `test_slang_equiv.ys` would read with
+`--ignore-assertions` (the checks would otherwise become miter asserts of their
+own), so read_slang emits no `$check` by construction.  What the test claims is
+that the assertion is not DROPPED -- at least one `$check` -- which read_verilog
+also produces, plus the surrounding logic, which the uhdm-vs-verilog comparison
+covers.  The cell is counted and then DELETED before the value proof, because a
+`$check` has no SAT model.
+"""
+
+_ASSERT_NO_CELL_NOTE = """CONVERTED, with the assertion's own effect out of reach.
+
+Measured 2026-10-31: this assertion form reaches a netlist on NONE of the three
+frontends -- read_uhdm and read_slang emit no `$check` for it, and read_verilog
+cannot even parse it ({rverr}).  So a test that asserted the cell would fail on
+all three rather than on ours, and this conversion claims only what is true: the
+form is ACCEPTED and does not perturb the surrounding logic, which the proof
+below pins.  `initial assert`, `initial cover` and `initial assume` DO reach a
+netlist -- see assert_test, cover_test and assume_test -- so this is specific to
+the deferred / `final` / concurrent-property forms.
+"""
+
+for nm, stmt, what, cell in [
+    ("assert_test",       "initial assert (a != 0);",   "an immediate `assert` in an initial block", True),
+    ("assert0_test",      "assert #0 (a != 0);",        "a deferred `assert #0`", False),
+    ("assert_final_test", "assert final (a != 0);",     "a final `assert final`", False),
+    ("assume_test",       "initial assume (a != 0);",   "an immediate `assume`", True),
+    ("assume0_test",      "assume #0 (a != 0);",        "a deferred `assume #0`", False),
+    ("assume_final_test", "assume final (a != 0);",     "a final `assume final`", False),
+    ("cover_test",        "initial cover (a != 0);",    "an immediate `cover`", True),
+    ("cover0_test",       "cover #0 (a != 0);",         "a deferred `cover #0`", False),
+    ("cover_final_test",  "cover final (a != 0);",      "a final `cover final`", False),
 ]:
-    add(nm,
-        f"Upstream ties `a` to the constant 1, so {what} is vacuously true and a frontend "
-        "that dropped it entirely would look identical.",
-        f"""module top(input logic a, output logic o);
+    dut = f"""module top(input logic a, output logic o);
   {stmt}
   // The condition is a PORT, so the assertion is a real one, and the passthrough
   // gives the netlist an output that actually moves.
   assign o = a;
 endmodule
-""",
-        f"{what[0].upper()}{what[1:]} must reach the netlist as a `$check` cell rather than "
-        "being dropped.  The count is a minimum because the frontends legitimately emit "
-        "different numbers for the same form.",
-        ["select -assert-min 1 t:$check",
-         "sat -verify -prove o 1'b1 -set a 1'b1"],
-        slang=False,
-        note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
-
-A miter is not a gate for an assertion: `test_slang_equiv.ys` reads with
-`--ignore-assertions` (the checks would otherwise become miter asserts of their
-own), and the three frontends legitimately lower the same assertion form to
-different numbers of `$check` cells.  What the test claims is that the assertion
-is not DROPPED -- at least one `$check` -- plus the surrounding logic, which the
-uhdm-vs-verilog comparison covers.
-""")
+"""
+    if cell:
+        claim = (f"{what[0].upper()}{what[1:]} must reach the netlist as a `$check` cell "
+                 "rather than being dropped, and the surrounding logic must survive.")
+        extra = "select -assert-min 1 t:$check\ndelete t:$check\nopt_clean"
+        note = _ASSERT_CELL_NOTE
+    else:
+        claim = (f"{what[0].upper()}{what[1:]} must be ACCEPTED and must not perturb the "
+                 "logic beside it.  No frontend lowers this form to a netlist cell, so "
+                 "that is all a netlist can show -- see NOTE.md.")
+        extra = ""
+        note = _ASSERT_NO_CELL_NOTE.format(
+            rverr="`Can't resolve task name` / a syntax error")
+    add(nm,
+        f"Upstream ties `a` to the constant 1, so {what} is vacuously true and a frontend "
+        "that dropped it entirely would look identical.",
+        dut, claim,
+        ["sat -verify -prove o 1'b1 -set a 1'b1",
+         "sat -verify -prove o 1'b0 -set a 1'b0"],
+        slang=False, extra=extra, note=note,
+        # `cover` does not abort a simulation; `assert` and `assume` do.
+        sim_config="""# The assertion under test is a real one over a PORT, so the co-sim's random
+# stimulus drives the condition false and Verilator aborts on it:
+#   %Error: dut.sv:7: Assertion failed in TOP.tb.u_rtl.u_orig: 'assert' failed.
+# That is the assertion WORKING, not a divergence: test_sim_equivalence.py drives
+# unconstrained random inputs and has no notion of an assumption to respect.  The
+# netlist and the RTL are compared by the uhdm-vs-verilog formal check and by this
+# test's own test_structural.ys instead.
+SKIP_SIM_EQUIV=1
+""" if nm.startswith(("assert", "assume")) else None)
 
 add("assume_property_test",
     "Upstream never drives `clk` or `a`, so the concurrent `assume property` constrains "
@@ -2110,15 +2162,24 @@ endmodule
 """,
     "The concurrent `assume property` must reach the netlist as a `$check` cell rather "
     "than being dropped.",
-    ["select -assert-min 1 t:$check",
-     "sat -verify -prove o 1'b1 -set a 1'b1"],
-    slang=False,
-    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+    ["sat -verify -prove o 1'b1 -set a 1'b1"],
+    slang=False, sim_config="""# The assertion under test is a real one over a PORT, so the co-sim's random
+# stimulus drives the condition false and Verilator aborts on it:
+#   %Error: dut.sv:7: Assertion failed in TOP.tb.u_rtl.u_orig: 'assert' failed.
+# That is the assertion WORKING, not a divergence: test_sim_equivalence.py drives
+# unconstrained random inputs and has no notion of an assumption to respect.  The
+# netlist and the RTL are compared by the uhdm-vs-verilog formal check and by this
+# test's own test_structural.ys instead.
+SKIP_SIM_EQUIV=1
+""",
+    note="""CONVERTED, with the assertion's own effect out of reach.
 
-As for the immediate-assertion tests: the slang miter reads with
-`--ignore-assertions`, so it cannot gate the assertion itself, and the frontends
-lower a concurrent property to different cell counts.  The claim is that it is
-not dropped.
+Measured 2026-10-31: a concurrent `assume property` reaches a netlist on NONE of
+the three frontends -- read_uhdm and read_slang emit no `$check` for it, and
+read_verilog cannot parse it at all.  A test that asserted the cell would fail on
+all three rather than on ours, so this claims only what is true: the form is
+accepted and does not perturb the logic beside it.  The IMMEDIATE forms do reach
+a netlist (assert_test, cover_test, assume_test).
 """)
 
 # --------------------------------------------------------------------------
@@ -2207,8 +2268,8 @@ endmodule
 """,
     "The $display must become exactly one `$print` cell -- all three frontends emit one "
     "-- and the value it formats must still reach the output.",
-    ["select -assert-count 1 t:$print",
-     "sat -verify -prove o 32'hDEADBEEF -set x 32'hDEADBEEF"],
+    ["sat -verify -prove o 32'hDEADBEEF -set x 32'hDEADBEEF"],
+    extra="select -assert-count 1 t:$print\ndelete t:$print\nopt_clean",
     slang=False,
     note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
 
@@ -2546,7 +2607,13 @@ endmodule
      "sat -verify -prove b 5'd3",
      "sat -verify -prove c[2] 1'b0",
      "sat -verify -prove c[1] 1'b1"],
-    note=_XZ_NOTE)
+    slang=False,
+    note=_XZ_NOTE + """
+`read_slang` is NOT a reference for the x/z bits: it normalises z to x (`'h 0z3`
+reads back as `0000xxxx0011` where read_verilog and read_uhdm both give
+`0000zzzz0011`), so a miter against it fails on a difference that is not ours.
+read_verilog agrees with read_uhdm and is this test's reference.
+""")
 
 add("integers-signed",
     "Upstream assigns four SIGNED literals inside an `initial` block and never reads them, "
@@ -2568,7 +2635,13 @@ endmodule
     ["sat -verify -prove a 8'hFA",
      "sat -verify -prove b 4'b1111",
      "sat -verify -prove c 4'b0001"],
-    note=_XZ_NOTE)
+    slang=False,
+    note=_XZ_NOTE + """
+`read_slang` is NOT a reference for the x/z bits: it normalises z to x (`'h 0z3`
+reads back as `0000xxxx0011` where read_verilog and read_uhdm both give
+`0000zzzz0011`), so a miter against it fails on a difference that is not ours.
+read_verilog agrees with read_uhdm and is this test's reference.
+""")
 
 add("integers-left-padding",
     "Upstream assigns seven literals with x and z padding inside an `initial` block and "
@@ -2615,7 +2688,13 @@ endmodule
     "The fill literals must REPLICATE to the full width, not sit in bit 0: '0 is 16'h0000 "
     "and '1 is 16'hFFFF.",
     ["sat -verify -prove a 16'h0000", "sat -verify -prove b 16'hFFFF"],
-    note=_XZ_NOTE)
+    slang=False,
+    note=_XZ_NOTE + """
+`read_slang` is NOT a reference for the x/z bits: it normalises z to x (`'h 0z3`
+reads back as `0000xxxx0011` where read_verilog and read_uhdm both give
+`0000zzzz0011`), so a miter against it fails on a difference that is not ours.
+read_verilog agrees with read_uhdm and is this test's reference.
+""")
 
 add("integers-token",
     "Upstream declares `integer a;` and never drives or reads it.",
@@ -2682,27 +2761,45 @@ endmodule
     top="jump_tb")
 
 add("jump_return",
-    "Upstream's void function only `$display`s, so whether the early `return` skipped the "
-    "rest of the body is invisible to synthesis.",
+    "Upstream's void function only `$display`s, so whether the early bare `return` "
+    "skipped the rest of the body is invisible to synthesis.",
     """module jump_tb (input logic signed [31:0] a, output logic signed [31:0] o);
-  // The early `return` must skip the second write, so the argument 21 leaves the
+  // Upstream's construct is a VOID function with a BARE `return`, kept as such:
+  // the early return must skip the second write, so the argument 21 leaves the
   // output at the first value and anything else reaches the second.
-  function automatic int fun(input int a);
-    fun = 1;
+  function automatic void fun(input int a, output int r);
+    r = 1;
     if(a == 21)
-      return fun;
-    fun = 2;
-    return fun;
+      return;
+    r = 2;
   endfunction
-  assign o = fun(a);
+  always_comb fun(a, o);
 endmodule
 """,
-    "The early `return` must skip the rest of the body: at upstream's 21 the result is "
-    "the first value, and at any other argument the second.",
+    "The bare `return` must skip the rest of the body: at upstream's 21 the result is "
+    "the first value, and at any other argument the second.  read_slang does that; "
+    "read_uhdm reaches the second write either way, which is why this is a RATCHET -- "
+    "see NOTE.md.",
     ["sat -verify -prove o 32'sd1 -set a 32'sd21",
-     "sat -verify -prove o 32'sd2 -set a 32'sd20",
-     "sat -verify -prove o 32'sd2 -set a 32'sd22"],
-    top="jump_tb")
+     "sat -verify -prove o 32'sd2 -set a 32'sd20"],
+    top="jump_tb",
+    note="""RATCHET -- a BARE `return` in a VOID FUNCTION does not skip the rest of the body.
+
+`fun` writes 1, returns early when the argument is 21, and otherwise writes 2.
+read_slang gives 1 at a=21 and 2 at a=20; read_uhdm gives **2 for both**, so the
+early return is ignored and every statement after it still runs.
+
+The value form is NOT affected -- `return <expression>` is correct
+(`jump_return_expr`), and so is returning the function's own name
+(`fun = 7; return fun;` gives 7 on read_uhdm and read_slang alike).  The gap is
+the bare `return` as a control transfer.
+
+`read_verilog` cannot read the construct at all
+(`ERROR: Can't resolve task name \\return`), so read_slang is the oracle and the
+slang miter plus this proof are the gates.  Listed in
+structural_expected_fail.txt and slang_miter_expected_fail.txt; both entries must
+go in the commit that fixes it.
+""")
 
 add("jump_return_expr",
     "Upstream calls the function 256 times inside an `initial` block and only `$display` "
@@ -2774,10 +2871,544 @@ endmodule
      "sat -verify -prove y 9'd100 -set a 8'd200 -set b 8'd100 -set sel 1'b0"])
 
 
+# --------------------------------------------------------------------------
+# event controls, enums, packed-array copies, string and display forms
+# --------------------------------------------------------------------------
+for nm, sens, what, extra_in in [
+    ("event_control_posedge", "posedge clk", "a rising-edge sensitivity", ""),
+    ("event_control_negedge", "negedge clk", "a falling-edge sensitivity", ""),
+]:
+    add(nm,
+        f"Upstream ties the clock to the constant 0 and never reads `a`, so {what} is "
+        "never exercised -- a frontend that dropped the block entirely would look "
+        "identical.",
+        f"""module block_tb (input wire clk, output reg [3:0] a);
+  // Upstream toggles `a` on every edge; the clock is a port now so the block is a
+  // real register.
+  always @({sens}) a <= ~a;
+endmodule
+""",
+        f"{what[0].upper()}{what[1:]} must become an edge-triggered register wired to "
+        "the clock, not a latch or combinational logic.",
+        ["select -assert-min 1 t:$dff t:$adff t:$sdff t:$dffe %u %u %u",
+         "select -assert-any t:$dff t:$adff t:$sdff t:$dffe %u %u %u %ci* w:clk %i"],
+        top="block_tb", slang=False,
+        note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A register's behaviour is invisible to a miter that starts from an unconstrained
+state -- both sides satisfy it regardless -- and `sat -seq N -prove` checks the
+property in EVERY step including step 1, before any edge, where it fails on
+read_verilog and read_slang too.  So the claim is structural: the block must
+become an edge-triggered register wired to the clock.  The uhdm-vs-verilog
+comparison covers the logic itself.
+""")
+
+for nm, sens in [("event_or_op", "a or b or c or d"), ("event_comma_op", "a, b, c, d"),
+                 ("event_implicit", "*")]:
+    add(nm,
+        "Upstream ties all four inputs to the constant 0 and never reads `out`, so the "
+        "sensitivity list is never exercised.",
+        f"""module block_tb (input wire a, input wire b, input wire c, input wire d,
+                output reg out);
+  always @({sens})
+    out = (a | b) & (c | d);
+endmodule
+""",
+        "The block must be sensitive to all four inputs: every one of these vectors "
+        "changes the result, so a sensitivity list missing any of them would be visible "
+        "as a stale value.",
+        ["sat -verify -prove out 1'b1 -set a 1'b1 -set b 1'b0 -set c 1'b1 -set d 1'b0",
+         "sat -verify -prove out 1'b1 -set a 1'b0 -set b 1'b1 -set c 1'b0 -set d 1'b1",
+         "sat -verify -prove out 1'b0 -set a 1'b1 -set b 1'b1 -set c 1'b0 -set d 1'b0",
+         "sat -verify -prove out 1'b0 -set a 1'b0 -set b 1'b0 -set c 1'b1 -set d 1'b1"],
+        top="block_tb")
+
+add("event_conditional",
+    "Upstream ties the clock, the enable and the data to constants and never reads `y`, "
+    "so the `iff` qualifier is never exercised.",
+    """module block_tb (input wire clk, input wire en, input wire a, output reg y);
+  // `iff` qualifies the edge: the register must capture only when the condition
+  // holds, which makes it an ENABLED flop rather than a plain one.
+  always @(posedge clk iff en == 1)
+    y <= a;
+endmodule
+""",
+    "The qualified edge must become a register whose enable comes from `en`.",
+    ["select -assert-min 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u",
+     "select -assert-any t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:en %i",
+     "select -assert-any t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:clk %i"],
+    top="block_tb", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_slang's own read.
+
+`read_verilog` cannot parse `always @(posedge clk iff ...)` at all, so the golden
+comparison is unavailable, and a register is invisible to a miter from an
+unconstrained state.  The claim is therefore structural: the qualified edge must
+produce a register whose enable cone contains `en` and whose clock cone contains
+`clk` -- a frontend that dropped the `iff` would leave `en` out of the netlist
+entirely.
+""")
+
+add("enum_typedef",
+    "Upstream declares a variable of a typedef'd enum and never drives or reads it.",
+    """module top(input logic [1:0] x, output logic [1:0] val_o, output logic is_c);
+  typedef enum {a, b, c} e;
+  e val;
+  // The enum members must carry their implicit values 0,1,2, which a comparison
+  // against one of them reads back.
+  always_comb val = e'(x);
+  assign val_o = val;
+  assign is_c  = (val == c);
+endmodule
+""",
+    "The typedef'd enum's third member must be 2.",
+    ["sat -verify -prove is_c 1'b1 -set x 2'd2", "sat -verify -prove is_c 1'b0 -set x 2'd1",
+     "sat -verify -prove val_o 2'd1 -set x 2'd1"])
+
+add("enum_type_checking",
+    "Upstream assigns an enum member to an enum variable inside an `initial` block and "
+    "never reads it.",
+    """module top(input logic [1:0] x, output logic [1:0] o, output logic is_a);
+  typedef enum {a, b, c, d} e;
+  e val;
+  // Assigning a MEMBER (not an integer) is the construct: the variable must take
+  // that member's value, and a comparison back against the member must hold.
+  always_comb
+    case (x)
+      2'd0:    val = a;
+      2'd1:    val = b;
+      2'd2:    val = c;
+      default: val = d;
+    endcase
+  assign o    = val;
+  assign is_a = (val == a);
+endmodule
+""",
+    "Each member assignment must give the variable that member's ordinal, and the "
+    "comparison back against the member must agree.",
+    ["sat -verify -prove o 2'd0 -set x 2'd0", "sat -verify -prove o 2'd3 -set x 2'd3",
+     "sat -verify -prove is_a 1'b1 -set x 2'd0", "sat -verify -prove is_a 1'b0 -set x 2'd2"])
+
+add("enum_xx",
+    "Upstream declares an enum with an ALL-X member (`b = {32{1'bx}}`) and never reads "
+    "any of them, so neither the x member nor the ordinary ones are checked.",
+    """module top(input logic [31:0] x, output logic signed [31:0] oa,
+           output logic signed [31:0] oc, output logic is_b);
+  enum integer {a=0, b={32{1'bx}}, c=1} val;
+  // The two ordinary members must carry their explicit values, and the x member must
+  // be comparable with === (which `==` could not express).
+  assign oa   = a;
+  assign oc   = c;
+  assign is_b = (x === b);
+endmodule
+""",
+    "The explicit members must be 0 and 1.  The all-x member's comparison is an output "
+    "too, but not a proof: see NOTE.md.",
+    ["sat -verify -prove oa 32'sd0", "sat -verify -prove oc 32'sd1"],
+    note="""CONVERTED, with the all-x member's comparison out of reach of a proof.
+
+`is_b = (x === b)` where `b` is `{32{1'bx}}` evaluates to 0 for a two-state input
+on all three frontends (measured), but `sat -verify -prove` cannot carry the
+claim: satgen does not model an x operand the way `eval` does, and the proof
+finds a model where it differs.  Same limitation as the x/z literal tests.  So
+`is_b` stays an OUTPUT -- the uhdm-vs-`read_verilog` netlist comparison compares
+it exactly -- and only the two explicit members are proven.
+""")
+
+add("enum_sequence_range",
+    "Upstream declares a RANGED enum member list with explicit bounds "
+    "(`stop[11:13]`) and never reads any of its members.",
+    """module top(output logic signed [31:0] st, output logic signed [31:0] s11,
+           output logic signed [31:0] s12, output logic signed [31:0] s13);
+  enum {start=10, stop[11:13]} e;
+  // `stop[11:13]` generates stop11..stop13, and -- unlike `stop[3]`, which would
+  // number from the previous member -- the names carry their own INDEX values.
+  assign st  = start;
+  assign s11 = stop11;
+  assign s12 = stop12;
+  assign s13 = stop13;
+endmodule
+""",
+    "start is 10 and the ranged members carry their index: stop11 = 11 through "
+    "stop13 = 13.  read_slang does that; read_uhdm fabricates a wire for each "
+    "generated name, which is why this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove st 32'sd10", "sat -verify -prove s11 32'sd11",
+     "sat -verify -prove s12 32'sd12", "sat -verify -prove s13 32'sd13"],
+    note="""RATCHET -- a RANGED enum member list does not create its members.
+
+`enum {start=10, stop[11:13]}` must generate stop11, stop12 and stop13.
+read_slang resolves them to 11, 12 and 13; read_uhdm reports
+`Reference to unknown signal: stop11` and fabricates a 1-bit wire, so every
+generated name reads as an undriven bit.
+
+`read_verilog` cannot parse a ranged enum at all, so read_slang is the oracle.
+Same defect as `enum_sequence` (the `step[10]` count form); both are listed in
+structural_expected_fail.txt and slang_miter_expected_fail.txt, and both entries
+must go in the commit that fixes it.
+""")
+
+# --------------------------------------------------------------------------
+add("copy",
+    "Upstream writes one element of a packed 2-D array inside an `initial` block, copies "
+    "it to an element of another array and prints both, so synthesis sees neither.",
+    """module top(input bit [3:0] [7:0] x, output bit [3:0] [7:0] a1_o,
+           output bit [3:0] [7:0] b2_o);
+  bit [3:0] [7:0] arr_a [1:10];
+  bit [3:0] [7:0] arr_b [1:10];
+  // The whole 32-bit packed element has to survive both the write and the
+  // element-to-element copy: upstream's value is 32'hdeadbeef.
+  always_comb begin
+    arr_a[1] = x;
+    arr_b[2] = arr_a[1];
+  end
+  assign a1_o = arr_a[1];
+  assign b2_o = arr_b[2];
+endmodule
+""",
+    "Both the element write and the element-to-element copy must carry all 32 bits of "
+    "upstream's 0xdeadbeef -- a copy that lost the packed geometry would narrow it.",
+    ["sat -verify -prove a1_o 32'hdeadbeef -set x 32'hdeadbeef",
+     "sat -verify -prove b2_o 32'hdeadbeef -set x 32'hdeadbeef"])
+
+for nm, extra_assert in [("empty_string", True), ("empty_string_sim", False)]:
+    add(nm,
+        "Upstream assigns the EMPTY STRING to a 112-bit vector inside an `initial` block "
+        "and checks it with an immediate `assert`, which synthesis does not evaluate.",
+        """module top(output logic is_zero, output logic [8*14:1] a_o);
+  bit [8*14:1] a;
+  // The empty string must zero the WHOLE vector, not just its low byte.
+  always_comb a = "";
+  assign a_o     = a;
+  assign is_zero = (a == 0);
+endmodule
+""",
+        "The empty string must leave every one of the 112 bits at 0, which is exactly "
+        "what upstream's `assert(a == 0)` claims.",
+        ["sat -verify -prove is_zero 1'b1",
+         "sat -verify -prove a_o 112'd0"])
+
+add("display_boh",
+    "Upstream's three radix displays are inside an `initial` block on a constant, so "
+    "synthesis has no consumer for them and `opt` removes everything.",
+    """module top(input logic [31:0] x, output logic [31:0] o);
+  // $displayb / $displayo / $displayh differ only in radix; each must become its own
+  // $print cell, so a frontend that folded them together is visible as a count.
+  always_comb begin
+    $displayb(x);
+    $displayo(x);
+    $displayh(x);
+  end
+  assign o = x;
+endmodule
+""",
+    "All three radix forms must survive as separate `$print` cells -- read_verilog also "
+    "emits three -- and the value they format must still reach the output.",
+    ["sat -verify -prove o 32'd1234 -set x 32'd1234"],
+    extra=("select -assert-count 3 t:$print\n"
+           "delete t:$print\n"
+           "opt_clean"),
+    slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+`read_slang` cannot read the radix forms (`unsupported system task '$displayb'`),
+so there is no miter.  read_verilog and read_uhdm both emit three `$print` cells
+(measured 2026-10-31), so the count is the claim; the cells are deleted before
+the value proof because a `$print` has no SAT model.
+""")
+
+
+add("event_control_edge",
+    "Upstream ties the clock to the constant 0 and never reads `a`, so the ANY-edge "
+    "sensitivity (`@(edge clk)`) is never exercised.",
+    """module block_tb (input wire clk, output reg [3:0] a);
+  always @(edge clk) a <= ~a;
+endmodule
+""",
+    "A dual-edge sensitivity must not produce COMBINATIONAL FEEDBACK.  read_uhdm builds "
+    "a `$not` whose output feeds its own input -- four logic loops, one per bit -- so "
+    "`check -assert` fails, which is why this is a RATCHET; see NOTE.md.",
+    ["select -assert-count 0 t:$not"],
+    top="block_tb", slang=False,
+    note="""RATCHET -- `@(edge clk)` becomes a COMBINATIONAL LOGIC LOOP.
+
+Measured 2026-10-31:
+
+* `read_verilog` cannot parse it: `syntax error, unexpected TOK_ID`.
+* `read_slang` REFUSES it explicitly:
+  `@(edge) will not be synthesized (override with '--allow-dual-edge-ff')`.
+* `read_uhdm` accepts it and emits a plain `$not` driving `a` from `a`, so
+  `check` reports FOUR logic loops (one per bit) and `check -assert` fails.
+
+So no frontend synthesizes a dual-edge flop -- that part is a shared ceiling --
+but read_uhdm is the only one that silently produces a BROKEN netlist instead of
+refusing, and a logic loop is never an acceptable lowering.  Either emitting a
+dual-edge register or refusing the construct would close this; until then the
+assertion above pins the current state.  Listed in structural_expected_fail.txt,
+and it must be removed from it in the commit that fixes this.
+""")
+
+
+# --------------------------------------------------------------------------
+# memories, multi-dimensional arrays, declaration forms, let, type operator
+# --------------------------------------------------------------------------
+add("memories-basic",
+    "Upstream declares a 256-entry memory and never drives or reads it, so nothing "
+    "confirms it became a memory rather than 256 registers.",
+    """module top(input logic clk, input logic we, input logic [7:0] addr,
+           input logic [7:0] wd, output logic [7:0] rd);
+  logic [7:0] mem [0:255];
+  // The address is a real port, so the array has to be inferred as a MEMORY --
+  // a port-addressed 256-entry array expanded to registers would be 256 muxes.
+  always_ff @(posedge clk)
+    if (we) mem[addr] <= wd;
+  assign rd = mem[addr];
+endmodule
+""",
+    "A port-addressed 256-entry array must become one memory.",
+    ["select -assert-count 1 t:$mem_v2"],
+    extra="memory_collect", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A miter over a memory is not a gate: the two sides' contents are free variables
+at cycle 0, so the proof fails for a reason that is not a frontend difference
+(measured on read_verilog too).  The claim is the SHAPE -- one memory, not 256
+registers -- which read_verilog produces as well.
+""")
+
+add("memories-read-write",
+    "Upstream writes one element twice inside an `initial` block and prints it, so "
+    "synthesis sees neither the write nor the read.",
+    """module top(input logic clk, input logic we, input logic [7:0] wd,
+           output logic [7:0] rd);
+  logic [7:0] mem [0:255];
+  // Upstream's constant index is kept and the write is clocked, so the round trip
+  // is a real one; the VALUE comes from a port so a folded constant cannot satisfy
+  // the shape below.
+  always_ff @(posedge clk)
+    if (we) mem[5] <= wd;
+  assign rd = mem[5];
+endmodule
+""",
+    "Only one element of the 256 is touched, so the array must reduce to a single "
+    "ENABLED register carrying `wd` to `rd` under `we` -- not a memory, and not 256 "
+    "registers.",
+    ["select -assert-count 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u",
+     "select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:wd %i",
+     "select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:we %i"],
+    extra="memory_collect", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+As for `array_addressing_sim`: with `we` held low the element is never written, so
+`sat` reads it as a free value and a value proof succeeds VACUOUSLY -- measured on
+read_verilog too.  The claim is therefore structural.
+""")
+
+add("multi_dim_array_addressing",
+    "Upstream reads one constant index pair of a 1024x4 array in an `initial` block and "
+    "drops the result.",
+    """module top(input logic clk, input logic we, input logic [9:0] i,
+           input logic [1:0] j, input logic [7:0] wd, output logic [7:0] a);
+  logic [7:0] mem [0:1023][0:3];
+  // BOTH indices are ports, so the two-dimensional addressing is exercised rather
+  // than folded.
+  always_ff @(posedge clk)
+    if (we) mem[i][j] <= wd;
+  assign a = mem[i][j];
+endmodule
+""",
+    "A port-addressed two-dimensional array must become memory, not thousands of muxes.",
+    ["select -assert-min 1 t:$mem_v2"],
+    extra="memory_collect", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A memory miter is never a gate (free contents at cycle 0), so the claim is the
+shape.  The count is a minimum because a 2-D array may legitimately be lowered to
+one memory or to one per outer index.
+""")
+
+add("multi_dim_array_addressing_sim",
+    "Upstream writes one constant index pair inside an `initial` block, reads it back "
+    "and prints it, so synthesis sees neither.",
+    """module top(input logic clk, input logic we, input logic [7:0] wd,
+           output logic [7:0] a);
+  logic [7:0] mem [0:1023][0:3];
+  // Upstream's constant index pair is kept and the write is clocked; the value
+  // comes from a port so a folded constant cannot satisfy the shape below.
+  always_ff @(posedge clk)
+    if (we) mem[123][2] <= wd;
+  assign a = mem[123][2];
+endmodule
+""",
+    "A single element of the two-dimensional array must reduce to one enabled register "
+    "carrying `wd` to `a` under `we`.",
+    ["select -assert-count 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u",
+     "select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:wd %i",
+     "select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:we %i"],
+    extra="memory_collect", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+As for the other single-element memory tests: a value proof is VACUOUS with the
+write enable held low, on read_verilog too, so the claim is structural.
+""")
+
+add("multi-dim-basic",
+    "Upstream declares three arrays with different packed/unpacked dimension orders and "
+    "never drives or reads any of them, so neither the geometry nor the ordering its "
+    "comments spell out is checked.",
+    """module top(input bit [3:0] [7:0] x, input bit [7:0] y,
+           output bit [3:0] [7:0] arr_o, output bit [7:0] mem_o,
+           output logic signed [31:0] arr_bits, output logic signed [31:0] arr2_bits,
+           output logic signed [31:0] arr2_dims);
+  // 10 elements of 4 8-bit bytes (each element packed into 32 bits)
+  bit [3:0] [7:0] arr [1:10];
+  // compatible with memory array
+  bit [7:0] mem [0:255];
+  // Varies most rapidly: 1 to 6, 1 to 5, 1 to 8, 1 to 7
+  bit [1:5] [1:6] arr2 [1:7] [1:8];
+  // An element of each array round-trips, and $bits / $dimensions read the geometry
+  // back, so a declaration whose dimensions collapsed is visible.
+  always_comb begin
+    arr[1] = x;
+    mem[0] = y;
+  end
+  assign arr_o     = arr[1];
+  assign mem_o     = mem[0];
+  assign arr_bits  = $bits(arr[1]);
+  assign arr2_bits = $bits(arr2[1][1]);
+  assign arr2_dims = $dimensions(arr2);
+endmodule
+""",
+    "Each packed element must measure the product of its packed dimensions -- 4x8 = 32 "
+    "for arr and 5x6 = 30 for arr2 -- and arr2 must report FOUR dimensions (two "
+    "unpacked, two packed).",
+    ["sat -verify -prove arr_bits 32'sd32",
+     "sat -verify -prove arr2_bits 32'sd30",
+     "sat -verify -prove arr2_dims 32'sd4",
+     "sat -verify -prove arr_o 32'hDEADBEEF -set x 32'hDEADBEEF",
+     "sat -verify -prove mem_o 8'hA5 -set y 8'hA5"])
+
+add("multi-declaration",
+    "Upstream declares two arrays of different shapes in ONE declaration and never "
+    "drives or reads either, so nothing confirms each got its own dimensions.",
+    """module top (input bit [7:0] [31:0] x, input bit [7:0] [31:0] y,
+            output bit [7:0] [31:0] a_o, output bit [7:0] [31:0] b_o,
+            output logic signed [31:0] a_bits, output logic signed [31:0] b_bits);
+  // Same packed dimensions, DIFFERENT unpacked ones, in a single declaration.
+  bit [7:0] [31:0] arr_a [1:5] [1:10], arr_b [0:255];
+  // An element of each round-trips and $bits reads the shared packed geometry back,
+  // so a declaration that gave the second name the first one's unpacked dims -- or
+  // dropped its own -- is visible.
+  always_comb begin
+    arr_a[1][1] = x;
+    arr_b[0]    = y;
+  end
+  assign a_o    = arr_a[1][1];
+  assign b_o    = arr_b[0];
+  assign a_bits = $bits(arr_a[1][1]);
+  assign b_bits = $bits(arr_b[0]);
+endmodule
+""",
+    "Both names must share the packed geometry (8x32 = 256 bits per element) while "
+    "keeping their own unpacked dimensions, and each element must round-trip.",
+    ["sat -verify -prove a_bits 32'sd256", "sat -verify -prove b_bits 32'sd256",
+     "sat -verify -prove a_o 256'hA5 -set x 256'hA5",
+     "sat -verify -prove b_o 256'h5A -set y 256'h5A"])
+
+add("nested_repl_op",
+    "Upstream builds the nested replication inside an `initial` block from constants and "
+    "never reads it.",
+    """module top(input bit [1:0] b, input bit [1:0] c, input bit [3:0] d,
+           output bit [15:0] a);
+  // {3{b, c}} replicates the PAIR three times (12 bits), then d completes the 16.
+  assign a = {{3{b, c}}, d};
+endmodule
+""",
+    "The inner concatenation must be replicated as a UNIT: at upstream's b=2'b10, "
+    "c=2'b01, d=4'b1111 the result is 1001 1001 1001 1111, which a replication of "
+    "either operand alone would not give.",
+    ["sat -verify -prove a 16'b1001100110011111 -set b 2'b10 -set c 2'b01 -set d 4'b1111",
+     "sat -verify -prove a 16'b0110011001100000 -set b 2'b01 -set c 2'b10 -set d 4'b0000"])
+
+add("let_construct",
+    "Upstream calls the `let` with NAMED arguments inside an `initial` block on constants "
+    "and never reads the result.",
+    """module top(input logic [3:0] a, input logic [3:0] b, input logic [3:0] c,
+           output logic d);
+  // `let` is a compile-time macro-like function; upstream's call uses NAMED
+  // arguments, which is the part worth keeping verbatim.
+  let op(x, y, z) = |((x | y) & z);
+  assign d = op(.x(a), .y(b), .z(c));
+endmodule
+""",
+    "The `let` must expand with its arguments bound BY NAME: at upstream's 12, 15 and 7 "
+    "the reduction is 1, and a vector where the or and the and disagree pins the "
+    "operator order.",
+    ["sat -verify -prove d 1'b1 -set a 4'd12 -set b 4'd15 -set c 4'd7",
+     "sat -verify -prove d 1'b0 -set a 4'b1100 -set b 4'b1100 -set c 4'b0011",
+     "sat -verify -prove d 1'b1 -set a 4'b0001 -set b 4'b0000 -set c 4'b0001"])
+
+add("localparam_string",
+    "Upstream declares an untyped and a `string`-typed localparam and never reads either.",
+    """module top(output logic s1_ok, output logic s2_ok);
+  localparam s1 = "foo";
+  localparam string s2 = "bar";
+  // A string localparam's value is observable by COMPARISON, which is the only form
+  // a netlist can carry.
+  assign s1_ok = (s1 == "foo");
+  assign s2_ok = (s2 == "bar");
+endmodule
+""",
+    "Both localparams must carry their string value, typed and untyped alike.",
+    ["sat -verify -prove s1_ok 1'b1", "sat -verify -prove s2_ok 1'b1"])
+
+add("localparam_type_decl",
+    "Upstream declares a TYPE localparam and a variable of it, and never drives or reads "
+    "the variable.",
+    """module top (input logic x, output logic o, output logic signed [31:0] nbits);
+  localparam type testtype = logic;
+  testtype t;
+  // The type localparam must actually name a type: the variable declared over it
+  // has to be a usable one-bit signal, which $bits and the round trip both read.
+  always_comb t = x;
+  assign o     = t;
+  assign nbits = $bits(testtype);
+endmodule
+""",
+    "A variable declared over the type localparam must be a usable 1-bit signal.",
+    ["sat -verify -prove nbits 32'sd1", "sat -verify -prove o 1'b1 -set x 1'b1",
+     "sat -verify -prove o 1'b0 -set x 1'b0"])
+
+add("type_op_compare",
+    "Upstream compares `type(T)` against several types inside an `initial` block and "
+    "reports a mismatch with `$stop`, which synthesis does not evaluate -- so none of "
+    "the four comparisons is checked.",
+    """module top #( parameter type T = type(logic[11:0]) )
+   (output logic eq_same, output logic eq_other, output logic ne_same,
+    output logic case_hit, output logic signed [31:0] nbits);
+   // Each type comparison drives its own output, so WHICH of them the elaborator
+   // got wrong is a value rather than a `$stop`.
+   assign eq_same  = (type(T) == type(logic[11:0]));
+   assign eq_other = (type(T) == type(logic[12:0]));
+   assign ne_same  = (type(T) != type(logic[11:0]));
+   assign nbits    = $bits(T);
+   always_comb
+     case (type(T))
+       type(logic[11:0]) : case_hit = 1'b1;
+       default           : case_hit = 1'b0;
+     endcase
+endmodule
+""",
+    "The type operator must compare EQUAL to the identical type and unequal to a "
+    "different-width one, the case over `type(T)` must take the matching arm, and "
+    "$bits(T) must be 12 -- exactly the four claims upstream reports with $stop.",
+    ["sat -verify -prove eq_same 1'b1", "sat -verify -prove eq_other 1'b0",
+     "sat -verify -prove ne_same 1'b0", "sat -verify -prove case_hit 1'b1",
+     "sat -verify -prove nbits 32'sd12"])
+
+
 def write_all(only=None):
     n = 0
     for name, (why, dut, claim, proofs, top, flatten, slang, note, extra,
-                seq, slang_extra) in T.items():
+                seq, slang_extra, sim_config) in T.items():
         if only and name not in only:
             continue
         p = pathlib.Path(name)
@@ -2796,6 +3427,8 @@ def write_all(only=None):
             (p / "test_slang_equiv.ys").unlink()
         if note:
             (p / "NOTE.md").write_text(note)
+        if sim_config:
+            (p / "sim_config").write_text(sim_config)
         n += 1
         print("converted", name)
     print("total", n)

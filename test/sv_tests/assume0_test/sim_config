@@ -1,0 +1,8 @@
+# The assertion under test is a real one over a PORT, so the co-sim's random
+# stimulus drives the condition false and Verilator aborts on it:
+#   %Error: dut.sv:7: Assertion failed in TOP.tb.u_rtl.u_orig: 'assert' failed.
+# That is the assertion WORKING, not a divergence: test_sim_equivalence.py drives
+# unconstrained random inputs and has no notion of an assumption to respect.  The
+# netlist and the RTL are compared by the uhdm-vs-verilog formal check and by this
+# test's own test_structural.ys instead.
+SKIP_SIM_EQUIV=1
