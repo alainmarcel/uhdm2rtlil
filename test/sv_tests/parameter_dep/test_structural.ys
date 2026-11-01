@@ -1,0 +1,8 @@
+# The dependent parameter must be 3 * 123 = 369.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o1 32'sd123
+sat -verify -prove o2 32'sd369

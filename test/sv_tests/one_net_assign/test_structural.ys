@@ -1,0 +1,8 @@
+# The assignment must connect the two ports.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set a 1'b1
+sat -verify -prove b 1'b0 -set a 1'b0

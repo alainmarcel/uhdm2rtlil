@@ -213,3 +213,12 @@ multi-dim-basic
 # `1'b1` into an `int` parameter reads -1 instead of 1, so the co-sim diverges
 # every cycle.  Defect measured in structural_expected_fail.txt.
 number_test_9
+# ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
+# Divergences caused by reader defects measured in structural_expected_fail.txt:
+#   repeat_loop  : `repeat` not unrolled in a comb context (count reads 0)
+#   parameter_type : a `real` measured as 32 bits instead of 64
+#   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an
+#       UNPACKED array loses the array (the packed form is correct)
+repeat_loop
+parameter_type
+operations-on-unpacked-arrays-variable-slice-rw

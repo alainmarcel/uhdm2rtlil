@@ -1,0 +1,9 @@
+# Elements 2:0 of the source must land on elements 5:3 of the destination, leaving the rest: upstream's all-ones into all-zeros gives 0011_1000.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 8'b00111000 -set x 8'b11111111 -set base 8'b00000000
+sat -verify -prove o 8'b00101000 -set x 8'b00000101 -set base 8'b00000000
+sat -verify -prove o 8'b11000111 -set x 8'b00000000 -set base 8'b11111111

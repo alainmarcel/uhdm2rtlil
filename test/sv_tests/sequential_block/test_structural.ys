@@ -1,0 +1,9 @@
+# The value must reach the end of the chain, not stop at the first link.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top sequential_tb
+proc
+opt -full
+check -assert
+sat -verify -prove c 1'b1 -set x 1'b1
+sat -verify -prove c 1'b0 -set x 1'b0
+sat -verify -prove b 1'b1 -set x 1'b1

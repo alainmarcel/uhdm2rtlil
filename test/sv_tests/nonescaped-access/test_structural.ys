@@ -1,0 +1,8 @@
+# The escaped declaration and the unescaped reference must be one signal, so the value travels from the port through it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top identifiers
+proc
+opt -full
+check -assert
+sat -verify -prove reference_test 1'b1 -set x 1'b1
+sat -verify -prove reference_test 1'b0 -set x 1'b0

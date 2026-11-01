@@ -1,0 +1,9 @@
+# Every element must round-trip in place: upstream's three patterns are the three vectors below, and an array whose element order was reversed would fail the last two.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 8'b00000000 -set x 8'b00000000
+sat -verify -prove o 8'b11011110 -set x 8'b11011110
+sat -verify -prove o 8'b10101101 -set x 8'b10101101

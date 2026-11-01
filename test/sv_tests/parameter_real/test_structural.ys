@@ -1,0 +1,7 @@
+# The real parameter must keep its value: 4.76 scaled by 100 is 476.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd476

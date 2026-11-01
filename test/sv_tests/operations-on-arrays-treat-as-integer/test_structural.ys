@@ -1,0 +1,8 @@
+# At upstream's 17 the sum is 46, and the second vector pins the WRAP at 8 bits (240 + 29 = 269, which truncates to 13).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arr_b 8'd46 -set arr_a 8'd17
+sat -verify -prove arr_b 8'd13 -set arr_a 8'd240

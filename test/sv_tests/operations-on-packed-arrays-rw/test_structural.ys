@@ -1,0 +1,9 @@
+# Every one of upstream's three values must round-trip through the whole array.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arr 8'h00 -set x 8'h00
+sat -verify -prove arr 8'hde -set x 8'hde
+sat -verify -prove arr 8'had -set x 8'had

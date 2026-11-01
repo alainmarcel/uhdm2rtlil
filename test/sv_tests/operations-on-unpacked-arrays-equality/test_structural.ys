@@ -1,0 +1,10 @@
+# Whole-array equality must compare every element: upstream's identical pair gives 1 and 0, and a pair differing in ONE element must give the opposite.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove eq 1'b1 -set x 8'b11100111 -set y 8'b11100111
+sat -verify -prove ne 1'b0 -set x 8'b11100111 -set y 8'b11100111
+sat -verify -prove eq 1'b0 -set x 8'b11100111 -set y 8'b11100110
+sat -verify -prove ne 1'b1 -set x 8'b11100111 -set y 8'b11100110

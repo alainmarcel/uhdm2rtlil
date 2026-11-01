@@ -1,0 +1,8 @@
+# `priority if` with no final `else` is the user ASSERTING that one of the
+# conditions always holds, and a tool may exploit that.  At a = 4'b0011, where both
+# are false, read_verilog takes the second arm (2'10) while read_slang and read_uhdm
+# hold the previous value (2'11) -- both defensible, so the uhdm-vs-verilog formal
+# comparison can never pass on this construct and is skipped.  What remains is the
+# part `priority` actually specifies: the structural proof (the FIRST true condition
+# wins), the slang miter, and the co-sim.
+SKIP_FORMAL=1

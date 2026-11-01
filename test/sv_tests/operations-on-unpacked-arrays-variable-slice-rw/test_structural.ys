@@ -1,0 +1,9 @@
+# Three elements starting at 1 must land at offset 4: upstream's all-ones into all-zeros gives 0111_0000.  read_slang does that; read_uhdm loses the arrays entirely, which is why this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 8'b01110000 -set x 8'b11111111 -set base 8'b00000000
+sat -verify -prove o 8'b00010000 -set x 8'b00000010 -set base 8'b00000000
+sat -verify -prove o 8'b10001111 -set x 8'b00000000 -set base 8'b11111111

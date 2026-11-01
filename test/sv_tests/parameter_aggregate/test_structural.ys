@@ -1,0 +1,10 @@
+# The pattern `'{1, 2, 3, 4}` fills index 3 first, so the elements are 4, 3, 2, 1 from index 0 up.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove e3 32'd1
+sat -verify -prove e2 32'd2
+sat -verify -prove e1 32'd3
+sat -verify -prove e0 32'd4

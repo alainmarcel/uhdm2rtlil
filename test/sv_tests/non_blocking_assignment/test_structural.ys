@@ -1,0 +1,9 @@
+# The non-blocking assignment must become a register whose data is the LOW BIT of the wider source -- upstream's 2 truncates to 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+select -assert-count 1 t:$dff
+select -assert-any t:$dff %ci:+[CLK] w:clk %i
+select -assert-any t:$dff %ci:+[D] w:x %i

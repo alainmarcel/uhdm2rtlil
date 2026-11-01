@@ -1,0 +1,10 @@
+# At upstream's 1111_0000 and 0000_1111 both slices are all-ones, so equality holds; swapping the operands makes them all-zeros against all-ones and it must not.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove eq 1'b1 -set x 8'b11110000 -set y 8'b00001111
+sat -verify -prove ne 1'b0 -set x 8'b11110000 -set y 8'b00001111
+sat -verify -prove eq 1'b0 -set x 8'b00001111 -set y 8'b00001111
+sat -verify -prove ne 1'b1 -set x 8'b00001111 -set y 8'b00001111
