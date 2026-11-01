@@ -1,0 +1,8 @@
+# What the preprocessor substituted is read back as a value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove hi_in_string_ok 1'b1
+sat -verify -prove arg_in_string_ok 1'b1

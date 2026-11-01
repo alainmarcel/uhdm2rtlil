@@ -1,0 +1,12 @@
+# `behavioral is NOT defined, so the `else arm must be the one that compiled --
+# which the witness bit reads back -- and the gate it instantiates must work.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove which 1'b0
+sat -verify -prove a 1'b1 -set b 1'b1 -set c 1'b1
+sat -verify -prove a 1'b0 -set b 1'b1 -set c 1'b0
+sat -verify -prove a 1'b0 -set b 1'b0 -set c 1'b1

@@ -1,0 +1,9 @@
+# Nothing is defined, so the chain must fall through `else and then take
+# `ifndef last_result: arm 4.  Any other arm compiling gives a different code.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove arm 4'd4
+sat -verify -prove o 1'b1 -set b 1'b1 -set c 1'b1

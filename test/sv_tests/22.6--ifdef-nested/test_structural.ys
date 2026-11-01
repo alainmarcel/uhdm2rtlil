@@ -1,0 +1,11 @@
+# All four macros are defined just above, so every level must take its `ifdef arm:
+# wow -> nest_one -> nest_two, i.e. 1/1/1.  A level that fell to its `else, or a
+# `define that did not reach the `ifdef, shows up as a different code.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove lvl0 2'd1
+sat -verify -prove lvl1 2'd1
+sat -verify -prove lvl2 2'd1

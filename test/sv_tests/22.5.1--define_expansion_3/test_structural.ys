@@ -1,0 +1,11 @@
+# What the preprocessor substituted into each argument, read back as a value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+# The EMPTY first actual left po at its default; qo is "msg2 " narrowed to 32 bits ("sg2 ").
+sat -verify -prove po 32'd101
+sat -verify -prove qo 32'd1936142880
+sat -verify -prove ro 32'd103

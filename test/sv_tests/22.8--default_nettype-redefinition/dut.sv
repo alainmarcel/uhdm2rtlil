@@ -1,0 +1,23 @@
+// Converted from chipsalliance/sv-tests (22.8--default_nettype-redefinition, :type: preprocessing).
+// Upstream is the directive alone, so nothing about it is observable.
+// The directive is kept VERBATIM below and now brackets real logic: if it
+// perturbed compilation the proven adder/subtractor would not survive.
+// The whole directive group shares this body on purpose -- the directive form is
+// the only variable, so a failure localises to it.  Upstream kept as orig.sv.
+`default_nettype wire
+`default_nettype tri
+`default_nettype tri0
+`default_nettype tri1
+`default_nettype wand
+`default_nettype triand
+`default_nettype wor
+`default_nettype trior
+`default_nettype trireg
+`default_nettype uwire
+`default_nettype none
+module top(input logic [7:0] a, input logic [7:0] b, input logic sel,
+           output logic [8:0] y);
+  // One observable body for the whole directive group: the directive above is
+  // the only variable, so a failure localises to it.
+  assign y = sel ? (a + b) : (a - b);
+endmodule

@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1
+sat -verify -prove y 9'd100 -set a 8'd200 -set b 8'd100 -set sel 1'b0

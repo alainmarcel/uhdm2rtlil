@@ -1,0 +1,10 @@
+# The implicit net must exist and carry the value: a frontend that did not create
+# it would not have read the file at all, and one that created it at the wrong
+# width would not prove the and.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -auto-top
+proc
+opt -full
+check -assert
+sat -verify -prove o 1'b1 -set a 1'b1 -set b 1'b1
+sat -verify -prove o 1'b0 -set a 1'b1 -set b 1'b0
