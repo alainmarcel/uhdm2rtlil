@@ -1,0 +1,9 @@
+# The FIRST true condition must win: both are true when a is 0 and the answer must be 1, not 2.  The case where NEITHER condition holds is deliberately not proven -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top if_tb
+proc
+opt -full
+check -assert
+sat -verify -prove b 2'd1 -set a 4'b0000 -set bin 2'd3
+sat -verify -prove b 2'd1 -set a 4'b0010 -set bin 2'd3
+sat -verify -prove b 2'd2 -set a 4'b0001 -set bin 2'd3

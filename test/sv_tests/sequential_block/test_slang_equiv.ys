@@ -1,0 +1,14 @@
+# read_uhdm vs read_slang -- the second reference alongside read_verilog.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top sequential_tb
+prep -top sequential_tb; async2sync
+rename sequential_tb gold; design -stash g1
+read_slang --ignore-assertions dut.sv --top sequential_tb
+hierarchy -top sequential_tb
+prep -top sequential_tb; async2sync
+rename sequential_tb gate; design -stash g2
+design -copy-from g1 -as gold gold
+design -copy-from g2 -as gate gate
+miter -equiv -flatten -make_assert gold gate m
+hierarchy -top m
+sat -verify -prove-asserts m

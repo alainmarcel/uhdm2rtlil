@@ -1,0 +1,8 @@
+# The part-select must take bits 11:8: at upstream's 16'h1234 that is 4'h2, and a second vector pins the offset.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 4'h2 -set a 16'h1234
+sat -verify -prove b 4'hb -set a 16'habcd

@@ -1,0 +1,10 @@
+# At upstream's 8'hf0 and 8'h0f the two slices are both 4'hf, so equality holds; swapping the operands makes them 4'h0 against 4'hf and it must not.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove eq 1'b1 -set arr_a 8'hf0 -set arr_b 8'h0f
+sat -verify -prove ne 1'b0 -set arr_a 8'hf0 -set arr_b 8'h0f
+sat -verify -prove eq 1'b0 -set arr_a 8'h0f -set arr_b 8'h0f
+sat -verify -prove ne 1'b1 -set arr_a 8'h0f -set arr_b 8'h0f

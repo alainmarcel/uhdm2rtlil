@@ -1,0 +1,10 @@
+# Only the two set members may match.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 1'b0 -set b 32'sd12
+sat -verify -prove a 1'b1 -set b 32'sd5
+sat -verify -prove a 1'b1 -set b 32'sd7
+sat -verify -prove w 32'sd12 -set b 32'sd12

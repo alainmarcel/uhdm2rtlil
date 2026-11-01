@@ -3534,7 +3534,194 @@ endmodule
 # --------------------------------------------------------------------------
 # packed-array operations, net declarations, part-selects
 # --------------------------------------------------------------------------
+add("operations-on-arrays-treat-as-integer",
+    "Upstream does the arithmetic on constants inside an `initial` block and prints it.",
+    """module top (input bit [7:0] arr_a, output bit [7:0] arr_b);
+  // A packed array used in arithmetic is treated as an INTEGER of its width, so the
+  // add must carry across the whole 8 bits and wrap there.
+  assign arr_b = (arr_a + 29);
+endmodule
+""",
+    "At upstream's 17 the sum is 46, and the second vector pins the WRAP at 8 bits "
+    "(240 + 29 = 269, which truncates to 13).",
+    ["sat -verify -prove arr_b 8'd46 -set arr_a 8'd17",
+     "sat -verify -prove arr_b 8'd13 -set arr_a 8'd240"])
+
+add("operations-on-packed-arrays-rw",
+    "Upstream writes the array three times inside an `initial` block and prints each "
+    "value, so synthesis sees only the last -- if any.",
+    """module top (input bit [7:0] x, output bit [7:0] arr);
+  // A whole-array write must carry all eight bits; upstream's three values are the
+  // vectors below.
+  assign arr = x;
+endmodule
+""",
+    "Every one of upstream's three values must round-trip through the whole array.",
+    ["sat -verify -prove arr 8'h00 -set x 8'h00",
+     "sat -verify -prove arr 8'hde -set x 8'hde",
+     "sat -verify -prove arr 8'had -set x 8'had"])
+
+add("operations-on-packed-arrays-equality",
+    "Upstream compares two constant arrays inside an `initial` block and prints both "
+    "results.",
+    """module top (input bit [7:0] arr_a, input bit [7:0] arr_b, output logic eq,
+            output logic ne);
+  assign eq = (arr_a == arr_b);
+  assign ne = (arr_a != arr_b);
+endmodule
+""",
+    "Whole-array equality must compare all eight bits: upstream's identical pair gives "
+    "1 and 0, and a pair differing in ONE bit must give the opposite -- which a "
+    "comparison of only the low bits would miss.",
+    ["sat -verify -prove eq 1'b1 -set arr_a 8'hff -set arr_b 8'hff",
+     "sat -verify -prove ne 1'b0 -set arr_a 8'hff -set arr_b 8'hff",
+     "sat -verify -prove eq 1'b0 -set arr_a 8'hff -set arr_b 8'h7f",
+     "sat -verify -prove ne 1'b1 -set arr_a 8'hff -set arr_b 8'h7f"])
+
+add("operations-on-packed-arrays-slice-equality",
+    "Upstream compares two SLICES of constant arrays inside an `initial` block and prints "
+    "both results.",
+    """module top (input bit [7:0] arr_a, input bit [7:0] arr_b, output logic eq,
+            output logic ne);
+  // The slices are at DIFFERENT offsets, so a comparison that ignored one of the
+  // offsets would still pass upstream's single vector -- hence the second one.
+  assign eq = (arr_a[7:4] == arr_b[3:0]);
+  assign ne = (arr_a[7:4] != arr_b[3:0]);
+endmodule
+""",
+    "At upstream's 8'hf0 and 8'h0f the two slices are both 4'hf, so equality holds; "
+    "swapping the operands makes them 4'h0 against 4'hf and it must not.",
+    ["sat -verify -prove eq 1'b1 -set arr_a 8'hf0 -set arr_b 8'h0f",
+     "sat -verify -prove ne 1'b0 -set arr_a 8'hf0 -set arr_b 8'h0f",
+     "sat -verify -prove eq 1'b0 -set arr_a 8'h0f -set arr_b 8'h0f",
+     "sat -verify -prove ne 1'b1 -set arr_a 8'h0f -set arr_b 8'h0f"])
+
+add("operations-on-packed-arrays-one-bit",
+    "Upstream copies ONE bit between two constant arrays inside an `initial` block and "
+    "prints the result.",
+    """module top (input bit [7:0] arr_a, input bit [7:0] base, output bit [7:0] arr_b);
+  // A single-bit write must land on bit 5 and leave every other bit of the
+  // destination alone, which the port-supplied base makes observable.
+  always_comb begin
+    arr_b    = base;
+    arr_b[5] = arr_a[2];
+  end
+endmodule
+""",
+    "Bit 2 of the source must land on bit 5 of the destination and nothing else may "
+    "change: upstream's case is 8'hff into 8'h00, giving 8'b00100000.",
+    ["sat -verify -prove arr_b 8'b00100000 -set arr_a 8'hff -set base 8'h00",
+     "sat -verify -prove arr_b 8'b00000000 -set arr_a 8'hfb -set base 8'h00",
+     "sat -verify -prove arr_b 8'b11111111 -set arr_a 8'hff -set base 8'hff",
+     "sat -verify -prove arr_b 8'b11011111 -set arr_a 8'h00 -set base 8'hff"])
+
+add("operations-on-packed-arrays-slice-rw",
+    "Upstream copies a three-bit SLICE between two constant arrays inside an `initial` "
+    "block and prints the result.",
+    """module top (input bit [7:0] arr_a, input bit [7:0] base, output bit [7:0] arr_b);
+  // The source and destination slices are at DIFFERENT offsets, so the copy has to
+  // shift; the port-supplied base shows that the surrounding bits are untouched.
+  always_comb begin
+    arr_b      = base;
+    arr_b[5:3] = arr_a[2:0];
+  end
+endmodule
+""",
+    "Bits 2:0 of the source must land on bits 5:3 of the destination, leaving the rest: "
+    "upstream's 8'hff into 8'h00 gives 8'b00111000.",
+    ["sat -verify -prove arr_b 8'b00111000 -set arr_a 8'hff -set base 8'h00",
+     "sat -verify -prove arr_b 8'b00101000 -set arr_a 8'h05 -set base 8'h00",
+     "sat -verify -prove arr_b 8'b11000111 -set arr_a 8'h00 -set base 8'hff"])
+
+add("operations-on-packed-arrays-variable-slice-rw",
+    "Upstream copies an INDEXED part-select whose width comes from a parameter, inside an "
+    "`initial` block on constants, and prints the result.",
+    """module top (input bit [7:0] arr_a, input bit [7:0] base, output bit [7:0] arr_b);
+  parameter integer c = 3;
+  // The WIDTH comes from a parameter and the two offsets differ, so the copy has to
+  // take c bits from offset 1 and place them at offset 4.
+  always_comb begin
+    arr_b       = base;
+    arr_b[4+:c] = arr_a[1+:c];
+  end
+endmodule
+""",
+    "Three bits starting at 1 must land at offset 4: upstream's 8'hff into 8'h00 gives "
+    "8'b01110000, and the other vectors pin both offsets.",
+    ["sat -verify -prove arr_b 8'b01110000 -set arr_a 8'hff -set base 8'h00",
+     "sat -verify -prove arr_b 8'b00010000 -set arr_a 8'h02 -set base 8'h00",
+     "sat -verify -prove arr_b 8'b10001111 -set arr_a 8'h00 -set base 8'hff"])
+
 # --------------------------------------------------------------------------
+add("net_decl_assignment",
+    "Upstream's net-declaration assignment drives an internal wire that is never read.",
+    """module top(input a, input b, output w_o);
+  // A net-declaration assignment is a continuous assignment in the declaration;
+  // it has to drive the net just as a separate `assign` would.
+  wire w = a & b;
+  assign w_o = w;
+endmodule
+""",
+    "The net-declaration assignment must drive the wire.",
+    ["sat -verify -prove w_o 1'b1 -set a 1'b1 -set b 1'b1",
+     "sat -verify -prove w_o 1'b0 -set a 1'b1 -set b 1'b0"])
+
+add("one_net_assign",
+    "Upstream is a single continuous assignment between two ports -- already "
+    "synthesizable, but with nothing proven about it.",
+    """module top(input a, output b);
+  assign b = a;
+endmodule
+""",
+    "The assignment must connect the two ports.",
+    ["sat -verify -prove b 1'b1 -set a 1'b1", "sat -verify -prove b 1'b0 -set a 1'b0"])
+
+add("non_blocking_assignment",
+    "Upstream's `a <= 2` is inside an `initial` block on a 1-bit variable, so synthesis "
+    "sees a constant it never reads -- and the TRUNCATION upstream is really exercising "
+    "is invisible.",
+    """module top(input logic signed [31:0] x, input logic clk, output logic a);
+  // A non-blocking assignment into a ONE-BIT variable must truncate to its low bit,
+  // which is what upstream's `a <= 2` (an even value, so bit 0 is 0) exercises.
+  always_ff @(posedge clk)
+    a <= x;
+endmodule
+""",
+    "The non-blocking assignment must become a register whose data is the LOW BIT of "
+    "the wider source -- upstream's 2 truncates to 0.",
+    ["select -assert-count 1 t:$dff",
+     "select -assert-any t:$dff %ci:+[CLK] w:clk %i",
+     "select -assert-any t:$dff %ci:+[D] w:x %i"],
+    slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A register is invisible to a miter that starts from an unconstrained state, and
+`sat -seq N -prove` checks step 1 before any clock edge (it fails on read_verilog
+and read_slang too).  The claim is therefore structural: one edge-triggered
+register wired clk -> CLK and the source -> D.  The uhdm-vs-verilog comparison
+covers the truncation itself.
+""")
+
+add("nonescaped-access",
+    "Upstream reads an ESCAPED name (`\\\\cpu3 `) through its NON-escaped spelling "
+    "(`cpu3`) under `default_nettype none`, and never reads the result.",
+    """`default_nettype none
+module identifiers(input wire x, output wire reference_test);
+  reg \\cpu3 ;
+  // The escaped declaration and the plain reference must name the SAME signal --
+  // and under `default_nettype none` a mismatch cannot silently become an implicit
+  // net, it is an error.
+  always @(*)
+    \\cpu3  = x;
+  assign reference_test = cpu3;
+endmodule
+""",
+    "The escaped declaration and the unescaped reference must be one signal, so the "
+    "value travels from the port through it.",
+    ["sat -verify -prove reference_test 1'b1 -set x 1'b1",
+     "sat -verify -prove reference_test 1'b0 -set x 1'b0"],
+    top="identifiers")
+
 for nm, sel, exp1, exp2 in [
     ("non_idx_part_select",     "a[11:8]", "4'h2", "4'hb"),
     ("non_idx_part_select_sim", "a[11:8]", "4'h2", "4'hb"),
@@ -3551,6 +3738,21 @@ endmodule
         [f"sat -verify -prove b {exp1} -set a 16'h1234",
          f"sat -verify -prove b {exp2} -set a 16'habcd"])
 
+add("nested_repl_op_sim",
+    "Upstream builds the nested replication inside an `initial` block from constants and "
+    "prints it.",
+    """module top(input bit [1:0] b, input bit [1:0] c, input bit [3:0] d,
+           output bit [15:0] a);
+  assign a = {{3{b, c}}, d};
+endmodule
+""",
+    "The inner concatenation must be replicated as a UNIT: at upstream's b=2'b10, "
+    "c=2'b01, d=4'b1111 the result is 1001 1001 1001 1111.",
+    ["sat -verify -prove a 16'b1001100110011111 -set b 2'b10 -set c 2'b01 -set d 4'b1111",
+     "sat -verify -prove a 16'b0110011001100000 -set b 2'b01 -set c 2'b10 -set d 4'b0000"])
+
+
+
 # --------------------------------------------------------------------------
 # operations-on-UNPACKED-arrays: the mirror of the packed group above.  Upstream
 # fills each array with an assignment pattern inside an `initial` block and prints
@@ -3564,9 +3766,480 @@ _UNP_IN = """  // An assignment pattern fills the array MSB-index first, so bit 
     for (int i = 0; i < 8; i++) arr_a[i] = x[i];
 """
 
+add("operations-on-unpacked-arrays-rw",
+    "Upstream fills the array from three assignment patterns inside an `initial` block "
+    "and prints its elements, so synthesis sees only constants it never reads.",
+    """module top (input bit [7:0] x, output bit [7:0] o);
+  bit arr_a [7:0];
+""" + _UNP_IN + """  always_comb
+    for (int i = 0; i < 8; i++) o[i] = arr_a[i];
+endmodule
+""",
+    "Every element must round-trip in place: upstream's three patterns are the three "
+    "vectors below, and an array whose element order was reversed would fail the last "
+    "two.",
+    ["sat -verify -prove o 8'b00000000 -set x 8'b00000000",
+     "sat -verify -prove o 8'b11011110 -set x 8'b11011110",
+     "sat -verify -prove o 8'b10101101 -set x 8'b10101101"])
+
+add("operations-on-unpacked-arrays-equality",
+    "Upstream compares two constant unpacked arrays inside an `initial` block and prints "
+    "both results.",
+    """module top (input bit [7:0] x, input bit [7:0] y, output logic eq, output logic ne);
+  bit arr_a [7:0];
+  bit arr_b [7:0];
+  always_comb
+    for (int i = 0; i < 8; i++) begin
+      arr_a[i] = x[i];
+      arr_b[i] = y[i];
+    end
+  // Whole-ARRAY equality on an UNPACKED array compares element by element.
+  assign eq = (arr_a == arr_b);
+  assign ne = (arr_a != arr_b);
+endmodule
+""",
+    "Whole-array equality must compare every element: upstream's identical pair gives 1 "
+    "and 0, and a pair differing in ONE element must give the opposite.",
+    ["sat -verify -prove eq 1'b1 -set x 8'b11100111 -set y 8'b11100111",
+     "sat -verify -prove ne 1'b0 -set x 8'b11100111 -set y 8'b11100111",
+     "sat -verify -prove eq 1'b0 -set x 8'b11100111 -set y 8'b11100110",
+     "sat -verify -prove ne 1'b1 -set x 8'b11100111 -set y 8'b11100110"])
+
+add("operations-on-unpacked-arrays-one-bit",
+    "Upstream copies ONE element between two constant unpacked arrays inside an `initial` "
+    "block and prints the result.",
+    """module top (input bit [7:0] x, input bit [7:0] base, output bit [7:0] o);
+  bit arr_a [7:0];
+  bit arr_b [7:0];
+  // The copy must land on element 5 and leave every other element alone, which the
+  // port-supplied base makes observable.
+  always_comb begin
+    for (int i = 0; i < 8; i++) begin
+      arr_a[i] = x[i];
+      arr_b[i] = base[i];
+    end
+    arr_b[5] = arr_a[2];
+  end
+  always_comb
+    for (int i = 0; i < 8; i++) o[i] = arr_b[i];
+endmodule
+""",
+    "Element 2 of the source must land on element 5 of the destination and nothing else "
+    "may change: upstream's all-ones into all-zeros gives 0010_0000.",
+    ["sat -verify -prove o 8'b00100000 -set x 8'b11111111 -set base 8'b00000000",
+     "sat -verify -prove o 8'b00000000 -set x 8'b11111011 -set base 8'b00000000",
+     "sat -verify -prove o 8'b11011111 -set x 8'b00000000 -set base 8'b11111111"])
+
+add("operations-on-unpacked-arrays-slice-rw",
+    "Upstream copies a three-element SLICE between two constant unpacked arrays inside an "
+    "`initial` block and prints the result.",
+    """module top (input bit [7:0] x, input bit [7:0] base, output bit [7:0] o);
+  bit arr_a [7:0];
+  bit arr_b [7:0];
+  // The source and destination slices are at DIFFERENT offsets, so the copy has to
+  // shift; the port-supplied base shows the surrounding elements are untouched.
+  always_comb begin
+    for (int i = 0; i < 8; i++) begin
+      arr_a[i] = x[i];
+      arr_b[i] = base[i];
+    end
+    arr_b[5:3] = arr_a[2:0];
+  end
+  always_comb
+    for (int i = 0; i < 8; i++) o[i] = arr_b[i];
+endmodule
+""",
+    "Elements 2:0 of the source must land on elements 5:3 of the destination, leaving "
+    "the rest: upstream's all-ones into all-zeros gives 0011_1000.",
+    ["sat -verify -prove o 8'b00111000 -set x 8'b11111111 -set base 8'b00000000",
+     "sat -verify -prove o 8'b00101000 -set x 8'b00000101 -set base 8'b00000000",
+     "sat -verify -prove o 8'b11000111 -set x 8'b00000000 -set base 8'b11111111"])
+
+add("operations-on-unpacked-arrays-slice-equality",
+    "Upstream compares two SLICES of constant unpacked arrays inside an `initial` block "
+    "and prints both results.",
+    """module top (input bit [7:0] x, input bit [7:0] y, output logic eq, output logic ne);
+  bit arr_a [7:0];
+  bit arr_b [7:0];
+  always_comb
+    for (int i = 0; i < 8; i++) begin
+      arr_a[i] = x[i];
+      arr_b[i] = y[i];
+    end
+  // The slices are at DIFFERENT offsets, so a comparison that ignored one of them
+  // would still pass upstream's single vector.
+  assign eq = (arr_a[7:4] == arr_b[3:0]);
+  assign ne = (arr_a[7:4] != arr_b[3:0]);
+endmodule
+""",
+    "At upstream's 1111_0000 and 0000_1111 both slices are all-ones, so equality holds; "
+    "swapping the operands makes them all-zeros against all-ones and it must not.",
+    ["sat -verify -prove eq 1'b1 -set x 8'b11110000 -set y 8'b00001111",
+     "sat -verify -prove ne 1'b0 -set x 8'b11110000 -set y 8'b00001111",
+     "sat -verify -prove eq 1'b0 -set x 8'b00001111 -set y 8'b00001111",
+     "sat -verify -prove ne 1'b1 -set x 8'b00001111 -set y 8'b00001111"])
+
+add("operations-on-unpacked-arrays-variable-slice-rw",
+    "Upstream copies an INDEXED part-select of an unpacked array whose width comes from a "
+    "parameter, inside an `initial` block on constants, and prints the result.",
+    """module top (input bit [7:0] x, input bit [7:0] base, output bit [7:0] o);
+  parameter integer c = 3;
+  bit arr_a [7:0];
+  bit arr_b [7:0];
+  // The WIDTH comes from a parameter and the offsets differ, so the copy has to take
+  // c elements from offset 1 and place them at offset 4.
+  always_comb begin
+    for (int i = 0; i < 8; i++) begin
+      arr_a[i] = x[i];
+      arr_b[i] = base[i];
+    end
+    arr_b[4+:c] = arr_a[1+:c];
+  end
+  always_comb
+    for (int i = 0; i < 8; i++) o[i] = arr_b[i];
+endmodule
+""",
+    "Three elements starting at 1 must land at offset 4: upstream's all-ones into "
+    "all-zeros gives 0111_0000.  read_slang does that; read_uhdm loses the arrays "
+    "entirely, which is why this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove o 8'b01110000 -set x 8'b11111111 -set base 8'b00000000",
+     "sat -verify -prove o 8'b00010000 -set x 8'b00000010 -set base 8'b00000000",
+     "sat -verify -prove o 8'b10001111 -set x 8'b00000000 -set base 8'b11111111"],
+    note="""RATCHET -- an INDEXED PART-SELECT of an UNPACKED array loses the array.
+
+`arr_b[4+:c] = arr_a[1+:c]` on `bit arr_a [7:0]` must copy c elements from offset
+1 to offset 4.  read_slang does it (8'b01110000 for all-ones into all-zeros);
+read_uhdm warns `Base signal 'arr_a' not found in module or generate scope` for
+BOTH arrays and the destination reads all-zeros.
+
+`read_verilog` rejects the form outright (`Invalid array access`), so read_slang
+is the only oracle.  The PACKED counterpart is correct -- see
+`operations-on-packed-arrays-variable-slice-rw`, which passes -- so the gap is
+the unpacked case.
+
+Listed in structural_expected_fail.txt and slang_miter_expected_fail.txt.
+""")
+
+
+
 # --------------------------------------------------------------------------
 # parameters, packages, loops and a few operators
 # --------------------------------------------------------------------------
+add("parameter",
+    "Upstream declares the parameter and never reads it.",
+    """module top(output logic signed [31:0] o);
+  parameter p = 123;
+  assign o = p;
+endmodule
+""",
+    "The parameter must carry upstream's 123.",
+    ["sat -verify -prove o 32'sd123"])
+
+add("parameter_range",
+    "Upstream declares a sized-literal parameter and never reads it.",
+    """module top(output logic [15:0] o, output logic signed [31:0] nbits);
+  parameter p = 16'h1234;
+  // A sized literal gives the parameter its WIDTH as well as its value, which
+  // $bits reads back.
+  assign o     = p;
+  assign nbits = $bits(p);
+endmodule
+""",
+    "The parameter must carry upstream's 16'h1234 in sixteen bits.",
+    ["sat -verify -prove o 16'h1234", "sat -verify -prove nbits 32'sd16"])
+
+add("parameter_dep",
+    "Upstream declares one parameter in terms of another and reads neither.",
+    """module top(output logic signed [31:0] o1, output logic signed [31:0] o2);
+  parameter p1 = 123;
+  parameter p2 = p1 * 3;
+  // The dependent parameter must be folded at elaboration from the first one.
+  assign o1 = p1;
+  assign o2 = p2;
+endmodule
+""",
+    "The dependent parameter must be 3 * 123 = 369.",
+    ["sat -verify -prove o1 32'sd123", "sat -verify -prove o2 32'sd369"])
+
+add("parameter_port_list",
+    "Upstream declares the parameter in the module's PARAMETER PORT LIST and leaves the "
+    "body empty.",
+    """module top #(p = 12) (output logic signed [31:0] o);
+  assign o = p;
+endmodule
+""",
+    "A parameter from the port list must reach the body with upstream's default, 12.",
+    ["sat -verify -prove o 32'sd12"])
+
+add("parameter_real",
+    "Upstream declares a REAL parameter and never reads it.",
+    """module top(output logic signed [31:0] o);
+  parameter p = 4.76;
+  // A real parameter has to survive elaboration with its value; scaling by 100 and
+  // casting is how a netlist can carry it (4.76 * 100 rounds to 476).
+  assign o = int'(p * 100);
+endmodule
+""",
+    "The real parameter must keep its value: 4.76 scaled by 100 is 476.",
+    ["sat -verify -prove o 32'sd476"])
+
+add("parameter_aggregate",
+    "Upstream declares an UNPACKED-ARRAY parameter with an assignment pattern and never "
+    "reads any element.",
+    """module top(output logic [31:0] e0, output logic [31:0] e1,
+           output logic [31:0] e2, output logic [31:0] e3);
+  parameter logic [31:0] p [3:0] = '{1, 2, 3, 4};
+  // The pattern fills the array MSB-index first, so element 3 takes the FIRST value.
+  // Reading all four pins both the values and the order.
+  assign e0 = p[0];
+  assign e1 = p[1];
+  assign e2 = p[2];
+  assign e3 = p[3];
+endmodule
+""",
+    "The pattern `'{1, 2, 3, 4}` fills index 3 first, so the elements are 4, 3, 2, 1 "
+    "from index 0 up.",
+    ["sat -verify -prove e3 32'd1", "sat -verify -prove e2 32'd2",
+     "sat -verify -prove e1 32'd3", "sat -verify -prove e0 32'd4"])
+
+add("parameter_type",
+    "Upstream declares a TYPE parameter defaulting to `real` and leaves the body empty.",
+    """module top #(type T = real) (output logic signed [31:0] nbits);
+  // The type parameter must name a usable type; $bits of the default `real` is 64.
+  assign nbits = $bits(T);
+endmodule
+""",
+    "$bits of the default type parameter `real` must be 64.  read_slang gives 64; "
+    "read_uhdm gives 32, which is why this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove nbits 32'sd64"],
+    slang=False,
+    note="""RATCHET -- a `real` is measured as 32 bits, not 64.
+
+`$bits(T)` where `T` is a type parameter defaulting to `real` must be 64.
+read_slang gives 64; read_uhdm gives **32**.  Measured alongside it in the same
+file, `$bits(real)` written directly gives read_slang 64 and read_uhdm **0**,
+with `Warning: Empty argument in sys_func_call $bits` and
+`Unsupported expression type` -- so the type keyword is not accepted as an
+argument at all, and the type-parameter path merely guesses a 32-bit width.
+
+`read_verilog` cannot parse a `type` parameter (`syntax error, unexpected
+TOK_ID`), so read_slang is the oracle and there is no uhdm-vs-verilog comparison.
+A miter would be the natural gate but read_slang's own netlist for this module is
+a constant, so the structural proof carries it.
+
+Listed in structural_expected_fail.txt.
+""")
+
+add("package_decl",
+    "Upstream declares the package AFTER an empty module and never calls its function.",
+    """package mypkg;
+function int add(int a, b);
+	return a + b;
+endfunction
+endpackage : mypkg
+module top(input logic signed [31:0] x, output logic signed [31:0] o);
+  // The package's function has to be callable for the declaration to mean anything.
+  assign o = mypkg::add(x, 3);
+endmodule
+""",
+    "The package function must be callable and compute the sum.",
+    ["sat -verify -prove o 32'sd4 -set x 32'sd1",
+     "sat -verify -prove o 32'sd3 -set x 32'sd0"])
+
+add("package_ref",
+    "Upstream calls the package function inside an `initial` block on constants and prints "
+    "the result.",
+    """package mypkg;
+function int add(int a, b);
+	return a + b;
+endfunction
+endpackage : mypkg
+module top(input logic signed [31:0] x, input logic signed [31:0] y,
+           output logic signed [31:0] o);
+  assign o = mypkg::add(x, y);
+endmodule
+""",
+    "The scope-resolved call must compute the sum: upstream's add(1, 3) is 4.",
+    ["sat -verify -prove o 32'sd4 -set x 32'sd1 -set y 32'sd3",
+     "sat -verify -prove o 32'sd0 -set x 32'sd0 -set y 32'sd0"])
+
+add("repeat_loop",
+    "Upstream's `repeat` body is a `$display`, so the loop does nothing a netlist can see.",
+    """module repeat_tb (output logic signed [31:0] n);
+  // Upstream's count is a VARIABLE, which no frontend unrolls (read_verilog:
+  // "Repeat loops outside must have constant repetition count"), so the count is
+  // upstream's own 128 as a literal -- the synthesizable form of the same loop.
+  always_comb begin
+    n = 0;
+    repeat(128)
+      n = n + 1;
+  end
+endmodule
+""",
+    "The loop must run exactly upstream's 128 times.  read_verilog unrolls it; "
+    "read_uhdm does not (`Unsupported statement type in comb context`) and leaves the "
+    "count at 0, which is why this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove n 32'sd128"],
+    top="repeat_tb", slang=False,
+    note="""RATCHET -- `repeat` IS NOT UNROLLED in a combinational context.
+
+With a CONSTANT count (`repeat(128)`), read_verilog unrolls the loop and the
+accumulator reads 128.  read_uhdm warns
+`Unsupported statement type in comb context` and emits nothing, so the
+accumulator stays 0.  Same family as the `foreach` gap in `foreach_loop`.
+
+Upstream's own count is a VARIABLE, which NO frontend unrolls -- read_verilog
+says `Repeat loops outside must have constant repetition count` -- so the
+conversion uses upstream's own 128 as a literal, which is the synthesizable form
+of the same loop.  `read_slang` refuses `repeat` outright
+(`unsupported language feature`), so read_verilog is the oracle and there is no
+slang miter.
+
+Listed in structural_expected_fail.txt; remove it there in the commit that
+unrolls `repeat`.
+""")
+
+add("repl_op",
+    "Upstream builds the replication inside an `initial` block from a constant and never "
+    "reads it.",
+    """module top(input bit [1:0] b, output bit [15:0] a);
+  assign a = {8{b}};
+endmodule
+""",
+    "The two-bit operand must be replicated eight times to fill sixteen bits.",
+    ["sat -verify -prove a 16'b1010101010101010 -set b 2'b10",
+     "sat -verify -prove a 16'b0101010101010101 -set b 2'b01"])
+
+add("repl_op_sim",
+    "Upstream builds the replication inside an `initial` block from a constant and prints "
+    "it.",
+    """module top(input bit [1:0] b, output bit [15:0] a);
+  assign a = {8{b}};
+endmodule
+""",
+    "The two-bit operand must be replicated eight times: upstream's 2'b10 gives "
+    "16'b1010101010101010.",
+    ["sat -verify -prove a 16'b1010101010101010 -set b 2'b10",
+     "sat -verify -prove a 16'b1111111111111111 -set b 2'b11"])
+
+add("priority_if",
+    "Upstream ties the selector to 0 and never reads `b`, so neither arm of the "
+    "`priority if` is exercised -- and with no final `else` the variable holds, which "
+    "nothing observes.",
+    """module if_tb (input wire [3:0] a, input reg [1:0] bin, output reg [1:0] b);
+  // `priority if` keeps the arms in source ORDER, so the first true condition wins;
+  // the hold value comes from a port because upstream has no final else.
+  always @* begin
+    b = bin;
+    priority if(a[0] == 0) b = 1;
+    else if(a[1] == 0) b = 2;
+  end
+endmodule
+""",
+    "The FIRST true condition must win: both are true when a is 0 and the answer must "
+    "be 1, not 2.  The case where NEITHER condition holds is deliberately not proven -- "
+    "see NOTE.md.",
+    ["sat -verify -prove b 2'd1 -set a 4'b0000 -set bin 2'd3",
+     "sat -verify -prove b 2'd1 -set a 4'b0010 -set bin 2'd3",
+     "sat -verify -prove b 2'd2 -set a 4'b0001 -set bin 2'd3"],
+    top="if_tb", sim_config="""# `priority if` with no final `else` is the user ASSERTING that one of the
+# conditions always holds, and a tool may exploit that.  At a = 4'b0011, where both
+# are false, read_verilog takes the second arm (2'10) while read_slang and read_uhdm
+# hold the previous value (2'11) -- both defensible, so the uhdm-vs-verilog formal
+# comparison can never pass on this construct and is skipped.  What remains is the
+# part `priority` actually specifies: the structural proof (the FIRST true condition
+# wins), the slang miter, and the co-sim.
+SKIP_FORMAL=1
+""",
+    note="""CONVERTED, with one case deliberately left unproven.
+
+`priority if` without a final `else` is the user ASSERTING that one of the
+conditions always holds, and a tool may exploit that.  Measured 2026-11-01 at
+a = 4'b0011, where both conditions are false:
+
+    read_verilog : 2'10  (takes the second arm -- exploiting the hint)
+    read_slang   : 2'11  (holds the previous value)
+    read_uhdm    : 2'11  (holds the previous value)
+
+Both readings are defensible, so that vector is NOT part of the proof: it would
+fail on read_verilog, not on us.  What the test does prove is the part `priority`
+actually specifies and all three agree on -- the FIRST true condition wins, which
+a 0 selector exercises because both conditions hold there.
+""")
+
+add("sequential_block",
+    "Upstream chains three blocking assignments inside an `initial` block on constants, so "
+    "the ORDER that makes the chain work is invisible.",
+    """module sequential_tb (input logic x, output reg a, output reg b, output reg c);
+  // Blocking assignments in sequence: the value has to travel the whole chain within
+  // one evaluation.
+  always @(*) begin
+    a = x;
+    b = a;
+    c = b;
+  end
+endmodule
+""",
+    "The value must reach the end of the chain, not stop at the first link.",
+    ["sat -verify -prove c 1'b1 -set x 1'b1", "sat -verify -prove c 1'b0 -set x 1'b0",
+     "sat -verify -prove b 1'b1 -set x 1'b1"],
+    top="sequential_tb")
+
+add("set_member",
+    "Upstream evaluates `inside` on constants in an `initial` block and never reads the "
+    "result.",
+    """module top(input logic signed [31:0] b, output logic a,
+           output logic signed [31:0] w);
+  localparam c = 5;
+  localparam d = 7;
+  // A port-driven witness: `a` is 0 for all but two of 2^32 values, so a random
+  // co-sim never sets it and reports the run VACUOUS.
+  assign w = b;
+  // `inside` must test membership of the SET, so only the two listed values match.
+  assign a = b inside {c, d};
+endmodule
+""",
+    "Only the two set members may match: upstream's 12 does not, and 5 and 7 do.",
+    ["sat -verify -prove a 1'b0 -set b 32'sd12",
+     "sat -verify -prove a 1'b1 -set b 32'sd5",
+     "sat -verify -prove a 1'b1 -set b 32'sd7",
+     "sat -verify -prove a 1'b0 -set b 32'sd6",
+     "sat -verify -prove w 32'sd12 -set b 32'sd12"])
+
+add("set_member_sim",
+    "Upstream evaluates `inside` on constants in an `initial` block and prints the result.",
+    """module top(input logic signed [31:0] b, output logic a,
+           output logic signed [31:0] w);
+  localparam c = 5;
+  localparam d = 7;
+  // A port-driven witness: `a` is 0 for all but two of 2^32 values, so a random
+  // co-sim never sets it and reports the run VACUOUS.
+  assign w = b;
+  assign a = b inside {c, d};
+endmodule
+""",
+    "Only the two set members may match.",
+    ["sat -verify -prove a 1'b0 -set b 32'sd12",
+     "sat -verify -prove a 1'b1 -set b 32'sd5",
+     "sat -verify -prove a 1'b1 -set b 32'sd7",
+     "sat -verify -prove w 32'sd12 -set b 32'sd12"])
+
+add("signed_func",
+    "Upstream applies `$signed` to a constant inside an `initial` block and never reads "
+    "the result.",
+    """module top(input logic [3:0] x, output logic signed [7:0] a);
+  // $signed reinterprets the operand, so a 4-bit value with its MSB set must
+  // SIGN-extend into the wider signed target.
+  assign a = $signed(x);
+endmodule
+""",
+    "At upstream's 4'b1000 the signed reinterpretation is -8, which sign-extends to "
+    "8'hf8; a value with the MSB clear must zero-extend.",
+    ["sat -verify -prove a 8'hf8 -set x 4'b1000",
+     "sat -verify -prove a 8'h07 -set x 4'b0111",
+     "sat -verify -prove a 8'hff -set x 4'b1111"])
+
+
 def write_all(only=None):
     n = 0
     for name, (why, dut, claim, proofs, top, flatten, slang, note, extra,

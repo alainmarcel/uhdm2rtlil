@@ -1,0 +1,7 @@
+# The loop must run exactly upstream's 128 times.  read_verilog unrolls it; read_uhdm does not (`Unsupported statement type in comb context`) and leaves the count at 0, which is why this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top repeat_tb
+proc
+opt -full
+check -assert
+sat -verify -prove n 32'sd128

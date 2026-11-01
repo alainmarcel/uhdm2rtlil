@@ -165,3 +165,27 @@ sv_tests/let_construct
 # path.  See number_test_9/NOTE.md for the measured table and for the sibling
 # tests that pin the boundary and must keep passing.
 sv_tests/number_test_9
+
+# ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
+
+# `repeat` IS NOT UNROLLED in a combinational context.  With a CONSTANT count
+# (`repeat(128)`) read_verilog unrolls it and the accumulator reads 128; read_uhdm
+# warns `Unsupported statement type in comb context` and leaves it at 0.  Same
+# family as the `foreach` gap in foreach_loop above.  read_slang refuses `repeat`
+# outright, so read_verilog is the oracle and there is no miter.
+sv_tests/repeat_loop
+
+# A `real` is measured as 32 BITS, not 64.  `$bits(T)` with `T` a type parameter
+# defaulting to `real` gives read_slang 64 and read_uhdm 32; `$bits(real)` written
+# directly gives read_slang 64 and read_uhdm 0, with `Empty argument in
+# sys_func_call $bits` -- the type keyword is not accepted as an argument at all.
+# read_verilog cannot parse a `type` parameter, so read_slang is the oracle.
+sv_tests/parameter_type
+
+# An INDEXED PART-SELECT of an UNPACKED array loses the array: read_uhdm warns
+# `Base signal 'arr_a' not found in module or generate scope` for both operands of
+# `arr_b[4+:c] = arr_a[1+:c]` and the destination reads all-zeros, where read_slang
+# performs the copy.  read_verilog rejects the form (`Invalid array access`).  The
+# PACKED counterpart is correct -- operations-on-packed-arrays-variable-slice-rw
+# passes -- so the gap is the unpacked case.
+sv_tests/operations-on-unpacked-arrays-variable-slice-rw

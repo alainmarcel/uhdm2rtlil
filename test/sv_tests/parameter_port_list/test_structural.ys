@@ -1,0 +1,7 @@
+# A parameter from the port list must reach the body with upstream's default, 12.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd12

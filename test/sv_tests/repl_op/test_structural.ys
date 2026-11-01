@@ -1,0 +1,8 @@
+# The two-bit operand must be replicated eight times to fill sixteen bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'b1010101010101010 -set b 2'b10
+sat -verify -prove a 16'b0101010101010101 -set b 2'b01

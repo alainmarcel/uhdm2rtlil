@@ -1,0 +1,9 @@
+# Bits 2:0 of the source must land on bits 5:3 of the destination, leaving the rest: upstream's 8'hff into 8'h00 gives 8'b00111000.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arr_b 8'b00111000 -set arr_a 8'hff -set base 8'h00
+sat -verify -prove arr_b 8'b00101000 -set arr_a 8'h05 -set base 8'h00
+sat -verify -prove arr_b 8'b11000111 -set arr_a 8'h00 -set base 8'hff

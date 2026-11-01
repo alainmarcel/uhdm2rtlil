@@ -1,0 +1,7 @@
+# $bits of the default type parameter `real` must be 64.  read_slang gives 64; read_uhdm gives 32, which is why this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd64

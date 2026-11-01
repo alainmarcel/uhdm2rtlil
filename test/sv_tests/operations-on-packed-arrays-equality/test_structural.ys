@@ -1,0 +1,10 @@
+# Whole-array equality must compare all eight bits: upstream's identical pair gives 1 and 0, and a pair differing in ONE bit must give the opposite -- which a comparison of only the low bits would miss.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove eq 1'b1 -set arr_a 8'hff -set arr_b 8'hff
+sat -verify -prove ne 1'b0 -set arr_a 8'hff -set arr_b 8'hff
+sat -verify -prove eq 1'b0 -set arr_a 8'hff -set arr_b 8'h7f
+sat -verify -prove ne 1'b1 -set arr_a 8'hff -set arr_b 8'h7f

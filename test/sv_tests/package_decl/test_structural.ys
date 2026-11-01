@@ -1,0 +1,8 @@
+# The package function must be callable and compute the sum.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd4 -set x 32'sd1
+sat -verify -prove o 32'sd3 -set x 32'sd0

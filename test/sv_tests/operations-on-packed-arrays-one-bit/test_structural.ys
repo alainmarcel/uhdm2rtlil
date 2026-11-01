@@ -1,0 +1,10 @@
+# Bit 2 of the source must land on bit 5 of the destination and nothing else may change: upstream's case is 8'hff into 8'h00, giving 8'b00100000.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arr_b 8'b00100000 -set arr_a 8'hff -set base 8'h00
+sat -verify -prove arr_b 8'b00000000 -set arr_a 8'hfb -set base 8'h00
+sat -verify -prove arr_b 8'b11111111 -set arr_a 8'hff -set base 8'hff
+sat -verify -prove arr_b 8'b11011111 -set arr_a 8'h00 -set base 8'hff

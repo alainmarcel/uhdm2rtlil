@@ -1,0 +1,9 @@
+# At upstream's 4'b1000 the signed reinterpretation is -8, which sign-extends to 8'hf8; a value with the MSB clear must zero-extend.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 8'hf8 -set x 4'b1000
+sat -verify -prove a 8'h07 -set x 4'b0111
+sat -verify -prove a 8'hff -set x 4'b1111

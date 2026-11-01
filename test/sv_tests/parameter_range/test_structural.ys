@@ -1,0 +1,8 @@
+# The parameter must carry upstream's 16'h1234 in sixteen bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 16'h1234
+sat -verify -prove nbits 32'sd16

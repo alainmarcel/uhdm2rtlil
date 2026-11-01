@@ -1,0 +1,8 @@
+# The two-bit operand must be replicated eight times: upstream's 2'b10 gives 16'b1010101010101010.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'b1010101010101010 -set b 2'b10
+sat -verify -prove a 16'b1111111111111111 -set b 2'b11
