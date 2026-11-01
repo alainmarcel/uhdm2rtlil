@@ -1,0 +1,8 @@
+# The implicit net must exist and carry the reduction-or: a is the constant 8, so the result is 1 whatever x is.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove c_o 1'b1 -set x 4'h0
+sat -verify -prove c_o 1'b1 -set x 4'hf

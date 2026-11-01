@@ -82,3 +82,16 @@ ibex_alu              artefact   # UHDM==slang miter PROVEN (seq 4); co-sim dive
 dyn_elem_member_slice_compound_write  artefact   # Verilator DIDNOTCONVERGE on the behavioural RTL instance alone (self-RMW comb block through a dynamic slot index); netlist-only tb passes, slang miter PROVES (seq=3) — UHDM-only, no read_verilog reference
 block_local_packed_struct_array_dyn_write  artefact   # Verilator "stack smashing detected" on the behavioural RTL instance alone (495-bit block-local packed array updated via dynamic index); netlist-only tb passes 200 cycles, slang miter PROVES (seq=3) — UHDM-only, no read_verilog reference
 mem_simple_4x1_cells  artefact   # satgen has no model for the collected $mem_v2, so the miter is INCONCLUSIVE; the test's own Induct-Formal check PASSES (read_uhdm == read_verilog), so both frontends agree and the 41/200 RD_DATA diffs are Verilator's read-old-data ordering on a same-cycle read/write collision vs the synthesized sync read port — sibling mem_simple_4x1_tb is already baselined
+
+# ---- sv-tests conversion campaign (2026-10-31) ----------------------------
+# Three tests whose whole subject is a DELAY -- a gate delay through a macro
+# argument, a delay on a continuous assignment, and a delay on a net
+# declaration.  Synthesis discards a delay, so the behavioural RTL lags the
+# netlist and the co-sim diverges by construction; the delay is in the SOURCE
+# and BOTH frontends drop it identically, which is why each test's own
+# read_verilog formal equivalence check passes.  The miter is inconclusive
+# because what is left after the delay is gone is pure wiring with no cells for
+# satgen to compare, so the classification is asserted here with that reference.
+22.5.1--define_expansion_20 artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes
+cont_assignment_delay       artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes
+cont_assignment_net_delay   artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes

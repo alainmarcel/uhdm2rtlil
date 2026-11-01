@@ -1,0 +1,8 @@
+# The or must reach an output.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove c_o 4'hf -set a 4'ha -set b 4'h5
+sat -verify -prove c_o 4'ha -set a 4'ha -set b 4'h0

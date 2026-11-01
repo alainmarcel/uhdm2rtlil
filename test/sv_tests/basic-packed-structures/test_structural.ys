@@ -1,0 +1,9 @@
+# At upstream's 8'h5a the first-declared member lo must be the HIGH nibble 5 and hi the low nibble a; swapping the order swaps both.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove p1_o 8'h5a -set x 8'h5a
+sat -verify -prove lo_o 4'h5 -set x 8'h5a
+sat -verify -prove hi_o 4'ha -set x 8'h5a

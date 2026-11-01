@@ -1,0 +1,11 @@
+# All five of upstream's asserted factorials must come out, including 11! = 39916800 which needs eleven levels of recursion and the full 32 bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove f0 32'sd1
+sat -verify -prove f1 32'sd1
+sat -verify -prove f2 32'sd2
+sat -verify -prove f5 32'sd120
+sat -verify -prove f11 32'sd39916800

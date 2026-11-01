@@ -1,0 +1,8 @@
+# `undefineall must leave both XXX and YYY cleared, so the `else arm compiles: 3.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top d
+proc
+opt -full
+check -assert
+sat -verify -prove state 2'd3
+sat -verify -prove o 9'd30 -set a 8'd10 -set b 8'd20

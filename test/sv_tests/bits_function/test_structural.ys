@@ -1,0 +1,8 @@
+# $bits of a 32-bit variable must be upstream's 32, and the variable must still carry all 32 bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd32
+sat -verify -prove val_o 32'hDEADBEEF -set x 32'hDEADBEEF

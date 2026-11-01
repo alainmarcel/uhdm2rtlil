@@ -1,0 +1,9 @@
+# Both the module inside the `celldefine region and the one after `endcelldefine must keep their own logic.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove y_cd 9'd11 -set x 8'd10
+sat -verify -prove y_ncd 9'd12 -set x 8'd10

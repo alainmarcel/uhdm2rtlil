@@ -1,0 +1,8 @@
+# A descending indexed part-select must take the right bits: both vectors would pass for an off-by-one base or a reversed direction only by coincidence.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 4'b0010 -set a 16'h1234
+sat -verify -prove b 4'b1011 -set a 16'hABCD

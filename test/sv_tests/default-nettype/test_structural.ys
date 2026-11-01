@@ -1,0 +1,7 @@
+# Under `default_nettype none the fully declared body must still compile and prove.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dn
+proc
+opt -full
+check -assert
+sat -verify -prove y 9'd30 -set x 8'd10 -set z 8'd20

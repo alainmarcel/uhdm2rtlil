@@ -1,0 +1,8 @@
+# `$clog2(32)` must be 5, which is upstream's own asserted value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd5
+sat -verify -prove w 32'sd7 -set x 32'sd7

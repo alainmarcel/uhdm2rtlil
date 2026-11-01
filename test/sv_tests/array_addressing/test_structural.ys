@@ -1,0 +1,8 @@
+# A 1024-entry array addressed by a port must become a memory, not 1024 muxes.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$mem_v2

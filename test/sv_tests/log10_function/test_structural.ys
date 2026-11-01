@@ -1,0 +1,8 @@
+# `int'($log10(100))` must be 2, which is upstream's own asserted value -- read_verilog computes it and read_uhdm returns the argument instead, so this is a RATCHET; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd2
+sat -verify -prove w 32'sd7 -set x 32'sd7

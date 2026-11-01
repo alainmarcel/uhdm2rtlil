@@ -1,0 +1,10 @@
+# start is 10 and the generated members continue from it: step0 = 11 through step9 = 20.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove st 32'sd10
+sat -verify -prove s0 32'sd11
+sat -verify -prove s1 32'sd12
+sat -verify -prove s9 32'sd20

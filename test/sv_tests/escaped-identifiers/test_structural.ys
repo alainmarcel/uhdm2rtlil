@@ -1,0 +1,8 @@
+# All six escaped names must be distinct, usable signals: each bit must come back from the one it was written to.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top identifiers
+proc
+opt -full
+check -assert
+sat -verify -prove y 6'b101010 -set x 6'b101010
+sat -verify -prove y 6'b010101 -set x 6'b010101

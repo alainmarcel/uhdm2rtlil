@@ -1,0 +1,8 @@
+# The `return` statement must carry the value out: upstream's add(30,60) is 90.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd90 -set a 32'sd30 -set b 32'sd60
+sat -verify -prove o 32'sd0  -set a 32'sd0  -set b 32'sd0

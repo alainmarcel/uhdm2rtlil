@@ -1,0 +1,10 @@
+# All three attribute spellings must be accepted on a module with content, and each module's own logic must survive.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove ya 9'd11 -set x 8'd10
+sat -verify -prove yb 9'd12 -set x 8'd10
+sat -verify -prove yc 9'd13 -set x 8'd10

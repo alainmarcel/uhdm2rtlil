@@ -10,3 +10,94 @@
 # Use this list ONLY for a structural check.  A test whose whole run fails
 # belongs in failing_tests.txt; a read_uhdm-vs-read_slang miter counterexample
 # belongs in slang_miter_expected_fail.txt.
+
+# ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
+# Seven conversions whose `test_structural.ys` proves upstream's own asserted
+# values and FAILS on read_uhdm today.  Each was measured against a reference
+# before being listed; the netlists are pure wiring (0 gates), so the ordinary
+# uhdm-vs-verilog gate-count comparison is VACUOUS on them and the structural
+# proof is the only real check -- which is exactly why these would otherwise go
+# unnoticed.
+
+# $dimensions / $left / $right / $low / $high / $size with a DIMENSION ARGUMENT
+# are answered with the array's TOTAL BIT COUNT instead of that dimension's
+# bound, and $dimensions itself reads 1 instead of 2.  Golden read_verilog gives
+# dims=2 left1=15 left2=31 high2=31 low2=0 right1=0 right2=0 size2=32;
+# read_uhdm gives dims=1 and 512 (= 16*32) for every bound.
+sv_tests/array_queries_multi_dim
+
+# A whole-array assignment between REVERSED ranges (`int A[3:0]` -> `int B[0:3]`)
+# must copy by POSITION, so B[0] takes A[3].  read_verilog and read_slang do;
+# read_uhdm copies by INDEX (b0 = 0 where the golden gives 3).  Upstream's own
+# $display asserted this exact ordering.
+sv_tests/array-unpacked-assignments
+
+# `c >>>= 3` on a `logic signed [7:0]` loses its SIGNEDNESS: at -120 read_verilog
+# gives 8'hf1 (-15) and read_uhdm 8'h11 (a logical shift of 0x88).  The
+# NON-compound form `c = a >>> 3` is correct in the same test file, so the gap is
+# in the compound assignment operator alone.
+sv_tests/arith_shift_assignment_signed
+
+# A REPLICATION inside an unpacked-array assignment pattern is dropped: every
+# element it should fill reads 32'x.  `'{'{0,1,2},'{3{4}}}` fills row 1 correctly
+# and leaves row 2 entirely X; `'{2{'{3{4, 5}}}}` leaves all of both rows X.
+# read_slang fills both.  read_verilog cannot parse the pattern at all, so the
+# slang miter and this proof are the only gates.
+sv_tests/arrays
+sv_tests/arrays-replication
+
+# An INDEX-KEYED assignment pattern (`'{1:1, default:0}`) is dropped entirely:
+# all three elements read 32'x where read_slang gives 1, 0, 0.
+sv_tests/arrays-key-index
+
+# A RANGED enum member list (`enum {start=10, step[10]}`) does not create the
+# generated member names: read_uhdm reports `Reference to unknown signal: step0`
+# and fabricates a wire, where read_slang resolves step0..step9 to 11..20.
+sv_tests/enum_sequence
+
+# $countones / $countbits are not implemented: the reader warns
+# `Unhandled system function call` and returns the ARGUMENT, so all five counts
+# read 1879082017 at 32'h70008421 instead of 7 / 25 / 32 / 0.  read_verilog is
+# the oracle; read_slang refuses the functions outright so there is no miter.
+sv_tests/countbits_function
+
+# ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
+
+# A COMPOUND ASSIGNMENT USED AS AN EXPRESSION evaluates to the RHS alone: at
+# x = 7, `b = (a += 1)` gives read_verilog a=8/b=8 and read_uhdm a=1/b=1 -- the
+# `a +` part is lost.  `b = (a -= 1)` likewise gives 1 instead of 6.  The
+# PRE-INCREMENT form `b = (++a)` and a plain chain `a = (b = (c = x))` are both
+# correct in the same shape, so the gap is the compound operators.  Related to
+# the `>>>=` signedness loss recorded for arith_shift_assignment_signed above.
+sv_tests/assign_in_exp
+sv_tests/assign_in_exp_sim
+sv_tests/assignment_in_expression
+sv_tests/assignment_in_expression_sim
+
+# A SELECT APPLIED TO A CONCATENATION takes the wrong bits: `{b,c}[9:6]` with
+# b = 8'b10101100 and c = 8'b01010011 is 4'b0001 (b[1:0] then c[7:6]), which
+# read_slang gives; read_uhdm gives 4'b0011.  read_verilog cannot parse the form
+# at all (`syntax error, unexpected '['`), so read_slang is the oracle.
+sv_tests/concat_op-bit_select
+
+# `foreach` IS NOT UNROLLED in a combinational context: read_uhdm warns
+# `Cannot unroll foreach in comb context` and emits nothing, so the loop's work
+# is lost (foreach_loop reads 0 visits and sum 0 where read_slang gives 4 and
+# 1110; foreach_loop_synth leaves the copied elements undriven).  read_verilog
+# cannot parse `foreach`, so read_slang is the oracle.
+sv_tests/foreach_loop
+sv_tests/foreach_loop_synth
+
+# Nine constant SYSTEM FUNCTIONS that read_uhdm does not implement: it warns
+# `Unhandled system function call` and returns the FIRST ARGUMENT.  read_verilog
+# computes all nine and is the oracle; read_slang refuses $countbits so there is
+# no miter for that one.  One underlying gap -- see the NOTE.md in each.
+sv_tests/atan2_function
+sv_tests/exp_function
+sv_tests/hypot_function
+sv_tests/ln_function
+sv_tests/log10_function
+sv_tests/onehot0_function
+sv_tests/onehot_function
+sv_tests/pow_function
+sv_tests/sqrt_function

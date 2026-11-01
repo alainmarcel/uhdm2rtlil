@@ -1,0 +1,12 @@
+# Both rows must be 4,5,4,5,4,5.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove r1c1 32'sd4
+sat -verify -prove r1c2 32'sd5
+sat -verify -prove r1c5 32'sd4
+sat -verify -prove r1c6 32'sd5
+sat -verify -prove r2c1 32'sd4
+sat -verify -prove r2c6 32'sd5

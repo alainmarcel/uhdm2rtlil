@@ -1,0 +1,8 @@
+# `-=` inside an expression must BOTH update the variable and yield the updated value, which upstream asserts by comparing the result against the variable's old value plus or minus one.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b_o 32'sd6 -set x 32'sd7
+sat -verify -prove a_o 32'sd6 -set x 32'sd7

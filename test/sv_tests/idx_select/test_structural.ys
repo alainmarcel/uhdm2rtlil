@@ -1,0 +1,8 @@
+# A plain bit-select must take the right bits: both vectors would pass for an off-by-one base or a reversed direction only by coincidence.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set a 16'h0800
+sat -verify -prove b 1'b0 -set a 16'h0000

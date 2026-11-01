@@ -1,0 +1,7 @@
+# `.num()` must be the enum's member COUNT, 4 -- not the current value, which is 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove n 32'sd4

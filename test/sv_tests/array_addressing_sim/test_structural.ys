@@ -1,0 +1,11 @@
+# Only ONE element of the 1024 is ever touched, so the array must reduce to a single enabled register -- not a memory and not 1024 registers -- and that register has to carry `wd` to `a` under `we`.  A proof of the value alone would be vacuous here: with `we` held low the element is never written, so SAT reads it as a free value and any constant can be 'proven'.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:wd %i
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:we %i
+select -assert-any  t:$dff t:$dffe t:$adff t:$sdff %u %u %u %co* w:a %i

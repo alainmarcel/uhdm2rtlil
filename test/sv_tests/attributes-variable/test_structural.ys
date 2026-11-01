@@ -1,0 +1,9 @@
+# All three attributed variables must keep their width and their drivers.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove ao 8'd10 -set x 8'd10
+sat -verify -prove bo 8'd11 -set x 8'd10
+sat -verify -prove co 8'd12 -set x 8'd10

@@ -1,0 +1,8 @@
+# `.first()` must be 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove m 2'd0
+sat -verify -prove w 2'd3 -set x 2'd3

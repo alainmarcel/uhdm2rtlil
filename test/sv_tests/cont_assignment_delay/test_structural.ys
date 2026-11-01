@@ -1,0 +1,8 @@
+# The delayed continuous assignment must still drive the output with the and.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove w 1'b1 -set a 1'b1 -set b 1'b1
+sat -verify -prove w 1'b0 -set a 1'b0 -set b 1'b1

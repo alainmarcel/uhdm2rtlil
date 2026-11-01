@@ -1,0 +1,8 @@
+# Each member must keep its own value, upstream's lo = 5 and hi = a.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove lo_o 4'h5 -set xlo 4'h5 -set xhi 4'ha
+sat -verify -prove hi_o 4'ha -set xlo 4'h5 -set xhi 4'ha

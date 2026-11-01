@@ -1,0 +1,7 @@
+# Both comment forms must be consumed without swallowing the logic between and after them.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top empty
+proc
+opt -full
+check -assert
+sat -verify -prove y 9'd11 -set x 8'd10

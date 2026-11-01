@@ -1,0 +1,9 @@
+# The body must run when the condition is true and the HOLD value must survive when it is false.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top if_tb
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set a 1'b1 -set bin 1'b0
+sat -verify -prove b 1'b0 -set a 1'b0 -set bin 1'b0
+sat -verify -prove b 1'b1 -set a 1'b0 -set bin 1'b1

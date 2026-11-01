@@ -1,0 +1,7 @@
+# At upstream's 0x89 and 0x12 the concatenation must be 0x8912 -- the first operand in the high byte.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'h8912 -set b 8'h89 -set c 8'h12

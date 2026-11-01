@@ -1,0 +1,9 @@
+# The value must travel the whole chain inside the labelled block.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_tb
+proc
+opt -full
+check -assert
+sat -verify -prove c 1'b1 -set x 1'b1
+sat -verify -prove c 1'b0 -set x 1'b0
+sat -verify -prove b 1'b1 -set x 1'b1

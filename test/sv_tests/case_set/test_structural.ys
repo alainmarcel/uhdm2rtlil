@@ -1,0 +1,14 @@
+# The value list, the wildcard and the range must each match, and anything outside all three must take the default.  Note 5 and 6 are matched by BOTH the 4'b01?? wildcard and the range, and 4 and 7 only by the wildcard.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top case_tb
+proc
+opt -full
+check -assert
+sat -verify -prove b 4'd1 -set a 4'd1
+sat -verify -prove b 4'd1 -set a 4'd3
+sat -verify -prove b 4'd2 -set a 4'd4
+sat -verify -prove b 4'd2 -set a 4'd5
+sat -verify -prove b 4'd2 -set a 4'd6
+sat -verify -prove b 4'd2 -set a 4'd7
+sat -verify -prove b 4'd3 -set a 4'd0
+sat -verify -prove b 4'd3 -set a 4'd8

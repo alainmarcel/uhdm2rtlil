@@ -1,0 +1,8 @@
+# At upstream's 16'h1234 the descending part-select from 15 must be the HIGH byte, upstream's 0x12.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 8'h12 -set a 16'h1234
+sat -verify -prove b 8'hab -set a 16'habcd

@@ -1,0 +1,9 @@
+# At a = 8 the compound shifts must give upstream's 64 and 1, with zeros shifted in.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 8'd64 -set a 8'd8
+sat -verify -prove c 8'd1  -set a 8'd8
+sat -verify -prove c 8'd16 -set a 8'd128

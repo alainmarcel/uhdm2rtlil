@@ -1,0 +1,8 @@
+# 256 iterations with indices 0..255: the count is 256 and the sum is 255*256/2 = 32640.  A loop off by one iteration changes both.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top for_tb
+proc
+opt -full
+check -assert
+sat -verify -prove n 32'sd256
+sat -verify -prove sum 32'sd32640

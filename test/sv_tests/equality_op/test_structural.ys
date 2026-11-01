@@ -1,0 +1,13 @@
+# Each pair differs in bit 0, so every comparison -- logical and CASE equality, over x, z and two-state operands alike -- must be 0, which is upstream's own assertion.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove eq_ab 1'b0
+sat -verify -prove eq_cd 1'b0
+sat -verify -prove eq_ef 1'b0
+sat -verify -prove ceq_ab 1'b0
+sat -verify -prove ceq_cd 1'b0
+sat -verify -prove ceq_ef 1'b0
+sat -verify -prove w 8'hA5 -set x 8'hA5

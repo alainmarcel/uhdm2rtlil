@@ -388,3 +388,43 @@ arch/quicklogic/qlf_k6n10f/meminit.v
 # If read_verilog ever learns this construct, this entry becomes an UNEXPECTED
 # SUCCESS and should be removed.
 loopvar_index_in_hier_path
+
+# ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
+# Four conversions whose uhdm-vs-verilog formal equivalence FAILS because
+# read_uhdm computes a different value.  Each defect is measured and recorded in
+# structural_expected_fail.txt; these entries exist because the whole test fails,
+# not just one check, and must be removed in the commit that fixes the defect.
+#   arith_shift_assignment_signed : `>>>=` loses signedness
+#   array-unpacked-assignments    : whole-array copy between reversed ranges
+#                                   copies by index, not position
+#   array_queries_multi_dim       : a dimension argument to $left/$right/... is
+#                                   ignored; every bound reads the total bit count
+#   countbits_function            : $countones / $countbits unimplemented -- the
+#                                   reader returns the argument
+sv_tests/arith_shift_assignment_signed
+sv_tests/array-unpacked-assignments
+sv_tests/array_queries_multi_dim
+sv_tests/countbits_function
+
+# ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
+# Conversions whose uhdm-vs-verilog formal equivalence FAILS because read_uhdm
+# computes a different value.  Each defect is measured and written out in
+# structural_expected_fail.txt; these entries exist because the WHOLE test
+# fails, not just one check, and must be removed in the commit that fixes it.
+#   assign_in_exp* / assignment_in_expression* : a compound assignment used as
+#       an expression yields the RHS alone (a=1,b=1 where the golden gives 8,8)
+#   *_function : the constant system function is not implemented -- the reader
+#       warns `Unhandled system function call` and returns its first argument
+sv_tests/assign_in_exp
+sv_tests/assign_in_exp_sim
+sv_tests/assignment_in_expression
+sv_tests/assignment_in_expression_sim
+sv_tests/atan2_function
+sv_tests/exp_function
+sv_tests/hypot_function
+sv_tests/ln_function
+sv_tests/log10_function
+sv_tests/onehot0_function
+sv_tests/onehot_function
+sv_tests/pow_function
+sv_tests/sqrt_function

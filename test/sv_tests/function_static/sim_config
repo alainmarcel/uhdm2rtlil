@@ -1,0 +1,10 @@
+# A `static` function local is persistent state read and written in a
+# COMBINATIONAL context, so Verilator reports the behavioural RTL's own
+# combinational region as non-converging:
+#   %Error-DIDNOTCONVERGE: Input combinational region did not converge
+#     after '--converge-limit' of 10000 tries
+# That is a property of the SOURCE, not of the netlist: read_uhdm's netlist for
+# this test is `assign o = x` and `check` finds 0 problems on both read_uhdm and
+# read_slang.  There is nothing to co-simulate against, and read_verilog cannot
+# parse `function static` at all, so the miter cannot adjudicate it either.
+SKIP_SIM_EQUIV=1

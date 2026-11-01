@@ -1,0 +1,8 @@
+# Both arms must be reachable.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top if_tb
+proc
+opt -full
+check -assert
+sat -verify -prove b 1'b1 -set a 1'b1
+sat -verify -prove b 1'b0 -set a 1'b0

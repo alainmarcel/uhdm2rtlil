@@ -14,3 +14,28 @@
 ibex_ex_block
 
 
+
+# ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
+# The same seven reader defects as the sv_tests block in
+# structural_expected_fail.txt, seen from the other side: read_slang computes
+# upstream's values and read_uhdm does not, so the miter finds a counterexample.
+# Both lists must lose the entry in the commit that fixes the defect.
+sv_tests/array_queries_multi_dim
+sv_tests/array-unpacked-assignments
+sv_tests/arith_shift_assignment_signed
+sv_tests/arrays
+sv_tests/arrays-replication
+sv_tests/arrays-key-index
+sv_tests/enum_sequence
+
+# ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
+# read_slang computes upstream's values and read_uhdm does not, so the miter
+# finds a counterexample.  Reasons are recorded against the same tests in
+# structural_expected_fail.txt.
+sv_tests/assign_in_exp
+sv_tests/assign_in_exp_sim
+sv_tests/assignment_in_expression
+sv_tests/assignment_in_expression_sim
+sv_tests/concat_op-bit_select
+sv_tests/foreach_loop
+sv_tests/foreach_loop_synth

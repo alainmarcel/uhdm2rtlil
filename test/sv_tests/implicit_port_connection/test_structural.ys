@@ -1,0 +1,10 @@
+# The positional connection must bind the two inputs and the output in declaration order, so d is a | b.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove d 1'b1 -set a 1'b1 -set b 1'b0
+sat -verify -prove d 1'b1 -set a 1'b0 -set b 1'b1
+sat -verify -prove d 1'b0 -set a 1'b0 -set b 1'b0

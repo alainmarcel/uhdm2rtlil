@@ -1,0 +1,8 @@
+# `$unpacked_dimensions(arr)` must be upstream's 0, and the array it describes must still carry data.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove q 32'sd0
+sat -verify -prove arr_o 8'hA5 -set a 8'hA5

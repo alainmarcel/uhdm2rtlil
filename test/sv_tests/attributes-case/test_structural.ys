@@ -1,0 +1,14 @@
+# All three attributed case statements must decode identically: 1 for 01 and 10, 0 for 00 and 11.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b0 1'b0 -set a 2'b00
+sat -verify -prove b0 1'b1 -set a 2'b01
+sat -verify -prove b0 1'b1 -set a 2'b10
+sat -verify -prove b0 1'b0 -set a 2'b11
+sat -verify -prove b1 1'b1 -set a 2'b01
+sat -verify -prove b1 1'b0 -set a 2'b11
+sat -verify -prove b2 1'b1 -set a 2'b10
+sat -verify -prove b2 1'b0 -set a 2'b00

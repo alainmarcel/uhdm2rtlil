@@ -1,0 +1,8 @@
+# The attributed addition must still add.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 8'd30 -set b 8'd10 -set c 8'd20
+sat -verify -prove a 8'd0  -set b 8'd128 -set c 8'd128
