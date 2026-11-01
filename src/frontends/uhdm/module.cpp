@@ -2107,9 +2107,20 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         if (rhs.size() == 1) {
             // Extend single bit to match LHS width by replicating the bit
             // This handles unbased unsized literals like 'x, 'z, '0, '1 correctly
-            if (rhs.is_fully_const()) {
+            // ... but ONLY for a fill literal.  A SIZED one-bit literal
+            // (`1'bx`, `1'bz`, `1'b1`, or a parameter Surelog folded to one)
+            // is an unsigned value that zero-extends: `assign o = 1'bx` on a
+            // 32-bit `o` is `0…0x`, not 32 bits of x (read_verilog agrees;
+            // sv-tests number_test_10..14).  A fill literal that reached
+            // here is one import_constant could not size from the context.
+            bool is_fill = false;
+            if (rhs_expr && rhs_expr->UhdmType() == uhdmconstant)
+                is_fill = any_cast<const constant*>(rhs_expr)->VpiSize() == -1;
+            if (rhs.is_fully_const() && (is_fill || is_expr_signed(rhs_expr))) {
                 RTLIL::State bit_val = rhs.as_const()[0];
                 rhs = RTLIL::SigSpec(RTLIL::Const(bit_val, lhs.size()));
+            } else if (rhs.is_fully_const()) {
+                rhs.extend_u0(lhs.size(), false);
             } else if (rhs.is_wire() && rhs.as_wire()->is_signed) {
                 // Non-constant single SIGNED bit: sign-extend by replicating
                 // the bit (`wire signed inp` → `xn = {inp,inp,...}`).  Without

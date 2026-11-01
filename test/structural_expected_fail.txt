@@ -156,15 +156,6 @@ sv_tests/multi-dim-basic
 # (`syntax error, unexpected '='`), so read_slang is the oracle.
 sv_tests/let_construct
 
-# ---- sv-tests conversion campaign, batch 7 (2026-11-01) -------------------
-# An UNSIGNED BINARY literal is SIGN-EXTENDED into a wider signed parameter:
-# `parameter int foo = 1'b1;` must be 1 (a sized literal without `s` is unsigned)
-# and read_uhdm gives all-ones.  read_verilog AND read_slang both give 1.
-# Specific to the BINARY base -- 8'hFF gives 255 correctly and 4'sb1111 gives -1
-# correctly -- so only an unsigned 'b literal with its MSB set takes the wrong
-# path.  See number_test_9/NOTE.md for the measured table and for the sibling
-# tests that pin the boundary and must keep passing.
-sv_tests/number_test_9
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
 

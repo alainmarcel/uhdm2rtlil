@@ -82,6 +82,13 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (auto c = any_cast<const UHDM::constant*>(e)) {
         std::string_view deco = c->VpiDecompile();
         if (deco.find("'s") != std::string_view::npos) return true;
+        // A BASED literal without the `s` sigil is UNSIGNED (LRM 5.7.1), and
+        // that is decided by the literal alone.  Surelog stamps the TARGET's
+        // typespec on a literal it folds into a parameter (`parameter byte B =
+        // 2'b11` arrives as BIN:11, vpiSize 2, typespec `byte`), so the
+        // typespec fallback below read it as signed and the assignment
+        // sign-extended 2'b11 to 8'hFF (sv-tests number_test_9 family).
+        if (deco.find('\'') != std::string_view::npos) return false;
         // Const-folded results may have lost the decompile sigil but still carry
         // signedness on the typespec.
         if (c->Typespec() && c->Typespec()->Actual_typespec())
