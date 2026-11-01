@@ -200,3 +200,16 @@ sqrt_function
 # Both lists must lose the entry in the commit that fixes the defect.
 enum_sequence_range
 event_control_edge
+# ---- sv-tests conversion campaign, batch 6 (2026-11-01) ------------------
+# Divergences caused by reader defects tracked, with their measurements, in
+# structural_expected_fail.txt:
+#   let_construct     : a `let`'s formal arguments are never bound (output is 1'x)
+#   multi-declaration : $bits of an array ELEMENT measures the whole array
+#   multi-dim-basic   : as above, plus $dimensions reporting 1 instead of 4
+let_construct
+multi-declaration
+multi-dim-basic
+# ---- sv-tests conversion campaign, batch 7 (2026-11-01) ------------------
+# `1'b1` into an `int` parameter reads -1 instead of 1, so the co-sim diverges
+# every cycle.  Defect measured in structural_expected_fail.txt.
+number_test_9

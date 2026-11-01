@@ -1,0 +1,9 @@
+# The `let` must expand with its arguments bound BY NAME: at upstream's 12, 15 and 7 the reduction is 1, and a vector where the or and the and disagree pins the operator order.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove d 1'b1 -set a 4'd12 -set b 4'd15 -set c 4'd7
+sat -verify -prove d 1'b0 -set a 4'b1100 -set b 4'b1100 -set c 4'b0011
+sat -verify -prove d 1'b1 -set a 4'b0001 -set b 4'b0000 -set c 4'b0001

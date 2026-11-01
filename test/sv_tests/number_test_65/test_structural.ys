@@ -1,0 +1,8 @@
+# The literal must carry the value read_verilog gives it, -17958194.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'hfeedface
+sat -verify -prove w 32'sd7 -set x 32'sd7

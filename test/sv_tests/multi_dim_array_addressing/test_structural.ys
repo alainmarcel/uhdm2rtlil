@@ -1,0 +1,8 @@
+# A port-addressed two-dimensional array must become memory, not thousands of muxes.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-min 1 t:$mem_v2

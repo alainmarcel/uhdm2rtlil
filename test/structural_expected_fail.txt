@@ -134,3 +134,34 @@ sv_tests/enum_sequence_range
 # and read_slang REFUSES it ("@(edge) will not be synthesized") -- but read_uhdm
 # is the only one that silently produces a broken netlist instead of refusing.
 sv_tests/event_control_edge
+
+# ---- sv-tests conversion campaign, batch 6 (2026-11-01) -------------------
+
+# $bits AND $dimensions OF AN ARRAY ELEMENT ignore the selection and measure the
+# WHOLE array.  Golden read_verilog vs read_uhdm:
+#   multi-declaration   $bits(arr_a[1][1])  256 vs 12800 (= 256 * 5 * 10)
+#                       $bits(arr_b[0])     256 vs 65536 (= 256 * 256)
+#   multi-dim-basic     $bits(arr[1])        32 vs   320 (=  32 * 10)
+#                       $bits(arr2[1][1])    30 vs  1680 (=  30 * 7 * 8)
+#                       $dimensions(arr2)     4 vs     1
+# Same underlying gap as array_queries_multi_dim above (the dims of the selected
+# element are never collected, so the query answers from the total bit count).
+sv_tests/multi-declaration
+sv_tests/multi-dim-basic
+
+# A `let`'s FORMAL ARGUMENTS are not bound: read_uhdm reports
+# `Reference to unknown signal: x` (and y, z) for `let op(x, y, z) = |((x|y)&z);`
+# and the expression reads fabricated wires, so the output is 1'x where read_slang
+# gives 1.  read_verilog cannot parse `let` at all
+# (`syntax error, unexpected '='`), so read_slang is the oracle.
+sv_tests/let_construct
+
+# ---- sv-tests conversion campaign, batch 7 (2026-11-01) -------------------
+# An UNSIGNED BINARY literal is SIGN-EXTENDED into a wider signed parameter:
+# `parameter int foo = 1'b1;` must be 1 (a sized literal without `s` is unsigned)
+# and read_uhdm gives all-ones.  read_verilog AND read_slang both give 1.
+# Specific to the BINARY base -- 8'hFF gives 255 correctly and 4'sb1111 gives -1
+# correctly -- so only an unsigned 'b literal with its MSB set takes the wrong
+# path.  See number_test_9/NOTE.md for the measured table and for the sibling
+# tests that pin the boundary and must keep passing.
+sv_tests/number_test_9

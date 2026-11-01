@@ -1,0 +1,9 @@
+# A variable declared over the type localparam must be a usable 1-bit signal.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd1
+sat -verify -prove o 1'b1 -set x 1'b1
+sat -verify -prove o 1'b0 -set x 1'b0

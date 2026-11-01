@@ -1,0 +1,11 @@
+# Each packed element must measure the product of its packed dimensions -- 4x8 = 32 for arr and 5x6 = 30 for arr2 -- and arr2 must report FOUR dimensions (two unpacked, two packed).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arr_bits 32'sd32
+sat -verify -prove arr2_bits 32'sd30
+sat -verify -prove arr2_dims 32'sd4
+sat -verify -prove arr_o 32'hDEADBEEF -set x 32'hDEADBEEF
+sat -verify -prove mem_o 8'hA5 -set y 8'hA5
