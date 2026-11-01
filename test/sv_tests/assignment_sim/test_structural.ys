@@ -1,0 +1,8 @@
+# At upstream's 12 and 5 the first read must be 12 and the read after the overwrite 5 -- a frontend that reordered the two would give 5 for both.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove first  4'd12 -set ain 4'd12 -set bin 4'd5
+sat -verify -prove second 4'd5  -set ain 4'd12 -set bin 4'd5

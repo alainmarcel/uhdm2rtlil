@@ -1,0 +1,10 @@
+# The two fully-defined literals must carry their values, and the partly-unknown one must keep its DEFINED bits -- 3'b01x has bits 2 and 1 as 0 and 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 4'b1001
+sat -verify -prove b 5'd3
+sat -verify -prove c[2] 1'b0
+sat -verify -prove c[1] 1'b1

@@ -1,0 +1,7 @@
+# The sixteen-bit vector must carry all sixteen bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 16'hA55A -set x 16'hA55A

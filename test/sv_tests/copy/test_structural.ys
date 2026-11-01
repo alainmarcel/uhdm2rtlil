@@ -1,0 +1,8 @@
+# Both the element write and the element-to-element copy must carry all 32 bits of upstream's 0xdeadbeef -- a copy that lost the packed geometry would narrow it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a1_o 32'hdeadbeef -set x 32'hdeadbeef
+sat -verify -prove b2_o 32'hdeadbeef -set x 32'hdeadbeef

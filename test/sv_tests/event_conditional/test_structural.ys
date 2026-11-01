@@ -1,0 +1,9 @@
+# The qualified edge must become a register whose enable comes from `en`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_tb
+proc
+opt -full
+check -assert
+select -assert-min 1 t:$dff t:$dffe t:$adff t:$sdff %u %u %u
+select -assert-any t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:en %i
+select -assert-any t:$dff t:$dffe t:$adff t:$sdff %u %u %u %ci* w:clk %i

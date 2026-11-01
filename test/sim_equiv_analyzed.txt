@@ -852,3 +852,16 @@ Test: array_addressing_sim
     test's own Induct-Formal check passes), so the miter classifies it ARTEFACT.
     The round trip itself is proven by test_structural.ys with the written VALUE
     coming from a port, so the proof cannot be satisfied by a folded constant.
+
+Test: enum_xx
+    The enum under test has an ALL-X member (`b = {32{1'bx}}`) and the module
+    brings out `is_b = (x === b)`.  Verilator's two-state RTL evaluates a case
+    comparison against x as 0, while the synthesised netlist's `$eqx` against an
+    x constant resolves the other way, so the co-sim mismatches on `is_b` every
+    cycle by construction -- the same x-versus-two-state class as the other
+    entries in this file.  NOT a frontend difference: read_uhdm and read_verilog
+    agree on the netlist (this test's own formal equivalence check passes) and
+    both report `is_b = 0` under `eval`.  The two EXPLICIT members are what the
+    test proves (`oa = 0`, `oc = 1`); the x member's comparison is deliberately
+    not a proof, because `sat -verify -prove` cannot express an x operand -- see
+    the test's NOTE.md.

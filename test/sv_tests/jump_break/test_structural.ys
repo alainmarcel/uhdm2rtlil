@@ -1,0 +1,8 @@
+# The `break` must stop the loop at upstream's 101, after 102 iterations -- a loop that ignored the break would run all 256.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top jump_tb
+proc
+opt -full
+check -assert
+sat -verify -prove i_o 32'sd101
+sat -verify -prove n 32'sd102

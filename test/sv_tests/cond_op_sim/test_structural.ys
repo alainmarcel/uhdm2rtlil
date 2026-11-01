@@ -1,0 +1,8 @@
+# At upstream's 12 and 5 the ternary must give 11, and swapping the operands must give 13.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove c 32'sd11 -set a 32'sd12 -set b 32'sd5
+sat -verify -prove c 32'sd13 -set a 32'sd5  -set b 32'sd12

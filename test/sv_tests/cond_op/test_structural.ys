@@ -1,0 +1,9 @@
+# Both arms must be reachable, and the comparison must be the SIGNED one: upstream's 12 > 5 takes the true arm, and a negative a must take the false arm.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove c 32'sd11 -set a 32'sd12 -set b 32'sd5
+sat -verify -prove c 32'sd13 -set a 32'sd5  -set b 32'sd12
+sat -verify -prove c 32'sd13 -set a 32'sd-1 -set b 32'sd1

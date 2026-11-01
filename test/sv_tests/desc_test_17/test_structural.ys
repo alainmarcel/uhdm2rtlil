@@ -1,0 +1,8 @@
+# ASIC_OR_FPGA is not defined, so the empty `else arm is taken and neither module exists.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove arm 4'd9
+sat -verify -prove y 9'd13 -set a 8'd10

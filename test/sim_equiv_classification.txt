@@ -95,3 +95,8 @@ mem_simple_4x1_cells  artefact   # satgen has no model for the collected $mem_v2
 22.5.1--define_expansion_20 artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes
 cont_assignment_delay       artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes
 cont_assignment_net_delay   artefact  delay dropped identically by both frontends; read_verilog formal equivalence passes
+# An x-versus-two-state co-sim divergence: the miter cannot adjudicate an x
+# operand either, so the reference is that read_uhdm and read_verilog produce the
+# same netlist (the test's own Induct-Formal equivalence check passes) and agree
+# under `eval`.
+enum_xx                     artefact  x vs 2-state: uhdm==verilog formally and under eval; sat cannot express x

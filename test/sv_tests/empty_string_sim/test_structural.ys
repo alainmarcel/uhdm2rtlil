@@ -1,0 +1,8 @@
+# The empty string must leave every one of the 112 bits at 0, which is exactly what upstream's `assert(a == 0)` claims.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove is_zero 1'b1
+sat -verify -prove a_o 112'd0

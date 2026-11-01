@@ -1,0 +1,11 @@
+# An immediate `assert` in an initial block must reach the netlist as a `$check` cell rather than being dropped, and the surrounding logic must survive.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+select -assert-min 1 t:$check
+delete t:$check
+opt_clean
+sat -verify -prove o 1'b1 -set a 1'b1
+sat -verify -prove o 1'b0 -set a 1'b0

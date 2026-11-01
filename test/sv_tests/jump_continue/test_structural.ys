@@ -1,0 +1,8 @@
+# The guarded statement must run exactly once, at upstream's 255 -- a `continue` that did nothing would run it 256 times and leave the count at 256.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top jump_tb
+proc
+opt -full
+check -assert
+sat -verify -prove reached 32'sd255
+sat -verify -prove n 32'sd1

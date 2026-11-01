@@ -1,0 +1,9 @@
+# The typedef'd enum's third member must be 2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove is_c 1'b1 -set x 2'd2
+sat -verify -prove is_c 1'b0 -set x 2'd1
+sat -verify -prove val_o 2'd1 -set x 2'd1

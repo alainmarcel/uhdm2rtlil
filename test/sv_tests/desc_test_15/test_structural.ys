@@ -1,0 +1,9 @@
+# ASIC is not defined, so the `else arm's module_fpga must exist and add 2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove arm 4'd2
+sat -verify -prove y 9'd12 -set a 8'd10

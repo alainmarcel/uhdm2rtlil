@@ -190,3 +190,13 @@ onehot0_function
 onehot_function
 pow_function
 sqrt_function
+# ---- sv-tests conversion campaign, batch 5 (2026-10-31) ------------------
+# Both divergences are a DIRECT CONSEQUENCE of a reader defect already tracked,
+# with its measurement, in structural_expected_fail.txt:
+#   enum_sequence_range : the ranged enum's generated members are not created, so
+#                         stop11 reads 0 where the RTL gives 11
+#   event_control_edge  : `@(edge clk)` becomes a combinational logic loop, so the
+#                         register never advances
+# Both lists must lose the entry in the commit that fixes the defect.
+enum_sequence_range
+event_control_edge

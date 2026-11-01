@@ -1,0 +1,10 @@
+# The $display must become exactly one `$print` cell -- all three frontends emit one -- and the value it formats must still reach the output.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+select -assert-count 1 t:$print
+delete t:$print
+opt_clean
+sat -verify -prove o 32'hDEADBEEF -set x 32'hDEADBEEF

@@ -101,3 +101,36 @@ sv_tests/onehot0_function
 sv_tests/onehot_function
 sv_tests/pow_function
 sv_tests/sqrt_function
+
+# ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
+
+# An `initial assume` is DROPPED: read_uhdm lowers an immediate `assert` and an
+# immediate `cover` to a $check cell but emits nothing for an immediate `assume`,
+# where read_verilog emits one.  (The deferred `#0`, `final` and concurrent
+# `assume property` forms reach a netlist on NONE of the three frontends, so
+# those tests do not assert a cell at all -- see each NOTE.md.)
+sv_tests/assume_test
+
+# A BARE `return` in a VOID FUNCTION does not skip the rest of the body: `fun`
+# writes 1, returns early at a == 21 and otherwise writes 2, and read_uhdm
+# reaches the second write EITHER WAY (read_slang gives 1 and 2).  The value form
+# `return <expression>` is correct (jump_return_expr), and so is returning the
+# function's own name, so the gap is the bare `return` as a control transfer.
+# read_verilog cannot read the construct (`Can't resolve task name \return`).
+sv_tests/jump_return
+
+# ---- sv-tests conversion campaign, batch 5 (2026-10-31) -------------------
+
+# A RANGED enum member list with explicit bounds (`enum {start=10, stop[11:13]}`)
+# does not create stop11/stop12/stop13: read_uhdm reports
+# `Reference to unknown signal: stop11` and fabricates a wire, where read_slang
+# resolves them to 11, 12 and 13.  read_verilog cannot parse a ranged enum.  Same
+# defect as enum_sequence (the `step[10]` count form) above.
+sv_tests/enum_sequence_range
+
+# `always @(edge clk)` becomes a COMBINATIONAL LOGIC LOOP: read_uhdm emits a plain
+# $not driving `a` from `a`, so `check` reports four logic loops (one per bit).
+# No frontend synthesizes a dual-edge flop -- read_verilog cannot parse the form
+# and read_slang REFUSES it ("@(edge) will not be synthesized") -- but read_uhdm
+# is the only one that silently produces a broken netlist instead of refusing.
+sv_tests/event_control_edge

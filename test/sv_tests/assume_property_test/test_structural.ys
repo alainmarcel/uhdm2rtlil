@@ -1,0 +1,7 @@
+# The concurrent `assume property` must reach the netlist as a `$check` cell rather than being dropped.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 1'b1 -set a 1'b1

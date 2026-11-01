@@ -1,0 +1,8 @@
+# The constant function must be evaluated at elaboration: fun(3) is upstream's 4 and fun(10) is 11.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd4
+sat -verify -prove w 32'sd11

@@ -1,0 +1,10 @@
+# All three radix forms must survive as separate `$print` cells -- read_verilog also emits three -- and the value they format must still reach the output.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+select -assert-count 3 t:$print
+delete t:$print
+opt_clean
+sat -verify -prove o 32'd1234 -set x 32'd1234

@@ -1,0 +1,9 @@
+# `return <expression>` must carry the computed value out.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top jump_tb
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd0  -set a 32'sd0
+sat -verify -prove o 32'sd63 -set a 32'sd21
+sat -verify -prove o 32'sd765 -set a 32'sd255

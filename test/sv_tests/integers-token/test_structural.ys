@@ -1,0 +1,8 @@
+# `integer` must carry a full signed 32 bits.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'h80000001 -set x 32'h80000001
+sat -verify -prove o 32'd659 -set x 32'd659

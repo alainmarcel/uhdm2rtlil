@@ -1,0 +1,8 @@
+# A deferred `cover #0` must be ACCEPTED and must not perturb the logic beside it.  No frontend lowers this form to a netlist cell, so that is all a netlist can show -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 1'b1 -set a 1'b1
+sat -verify -prove o 1'b0 -set a 1'b0

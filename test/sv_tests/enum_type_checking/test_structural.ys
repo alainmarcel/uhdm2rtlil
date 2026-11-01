@@ -1,0 +1,10 @@
+# Each member assignment must give the variable that member's ordinal, and the comparison back against the member must agree.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 2'd0 -set x 2'd0
+sat -verify -prove o 2'd3 -set x 2'd3
+sat -verify -prove is_a 1'b1 -set x 2'd0
+sat -verify -prove is_a 1'b0 -set x 2'd2

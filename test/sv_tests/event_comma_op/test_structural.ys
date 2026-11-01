@@ -1,0 +1,10 @@
+# The block must be sensitive to all four inputs: every one of these vectors changes the result, so a sensitivity list missing any of them would be visible as a stale value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_tb
+proc
+opt -full
+check -assert
+sat -verify -prove out 1'b1 -set a 1'b1 -set b 1'b0 -set c 1'b1 -set d 1'b0
+sat -verify -prove out 1'b1 -set a 1'b0 -set b 1'b1 -set c 1'b0 -set d 1'b1
+sat -verify -prove out 1'b0 -set a 1'b1 -set b 1'b1 -set c 1'b0 -set d 1'b0
+sat -verify -prove out 1'b0 -set a 1'b0 -set b 1'b0 -set c 1'b1 -set d 1'b1

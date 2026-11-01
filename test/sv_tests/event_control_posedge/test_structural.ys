@@ -1,0 +1,8 @@
+# A rising-edge sensitivity must become an edge-triggered register wired to the clock, not a latch or combinational logic.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top block_tb
+proc
+opt -full
+check -assert
+select -assert-min 1 t:$dff t:$adff t:$sdff t:$dffe %u %u %u
+select -assert-any t:$dff t:$adff t:$sdff t:$dffe %u %u %u %ci* w:clk %i
