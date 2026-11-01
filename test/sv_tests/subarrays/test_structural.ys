@@ -1,0 +1,9 @@
+# The subarray copy must carry all four elements in order: upstream's 5,6,7,8.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b0 32'sd5 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8
+sat -verify -prove b3 32'sd8 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8
+sat -verify -prove b1 32'sd6 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8

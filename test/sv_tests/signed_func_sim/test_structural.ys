@@ -1,0 +1,8 @@
+# Upstream's 4'b1000 reinterpreted as signed is -8, i.e. 8'hf8 once extended.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 8'hf8 -set x 4'b1000
+sat -verify -prove a 8'h07 -set x 4'b0111

@@ -1,0 +1,17 @@
+// Converted from chipsalliance/sv-tests (typedef_test_18).
+// Upstream declares the typedef at $unit scope and leaves the module EMPTY, so the type is never used and its geometry is never checked.
+// The construct and upstream's OWN ASSERTED VALUES are kept; the computation now
+// runs on real ports, so the values are proven instead of printed.
+// Upstream kept as orig.sv.
+parameter K = 9;
+
+typedef struct {
+  rand bit i;
+  randc integer b[K:0];
+} randstruct;
+module test(input logic x, output logic signed [31:0] nbits, output logic w);
+  // The typedef is kept verbatim; $bits of the TYPE is what a typedef test is
+  // about, and the witness gives the co-sim something that moves.
+  assign nbits = $bits(randstruct);
+  assign w     = x;
+endmodule

@@ -100,3 +100,9 @@ cont_assignment_net_delay   artefact  delay dropped identically by both frontend
 # same netlist (the test's own Induct-Formal equivalence check passes) and agree
 # under `eval`.
 enum_xx                     artefact  x vs 2-state: uhdm==verilog formally and under eval; sat cannot express x
+
+# `$bits(<unpacked struct TYPE>)`: both netlists agree (formal passes), Verilator reports 1 for the type -- see sim_equiv_analyzed.txt
+struct_test_0 artefact verilator-bits-of-unpacked-struct-type
+typedef_test_6 artefact verilator-bits-of-unpacked-struct-type
+typedef_test_7 artefact verilator-bits-of-unpacked-struct-type
+typedef_test_24 artefact verilator-bits-of-unpacked-struct-type

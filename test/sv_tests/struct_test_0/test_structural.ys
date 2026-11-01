@@ -1,0 +1,9 @@
+# The FORWARD-declared struct must be completed by the second typedef: two usable one-bit members, 2 bits in all.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd2
+sat -verify -prove a_o 1'b1 -set x 1'b1 -set y 1'b0
+sat -verify -prove b_o 1'b1 -set x 1'b0 -set y 1'b1

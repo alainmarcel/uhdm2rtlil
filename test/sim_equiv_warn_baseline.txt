@@ -222,3 +222,34 @@ number_test_9
 repeat_loop
 parameter_type
 operations-on-unpacked-arrays-variable-slice-rw
+
+# ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
+# Co-sim rows of tests ratcheted in structural_expected_fail.txt (the netlist
+# IS wrong, so the divergence is expected until the reader fix lands):
+# `$isunbounded`/`$isunknown` unhandled sysfunc pass-through
+isunbounded_function
+isunknown_function
+# packed SIGNED struct read unsigned (0x92 vs 0xffffff92)
+packed-and-signed-structures
+# `$readmem*` initialisation dropped
+readmemb_task
+readmemh_task
+# real literal with exponent + underscores folded wrong; $realtobits/$bitstoreal
+# and the shortreal pair not folded
+real-constants
+realtobits_bitstoreal_functions
+shortrealtobits_bitstoshortreal_functions
+# struct type-key / pattern order, replicated pattern dropped, element pattern
+structure
+structure-arrays
+structure-replication
+# task locals: an automatic task's locals read 0
+task_automatic
+# time literals (`10ns`) folded in the wrong unit
+time-literals
+# compound assignment as an expression yields the RHS alone
+two_assignments_in_expression
+two_assignments_in_expression_sim
+# a padded streaming unpack places the pad word at the wrong end
+unpack_stream_pad
+unpack_stream_pad_sim

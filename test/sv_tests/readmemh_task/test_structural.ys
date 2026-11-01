@@ -1,0 +1,8 @@
+# `$readmemh` must become a memory initialisation that the read port exposes.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$mem_v2

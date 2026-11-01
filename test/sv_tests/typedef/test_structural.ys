@@ -1,0 +1,8 @@
+# The typedef'd variable must be a usable one-bit signal.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd1
+sat -verify -prove a_o 1'b1 -set x 1'b1

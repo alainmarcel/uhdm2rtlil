@@ -1,0 +1,8 @@
+# The raw bits are 8'hc8 and the signed read is -56.  read_verilog and read_slang give -56; read_uhdm gives 200 -- the `signed` qualifier is lost -- which is why this is a RATCHET; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove raw 8'hc8 -set x 8'd200
+sat -verify -prove o 32'hffffffc8 -set x 8'd200

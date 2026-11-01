@@ -1,0 +1,11 @@
+# Each time literal must be scaled to the 100ps unit.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove t_ns 64'd10
+sat -verify -prove t_us 64'd10000
+sat -verify -prove t_ms 64'd10000000
+sat -verify -prove t_real 64'd21000000
+sat -verify -prove w 1'b1 -set x 1'b1

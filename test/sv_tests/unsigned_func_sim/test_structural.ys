@@ -1,0 +1,8 @@
+# $unsigned(-4) truncated to 8 bits is 8'hfc.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 8'hfc -set x 32'shfffffffc
+sat -verify -prove a 8'd7 -set x 32'sd7

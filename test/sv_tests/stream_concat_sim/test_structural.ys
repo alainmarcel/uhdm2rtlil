@@ -1,0 +1,7 @@
+# A right-stream keeps order: the result is {a, b} -- upstream's (a << 32) + b.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove c 64'h4142434445464748 -set a 32'h41424344 -set b 32'h45464748

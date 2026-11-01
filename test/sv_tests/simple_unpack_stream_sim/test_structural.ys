@@ -1,0 +1,7 @@
+# A left-streaming operator with a 2-bit slice reverses the ORDER of the 2-bit slices: {a,b,c} = 10_01_11 streams to 11_01_10.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove d 6'b110110 -set a 2'b10 -set b 2'b01 -set c 2'b11

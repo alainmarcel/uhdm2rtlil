@@ -1,0 +1,8 @@
+# All three elements of the unpacked argument must reach the task: 0+1+2 = 3.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove s 32'sd3 -set x0 32'sd0 -set x1 32'sd1 -set x2 32'sd2
+sat -verify -prove s 32'sd60 -set x0 32'sd10 -set x1 32'sd20 -set x2 32'sd30

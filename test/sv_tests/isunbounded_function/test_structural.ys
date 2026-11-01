@@ -1,0 +1,9 @@
+# $isunbounded is 0 for a literal and 1 for a parameter whose value is `$`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove lit 1'b0
+sat -verify -prove unb 1'b1
+sat -verify -prove w 1'b1 -set x 1'b1

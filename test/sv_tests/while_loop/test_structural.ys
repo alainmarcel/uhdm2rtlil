@@ -1,0 +1,8 @@
+# The loop must stop at the first 222: one iteration, i = 1, seen = 111.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top while_tb
+proc
+opt -full
+check -assert
+sat -verify -prove i_o 32'sd1
+sat -verify -prove seen 32'sd111

@@ -1,0 +1,8 @@
+# The construct must compute upstream's values on the ports it already has.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 4'h4 -set a 16'h1234
+sat -verify -prove b 4'hd -set a 16'habcd

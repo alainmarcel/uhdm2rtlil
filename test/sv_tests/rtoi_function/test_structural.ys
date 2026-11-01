@@ -1,0 +1,8 @@
+# $rtoi truncates toward zero: 21.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd21
+sat -verify -prove w 32'sd7 -set x 32'sd7

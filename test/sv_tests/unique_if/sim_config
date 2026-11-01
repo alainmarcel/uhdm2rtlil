@@ -1,0 +1,6 @@
+# `unique`/`unique0 if` with no final else: the hold case is tool-defined
+# (see priority_if), so the uhdm-vs-verilog formal comparison is skipped.
+SKIP_FORMAL=1
+# Random stimulus violates the uniqueness claim and Verilator's RTL side
+# $stops on its own assertion, so there is no reference to compare against.
+SKIP_SIM_EQUIV=1

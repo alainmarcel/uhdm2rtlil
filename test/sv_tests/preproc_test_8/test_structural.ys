@@ -1,0 +1,8 @@
+# A macro defined by another macro's expansion must itself expand: DEEPER is (7).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove arm 4'd7
+sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1

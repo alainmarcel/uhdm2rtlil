@@ -1,0 +1,11 @@
+# $isunknown must be 1 for any operand with an x or z bit and 0 otherwise.  read_verilog gives 1/1/1/0; read_uhdm gives x for the first three -- the unhandled-system-function pass-through -- so this is a RATCHET; see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove u3 1'b0
+sat -verify -prove w 4'ha -set v 4'ha
+sat -verify -prove u0 1'b1
+sat -verify -prove u1 1'b1
+sat -verify -prove u2 1'b1

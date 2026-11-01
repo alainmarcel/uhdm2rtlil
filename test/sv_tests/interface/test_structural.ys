@@ -1,0 +1,9 @@
+# A value driven into the interface member in `top` must come out of `sub` through the implicitly-connected interface port.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt -full
+check -assert
+sat -verify -prove o 1'b1 -set x 1'b1
+sat -verify -prove o 1'b0 -set x 1'b0

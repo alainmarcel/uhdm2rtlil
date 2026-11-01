@@ -1,0 +1,9 @@
+# At a=5, b=10: a=6, b=17, d=17.  RATCHET -- see assign_in_exp.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_o 32'sd6 -set x 32'sd5 -set y 32'sd10
+sat -verify -prove b_o 32'sd17 -set x 32'sd5 -set y 32'sd10
+sat -verify -prove d_o 32'sd17 -set x 32'sd5 -set y 32'sd10

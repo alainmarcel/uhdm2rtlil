@@ -1,0 +1,7 @@
+# The task must run and its output argument must carry the result.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd13 -set x 32'sd12

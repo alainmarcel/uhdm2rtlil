@@ -1,0 +1,9 @@
+# Inner `a += 1` yields a+1 and updates a; then `b += (a+1) + 1` yields the new b.  At a=5, b=10: a=6, b=10+6+1=17, d=17.  read_uhdm mis-evaluates compound assignments used as expressions (see assign_in_exp), so this is a RATCHET.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_o 32'sd6 -set x 32'sd5 -set y 32'sd10
+sat -verify -prove b_o 32'sd17 -set x 32'sd5 -set y 32'sd10
+sat -verify -prove d_o 32'sd17 -set x 32'sd5 -set y 32'sd10

@@ -1,0 +1,7 @@
+# A void function called as a statement must run and drive its output argument.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd24 -set x 32'sd12

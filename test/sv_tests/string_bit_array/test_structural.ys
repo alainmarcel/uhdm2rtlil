@@ -1,0 +1,8 @@
+# The four characters must sit in the low 32 bits: 0x54657374, zero above.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 112'h54657374
+sat -verify -prove w 1'b1 -set x 1'b1

@@ -1,0 +1,7 @@
+# A left-stream with no slice size reverses every bit: {1,2,3} becomes the bit reversal of 96'h000000010000000200000003.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove d 96'hc00000004000000080000000 -set a 32'd1 -set b 32'd2 -set c 32'd3

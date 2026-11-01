@@ -1,0 +1,8 @@
+# Each call's local must start at 0, so both results are the argument plus 1.  read_slang gives 13/13; read_uhdm gives x/x, so this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o1 32'sd13 -set x 32'sd12
+sat -verify -prove o2 32'sd13 -set x 32'sd12

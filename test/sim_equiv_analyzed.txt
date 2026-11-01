@@ -865,3 +865,23 @@ Test: enum_xx
     test proves (`oa = 0`, `oc = 1`); the x member's comparison is deliberately
     not a proof, because `sat -verify -prove` cannot express an x operand -- see
     the test's NOTE.md.
+
+Test: struct_test_0
+    `$bits(<unpacked struct TYPE>)`: Verilator's RTL side reports 1 for the
+    type `struct { logic a; logic b; }` where the netlist (read_uhdm AND
+    read_verilog -- this test's own formal check passes) gives 2, the LRM sum of
+    the members.  A Verilator artefact on `$bits` of an unpacked struct type,
+    not a frontend difference; the struct members themselves (`a_o`, `b_o`)
+    agree every cycle.
+
+Test: typedef_test_6
+    Same class as struct_test_0: `$bits(struct { int i; bit b; })` is 33 on
+    both netlists and 1 under Verilator.
+
+Test: typedef_test_7
+    Same class as struct_test_0: `$bits` of an unpacked struct type, 99 on both
+    netlists and 1 under Verilator.
+
+Test: typedef_test_24
+    Same class as struct_test_0: `$bits(struct { int sample; int tile; })` is
+    64 on both netlists and 1 under Verilator.

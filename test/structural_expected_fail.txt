@@ -189,3 +189,68 @@ sv_tests/parameter_type
 # PACKED counterpart is correct -- operations-on-packed-arrays-variable-slice-rw
 # passes -- so the gap is the unpacked case.
 sv_tests/operations-on-unpacked-arrays-variable-slice-rw
+
+# ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
+# The last conversions: every directory in test/sv_tests/ now has a dut.sv or a
+# NOTE.md.  Each entry below is a measured reader defect; the test's NOTE.md has
+# the measurement and the reference that adjudicated it.
+
+# `struct packed signed` LOSES its signedness: 8'd200 read into a signed 32-bit
+# context must sign-extend to -56 (read_verilog and read_slang); read_uhdm gives
+# 200.  The `unsigned` twin is correct on all three.
+sv_tests/packed-and-signed-structures
+
+# A struct member with a `rand`/`randc` QUALIFIER and an unpacked dimension is
+# DROPPED: `struct { rand bit i; randc integer b[9:0]; }` is 321 bits on
+# read_slang and 1 on read_uhdm.
+sv_tests/typedef_test_18
+
+# Unhandled-system-function pass-through, more members of the family already
+# ratcheted above: $realtobits/$bitstoreal (12.45 round-trips as 12.00),
+# $shortrealtobits/$bitstoshortreal, $isunknown (returns x for 4'b000x where
+# read_verilog gives 1) and $isunbounded (returns its operand).
+sv_tests/realtobits_bitstoreal_functions
+sv_tests/shortrealtobits_bitstoshortreal_functions
+sv_tests/isunknown_function
+sv_tests/isunbounded_function
+
+
+
+# The EXPONENT of a real literal that also has UNDERSCORES is dropped:
+# 236.123_763_e-12 rounds to 0 on both references and reads 236 on read_uhdm.
+sv_tests/real-constants
+
+# TIME LITERALS are not scaled to the module's time unit: under 100ps/10ps,
+# read_slang gives 1ns=10 1us=10000 1ms=10000000 2.1ms=21000000 and read_uhdm
+# gives 1000000 / 1000 / 1000000000 / 2000000000 (1ns comes out LARGER than 1us).
+sv_tests/time-literals
+
+# A TASK-LOCAL declaration with an initialiser, and `++` on it, are unsupported in
+# a task body (`Unsupported expression type: int_var`, `Unsupported statement type
+# 39 in task body`): the output reads x where read_slang gives i + 1.
+sv_tests/task_automatic
+
+# Assignment-pattern defects on STRUCTS: with two TYPE KEYS for the same type the
+# FIRST wins instead of the LAST (`'{int:0, int:1}` gives a = 0, read_slang 1); a
+# REPLICATION into a struct drops the middle member (`'{3{1}}` gives Y = 0); and
+# an array-of-structs initialiser loses a member (ms[0].a = 0 where the LRM says 1).
+sv_tests/structure
+sv_tests/structure-replication
+sv_tests/structure-arrays
+
+# A stream into a WIDER target is padded on the wrong side: the 96-bit stream must
+# sit in the HIGH bits of the 128-bit target (read_slang, and upstream's own
+# asserted 00000003_00000002_00000001_00000000); read_uhdm puts it in the LOW bits.
+sv_tests/unpack_stream_pad
+sv_tests/unpack_stream_pad_sim
+
+# `$readmemh` / `$readmemb` in an `initial` block are unsupported: both references
+# lower them into the memory's INIT (one $mem_v2); read_uhdm warns `Unsupported
+# statement type in sync context` and produces NO memory at all.
+sv_tests/readmemh_task
+sv_tests/readmemb_task
+
+# Compound assignments used as expressions (see assign_in_exp above), nested:
+# `d = ((b += (a+=1) + 1))`.
+sv_tests/two_assignments_in_expression
+sv_tests/two_assignments_in_expression_sim
