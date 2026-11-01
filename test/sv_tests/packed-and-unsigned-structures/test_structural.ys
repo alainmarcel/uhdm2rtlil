@@ -1,0 +1,8 @@
+# An unsigned packed struct must ZERO-extend into a wider signed context: 200 stays 200.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove raw 8'hc8 -set x 8'd200
+sat -verify -prove o 32'sd200 -set x 8'd200

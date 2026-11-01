@@ -1,0 +1,9 @@
+# The replication pattern must fill all three members.  read_slang gives 1/1/1; read_uhdm gives Y = 0, so this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove X 32'sd1
+sat -verify -prove Y 32'sd1
+sat -verify -prove Z 32'sd1

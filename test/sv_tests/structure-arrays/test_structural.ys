@@ -1,0 +1,10 @@
+# The nested pattern fills the MSB index first: ms[1] = '{0,0}, ms[0] = '{1,1}.  read_uhdm gives ms[0].a = 0, so this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a1 32'sd0
+sat -verify -prove b1 32'sd0
+sat -verify -prove a0 32'sd1
+sat -verify -prove b0 32'sd1

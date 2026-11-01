@@ -1,0 +1,8 @@
+# A port-addressed 256-entry array with a write port must become one memory.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+memory_collect
+select -assert-count 1 t:$mem_v2

@@ -1,0 +1,10 @@
+# The system task must reach the netlist as a `$print` cell.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top systemfn
+proc
+opt -full
+check -assert
+select -assert-count 1 t:$print
+delete t:$print
+opt_clean
+sat -verify -prove o 32'd7 -set x 32'd7

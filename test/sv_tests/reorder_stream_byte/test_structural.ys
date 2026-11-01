@@ -1,0 +1,7 @@
+# Byte-reversal with a TYPE as the slice size: 41424344 must become 44434241.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 32'h44434241 -set a 32'h41424344

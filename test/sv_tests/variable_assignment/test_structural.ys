@@ -1,0 +1,8 @@
+# The continuous assignment to a variable must drive it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd12 -set x 32'sd0
+sat -verify -prove o 32'sd19 -set x 32'sd7

@@ -1,0 +1,8 @@
+# $itor(20) is 20.0; times 10 is 200.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd200
+sat -verify -prove w 32'sd7 -set x 32'sd7

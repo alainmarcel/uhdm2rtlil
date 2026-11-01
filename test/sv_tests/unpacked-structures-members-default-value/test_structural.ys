@@ -1,0 +1,8 @@
+# The defaulted member must carry upstream's 5 and the written member the port value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove lo_o 4'h5
+sat -verify -prove hi_o 4'ha -set x 4'ha

@@ -1,0 +1,7 @@
+# Upstream's own assertion: "ABCD" streams to 0x44434241.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove b 32'h44434241 -set a 32'h41424344

@@ -467,3 +467,22 @@ sv_tests/number_test_13
 # structural_expected_fail.txt; read_slang refuses `repeat` outright, so
 # read_verilog is the only oracle and the whole test fails, not just one check.
 sv_tests/repeat_loop
+
+# ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
+# Each of these is ratcheted in structural_expected_fail.txt (and, where
+# read_slang parses the construct, slang_miter_expected_fail.txt); read_verilog
+# is the oracle, so the whole uhdm-vs-verilog comparison fails too.
+# `$isunknown` is an unhandled system function and silently returns its
+# argument (see number_test_* / project_countbits_unhandled).
+sv_tests/isunknown_function
+# `$readmemb` / `$readmemh` from an initial block: the memory initialisation
+# is dropped, every read gives 0 where read_verilog gives the file contents.
+sv_tests/readmemb_task
+sv_tests/readmemh_task
+# A real literal written with an exponent and digit underscores (`1_0.5e-1`)
+# is folded to the wrong integer.
+sv_tests/real-constants
+# A compound assignment used as an EXPRESSION (`b = (a += 1)`) yields the RHS
+# alone instead of the updated variable.
+sv_tests/two_assignments_in_expression
+sv_tests/two_assignments_in_expression_sim

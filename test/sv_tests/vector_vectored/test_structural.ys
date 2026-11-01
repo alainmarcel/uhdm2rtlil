@@ -1,0 +1,7 @@
+# A `vectored` net must carry its full width.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 16'hA55A -set x 16'hA55A

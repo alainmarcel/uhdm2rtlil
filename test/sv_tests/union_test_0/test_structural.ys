@@ -1,0 +1,9 @@
+# The FORWARD-declared union must be completed: one bit, and a write through `a` must read back through `b`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd1
+sat -verify -prove b_o 1'b1 -set x 1'b1
+sat -verify -prove b_o 1'b0 -set x 1'b0

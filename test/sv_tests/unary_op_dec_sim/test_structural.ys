@@ -1,0 +1,7 @@
+# `a--` on upstream's 12 gives 11.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 32'sd11 -set x 32'sd12

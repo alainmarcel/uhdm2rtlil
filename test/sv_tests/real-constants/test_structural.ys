@@ -1,0 +1,12 @@
+# Each real literal must round to the integral target: 1.2 -> 1, 2394.26331 -> 2394, 1.2E12 truncates to 32 bits, 23E10 likewise, 29E-2 -> 0, and the e-12 value -> 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a1 32'd1
+sat -verify -prove a2 32'd2394
+sat -verify -prove a5 32'd0
+sat -verify -prove a6 32'd0
+sat -verify -prove a3 32'd1704124416
+sat -verify -prove a4 32'h8D117C00

@@ -1,0 +1,12 @@
+# Positional fills a then b; `default:1, int:1` fills both ints with 1 (the type key wins); `int:0, int:1` -- the LAST type key wins, both are 1.  read_slang agrees; read_uhdm takes the FIRST `int:` key (a = 0), so this is a RATCHET -- see NOTE.md.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a_pos 32'sd7 -set x 32'sd7
+sat -verify -prove b_pos 32'sd1
+sat -verify -prove a_def 32'sd1
+sat -verify -prove b_def 32'sd1
+sat -verify -prove a_typ 32'sd1
+sat -verify -prove b_typ 32'sd1

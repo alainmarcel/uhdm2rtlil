@@ -1,0 +1,8 @@
+# $bits of the type must be 32, as read_slang measures it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top test
+proc
+opt -full
+check -assert
+sat -verify -prove nbits 32'sd32
+sat -verify -prove w 1'b1 -set x 1'b1

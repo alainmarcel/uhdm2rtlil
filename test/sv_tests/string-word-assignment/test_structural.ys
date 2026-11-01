@@ -1,0 +1,8 @@
+# "hi0" is 0x686930.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove a 24'h686930
+sat -verify -prove w 1'b1 -set x 1'b1

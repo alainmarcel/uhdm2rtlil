@@ -77,7 +77,10 @@ def directive_lines(orig: str) -> list[str]:
     body = re.sub(r"\A.*?^\*/\n", "", orig, flags=re.S | re.M)
     out, drop = [], False
     for line in body.splitlines():
-        if re.match(r"^\s*module\s+top\s*\(\s*\)\s*;\s*$", line):
+        # An EMPTY module of ANY name is dropped -- upstream names them `top`, `ts`,
+        # `empty` -- so the shared body is the only module and -auto-top is
+        # unambiguous.
+        if re.match(r"^\s*module\s+\w+\s*(\(\s*\))?\s*;\s*$", line):
             drop = True
             continue
         if drop and re.match(r"^\s*endmodule\s*$", line):
@@ -96,7 +99,7 @@ def main() -> None:
         p = pathlib.Path(d)
         orig = (p / "orig.sv").read_text(errors="replace")
         lines = directive_lines(orig)
-        had_mod = bool(re.search(r"^\s*module\s+top\s*\(\s*\)\s*;", orig, re.M))
+        had_mod = bool(re.search(r"^\s*module\s+\w+\s*(\(\s*\))?\s*;", orig, re.M))
         hdr = HEADER.format(
             name=p.name,
             alsomod=" plus an EMPTY `module top ();`" if had_mod else "",

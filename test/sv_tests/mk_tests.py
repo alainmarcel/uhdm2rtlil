@@ -4240,6 +4240,1035 @@ endmodule
      "sat -verify -prove a 8'hff -set x 4'b1111"])
 
 
+
+# --------------------------------------------------------------------------
+# typedef_test_*: a `typedef` at $unit scope followed by an EMPTY module, so the
+# type is never used.  Each conversion keeps the declaration VERBATIM and brings
+# $bits of the type out on a port -- the GEOMETRY is what a typedef test is about
+# -- with a port-driven witness for co-sim activity.  Widths were measured with
+# read_slang (read_verilog cannot parse most of these forms).
+# --------------------------------------------------------------------------
+_TD_RATCHET = """RATCHET -- a struct member with a `rand`/`randc` QUALIFIER and an unpacked
+dimension is DROPPED.
+
+`typedef struct { rand bit i; randc integer b[K:0]; } randstruct;` with K = 9 is
+1 + 10*32 = 321 bits.  read_slang gives 321; read_uhdm gives **1** -- the
+`randc integer b[9:0]` member is lost entirely, so the type collapses to its
+first field.  The `rand`/`randc` qualifiers are simulation-only and must be
+IGNORED for synthesis, not taken as a reason to drop the member.
+
+read_verilog cannot parse the qualifiers, so read_slang is the oracle.  Listed in
+structural_expected_fail.txt; remove it there in the commit that keeps the
+member.
+"""
+
+for _nm, _ty, _bits, _body, _bad in [
+    ('typedef_test_0', 'i_am_a_type_really', 32, 'typedef i_am_a_type_really;\n\ntypedef int i_am_a_type_really;\n\n// Multiple forward typedefs are allowed.\ntypedef i_am_a_type_really;\ntypedef i_am_a_type_really;\n', False),
+    ('typedef_test_1', 'quartet', 4, 'typedef reg[3:0] quartet;\n', False),
+    ('typedef_test_2', 'quartet', 4, 'typedef reg quartet[3:0];\n', False),
+    ('typedef_test_3', 'quartet', 4, 'typedef reg[1:0] quartet[1:0];\n', False),
+    ('typedef_test_4', 'colors', 32, 'typedef enum { RED, GREEN, BLUE } colors;\n', False),
+    ('typedef_test_5', 'bint', 32, 'typedef union { int i; bit b; } bint;\n', False),
+    ('typedef_test_6', 'mystruct', 33, 'typedef struct { int i; bit b; } mystruct;\n', False),
+    ('typedef_test_7', 'mystruct', 99, 'typedef struct { int i, j, k; bit b, c, d; } mystruct;\n', False),
+    ('typedef_test_8', 'myalias', 1, 'typedef bit some_other_type;\ntypedef some_other_type myalias;\n', False),
+    ('typedef_test_9', 'my_array_t', 12, 'parameter j = 3;\nparameter k = 2;\ntypedef bit data_t;\n\ntypedef data_t my_array_t [k:0][j:0];\n', False),
+    ('typedef_test_14', 'myalias', 1, 'package some_package;\n   typedef bit some_type;\nendpackage\n\ntypedef some_package::some_type myalias;\n', False),
+    ('typedef_test_16', 'mystruct_t', 5, 'typedef struct packed {\n  logic [4:0] some_member;\n} mystruct_t;\n', False),
+    ('typedef_test_18', 'randstruct', 321, 'parameter K = 9;\n\ntypedef struct {\n  rand bit i;\n  randc integer b[K:0];\n} randstruct;\n', True),
+    ('typedef_test_19', 'myenum_fwd', 32, 'typedef enum {\n  Global = 2,\n  Local = 3\n} myenum_fwd;\n', False),
+    ('typedef_test_20', 'myenum_fwd', 4, "typedef enum logic[3:0] {\n  Global = 4'h2,\n  Local = 4'h3\n} myenum_fwd;\n", False),
+    ('typedef_test_21', 'myenum_fwd', 4, "typedef enum bit[3:0] {\n  Global = 4'h2,\n  Local = 4'h3\n} myenum_fwd;\n", False),
+    ('typedef_test_22', 'uvec8_t', 32, 'typedef enum uvec8_t;\ntypedef enum {\n  Global = 2,\n  Local = 3\n} uvec8_t;\n', False),
+    ('typedef_test_23', 'myenum_fwd', 4, "typedef bit[3:0] num_t;\ntypedef enum num_t {\n  Global = 4'h2,\n  Local = 4'h3\n} myenum_fwd;\n", False),
+    ('typedef_test_24', 'tuple_t', 64, 'typedef struct {\n  int sample;\n  int tile;\n} tuple_t;\n', False),
+    ('typedef_test_25', 'req_t', 49, 'parameter A = 5;\nparameter D = 32;\nparameter E = 7;\nparameter M = 4;\n\ntypedef struct packed {\n  reg  [A-1:0] addr;\n  reg [D-1:0] data;\n`ifndef FOO\n  reg  [E-1:0] ecc;\n`endif //  `ifndef FOO\n  reg   [M-1:0] mask;\n  reg         parity;\n} req_t;\n', False),
+    ('typedef_test_26', 'myenum_fwd', 32, 'typedef enum {\n`ifdef TWO\n  Global = 2,\n`else\n  Global = 1,\n`endif\n  Local = 3\n} myenum_fwd;\n', False),
+    ('typedef_test_27', 'myenum_fwd', 32, 'typedef enum {\n  Global = 2,\n`ifdef TWO\n  Local = 2\n`else\n  Local = 1\n`endif\n} myenum_fwd;\n', False),
+]:
+    add(_nm,
+        "Upstream declares the typedef at $unit scope and leaves the module EMPTY, so "
+        "the type is never used and its geometry is never checked.",
+        _body + f"""module test(input logic x, output logic signed [31:0] nbits, output logic w);
+  // The typedef is kept verbatim; $bits of the TYPE is what a typedef test is
+  // about, and the witness gives the co-sim something that moves.
+  assign nbits = $bits({_ty});
+  assign w     = x;
+endmodule
+""",
+        f"$bits of the type must be {_bits}, as read_slang measures it"
+        + (" -- read_uhdm gives a different width, which is why this is a RATCHET; "
+           "see NOTE.md." if _bad else "."),
+        [f"sat -verify -prove nbits 32'sd{_bits}",
+         "sat -verify -prove w 1'b1 -set x 1'b1"],
+        top="test",
+        note=_TD_RATCHET if _bad else None)
+
+add("typedef",
+    "Upstream declares a typedef inside the module and a variable of it, and never "
+    "drives or reads the variable.",
+    """module top(input logic x, output logic a_o, output logic signed [31:0] nbits);
+	typedef logic logic_t;
+	logic_t a;
+  always_comb a = x;
+  assign a_o   = a;
+  assign nbits = $bits(logic_t);
+endmodule
+""",
+    "The typedef'd variable must be a usable one-bit signal.",
+    ["sat -verify -prove nbits 32'sd1", "sat -verify -prove a_o 1'b1 -set x 1'b1"])
+
+
+
+# --------------------------------------------------------------------------
+# simple_*_sim: already have real ports upstream; they only lacked proofs.
+# --------------------------------------------------------------------------
+add("simple_array_addressing_sim",
+    "Upstream already has ports but reads a memory that is NEVER WRITTEN, so the "
+    "output is x on every address.",
+    """module top(input clk, input we, input [7:0] wa, input [7:0] wd, input [7:0] a,
+           output [7:0] b);
+  reg [7:0] mem [0:255];
+  // A write port is added so the array is a real memory with real contents.
+  always @(posedge clk) if (we) mem[wa] <= wd;
+  assign b = mem[a];
+endmodule
+""",
+    "A port-addressed 256-entry array with a write port must become one memory.",
+    ["select -assert-count 1 t:$mem_v2"],
+    extra="memory_collect", slang=False,
+    note="""CONVERTED, and gated on the netlist SHAPE plus read_verilog.
+
+A miter over a memory is not a gate (free contents at cycle 0), so the claim is
+the shape, which read_verilog produces as well.
+""")
+
+for nm, hdr, body, proofs in [
+    ("simple_concat_op_sim", "input [1:0] a, input [1:0] b, output [3:0] c", "assign c = {a, b};",
+     ["sat -verify -prove c 4'b1001 -set a 2'b10 -set b 2'b01"]),
+    ("simple_cond_op_sim", "input a, output b", "assign b = (a) ? 0 : 1;",
+     ["sat -verify -prove b 1'b0 -set a 1'b1", "sat -verify -prove b 1'b1 -set a 1'b0"]),
+    ("simple_idx_neg_part_select_sim", "input [15:0] a, output [3:0] b", "assign b = a[15-:4];",
+     ["sat -verify -prove b 4'h1 -set a 16'h1234", "sat -verify -prove b 4'ha -set a 16'habcd"]),
+    ("simple_idx_pos_part_select_sim", "input [15:0] a, output [3:0] b", "assign b = a[0+:4];",
+     ["sat -verify -prove b 4'h4 -set a 16'h1234", "sat -verify -prove b 4'hd -set a 16'habcd"]),
+    ("simple_idx_select_sim", "input [3:0] a, output b", "assign b = a[2];",
+     ["sat -verify -prove b 1'b1 -set a 4'b0100", "sat -verify -prove b 1'b0 -set a 4'b1011"]),
+    ("simple_non_idx_part_select_sim", "input [7:0] a, output [1:0] b", "assign b = a[7:6];",
+     ["sat -verify -prove b 2'b10 -set a 8'b10111111", "sat -verify -prove b 2'b01 -set a 8'b01000000"]),
+    ("simple_repl_op_sim", "input [1:0] a, output [15:0] b", "assign b = {8{a}};",
+     ["sat -verify -prove b 16'b1010101010101010 -set a 2'b10"]),
+    ("simple_set_member_sim", "input [3:0] a, output b", "assign b = (a inside {2, 3, 4, 5});",
+     ["sat -verify -prove b 1'b1 -set a 4'd3", "sat -verify -prove b 1'b0 -set a 4'd6",
+      "sat -verify -prove b 1'b0 -set a 4'd1"]),
+]:
+    add(nm, "Upstream already has real ports; the module only lacked a proof of its values.",
+        f"module top({hdr});\n{body}\nendmodule\n",
+        "The construct must compute upstream's values on the ports it already has.", proofs)
+
+add("simple_unpack_stream_sim",
+    "Upstream already has real ports; the module only lacked a proof of its values.",
+    """module top(input [1:0] a, input [1:0] b, input [1:0] c, output [5:0] d);
+    assign d = {<<2 {a, b, c}};
+endmodule
+""",
+    "A left-streaming operator with a 2-bit slice reverses the ORDER of the 2-bit "
+    "slices: {a,b,c} = 10_01_11 streams to 11_01_10.",
+    ["sat -verify -prove d 6'b110110 -set a 2'b10 -set b 2'b01 -set c 2'b11"],
+    note=_ENUM_NO_VERILOG)
+
+# --------------------------------------------------------------------------
+# streaming operators
+# --------------------------------------------------------------------------
+_STREAM_NOTE = _ENUM_NO_VERILOG
+add("reorder_stream",
+    "Upstream streams a constant inside an `initial` block and never reads the result.",
+    """module top(input logic [31:0] a, output logic [31:0] b);
+  // `{<< 8 {a}}` reverses the order of the BYTES.
+  assign b = {<< 8 {a}};
+endmodule
+""",
+    "Byte-reversal: \"ABCD\" (41424344) must become 44434241.",
+    ["sat -verify -prove b 32'h44434241 -set a 32'h41424344"], note=_STREAM_NOTE)
+add("reorder_stream_byte",
+    "Upstream streams a constant with a `byte` slice size inside an `initial` block and "
+    "never reads the result.",
+    """module top(input logic [31:0] a, output logic [31:0] b);
+  // `byte` as the slice size is 8 bits.
+  assign b = {<< byte {a}};
+endmodule
+""",
+    "Byte-reversal with a TYPE as the slice size: 41424344 must become 44434241.",
+    ["sat -verify -prove b 32'h44434241 -set a 32'h41424344"], note=_STREAM_NOTE)
+add("reorder_stream_byte_sim",
+    "Upstream streams a constant with a `byte` slice size and prints the result.",
+    """module top(input logic [31:0] a, output logic [31:0] b);
+  assign b = {<< byte {a}};
+endmodule
+""",
+    "Upstream's own assertion: \"ABCD\" streams to 0x44434241.",
+    ["sat -verify -prove b 32'h44434241 -set a 32'h41424344"], note=_STREAM_NOTE)
+for nm in ("stream_concat", "stream_concat_sim"):
+    add(nm, "Upstream right-streams two constants into a 64-bit vector inside an `initial` "
+        "block" + (" and prints the result." if nm.endswith("_sim") else " and never reads it."),
+        """module top(input logic [31:0] a, input logic [31:0] b, output logic [63:0] c);
+  // `{>> 8 {a, b}}` keeps the byte order, so this is a plain concatenation.
+  assign c = {>> 8 {a, b}};
+endmodule
+""",
+        "A right-stream keeps order: the result is {a, b} -- upstream's (a << 32) + b.",
+        ["sat -verify -prove c 64'h4142434445464748 -set a 32'h41424344 -set b 32'h45464748"],
+        note=_STREAM_NOTE)
+add("unpack_stream",
+    "Upstream left-streams three ints into a 96-bit local inside an `initial` block and "
+    "never reads it.",
+    """module top(input logic [31:0] a, input logic [31:0] b, input logic [31:0] c,
+           output bit [95:0] d);
+  // With no slice size the stream is BIT-reversed over the whole concatenation.
+  assign d = {<<{a, b, c}};
+endmodule
+""",
+    "A left-stream with no slice size reverses every bit: {1,2,3} becomes the bit "
+    "reversal of 96'h000000010000000200000003.",
+    ["sat -verify -prove d 96'hc00000004000000080000000 -set a 32'd1 -set b 32'd2 -set c 32'd3"],
+    note=_STREAM_NOTE)
+for nm in ("unpack_stream_pad", "unpack_stream_pad_sim"):
+    slice_ = " 32" if nm.endswith("_sim") else ""
+    expect = ("128'h00000003_00000002_00000001_00000000" if nm.endswith("_sim")
+              else "128'hc0000000400000008000000_00000000")
+    add(nm, "Upstream left-streams three ints into a 128-bit local -- WIDER than the "
+        "source, so the stream is PADDED -- inside an `initial` block.",
+        f"""module top(input logic [31:0] a, input logic [31:0] b, input logic [31:0] c,
+           output bit [127:0] d);
+  // The target is 32 bits wider than the 96-bit stream, so the result is padded.
+  assign d = {{<<{slice_} {{a, b, c}}}};
+endmodule
+""",
+        "The 96-bit stream must land in the HIGH bits of the 128-bit target, with the "
+        "low 32 bits zero" + (" -- upstream's own asserted 128'h00000003_00000002_00000001_00000000."
+                              if nm.endswith("_sim") else ".")
+        + "  read_slang does that; read_uhdm puts the stream in the LOW bits, so this is a "
+          "RATCHET -- see NOTE.md.",
+        [f"sat -verify -prove d {expect} -set a 32'd1 -set b 32'd2 -set c 32'd3"],
+        note="""RATCHET -- a stream into a WIDER target is padded on the wrong side.
+
+`{<< 32 {a, b, c}}` into a 128-bit `bit` vector must leave the 96-bit stream in
+the HIGH bits with zeros below (LRM 11.4.14.4: padding is on the right of the
+stream); upstream's own assertion is `128'h00000003_00000002_00000001_00000000`.
+read_slang gives exactly that; read_uhdm gives `00000000_00000003_00000002_00000001`
+-- the stream in the LOW bits.  The unpadded 96-bit case (`unpack_stream`) is
+correct on both, so the gap is the padding position.  read_verilog cannot parse
+streaming operators.  Listed in structural_expected_fail.txt and
+slang_miter_expected_fail.txt.
+""")
+
+# --------------------------------------------------------------------------
+# structs and unions
+# --------------------------------------------------------------------------
+add("packed-and-signed-structures",
+    "Upstream assigns 200 to a `struct packed signed` and prints it as -56, inside an "
+    "`initial` block.",
+    """module top (input logic [7:0] x, output logic signed [31:0] o, output logic [7:0] raw);
+struct packed signed {
+	bit [3:0] lo;
+	bit [3:0] hi;
+} p1;
+  // A packed struct declared `signed` must SIGN-extend when read into a wider
+  // signed context: 8'd200 is 8'hc8, i.e. -56.
+  always_comb p1 = x;
+  assign o   = p1;
+  assign raw = p1;
+endmodule
+""",
+    "The raw bits are 8'hc8 and the signed read is -56.  read_verilog and read_slang "
+    "give -56; read_uhdm gives 200 -- the `signed` qualifier is lost -- which is why "
+    "this is a RATCHET; see NOTE.md.",
+    ["sat -verify -prove raw 8'hc8 -set x 8'd200", "sat -verify -prove o 32'hffffffc8 -set x 8'd200"],
+    note="""RATCHET -- `struct packed signed` LOSES its signedness.
+
+`struct packed signed { bit [3:0] lo; bit [3:0] hi; } p1; p1 = 8'd200;` read into a
+32-bit signed context must sign-extend: -56.  read_verilog and read_slang give
+-56; read_uhdm gives **200**, i.e. it treats the struct as unsigned.  The
+`unsigned` twin (`packed-and-unsigned-structures`) gives 200 on all three, which
+is what localises the gap to the `signed` qualifier on a packed struct type.
+
+Listed in structural_expected_fail.txt and slang_miter_expected_fail.txt.
+""")
+add("packed-and-unsigned-structures",
+    "Upstream assigns 200 to a `struct packed unsigned` and prints it, inside an `initial` block.",
+    """module top (input logic [7:0] x, output logic signed [31:0] o, output logic [7:0] raw);
+struct packed unsigned {
+	bit [3:0] lo;
+	bit [3:0] hi;
+} p1;
+  always_comb p1 = x;
+  assign o   = p1;
+  assign raw = p1;
+endmodule
+""",
+    "An unsigned packed struct must ZERO-extend into a wider signed context: 200 stays 200.",
+    ["sat -verify -prove raw 8'hc8 -set x 8'd200", "sat -verify -prove o 32'sd200 -set x 8'd200"])
+add("struct_test_0",
+    "Upstream forward-declares a struct typedef, completes it, and leaves the module EMPTY.",
+    """typedef struct mystruct_fwd;
+typedef struct { logic a; logic b; } mystruct_fwd;
+module test(input logic x, input logic y, output logic a_o, output logic b_o,
+            output logic signed [31:0] nbits);
+  mystruct_fwd s;
+  always_comb begin s.a = x; s.b = y; end
+  assign a_o = s.a; assign b_o = s.b;
+  assign nbits = $bits(mystruct_fwd);
+endmodule
+""",
+    "The FORWARD-declared struct must be completed by the second typedef: two usable "
+    "one-bit members, 2 bits in all.",
+    ["sat -verify -prove nbits 32'sd2", "sat -verify -prove a_o 1'b1 -set x 1'b1 -set y 1'b0",
+     "sat -verify -prove b_o 1'b1 -set x 1'b0 -set y 1'b1"], top="test")
+add("union_test_0",
+    "Upstream forward-declares a union typedef, completes it, and leaves the module EMPTY.",
+    """typedef union myunion_fwd;
+typedef union { logic a; logic b; } myunion_fwd;
+module test(input logic x, output logic a_o, output logic b_o, output logic signed [31:0] nbits);
+  myunion_fwd u;
+  always_comb u.a = x;
+  assign a_o = u.a; assign b_o = u.b;
+  assign nbits = $bits(myunion_fwd);
+endmodule
+""",
+    "The FORWARD-declared union must be completed: one bit, and a write through `a` "
+    "must read back through `b`.",
+    ["sat -verify -prove nbits 32'sd1", "sat -verify -prove b_o 1'b1 -set x 1'b1",
+     "sat -verify -prove b_o 1'b0 -set x 1'b0"], top="test", slang=False,
+    note="""CONVERTED, and gated on read_uhdm's own proof plus read_verilog.
+
+read_slang refuses to bit-convert an UNPACKED union (`value of type 'union' is
+unsupported for conversion to bits`), so there is no miter; read_verilog cannot
+parse the forward typedef.  The structural proof carries the test.
+""")
+add("structure",
+    "Upstream assigns the struct three ways inside an `initial` block -- positional, "
+    "`default:`, and `int:` type-keyed patterns -- and never reads it.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] a_pos,
+           output logic signed [31:0] b_pos, output logic signed [31:0] a_def,
+           output logic signed [31:0] b_def, output logic signed [31:0] a_typ,
+           output logic signed [31:0] b_typ);
+  typedef struct {
+    int a;
+    int b;
+  } ms_t;
+  ms_t p, d, t;
+  // Each of upstream's three assignment-pattern forms fills its own struct, so
+  // which members each form reached is a value.
+  always_comb begin
+    p = '{ x, 1};
+    d = '{ default:1, int:1};
+    t = '{ int:0, int:1};
+  end
+  assign a_pos = p.a; assign b_pos = p.b;
+  assign a_def = d.a; assign b_def = d.b;
+  assign a_typ = t.a; assign b_typ = t.b;
+endmodule
+""",
+    "Positional fills a then b; `default:1, int:1` fills both ints with 1 (the type key "
+    "wins); `int:0, int:1` -- the LAST type key wins, both are 1.  read_slang agrees; "
+    "read_uhdm takes the FIRST `int:` key (a = 0), so this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove a_pos 32'sd7 -set x 32'sd7", "sat -verify -prove b_pos 32'sd1",
+     "sat -verify -prove a_def 32'sd1", "sat -verify -prove b_def 32'sd1",
+     "sat -verify -prove a_typ 32'sd1", "sat -verify -prove b_typ 32'sd1"],
+    note="""RATCHET -- with two TYPE KEYS for the same type, the FIRST wins instead of the LAST.
+
+`'{int:0, int:1}` assigns every `int` member: by the LRM (10.9.2) a later key
+overrides an earlier one, so both members are 1.  read_slang gives a = 1, b = 1;
+read_uhdm gives a = **0**, b = 1 -- it applied the first `int:` key and never
+overrode it.  The positional and `default:` forms in the same test are correct.
+read_verilog cannot parse an unpacked struct.  Listed in
+structural_expected_fail.txt and slang_miter_expected_fail.txt.
+""")
+add("structure-arrays",
+    "Upstream initialises an ARRAY OF STRUCTS with a nested pattern and never reads it.",
+    """module top(output logic signed [31:0] a0, output logic signed [31:0] b0,
+           output logic signed [31:0] a1, output logic signed [31:0] b1);
+  typedef struct {
+    int a;
+    int b;
+  } ms_t;
+  ms_t ms[1:0] = '{'{0, 0}, '{1, 1}};
+  // The outer pattern fills index 1 FIRST, so ms[1] is '{0,0} and ms[0] is '{1,1}.
+  assign a0 = ms[0].a; assign b0 = ms[0].b;
+  assign a1 = ms[1].a; assign b1 = ms[1].b;
+endmodule
+""",
+    "The nested pattern fills the MSB index first: ms[1] = '{0,0}, ms[0] = '{1,1}.  "
+    "read_uhdm gives ms[0].a = 0, so this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove a1 32'sd0", "sat -verify -prove b1 32'sd0",
+     "sat -verify -prove a0 32'sd1", "sat -verify -prove b0 32'sd1"], slang=False,
+    note="""RATCHET -- an ARRAY-OF-STRUCTS initialiser loses a member.
+
+`ms_t ms[1:0] = '{'{0, 0}, '{1, 1}};` fills index 1 first, so ms[0] is '{1,1}.
+read_uhdm gives ms[0].a = **0**, ms[0].b = 1, ms[1] = '{0,0}: one member of one
+element is wrong.  read_verilog cannot parse an unpacked struct and read_slang
+reads the file but emits no outputs for it, so the reference is the LRM.
+Listed in structural_expected_fail.txt.
+""")
+add("structure-replication",
+    "Upstream initialises a struct with a REPLICATION pattern and never reads it; the "
+    "nested array-of-structs part lives in an `initial` block.",
+    """module top(output logic signed [31:0] X, output logic signed [31:0] Y,
+           output logic signed [31:0] Z);
+  struct {int X,Y,Z;} XYZ = '{3{1}};
+  // '{3{1}} fills all three members with 1.
+  assign X = XYZ.X; assign Y = XYZ.Y; assign Z = XYZ.Z;
+endmodule
+""",
+    "The replication pattern must fill all three members.  read_slang gives 1/1/1; "
+    "read_uhdm gives Y = 0, so this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove X 32'sd1", "sat -verify -prove Y 32'sd1", "sat -verify -prove Z 32'sd1"],
+    note="""RATCHET -- a REPLICATION pattern into a STRUCT drops the middle member.
+
+`struct {int X,Y,Z;} XYZ = '{3{1}};` must set all three to 1.  read_slang gives
+1/1/1; read_uhdm gives X = 1, **Y = 0**, Z = 1.  Same family as the unpacked-array
+replication defect (`arrays`, `arrays-replication`).  read_verilog cannot parse an
+unpacked struct.  Listed in structural_expected_fail.txt and
+slang_miter_expected_fail.txt.
+""")
+add("subarrays",
+    "Upstream writes a 4-element SUBARRAY of a 3-D array element by element inside an "
+    "`initial` block, copies the whole subarray to another, and prints it.",
+    """module top(input logic signed [31:0] x0, input logic signed [31:0] x1,
+           input logic signed [31:0] x2, input logic signed [31:0] x3,
+           output logic signed [31:0] b0, output logic signed [31:0] b1,
+           output logic signed [31:0] b2, output logic signed [31:0] b3);
+  int A[2][3][4], B[2][3][4];
+  // A whole-SUBARRAY copy: B[1][1] takes all four elements of A[0][2].
+  always_comb begin
+    A[0][2][0] = x0; A[0][2][1] = x1; A[0][2][2] = x2; A[0][2][3] = x3;
+    B[1][1] = A[0][2];
+  end
+  assign b0 = B[1][1][0]; assign b1 = B[1][1][1]; assign b2 = B[1][1][2]; assign b3 = B[1][1][3];
+endmodule
+""",
+    "The subarray copy must carry all four elements in order: upstream's 5,6,7,8.",
+    ["sat -verify -prove b0 32'sd5 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8",
+     "sat -verify -prove b3 32'sd8 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8",
+     "sat -verify -prove b1 32'sd6 -set x0 32'sd5 -set x1 32'sd6 -set x2 32'sd7 -set x3 32'sd8"])
+add("unpacked-structures-members-default-value",
+    "Upstream gives one struct member a DEFAULT VALUE from a parameter, writes the other "
+    "in an `initial` block, and prints both.",
+    """module top (input logic [3:0] x, output logic [3:0] lo_o, output logic [3:0] hi_o);
+parameter c = 4'h5;
+struct {
+	bit [3:0] lo = c;
+	bit [3:0] hi;
+} p1;
+  // `lo` is never written, so its DEFAULT must survive as its value.
+  always_comb p1.hi = x;
+  assign lo_o = p1.lo; assign hi_o = p1.hi;
+endmodule
+""",
+    "The defaulted member must carry upstream's 5 and the written member the port value.",
+    ["sat -verify -prove lo_o 4'h5", "sat -verify -prove hi_o 4'ha -set x 4'ha"],
+    slang=False,
+    note="""CONVERTED, and gated on the structural proof plus read_verilog.
+
+A member DEFAULT is an initial value, which a miter from an unconstrained state
+cannot see on either side; read_verilog cannot parse the default either.  The
+proof is the gate.
+""")
+
+# --------------------------------------------------------------------------
+# reals, system functions, operators, tasks, loops, misc
+# --------------------------------------------------------------------------
+# `real`, `realtime`, `shortreal`, `real-token` and `type_op` are deliberately NOT in
+# this table: a real VARIABLE has no netlist form.  What IS synthesizable is real
+# arithmetic folded at ELABORATION -- parameter_real, real-constants, rtoi/itor,
+# cast_op, ceil_function -- and those stay.  See each directory's NOTE.md.
+_REAL_NOTE = """CONVERTED, and UHDM-only against the golden frontend.
+
+read_verilog cannot parse the construct, so the slang miter plus the structural
+proof are the gates.  A real is carried as a scaled int, which is how a netlist
+can hold it.
+"""
+add("real-constants",
+    "Upstream assigns nine REAL LITERAL spellings to a 32-bit logic inside an `initial` "
+    "block, so only the last survives and none is read.",
+    """module top(output logic [31:0] a1, output logic [31:0] a2, output logic [31:0] a3,
+           output logic [31:0] a4, output logic [31:0] a5, output logic [31:0] a6);
+  // Each spelling gets its own output; a real assigned to an integral target ROUNDS.
+  assign a1 = 1.2;
+  assign a2 = 2394.26331;
+  assign a3 = 1.2E12;           // the exponent symbol can be e or E
+  assign a4 = 23E10;
+  assign a5 = 29E-2;
+  assign a6 = 236.123_763_e-12; // underscores are ignored
+endmodule
+""",
+    "Each real literal must round to the integral target: 1.2 -> 1, 2394.26331 -> 2394, "
+    "1.2E12 truncates to 32 bits, 23E10 likewise, 29E-2 -> 0, and the e-12 value -> 0.",
+    ["sat -verify -prove a1 32'd1", "sat -verify -prove a2 32'd2394",
+     "sat -verify -prove a5 32'd0", "sat -verify -prove a6 32'd0",
+     # a3 and a4 overflow 32 bits; these are the MEASURED truncations (all three
+     # frontends agree on them).  a6 is 236.123763e-12, which rounds to 0 --
+     # read_uhdm gives 236, dropping the exponent, which is why this is a RATCHET.
+     "sat -verify -prove a3 32'd1704124416", "sat -verify -prove a4 32'h8D117C00"],
+    note="""RATCHET -- the EXPONENT of a real literal with UNDERSCORES is dropped.
+
+`236.123_763_e-12` is 2.36e-10 and rounds to 0 when assigned to an integral
+target; read_verilog and read_slang give 0 and read_uhdm gives **236** -- the
+mantissa with the exponent ignored.  The other eight spellings, including
+`1.30e-2`, `29E-2` and `1.2E12`, are correct on all three, so the gap is specific
+to a literal that combines underscores with an exponent.  Listed in
+structural_expected_fail.txt and slang_miter_expected_fail.txt.
+""")
+add("rtoi_function",
+    "Upstream prints `$rtoi(21.37)` from an `initial` block.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o, output logic signed [31:0] w);
+  assign o = $rtoi(21.37);
+  assign w = x;
+endmodule
+""", "$rtoi truncates toward zero: 21.",
+    ["sat -verify -prove o 32'sd21", "sat -verify -prove w 32'sd7 -set x 32'sd7"], note=_REAL_NOTE)
+add("itor_function",
+    "Upstream prints `$itor(20)` from an `initial` block.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o, output logic signed [31:0] w);
+  // $itor yields a real; scaled by 10 and cast so a netlist can carry it.
+  assign o = int'($itor(20) * 10);
+  assign w = x;
+endmodule
+""", "$itor(20) is 20.0; times 10 is 200.",
+    ["sat -verify -prove o 32'sd200", "sat -verify -prove w 32'sd7 -set x 32'sd7"], note=_REAL_NOTE)
+add("realtobits_bitstoreal_functions",
+    "Upstream prints `$bitstoreal($realtobits(12.45))` from an `initial` block.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o, output logic signed [31:0] w);
+  // A round trip through the 64-bit pattern must give the value back: 12.45 * 100.
+  assign o = int'($bitstoreal($realtobits(12.45)) * 100);
+  assign w = x;
+endmodule
+""",
+    "The round trip must preserve 12.45 (1245 when scaled).  read_slang gives 1245; "
+    "read_uhdm gives 1200 -- see NOTE.md -- so this is a RATCHET.",
+    ["sat -verify -prove o 32'sd1245", "sat -verify -prove w 32'sd7 -set x 32'sd7"],
+    note="""RATCHET -- `$realtobits` / `$bitstoreal` are not implemented.
+
+`int'($bitstoreal($realtobits(12.45)) * 100)` must be 1245.  read_slang gives
+1245; read_uhdm gives **1200**, with `Unhandled system function call` warnings --
+the unhandled-system-function fallback that returns its first argument (so the
+value is 12.45 passed through and then truncated at the int boundary).  Same
+family as $countones, $sqrt, $pow and the rest; see the sysfn ratchets.
+read_verilog cannot parse these, so read_slang is the oracle.
+""")
+add("isunknown_function",
+    "Upstream prints `$isunknown` of four x/z parameters from an `initial` block.",
+    """module top(input logic [3:0] v, output logic u0, output logic u1, output logic u2,
+           output logic u3, output logic [3:0] w);
+	parameter [3:0] val0 = 4'b000x;
+	parameter [3:0] val1 = 4'b000z;
+	parameter [3:0] val2 = 4'b00xz;
+	parameter [3:0] val3 = 4'b0000;
+  assign u0 = $isunknown(val0);
+  assign u1 = $isunknown(val1);
+  assign u2 = $isunknown(val2);
+  assign u3 = $isunknown(val3);
+  assign w  = v;
+endmodule
+""",
+    "$isunknown must be 1 for any operand with an x or z bit and 0 otherwise.  "
+    "read_verilog gives 1/1/1/0; read_uhdm gives x for the first three -- the "
+    "unhandled-system-function pass-through -- so this is a RATCHET; see NOTE.md.",
+    ["sat -verify -prove u3 1'b0", "sat -verify -prove w 4'ha -set v 4'ha",
+     "sat -verify -prove u0 1'b1", "sat -verify -prove u1 1'b1", "sat -verify -prove u2 1'b1"],
+    slang=False,
+    note="""RATCHET -- `$isunknown` is not implemented.
+
+`$isunknown(4'b000x)` must be 1; read_verilog gives 1 and read_uhdm gives **x** --
+the unhandled-system-function fallback returning its operand.  Same family as
+$countones and the rest.  read_slang refuses `$isunknown` outright
+(`unsupported system task`), so read_verilog is the oracle and there is no miter.
+""")
+add("isunbounded_function",
+    "Upstream prints `$isunbounded` of a literal and of a parameter set to `$`.",
+    """module top(input logic x, output logic lit, output logic unb, output logic w);
+parameter int i = $;
+  assign lit = $isunbounded(1);
+  assign unb = $isunbounded(i);
+  assign w   = x;
+endmodule
+""",
+    "$isunbounded is 0 for a literal and 1 for a parameter whose value is `$`.",
+    ["sat -verify -prove lit 1'b0", "sat -verify -prove unb 1'b1", "sat -verify -prove w 1'b1 -set x 1'b1"],
+    slang=False,
+    note="""RATCHET -- `$isunbounded` is not implemented.
+
+read_uhdm warns `Unhandled system function call: $isunbounded` and returns its
+operand: 1 for the literal (should be 0) and the `$` for the parameter.  Neither
+read_verilog (`Can't resolve function name`) nor read_slang implements it either,
+so there is no oracle beyond the LRM: `$isunbounded(1)` is 0 and `$isunbounded`
+of a `$`-valued parameter is 1.  Listed in structural_expected_fail.txt.
+""")
+add("signed_func_sim",
+    "Upstream prints `$signed(4'b1000)` as -8 from an `initial` block.",
+    """module top(input logic [3:0] x, output logic signed [7:0] a);
+  assign a = $signed(x);
+endmodule
+""", "Upstream's 4'b1000 reinterpreted as signed is -8, i.e. 8'hf8 once extended.",
+    ["sat -verify -prove a 8'hf8 -set x 4'b1000", "sat -verify -prove a 8'h07 -set x 4'b0111"])
+for nm in ("unsigned_func", "unsigned_func_sim"):
+    add(nm, "Upstream assigns `$unsigned(-4)` to an 8-bit variable inside an `initial` block.",
+        """module top(input logic signed [31:0] x, output logic [7:0] a);
+  // $unsigned reinterprets the two's-complement pattern; -4 is ...11111100.
+  assign a = $unsigned(x);
+endmodule
+""", "$unsigned(-4) truncated to 8 bits is 8'hfc.",
+        ["sat -verify -prove a 8'hfc -set x 32'shfffffffc", "sat -verify -prove a 8'd7 -set x 32'sd7"])
+for nm, op, exp in [("unary_op_inc", "a++;", 13), ("unary_op_inc_sim", "a++;", 13), ("unary_op_dec", "a--;", 11)]:
+    add(nm, f"Upstream applies `{op}` to a constant inside an `initial` block.",
+        f"""module top(input logic signed [31:0] x, output logic signed [31:0] o);
+  always_comb begin
+    int a;
+    a = x;
+    {op}
+    o = a;
+  end
+endmodule
+""", f"`{op}` on upstream's 12 gives {exp}.",
+        [f"sat -verify -prove o 32'sd{exp} -set x 32'sd12"])
+add("two_assignments_in_expression",
+    "Upstream nests two compound assignments in one expression inside an `initial` block.",
+    """module top(input logic signed [31:0] x, input logic signed [31:0] y,
+           output logic signed [31:0] a_o, output logic signed [31:0] b_o,
+           output logic signed [31:0] d_o);
+  always_comb begin
+    int a, b, d;
+    a = x; b = y;
+    d = ((b += (a+=1) + 1));
+    a_o = a; b_o = b; d_o = d;
+  end
+endmodule
+""",
+    "Inner `a += 1` yields a+1 and updates a; then `b += (a+1) + 1` yields the new b.  "
+    "At a=5, b=10: a=6, b=10+6+1=17, d=17.  read_uhdm mis-evaluates compound "
+    "assignments used as expressions (see assign_in_exp), so this is a RATCHET.",
+    ["sat -verify -prove a_o 32'sd6 -set x 32'sd5 -set y 32'sd10",
+     "sat -verify -prove b_o 32'sd17 -set x 32'sd5 -set y 32'sd10",
+     "sat -verify -prove d_o 32'sd17 -set x 32'sd5 -set y 32'sd10"],
+    note=_COMPOUND_RATCHET)
+add("two_assignments_in_expression_sim",
+    "Upstream nests two compound assignments in one expression and prints the result.",
+    """module top(input logic signed [31:0] x, input logic signed [31:0] y,
+           output logic signed [31:0] a_o, output logic signed [31:0] b_o,
+           output logic signed [31:0] d_o);
+  always_comb begin
+    int a, b, d;
+    a = x; b = y;
+    d = ((b += (a+=1) + 1));
+    a_o = a; b_o = b; d_o = d;
+  end
+endmodule
+""",
+    "At a=5, b=10: a=6, b=17, d=17.  RATCHET -- see assign_in_exp.",
+    ["sat -verify -prove a_o 32'sd6 -set x 32'sd5 -set y 32'sd10",
+     "sat -verify -prove b_o 32'sd17 -set x 32'sd5 -set y 32'sd10",
+     "sat -verify -prove d_o 32'sd17 -set x 32'sd5 -set y 32'sd10"],
+    note=_COMPOUND_RATCHET)
+for nm, kw in [("unique_if", "unique"), ("unique0_if", "unique0")]:
+    add(nm, f"Upstream ties the selector to 0 and never reads `b`, so neither arm of the "
+        f"`{kw} if` is exercised.",
+        f"""module if_tb (input wire [3:0] a, input reg [1:0] bin, output reg [1:0] b);
+  // `{kw}` asserts the conditions are mutually exclusive; the hold value comes
+  // from a port because upstream has no final else.
+  always @* begin
+    b = bin;
+    {kw} if(a == 0) b = 1;
+    else if(a == 1) b = 2;
+  end
+endmodule
+""", "Each arm must be reachable with the selector as a port.",
+        ["sat -verify -prove b 2'd1 -set a 4'd0 -set bin 2'd3",
+         "sat -verify -prove b 2'd2 -set a 4'd1 -set bin 2'd3"],
+        top="if_tb", slang=False,
+        note="""CONVERTED, with the `neither condition holds` case left out.
+
+As for priority_if: `unique`/`unique0` without a final else is a user assertion a
+tool may exploit, so the hold case is tool-defined and is not proven, and the
+uhdm-vs-verilog formal comparison is skipped.  What is proven is each arm.
+""",
+        sim_config="# `unique`/`unique0 if` with no final else: the hold case is tool-defined\n# (see priority_if), so the uhdm-vs-verilog formal comparison is skipped.\nSKIP_FORMAL=1\n# Random stimulus violates the uniqueness claim and Verilator's RTL side\n# $stops on its own assertion, so there is no reference to compare against.\nSKIP_SIM_EQUIV=1\n")
+add("statement_labels_seq",
+    "Upstream labels a sequential block with the PREFIX form (`name: begin`) and chains "
+    "three blocking assignments inside it, on constants, in an `initial` block.",
+    """module block_tb (input logic x, output reg a, output reg b, output reg c);
+  always @(*)
+    name: begin
+      a = x;
+      b = a;
+      c = b;
+    end: name
+endmodule
+""", "The value must travel the chain inside the prefix-labelled block.",
+    ["sat -verify -prove c 1'b1 -set x 1'b1", "sat -verify -prove c 1'b0 -set x 1'b0"], top="block_tb")
+add("variable_assignment",
+    "Upstream continuously assigns a constant to an `int` VARIABLE and never reads it.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o);
+	int v;
+  // A continuous assign to a VARIABLE (not a net) is legal in SystemVerilog.
+	assign v = x + 12;
+  assign o = v;
+endmodule
+""", "The continuous assignment to a variable must drive it.",
+    ["sat -verify -prove o 32'sd12 -set x 32'sd0", "sat -verify -prove o 32'sd19 -set x 32'sd7"])
+for nm, kw in [("vector_scalared", "scalared"), ("vector_vectored", "vectored")]:
+    add(nm, f"Upstream declares a `tri1 {kw}` vector and never drives or reads it.",
+        f"""module top(input logic [15:0] x, output logic [15:0] o);
+	tri1 {kw} [15:0] a;
+  // `{kw}` is an access hint; the net must still carry all sixteen bits.
+  assign a = x;
+  assign o = a;
+endmodule
+""", f"A `{kw}` net must carry its full width.",
+        ["sat -verify -prove o 16'hA55A -set x 16'hA55A"], slang=False,
+        note="CONVERTED; read_slang does not implement the `scalared`/`vectored` hint, so\nthe uhdm-vs-verilog comparison and the structural proof are the gates.\n")
+add("while_loop",
+    "Upstream's `while` runs over a `string` array in an `initial` block and prints each "
+    "step; the strings are incidental to the construct and are replaced by ints.",
+    """module while_tb (output logic signed [31:0] i_o, output logic signed [31:0] seen);
+  int test [4] = '{111, 222, 333, 444};
+  always_comb begin
+    int i;
+    i = 0; seen = 0;
+    while(test[i] != 222) begin
+      seen = seen + test[i];
+      i++;
+    end
+    i_o = i;
+  end
+endmodule
+""", "The loop must stop at the first 222: one iteration, i = 1, seen = 111.",
+    ["sat -verify -prove i_o 32'sd1", "sat -verify -prove seen 32'sd111"], top="while_tb",
+    slang=False,
+    note="CONVERTED, and correct on read_uhdm (1 / 111).  read_slang cannot bound the loop\n(`unroll limit of 4000 exhausted`) and read_verilog allows `while` only in\nconstant functions, so the structural proof is the gate.\n")
+add("task",
+    "Upstream's task body is a `$display`, so calling it does nothing a netlist can see.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o);
+task mytask(input int i, output int r);
+	r = i + 1;
+endtask
+  always_comb mytask(x, o);
+endmodule
+""", "The task must run and its output argument must carry the result.",
+    ["sat -verify -prove o 32'sd13 -set x 32'sd12"])
+add("task-label",
+    "Upstream's task has an END LABEL (`endtask : mytask`) and a `$display` body.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o);
+  task mytask(input int i, output int r);
+    r = i + 1;
+  endtask : mytask
+  always_comb mytask(x, o);
+endmodule
+""", "The end-labelled task must run and its output argument must carry the result.",
+    ["sat -verify -prove o 32'sd13 -set x 32'sd12"])
+add("task_automatic",
+    "Upstream calls an AUTOMATIC task four times; its local `a` starts at 0 each call, "
+    "which only `$display` sees.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o1, output logic signed [31:0] o2);
+task automatic mytask(input int i, output int r);
+	int a = 0;
+	a++;
+	r = a + i;
+endtask
+  // Two calls: an automatic local starts fresh each time, so both see a = 1.
+  always_comb begin mytask(x, o1); mytask(x, o2); end
+endmodule
+""", "Each call's local must start at 0, so both results are the argument plus 1.  "
+    "read_slang gives 13/13; read_uhdm gives x/x, so this is a RATCHET -- see NOTE.md.",
+    ["sat -verify -prove o1 32'sd13 -set x 32'sd12", "sat -verify -prove o2 32'sd13 -set x 32'sd12"],
+    note="""RATCHET -- a TASK-LOCAL declaration with an initialiser, and `++` on it, are
+unsupported in a task body.
+
+`task automatic mytask(input int i, output int r); int a = 0; a++; r = a + i;`
+must give i + 1.  read_slang gives 13 for i = 12; read_uhdm gives `32'x` with
+`Unsupported expression type: int_var` and `Unsupported statement type 39 in task
+body`.  The plain `task` (no locals) in the `task` test is correct, so the gap is
+the local declaration/increment inside a task.  read_verilog refuses a task call
+from always_comb.  Listed in structural_expected_fail.txt and
+slang_miter_expected_fail.txt.
+""")
+add("void",
+    "Upstream's void function body is a `$display`.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o);
+	function void fun(input int i, output int r);
+		r = i * 2;
+	endfunction
+  always_comb fun(x, o);
+endmodule
+""", "A void function called as a statement must run and drive its output argument.",
+    ["sat -verify -prove o 32'sd24 -set x 32'sd12"])
+for nm, calls in [("write_task", ["$write(x);"]), ("write_boh", ["$writeb(x);", "$writeo(x);", "$writeh(x);"])]:
+    n = len(calls)
+    add(nm, "Upstream's `$write` is inside an `initial` block on a constant, so synthesis has no "
+        "consumer for it.",
+        f"""module top(input logic [31:0] x, output logic [31:0] o);
+  always_comb begin
+    {" ".join(calls)}
+  end
+  assign o = x;
+endmodule
+""", f"The $write form(s) must become {n} `$print` cell(s).",
+        ["sat -verify -prove o 32'd1234 -set x 32'd1234"],
+        extra=f"select -assert-count {n} t:$print\ndelete t:$print\nopt_clean", slang=False,
+        note="CONVERTED, and gated on the netlist SHAPE plus read_verilog: a $print cell has no\nSAT model and read_slang does not read the radix forms.\n")
+add("unpacked-arrays-as-arguments-to-subroutines",
+    "Upstream passes an UNPACKED ARRAY to a task whose body is a `$display`.",
+    """module top (input logic signed [31:0] x0, input logic signed [31:0] x1,
+            input logic signed [31:0] x2, output logic signed [31:0] s);
+task fun(input int a [2:0], output int r);
+	r = a[0] + a[1] + a[2];
+endtask
+  always_comb begin
+    int b [2:0];
+    b[0] = x0; b[1] = x1; b[2] = x2;
+    fun(b, s);
+  end
+endmodule
+""", "All three elements of the unpacked argument must reach the task: 0+1+2 = 3.",
+    ["sat -verify -prove s 32'sd3 -set x0 32'sd0 -set x1 32'sd1 -set x2 32'sd2",
+     "sat -verify -prove s 32'sd60 -set x0 32'sd10 -set x1 32'sd20 -set x2 32'sd30"])
+# --------------------------------------------------------------------------
+# readmem: a $readmem is a memory INITIALISATION, which synthesis carries as a
+# $meminit.  The .mem payloads do not exist upstream, so each test vendors a
+# small one of its own.
+# --------------------------------------------------------------------------
+for nm, task, fname in [("readmemh_task", "$readmemh", "test1.mem"), ("readmemb_task", "$readmemb", "test0.mem")]:
+    add(nm, f"Upstream's `{task}` names a file that does not exist upstream, inside an `initial` "
+        "block, on a memory that is never read.",
+        f"""module top(input logic [9:0] addr, output logic [31:0] rd);
+logic [31:0] mem [1023:0];
+  // {task} is a memory INITIALISATION; synthesis carries it as a $meminit, and
+  // reading the memory back makes the loaded contents observable.
+initial begin
+	{task}("{fname}", mem);
+end
+  assign rd = mem[addr];
+endmodule
+""", f"`{task}` must become a memory initialisation that the read port exposes.",
+        ["select -assert-count 1 t:$mem_v2"],
+        extra="memory_collect", slang=False,
+        note=f"""RATCHET -- `{task}` in an `initial` block is unsupported.
+
+read_verilog and read_slang both lower the `{task}` into the memory's INIT (one
+`$mem_v2` after memory_collect); read_uhdm warns `Unsupported statement type in
+sync context` and produces NO memory at all, so the read port has nothing behind
+it.  The .mem payload is vendored in the test directory because upstream ships
+none.  Listed in structural_expected_fail.txt and failing_tests.txt.
+""")
+
+# --------------------------------------------------------------------------
+# preprocessing: the generic/preproc tests and the three directive tests
+# --------------------------------------------------------------------------
+_PP = """module test(input logic [7:0] a, input logic [7:0] b, input logic sel,
+            output logic [8:0] y, output logic [3:0] arm);
+"""
+add("preproc_test_0", "Upstream defines a macro and leaves the module EMPTY.",
+    "`define TRUTH\n" + _PP + """`ifdef TRUTH
+  assign arm = 4'd1;
+`else
+  assign arm = 4'd9;
+`endif
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "The macro must be defined, which `ifdef reads back.",
+    ["sat -verify -prove arm 4'd1", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+add("preproc_test_2", "Upstream includes a payload that defines SUCCESS, checks it with a bare string "
+    "(a syntax error if it failed), and leaves the module EMPTY.",
+    """`include "preproc_test_2.svh"
+`ifndef SUCCESS
+"Didn't successfully include preproc_test_2.svh!"
+`endif
+`ifndef SANITY
+`define SANITY
+`endif
+""" + _PP + """`ifdef SUCCESS
+  assign arm = 4'd1;
+`else
+  assign arm = 4'd9;
+`endif
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "The included file's SUCCESS macro must be visible afterwards.",
+    ["sat -verify -prove arm 4'd1", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+add("preproc_test_4", "Upstream's `ifdef/else chain defines SANITY in its else arm and leaves the module EMPTY.",
+    """`ifdef INSANITY
+`define INSANITY // comment
+`else
+`define SANITY 1
+`endif
+""" + _PP + """`ifdef SANITY
+  assign arm = 4'd2;
+`else
+  assign arm = 4'd9;
+`endif
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "INSANITY is undefined, so the else arm defines SANITY, which `ifdef reads back.",
+    ["sat -verify -prove arm 4'd2", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+add("preproc_test_5", "Upstream defines a three-argument macro with an EMPTY body and leaves the module EMPTY.",
+    "`define INCEPTION(a, b, c)\n" + _PP + """  // An empty-bodied macro must expand to nothing, so the statement after it is
+  // just the assignment.
+  `INCEPTION(1, 2, 3) assign arm = 4'd3;
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "The empty macro must expand to nothing and leave the following code intact.",
+    ["sat -verify -prove arm 4'd3", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+for nm, mdef in [("preproc_test_6", "`define INCEPTION(a, b, c) (a*b-c)"),
+                 ("preproc_test_7", "`define INCEPTION(a, b, c) \\\n  (a*b-c)")]:
+    add(nm, "Upstream defines a three-argument arithmetic macro" + (" across a LINE CONTINUATION" if nm.endswith("7") else "") + " and leaves the module EMPTY.",
+        mdef + "\n" + _PP + """  assign arm = `INCEPTION(3, 2, 1);
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "`INCEPTION(3, 2, 1)` is 3*2-1 = 5.",
+        ["sat -verify -prove arm 4'd5", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+add("preproc_test_8", "Upstream defines a macro whose body DEFINES ANOTHER macro and leaves the module EMPTY.",
+    """`define INCEPTION(xyz) \\
+  `define DEEPER (xyz)
+""" + _PP + """`INCEPTION(7)
+  // Expanding INCEPTION defines DEEPER, which must then expand to (7).
+  assign arm = `DEEPER;
+  assign y = sel ? (a + b) : (a - b);
+endmodule
+""", "A macro defined by another macro's expansion must itself expand: DEEPER is (7).",
+    ["sat -verify -prove arm 4'd7", "sat -verify -prove y 9'd300 -set a 8'd200 -set b 8'd100 -set sel 1'b1"], top="test")
+
+
+
+# string LITERALS into packed vectors are synthesizable (the string TYPE is not)
+for nm in ("string_bit_array", "string_bit_array_sim"):
+    add(nm, "Upstream assigns the literal \"Test\" to a 112-bit vector inside an `initial` block"
+        + (" and prints it." if nm.endswith("_sim") else " and never reads it."),
+        """module top(input logic x, output logic [8*14:1] a, output logic w);
+  // A string literal is a packed vector of its characters, right-aligned.
+  always_comb a = "Test";
+  assign w = x;
+endmodule
+""", "The four characters must sit in the low 32 bits: 0x54657374, zero above.",
+        ["sat -verify -prove a 112'h54657374", "sat -verify -prove w 1'b1 -set x 1'b1"])
+add("string_compare", "Upstream assigns the same literal to two vectors and prints both.",
+    """module top(input logic x, output logic eq, output logic w);
+  bit [8*14:1] a;
+  bit [8*14:1] b;
+  always_comb begin a = "Test"; b = "Test"; end
+  assign eq = (a == b);
+  assign w  = x;
+endmodule
+""", "Two vectors holding the same literal must compare equal.",
+    ["sat -verify -prove eq 1'b1", "sat -verify -prove w 1'b1 -set x 1'b1"])
+add("string-word-assignment", "Upstream assigns a three-character literal to a 24-bit vector and never reads it.",
+    """module top(input logic x, output logic [8 * 3 - 1 : 0] a, output logic w);
+  always_comb a = "hi0";
+  assign w = x;
+endmodule
+""", "\"hi0\" is 0x686930.",
+    ["sat -verify -prove a 24'h686930", "sat -verify -prove w 1'b1 -set x 1'b1"])
+
+
+
+# the last seven
+add("interface",
+    "Upstream connects an interface instance to a submodule with the IMPLICIT named "
+    "port form (`.iface`) and gives the submodule no body, so nothing crosses the "
+    "interface.",
+    """interface test_bus;
+  logic test_pad;
+endinterface: test_bus
+module sub(test_bus iface, output logic o);
+  // The member is read THROUGH the interface port.
+  assign o = iface.test_pad;
+endmodule
+module top(input logic x, output logic o);
+   test_bus iface();
+   assign iface.test_pad = x;
+   // `.iface` is the implicit named connection: the port and the instance share
+   // the name, which is the construct under test.
+   sub sub (.iface, .o(o));
+endmodule
+""", "A value driven into the interface member in `top` must come out of `sub` through "
+    "the implicitly-connected interface port.",
+    ["sat -verify -prove o 1'b1 -set x 1'b1", "sat -verify -prove o 1'b0 -set x 1'b0"],
+    flatten=True)
+add("time-literals",
+    "Upstream assigns seven TIME LITERALS to a `time` variable inside an `initial` block, "
+    "under a 100ps/10ps timescale, and never reads it.",
+    """`timescale 100ps/10ps
+module top(input logic x, output logic [63:0] t_ns, output logic [63:0] t_us,
+           output logic [63:0] t_ms, output logic [63:0] t_real, output logic w);
+  // A time literal is scaled to the module's time unit (100ps): 1ns is 10 units,
+  // 1us is 10000, 1ms is 10000000, and the real 2.1ms rounds to 21000000.
+  assign t_ns   = 1ns;
+  assign t_us   = 1us;
+  assign t_ms   = 1ms;
+  assign t_real = 2.1ms;
+  assign w = x;
+endmodule
+""", "Each time literal must be scaled to the 100ps unit.",
+    ["sat -verify -prove t_ns 64'd10", "sat -verify -prove t_us 64'd10000",
+     "sat -verify -prove t_ms 64'd10000000", "sat -verify -prove t_real 64'd21000000",
+     "sat -verify -prove w 1'b1 -set x 1'b1"],
+    note="""RATCHET -- TIME LITERALS are not scaled to the module's time unit.
+
+Under `timescale 100ps/10ps`, 1ns is 10 units, 1us is 10000, 1ms is 10000000 and
+the real 2.1ms rounds to 21000000.  read_slang gives exactly those; read_uhdm
+gives 1000000 / 1000 / 1000000000 / 2000000000 -- not a consistent unit at all
+(1ns comes out LARGER than 1us).  read_verilog cannot parse the literals.  The fs
+and ps literals are below the unit and round to 0, so they are not proven.
+Listed in structural_expected_fail.txt and slang_miter_expected_fail.txt.
+""")
+add("reorder_stream_sim", "Upstream streams a constant and prints the result.",
+    """module top(input logic [31:0] a, output logic [31:0] b);
+  assign b = {<< 8 {a}};
+endmodule
+""", "Byte-reversal: 41424344 must become 44434241.",
+    ["sat -verify -prove b 32'h44434241 -set a 32'h41424344"], note=_STREAM_NOTE)
+add("unpack_stream_sim", "Upstream bit-reverses three ints into a 96-bit local and prints it.",
+    """module top(input logic [31:0] a, input logic [31:0] b, input logic [31:0] c,
+           output bit [95:0] d);
+  assign d = {<<{a, b, c}};
+endmodule
+""", "A left-stream with no slice size bit-reverses the whole concatenation.",
+    ["sat -verify -prove d 96'hc00000004000000080000000 -set a 32'd1 -set b 32'd2 -set c 32'd3"],
+    note=_STREAM_NOTE)
+add("unary_op_dec_sim", "Upstream applies `a--` to a constant inside an `initial` block and prints it.",
+    """module top(input logic signed [31:0] x, output logic signed [31:0] o);
+  always_comb begin
+    int a;
+    a = x;
+    a--;
+    o = a;
+  end
+endmodule
+""", "`a--` on upstream's 12 gives 11.",
+    ["sat -verify -prove o 32'sd11 -set x 32'sd12"])
+add("shortrealtobits_bitstoshortreal_functions",
+    "Upstream round-trips 12.45 through `$shortrealtobits`/`$bitstoshortreal` and checks it "
+    "within 0.001, inside an `initial` block.",
+    """module top(input logic x, output logic ok, output logic w);
+	shortreal s;
+  always_comb s = $bitstoshortreal($shortrealtobits(12.45));
+  assign ok = (s > 12.449 && s < 12.451);
+  assign w  = x;
+endmodule
+""", "The round trip must preserve 12.45 to within 0.001 -- upstream's own check.  "
+    "read_uhdm's unhandled-system-function pass-through breaks it, so this is a RATCHET.",
+    ["sat -verify -prove ok 1'b1", "sat -verify -prove w 1'b1 -set x 1'b1"], slang=False,
+    note="RATCHET -- `$shortrealtobits` / `$bitstoshortreal` are not implemented: the\nunhandled-system-function fallback returns its operand (see the sysfn ratchets).\nread_verilog cannot parse `shortreal` and read_slang refuses the real-to-bits\nconversion, so the reference is upstream's own bound check.\n")
+add("system-functions", "Upstream's module is a single `$display(\"hello world\")` in an `initial` block.",
+    """module systemfn(input logic [31:0] x, output logic [31:0] o);
+  // The $display becomes a $print cell, which is the netlist's form of a system task.
+  always_comb $display("hello world %d", x);
+  assign o = x;
+endmodule
+""", "The system task must reach the netlist as a `$print` cell.",
+    ["sat -verify -prove o 32'd7 -set x 32'd7"],
+    extra="select -assert-count 1 t:$print\ndelete t:$print\nopt_clean", top="systemfn", slang=False,
+    note="CONVERTED, and gated on the netlist SHAPE plus read_verilog: a $print has no SAT\nmodel.\n")
+
+
 def write_all(only=None):
     n = 0
     for name, (why, dut, claim, proofs, top, flatten, slang, note, extra,
