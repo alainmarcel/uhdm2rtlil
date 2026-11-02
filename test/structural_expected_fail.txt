@@ -48,14 +48,6 @@ sv_tests/concat_op-bit_select
 
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
 
-# A BARE `return` in a VOID FUNCTION does not skip the rest of the body: `fun`
-# writes 1, returns early at a == 21 and otherwise writes 2, and read_uhdm
-# reaches the second write EITHER WAY (read_slang gives 1 and 2).  The value form
-# `return <expression>` is correct (jump_return_expr), and so is returning the
-# function's own name, so the gap is the bare `return` as a control transfer.
-# read_verilog cannot read the construct (`Can't resolve task name \return`).
-sv_tests/jump_return
-
 # ---- sv-tests conversion campaign, batch 5 (2026-10-31) -------------------
 
 # A RANGED enum member list with explicit bounds (`enum {start=10, stop[11:13]}`)
