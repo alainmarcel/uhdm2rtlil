@@ -153,7 +153,6 @@ func_local_accumulator_in_ff
 # fixes the defect.
 arith_shift_assignment_signed
 array-unpacked-assignments
-array_queries_multi_dim
 arrays
 arrays-key-index
 arrays-replication
@@ -204,11 +203,7 @@ event_control_edge
 # Divergences caused by reader defects tracked, with their measurements, in
 # structural_expected_fail.txt:
 #   let_construct     : a `let`'s formal arguments are never bound (output is 1'x)
-#   multi-declaration : $bits of an array ELEMENT measures the whole array
-#   multi-dim-basic   : as above, plus $dimensions reporting 1 instead of 4
 let_construct
-multi-declaration
-multi-dim-basic
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
 #   repeat_loop  : `repeat` not unrolled in a comb context (count reads 0)

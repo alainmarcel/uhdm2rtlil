@@ -3205,9 +3205,14 @@ read_verilog too.  The claim is therefore structural.
 add("multi_dim_array_addressing",
     "Upstream reads one constant index pair of a 1024x4 array in an `initial` block and "
     "drops the result.",
-    """module top(input logic clk, input logic we, input logic [9:0] i,
+    """module top(input logic clk, input logic we, input logic [5:0] i,
            input logic [1:0] j, input logic [7:0] wd, output logic [7:0] a);
-  logic [7:0] mem [0:1023][0:3];
+  // Upstream's 1024x4 is scaled to 64x4: the Verilator co-sim compiles the
+  // synthesized netlist as flat registers and muxes, and the 4096-element
+  // version (an 8.5 MB netlist) exhausted the 16 GB CI runner every time it
+  // shared the VM with another test.  The two-dimensional addressing is the
+  // same at either size.
+  logic [7:0] mem [0:63][0:3];
   // BOTH indices are ports, so the two-dimensional addressing is exercised rather
   // than folded.
   always_ff @(posedge clk)
@@ -3230,12 +3235,15 @@ add("multi_dim_array_addressing_sim",
     "and prints it, so synthesis sees neither.",
     """module top(input logic clk, input logic we, input logic [7:0] wd,
            output logic [7:0] a);
-  logic [7:0] mem [0:1023][0:3];
+  // 1024x4 upstream, scaled to 64x4 for the same reason as
+  // multi_dim_array_addressing (the co-sim netlist of the 4096-element array
+  // exhausted the CI runner); the index pair is scaled with it.
+  logic [7:0] mem [0:63][0:3];
   // Upstream's constant index pair is kept and the write is clocked; the value
   // comes from a port so a folded constant cannot satisfy the shape below.
   always_ff @(posedge clk)
-    if (we) mem[123][2] <= wd;
-  assign a = mem[123][2];
+    if (we) mem[23][2] <= wd;
+  assign a = mem[23][2];
 endmodule
 """,
     "A single element of the two-dimensional array must reduce to one enabled register "
