@@ -63,5 +63,3 @@ sv_tests/time-literals
 sv_tests/task_automatic
 sv_tests/structure
 sv_tests/structure-replication
-sv_tests/unpack_stream_pad
-sv_tests/unpack_stream_pad_sim

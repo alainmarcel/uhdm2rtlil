@@ -1,4 +1,4 @@
-# The 96-bit stream must land in the HIGH bits of the 128-bit target, with the low 32 bits zero -- upstream's own asserted 128'h00000003_00000002_00000001_00000000.  read_slang does that; read_uhdm puts the stream in the LOW bits, so this is a RATCHET -- see NOTE.md.
+# The 96-bit stream must land in the HIGH bits of the 128-bit target, with the low 32 bits zero -- upstream's own asserted 128'h00000003_00000002_00000001_00000000.  read_slang does that, and so does read_uhdm since 2026-11-02 (it used to put the stream in the LOW bits) -- see NOTE.md.
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top top
 proc

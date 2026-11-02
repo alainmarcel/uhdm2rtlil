@@ -204,6 +204,3 @@ structure-replication
 task_automatic
 # time literals (`10ns`) folded in the wrong unit
 time-literals
-# a padded streaming unpack places the pad word at the wrong end
-unpack_stream_pad
-unpack_stream_pad_sim

@@ -4451,7 +4451,8 @@ endmodule
 for nm in ("unpack_stream_pad", "unpack_stream_pad_sim"):
     slice_ = " 32" if nm.endswith("_sim") else ""
     expect = ("128'h00000003_00000002_00000001_00000000" if nm.endswith("_sim")
-              else "128'hc0000000400000008000000_00000000")
+              # 96-bit bit-reversal C0000000_40000000_80000000 (read_slang agrees) left-justified.
+              else "128'hc00000004000000080000000_00000000")
     add(nm, "Upstream left-streams three ints into a 128-bit local -- WIDER than the "
         "source, so the stream is PADDED -- inside an `initial` block.",
         f"""module top(input logic [31:0] a, input logic [31:0] b, input logic [31:0] c,
@@ -4463,19 +4464,20 @@ endmodule
         "The 96-bit stream must land in the HIGH bits of the 128-bit target, with the "
         "low 32 bits zero" + (" -- upstream's own asserted 128'h00000003_00000002_00000001_00000000."
                               if nm.endswith("_sim") else ".")
-        + "  read_slang does that; read_uhdm puts the stream in the LOW bits, so this is a "
-          "RATCHET -- see NOTE.md.",
+        + "  read_slang does that, and so does read_uhdm since 2026-11-02 (it used to put "
+          "the stream in the LOW bits) -- see NOTE.md.",
         [f"sat -verify -prove d {expect} -set a 32'd1 -set b 32'd2 -set c 32'd3"],
-        note="""RATCHET -- a stream into a WIDER target is padded on the wrong side.
+        note="""FIXED 2026-11-02 (was a RATCHET) -- a stream into a WIDER target was padded on
+the wrong side: the assignment zero-extended the 96-bit stream like any other
+value, where LRM 11.4.14.3 left-justifies it.
 
 `{<< 32 {a, b, c}}` into a 128-bit `bit` vector must leave the 96-bit stream in
 the HIGH bits with zeros below (LRM 11.4.14.4: padding is on the right of the
 stream); upstream's own assertion is `128'h00000003_00000002_00000001_00000000`.
-read_slang gives exactly that; read_uhdm gives `00000000_00000003_00000002_00000001`
--- the stream in the LOW bits.  The unpadded 96-bit case (`unpack_stream`) is
-correct on both, so the gap is the padding position.  read_verilog cannot parse
-streaming operators.  Listed in structural_expected_fail.txt and
-slang_miter_expected_fail.txt.
+read_slang gives exactly that; read_uhdm used to give
+`00000000_00000003_00000002_00000001` -- the stream in the LOW bits.  The
+unpadded 96-bit case (`unpack_stream`) was always correct on both, so the gap was
+the padding position alone.  read_verilog cannot parse streaming operators.
 """)
 
 # --------------------------------------------------------------------------
