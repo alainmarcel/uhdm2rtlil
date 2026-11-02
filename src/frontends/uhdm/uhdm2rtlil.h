@@ -1524,6 +1524,8 @@ struct UhdmImporter {
     // case-statement context extension. Walks ref_obj into its target (variable,
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
+    // `B = A` between whole unpacked arrays declared in OPPOSITE directions: reverse the element chunks (copy by position, LRM 7.6).
+    RTLIL::SigSpec reorder_whole_array_copy(const UHDM::any* lhs_e, const UHDM::any* rhs_e, RTLIL::SigSpec rhs);
     // True for a streaming concatenation `{<<{...}}` / `{>>{...}}` (any slice size).
     static bool is_stream_op(const UHDM::any* e);
     // Present unpacked-array ports with element 0 at the MSB (slang/Verilator).

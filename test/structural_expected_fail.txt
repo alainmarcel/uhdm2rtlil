@@ -20,12 +20,6 @@
 # unnoticed.
 
 
-# A whole-array assignment between REVERSED ranges (`int A[3:0]` -> `int B[0:3]`)
-# must copy by POSITION, so B[0] takes A[3].  read_verilog and read_slang do;
-# read_uhdm copies by INDEX (b0 = 0 where the golden gives 3).  Upstream's own
-# $display asserted this exact ordering.
-sv_tests/array-unpacked-assignments
-
 # A REPLICATION inside an unpacked-array assignment pattern is dropped: every
 # element it should fill reads 32'x.  `'{'{0,1,2},'{3{4}}}` fills row 1 correctly
 # and leaves row 2 entirely X; `'{2{'{3{4, 5}}}}` leaves all of both rows X.

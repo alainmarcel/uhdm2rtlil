@@ -20,7 +20,6 @@ ibex_ex_block
 # structural_expected_fail.txt, seen from the other side: read_slang computes
 # upstream's values and read_uhdm does not, so the miter finds a counterexample.
 # Both lists must lose the entry in the commit that fixes the defect.
-sv_tests/array-unpacked-assignments
 sv_tests/arrays
 sv_tests/arrays-replication
 sv_tests/arrays-key-index

@@ -71,6 +71,43 @@ bool UhdmImporter::is_stream_op(const UHDM::any* e) {
     return t == vpiStreamRLOp || t == vpiStreamLROp;
 }
 
+// A whole-array assignment between unpacked arrays copies by POSITION (LRM
+// 7.6): `int A [3:0]; int B [0:3]; B = A;` gives B[0] = A[3].  The whole-array
+// flattening (import_ref_obj) puts the LOW index at the LSB of either side
+// regardless of the declared direction, so the copy came out by INDEX (B[0] =
+// A[0]; sv-tests array-unpacked-assignments, read_verilog and read_slang both
+// copy by position).  Reverse the element chunks when exactly one side is
+// declared ascending.  The flattening itself is left alone: function-argument
+// passing (`mat[i] == a[i]`) relies on its index order.
+RTLIL::SigSpec UhdmImporter::reorder_whole_array_copy(const UHDM::any* lhs_e, const UHDM::any* rhs_e, RTLIL::SigSpec rhs) {
+    auto dir = [&](const UHDM::any* e, int& nelem) -> int {
+        if (!e || e->VpiType() != vpiRefObj) return 0;
+        const any* ag = any_cast<const ref_obj*>(e)->Actual_group();
+        const UHDM::VectorOfrange* rs = nullptr;
+        if (ag && ag->UhdmType() == uhdmarray_var) rs = any_cast<const UHDM::array_var*>(ag)->Ranges();
+        else if (ag && ag->UhdmType() == uhdmarray_net) rs = any_cast<const UHDM::array_net*>(ag)->Ranges();
+        if (!rs || rs->size() != 1) return 0;
+        const UHDM::range* r = (*rs)[0];
+        if (!r || !r->Left_expr() || !r->Right_expr()) return 0;
+        RTLIL::SigSpec l = import_expression(any_cast<const expr*>(r->Left_expr()));
+        RTLIL::SigSpec rr = import_expression(any_cast<const expr*>(r->Right_expr()));
+        if (!l.is_fully_const() || !rr.is_fully_const()) return 0;
+        int li = l.as_const().as_int(), ri = rr.as_const().as_int();
+        nelem = std::abs(li - ri) + 1;
+        return li < ri ? 1 : (li > ri ? -1 : 0);
+    };
+    int nl = 0, nr = 0;
+    int dl = dir(lhs_e, nl);
+    if (dl == 0) return rhs;
+    int dr = dir(rhs_e, nr);
+    if (dr == 0 || dl == dr || nl != nr || nl < 2 || rhs.size() % nl != 0) return rhs;
+    int ew = rhs.size() / nl;
+    RTLIL::SigSpec out;
+    for (int i = nl - 1; i >= 0; i--) out.append(rhs.extract(i * ew, ew));
+    uhdm_trace("    whole-array copy between opposite-direction ranges: %d elements reversed\n", nl);
+    return out;
+}
+
 bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
     // LRM 11.8.1: a bit-select or part-select result is ALWAYS unsigned,
@@ -13834,6 +13871,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             rhs = import_expression(rhs_expr,
                 (edge_sync && !sync_blocking_values.empty()) ? &sync_blocking_values : nullptr);
             expression_context_width = prev_ctx;
+            rhs = reorder_whole_array_copy(uhdm_assign->Lhs(), rhs_expr, rhs);
             uhdm_trace("            RHS imported: [signal] (size=%d)\n", rhs.size());
             log_flush();
         } else {
@@ -18034,6 +18072,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             rhs = import_expression(rhs_expr,
                 comb_read_map());
             expression_context_width = prev_ctx;
+            rhs = reorder_whole_array_copy(uhdm_assign->Lhs(), rhs_expr, rhs);
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
@@ -18582,6 +18621,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             // tree then drives — a combinational loop.
             rhs = import_expression(rhs_expr, comb_read_map());
             expression_context_width = prev_ctx;
+            rhs = reorder_whole_array_copy(uhdm_assign->Lhs(), rhs_expr, rhs);
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }

@@ -2070,6 +2070,7 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
     expression_context_typespec = saved_ctx_ts;
     expression_context_width = 0;
+    rhs = reorder_whole_array_copy(lhs_expr, rhs_expr, rhs);
     
     log("  Continuous assignment: LHS size=%d, RHS size=%d, is_net_decl=%d\n", 
         lhs.size(), rhs.size(), is_net_decl_assign);
