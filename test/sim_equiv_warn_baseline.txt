@@ -209,10 +209,6 @@ event_control_edge
 let_construct
 multi-declaration
 multi-dim-basic
-# ---- sv-tests conversion campaign, batch 7 (2026-11-01) ------------------
-# `1'b1` into an `int` parameter reads -1 instead of 1, so the co-sim diverges
-# every cycle.  Defect measured in structural_expected_fail.txt.
-number_test_9
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
 #   repeat_loop  : `repeat` not unrolled in a comb context (count reads 0)

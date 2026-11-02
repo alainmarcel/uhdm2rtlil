@@ -885,3 +885,14 @@ Test: typedef_test_7
 Test: typedef_test_24
     Same class as struct_test_0: `$bits(struct { int sample; int tile; })` is
     64 on both netlists and 1 under Verilator.
+
+Test: tribuf
+    Upstream yosys `tests/arch/common/tribuf.v`: `o <= en ? i : 1'bZ`.  The
+    literal is spelled with an UPPER-CASE Z, which the reader used to read as a
+    don't-care (`-`) rather than z; now that `BIN:Z` is lower-cased before
+    `Const::from_string` the netlist carries a real z, exactly as read_verilog
+    does (this test's own Induct-Formal check passes).  Synthesis treats the z
+    arm as don't-care and keeps `o = i`; Verilator's two-state RTL drives 0 for
+    z, so the co-sim mismatches whenever `en = 0, i = 1` -- the same
+    x/z-versus-two-state class as the other entries here, not a frontend
+    difference.

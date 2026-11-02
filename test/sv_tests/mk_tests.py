@@ -3408,9 +3408,9 @@ read_uhdm on x and z and is this test's reference.
 """
 
 
-# Four of the x/z literals have their MEASURED difference written out, because it is
-# the evidence that number_test_9's extension defect and the x/z behaviour are one
-# bug.  These override the generic note above.
+# Four of the x/z literals have their MEASURED difference written out, because it was
+# the evidence that number_test_9's extension defect and the x/z behaviour were one
+# bug (fixed 2026-11-01).  These override the generic note above.
 _NUM_MEASURED = {
     'number_test_10': ("1'bx", "32'0000000000000000000000000000000x", "32'-------------------------------- (all don't-care)"),
     'number_test_11': ("1 'b x", "32'0000000000000000000000000000000x", "32'-------------------------------- (all don't-care)"),
@@ -3418,26 +3418,27 @@ _NUM_MEASURED = {
     'number_test_14': ("4'bzzzz", "32'0000000000000000000000000000zzzz", "32'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),
 }
 
-_NUM_MEASURED_NOTE = """RATCHET-ADJACENT -- the same sign/fill-EXTENSION defect as number_test_9, in its
-x/z form, but this test's gates cannot see it.
+_NUM_MEASURED_NOTE = """FIXED 2026-11-01 -- the same sign/fill-EXTENSION defect as number_test_9, in its
+x/z form; this test's gates could not see it, so the measurement is kept here.
 
 `parameter int foo = {lit};` must ZERO-extend into the 32-bit `int`, leaving the
-literal's own bits at the bottom.  Measured 2026-11-01:
+literal's own bits at the bottom.  Measured 2026-11-01, before the fix:
 
     read_verilog : {rv}
     read_uhdm    : {uh}
 
-So read_uhdm extends the x (or z) bit across the WHOLE width instead of
-zero-extending -- the same wrong path that turns `1'b1` into all-ones
-(see number_test_9/NOTE.md, which carries the full measured table).
+read_uhdm extended the x (or z) bit across the WHOLE width -- the reader
+replicated any 1-bit constant to the LHS width (a path meant for `'1` fills) and
+sign-extended a wider one off the typespec Surelog stamps on a folded literal.
+After the fix read_uhdm gives {rv}, the read_verilog value.
 
 Why this test is not in the ratchet lists: `sat -verify -prove` takes a two-state
 constant, so the value cannot be proven; `read_slang` normalises x/z differently
 again (it reports 0 for `4'bxxxx`), so the miter is not a reference; and the
 netlist is pure wiring, so the workflow's gate-count comparison reports
 "functionally equivalent" on ZERO gates.  `number_test_13` is the one case where
-the Induct-Formal check does fire, so that is the entry that ratchets this
-defect's x/z half -- fix it and this test's measurement changes with it.
+the Induct-Formal check fires, so that was the entry that ratcheted the x/z half;
+see number_test_9/NOTE.md for the two root causes.
 """
 
 for _nm, _decl, _val in [

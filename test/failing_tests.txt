@@ -450,16 +450,6 @@ sv_tests/multi-declaration
 sv_tests/multi-dim-basic
 sv_tests/multi_dim_array_addressing_sim
 
-# ---- sv-tests conversion campaign, batch 7 (2026-11-01) -------------------
-# One defect, two entries: an unsigned BINARY literal is extended by its MSB
-# instead of zero-extended when it reaches a wider signed parameter.
-#   number_test_9  : `1'b1`    -> all-ones where both references give 1
-#   number_test_13 : `4'bxxxx` -> all-x where read_verilog gives 0000...xxxx
-# number_test_10/_11/_12/_14 share the defect but their gates cannot see it;
-# each carries the measurement in its NOTE.md.  See number_test_9/NOTE.md for the
-# full table and for the sibling tests that pin the boundary.
-sv_tests/number_test_9
-sv_tests/number_test_13
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
 # `repeat` is not unrolled in a combinational context, so the accumulated count

@@ -106,3 +106,5 @@ struct_test_0 artefact verilator-bits-of-unpacked-struct-type
 typedef_test_6 artefact verilator-bits-of-unpacked-struct-type
 typedef_test_7 artefact verilator-bits-of-unpacked-struct-type
 typedef_test_24 artefact verilator-bits-of-unpacked-struct-type
+# upstream yosys tribuf: z arm vs Verilator's two-state 0 -- netlist agrees with read_verilog
+tribuf artefact z-vs-two-state-tristate

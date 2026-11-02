@@ -57,10 +57,6 @@ sv_tests/let_construct
 sv_tests/multi-declaration
 sv_tests/multi-dim-basic
 
-# ---- sv-tests conversion campaign, batch 7 (2026-11-01) -------------------
-# read_slang zero-extends the unsigned binary literal (value 1) and read_uhdm
-# sign-extends it (-1).  Reason in structural_expected_fail.txt.
-sv_tests/number_test_9
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
 # read_slang performs the unpacked indexed part-select and read_uhdm loses the

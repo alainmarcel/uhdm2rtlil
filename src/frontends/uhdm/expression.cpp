@@ -6,6 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <cctype>
 #include <algorithm>
 #include <uhdm/logic_var.h>
 #include <uhdm/struct_var.h>
@@ -3093,6 +3094,9 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
         return RTLIL::Const(uint_val, width);
     } else if (value_str.substr(0, 4) == "BIN:") {
         std::string bin_str = value_str.substr(4);
+        // `BIN:X` (upper case) is how Surelog spells an x digit it folded
+        // into a parameter; from_string takes only lower case.
+        for (char& ch : bin_str) ch = std::tolower((unsigned char)ch);
         return RTLIL::Const::from_string(bin_str);
     } else if (value_str.substr(0, 4) == "HEX:") {
         // Build the constant nibble-by-nibble so arbitrarily wide values work
@@ -7364,7 +7368,12 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 }
             }
             
-            // Create constant with proper size
+            // Create constant with proper size.  Surelog spells an x/z digit
+            // in either case (`1'bx` folded into a parameter arrives as
+            // `BIN:X`), and from_string knows only the lower-case letters --
+            // an upper-case `X` fell through to the don't-care state and the
+            // literal read as `-` instead of `x`.
+            for (char& ch : bin_str) ch = std::tolower((unsigned char)ch);
             RTLIL::Const const_val = RTLIL::Const::from_string(bin_str);
             if (size > 0 && const_val.size() != size) {
                 if (const_val.size() < size) {
