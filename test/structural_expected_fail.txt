@@ -26,12 +26,6 @@
 # $display asserted this exact ordering.
 sv_tests/array-unpacked-assignments
 
-# `c >>>= 3` on a `logic signed [7:0]` loses its SIGNEDNESS: at -120 read_verilog
-# gives 8'hf1 (-15) and read_uhdm 8'h11 (a logical shift of 0x88).  The
-# NON-compound form `c = a >>> 3` is correct in the same test file, so the gap is
-# in the compound assignment operator alone.
-sv_tests/arith_shift_assignment_signed
-
 # A REPLICATION inside an unpacked-array assignment pattern is dropped: every
 # element it should fill reads 32'x.  `'{'{0,1,2},'{3{4}}}` fills row 1 correctly
 # and leaves row 2 entirely X; `'{2{'{3{4, 5}}}}` leaves all of both rows X.
@@ -59,13 +53,6 @@ sv_tests/enum_sequence
 sv_tests/concat_op-bit_select
 
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
-
-# An `initial assume` is DROPPED: read_uhdm lowers an immediate `assert` and an
-# immediate `cover` to a $check cell but emits nothing for an immediate `assume`,
-# where read_verilog emits one.  (The deferred `#0`, `final` and concurrent
-# `assume property` forms reach a netlist on NONE of the three frontends, so
-# those tests do not assert a cell at all -- see each NOTE.md.)
-sv_tests/assume_test
 
 # A BARE `return` in a VOID FUNCTION does not skip the rest of the body: `fun`
 # writes 1, returns early at a == 21 and otherwise writes 2, and read_uhdm

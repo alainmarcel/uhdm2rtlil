@@ -322,6 +322,19 @@ void UhdmImporter::import_immediate_cover(const UHDM::immediate_cover* cover_stm
     log_flush();
 }
 
+// Import immediate assume as $check cell (FLAVOR="assume").  It was the one
+// immediate assertion with no handler, so `initial assume (a != 0)` was
+// dropped while the matching assert and cover reached the netlist (sv-tests
+// assume_test).
+void UhdmImporter::import_immediate_assume(const UHDM::immediate_assume* assume_stmt, RTLIL::Wire*& enable_wire) {
+    if (!assume_stmt || !assume_stmt->Expr()) {
+        return;
+    }
+    build_check_cell(this, assume_stmt, assume_stmt->Expr(), "assume", enable_wire);
+    uhdm_trace("        Created $check cell for assume\n");
+    log_flush();
+}
+
 // Import a process statement (always block)
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
@@ -938,6 +951,13 @@ void wbr_scan_stmt(const UHDM::any* stmt, WbrState& st) {
         }
         case vpiImmediateAssert: {
             auto ia = any_cast<const UHDM::immediate_assert*>(stmt);
+            wbr_scan_expr(ia->Expr(), st);
+            wbr_scan_stmt(ia->Stmt(), st);
+            wbr_scan_stmt(ia->Else_stmt(), st);
+            break;
+        }
+        case vpiImmediateAssume: {
+            auto ia = any_cast<const UHDM::immediate_assume*>(stmt);
             wbr_scan_expr(ia->Expr(), st);
             wbr_scan_stmt(ia->Stmt(), st);
             wbr_scan_stmt(ia->Else_stmt(), st);
@@ -7295,6 +7315,15 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             break;
         }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+            break;
+        }
         case vpiImmediateCover: {
             uhdm_trace("        Processing immediate cover - converting to $check cell\n");
             log_flush();
@@ -9474,6 +9503,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
 
             uhdm_trace("        Immediate assert processed\n");
             log_flush();
+            break;
+        }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
             break;
         }
         case vpiImmediateCover: {
@@ -13936,7 +13974,25 @@ RTLIL::SigSpec UhdmImporter::create_compound_op_cell(int vpi_op_type, RTLIL::Sig
     int width = lhs_val.size();
     RTLIL::SigSpec result = module->addWire(NEW_ID, width);
     std::string cell_name;
-    bool is_signed = false;
+
+    // `a op= b` is `a = a op b` (LRM 11.4.1), so the cell's signedness is the
+    // expression's: a shift takes it from the LEFT operand alone (11.4.10), the
+    // arithmetic operators from both.  It was hard-coded false, so `c >>>= 3`
+    // on a `logic signed [7:0]` shifted in zeros (sv-tests
+    // arith_shift_assignment_signed).
+    bool lhs_signed = false, rhs_signed = false;
+    if (uhdm_assign) {
+        if (auto l = any_cast<const expr*>(uhdm_assign->Lhs()))
+            lhs_signed = is_expr_signed(l);
+        if (auto r = any_cast<const expr*>(uhdm_assign->Rhs()))
+            rhs_signed = is_expr_signed(r);
+    } else if (lhs_val.is_wire()) {
+        lhs_signed = lhs_val.as_wire()->is_signed;
+    }
+    bool is_signed = (vpi_op_type == vpiArithLShiftOp || vpi_op_type == vpiArithRShiftOp ||
+                      vpi_op_type == vpiLShiftOp || vpi_op_type == vpiRShiftOp)
+                         ? lhs_signed
+                         : (lhs_signed && rhs_signed);
 
     // Match operand widths
     if (rhs_val.size() < width)
@@ -21663,6 +21719,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
 
             uhdm_trace("        Immediate assert processed in case\n");
+            break;
+        }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
             break;
         }
         case vpiImmediateCover: {

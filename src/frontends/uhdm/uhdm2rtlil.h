@@ -1447,6 +1447,7 @@ struct UhdmImporter {
     // Assertion handling
     void import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire);
     void import_immediate_cover(const UHDM::immediate_cover* cover_stmt, RTLIL::Wire*& enable_wire);
+    void import_immediate_assume(const UHDM::immediate_assume* assume_stmt, RTLIL::Wire*& enable_wire);
 
     // System task handling ($display, $write, etc.)
     // Creates a $print cell; EN default=0 added to proc_root_case, EN=1 added to active_case.
