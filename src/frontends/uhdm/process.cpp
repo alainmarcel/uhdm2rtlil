@@ -14497,14 +14497,25 @@ RTLIL::Wire* UhdmImporter::stage_level_sensitive_elem(RTLIL::Wire* ew,
 }
 
 bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
-        const std::string& base_name,
+        const std::string& base_name_in,
         const UHDM::any* idx_expr,
         const UHDM::any* rhs_any,
         int slice_off,
         int slice_w,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule) {
-    if (base_name.empty()) return false;
+    if (base_name_in.empty()) return false;
+    // An array declared INSIDE a generate scope has its element wires under
+    // the SCOPED name (`\BP.arr[0]`), while the bit_select names it bare
+    // (`arr`).  The probe below asks the module for `\arr[0]`, found nothing,
+    // and the caller fell through to the generic LHS import -- the write
+    // landed on a dangling bit_select temp and the array never changed
+    // (biriscv_npc's BTB: allocated on a miss, looked up as empty forever).
+    // Resolve the bare name through the enclosing scopes first
+    // (expanded_array_base; the same walk fixes the reset-loop expansion in
+    // extract_assigned_signals, which registered "all 0 elements").
+    std::string base_name = expanded_array_base(base_name_in);
+    if (base_name.empty()) base_name = base_name_in;
     // Expanded unpacked array: element wires \base[low..high] exist.  The low
     // bound is usually 0, but a `[N:1]` declaration (CVA6 perf_counters
     // `generic_counter_d[MHPMCounterNum:1]`) starts at 1 — probe a small
