@@ -32,8 +32,6 @@ sv_tests/enum_sequence
 # finds a counterexample.  Reasons are recorded against the same tests in
 # structural_expected_fail.txt.
 sv_tests/concat_op-bit_select
-sv_tests/foreach_loop
-sv_tests/foreach_loop_synth
 
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
 # read_slang honours the early bare `return` and read_uhdm does not, so the

@@ -9382,14 +9382,39 @@ bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
         ats = hier_path_member_typespec(hp);
     }
     if (!ats) {
-        if (!rts || !rts->Actual_typespec()) return false;
-        ats = rts->Actual_typespec();
+        if (rts && rts->Actual_typespec()) ats = rts->Actual_typespec();
     }
 
     const UHDM::VectorOfrange* ranges = nullptr;
     if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) ranges = arrts->Ranges();
     else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pkts->Ranges();
     else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lts->Ranges();
+    // A module-level `int test [4]` presents its ref_var with a BARE
+    // array_typespec (no ranges, no element): the unpacked dimension lives on
+    // the array_var / array_net OBJECT itself.  Resolve the reference and take
+    // the object's Ranges() (sv-tests foreach_loop / foreach_loop_synth were
+    // reported "Cannot unroll foreach in comb context" and their sums and
+    // copies came out undriven).
+    if (!ranges || ranges->empty()) {
+        const UHDM::any* actual = nullptr;
+        if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) actual = rv->Actual_group();
+        else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) actual = ro->Actual_group();
+        if (!actual) {
+            std::string an = std::string(arr->VpiName());
+            if (current_instance) {
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                    if (mi->Variables())
+                        for (auto v : *mi->Variables())
+                            if (std::string(v->VpiName()) == an) { actual = v; break; }
+                    if (!actual && mi->Array_nets())
+                        for (auto n : *mi->Array_nets())
+                            if (std::string(n->VpiName()) == an) { actual = n; break; }
+                }
+            }
+        }
+        if (auto av = dynamic_cast<const UHDM::array_var*>(actual)) ranges = av->Ranges();
+        else if (auto an = dynamic_cast<const UHDM::array_net*>(actual)) ranges = an->Ranges();
+    }
     if (!ranges || ranges->empty()) return false;
 
     auto r0 = (*ranges)[0];
@@ -10134,6 +10159,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiWhile:
             import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), &proc->root_case);
             break;
+        case vpiRepeat: {
+            // `repeat (N) body` with a constant N: unroll, as the clocked path
+            // already does.  It fell to the default below and the body was
+            // dropped (sv-tests repeat_loop: the accumulator read 0, not 128).
+            auto rp = any_cast<const UHDM::repeat*>(uhdm_stmt);
+            int n = -1;
+            if (rp && rp->VpiCondition()) {
+                bool saved = force_const_fold;
+                force_const_fold = true;
+                RTLIL::SigSpec c = import_expression(rp->VpiCondition());
+                force_const_fold = saved;
+                if (c.is_fully_const()) n = c.as_const().as_int();
+            }
+            if (n < 0 || n > 100000 || !rp || !rp->VpiStmt()) {
+                log_warning("Cannot unroll repeat in comb context (count %d)\n", n);
+                break;
+            }
+            for (int i = 0; i < n; i++) import_statement_comb(rp->VpiStmt(), proc);
+            break;
+        }
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
             break;
