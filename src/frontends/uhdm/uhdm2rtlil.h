@@ -1585,6 +1585,7 @@ struct UhdmImporter {
     // wires) — usually 0, but a `[N:1]` declaration starts at 1.  -1 when no
     // element wire exists (not an expanded array).
     int expanded_array_low(const std::string& base_name);
+    std::string expanded_array_base(const std::string& name);
     void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);
