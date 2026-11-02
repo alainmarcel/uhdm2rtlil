@@ -20,7 +20,6 @@ ibex_ex_block
 # structural_expected_fail.txt, seen from the other side: read_slang computes
 # upstream's values and read_uhdm does not, so the miter finds a counterexample.
 # Both lists must lose the entry in the commit that fixes the defect.
-sv_tests/array_queries_multi_dim
 sv_tests/array-unpacked-assignments
 sv_tests/arith_shift_assignment_signed
 sv_tests/arrays
@@ -51,11 +50,9 @@ sv_tests/jump_return
 sv_tests/enum_sequence_range
 
 # ---- sv-tests conversion campaign, batch 6 (2026-11-01) -------------------
-# read_slang binds the `let` formals and measures an element's $bits correctly;
-# read_uhdm does neither.  Reasons in structural_expected_fail.txt.
+# read_slang binds the `let` formals; read_uhdm does not.  Reason in
+# structural_expected_fail.txt.
 sv_tests/let_construct
-sv_tests/multi-declaration
-sv_tests/multi-dim-basic
 
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------

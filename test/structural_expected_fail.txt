@@ -19,12 +19,6 @@
 # proof is the only real check -- which is exactly why these would otherwise go
 # unnoticed.
 
-# $dimensions / $left / $right / $low / $high / $size with a DIMENSION ARGUMENT
-# are answered with the array's TOTAL BIT COUNT instead of that dimension's
-# bound, and $dimensions itself reads 1 instead of 2.  Golden read_verilog gives
-# dims=2 left1=15 left2=31 high2=31 low2=0 right1=0 right2=0 size2=32;
-# read_uhdm gives dims=1 and 512 (= 16*32) for every bound.
-sv_tests/array_queries_multi_dim
 
 # A whole-array assignment between REVERSED ranges (`int A[3:0]` -> `int B[0:3]`)
 # must copy by POSITION, so B[0] takes A[3].  read_verilog and read_slang do;
@@ -135,19 +129,6 @@ sv_tests/enum_sequence_range
 # is the only one that silently produces a broken netlist instead of refusing.
 sv_tests/event_control_edge
 
-# ---- sv-tests conversion campaign, batch 6 (2026-11-01) -------------------
-
-# $bits AND $dimensions OF AN ARRAY ELEMENT ignore the selection and measure the
-# WHOLE array.  Golden read_verilog vs read_uhdm:
-#   multi-declaration   $bits(arr_a[1][1])  256 vs 12800 (= 256 * 5 * 10)
-#                       $bits(arr_b[0])     256 vs 65536 (= 256 * 256)
-#   multi-dim-basic     $bits(arr[1])        32 vs   320 (=  32 * 10)
-#                       $bits(arr2[1][1])    30 vs  1680 (=  30 * 7 * 8)
-#                       $dimensions(arr2)     4 vs     1
-# Same underlying gap as array_queries_multi_dim above (the dims of the selected
-# element are never collected, so the query answers from the total bit count).
-sv_tests/multi-declaration
-sv_tests/multi-dim-basic
 
 # A `let`'s FORMAL ARGUMENTS are not bound: read_uhdm reports
 # `Reference to unknown signal: x` (and y, z) for `let op(x, y, z) = |((x|y)&z);`

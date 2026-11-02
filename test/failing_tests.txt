@@ -397,13 +397,10 @@ loopvar_index_in_hier_path
 #   arith_shift_assignment_signed : `>>>=` loses signedness
 #   array-unpacked-assignments    : whole-array copy between reversed ranges
 #                                   copies by index, not position
-#   array_queries_multi_dim       : a dimension argument to $left/$right/... is
-#                                   ignored; every bound reads the total bit count
 #   countbits_function            : $countones / $countbits unimplemented -- the
 #                                   reader returns the argument
 sv_tests/arith_shift_assignment_signed
 sv_tests/array-unpacked-assignments
-sv_tests/array_queries_multi_dim
 sv_tests/countbits_function
 
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
@@ -429,26 +426,6 @@ sv_tests/onehot_function
 sv_tests/pow_function
 sv_tests/sqrt_function
 
-# ---- sv-tests conversion campaign, batch 6 (2026-11-01) -------------------
-# The SECOND UNPACKED DIMENSION is folded into the element, so the array has the
-# wrong geometry.  `logic [7:0] mem [0:1023][0:3]` must flatten to 4096 elements
-# of 8 bits, which read_verilog does; read_uhdm produces 1024 elements of 32 bits
-# (`connect \mem[1023] 32'x`).  The equivalence check reports it as
-# "UHDM synthesized netlist contains X assignments not present in Verilog",
-# which is really a count difference: 1025 wide X wires against 4095 narrow ones.
-#
-# This is the SAME root cause as the $bits/$dimensions-of-an-element entries in
-# structural_expected_fail.txt and as array_queries_multi_dim: the inner unpacked
-# dimension is absorbed into the element everywhere.  One fix should close all of
-# them; remove every entry together.
-#
-# Note the test's OWN gates pass -- the shape assertion (one enabled register)
-# and the co-sim both hold, because `mem[123][2]` still selects the right byte out
-# of read_uhdm's 32-bit element.  Only the geometry is wrong, which is exactly why
-# a test like this is worth having.
-sv_tests/multi-declaration
-sv_tests/multi-dim-basic
-sv_tests/multi_dim_array_addressing_sim
 
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
@@ -476,3 +453,15 @@ sv_tests/real-constants
 # alone instead of the updated variable.
 sv_tests/two_assignments_in_expression
 sv_tests/two_assignments_in_expression_sim
+
+# ---- inner-dimension geometry (2026-11-02) ---------------------------------
+# The query half of this test is fixed ($bits of the selected element is 256),
+# but the uhdm-vs-verilog comparison still fails on the WIRE GEOMETRY of a 2-D
+# unpacked array written by element: `bit [7:0][31:0] arr_a [1:5][1:10]` is one
+# 12800-bit canonical wire with per-ROW aliases (`connect \arr_a [2559:0]
+# \arr_a[1]`), and the always_comb write `arr_a[1][1] = x` lands on the
+# canonical wire's low 256 bits -- which the row alias ALSO drives, so the
+# element is doubly driven and the read `a_o = arr_a[255:0]` is not `x`.
+# read_verilog flattens the array to 50 wires of 256 bits and writes element 0.
+# multi-dim-basic (reads only, no element write) passes; this is the write path.
+sv_tests/multi-declaration

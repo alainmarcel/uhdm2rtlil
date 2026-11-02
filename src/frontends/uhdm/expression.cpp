@@ -6409,6 +6409,26 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     auto append_typespec_dims = [&](auto& self, const UHDM::any* ts,
                                                     std::vector<DimInfo>& out) -> void {
                         while (ts) {
+                            // A `bit`-typed array (`bit [3:0][7:0] arr [1:10]`) carries
+                            // its packed dims on a bit_typespec, which this walk did not
+                            // read: $dimensions(arr) answered 1 (the unpacked dim alone)
+                            // where the logic-typed twin answered 3 (sv_tests
+                            // multi-declaration / multi-dim-basic).  Same shape as
+                            // logic_typespec, minus the Elem_typespec chain.
+                            if (auto bts = dynamic_cast<const UHDM::bit_typespec*>(ts)) {
+                                if (auto ranges = bts->Ranges()) {
+                                    for (auto r : *ranges) {
+                                        RTLIL::SigSpec ls = import_expression(
+                                            any_cast<const UHDM::expr*>(r->Left_expr()));
+                                        RTLIL::SigSpec rs = import_expression(
+                                            any_cast<const UHDM::expr*>(r->Right_expr()));
+                                        if (ls.is_fully_const() && rs.is_fully_const())
+                                            out.push_back({ls.as_const().as_int(),
+                                                           rs.as_const().as_int()});
+                                    }
+                                }
+                                break;
+                            }
                             if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
                                 if (auto ranges = lts->Ranges()) {
                                     for (auto r : *ranges) {
@@ -6584,7 +6604,51 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                         if (auto ref = dynamic_cast<const UHDM::ref_obj*>(expr)) {
                             if (ref->Actual_group()) {
-                                if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
+                                if (auto av = dynamic_cast<const UHDM::array_var*>(ref->Actual_group())) {
+                                    // Unpacked array VARIABLE (`logic [7:0] mem
+                                    // [N1][N2]`): the mirror of the array_net
+                                    // branch below.  Its unpacked dims live on
+                                    // `av->Ranges()` and the element typespec on
+                                    // `av->Variables()[0]`.  Taking only
+                                    // `v->Typespec()` here -- the generic variables
+                                    // path -- left `dims` without the unpacked
+                                    // part, so every query fell into the "atomic"
+                                    // branch and answered from the TOTAL bit
+                                    // count: $bits(arr[1][1]) read 12800 instead
+                                    // of 256 and $dimensions read 1 instead of 4
+                                    // (sv_tests multi-declaration, multi-dim-basic,
+                                    // array_queries_multi_dim).
+                                    int elem_w = 1;
+                                    if (av->Variables() && !av->Variables()->empty()) {
+                                        if (auto ev = (*av->Variables())[0]) {
+                                            if (ev->Typespec() && ev->Typespec()->Actual_typespec()) {
+                                                leaf_ts = ev->Typespec()->Actual_typespec();
+                                                elem_w = get_width_from_typespec(
+                                                    leaf_ts, current_instance);
+                                            }
+                                        }
+                                    }
+                                    int count = 1, n_unp = 0;
+                                    if (av->Ranges() && !av->Ranges()->empty()) {
+                                        for (auto r : *av->Ranges()) {
+                                            if (!r->Left_expr() || !r->Right_expr()) continue;
+                                            RTLIL::SigSpec ls = import_expression(
+                                                any_cast<const UHDM::expr*>(r->Left_expr()));
+                                            RTLIL::SigSpec rs = import_expression(
+                                                any_cast<const UHDM::expr*>(r->Right_expr()));
+                                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                                count *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                                dims.push_back({ls.as_const().as_int(),
+                                                                rs.as_const().as_int()});
+                                                n_unp++;
+                                            }
+                                        }
+                                    }
+                                    if (count > 0 && elem_w > 0)
+                                        total_bits = count * elem_w;
+                                    unpacked_dim_count = n_unp;
+                                    return;
+                                } else if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
                                     if (v->Typespec() && v->Typespec()->Actual_typespec())
                                         leaf_ts = v->Typespec()->Actual_typespec();
                                 } else if (auto an = dynamic_cast<const UHDM::array_net*>(ref->Actual_group())) {
@@ -6670,6 +6734,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     // via `z[3]`, the bit_select strips the outermost
                     // unpacked dim (leaving 1 unpacked + 1 packed).
                     while (strip_outer_dims > 0 && !dims.empty()) {
+                        // The selected element has 1/extent of the bits: `$bits(arr[1])`
+                        // on `bit [3:0][7:0] arr [1:10]` is 32, not the array's 320
+                        // (sv_tests multi-declaration / multi-dim-basic).
+                        int ext = std::abs(dims[0].left - dims[0].right) + 1;
+                        if (ext > 0 && total_bits % ext == 0) total_bits /= ext;
                         dims.erase(dims.begin());
                         if (unpacked_dim_count > 0) --unpacked_dim_count;
                         --strip_outer_dims;
