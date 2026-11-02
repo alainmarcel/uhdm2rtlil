@@ -58,14 +58,6 @@ sv_tests/enum_sequence
 # at all (`syntax error, unexpected '['`), so read_slang is the oracle.
 sv_tests/concat_op-bit_select
 
-# `foreach` IS NOT UNROLLED in a combinational context: read_uhdm warns
-# `Cannot unroll foreach in comb context` and emits nothing, so the loop's work
-# is lost (foreach_loop reads 0 visits and sum 0 where read_slang gives 4 and
-# 1110; foreach_loop_synth leaves the copied elements undriven).  read_verilog
-# cannot parse `foreach`, so read_slang is the oracle.
-sv_tests/foreach_loop
-sv_tests/foreach_loop_synth
-
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
 
 # An `initial assume` is DROPPED: read_uhdm lowers an immediate `assert` and an
@@ -109,13 +101,6 @@ sv_tests/let_construct
 
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
-
-# `repeat` IS NOT UNROLLED in a combinational context.  With a CONSTANT count
-# (`repeat(128)`) read_verilog unrolls it and the accumulator reads 128; read_uhdm
-# warns `Unsupported statement type in comb context` and leaves it at 0.  Same
-# family as the `foreach` gap in foreach_loop above.  read_slang refuses `repeat`
-# outright, so read_verilog is the oracle and there is no miter.
-sv_tests/repeat_loop
 
 # A `real` is measured as 32 BITS, not 64.  `$bits(T)` with `T` a type parameter
 # defaulting to `real` gives read_slang 64 and read_uhdm 32; `$bits(real)` written

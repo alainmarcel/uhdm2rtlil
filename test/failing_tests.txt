@@ -408,12 +408,6 @@ sv_tests/array-unpacked-assignments
 
 
 
-# ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
-# `repeat` is not unrolled in a combinational context, so the accumulated count
-# reads 0 where read_verilog unrolls the loop and gives 128.  Measured in
-# structural_expected_fail.txt; read_slang refuses `repeat` outright, so
-# read_verilog is the only oracle and the whole test fails, not just one check.
-sv_tests/repeat_loop
 
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # Each of these is ratcheted in structural_expected_fail.txt (and, where

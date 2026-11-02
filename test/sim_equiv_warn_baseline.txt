@@ -166,11 +166,7 @@ enum_sequence
 # wrong.  Every list must lose the entry in the commit that fixes the defect.
 #   concat_op-bit_select                     : a select on a concatenation takes
 #                                              the wrong bits (188 of 200 cycles)
-#   foreach_loop*                            : `foreach` is not unrolled in a
-#                                              comb context -- the body is lost
 concat_op-bit_select
-foreach_loop
-foreach_loop_synth
 # ---- sv-tests conversion campaign, batch 5 (2026-10-31) ------------------
 # Both divergences are a DIRECT CONSEQUENCE of a reader defect already tracked,
 # with its measurement, in structural_expected_fail.txt:
@@ -188,11 +184,9 @@ event_control_edge
 let_construct
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
-#   repeat_loop  : `repeat` not unrolled in a comb context (count reads 0)
 #   parameter_type : a `real` measured as 32 bits instead of 64
 #   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an
 #       UNPACKED array loses the array (the packed form is correct)
-repeat_loop
 parameter_type
 operations-on-unpacked-arrays-variable-slice-rw
 
