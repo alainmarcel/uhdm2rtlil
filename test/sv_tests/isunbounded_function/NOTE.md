@@ -1,4 +1,4 @@
-RATCHET -- `$isunbounded` is not implemented.
+FIXED 2026-11-02 (was a RATCHET): -- `$isunbounded` is not implemented.
 
 read_uhdm warns `Unhandled system function call: $isunbounded` and returns its
 operand: 1 for the literal (should be 0) and the `$` for the parameter.  Neither

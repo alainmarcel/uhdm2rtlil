@@ -1,4 +1,4 @@
-RATCHET -- `$realtobits` / `$bitstoreal` are not implemented.
+FIXED 2026-11-02 (was a RATCHET): -- `$realtobits` / `$bitstoreal` are not implemented.
 
 `int'($bitstoreal($realtobits(12.45)) * 100)` must be 1245.  read_slang gives
 1245; read_uhdm gives **1200**, with `Unhandled system function call` warnings --

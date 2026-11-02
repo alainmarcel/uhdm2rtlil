@@ -397,11 +397,8 @@ loopvar_index_in_hier_path
 #   arith_shift_assignment_signed : `>>>=` loses signedness
 #   array-unpacked-assignments    : whole-array copy between reversed ranges
 #                                   copies by index, not position
-#   countbits_function            : $countones / $countbits unimplemented -- the
-#                                   reader returns the argument
 sv_tests/arith_shift_assignment_signed
 sv_tests/array-unpacked-assignments
-sv_tests/countbits_function
 
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
 # Conversions whose uhdm-vs-verilog formal equivalence FAILS because read_uhdm
@@ -410,21 +407,10 @@ sv_tests/countbits_function
 # fails, not just one check, and must be removed in the commit that fixes it.
 #   assign_in_exp* / assignment_in_expression* : a compound assignment used as
 #       an expression yields the RHS alone (a=1,b=1 where the golden gives 8,8)
-#   *_function : the constant system function is not implemented -- the reader
-#       warns `Unhandled system function call` and returns its first argument
 sv_tests/assign_in_exp
 sv_tests/assign_in_exp_sim
 sv_tests/assignment_in_expression
 sv_tests/assignment_in_expression_sim
-sv_tests/atan2_function
-sv_tests/exp_function
-sv_tests/hypot_function
-sv_tests/ln_function
-sv_tests/log10_function
-sv_tests/onehot0_function
-sv_tests/onehot_function
-sv_tests/pow_function
-sv_tests/sqrt_function
 
 
 
@@ -439,9 +425,6 @@ sv_tests/repeat_loop
 # Each of these is ratcheted in structural_expected_fail.txt (and, where
 # read_slang parses the construct, slang_miter_expected_fail.txt); read_verilog
 # is the oracle, so the whole uhdm-vs-verilog comparison fails too.
-# `$isunknown` is an unhandled system function and silently returns its
-# argument (see number_test_* / project_countbits_unhandled).
-sv_tests/isunknown_function
 # `$readmemb` / `$readmemh` from an initial block: the memory initialisation
 # is dropped, every read gives 0 where read_verilog gives the file contents.
 sv_tests/readmemb_task
