@@ -65,6 +65,12 @@ static RTLIL::SigSpec cond_as_bool(RTLIL::Module* module, const RTLIL::SigSpec& 
 }
 
 
+bool UhdmImporter::is_stream_op(const UHDM::any* e) {
+    if (!e || e->UhdmType() != uhdmoperation) return false;
+    int t = any_cast<const operation*>(e)->VpiOpType();
+    return t == vpiStreamRLOp || t == vpiStreamLROp;
+}
+
 bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
     // LRM 11.8.1: a bit-select or part-select result is ALWAYS unsigned,
@@ -13842,6 +13848,12 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             if (rhs_is_fill) {
                 // Fill constant: replicate to fill the entire LHS width
                 rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
+            } else if (uhdm_assign && is_stream_op(uhdm_assign->Rhs())) {
+                // A streaming concatenation narrower than its target is
+                // LEFT-justified: the stream fills the MSBs and the zero pad
+                // is on the right (LRM 11.4.14.3).  It was zero-extended like
+                // any other value (sv-tests unpack_stream_pad).
+                rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - rhs.size())};
             } else {
                 // Sign-extend if RHS is a signed wire or expression result
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
@@ -18048,6 +18060,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (rhs.size() < lhs.size()) {
             if (rhs_is_fill) {
                 rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
+            } else if (uhdm_assign && is_stream_op(uhdm_assign->Rhs())) {
+                // Streaming concatenation: LEFT-justified in a wider target
+                // (LRM 11.4.14.3), see import_assignment_sync.
+                rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - rhs.size())};
             } else {
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
                 rhs.extend_u0(lhs.size(), rhs_is_signed);
@@ -18583,6 +18599,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (rhs.size() < lhs.size()) {
             if (rhs_is_fill) {
                 rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
+            } else if (uhdm_assign && is_stream_op(uhdm_assign->Rhs())) {
+                // Streaming concatenation: LEFT-justified in a wider target
+                // (LRM 11.4.14.3), see import_assignment_sync.
+                rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - rhs.size())};
             } else {
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
                 rhs.extend_u0(lhs.size(), rhs_is_signed);

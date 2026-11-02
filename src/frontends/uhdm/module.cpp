@@ -2130,6 +2130,14 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                 // For non-constant single bits, zero-extend (zeros in MSB, value in LSB)
                 rhs = {RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1), rhs};
             }
+        } else if (rhs.size() < lhs.size() && is_stream_op(rhs_expr)) {
+            // A streaming concatenation narrower than its target is LEFT-
+            // justified: the stream fills the MSBs and the zero pad is on the
+            // right (LRM 11.4.14.3; read_slang and upstream's own asserted
+            // 00000003_00000002_00000001_00000000 agree).  It was zero-extended
+            // like any other value, which put the stream in the LSBs
+            // (sv-tests unpack_stream_pad).
+            rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - rhs.size())};
         } else if (rhs.size() < lhs.size() && rhs.is_fully_const()) {
             // A CONSTANT stays a constant when widened.  Going through a
             // $pos cell made it a wire, so a net-declaration initialiser

@@ -143,10 +143,4 @@ sv_tests/structure
 sv_tests/structure-replication
 sv_tests/structure-arrays
 
-# A stream into a WIDER target is padded on the wrong side: the 96-bit stream must
-# sit in the HIGH bits of the 128-bit target (read_slang, and upstream's own
-# asserted 00000003_00000002_00000001_00000000); read_uhdm puts it in the LOW bits.
-sv_tests/unpack_stream_pad
-sv_tests/unpack_stream_pad_sim
-
 

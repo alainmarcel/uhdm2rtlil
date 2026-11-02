@@ -1524,6 +1524,8 @@ struct UhdmImporter {
     // case-statement context extension. Walks ref_obj into its target (variable,
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
+    // True for a streaming concatenation `{<<{...}}` / `{>>{...}}` (any slice size).
+    static bool is_stream_op(const UHDM::any* e);
     // Present unpacked-array ports with element 0 at the MSB (slang/Verilator).
     void reverse_unpacked_array_ports();
     int context_operand_width(const UHDM::any* o, const std::map<std::string, RTLIL::SigSpec>* input_mapping);
