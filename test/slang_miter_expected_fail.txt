@@ -21,7 +21,6 @@ ibex_ex_block
 # upstream's values and read_uhdm does not, so the miter finds a counterexample.
 # Both lists must lose the entry in the commit that fixes the defect.
 sv_tests/array-unpacked-assignments
-sv_tests/arith_shift_assignment_signed
 sv_tests/arrays
 sv_tests/arrays-replication
 sv_tests/arrays-key-index

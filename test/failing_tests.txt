@@ -394,10 +394,8 @@ loopvar_index_in_hier_path
 # read_uhdm computes a different value.  Each defect is measured and recorded in
 # structural_expected_fail.txt; these entries exist because the whole test fails,
 # not just one check, and must be removed in the commit that fixes the defect.
-#   arith_shift_assignment_signed : `>>>=` loses signedness
 #   array-unpacked-assignments    : whole-array copy between reversed ranges
 #                                   copies by index, not position
-sv_tests/arith_shift_assignment_signed
 sv_tests/array-unpacked-assignments
 
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------

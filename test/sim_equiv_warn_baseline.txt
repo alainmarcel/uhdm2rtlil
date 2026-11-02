@@ -151,7 +151,6 @@ func_local_accumulator_in_ff
 # calls them a BUG, which would hard-fail the test: the divergence is real and
 # the netlist is wrong.  All three lists must lose the entry in the commit that
 # fixes the defect.
-arith_shift_assignment_signed
 array-unpacked-assignments
 arrays
 arrays-key-index
