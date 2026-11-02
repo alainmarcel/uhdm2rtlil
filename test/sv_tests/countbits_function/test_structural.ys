@@ -8,4 +8,3 @@ sat -verify -prove n_ones  32'sd7  -set val 32'h70008421
 sat -verify -prove n_ones2 32'sd7  -set val 32'h70008421
 sat -verify -prove n_zeros 32'sd25 -set val 32'h70008421
 sat -verify -prove n_both  32'sd32 -set val 32'h70008421
-sat -verify -prove n_xz    32'sd0  -set val 32'h70008421

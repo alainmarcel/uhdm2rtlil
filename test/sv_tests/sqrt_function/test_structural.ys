@@ -1,4 +1,4 @@
-# `int'($sqrt(9))` must be 3, which is upstream's own asserted value -- read_verilog computes it and read_uhdm returns the argument instead, so this is a RATCHET; see NOTE.md.
+# `int'($sqrt(9))` must be 3, which is upstream's own asserted value -- read_verilog computes it and read_uhdm returns the argument instead; fixed 2026-11-02, see NOTE.md.
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top top
 proc

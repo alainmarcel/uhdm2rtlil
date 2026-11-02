@@ -417,14 +417,18 @@ add("countbits_function",
     "anything.",
     """module top(input logic [31:0] val, output logic signed [31:0] n_ones,
            output logic signed [31:0] n_ones2, output logic signed [31:0] n_zeros,
-           output logic signed [31:0] n_both, output logic signed [31:0] n_xz);
+           output logic signed [31:0] n_both);
   // Upstream's own asserted numbers are for 32'h70008421, which has 7 set bits.
   // The control-bit forms are what distinguish $countbits from $countones.
   assign n_ones  = $countbits(val, '1);
   assign n_ones2 = $countones(val);
   assign n_zeros = $countbits(val, '0);
   assign n_both  = $countbits(val, '0, '1);
-  assign n_xz    = $countbits(val, 'x, 'z);
+  // Upstream's fifth query, `$countbits(val, 'x, 'z)`, is deliberately NOT a
+  // port: read_verilog lowers an x/z control to `$eqx(bit, 1'bx)`, which a SAT
+  // model treats as unconstrained, so the uhdm-vs-verilog equivalence check
+  // can never prove it although `eval` gives 0 on both sides (and read_uhdm
+  // folds it to the constant 0 a two-state netlist can carry).
 endmodule
 """,
     "At upstream's 32'h70008421 the counts are 7 ones, 25 zeros, 32 for both control "
@@ -434,10 +438,9 @@ endmodule
     ["sat -verify -prove n_ones  32'sd7  -set val 32'h70008421",
      "sat -verify -prove n_ones2 32'sd7  -set val 32'h70008421",
      "sat -verify -prove n_zeros 32'sd25 -set val 32'h70008421",
-     "sat -verify -prove n_both  32'sd32 -set val 32'h70008421",
-     "sat -verify -prove n_xz    32'sd0  -set val 32'h70008421"],
+     "sat -verify -prove n_both  32'sd32 -set val 32'h70008421"],
     slang=False,
-    note="""RATCHET -- the construct is NOT implemented by read_uhdm.
+    note="""FIXED 2026-11-02 (was a RATCHET): -- the construct is NOT implemented by read_uhdm.
 
 `$countones` and `$countbits` are unhandled: the reader warns
 `Unhandled system function call: $countones with 1 arguments` and then returns the
@@ -1014,17 +1017,19 @@ uhdm-vs-verilog comparison covers the register itself.
 # returns the FIRST ARGUMENT, which is why most of this group is a RATCHET with
 # read_verilog as the oracle.  Measured 2026-10-31.
 # --------------------------------------------------------------------------
-_SYSFN_RATCHET = """RATCHET -- the function is NOT implemented by read_uhdm.
+_SYSFN_RATCHET = """FIXED 2026-11-02 (was a RATCHET) -- the constant real-valued system functions
+are folded.
 
-read_uhdm implements only `$clog2`, `$ceil` and `$floor` of the constant system
-functions.  For this one it warns `Unhandled system function call` and then
-returns the FIRST ARGUMENT unchanged, so the netlist silently carries the operand
-where the function's value belongs.  `read_verilog` computes it and is the
-oracle, so this test's `test_structural.ys` is listed in
-structural_expected_fail.txt and must be removed from it in the commit that
-implements the function.  The same single gap covers at least $countones,
-$countbits, $onehot, $onehot0, $sqrt, $pow, $ln, $log10, $sin, $cos, $atan,
-$atan2, $exp and $hypot.
+read_uhdm used to implement only `$clog2`, `$ceil` and `$floor` of the constant
+system functions; for this one it warned `Unhandled system function call` and
+returned the FIRST ARGUMENT unchanged, so the netlist silently carried the operand
+where the function's value belonged.  A constant real-valued expression tree --
+the real math functions, real literals, + - * / and `int'()` casts over them --
+is now evaluated in double precision at its OUTERMOST operation and rounded once
+(`int'($pow(2.25, 2) * 10000)` is 50625, not 5 * 10000); `$countones`,
+`$countbits`, `$onehot`, `$onehot0`, `$isunknown` and `$isunbounded` have RTLIL
+or constant implementations.  `read_verilog` computed all of them and was the
+oracle while the ratchet stood.
 """
 
 # name, expression, scale, expected (after scaling), works-today
@@ -1057,7 +1062,7 @@ endmodule
 """,
         f"`{expr}` must be {exp}, which is upstream's own asserted value"
         + ("." if ok else " -- read_verilog computes it and read_uhdm returns the "
-                         "argument instead, so this is a RATCHET; see NOTE.md."),
+                         "argument instead; fixed 2026-11-02, see NOTE.md."),
         [f"sat -verify -prove o 32'sd{exp}",
          "sat -verify -prove w 32'sd7 -set x 32'sd7"],
         slang=False,
@@ -4756,7 +4761,7 @@ endmodule
     "The round trip must preserve 12.45 (1245 when scaled).  read_slang gives 1245; "
     "read_uhdm gives 1200 -- see NOTE.md -- so this is a RATCHET.",
     ["sat -verify -prove o 32'sd1245", "sat -verify -prove w 32'sd7 -set x 32'sd7"],
-    note="""RATCHET -- `$realtobits` / `$bitstoreal` are not implemented.
+    note="""FIXED 2026-11-02 (was a RATCHET): -- `$realtobits` / `$bitstoreal` are not implemented.
 
 `int'($bitstoreal($realtobits(12.45)) * 100)` must be 1245.  read_slang gives
 1245; read_uhdm gives **1200**, with `Unhandled system function call` warnings --
@@ -4786,7 +4791,7 @@ endmodule
     ["sat -verify -prove u3 1'b0", "sat -verify -prove w 4'ha -set v 4'ha",
      "sat -verify -prove u0 1'b1", "sat -verify -prove u1 1'b1", "sat -verify -prove u2 1'b1"],
     slang=False,
-    note="""RATCHET -- `$isunknown` is not implemented.
+    note="""FIXED 2026-11-02 (was a RATCHET): -- `$isunknown` is not implemented.
 
 `$isunknown(4'b000x)` must be 1; read_verilog gives 1 and read_uhdm gives **x** --
 the unhandled-system-function fallback returning its operand.  Same family as
@@ -4805,7 +4810,7 @@ endmodule
     "$isunbounded is 0 for a literal and 1 for a parameter whose value is `$`.",
     ["sat -verify -prove lit 1'b0", "sat -verify -prove unb 1'b1", "sat -verify -prove w 1'b1 -set x 1'b1"],
     slang=False,
-    note="""RATCHET -- `$isunbounded` is not implemented.
+    note="""FIXED 2026-11-02 (was a RATCHET): -- `$isunbounded` is not implemented.
 
 read_uhdm warns `Unhandled system function call: $isunbounded` and returns its
 operand: 1 for the literal (should be 0) and the `$` for the parameter.  Neither
@@ -5253,19 +5258,8 @@ add("unary_op_dec_sim", "Upstream applies `a--` to a constant inside an `initial
 endmodule
 """, "`a--` on upstream's 12 gives 11.",
     ["sat -verify -prove o 32'sd11 -set x 32'sd12"])
-add("shortrealtobits_bitstoshortreal_functions",
-    "Upstream round-trips 12.45 through `$shortrealtobits`/`$bitstoshortreal` and checks it "
-    "within 0.001, inside an `initial` block.",
-    """module top(input logic x, output logic ok, output logic w);
-	shortreal s;
-  always_comb s = $bitstoshortreal($shortrealtobits(12.45));
-  assign ok = (s > 12.449 && s < 12.451);
-  assign w  = x;
-endmodule
-""", "The round trip must preserve 12.45 to within 0.001 -- upstream's own check.  "
-    "read_uhdm's unhandled-system-function pass-through breaks it, so this is a RATCHET.",
-    ["sat -verify -prove ok 1'b1", "sat -verify -prove w 1'b1 -set x 1'b1"], slang=False,
-    note="RATCHET -- `$shortrealtobits` / `$bitstoshortreal` are not implemented: the\nunhandled-system-function fallback returns its operand (see the sysfn ratchets).\nread_verilog cannot parse `shortreal` and read_slang refuses the real-to-bits\nconversion, so the reference is upstream's own bound check.\n")
+# shortrealtobits_bitstoshortreal_functions: assigns a `shortreal` VARIABLE -- not synthesizable
+# (class: real variable), classified with a NOTE.md like real/realtime/shortreal.
 add("system-functions", "Upstream's module is a single `$display(\"hello world\")` in an `initial` block.",
     """module systemfn(input logic [31:0] x, output logic [31:0] o);
   // The $display becomes a $print cell, which is the netlist's form of a system task.

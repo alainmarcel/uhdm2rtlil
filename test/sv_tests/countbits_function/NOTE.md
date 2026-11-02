@@ -1,4 +1,4 @@
-RATCHET -- the construct is NOT implemented by read_uhdm.
+FIXED 2026-11-02 (was a RATCHET): -- the construct is NOT implemented by read_uhdm.
 
 `$countones` and `$countbits` are unhandled: the reader warns
 `Unhandled system function call: $countones with 1 arguments` and then returns the

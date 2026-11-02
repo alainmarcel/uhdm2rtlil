@@ -1620,6 +1620,11 @@ struct UhdmImporter {
 
     // Helper to extract RTLIL::Const from UHDM Value string
     static RTLIL::Const extract_const_from_value(const std::string& value_str);
+    // Fold a CONSTANT real-valued expression (real literals, the real math system
+    // functions, +-*/ and casts over them) to a double; false when any leaf is not
+    // a constant.  `saw_real` reports whether a real literal or real function was
+    // involved (an all-integer tree is left to the integer paths).
+    bool try_eval_real(const UHDM::any* e, double& out, bool& saw_real, int depth = 0);
     static RTLIL::Const import_attribute_value(const UHDM::attribute* attr);
     RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
     

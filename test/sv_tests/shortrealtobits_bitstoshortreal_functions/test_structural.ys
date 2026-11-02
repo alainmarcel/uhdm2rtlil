@@ -1,8 +1,0 @@
-# The round trip must preserve 12.45 to within 0.001 -- upstream's own check.  read_uhdm's unhandled-system-function pass-through breaks it, so this is a RATCHET.
-read_uhdm slpp_all/surelog.uhdm
-hierarchy -check -top top
-proc
-opt -full
-check -assert
-sat -verify -prove ok 1'b1
-sat -verify -prove w 1'b1 -set x 1'b1
