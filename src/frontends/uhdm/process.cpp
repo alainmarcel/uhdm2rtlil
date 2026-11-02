@@ -13936,7 +13936,25 @@ RTLIL::SigSpec UhdmImporter::create_compound_op_cell(int vpi_op_type, RTLIL::Sig
     int width = lhs_val.size();
     RTLIL::SigSpec result = module->addWire(NEW_ID, width);
     std::string cell_name;
-    bool is_signed = false;
+
+    // `a op= b` is `a = a op b` (LRM 11.4.1), so the cell's signedness is the
+    // expression's: a shift takes it from the LEFT operand alone (11.4.10), the
+    // arithmetic operators from both.  It was hard-coded false, so `c >>>= 3`
+    // on a `logic signed [7:0]` shifted in zeros (sv-tests
+    // arith_shift_assignment_signed).
+    bool lhs_signed = false, rhs_signed = false;
+    if (uhdm_assign) {
+        if (auto l = any_cast<const expr*>(uhdm_assign->Lhs()))
+            lhs_signed = is_expr_signed(l);
+        if (auto r = any_cast<const expr*>(uhdm_assign->Rhs()))
+            rhs_signed = is_expr_signed(r);
+    } else if (lhs_val.is_wire()) {
+        lhs_signed = lhs_val.as_wire()->is_signed;
+    }
+    bool is_signed = (vpi_op_type == vpiArithLShiftOp || vpi_op_type == vpiArithRShiftOp ||
+                      vpi_op_type == vpiLShiftOp || vpi_op_type == vpiRShiftOp)
+                         ? lhs_signed
+                         : (lhs_signed && rhs_signed);
 
     // Match operand widths
     if (rhs_val.size() < width)

@@ -26,12 +26,6 @@
 # $display asserted this exact ordering.
 sv_tests/array-unpacked-assignments
 
-# `c >>>= 3` on a `logic signed [7:0]` loses its SIGNEDNESS: at -120 read_verilog
-# gives 8'hf1 (-15) and read_uhdm 8'h11 (a logical shift of 0x88).  The
-# NON-compound form `c = a >>> 3` is correct in the same test file, so the gap is
-# in the compound assignment operator alone.
-sv_tests/arith_shift_assignment_signed
-
 # A REPLICATION inside an unpacked-array assignment pattern is dropped: every
 # element it should fill reads 32'x.  `'{'{0,1,2},'{3{4}}}` fills row 1 correctly
 # and leaves row 2 entirely X; `'{2{'{3{4, 5}}}}` leaves all of both rows X.
