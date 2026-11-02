@@ -51,16 +51,6 @@ sv_tests/enum_sequence
 
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
 
-# A COMPOUND ASSIGNMENT USED AS AN EXPRESSION evaluates to the RHS alone: at
-# x = 7, `b = (a += 1)` gives read_verilog a=8/b=8 and read_uhdm a=1/b=1 -- the
-# `a +` part is lost.  `b = (a -= 1)` likewise gives 1 instead of 6.  The
-# PRE-INCREMENT form `b = (++a)` and a plain chain `a = (b = (c = x))` are both
-# correct in the same shape, so the gap is the compound operators.  Related to
-# the `>>>=` signedness loss recorded for arith_shift_assignment_signed above.
-sv_tests/assign_in_exp
-sv_tests/assign_in_exp_sim
-sv_tests/assignment_in_expression
-sv_tests/assignment_in_expression_sim
 
 # A SELECT APPLIED TO A CONCATENATION takes the wrong bits: `{b,c}[9:6]` with
 # b = 8'b10101100 and c = 8'b01010011 is 4'b0001 (b[1:0] then c[7:6]), which
@@ -193,7 +183,3 @@ sv_tests/unpack_stream_pad_sim
 sv_tests/readmemh_task
 sv_tests/readmemb_task
 
-# Compound assignments used as expressions (see assign_in_exp above), nested:
-# `d = ((b += (a+=1) + 1))`.
-sv_tests/two_assignments_in_expression
-sv_tests/two_assignments_in_expression_sim
