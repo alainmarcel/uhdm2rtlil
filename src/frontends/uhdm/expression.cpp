@@ -6,6 +6,9 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <cmath>
+#include <cstring>
+#include <map>
 #include <cctype>
 #include <algorithm>
 #include <uhdm/logic_var.h>
@@ -6820,7 +6823,117 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     log_debug("UHDM: %s returning %d (dims=%d, strip=%d)\n",
                               func_name.c_str(), result, (int)dims.size(), strip_outer_dims);
                     return RTLIL::SigSpec(RTLIL::Const(result, 32));
+                } else if (func_name == "$countones" || func_name == "$countbits" ||
+                           func_name == "$onehot" || func_name == "$onehot0" ||
+                           func_name == "$isunknown" || func_name == "$isunbounded") {
+                    // The bit-counting and bit-query functions had no
+                    // implementation and fell through to the pass-through
+                    // below, so `$countones(v)` was `v` itself (sv-tests
+                    // countbits_function and friends; read_verilog implements
+                    // all of them).
+                    int rw = (expression_context_width > 0) ? expression_context_width : 32;
+                    auto to_width = [&](RTLIL::SigSpec v) {
+                        if (v.size() < rw) v.extend_u0(rw, false);
+                        else if (v.size() > rw) v = v.extract(0, rw);
+                        return v;
+                    };
+                    // popcount: a chain of 1-bit adds, or a constant when the
+                    // operand is one.
+                    auto popcount = [&](const RTLIL::SigSpec& a) -> RTLIL::SigSpec {
+                        int w = a.size();
+                        int cw = 1; while ((1 << cw) <= w) cw++;
+                        if (a.is_fully_const()) {
+                            int n = 0;
+                            for (int i = 0; i < w; i++) if (a[i] == RTLIL::State::S1) n++;
+                            return RTLIL::SigSpec(RTLIL::Const(n, cw));
+                        }
+                        RTLIL::SigSpec acc(RTLIL::Const(0, cw));
+                        for (int i = 0; i < w; i++) {
+                            RTLIL::SigSpec bit = a.extract(i, 1);
+                            bit.extend_u0(cw, false);
+                            acc = module->Add(NEW_ID, acc, bit, false);
+                        }
+                        return acc;
+                    };
+                    if (func_name == "$isunbounded") {
+                        // True for the unbounded literal `$` and for a parameter
+                        // whose value is `$` (Surelog stores it as STRING:$).
+                        bool unb = false;
+                        if (func_call->Tf_call_args() && !func_call->Tf_call_args()->empty()) {
+                            const UHDM::any* a0 = (*func_call->Tf_call_args())[0];
+                            auto is_dollar = [](const UHDM::any* n) {
+                                if (!n) return false;
+                                if (n->UhdmType() == uhdmconstant)
+                                    return std::string(any_cast<const UHDM::constant*>(n)->VpiValue()) == "STRING:$";
+                                if (n->UhdmType() == uhdmparameter)
+                                    return std::string(any_cast<const UHDM::parameter*>(n)->VpiValue()) == "STRING:$";
+                                return false;
+                            };
+                            unb = is_dollar(a0);
+                            if (!unb && a0->UhdmType() == uhdmref_obj)
+                                unb = is_dollar(any_cast<const UHDM::ref_obj*>(a0)->Actual_group());
+                        }
+                        return RTLIL::SigSpec(RTLIL::Const(unb ? 1 : 0, 1));
+                    }
+                    if (args.empty() || args[0].size() == 0)
+                        return RTLIL::SigSpec(RTLIL::Const(0, 1));
+                    const RTLIL::SigSpec& a = args[0];
+                    if (func_name == "$isunknown") {
+                        // A synthesized netlist is two-state: only a constant
+                        // argument can be unknown.
+                        bool unk = false;
+                        if (a.is_fully_const())
+                            for (int i = 0; i < a.size(); i++)
+                                if (a[i] == RTLIL::State::Sx || a[i] == RTLIL::State::Sz) unk = true;
+                        return RTLIL::SigSpec(RTLIL::Const(unk ? 1 : 0, 1));
+                    }
+                    if (func_name == "$countones")
+                        return to_width(popcount(a));
+                    if (func_name == "$onehot" || func_name == "$onehot0") {
+                        // onehot0: a & (a - 1) == 0; onehot adds a != 0.
+                        RTLIL::SigSpec zero(RTLIL::Const(0, a.size()));
+                        RTLIL::SigSpec one(RTLIL::Const(1, a.size()));
+                        RTLIL::SigSpec am1 = module->Sub(NEW_ID, a, one, false);
+                        RTLIL::SigSpec masked = module->And(NEW_ID, a, am1, false);
+                        RTLIL::SigSpec le1 = module->Eq(NEW_ID, masked, zero, false);
+                        if (func_name == "$onehot0") return le1;
+                        RTLIL::SigSpec nz = module->Ne(NEW_ID, a, zero, false);
+                        return module->And(NEW_ID, le1, nz, false);
+                    }
+                    // $countbits(v, ctrl...): the control literals pick which
+                    // bit values are counted; x and z count 0 in a two-state
+                    // netlist, 0s are the complement of the 1s.
+                    bool want1 = false, want0 = false;
+                    if (func_call->Tf_call_args())
+                        for (size_t i = 1; i < func_call->Tf_call_args()->size(); i++) {
+                            const UHDM::any* ca = (*func_call->Tf_call_args())[i];
+                            std::string cv;
+                            if (ca->UhdmType() == uhdmconstant)
+                                cv = std::string(any_cast<const UHDM::constant*>(ca)->VpiValue());
+                            for (char& ch : cv) ch = std::tolower((unsigned char)ch);
+                            if (cv == "bin:1" || cv == "uint:1" || cv == "int:1") want1 = true;
+                            else if (cv == "bin:0" || cv == "uint:0" || cv == "int:0") want0 = true;
+                        }
+                    RTLIL::SigSpec ones = popcount(a);
+                    RTLIL::SigSpec res(RTLIL::Const(0, rw));
+                    if (want1) res = to_width(ones);
+                    if (want0) {
+                        RTLIL::SigSpec total(RTLIL::Const(a.size(), rw));
+                        RTLIL::SigSpec zeros = module->Sub(NEW_ID, total, to_width(ones), false);
+                        res = want1 ? module->Add(NEW_ID, res, zeros, false) : zeros;
+                    }
+                    return res;
                 } else {
+                    // A constant real-valued call (`$sqrt(9)`, `$atan2(2.1, 3.7)`)
+                    // with no enclosing operation folds here; see try_eval_real.
+                    {
+                        double rv = 0; bool saw_real = false;
+                        if (try_eval_real(func_call, rv, saw_real) && saw_real && std::isfinite(rv)) {
+                            int w = (expression_context_width > 0) ? expression_context_width : 32;
+                            double rounded = (rv >= 0.0) ? std::floor(rv + 0.5) : std::ceil(rv - 0.5);
+                            return RTLIL::SigSpec(RTLIL::Const((long long)rounded, w));
+                        }
+                    }
                     log_warning("Unhandled system function call: %s with %d arguments\n",
                                func_name.c_str(), (int)args.size());
                     // Return first argument if available, otherwise empty
@@ -8166,8 +8279,180 @@ bool UhdmImporter::unpacked_array_concat_geometry(const UHDM::operation* op, int
     return ew > 0 && n > 0;
 }
 
+
+// A constant expression over REAL values -- `int'($pow(2.25, 2) * 10000)`,
+// `$sqrt(9)`, `$hypot(2.1, 3.7) * 1000` -- has no RTLIL form between its leaves
+// and its integer result: the importer carries only bit vectors, so folding the
+// call alone to an integer (5 for 5.0625) and then multiplying loses the
+// fraction.  Evaluate the whole constant tree in double precision and let the
+// caller round once, at the outermost operation (or the cast).
+bool UhdmImporter::try_eval_real(const UHDM::any* e, double& out, bool& saw_real, int depth) {
+    if (!e || depth > 32) return false;
+    switch (e->UhdmType()) {
+        case uhdmconstant: {
+            auto c = any_cast<const UHDM::constant*>(e);
+            std::string v = std::string(c->VpiValue());
+            if (v.rfind("REAL:", 0) == 0 || c->VpiConstType() == vpiRealConst) {
+                std::string r = (v.rfind("REAL:", 0) == 0) ? v.substr(5) : v;
+                r.erase(std::remove(r.begin(), r.end(), '_'), r.end());
+                try { out = std::stod(r); } catch (...) { return false; }
+                saw_real = true;
+                return true;
+            }
+            if (c->VpiSize() == -1) return false;  // a fill literal has no value here
+            RTLIL::Const k = extract_const_from_value(v);
+            if (k.size() == 0 || !k.is_fully_def()) return false;
+            // sized literals are unsigned, `INT:` and `'s` ones signed
+            bool sgn = (v.rfind("INT:", 0) == 0) ||
+                       std::string(c->VpiDecompile()).find("'s") != std::string::npos;
+            if (k.size() > 64) return false;
+            if (sgn) out = (double)(long long)k.as_int(true);
+            else out = (double)(unsigned long long)k.as_int(false);
+            return true;
+        }
+        case uhdmref_obj: {
+            auto r = any_cast<const UHDM::ref_obj*>(e);
+            const UHDM::any* a = r->Actual_group();
+            if (a && a->UhdmType() == uhdmparameter) {
+                auto p = any_cast<const UHDM::parameter*>(a);
+                std::string v = std::string(p->VpiValue());
+                if (v.rfind("REAL:", 0) == 0) {
+                    try { out = std::stod(v.substr(5)); } catch (...) { return false; }
+                    saw_real = true;
+                    return true;
+                }
+                if (v.empty() && p->VpiParent() &&
+                    p->VpiParent()->UhdmType() == uhdmparam_assign) {
+                    auto pa = any_cast<const UHDM::param_assign*>(p->VpiParent());
+                    return try_eval_real(pa->Rhs(), out, saw_real, depth + 1);
+                }
+                if (!v.empty()) {
+                    RTLIL::Const k = extract_const_from_value(v);
+                    if (k.size() == 0 || k.size() > 64 || !k.is_fully_def()) return false;
+                    out = (double)(long long)k.as_int(v.rfind("INT:", 0) == 0);
+                    return true;
+                }
+            }
+            return false;
+        }
+        case uhdmoperation: {
+            auto op = any_cast<const UHDM::operation*>(e);
+            auto ops = op->Operands();
+            int t = op->VpiOpType();
+            auto arg = [&](size_t i, double& d) -> bool {
+                return ops && ops->size() > i &&
+                       try_eval_real((*ops)[i], d, saw_real, depth + 1);
+            };
+            double a = 0, b = 0;
+            switch (t) {
+                case vpiMinusOp: if (!arg(0, a)) return false; out = -a; return true;
+                case vpiPlusOp:  if (!arg(0, a)) return false; out = a;  return true;
+                case vpiAddOp:   if (!arg(0, a) || !arg(1, b)) return false; out = a + b; return true;
+                case vpiSubOp:   if (!arg(0, a) || !arg(1, b)) return false; out = a - b; return true;
+                case vpiMultOp:  if (!arg(0, a) || !arg(1, b)) return false; out = a * b; return true;
+                case vpiDivOp:   if (!arg(0, a) || !arg(1, b) || b == 0.0) return false;
+                                 out = saw_real ? a / b : std::trunc(a / b); return true;
+                case vpiPowerOp: if (!arg(0, a) || !arg(1, b)) return false; out = std::pow(a, b); return true;
+                case vpiCastOp: {
+                    // `int'(x)` / `integer'(x)`: real -> integer, rounded.  A
+                    // real-typed cast keeps the value.
+                    if (!arg(0, a)) return false;
+                    bool to_real = false;
+                    if (op->Typespec() && op->Typespec()->Actual_typespec()) {
+                        auto ts = op->Typespec()->Actual_typespec();
+                        int tt = ts->UhdmType();
+                        to_real = (tt == uhdmreal_typespec || tt == uhdmshort_real_typespec);
+                    }
+                    out = to_real ? a : ((a >= 0.0) ? std::floor(a + 0.5) : std::ceil(a - 0.5));
+                    return true;
+                }
+                default: return false;
+            }
+        }
+        case uhdmsys_func_call: {
+            auto sf = any_cast<const UHDM::sys_func_call*>(e);
+            std::string n = std::string(sf->VpiName());
+            auto args = sf->Tf_call_args();
+            auto arg = [&](size_t i, double& d) -> bool {
+                return args && args->size() > i &&
+                       try_eval_real((*args)[i], d, saw_real, depth + 1);
+            };
+            double a = 0, b = 0;
+            static const std::map<std::string, double(*)(double)> unary = {
+                {"$sqrt", [](double x){ return std::sqrt(x); }},
+                {"$ln", [](double x){ return std::log(x); }},
+                {"$log10", [](double x){ return std::log10(x); }},
+                {"$exp", [](double x){ return std::exp(x); }},
+                {"$sin", [](double x){ return std::sin(x); }},
+                {"$cos", [](double x){ return std::cos(x); }},
+                {"$tan", [](double x){ return std::tan(x); }},
+                {"$asin", [](double x){ return std::asin(x); }},
+                {"$acos", [](double x){ return std::acos(x); }},
+                {"$atan", [](double x){ return std::atan(x); }},
+                {"$sinh", [](double x){ return std::sinh(x); }},
+                {"$cosh", [](double x){ return std::cosh(x); }},
+                {"$tanh", [](double x){ return std::tanh(x); }},
+                {"$asinh", [](double x){ return std::asinh(x); }},
+                {"$acosh", [](double x){ return std::acosh(x); }},
+                {"$atanh", [](double x){ return std::atanh(x); }},
+                {"$floor", [](double x){ return std::floor(x); }},
+                {"$ceil", [](double x){ return std::ceil(x); }},
+                {"$itor", [](double x){ return x; }},
+            };
+            auto it = unary.find(n);
+            if (it != unary.end()) {
+                if (!arg(0, a)) return false;
+                out = it->second(a); saw_real = true; return true;
+            }
+            if (n == "$pow" || n == "$hypot" || n == "$atan2") {
+                if (!arg(0, a) || !arg(1, b)) return false;
+                out = (n == "$pow") ? std::pow(a, b) : (n == "$hypot") ? std::hypot(a, b) : std::atan2(a, b);
+                saw_real = true; return true;
+            }
+            if (n == "$rtoi") {
+                if (!arg(0, a)) return false;
+                out = std::trunc(a); return true;
+            }
+            // `$realtobits(r)` is the IEEE-754 pattern of r as a 64-bit integer;
+            // `$bitstoreal(b)` undoes it.  `$shortrealtobits` / `$bitstoshortreal`
+            // the same through a 32-bit float.
+            if (n == "$realtobits" || n == "$shortrealtobits") {
+                if (!arg(0, a)) return false;
+                if (n == "$realtobits") { uint64_t bits; double d = a; std::memcpy(&bits, &d, 8); out = (double)bits; }
+                else { uint32_t bits; float f = (float)a; std::memcpy(&bits, &f, 4); out = (double)bits; }
+                saw_real = true; return true;
+            }
+            if (n == "$bitstoreal" || n == "$bitstoshortreal") {
+                if (!arg(0, a)) return false;
+                if (n == "$bitstoreal") { uint64_t bits = (uint64_t)a; double d; std::memcpy(&d, &bits, 8); out = d; }
+                else { uint32_t bits = (uint32_t)a; float f; std::memcpy(&f, &bits, 4); out = (double)f; }
+                saw_real = true; return true;
+            }
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
+
+    // A constant REAL-valued tree folds here, at its outermost operation, in
+    // double precision; the integer result is rounded once (LRM 6.12.2) at the
+    // cast's or the context's width.  See try_eval_real.
+    {
+        double rv = 0; bool saw_real = false;
+        if (try_eval_real(uhdm_op, rv, saw_real) && saw_real && std::isfinite(rv)) {
+            int w = 32;
+            if (op_type == vpiCastOp && uhdm_op->Typespec() && uhdm_op->Typespec()->Actual_typespec())
+                w = get_width_from_typespec(uhdm_op->Typespec()->Actual_typespec(), current_instance);
+            else if (expression_context_width > 0) w = expression_context_width;
+            if (w <= 0) w = 32;
+            double rounded = (rv >= 0.0) ? std::floor(rv + 0.5) : std::ceil(rv - 0.5);
+            return RTLIL::SigSpec(RTLIL::Const((long long)rounded, w));
+        }
+    }
 
     // Handle side-effect operations before reduceExpr (which doesn't understand them)
     if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||

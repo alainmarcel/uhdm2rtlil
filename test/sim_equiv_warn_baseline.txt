@@ -170,9 +170,6 @@ enum_sequence
 #                                              the wrong bits (188 of 200 cycles)
 #   foreach_loop*                            : `foreach` is not unrolled in a
 #                                              comb context -- the body is lost
-#   *_function                               : the system function is not
-#                                              implemented; the reader returns
-#                                              its first argument
 assign_in_exp
 assign_in_exp_sim
 assignment_in_expression
@@ -180,15 +177,6 @@ assignment_in_expression_sim
 concat_op-bit_select
 foreach_loop
 foreach_loop_synth
-atan2_function
-exp_function
-hypot_function
-ln_function
-log10_function
-onehot0_function
-onehot_function
-pow_function
-sqrt_function
 # ---- sv-tests conversion campaign, batch 5 (2026-10-31) ------------------
 # Both divergences are a DIRECT CONSEQUENCE of a reader defect already tracked,
 # with its measurement, in structural_expected_fail.txt:
@@ -217,19 +205,13 @@ operations-on-unpacked-arrays-variable-slice-rw
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # Co-sim rows of tests ratcheted in structural_expected_fail.txt (the netlist
 # IS wrong, so the divergence is expected until the reader fix lands):
-# `$isunbounded`/`$isunknown` unhandled sysfunc pass-through
-isunbounded_function
-isunknown_function
 # packed SIGNED struct read unsigned (0x92 vs 0xffffff92)
 packed-and-signed-structures
 # `$readmem*` initialisation dropped
 readmemb_task
 readmemh_task
-# real literal with exponent + underscores folded wrong; $realtobits/$bitstoreal
-# and the shortreal pair not folded
+# real literal with exponent + underscores folded wrong
 real-constants
-realtobits_bitstoreal_functions
-shortrealtobits_bitstoshortreal_functions
 # struct type-key / pattern order, replicated pattern dropped, element pattern
 structure
 structure-arrays

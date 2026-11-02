@@ -49,12 +49,6 @@ sv_tests/arrays-key-index
 # and fabricates a wire, where read_slang resolves step0..step9 to 11..20.
 sv_tests/enum_sequence
 
-# $countones / $countbits are not implemented: the reader warns
-# `Unhandled system function call` and returns the ARGUMENT, so all five counts
-# read 1879082017 at 32'h70008421 instead of 7 / 25 / 32 / 0.  read_verilog is
-# the oracle; read_slang refuses the functions outright so there is no miter.
-sv_tests/countbits_function
-
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
 
 # A COMPOUND ASSIGNMENT USED AS AN EXPRESSION evaluates to the RHS alone: at
@@ -81,20 +75,6 @@ sv_tests/concat_op-bit_select
 # cannot parse `foreach`, so read_slang is the oracle.
 sv_tests/foreach_loop
 sv_tests/foreach_loop_synth
-
-# Nine constant SYSTEM FUNCTIONS that read_uhdm does not implement: it warns
-# `Unhandled system function call` and returns the FIRST ARGUMENT.  read_verilog
-# computes all nine and is the oracle; read_slang refuses $countbits so there is
-# no miter for that one.  One underlying gap -- see the NOTE.md in each.
-sv_tests/atan2_function
-sv_tests/exp_function
-sv_tests/hypot_function
-sv_tests/ln_function
-sv_tests/log10_function
-sv_tests/onehot0_function
-sv_tests/onehot_function
-sv_tests/pow_function
-sv_tests/sqrt_function
 
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
 
@@ -176,15 +156,6 @@ sv_tests/packed-and-signed-structures
 # DROPPED: `struct { rand bit i; randc integer b[9:0]; }` is 321 bits on
 # read_slang and 1 on read_uhdm.
 sv_tests/typedef_test_18
-
-# Unhandled-system-function pass-through, more members of the family already
-# ratcheted above: $realtobits/$bitstoreal (12.45 round-trips as 12.00),
-# $shortrealtobits/$bitstoshortreal, $isunknown (returns x for 4'b000x where
-# read_verilog gives 1) and $isunbounded (returns its operand).
-sv_tests/realtobits_bitstoreal_functions
-sv_tests/shortrealtobits_bitstoshortreal_functions
-sv_tests/isunknown_function
-sv_tests/isunbounded_function
 
 
 
