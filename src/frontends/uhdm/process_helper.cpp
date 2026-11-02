@@ -2911,6 +2911,32 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 }
                 break;
             }
+            case vpiSysFuncCall:
+            case vpiSysTaskCall: {
+                // `initial $readmemh("f", mem);` LOADS the whole array, and
+                // emit_initial_readmem can only fill a $mem (read_verilog
+                // carries the load as a $meminit on one).  An array whose only
+                // other access is a continuous `assign rd = mem[addr]` has no
+                // process access at all, scored constant-indexed, became
+                // per-element wires, and the load was dropped on the floor
+                // ("Unsupported statement type in sync context: 56"; sv-tests
+                // readmemh_task / readmemb_task).  Score the loaded array dynamic.
+                auto tfc = dynamic_cast<const UHDM::tf_call*>(stmt);
+                if (tfc) {
+                    std::string nm = std::string(tfc->VpiName());
+                    if ((nm == "$readmemh" || nm == "$readmemb") && tfc->Tf_call_args() &&
+                        tfc->Tf_call_args()->size() >= 2) {
+                        const any* tgt = (*tfc->Tf_call_args())[1];
+                        if (tgt && tgt->VpiType() == vpiRefObj &&
+                            std::string(any_cast<const ref_obj*>(tgt)->VpiName()) == array_name) {
+                            uhdm_trace("UHDM: array '%s' is the target of %s -- a $mem\n",
+                                       array_name.c_str(), nm.c_str());
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
         }
         
         return true;  // No non-constant access found

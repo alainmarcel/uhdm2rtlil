@@ -149,9 +149,4 @@ sv_tests/structure-arrays
 sv_tests/unpack_stream_pad
 sv_tests/unpack_stream_pad_sim
 
-# `$readmemh` / `$readmemb` in an `initial` block are unsupported: both references
-# lower them into the memory's INIT (one $mem_v2); read_uhdm warns `Unsupported
-# statement type in sync context` and produces NO memory at all.
-sv_tests/readmemh_task
-sv_tests/readmemb_task
 

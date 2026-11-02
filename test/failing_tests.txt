@@ -411,10 +411,6 @@ sv_tests/array-unpacked-assignments
 # Each of these is ratcheted in structural_expected_fail.txt (and, where
 # read_slang parses the construct, slang_miter_expected_fail.txt); read_verilog
 # is the oracle, so the whole uhdm-vs-verilog comparison fails too.
-# `$readmemb` / `$readmemh` from an initial block: the memory initialisation
-# is dropped, every read gives 0 where read_verilog gives the file contents.
-sv_tests/readmemb_task
-sv_tests/readmemh_task
 # A real literal written with an exponent and digit underscores (`1_0.5e-1`)
 # is folded to the wrong integer.
 sv_tests/real-constants

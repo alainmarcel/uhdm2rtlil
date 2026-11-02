@@ -896,3 +896,21 @@ Test: tribuf
     z, so the co-sim mismatches whenever `en = 0, i = 1` -- the same
     x/z-versus-two-state class as the other entries here, not a frontend
     difference.
+
+Test: readmemh_task
+    `initial $readmemh("test1.mem", mem)` loads 16 of the 1024 words of
+    `logic [31:0] mem [1023:0]`; the other 1008 are never written, so a read
+    there is UNDEFINED.  Both frontends carry the load as a $meminit and yosys
+    folds the read-only memory to the 16 defined words -- the synthesized
+    netlist is `rd = {4'h0, addr[3:0], ...}` (the payload is word i =
+    0x0i0i0i0i) from read_uhdm and read_verilog alike, byte-identical.  The
+    co-sim's RTL side is two-state Verilator, which reads an unloaded word as
+    0, so every cycle whose random address lands above 15 differs: a
+    synthesis-of-x versus two-state artefact, not a frontend difference (the
+    miter proves UHDM == Verilog).  The in-range reads are what the test is
+    for and they agree.
+
+Test: readmemb_task
+    Same as readmemh_task with `$readmemb` and a 16-word binary payload: the
+    1008 unloaded words are undefined, yosys folds both frontends' netlists to
+    the loaded words, and Verilator's two-state RTL reads 0 there instead.
