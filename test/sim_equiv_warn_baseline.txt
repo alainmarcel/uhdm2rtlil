@@ -182,10 +182,8 @@ event_control_edge
 let_construct
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
-#   parameter_type : a `real` measured as 32 bits instead of 64
 #   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an
 #       UNPACKED array loses the array (the packed form is correct)
-parameter_type
 operations-on-unpacked-arrays-variable-slice-rw
 
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------

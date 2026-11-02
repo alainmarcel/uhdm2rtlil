@@ -83,13 +83,6 @@ sv_tests/let_construct
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
 
-# A `real` is measured as 32 BITS, not 64.  `$bits(T)` with `T` a type parameter
-# defaulting to `real` gives read_slang 64 and read_uhdm 32; `$bits(real)` written
-# directly gives read_slang 64 and read_uhdm 0, with `Empty argument in
-# sys_func_call $bits` -- the type keyword is not accepted as an argument at all.
-# read_verilog cannot parse a `type` parameter, so read_slang is the oracle.
-sv_tests/parameter_type
-
 # An INDEXED PART-SELECT of an UNPACKED array loses the array: read_uhdm warns
 # `Base signal 'arr_a' not found in module or generate scope` for both operands of
 # `arr_b[4+:c] = arr_a[1+:c]` and the destination reads all-zeros, where read_slang
