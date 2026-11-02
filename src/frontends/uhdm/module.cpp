@@ -4881,6 +4881,12 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         }
 
         // Handle built-in integer types with known widths
+        // `real` is 64 bits and `shortreal` 32 (LRM 6.12): `$bits(T)` with a
+        // type parameter defaulting to `real` measured 32 (sv-tests
+        // parameter_type; read_slang gives 64).  Only the WIDTH is meaningful
+        // here -- a real variable is not synthesizable, a real CONSTANT folds.
+        if (typespec->UhdmType() == uhdmreal_typespec) return 64;
+        if (typespec->UhdmType() == uhdmshort_real_typespec) return 32;
         if (typespec->UhdmType() == uhdmbyte_typespec) return 8;
         if (typespec->UhdmType() == uhdmshort_int_typespec) return 16;
         if (typespec->UhdmType() == uhdmint_typespec) return 32;
