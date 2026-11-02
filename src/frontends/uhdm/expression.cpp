@@ -13471,22 +13471,43 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             const UHDM::VectorOfrange* rgs = nullptr;
             if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at2))
                 if (!lt->Elem_typespec()) rgs = lt->Ranges();
+            int dli = 0, dri = 0; bool have_decl = false;
             if (rgs && rgs->size() == 1) {
                 auto r0 = (*rgs)[0];
                 RTLIL::SigSpec dl = import_expression(r0->Left_expr(), input_mapping);
                 RTLIL::SigSpec dr = import_expression(r0->Right_expr(), input_mapping);
                 if (dl.is_fully_const() && dr.is_fully_const()) {
-                    int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
-                    int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
-                    int ilo = std::min(left, right), ihi = std::max(left, right);
-                    if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
-                        ilo >= dlow && ihi <= dhigh) {
-                        offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
-                                              : (dhigh - ihi);    // ascending  [lo:hi]
-                        uhdm_trace("    part_select: non-zero-based vector [%d:%d], "
-                            "select [%d:%d] -> bits [%d+:%d]\n",
-                            dli, dri, left, right, offset, width);
-                    }
+                    dli = dl.as_const().as_int(); dri = dr.as_const().as_int();
+                    have_decl = true;
+                }
+            } else if (!rgs && !base_signal_name.empty()) {
+                // No Actual_group (a part_select in a module DEFINITION has
+                // none) -- the declared range is still on the module's own
+                // wire of that name (`reg [31:16] shift_right_fill_r`,
+                // start_offset 16).  Without it the IN-FLIGHT value of such a
+                // register -- not a wire, so the geometry branch below never
+                // sees it -- was sliced at the declared indices and
+                // `fill[31:24]` came back X: biriscv's ALU lost every
+                // arithmetic-shift fill bit, but only as a CHILD of
+                // biriscv_exec (the top-level instance has the Actual_group).
+                RTLIL::Wire* dw = find_wire_in_scope(base_signal_name, "");
+                if (dw && (dw->start_offset != 0 || dw->upto) &&
+                    dw->width == base.size()) {
+                    if (dw->upto) { dli = dw->start_offset; dri = dw->start_offset + dw->width - 1; }
+                    else          { dli = dw->start_offset + dw->width - 1; dri = dw->start_offset; }
+                    have_decl = true;
+                }
+            }
+            if (have_decl) {
+                int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+                int ilo = std::min(left, right), ihi = std::max(left, right);
+                if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
+                    ilo >= dlow && ihi <= dhigh) {
+                    offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
+                                          : (dhigh - ihi);    // ascending  [lo:hi]
+                    uhdm_trace("    part_select: non-zero-based vector [%d:%d], "
+                        "select [%d:%d] -> bits [%d+:%d]\n",
+                        dli, dri, left, right, offset, width);
                 }
             }
         }

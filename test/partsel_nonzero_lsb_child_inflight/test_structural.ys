@@ -1,0 +1,8 @@
+# The VALUE gate: an arithmetic right shift by 10 of a negative operand must
+# fill its top ten bits with ones.  Without the fix every `fill[...]` slice is
+# X and the proof fails.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -prove y 32'hfff7a802 -set a 32'hdea00812 -set b 5'd10 -set arith 1'b1
+sat -verify -prove y 32'h0037a802 -set a 32'hdea00812 -set b 5'd10 -set arith 1'b0
