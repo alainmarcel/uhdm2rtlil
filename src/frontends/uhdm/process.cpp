@@ -322,6 +322,19 @@ void UhdmImporter::import_immediate_cover(const UHDM::immediate_cover* cover_stm
     log_flush();
 }
 
+// Import immediate assume as $check cell (FLAVOR="assume").  It was the one
+// immediate assertion with no handler, so `initial assume (a != 0)` was
+// dropped while the matching assert and cover reached the netlist (sv-tests
+// assume_test).
+void UhdmImporter::import_immediate_assume(const UHDM::immediate_assume* assume_stmt, RTLIL::Wire*& enable_wire) {
+    if (!assume_stmt || !assume_stmt->Expr()) {
+        return;
+    }
+    build_check_cell(this, assume_stmt, assume_stmt->Expr(), "assume", enable_wire);
+    uhdm_trace("        Created $check cell for assume\n");
+    log_flush();
+}
+
 // Import a process statement (always block)
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
@@ -938,6 +951,13 @@ void wbr_scan_stmt(const UHDM::any* stmt, WbrState& st) {
         }
         case vpiImmediateAssert: {
             auto ia = any_cast<const UHDM::immediate_assert*>(stmt);
+            wbr_scan_expr(ia->Expr(), st);
+            wbr_scan_stmt(ia->Stmt(), st);
+            wbr_scan_stmt(ia->Else_stmt(), st);
+            break;
+        }
+        case vpiImmediateAssume: {
+            auto ia = any_cast<const UHDM::immediate_assume*>(stmt);
             wbr_scan_expr(ia->Expr(), st);
             wbr_scan_stmt(ia->Stmt(), st);
             wbr_scan_stmt(ia->Else_stmt(), st);
@@ -7295,6 +7315,15 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             break;
         }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+            break;
+        }
         case vpiImmediateCover: {
             uhdm_trace("        Processing immediate cover - converting to $check cell\n");
             log_flush();
@@ -9474,6 +9503,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
 
             uhdm_trace("        Immediate assert processed\n");
             log_flush();
+            break;
+        }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
             break;
         }
         case vpiImmediateCover: {
@@ -21681,6 +21719,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
 
             uhdm_trace("        Immediate assert processed in case\n");
+            break;
+        }
+        case vpiImmediateAssume: {
+            const UHDM::immediate_assume* assume_stmt = any_cast<const UHDM::immediate_assume*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assume(assume_stmt, enable_wire);
+            if (enable_wire) {
+                case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
             break;
         }
         case vpiImmediateCover: {

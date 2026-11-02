@@ -2073,7 +2073,7 @@ proof are its gates.  An upstream yosys capability gap, not a reader defect.
 #   form                              read_verilog  read_slang  read_uhdm
 #   initial assert                         1             0*         1
 #   initial cover                          1             0*         1
-#   initial assume                         1             0*         0   <- defect
+#   initial assume                         1             0*         1   (0 before 2026-11-02)
 #   assert/assume/cover #0                 -             0          0
 #   assert/assume/cover final              -             0          0
 #   assume property                        -             0          0
@@ -2081,8 +2081,9 @@ proof are its gates.  An upstream yosys capability gap, not a reader defect.
 #   * read_slang is read with --ignore-assertions in the miter, so it emits none
 #     by construction; `-` means read_verilog cannot PARSE the form at all.
 #
-# So only three of the ten forms reach a netlist anywhere.  `initial assume` is a
-# read_uhdm defect with read_verilog as the oracle; the deferred, `final` and
+# So only three of the ten forms reach a netlist anywhere.  `initial assume` was a
+# read_uhdm defect (no handler for the one immediate form; fixed 2026-11-02 with
+# read_verilog as the oracle); the deferred, `final` and
 # concurrent-property forms are emitted by NONE of the three, so those tests
 # claim only what is true -- the form is accepted and the surrounding logic
 # survives -- and say so in their NOTE.
