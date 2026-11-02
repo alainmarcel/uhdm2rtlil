@@ -194,9 +194,6 @@ operations-on-unpacked-arrays-variable-slice-rw
 # IS wrong, so the divergence is expected until the reader fix lands):
 # packed SIGNED struct read unsigned (0x92 vs 0xffffff92)
 packed-and-signed-structures
-# `$readmem*` initialisation dropped
-readmemb_task
-readmemh_task
 # real literal with exponent + underscores folded wrong
 real-constants
 # struct type-key / pattern order, replicated pattern dropped, element pattern
