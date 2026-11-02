@@ -164,16 +164,10 @@ enum_sequence
 # rather than in sim_equiv_analyzed.txt because the miter correctly calls them a
 # BUG, which would hard-fail the test: the divergence is real and the netlist is
 # wrong.  Every list must lose the entry in the commit that fixes the defect.
-#   assign_in_exp*/assignment_in_expression* : a compound assignment used as an
-#                                              expression yields the RHS alone
 #   concat_op-bit_select                     : a select on a concatenation takes
 #                                              the wrong bits (188 of 200 cycles)
 #   foreach_loop*                            : `foreach` is not unrolled in a
 #                                              comb context -- the body is lost
-assign_in_exp
-assign_in_exp_sim
-assignment_in_expression
-assignment_in_expression_sim
 concat_op-bit_select
 foreach_loop
 foreach_loop_synth
@@ -220,9 +214,6 @@ structure-replication
 task_automatic
 # time literals (`10ns`) folded in the wrong unit
 time-literals
-# compound assignment as an expression yields the RHS alone
-two_assignments_in_expression
-two_assignments_in_expression_sim
 # a padded streaming unpack places the pad word at the wrong end
 unpack_stream_pad
 unpack_stream_pad_sim

@@ -31,10 +31,6 @@ sv_tests/enum_sequence
 # read_slang computes upstream's values and read_uhdm does not, so the miter
 # finds a counterexample.  Reasons are recorded against the same tests in
 # structural_expected_fail.txt.
-sv_tests/assign_in_exp
-sv_tests/assign_in_exp_sim
-sv_tests/assignment_in_expression
-sv_tests/assignment_in_expression_sim
 sv_tests/concat_op-bit_select
 sv_tests/foreach_loop
 sv_tests/foreach_loop_synth
@@ -72,5 +68,3 @@ sv_tests/structure
 sv_tests/structure-replication
 sv_tests/unpack_stream_pad
 sv_tests/unpack_stream_pad_sim
-sv_tests/two_assignments_in_expression
-sv_tests/two_assignments_in_expression_sim

@@ -405,12 +405,6 @@ sv_tests/array-unpacked-assignments
 # computes a different value.  Each defect is measured and written out in
 # structural_expected_fail.txt; these entries exist because the WHOLE test
 # fails, not just one check, and must be removed in the commit that fixes it.
-#   assign_in_exp* / assignment_in_expression* : a compound assignment used as
-#       an expression yields the RHS alone (a=1,b=1 where the golden gives 8,8)
-sv_tests/assign_in_exp
-sv_tests/assign_in_exp_sim
-sv_tests/assignment_in_expression
-sv_tests/assignment_in_expression_sim
 
 
 
@@ -432,10 +426,6 @@ sv_tests/readmemh_task
 # A real literal written with an exponent and digit underscores (`1_0.5e-1`)
 # is folded to the wrong integer.
 sv_tests/real-constants
-# A compound assignment used as an EXPRESSION (`b = (a += 1)`) yields the RHS
-# alone instead of the updated variable.
-sv_tests/two_assignments_in_expression
-sv_tests/two_assignments_in_expression_sim
 
 # ---- inner-dimension geometry (2026-11-02) ---------------------------------
 # The query half of this test is fixed ($bits of the selected element is 256),
