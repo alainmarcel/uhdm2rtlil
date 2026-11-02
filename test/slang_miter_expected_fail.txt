@@ -53,6 +53,5 @@ sv_tests/packed-and-signed-structures
 sv_tests/typedef_test_18
 sv_tests/real-constants
 sv_tests/time-literals
-sv_tests/task_automatic
 sv_tests/structure
 sv_tests/structure-replication

@@ -109,11 +109,6 @@ sv_tests/real-constants
 # gives 1000000 / 1000 / 1000000000 / 2000000000 (1ns comes out LARGER than 1us).
 sv_tests/time-literals
 
-# A TASK-LOCAL declaration with an initialiser, and `++` on it, are unsupported in
-# a task body (`Unsupported expression type: int_var`, `Unsupported statement type
-# 39 in task body`): the output reads x where read_slang gives i + 1.
-sv_tests/task_automatic
-
 # Assignment-pattern defects on STRUCTS: with two TYPE KEYS for the same type the
 # FIRST wins instead of the LAST (`'{int:0, int:1}` gives a = 0, read_slang 1); a
 # REPLICATION into a struct drops the middle member (`'{3{1}}` gives Y = 0); and
