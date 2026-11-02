@@ -31,12 +31,6 @@ sv_tests/enum_sequence
 # structural_expected_fail.txt.
 sv_tests/concat_op-bit_select
 
-# ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
-# read_slang honours the early bare `return` and read_uhdm does not, so the
-# miter finds a counterexample.  Reason recorded against the same test in
-# structural_expected_fail.txt.
-sv_tests/jump_return
-
 # ---- sv-tests conversion campaign, batch 5 (2026-10-31) -------------------
 # read_slang resolves the ranged enum's generated members and read_uhdm does not.
 sv_tests/enum_sequence_range

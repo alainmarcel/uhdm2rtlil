@@ -11347,8 +11347,23 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             // Process statements in the block
             VectorOfany* stmts = begin_block_stmts(bg);
             if (stmts) {
-                for (auto s : *stmts) {
+                for (size_t si = 0; si < stmts->size(); si++) {
+                    const any* s = (*stmts)[si];
                     if (tf_call_returned) break;  // honour an earlier `return`
+                    // A bare `return` INSIDE an if arm is a control transfer
+                    // the arm importer (import_if_stmt_comb) knows nothing
+                    // about: the statements after the `if` ran either way
+                    // (sv-tests jump_return: `r = 1; if (a == 21) return;
+                    // r = 2;` always gave 2).  Rewrite `if (c) {A; return;}
+                    // REST` as `if (c) {A} else {REST}` and let the arm
+                    // importer do the guarding.
+                    if (si + 1 < stmts->size() &&
+                        (s->VpiType() == vpiIf || s->VpiType() == vpiIfElse)) {
+                        if (const any* guarded = return_guarded_rest(s, stmts, si)) {
+                            inline_task_body_comb(guarded, proc, task_mapping, context, new_prefix, process_src);
+                            break;
+                        }
+                    }
                     inline_task_body_comb(s, proc, task_mapping, context, new_prefix, process_src);
                 }
             }
@@ -11914,6 +11929,61 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
 // import died on "Could not find wire 'arr' for bit select" -- RSD
 // CommitStage's GetInsnPtr (`headOfThisInsn[i] = j + 1`).  Resolve the element
 // slice from the declaration's geometry, as the read path already does.
+// Does this arm end the body?  A bare `return` as the arm itself, or at the
+// top level of the arm's begin block.
+static bool tf_arm_returns(const UHDM::any* st) {
+    if (!st) return false;
+    if (st->VpiType() == vpiReturn)
+        return any_cast<const UHDM::return_stmt*>(st)->VpiCondition() == nullptr;
+    const UHDM::VectorOfany* stmts = nullptr;
+    if (auto b = dynamic_cast<const UHDM::begin*>(st)) stmts = b->Stmts();
+    else if (auto nb = dynamic_cast<const UHDM::named_begin*>(st)) stmts = nb->Stmts();
+    if (stmts)
+        for (auto x : *stmts)
+            if (x && x->VpiType() == vpiReturn &&
+                any_cast<const UHDM::return_stmt*>(x)->VpiCondition() == nullptr)
+                return true;
+    return false;
+}
+
+const UHDM::any* UhdmImporter::return_guarded_rest(const UHDM::any* if_node, UHDM::VectorOfany* stmts, size_t idx) {
+    const expr* cond = nullptr;
+    const any* then_st = nullptr;
+    const any* else_st = nullptr;
+    if (if_node->VpiType() == vpiIf) {
+        auto is = any_cast<const UHDM::if_stmt*>(if_node);
+        cond = is->VpiCondition(); then_st = is->VpiStmt();
+    } else {
+        auto ie = any_cast<const UHDM::if_else*>(if_node);
+        cond = ie->VpiCondition(); then_st = ie->VpiStmt(); else_st = ie->VpiElseStmt();
+    }
+    bool then_ret = tf_arm_returns(then_st);
+    bool else_ret = tf_arm_returns(else_st);
+    if (!cond || then_ret == else_ret) return nullptr;  // neither, or both (REST is dead)
+    UHDM::Serializer* ser = uhdm_design->GetSerializer();
+    // The continuing arm: its own statements, then everything after the `if`.
+    UHDM::begin* rest = ser->MakeBegin();
+    UHDM::VectorOfany* v = ser->MakeAnyVec();
+    const any* cont = then_ret ? else_st : then_st;
+    if (cont) v->push_back(const_cast<any*>(cont));
+    for (size_t k = idx + 1; k < stmts->size(); k++) v->push_back((*stmts)[k]);
+    rest->Stmts(v);
+    rest->VpiParent(const_cast<any*>(if_node->VpiParent()));
+    UHDM::if_else* ie = ser->MakeIf_else();
+    ie->VpiCondition(const_cast<expr*>(cond));
+    ie->VpiStmt(const_cast<any*>(then_ret ? then_st : rest));
+    ie->VpiElseStmt(const_cast<any*>(then_ret ? rest : else_st));
+    ie->VpiParent(const_cast<any*>(if_node->VpiParent()));
+    ie->VpiFile(if_node->VpiFile());
+    ie->VpiLineNo(if_node->VpiLineNo());
+    ie->VpiColumnNo(if_node->VpiColumnNo());
+    ie->VpiEndLineNo(if_node->VpiEndLineNo());
+    ie->VpiEndColumnNo(if_node->VpiEndColumnNo());
+    uhdm_trace("    inlined body: `return` inside an if arm -- the %zu following statement(s) now run in the other arm\n",
+               stmts->size() - idx - 1);
+    return ie;
+}
+
 bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_out) {
     if (!lhs_expr) return false;
     int lt = lhs_expr->VpiType();
@@ -21952,6 +22022,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
         case vpiWhile:
             import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), case_rule);
+            break;
+        case vpiReturn:
+            // A bare `return` in an inlined body's arm: the statements it
+            // skips were moved to the other arm by return_guarded_rest.
             break;
         default:
             if (mode_debug)

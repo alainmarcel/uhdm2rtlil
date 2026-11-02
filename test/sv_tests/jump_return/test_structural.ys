@@ -1,4 +1,4 @@
-# The bare `return` must skip the rest of the body: at upstream's 21 the result is the first value, and at any other argument the second.  read_slang does that; read_uhdm reaches the second write either way, which is why this is a RATCHET -- see NOTE.md.
+# The bare `return` must skip the rest of the body: at upstream's 21 the result is the first value, and at any other argument the second.  read_slang does that, and so does read_uhdm since 2026-11-02 (it used to reach the second write either way) -- see NOTE.md.
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top jump_tb
 proc

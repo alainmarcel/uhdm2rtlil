@@ -1547,6 +1547,9 @@ struct UhdmImporter {
     static std::string param_value_for_name(const std::string& value);
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     UHDM::VectorOfany *begin_block_stmts(const any *stmt);
+    // `if (c) { ...; return; } REST` inside an inlined task / void-function body:
+    // a synthesized `if (c) {...} else { REST }` (nullptr when no arm returns).
+    const UHDM::any* return_guarded_rest(const UHDM::any* if_node, UHDM::VectorOfany* stmts, size_t idx);
     void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
     // Whether an offset/index expression (of an indexed part-select or a
     // bit-select LHS) references a runtime signal or an UNSUBSTITUTED for-loop
