@@ -197,7 +197,5 @@ real-constants
 structure
 structure-arrays
 structure-replication
-# task locals: an automatic task's locals read 0
-task_automatic
 # time literals (`10ns`) folded in the wrong unit
 time-literals

@@ -11427,9 +11427,13 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             bool dyn_bit_select_handled = false;
             if (auto lhs_expr = a_lhs) {
                 int lhs_type = lhs_expr->VpiType();
-                if (lhs_type == vpiRefObj) {
-                    const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
-                    lhs_name = std::string(lhs_ref->VpiName());
+                if (lhs_type == vpiRefObj || dynamic_cast<const UHDM::variables*>(lhs_expr)) {
+                    // A task-local DECLARATION WITH AN INITIALISER (`int a = 0;`)
+                    // arrives as an assignment whose LHS is the int_var ITSELF,
+                    // not a ref_obj to it; by name it is the same local
+                    // (sv-tests task_automatic: "Unsupported expression type:
+                    // int_var", the local read x).
+                    lhs_name = std::string(lhs_expr->VpiName());
 
                     // Check task_mapping, but only use it if it maps to a task-local temp wire
                     // (names starting with "$0\"). Values from current_comb_values (constants,
@@ -11696,6 +11700,36 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                 else
                     current_comb_values.erase(name);
             }
+            break;
+        }
+        case vpiOperation: {
+            // `a++` / `a--` / `++a` / `--a` on a task local as a STATEMENT
+            // (sv-tests task_automatic: "Unsupported statement type 39 in task
+            // body").  Rewrite it as the assignment `a = a + 1` and let the
+            // assignment case do the mapping.
+            auto op = any_cast<const operation*>(stmt);
+            int ot = op ? op->VpiOpType() : 0;
+            if (!(ot == vpiPostIncOp || ot == vpiPreIncOp || ot == vpiPostDecOp || ot == vpiPreDecOp) ||
+                !op->Operands() || op->Operands()->empty()) {
+                log_warning("Unsupported operation type %d as statement in task body\n", ot);
+                break;
+            }
+            UHDM::Serializer* ser = uhdm_design->GetSerializer();
+            any* operand = (*op->Operands())[0];
+            UHDM::constant* one = ser->MakeConstant();
+            one->VpiValue("INT:1"); one->VpiDecompile("1"); one->VpiConstType(vpiIntConst); one->VpiSize(32);
+            UHDM::operation* sum = ser->MakeOperation();
+            sum->VpiOpType((ot == vpiPostIncOp || ot == vpiPreIncOp) ? vpiAddOp : vpiSubOp);
+            UHDM::VectorOfany* ops = ser->MakeAnyVec();
+            ops->push_back(operand); ops->push_back(one);
+            sum->Operands(ops); one->VpiParent(sum);
+            UHDM::assignment* asg = ser->MakeAssignment();
+            asg->Lhs(any_cast<expr*>(operand)); asg->Rhs(sum); sum->VpiParent(asg);
+            asg->VpiOpType(vpiAssignmentOp);
+            asg->VpiParent(const_cast<any*>(stmt->VpiParent()));
+            asg->VpiFile(stmt->VpiFile()); asg->VpiLineNo(stmt->VpiLineNo()); asg->VpiColumnNo(stmt->VpiColumnNo());
+            asg->VpiEndLineNo(stmt->VpiEndLineNo()); asg->VpiEndColumnNo(stmt->VpiEndColumnNo());
+            inline_task_body_comb(asg, proc, task_mapping, context, block_prefix, process_src);
             break;
         }
         case vpiFuncCall:
