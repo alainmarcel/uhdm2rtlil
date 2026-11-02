@@ -33,17 +33,14 @@ set -e
 ROOT=$PWD                              # the gemmini checkout ($EXT_IP_ROOT/gemmini)
 ROCKET=${ROCKET_DIR:-$(cd "$ROOT/../rocket-chip" && pwd)}
 HARNESS=${GEMMINI_HARNESS:-$(cd "$(dirname "$0")/gemmini_harness" && pwd)}
-TOOLS=${ROCKET_TOOLS:-$HOME/ext/tools}
-FIRTOOL_VERSION=1.162.0
 CONFIG=${GEMMINI_CONFIG:-gemminisweep.LeanGemminiRocketConfig}
 TOP=${GEMMINI_TOP:-freechips.rocketchip.system.TestHarness}
 OUT=$ROOT/gemmini_sv
 
-export PATH="$TOOLS/bin:$TOOLS/firtool-$FIRTOOL_VERSION/bin:$PATH"
 [ -d "$ROCKET" ] || { echo "gemmini_setup: no rocket-chip checkout at $ROCKET" >&2; exit 2; }
-command -v mill    >/dev/null || { echo "gemmini_setup: mill missing -- run rocket_setup.sh first" >&2; exit 2; }
-command -v firtool >/dev/null || { echo "gemmini_setup: firtool missing -- run rocket_setup.sh first" >&2; exit 2; }
-command -v dtc     >/dev/null || { echo "gemmini_setup: dtc missing -- run rocket_setup.sh first" >&2; exit 2; }
+# mill, firtool and dtc: installed here when missing (a cold CI runner has
+# none of them -- rocket_setup.sh runs in ANOTHER job), shared with it.
+source "$(dirname "$0")/rocket_tools.sh" "$ROCKET"
 
 cd "$ROCKET"
 git submodule update --init --recursive --depth 1 2>/dev/null || git submodule update --init --recursive

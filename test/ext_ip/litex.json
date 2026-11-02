@@ -15,7 +15,7 @@
    [
     "bash",
     "-c",
-    "python3 litex/litex_setup.py --init --install --user --tag 2026.08 && export PATH=$HOME/.local/bin:$PATH && litex_sim --cpu-type=vexriscv --output-dir=build/sim_vexriscv --no-compile"
+    "python3 litex/litex_setup.py --init --install --user --break-system-packages --tag 2026.08 && export PATH=$HOME/.local/bin:$PATH && litex_sim --cpu-type=vexriscv --output-dir=build/sim_vexriscv --no-compile"
    ]
   ],
   "timeout": 3600
