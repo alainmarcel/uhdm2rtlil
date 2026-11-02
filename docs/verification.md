@@ -35,33 +35,34 @@ Yosys suite -- the same run as the sharded
 workflow (every PR + nightly); the developer run is
 `cd test && ./run_parallel.sh 6 --no-cva6` (the internal tests, ~24 min), and
 a PR lands only on a clean run.  The counts are the regression's own summary
-of main at `5d97aff5a` (2026-10-25, run 40195316215), not a tally kept by
-hand; "upstream" is the 515 generated yosys tests the suite scores.  The 11
+of main at `b4073a653` (2026-11-02, run 41474238595), not a tally kept by
+hand; "upstream" is the 516 generated yosys tests the suite scores.  The 11
 upstream failures are the Yosys 0.70 bump's, each recorded in
 `test/failing_tests.txt`.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 1879 | 1364 | 515 |
-| Functional | 1832 (97%) | 1328 | 504 |
+| Tests | 2336 | 1820 | 516 |
+| Functional | 2287 (98%) | 1782 | 505 |
 | True failures | 11 | **0** | 11 |
 | Crashes | **0** | **0** | **0** |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **1100** tests formally equivalent UHDM vs Verilog; **732** UHDM-only
+- **999** tests formally equivalent UHDM vs Verilog; **783** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **350 / 351** SV-only designs also proven against `read_slang` (1 known-fail,
-  tracked in `test/slang_miter_expected_fail.txt`), and **96**
-  carry a `test_structural.ys` netlist-SHAPE gate for defects no formal check
+  **688 / 705** SV-only designs also proven against `read_slang` (17 known-fail,
+  each with its reason in `test/slang_miter_expected_fail.txt`), and **550**
+  carry a `test_structural.ys` netlist-SHAPE gate (532 pass, 18 known-fail in
+  `test/structural_expected_fail.txt`) for defects no formal check
   can see (a dropped flop, a missing `$mem` or a dropped clock connection still
   "works" — it just returns constants).
-- **16 equivalence failures**, each with a recorded verdict in
+- **18 equivalence failures**, each with a recorded verdict in
   `test/failing_tests.txt`.  In several the *reference* is the wrong side
   (`read_verilog` mis-lowers the construct) — a SAT miter against `read_slang`
   proves UHDM correct.
-- **Sim-equiv ratchet** (`test/sim_equiv_warn_baseline.txt`, shrink-only): 85
-  divergences outstanding across the full corpus, 0 new; 75 of them analyzed,
-  57 shown by a miter to be sim/synth artefacts and 18 still unclassified
+- **Sim-equiv ratchet** (`test/sim_equiv_warn_baseline.txt`, shrink-only): 100
+  divergences outstanding across the full corpus, 0 new; 85 of them analyzed,
+  66 shown by a miter to be sim/synth artefacts and 19 still unclassified
   (miter inconclusive).
