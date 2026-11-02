@@ -14993,6 +14993,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // Dynamic bit select - check for packed multidimensional array element access
     int element_width = packed_elem_w;
     int outer_left = packed_outer_l, outer_right = packed_outer_r;
+    // The net/var of the SAME NAME in the current instance, for the typespec
+    // fallback below when the bit_select carries no Actual_group.
+    const UHDM::any* named_obj = nullptr;
 
     // Elaborated packed-array-of-STRUCT variable (`dtype [FifoDepth-1:0]
     // mem_q` with a type-param struct dtype — CVA6 cva6_fifo_v3): the
@@ -15044,12 +15047,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 if (mi->Nets())
                     for (auto n0 : *mi->Nets())
                         if (std::string(n0->VpiName()) == signal_name) {
+                            if (!named_obj) named_obj = n0;
                             try_packed_obj(n0);
                             if (element_width > 1) break;
                         }
                 if (element_width <= 1 && mi->Variables())
                     for (auto v0 : *mi->Variables())
                         if (std::string(v0->VpiName()) == signal_name) {
+                            if (!named_obj) named_obj = v0;
                             try_packed_obj(v0);
                             if (element_width > 1) break;
                         }
@@ -15057,9 +15062,20 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
-    // Fall back to UHDM typespec detection if no wire attributes
+    // Fall back to UHDM typespec detection if no wire attributes.  A
+    // bit_select in a module DEFINITION often has no Actual_group at all; the
+    // definition's own net of that name then carries the declared typespec
+    // (`type_mprf_v [1:31] mprf_int` -- a logic_typespec with the outer range
+    // and the typedef as Elem_typespec).  Without it a CHILD module's dynamic
+    // element read `mprf_int[rs2_addr]` degenerated to ONE BIT of the flat
+    // array while the write beside it placed the full 32-bit element (SCR1's
+    // register file: every rs1/rs2 read of a written register returned 0, the
+    // top-level module read fine because its elaborated packed_array_var was
+    // found by name).
     if (element_width <= 1) {
-        if (auto actual_group = uhdm_bit->Actual_group()) {
+        const UHDM::any* actual_group = uhdm_bit->Actual_group();
+        if (!actual_group) actual_group = named_obj;
+        if (actual_group) {
             const UHDM::ref_typespec* net_ref_ts = nullptr;
             if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(actual_group)) {
                 net_ref_ts = logic_net->Typespec();

@@ -1,0 +1,9 @@
+# The dynamic element read of the child's typedef'd packed array must select a
+# whole 32-bit element: without the fix the $shiftx is ONE bit wide (and the
+# formal check against read_verilog fails on the first read-after-write).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+cd mprf
+select -assert-count 1 t:$shiftx
+select -assert-count 0 t:$shiftx r:Y_WIDTH=1 %i
+select -assert-count 1 t:$shiftx r:Y_WIDTH=32 %i
