@@ -1,0 +1,41 @@
+# Sweep the CONVERTED chipsalliance/sv-tests: every test/sv_tests/<name>/ whose
+# LRM snippet was rewritten into a synthesizable `dut.sv` (ports, an
+# observable construct) -- the tests the regression runs as `sv_tests/<name>`.
+#
+# Why a sweep of its own when the regression already runs them: the regression
+# miters only the tests that ship a hand-written test_slang_equiv.ys and runs
+# the read_slang co-sim only on demand, so a read_slang failure on a converted
+# test had no row anywhere.  This sweep gives every converted test the columns
+# the other sweeps report -- read_slang's own co-sim vs the RTL, the formal
+# miter read_uhdm vs read_slang (auto-generated over dut.sv where no
+# test_slang_equiv.ys exists), the opt-check, and the read_uhdm co-sim -- so a
+# read_slang issue is one row of one table, reportable upstream as such.
+#
+# Not to be confused with sweep-sv-tests.yml, which runs the UPSTREAM corpus
+# (708 files) under sv-tests' own read/elaborate/simulate rules.
+name: Sweep sv-synth-tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per test"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "11 4 * * *"   # nightly 04:11 UTC, after sv-tests' 03:41
+
+concurrency:
+  group: sweep-sv-synth-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: sv-synth-tests
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 180
+      # ~435 small single-file tests: four shards, four concurrent rows each.
+      shards: 4
+      jobs: "4"
