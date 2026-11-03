@@ -1,0 +1,7 @@
+# The value gate: dp_o must be a_i and m_o must be m_i, bit for bit.  With the
+# sibling measured at 1 bit, dp_o reads bits [11:1] of the request -- the top
+# bits of m_i and the low bit of a_i.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -prove dp_o a_i -prove m_o m_i

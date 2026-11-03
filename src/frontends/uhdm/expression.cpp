@@ -23886,11 +23886,20 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
                 break;
             }
 
-            // Only accumulate offset for structs, not unions
+            // Only accumulate offset for structs, not unions.  A SKIPPED
+            // member declared over a `parameter type` must be measured at
+            // its instance-bound type too, not the declaration default: the
+            // found member's offset is the sum of everything below it, and
+            // idma_backend_rw_axi's `idma_r_req_t = {r_dp_req_t r_dp_req;
+            // read_meta_channel_t ar_req}` placed `r_req.r_dp_req` at [11:1]
+            // -- `ar_req` measured as the 1-bit default `logic` instead of
+            // the 63-bit AXI AR channel the synth wrapper binds (cheshire's
+            // six idma_backend_synth rows, `differs`).
             if (is_struct) {
                 if (auto ref_ts = member->Typespec()) {
                     if (auto actual_ts = ref_ts->Actual_typespec()) {
-                        int width = get_width_from_typespec(actual_ts, inst);
+                        int width = get_width_from_typespec(
+                            resolve_type_param_typespec(actual_ts, inst), inst);
                         offset_in_level += width;
                     }
                 }
