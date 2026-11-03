@@ -405,7 +405,7 @@ def _slang_args(d):
     return "--ignore-assertions " + " ".join(incs)
 
 
-def _auto_slang_miter(d, top, known_fail, timeout=240):
+def _auto_slang_miter(d, top, known_fail, timeout=240, srcs=None, name=None):
     """Run an on-the-fly read_uhdm-vs-read_slang miter for a test dir that ships
     no committed `test_slang_equiv.ys`.  The miter is the same boilerplate the
     committed ones use (both frontends elaborate `top` from project.f, lower to a
@@ -413,10 +413,15 @@ def _auto_slang_miter(d, top, known_fail, timeout=240):
     attempted first: a LEAF-extraction dir for a parent module (project.f lists
     only the module + its packages, not the submodule RTL) cannot elaborate
     standalone — that is reported honestly as "needs submodules", not a diff.
+    `srcs` is what read_slang reads (default `-f project.f`; a single-file
+    test passes `dut.sv`), `name` the ratchet-list spelling of the test when
+    it is not the directory name (`sv_tests/<dir>`).
     Returns the `formal` cell string."""
     yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
     plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
     slang = _slang_args(d)
+    srcs = srcs or "-f project.f"
+    known = (name or d.name) in known_fail or d.name in known_fail
     script = f"""\
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {top}
@@ -424,7 +429,7 @@ flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
 opt_clean; setundef -init -zero; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; techmap; opt
 rename {top} gold
 design -stash gold
-read_slang -f project.f {slang} --top {top}
+read_slang {srcs} {slang} --top {top}
 hierarchy -check -top {top}
 flatten; proc; delete t:$check t:$assert t:$assume t:$print t:$cover
 opt_clean; setundef -init -zero; opt; memory_dff; opt_clean; memory_share; memory_collect; memory_map; setundef -init -zero; opt; async2sync; techmap; opt
@@ -471,6 +476,12 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
     # standalone: read_slang fails to elaborate ("unknown module"/"Build
     # failed"), or the read_uhdm hierarchy check flags the missing child ("is
     # not part of the design").  Honestly "no miter", not a divergence.
+    if srcs != "-f project.f" and re.search(
+            r"ERROR: unsupported|Design elaboration failed|Build failed:", out):
+        # A single-file test: there is no submodule to be missing, read_slang
+        # itself declines the construct (`$countbits`).  The same cell the
+        # other sweeps show for a module the reference cannot read.
+        return "no reference (read_slang fails)"
     if re.search(r"unknown module|Design elaboration failed|Build failed:"
                  r"|is not part of the design", out):
         return "— (no miter: needs submodules)"
@@ -493,26 +504,58 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
         # UHDM-vs-RTL co-sim (the authoritative adjudicator, run next) clears.
         # Report it as a soft warning, not a hard ❌, so the reader weighs it
         # against the co-sim column.
-        return "⚠ known-diff (auto)" if d.name in known_fail else "⚠ differs (auto)"
+        return "⚠ known-diff (auto)" if known else "⚠ differs (auto)"
     # Anything else (a lowering error on one side, an internal abort) is not a
     # trustworthy diff verdict.
     return "— (no miter: setup error)"
 
 
+SV_SYNTH_DIR = TEST_DIR / "sv_tests"
+
+
+def _auto_top(d):
+    """The top `hierarchy -auto-top` picks for a single-file `dut.sv` test
+    dir, or None.  The converted chipsalliance/sv-tests name their tops
+    `top` / `test` / whatever the LRM snippet used, never the directory."""
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    rc, out = sh([str(yosys), "-m", str(plugin), "-p",
+                  "read_uhdm slpp_all/surelog.uhdm; hierarchy -auto-top"],
+                 cwd=d, timeout=600)
+    m = re.search(r"Automatically selected (\S+) as design top module", out or "")
+    return m.group(1).lstrip("\\") if m else None
+
+
 def sweep_testdirs(prefix, cycles, jobs, flt=None):
-    """Sweep test/<prefix>_* dirs: slang miter + test_sim_equivalence.py."""
+    """Sweep test/<prefix>_* dirs: slang miter + test_sim_equivalence.py.
+
+    `sv-synth-tests` is the one family whose rows are NESTED: every
+    test/sv_tests/<name>/ with a converted `dut.sv` (the chipsalliance/sv-tests
+    corpus rewritten as synthesizable tests, which the regression runs under
+    `sv_tests/<name>`).  Same probes, same columns, same ratchet lists; the
+    miter is auto-generated over dut.sv when the dir ships no
+    test_slang_equiv.ys, so read_slang is measured on every converted test and
+    its own failures can be reported row by row."""
     known_fail = read_names_file(TEST_DIR / "slang_miter_expected_fail.txt")
     analyzed = read_analyzed_names()
     baselined = read_names_file(TEST_DIR / "sim_equiv_warn_baseline.txt")
-    dirs = sorted(d for d in TEST_DIR.iterdir()
-                  if d.is_dir() and d.name.startswith(prefix + "_")
-                  and ((d / "project.f").exists() or (d / "dut.sv").exists())
-                  and (flt is None or re.search(flt, d.name)))
+    nested = prefix == "sv-synth-tests"
+    if nested:
+        dirs = sorted(d for d in SV_SYNTH_DIR.iterdir()
+                      if d.is_dir() and (d / "dut.sv").exists()
+                      and (flt is None or re.search(flt, d.name)))
+    else:
+        dirs = sorted(d for d in TEST_DIR.iterdir()
+                      if d.is_dir() and d.name.startswith(prefix + "_")
+                      and ((d / "project.f").exists() or (d / "dut.sv").exists())
+                      and (flt is None or re.search(flt, d.name)))
     dirs = _apply_shard(dirs)
 
     def one(d):
-        name = d.name
-        row = {"module": name, "formal": "— (no miter)", "cosim": "—",
+        # `name` is what the regression's tools and ratchet lists call the
+        # test (`sv_tests/<dir>` for the nested family); the row shows the dir.
+        name = f"sv_tests/{d.name}" if nested else d.name
+        row = {"module": d.name, "formal": "— (no miter)", "cosim": "—",
                "check": "—", "conflicts": "—"}
         # Elaborate (surelog + read check) if the UHDM is missing.
         if not (d / "slpp_all" / "surelog.uhdm").exists():
@@ -523,8 +566,9 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             row["cosim"] = "skip (no UHDM)"
             row["check"] = "— (no UHDM)"
             return row
+        top = (_auto_top(d) or d.name) if nested else _project_top(d)
         # Structural undriven-net probe (fast dropped-driver check, every dir).
-        row["check"] = _undriven_check(d, _project_top(d))
+        row["check"] = _undriven_check(d, top)
         row["conflicts"] = _conflict_cell(d)
         row["unresolved"] = _unresolved_cell(d)
         # 1. slang miter.  A committed test_slang_equiv.ys takes precedence
@@ -537,10 +581,15 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
                         "./test_slang_equiv.ys"], cwd=d, timeout=900)
             if rc == 0:
                 row["formal"] = "✅ equivalent"
-            elif name in known_fail:
+            elif name in known_fail or d.name in known_fail:
                 row["formal"] = "⚠ known-diff"
             else:
                 row["formal"] = "❌ differs"
+        elif nested:
+            # A converted sv-test is one file with its top chosen by yosys:
+            # the standard miter over dut.sv, no project.f needed.
+            row["formal"] = _auto_slang_miter(d, top, known_fail,
+                                              srcs="dut.sv", name=name)
         elif (d / "project.f").exists():
             # An on-the-fly bounded-SAT miter is only practical for UNIT-scale
             # modules.  A full core / SoC would just burn the auto-miter timeout,
@@ -550,7 +599,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             if ncells > 8000:
                 row["formal"] = "— (no miter: core-scale)"
             else:
-                row["formal"] = _auto_slang_miter(d, _project_top(d), known_fail)
+                row["formal"] = _auto_slang_miter(d, top, known_fail)
         # 2. Verilator co-sim.
         cfg = d / "sim_config"
         if cfg.exists() and "SKIP_SIM_EQUIV=1" in cfg.read_text():
@@ -559,12 +608,18 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         rc, out = sh([sys.executable, "test_sim_equivalence.py", name,
                       "--cycles", str(cycles)], cwd=TEST_DIR, timeout=2400)
         # Slang correctness baseline: the same co-sim with the read_slang
-        # netlist on the netlist side.
-        rc2, out2 = sh([sys.executable, "test_sim_equivalence.py", name,
-                        "--cycles", str(cycles), "--frontend", "slang"],
-                       cwd=TEST_DIR, timeout=2400)
+        # netlist on the netlist side -- unless the miter already found that
+        # read_slang cannot read the test, in which case there is no netlist.
+        if row["formal"].startswith("no reference"):
+            rc2, out2 = 77, "SKIPPED: read_slang fails"
+        else:
+            rc2, out2 = sh([sys.executable, "test_sim_equivalence.py", name,
+                            "--cycles", str(cycles), "--frontend", "slang"],
+                           cwd=TEST_DIR, timeout=2400)
         m2 = re.search(r"FAIL: \d+ cycles, (\d+) mismatches", out2)
-        if re.search(r"PASS: \d+ cycles, 0 mismatches", out2):
+        if row["formal"].startswith("no reference"):
+            row["slang_cosim"] = "— (read_slang fails)"
+        elif re.search(r"PASS: \d+ cycles, 0 mismatches", out2):
             row["slang_cosim"] = "✅ PASS"
         elif m2:
             row["slang_cosim"] = f"❌ {m2.group(1)} div"
@@ -581,9 +636,9 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             # (sim_equiv_warn_baseline.txt) must not read as a failure here —
             # the local suite reports these as artefact/known, and the
             # nightly table contradicting it was pure confusion.
-            if name in analyzed:
+            if name in analyzed or d.name in analyzed:
                 row["cosim"] = f"⚠ artefact ({m.group(1)} div, adjudicated)"
-            elif name in baselined:
+            elif name in baselined or d.name in baselined:
                 row["cosim"] = f"⚠ known ({m.group(1)} div, baselined)"
             else:
                 row["cosim"] = f"❌ {m.group(1)} div"
@@ -2014,7 +2069,7 @@ def main():
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
                                      "egret", "dragonfly", "caliptra", "cva6-chip",
                                      "cva6-hpdcache", "cva6-hext", "cva6-rv32",
-                                     "opentitan"] + _ext_families())
+                                     "opentitan", "sv-synth-tests"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)

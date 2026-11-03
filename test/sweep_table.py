@@ -72,6 +72,7 @@ groups=[
  ('**XiangShan core** (香山)',['xiangshan-core-full'],'[xiangshan]('+W+'sweep-xiangshan.yml)'),
  ('**External IP** (the other 30 repos; the XiangShan library is the row above)',['axi','caliptra-ss','common_cells','cv32e40p','cve2','cvfpu','cvw','hdmi','verilog-ethernet','verilog-pcie','adams-bridge','aib-protocols','aib-phy-hardware','veerwolf','serv','litex','vexriscv','rocket-chip','biriscv','zipcpu','hazard3','nvdla','openc910','boom','gemmini','openpiton','pulpissimo','cheshire','snitch','vta'],'[ext]('+W+'sweep-ext.yml)'),
  ('**chipsalliance/sv-tests**',['sv-tests'],'[sv-tests]('+W+'sweep-sv-tests.yml)'),
+ ('**sv-synth-tests** (the converted sv-tests of `test/sv_tests`)',['sv-synth-tests'],'[sv-synth-tests]('+W+'sweep-sv-synth-tests.yml)'),
 ]
 tot=collections.Counter(); seen=set()
 hdrs=['Core','Rows','Formal proven','`read_slang` co-simulated','pass','**diverge**','artefact / no oracle','`read_uhdm` co-simulated','pass','**diverge**','artefact','Undriven']

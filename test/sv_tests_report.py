@@ -72,8 +72,27 @@ def main():
     # ext / pavona sweeps measure per module.  Same probes, same columns, same
     # order and same summary lines as core_sweep.py's table, so a reader can
     # compare an sv-tests row against an ibex or pavona row directly.
-    deep = [r for r in run if (r.get("formal") or "—") != "—"
-            and not (r.get("formal") or "").startswith("— (")]
+    # EVERY test that ran is a row of this table, so its row count is the
+    # frontend tally's (708 = 708).  A test the probes could not reach says
+    # why in its formal cell rather than vanishing: a parse-only test has no
+    # netlist, a should-fail test the tool correctly rejected has none either,
+    # a read_uhdm failure has nothing to measure, and a port-less top WAS
+    # probed for undriven nets and conflicts but gives the miter nothing to
+    # compare.  (The table once listed only the rows with a miter verdict --
+    # 527, then 37 once port-less tops stopped being mitered -- which read as
+    # 'most tests were not checked'.)
+    deep = list(run)
+    for r in deep:
+        if (r.get("formal") or "—") != "—":
+            continue
+        if r["uhdm"] != "PASS":
+            r["formal"] = "— (read_uhdm fails)"
+        elif r["mode"] in ("parsing", "preprocessing"):
+            r["formal"] = f"— ({r['mode']} test: no netlist)"
+        elif r.get("should_fail") == "1":
+            r["formal"] = "— (should-fail test, rejected)"
+        else:
+            r["formal"] = "— (not probed)"
     if deep:
         deep.sort(key=lambda r: r["test"])
         sc = lambda r: r.get("slang_cosim") or "—"
@@ -119,7 +138,12 @@ def main():
         A(f"**Slang co-sim baseline:** {spass}/{spass + sfail} read_slang "
           f"netlists track the RTL ({sfail} diverge; "
           f"{len(deep) - spass - sfail} not comparable).")
-        A(f"**Formal:** {nequiv}/{len(deep)} modules equivalent with read_slang.")
+        nports = sum(1 for r in deep if r.get("formal") == "— (top has no ports)")
+        nnet = sum(1 for r in deep if (r.get("formal") or "").startswith("— (") and
+                   r.get("formal") != "— (top has no ports)")
+        A(f"**Formal:** {nequiv}/{len(deep) - nports - nnet} netlists with ports equivalent "
+          f"with read_slang ({nports} port-less tops give the miter nothing to compare; "
+          f"{nnet} rows have no netlist to miter, each says why).")
         A(f"**Co-sim pass rate:** {npass}/{comparable} (**{pct:.1f}%**) — "
           f"{nadj} adjudicated non-bug divergences (⚠ rows, excluded), "
           f"{len(deep) - comparable - nadj} not comparable (skipped / no run).")
