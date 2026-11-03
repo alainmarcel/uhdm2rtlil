@@ -1116,6 +1116,13 @@ struct UhdmImporter {
     // select of one has to be resolved through these.
     bool unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr,
                               int& elem_w, int& low);
+    // A select whose base is an EXPRESSION rather than a named signal: a
+    // nameless bit_select / part_select whose Actual_group is the
+    // concatenation (or constant) being sliced, which is how Surelog hands
+    // over `{b, c}[9:6]`.  Returns true and the imported base when that is
+    // the shape.
+    bool select_on_expression_base(const UHDM::ref_obj* sel, RTLIL::SigSpec& base,
+                                   const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     void stamp_packed_attrs_from_def(RTLIL::Wire* wire,
                                      const std::string& def_name,
                                      const std::string& var_name,

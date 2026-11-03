@@ -13224,9 +13224,54 @@ bool UhdmImporter::unpacked_array_elems(const std::string& name, RTLIL::SigSpec&
     return arr.size() > 0;
 }
 
+// A select applied to an EXPRESSION rather than a name -- `{b, c}[9:6]`,
+// `{b, c}[3]` -- arrives as a nameless part_select / bit_select whose
+// Actual_group is the operation itself (Surelog used to drop the select and
+// hand over the bare concatenation: sv-tests concat_op-bit_select read c[3:0]
+// for `{b,c}[9:6]`).  Returns true and the imported base when that is the shape.
+bool UhdmImporter::select_on_expression_base(const UHDM::ref_obj* sel, RTLIL::SigSpec& base,
+                                              const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    if (!sel || !sel->VpiName().empty() || !sel->VpiDefName().empty()) return false;
+    const any* ag = sel->Actual_group();
+    if (!ag) return false;
+    if (ag->UhdmType() != uhdmoperation && ag->UhdmType() != uhdmconstant &&
+        ag->UhdmType() != uhdmsys_func_call && ag->UhdmType() != uhdmfunc_call)
+        return false;
+    base = import_expression(any_cast<const expr*>(ag), input_mapping);
+    return true;
+}
+
 RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         uhdm_trace("    Importing part select\n");
+    {
+        RTLIL::SigSpec ebase;
+        if (select_on_expression_base(uhdm_part, ebase, input_mapping)) {
+            int left = -1, right = -1;
+            bool saved_fcf = force_const_fold;
+            force_const_fold = true;
+            if (auto le = uhdm_part->Left_range()) {
+                RTLIL::SigSpec ls = import_expression(le, input_mapping);
+                if (ls.is_fully_const()) left = ls.as_const().as_int();
+            }
+            if (auto re = uhdm_part->Right_range()) {
+                RTLIL::SigSpec rs = import_expression(re, input_mapping);
+                if (rs.is_fully_const()) right = rs.as_const().as_int();
+            }
+            force_const_fold = saved_fcf;
+            if (left < 0 || right < 0) {
+                log_warning("Part select on an expression needs constant bounds\n");
+                return RTLIL::SigSpec();
+            }
+            int lo = std::min(left, right), width = std::abs(left - right) + 1;
+            // An expression is [N-1:0]; bits beyond it read 0 like an
+            // out-of-range select of an unsigned vector.
+            RTLIL::SigSpec padded = ebase;
+            if (lo + width > padded.size()) padded.append(RTLIL::SigSpec(RTLIL::State::S0, lo + width - padded.size()));
+            uhdm_trace("    part select [%d:%d] on a %d-bit expression\n", left, right, ebase.size());
+            return padded.extract(lo, width);
+        }
+    }
     
     // Get the parent object - this should contain the base signal
     const any* parent = uhdm_part->VpiParent();
@@ -13863,6 +13908,20 @@ static int packed_row_width(int total, int elem_w, int outer_l, int outer_r) {
 RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         uhdm_trace("    Importing bit select\n");
+    {
+        RTLIL::SigSpec ebase;
+        if (select_on_expression_base(uhdm_bit, ebase, input_mapping)) {
+            RTLIL::SigSpec idx = uhdm_bit->VpiIndex() ? import_expression(uhdm_bit->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+            if (idx.is_fully_const()) {
+                int i = idx.as_const().as_int();
+                if (i < 0 || i >= ebase.size()) return RTLIL::SigSpec(RTLIL::State::Sx);
+                return ebase.extract(i, 1);
+            }
+            RTLIL::SigSpec out = module->addWire(NEW_ID, 1);
+            module->addShiftx(NEW_ID, ebase, idx, out);
+            return out;
+        }
+    }
 
     // Get the signal name directly from the bit_select
     std::string signal_name = std::string(uhdm_bit->VpiName());

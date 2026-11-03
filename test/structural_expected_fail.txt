@@ -20,15 +20,6 @@
 # unnoticed.
 
 
-# ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
-
-
-# A SELECT APPLIED TO A CONCATENATION takes the wrong bits: `{b,c}[9:6]` with
-# b = 8'b10101100 and c = 8'b01010011 is 4'b0001 (b[1:0] then c[7:6]), which
-# read_slang gives; read_uhdm gives 4'b0011.  read_verilog cannot parse the form
-# at all (`syntax error, unexpected '['`), so read_slang is the oracle.
-sv_tests/concat_op-bit_select
-
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # The last conversions: every directory in test/sv_tests/ now has a dut.sv or a
 # NOTE.md.  Each entry below is a measured reader defect; the test's NOTE.md has
