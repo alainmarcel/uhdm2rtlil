@@ -1,0 +1,7 @@
+# Both bytes enabled: after one clock the word reads back whole (f5ef), not
+# just the last byte (f500).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean; async2sync
+sat -verify -seq 3 -prove-skip 1 -set-init-zero -set rst_n 1 -set we 1 -set be 2'b11 -set wa 2'd1 -set wd 16'hf5ef -set ra 2'd1 -prove rd 16'hf5ef
+sat -verify -seq 3 -prove-skip 1 -set-init-zero -set rst_n 1 -set we 1 -set be 2'b01 -set wa 2'd1 -set wd 16'hf5ef -set ra 2'd1 -prove rd 16'h00ef
