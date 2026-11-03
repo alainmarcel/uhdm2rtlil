@@ -13088,6 +13088,33 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
 }
 
 // Import part select (e.g., sig[7:0])
+// The element wires of an UNPACKED array by name (`name[low]`, `name[low+1]`,
+// ...; the current generate scope first), flattened low index at the LSB --
+// the same probe import_ref_obj uses for a whole-array reference.
+bool UhdmImporter::unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr, int& elem_w, int& low) {
+    if (name.empty() || name_map.count(name)) return false;
+    std::string gs = get_current_gen_scope();
+    auto find = [&](const std::string& en) -> RTLIL::Wire* {
+        if (!gs.empty() && name_map.count(gs + "." + en)) return name_map[gs + "." + en];
+        if (name_map.count(en)) return name_map[en];
+        return nullptr;
+    };
+    int lo = -1;
+    for (int probe = 0; probe <= 64; probe++)
+        if (find(name + "[" + std::to_string(probe) + "]")) { lo = probe; break; }
+    if (lo < 0) return false;
+    arr = RTLIL::SigSpec(); elem_w = 0;
+    for (int i = lo; ; i++) {
+        RTLIL::Wire* ew = find(name + "[" + std::to_string(i) + "]");
+        if (!ew) break;
+        if (elem_w == 0) elem_w = ew->width;
+        if (ew->width != elem_w) return false;
+        arr.append(RTLIL::SigSpec(ew));
+    }
+    low = lo;
+    return arr.size() > 0;
+}
+
 RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         uhdm_trace("    Importing part select\n");
@@ -15535,6 +15562,8 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         uhdm_trace("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
 
     // Check if the indexed part select itself has the signal name
+    RTLIL::SigSpec unp_arr;
+    int unp_ew = 0, unp_low = 0;
     std::string base_signal_name;
     if (!uhdm_indexed->VpiDefName().empty()) {
         base_signal_name = std::string(uhdm_indexed->VpiDefName());
@@ -15593,6 +15622,15 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                     if (im != input_mapping->end() && im->second.size() == base.size())
                         base = im->second;
                 }
+            } else if (unpacked_array_elems(base_signal_name, unp_arr, unp_ew, unp_low)) {
+                // An UNPACKED array has no wire of its own, only `name[i]`
+                // element wires: `arr_b[4 +: c] = arr_a[1 +: c]` on `bit arr_a
+                // [7:0]` selects ELEMENTS (LRM 7.4.6).  The base was "not found"
+                // and both sides read all-zeros (sv-tests
+                // operations-on-unpacked-arrays-variable-slice-rw; the packed
+                // twin was always right).  Flatten the elements, low index at
+                // the LSB, and scale the select by the element width below.
+                base = unp_arr;
             } else {
                 // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
                 RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
@@ -15672,6 +15710,21 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                 pk_ew = ew; pk_ol = hi; pk_or = lo;
             }
         }
+    }
+    if (unp_ew > 0 && base_index.is_fully_const() && width_expr.is_fully_const()) {
+        int offset = base_index.as_const().as_int();
+        int width = width_expr.as_const().as_int();
+        bool pos_sel = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
+        int ilo = pos_sel ? offset : offset - width + 1;
+        int boff = (ilo - unp_low) * unp_ew;
+        if (width > 0 && boff >= 0 && boff + width * unp_ew <= base.size()) {
+            uhdm_trace("    indexed part-select: unpacked elements [%d+:%d] (elem_w=%d) -> bits [%d+:%d]\n",
+                       ilo, width, unp_ew, boff, width * unp_ew);
+            return base.extract(boff, width * unp_ew);
+        }
+        log_warning("Indexed part-select [%d%s%d] is outside unpacked array '%s'\n",
+                    offset, pos_sel ? "+:" : "-:", width, base_signal_name.c_str());
+        return RTLIL::SigSpec(RTLIL::State::Sx, std::max(1, width * unp_ew));
     }
     if (geom_wire && geom_wire->width == base.size()) {
         auto& ga = geom_wire->attributes;

@@ -153,11 +153,6 @@ func_local_accumulator_in_ff
 #   concat_op-bit_select                     : a select on a concatenation takes
 #                                              the wrong bits (188 of 200 cycles)
 concat_op-bit_select
-# ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
-# Divergences caused by reader defects measured in structural_expected_fail.txt:
-#   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an
-#       UNPACKED array loses the array (the packed form is correct)
-operations-on-unpacked-arrays-variable-slice-rw
 
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # Co-sim rows of tests ratcheted in structural_expected_fail.txt (the netlist

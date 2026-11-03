@@ -1109,6 +1109,13 @@ struct UhdmImporter {
     // single item -- so a caller walks rows and cells of a 2-D pattern the
     // same way whichever level the replication sits at.
     std::vector<const UHDM::any*> pattern_items(const UHDM::any* node);
+    // The element wires of an UNPACKED array by name (`name[low]`,
+    // `name[low+1]`, ...; the current generate scope first), flattened with the
+    // low index at the LSB -- the same probe import_ref_obj uses for a
+    // whole-array reference.  An unpacked array has no wire of its own, so a
+    // select of one has to be resolved through these.
+    bool unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr,
+                              int& elem_w, int& low);
     void stamp_packed_attrs_from_def(RTLIL::Wire* wire,
                                      const std::string& def_name,
                                      const std::string& var_name,
