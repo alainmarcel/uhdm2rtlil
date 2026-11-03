@@ -7942,6 +7942,16 @@ int UhdmImporter::self_determined_width(const UHDM::any* node,
                 return 0;  // unknown form -> "don't truncate"
         }
     }
+    // An UNSIZED literal is 32 bits (LRM 5.7.1), not the 64 Surelog stores
+    // it at -- the same rule context_operand_width applies to a literal that
+    // is a DIRECT operand.  Nested one level down it was imported at 64, so
+    //     req_addr_q >= frame_start_q + frame_size_q - ((last_len_q+1)*8)
+    // (cheshire axi_vga_fetcher, all 32-bit) compared at 64 bits: the sum
+    // never wrapped, the frame-end test that the RTL takes at 32 bits was
+    // false, and the fetcher ran past the frame (14 diverging co-simulated
+    // cycles, miter cex at 6 steps).
+    if (auto c = any_cast<const constant*>(node))
+        return context_operand_width(c, input_mapping);
     // Leaf (ref / net / var / constant / select): width of the imported value.
     // For these, import_expression resolves to an existing wire or a Const and
     // creates no new logic, so this is side-effect-free.

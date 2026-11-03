@@ -1,0 +1,7 @@
+# fs + fsz = 0x12C00E8F8 wraps to 0x2C00E8F8 at 32 bits; minus 0x168 is
+# 0x2C00E790, and ra = 0x32032330 is >= that.  At 64 bits it is not.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -set ra 32'h32032330 -set fs 32'h32032330 -set fsz 32'hf9fdc5c8 -set ll 8'h2c -prove ge_param 1'b1 -prove ge_lit 1'b1 -prove ge_nolit 1'b1 -prove sum 32'h2c00e790
+sat -verify -set ra 32'h2c00e78f -set fs 32'h32032330 -set fsz 32'hf9fdc5c8 -set ll 8'h2c -prove ge_param 1'b0 -prove ge_lit 1'b0
