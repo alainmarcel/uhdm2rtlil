@@ -2105,6 +2105,15 @@ bool UhdmImporter::param_assign_is_override(const module_inst* inst, const std::
 }
 
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
+    // Port actuals of the cells created below are imported after the parent's
+    // body import returned, so `current_instance` is null here; keep the
+    // parent instance reachable for type-parameter resolution (see
+    // resolve_type_param_typespec_step).
+    struct HierInstGuard {
+        UhdmImporter* s; const module_inst* saved;
+        HierInstGuard(UhdmImporter* x, const module_inst* m) : s(x), saved(x->hier_instance_) { x->hier_instance_ = m; }
+        ~HierInstGuard() { s->hier_instance_ = saved; }
+    } hier_inst_guard(this, uhdm_module);
     if (!uhdm_module) return;
 
     // Save/restore the current RTLIL `module`.  This function mutates `module`

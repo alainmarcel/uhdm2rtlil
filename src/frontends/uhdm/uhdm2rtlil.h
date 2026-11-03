@@ -508,6 +508,12 @@ struct UhdmImporter {
     void discard_eval_module(RTLIL::Module* tmp);
     void build_elab_index();
     const UHDM::module_inst* find_elab_instance(const UHDM::module_inst* def);
+    // The elaborated instance whose CHILD CELLS import_module_hierarchy is
+    // creating.  A port actual is imported there with `current_instance`
+    // null (the body import has returned), so a type-parameter typespec met
+    // in one -- a struct member declared over `parameter type` -- had no
+    // instance to resolve its binding against.
+    const UHDM::module_inst* hier_instance_ = nullptr;
 
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated

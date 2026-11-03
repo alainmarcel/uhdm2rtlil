@@ -4354,6 +4354,17 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
         const UHDM::typespec* ts_c, const UHDM::scope* inst) {
     auto mi = dynamic_cast<const UHDM::module_inst*>(
         current_instance ? (const UHDM::scope*)current_instance : inst);
+    // A port actual of a child cell (`.data_i(r_req.r_dp_req)`) is imported
+    // by import_module_hierarchy after the parent's body import has
+    // returned: both `current_instance` and `inst` are null there, and a
+    // struct member declared over a `parameter type` then measured as its
+    // declaration default.  idma_backend_rw_axi's `read_meta_channel_t
+    // ar_req` (bound to the 63-bit AXI AR channel by the synth wrapper)
+    // measured 1 bit, so `r_req.r_dp_req` was sliced at [11:1] of the
+    // 74-bit request instead of [73:63] -- cheshire's six idma_backend_synth
+    // rows, `differs`.  The parent instance is what the hierarchy walk is
+    // creating cells for; resolve against it.
+    if (!mi) mi = hier_instance_;
 
     // A TYPE PARAMETER named inside a GENERATE BLOCK arrives as an
     // `unsupported_typespec` carrying only the name.  A generate block is its
@@ -4458,6 +4469,7 @@ const UHDM::typespec* UhdmImporter::resolve_type_param_typespec_step(
     }
     mi = dynamic_cast<const UHDM::module_inst*>(
         current_instance ? (const UHDM::scope*)current_instance : inst);
+    if (!mi) mi = hier_instance_;   // the port-actual context, see above
     // The default typespec may have been declared by an ANCESTOR that RELAYS
     // its own type parameter down (CVA6 issue_stage passes scoreboard_entry_t
     // to the scoreboard: the elem default inside the scoreboard's clone of
