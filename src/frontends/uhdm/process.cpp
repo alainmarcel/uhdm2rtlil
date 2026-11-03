@@ -14801,7 +14801,19 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
             if (!tw && level) tw = stage_level_sensitive_elem(ew, ename);
             RTLIL::SigSpec tgt = tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew);
             tgt = tgt.extract(slice_off, slice_w);
-            remove_target_from_switches(case_rule, tgt);
+            // The unconditional form below folds every earlier write into
+            // `cur`, so an earlier action for the same target inside this
+            // case's switches is stale and must go.  The level-sensitive form
+            // does NOT fold: it appends a switch that writes the element only
+            // where its own index hits, and relies on the earlier switches
+            // for every other index.  Removing their actions dropped the
+            // FIRST of two dynamic writes in one arm -- OpenPiton noc1buffer's
+            // CAS request `data_buffer_next[data_wrindex] = d0;
+            // data_buffer_next[data_wrindex_plus_1] = d1;` kept only d1, so
+            // the first data slot of every CAS was never filled (274
+            // diverging co-simulated cycles).  A later switch overrides an
+            // earlier one where both hit, which is the source order anyway.
+            if (!level) remove_target_from_switches(case_rule, tgt);
             if (level) {
                 // Write the element ONLY when it is the addressed one, and let
                 // the root case's hold default cover the rest.  The
