@@ -1,0 +1,17 @@
+# read_uhdm == read_slang: a blocking write then a read of the same memory in
+# one clocked block.  The miter finds the same-address read without the fix.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast; memory_dff; opt_clean; memory_collect; memory_map; async2sync; setundef -undriven -zero
+rename dut gold
+design -stash gold
+read_slang dut.sv --top dut
+hierarchy -check -top dut
+flatten; proc; opt -fast; memory_dff; opt_clean; memory_collect; memory_map; async2sync; setundef -undriven -zero
+rename dut gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 3 -set-init-zero miter

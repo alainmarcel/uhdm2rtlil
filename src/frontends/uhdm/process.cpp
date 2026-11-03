@@ -2087,6 +2087,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (!ff_memory_names.empty()) {
                 current_memory_writes.clear();
                 current_memory_writes_by_lhs.clear();
+                inflight_blocking_memwr_.clear();
                 std::map<std::string, std::vector<const UHDM::any*>> mem_write_lhs;
                 collect_memory_write_lhs(stmt, mem_write_lhs, module);
                 for (const auto& mem_name : ff_memory_names) {
@@ -2594,6 +2595,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             ff_blocking_temps.clear();
             current_memory_writes.clear();
             current_memory_writes_by_lhs.clear();
+            inflight_blocking_memwr_.clear();
 
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
@@ -3365,6 +3367,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // write's LHS node, so they don't collapse into one port.
                     current_memory_writes.clear();
                     current_memory_writes_by_lhs.clear();
+                    inflight_blocking_memwr_.clear();
                     std::map<std::string, std::vector<const UHDM::any*>> mem_write_lhs;
                     collect_memory_write_lhs(stmt, mem_write_lhs, module);
                     // Write ports in source order, for the sync mem_write_actions below.
@@ -3588,6 +3591,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Clear memory write tracking
                     current_memory_writes.clear();
                     current_memory_writes_by_lhs.clear();
+                    inflight_blocking_memwr_.clear();
                 } else if (needs_sync_path(stmt)) {
                     // Body contains a repeat loop or a for loop nested inside a conditional.
                     // These are not handled by import_statement_comb; fall back to the old
@@ -6339,6 +6343,70 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
 // nothing ever emitted — verilog-axis axis_fifo's guarded output-
 // pipeline shift was collected and then dropped, leaving the $mem with
 // one write port instead of two.
+// A memory read inside a clocked block that FOLLOWS a BLOCKING write to the
+// same memory in that block must see the write (LRM 10.4.1: `=` takes
+// effect before the next statement runs):
+//
+//     always @(posedge clk) begin
+//         if (wr) ram[waddr] = wdata;
+//         q = ram[raddr];               // wr && raddr == waddr -> wdata
+//     end
+//
+// The memory itself is still written through the $memwr on the sync rule,
+// so the $memrd returns the REGISTERED word; this threads the pending
+// blocking writes of the current process over it, latest write winning --
+// exactly the mux read_verilog's mem2reg builds.  Non-blocking writes are
+// left out: `<=` is not visible to a read in the same block.  biriscv's
+// dcache_core_tag_ram is this shape and its tag read missed every
+// same-address write (formal `differs`).
+RTLIL::SigSpec UhdmImporter::bypass_pending_blocking_mem_writes(const RTLIL::IdString& mem_id,
+                                                                const RTLIL::SigSpec& addr,
+                                                                RTLIL::SigSpec rd) {
+    if (rd.size() == 0) return rd;
+    // Control-wire path (the always_ff importer's memory-write handling): the
+    // port's en wire is 0 at the root case and 1 in the write's own arm, so it
+    // carries the write's condition; a partial write enables only its slice.
+    for (const auto& w : inflight_blocking_memwr_) {
+        if (w.mem_id != mem_id || w.addr.size() == 0 || w.data.size() == 0) continue;
+        RTLIL::SigSpec a = addr, b = w.addr;
+        int n = std::max(a.size(), b.size());
+        a.extend_u0(n); b.extend_u0(n);
+        RTLIL::SigSpec eq = module->Eq(NEW_ID, a, b);
+        RTLIL::SigSpec en = w.en, d = w.data;
+        en.extend_u0(rd.size()); d.extend_u0(rd.size());
+        RTLIL::SigSpec hitv = module->And(NEW_ID, en, RTLIL::SigSpec(eq).repeat(rd.size()));
+        RTLIL::SigSpec keep = module->And(NEW_ID, rd, module->Not(NEW_ID, hitv));
+        RTLIL::SigSpec take = module->And(NEW_ID, d, hitv);
+        rd = module->Or(NEW_ID, keep, take);
+        uhdm_trace("    memrd %s: bypassed an in-flight blocking write (control wires)\n",
+                   mem_id.c_str());
+    }
+    if (!(in_always_ff_body_mode || in_always_ff_context))
+        return rd;
+    for (const auto& w : pending_memory_writes) {
+        if (!w.blocking || w.mem_id != mem_id) continue;
+        if (w.address.size() == 0 || w.data.size() == 0) continue;
+        RTLIL::SigSpec a = addr, b = w.address;
+        int n = std::max(a.size(), b.size());
+        a.extend_u0(n); b.extend_u0(n);
+        RTLIL::SigSpec hit = module->Eq(NEW_ID, a, b);
+        if (w.condition.size() == 1)
+            hit = module->And(NEW_ID, hit, w.condition);
+        else if (w.condition.size() > 1)
+            hit = module->And(NEW_ID, hit, module->ReduceBool(NEW_ID, w.condition));
+        int lo = w.slice_w > 0 ? w.slice_lo : 0;
+        int wd = w.slice_w > 0 ? w.slice_w : rd.size();
+        if (lo < 0 || lo + wd > rd.size()) continue;
+        RTLIL::SigSpec d = w.data;
+        d.extend_u0(wd);
+        RTLIL::SigSpec part = module->Mux(NEW_ID, rd.extract(lo, wd), d, hit);
+        rd.replace(lo, part);
+        uhdm_trace("    memrd %s: bypassed a pending blocking write (slice %d+:%d)\n",
+                   mem_id.c_str(), lo, wd);
+    }
+    return rd;
+}
+
 void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
     // Process pending memory writes to generate proper structure
     if (!pending_memory_writes.empty()) {
@@ -7011,7 +7079,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                         mem_write.address = addr_spec;
                         mem_write.data = rhs_spec;
                         mem_write.condition = current_condition;
-                        
+                        mem_write.blocking = uhdm_assign->VpiBlocking();
                         // Track iteration number for unique wire naming
                         static int write_counter = 0;
                         mem_write.iteration = write_counter++;
@@ -7076,6 +7144,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                     mem_write.condition = current_condition;
                     mem_write.slice_lo = slice_lo;
                     mem_write.slice_w = slice_w;
+                    mem_write.blocking = uhdm_assign->VpiBlocking();
                     static int write_counter2 = 0;
                     mem_write.iteration = write_counter2++;
                     pending_memory_writes.push_back(mem_write);
@@ -14497,14 +14566,25 @@ RTLIL::Wire* UhdmImporter::stage_level_sensitive_elem(RTLIL::Wire* ew,
 }
 
 bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
-        const std::string& base_name,
+        const std::string& base_name_in,
         const UHDM::any* idx_expr,
         const UHDM::any* rhs_any,
         int slice_off,
         int slice_w,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule) {
-    if (base_name.empty()) return false;
+    if (base_name_in.empty()) return false;
+    // An array declared INSIDE a generate scope has its element wires under
+    // the SCOPED name (`\BP.arr[0]`), while the bit_select names it bare
+    // (`arr`).  The probe below asks the module for `\arr[0]`, found nothing,
+    // and the caller fell through to the generic LHS import -- the write
+    // landed on a dangling bit_select temp and the array never changed
+    // (biriscv_npc's BTB: allocated on a miss, looked up as empty forever).
+    // Resolve the bare name through the enclosing scopes first
+    // (expanded_array_base; the same walk fixes the reset-loop expansion in
+    // extract_assigned_signals, which registered "all 0 elements").
+    std::string base_name = expanded_array_base(base_name_in);
+    if (base_name.empty()) base_name = base_name_in;
     // Expanded unpacked array: element wires \base[low..high] exist.  The low
     // bound is usually 0, but a `[N:1]` declaration (CVA6 perf_counters
     // `generic_counter_d[MHPMCounterNum:1]`) starts at 1 — probe a small
@@ -20405,7 +20485,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(info.en_wire),
                                 RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
-
+                            // A BLOCKING write is visible to a later read of
+                            // this memory in the same block.
+                            if (assign->VpiBlocking())
+                                inflight_blocking_memwr_.push_back({info.mem_id,
+                                    RTLIL::SigSpec(info.addr_wire), RTLIL::SigSpec(info.data_wire),
+                                    RTLIL::SigSpec(info.en_wire)});
                             if (mode_debug)
                                 uhdm_trace("        Memory write to %s: addr=%s, data=%s\n",
                                     mem_name.c_str(), log_signal(addr), log_signal(data));
@@ -20457,6 +20542,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 case_rule->actions.push_back(RTLIL::SigSig(
                                     RTLIL::SigSpec(info.en_wire).extract(lo, w),
                                     RTLIL::SigSpec(RTLIL::State::S1, w)));
+                                if (assign->VpiBlocking())
+                                    inflight_blocking_memwr_.push_back({info.mem_id,
+                                        RTLIL::SigSpec(info.addr_wire), RTLIL::SigSpec(info.data_wire),
+                                        RTLIL::SigSpec(info.en_wire)});
                                 return;
                                 }
                             }

@@ -1,0 +1,9 @@
+# The read must see a same-cycle blocking write: a write of A5 to address 5
+# with the read address also 5 gives A5 on the next edge, while a non-matching
+# read address gives the registered (zero) word.  Without the fix the read
+# returns the old word in both cases (the first proof fails).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; memory_dff; memory_collect; memory_map; opt_clean
+sat -verify -seq 2 -set-init-zero -set-at 1 wr1_i 1 -set-at 1 addr1_i 5 -set-at 1 data1_i 8'hA5 -set-at 1 addr0_i 5 -prove-skip 1 -prove data0_o 8'hA5
+sat -verify -seq 2 -set-init-zero -set-at 1 wr1_i 1 -set-at 1 addr1_i 5 -set-at 1 data1_i 8'hA5 -set-at 1 addr0_i 6 -prove-skip 1 -prove data0_o 8'h00

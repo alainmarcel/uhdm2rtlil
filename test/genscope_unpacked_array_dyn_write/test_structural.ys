@@ -1,0 +1,7 @@
+# The element write must reach the array: without the fix `arr[wa] <= wd`
+# drives a dangling temp and no element of BP.arr is in wd's fan-out cone.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+select -assert-min 1 w:wd %co* w:BP.arr[0] %i
+select -assert-min 1 w:wd %co* w:BP.arr[31] %i

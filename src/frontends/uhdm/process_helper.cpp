@@ -388,6 +388,32 @@ int UhdmImporter::expanded_array_low(const std::string& base_name) {
     return -1;
 }
 
+// The REAL base name of an expanded unpacked array: `name` itself when
+// `\name[low]` is a module wire, else the scoped base (`<gen scope>.name`) of
+// the element wire that `name[low]` resolves to.  An array declared INSIDE a
+// generate scope has its element wires under the scoped name (`\BP.arr[0]`)
+// while every LHS names it bare (`arr`); the collectors and writers that walk
+// `\<base>[k]` with the bare name then see NO elements -- the reset loop
+// registered "all 0 elements", no `$0\` temp was made, and the dynamic write
+// fell through to a dangling temp (biriscv_npc's BTB: allocated on a miss,
+// looked up as empty forever).  Empty when `name` is not an expanded array.
+std::string UhdmImporter::expanded_array_base(const std::string& name) {
+    if (name.empty() || !module) return "";
+    for (int probe = 0; probe <= 64; probe++) {
+        std::string en = name + "[" + std::to_string(probe) + "]";
+        if (module->wire(RTLIL::escape_id(en))) return name;
+        RTLIL::Wire* w = name_map.count(en) ? name_map[en] : find_wire_in_scope(en);
+        if (!w) continue;
+        std::string wn = RTLIL::unescape_id(w->name);
+        std::string suffix = "[" + std::to_string(probe) + "]";
+        if (wn.size() > suffix.size() &&
+            wn.compare(wn.size() - suffix.size(), suffix.size(), suffix) == 0)
+            return wn.substr(0, wn.size() - suffix.size());
+        return name;
+    }
+    return "";
+}
+
 int UhdmImporter::const_cond_value(const any* cond) {
     if (!cond) return -1;
     // Constant literal (`if (1'b0)`).
@@ -868,15 +894,19 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     expanded_array_low(sig.name) >= 0 && idx &&
                                     index_is_loop_constant(idx)) {
                                     int low = expanded_array_low(sig.name);
+                                    // Walk the elements under their REAL base
+                                    // (scoped inside a generate block).
+                                    std::string ab = expanded_array_base(sig.name);
+                                    if (ab.empty()) ab = sig.name;
                                     int n = 0;
                                     while (module->wire(RTLIL::escape_id(
-                                               sig.name + "[" + std::to_string(low + n) + "]")))
+                                               ab + "[" + std::to_string(low + n) + "]")))
                                         n++;
                                     log("extract_assigned_signals: loop-indexed write to expanded array '%s' -> all %d elements\n",
-                                        sig.name.c_str(), n);
+                                        ab.c_str(), n);
                                     for (int k = low; k < low + n; k++) {
                                         AssignedSignal es = sig;
-                                        es.name = sig.name + "[" + std::to_string(k) + "]";
+                                        es.name = ab + "[" + std::to_string(k) + "]";
                                         es.is_part_select = false;
                                         es.lhs_expr = nullptr;
                                         bool dup = false;
