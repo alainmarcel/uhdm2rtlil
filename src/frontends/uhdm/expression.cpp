@@ -3531,7 +3531,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             memrd_cell->setPort(ID::ADDR, addr);
                             memrd_cell->setPort(ID::DATA, data_wire);
                             add_src_attribute(memrd_cell->attributes, vs);
-                            RTLIL::SigSpec rd(data_wire);
+                            RTLIL::SigSpec rd = bypass_pending_blocking_mem_writes(mem_id, addr, RTLIL::SigSpec(data_wire));
                             if (have_psel && psel_lo >= 0 && psel_hi < rd.size())
                                 return rd.extract(psel_lo, psel_hi - psel_lo + 1);
                             return rd;
@@ -13764,8 +13764,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         
         // Add source attribute
         add_src_attribute(memrd_cell->attributes, uhdm_bit);
-        
-        return RTLIL::SigSpec(data_wire);
+        return bypass_pending_blocking_mem_writes(mem_id, addr, RTLIL::SigSpec(data_wire));
     }
     
     // Check for expanded array: individual element wires exist (not a $memory object).

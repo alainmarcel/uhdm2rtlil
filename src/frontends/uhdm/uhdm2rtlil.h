@@ -819,6 +819,14 @@ struct UhdmImporter {
         int width;
     };
     std::map<std::string, MemoryWriteInfo> current_memory_writes;
+    // BLOCKING memory writes already imported in the CURRENT always block
+    // (control-wire path), in program order, for a later read of the same
+    // memory in that block -- see bypass_pending_blocking_mem_writes.
+    struct InflightMemWrite {
+        RTLIL::IdString mem_id;
+        RTLIL::SigSpec addr, data, en;   // the write port's control wires
+    };
+    std::vector<InflightMemWrite> inflight_blocking_memwr_;
     // When a memory has MORE THAN ONE write statement in the same always block
     // (e.g. a dual-port RAM: `if (wren_a) mem[a]<=da;  if (wren_b) mem[b]<=db;`)
     // each write needs its own RTLIL write port — keying only by memory name
@@ -844,8 +852,15 @@ struct UhdmImporter {
         // slice_w == 0 means the whole word.
         int slice_lo = 0;
         int slice_w = 0;
+        // A BLOCKING write (`mem[a] = d;` inside a clocked block): a later
+        // read of the memory in the same block must see it (see
+        // bypass_pending_blocking_mem_writes).
+        bool blocking = false;
     };
     std::vector<ProcessMemoryWrite> pending_memory_writes;
+    RTLIL::SigSpec bypass_pending_blocking_mem_writes(const RTLIL::IdString& mem_id,
+                                                      const RTLIL::SigSpec& addr,
+                                                      RTLIL::SigSpec rd);
     
     // Base names of UNPACKED arrays whose ELEMENTS this process writes with
     // a non-constant / loop-variable index (`for (c) arr[c] = src[c%N];`).
