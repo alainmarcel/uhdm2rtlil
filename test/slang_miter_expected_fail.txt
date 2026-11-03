@@ -42,8 +42,6 @@ sv_tests/operations-on-unpacked-arrays-variable-slice-rw
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # read_slang computes upstream's values and read_uhdm does not.  Reasons against
 # the same tests in structural_expected_fail.txt.
-sv_tests/structure
-sv_tests/structure-replication
 
 # ---- harness limit, not a reader defect (2026-11-03) -----------------------
 # mem_write_index_out_of_range: read_slang keeps the two-entry array as a

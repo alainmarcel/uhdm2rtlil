@@ -57,12 +57,4 @@ sv_tests/operations-on-unpacked-arrays-variable-slice-rw
 
 
 
-# Assignment-pattern defects on STRUCTS: with two TYPE KEYS for the same type the
-# FIRST wins instead of the LAST (`'{int:0, int:1}` gives a = 0, read_slang 1); a
-# REPLICATION into a struct drops the middle member (`'{3{1}}` gives Y = 0); and
-# an array-of-structs initialiser loses a member (ms[0].a = 0 where the LRM says 1).
-sv_tests/structure
-sv_tests/structure-replication
-sv_tests/structure-arrays
-
 

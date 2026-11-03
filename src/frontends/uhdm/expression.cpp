@@ -9020,6 +9020,83 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
             }
+            // A STRUCT target with TYPE keys or a `default` (LRM 10.9.2):
+            // `'{int: 0, int: 1}` sets every int member, the LAST matching key
+            // winning; `'{default: 1, int: 1}` likewise; a member-name key
+            // beats both.  The loop below placed each tagged value
+            // POSITIONALLY (a = 0, b = 1 for the two int keys) because a type
+            // key has no member name to match (sv-tests structure).  Resolve
+            // per member here: name keys, then type keys in source order
+            // (overwriting), then the default for what is left.
+            if (struct_ts && struct_ts->Members() && !struct_ts->Members()->empty()) {
+                bool has_type_or_default = false;
+                for (auto operand : *uhdm_op->Operands()) {
+                    if (operand->UhdmType() != uhdmtagged_pattern) continue;
+                    auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                    const UHDM::typespec* key = tp->Typespec() ? tp->Typespec()->Actual_typespec() : nullptr;
+                    if (!key) continue;
+                    std::string kn = std::string(key->VpiName());
+                    bool is_member = false;
+                    for (auto m : *struct_ts->Members())
+                        if (std::string(m->VpiName()) == kn) is_member = true;
+                    if (!is_member) has_type_or_default = true;   // `default` or a type
+                }
+                if (has_type_or_default) {
+                    auto& mems = *struct_ts->Members();
+                    int nm_ = (int)mems.size();
+                    std::vector<RTLIL::SigSpec> slot(nm_);
+                    std::vector<int> set_by(nm_, 0);   // 0 none, 1 default, 2 type, 3 name
+                    std::vector<int> mw(nm_, 0);
+                    std::vector<const UHDM::typespec*> mts(nm_, nullptr);
+                    for (int i = 0; i < nm_; i++) {
+                        if (mems[i]->Typespec()) mts[i] = mems[i]->Typespec()->Actual_typespec();
+                        mw[i] = mts[i] ? get_width_from_typespec(mts[i], inst) : 0;
+                    }
+                    auto same_type = [&](const UHDM::typespec* a, const UHDM::typespec* b) {
+                        if (!a || !b || a->UhdmType() != b->UhdmType()) return false;
+                        return get_width_from_typespec(a, inst) == get_width_from_typespec(b, inst);
+                    };
+                    auto import_for = [&](const UHDM::expr* e, int i) {
+                        int saved_ctx = expression_context_width;
+                        const UHDM::typespec* saved_ts = expression_context_typespec;
+                        if (mw[i] > 0) expression_context_width = mw[i];
+                        if (mts[i] && (mts[i]->UhdmType() == uhdmstruct_typespec || mts[i]->UhdmType() == uhdmunion_typespec))
+                            expression_context_typespec = mts[i];
+                        RTLIL::SigSpec v = import_expression(e, input_mapping);
+                        expression_context_typespec = saved_ts;
+                        expression_context_width = saved_ctx;
+                        if (mw[i] > 0) { if (v.size() > mw[i]) v = v.extract(0, mw[i]); else if (v.size() < mw[i]) v.extend_u0(mw[i]); }
+                        return v;
+                    };
+                    int pos = 0;
+                    for (auto operand : *uhdm_op->Operands()) {
+                        if (operand->UhdmType() != uhdmtagged_pattern) {
+                            if (pos < nm_ && !set_by[pos]) { slot[pos] = import_for(any_cast<const expr*>(operand), pos); set_by[pos] = 3; }
+                            pos++;
+                            continue;
+                        }
+                        auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                        const UHDM::typespec* key = tp->Typespec() ? tp->Typespec()->Actual_typespec() : nullptr;
+                        const expr* ve = tp->Pattern() ? any_cast<const expr*>(tp->Pattern()) : nullptr;
+                        if (!key || !ve) continue;
+                        std::string kn = std::string(key->VpiName());
+                        int named = -1;
+                        for (int i = 0; i < nm_; i++) if (std::string(mems[i]->VpiName()) == kn) named = i;
+                        if (named >= 0) { slot[named] = import_for(ve, named); set_by[named] = 3; continue; }
+                        if (kn == "default") {
+                            for (int i = 0; i < nm_; i++) if (set_by[i] < 2) { slot[i] = import_for(ve, i); set_by[i] = 1; }
+                            continue;
+                        }
+                        for (int i = 0; i < nm_; i++)
+                            if (set_by[i] != 3 && same_type(key, mts[i])) { slot[i] = import_for(ve, i); set_by[i] = 2; }
+                    }
+                    RTLIL::SigSpec result;
+                    for (int i = nm_ - 1; i >= 0; i--)
+                        result.append(set_by[i] ? slot[i] : RTLIL::SigSpec(RTLIL::State::Sx, std::max(mw[i], 1)));
+                    uhdm_trace("UHDM: struct pattern with type/default keys: %d members, %d bits\n", nm_, result.size());
+                    return result;
+                }
+            }
             int field_idx = 0;
             std::vector<std::string> field_tags;  // tag name per field ("" = untagged)
             for (auto operand : *uhdm_op->Operands()) {
@@ -9232,6 +9309,38 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // ends up at the MSB (same order as concatenation).
         if (uhdm_op->Operands() && uhdm_op->Operands()->size() >= 2) {
             auto& ops = *uhdm_op->Operands();
+            // A STRUCT target (`struct {int X, Y, Z;} s = '{3{1}}`, LRM 10.9.2):
+            // the replicated list fills the members POSITIONALLY, each sized to
+            // its member.  Sized as count equal slices of the context it read
+            // X = 1, Y = 0, Z = 1 (sv-tests structure-replication).
+            {
+                const UHDM::typespec* sts = nullptr;
+                if (uhdm_op->Typespec()) sts = uhdm_op->Typespec()->Actual_typespec();
+                if (!sts) sts = assignment_lhs_typespec(uhdm_op);
+                if (!sts && uhdm_op->VpiParent())
+                    if (auto pv = dynamic_cast<const UHDM::variables*>(uhdm_op->VpiParent()))
+                        if (pv->Typespec()) sts = pv->Typespec()->Actual_typespec();
+                if (!sts) sts = expression_context_typespec;
+                if (sts && sts->UhdmType() == uhdmstruct_typespec) {
+                    auto st = any_cast<const UHDM::struct_typespec*>(sts);
+                    std::vector<const UHDM::any*> items = pattern_items(uhdm_op);
+                    if (st->Members() && !items.empty() && items.size() == st->Members()->size()) {
+                        RTLIL::SigSpec result;
+                        auto& mems = *st->Members();
+                        for (int i = (int)mems.size() - 1; i >= 0; i--) {
+                            const UHDM::typespec* mt = mems[i]->Typespec() ? mems[i]->Typespec()->Actual_typespec() : nullptr;
+                            int w = mt ? get_width_from_typespec(mt, inst) : 0;
+                            int saved_ctx = expression_context_width;
+                            if (w > 0) expression_context_width = w;
+                            RTLIL::SigSpec v = import_expression(any_cast<const expr*>(items[i]), input_mapping);
+                            expression_context_width = saved_ctx;
+                            if (w > 0) { if (v.size() > w) v = v.extract(0, w); else if (v.size() < w) v.extend_u0(w); }
+                            result.append(v);
+                        }
+                        return result;
+                    }
+                }
+            }
             RTLIL::SigSpec count_sig = import_expression(any_cast<const expr*>(ops[0]), input_mapping);
             int count = count_sig.is_fully_const() ? count_sig.as_const().as_int() : 0;
             RTLIL::SigSpec elem = import_expression(any_cast<const expr*>(ops[1]), input_mapping);
