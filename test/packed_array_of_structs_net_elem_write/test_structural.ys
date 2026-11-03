@@ -1,0 +1,6 @@
+# Every element of d must be the matching 8-bit element of the input: with
+# the geometry missing, element i was ONE bit (bit i) copied from bit 8*i.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean; async2sync
+sat -verify -seq 1 -set-init-zero -prove d_o idma_busy_i
