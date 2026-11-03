@@ -12,6 +12,7 @@
 //   CLOCK <name>
 //   RESET <name> <active_high_polarity 0|1>
 
+#include <cstring>
 #include "kernel/yosys.h"
 
 USING_YOSYS_NAMESPACE
@@ -119,22 +120,37 @@ struct ExtractClocksResetsPass : public Pass {
                 if (!s.empty() && s[0] == '\\') return s.substr(1);
                 return s;
             };
+            // The polarity letter's position in each gate family:
+            //   $_DFF_<C><R><V>_          $_DFFE_<C><R><V><E>_
+            //   $_SDFF_<C><R><V>_         $_SDFFE_<C><R><V><E>_   $_SDFFCE_<C><R><V><E>_
+            //   $_DFFSR_<C><S><R>_        $_DFFSRE_<C><S><R><E>_
+            // Only the `$_DFF_` / `$_SDFF_` spellings were parsed, so a flop
+            // WITH AN ENABLE (`$_DFFE_PN0P_`: every `if (we) q <= d` under an
+            // async reset) fell to the active-high default -- an `rst_n`
+            // design whose reset flops all carry enables was then driven
+            // with rst_n=1 as "reset asserted" and sat in reset for most of
+            // the run (VACUOUS co-sim, or a weak PASS).  The `$_DFFSR_` set
+            // letter was read at index 6 (the 'R' of the prefix) and so was
+            // never 'P' either.
+            auto polarity_at = [&](const std::string& s, const char* prefix, int off, bool& ah) {
+                if (!starts_with(s, prefix)) return false;
+                size_t i = strlen(prefix) + off;
+                if (s.size() > i) ah = (s[i] == 'P');
+                return true;
+            };
             if (cell->hasPort(ID::R)) {
                 std::string s = type_str();
                 bool ah = true;
-                size_t prefix_len = 0;
-                if (starts_with(s, "$_DFF_") || starts_with(s, "$_SDFF_")) {
-                    prefix_len = starts_with(s, "$_SDFF_") ? 7 : 6;
-                    if (s.size() >= prefix_len + 2)
-                        ah = (s[prefix_len + 1] == 'P');
-                }
+                polarity_at(s, "$_SDFFCE_", 1, ah) || polarity_at(s, "$_SDFFE_", 1, ah) ||
+                polarity_at(s, "$_SDFF_", 1, ah)   || polarity_at(s, "$_DFFSRE_", 2, ah) ||
+                polarity_at(s, "$_DFFSR_", 2, ah)  || polarity_at(s, "$_DFFE_", 1, ah) ||
+                polarity_at(s, "$_DFF_", 1, ah);
                 record_top_port(cell->getPort(ID::R), nullptr, &resets, ah);
             }
             if (cell->hasPort(ID::S)) {
                 std::string s = type_str();
                 bool ah = true;
-                if (starts_with(s, "$_DFFSR_") && s.size() >= 9)
-                    ah = (s[6] == 'P');
+                polarity_at(s, "$_DFFSRE_", 1, ah) || polarity_at(s, "$_DFFSR_", 1, ah);
                 record_top_port(cell->getPort(ID::S), nullptr, &resets, ah);
             }
         }

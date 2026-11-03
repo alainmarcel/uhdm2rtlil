@@ -190,6 +190,23 @@ def _cosim_cells(log, cycles, rel=""):
     return ours, cell(int(m.group(2)))
 
 
+def _top_has_ports(il_path, top):
+    """Does module `top` of the RTLIL dump declare any port?  (`wire ... input
+    N \\name` / `output N` lines inside its module block.)"""
+    try:
+        inside = False
+        for line in open(il_path, errors="replace"):
+            if line.startswith("module "):
+                inside = line.split()[1] in (top, "\\" + top)
+            elif inside and line.startswith("end"):
+                inside = False
+            elif inside and re.match(r"\s*wire\b.*\b(input|output|inout)\s+\d+", line):
+                return True
+    except OSError:
+        return True   # cannot tell: let the miter speak
+    return False
+
+
 def deep_check(args, rel, work, p, files, incs, defs, sl_args, timeout):
     """The checks every other sweep reports, for one sv-tests test.
 
@@ -238,6 +255,12 @@ def deep_check(args, rel, work, p, files, incs, defs, sl_args, timeout):
 
     if not have_slang:
         out["formal"] = "no reference (read_slang fails)"
+    elif not _top_has_ports(os.path.join(work, "uhdm_hier.il"), top):
+        # A port-less LRM snippet (`module top(); initial ... $display`): the
+        # miter has nothing to compare and reported `❌ differs` on 32 rows --
+        # whatever the two frontends did with the $print / initial values is
+        # not an equivalence question.  Say so, as the co-sim column does.
+        out["formal"] = "— (top has no ports)"
     else:
         rc, log = _netlist(work, "deep_miter.ys", f"""\
 read_rtlil uhdm_hier.il
