@@ -310,6 +310,16 @@ static RTLIL::Cell* build_check_cell(UhdmImporter* self,
     RTLIL::IdString cell_id = cell_name.empty()
         ? NEW_ID
         : RTLIL::escape_id(cell_name);
+    // The same named check is imported more than once when it sits in a
+    // comb for-loop the importer UNROLLS -- common_cells' cc_addr_decode_dync
+    // runs `ASSUME_I(...)` over every (i, j) rule pair inside
+    // proc_check_addr_map -- and `addCell` asserts on the second
+    // `\<name>` (`count_id(cell->name) == 0`, rtlil.cc): PULP apb's
+    // apb_regs was a READ-FAIL from the first nightly that elaborated it.
+    // Keep the first instance's name (the Verilog frontend's spelling) and
+    // suffix the repeats, as read_verilog does for an unrolled block.
+    if (!cell_name.empty() && self->module->cell(cell_id))
+        cell_id = RTLIL::IdString(cell_id.str() + "$" + std::to_string(autoidx++));
 
     RTLIL::Cell* check_cell = self->module->addCell(cell_id, ID($check));
     check_cell->setParam(ID::ARGS_WIDTH, 0);

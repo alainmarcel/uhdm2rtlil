@@ -1,0 +1,7 @@
+# The read itself is the gate (it aborted on the second `rule_nonempty`); the
+# cell counts pin the unrolling: 4 assumes + 6 asserts, each its own $check.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 10 t:$check
+select -assert-count 1 c:rule_nonempty
+select -assert-count 1 c:rule_disjoint
