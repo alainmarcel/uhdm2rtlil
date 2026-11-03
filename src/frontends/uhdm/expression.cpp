@@ -21363,16 +21363,57 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         sub_offset += pos * slice_w;
                         sub_width = slice_w;
                     }
+                    // A MEMBER between the element and the part-select:
+                    // `nd_req_i.d_req[d-2].reps[RepWidth-1:0]` (iDMA's nd
+                    // midend) selects element d-2 of the packed array of
+                    // structs `d_req`, then its member `reps` -- the
+                    // part_select node is NAMED after that member.  The
+                    // part-select was applied to the ELEMENT's low bits
+                    // instead, which is the LAST member (dst_strides): every
+                    // repetition count read a stride, and cheshire's
+                    // idma_nd_midend_synth row `differs`.  Add the member's
+                    // offset within the element and size the part-select
+                    // by the member's own range.
+                    const UHDM::typespec* tail_member_ts = nullptr;
+                    {
+                        std::string tail_member = std::string(ps->VpiName());
+                        if (ok && !tail_member.empty() && tail_member != field_name &&
+                            field_elem_rts && field_elem_rts->Actual_typespec()) {
+                            const UHDM::typespec* et = resolve_type_param_typespec(
+                                field_elem_rts->Actual_typespec(), inst);
+                            if (et && et->UhdmType() == uhdmstruct_typespec) {
+                                int moff = 0, mw2 = 0;
+                                const UHDM::typespec* mts2 = nullptr;
+                                if (calculate_struct_member_offset(et, tail_member, inst,
+                                                                  moff, mw2, &mts2) &&
+                                    mw2 > 0 && moff + mw2 <= sub_width) {
+                                    sub_offset += moff;
+                                    sub_width = mw2;
+                                    tail_member_ts = mts2;
+                                    uhdm_trace("    Struct field chained select: element member "
+                                        "'%s' at +%d (w=%d)\n", tail_member.c_str(), moff, mw2);
+                                }
+                            }
+                        }
+                    }
                     RTLIL::SigSpec pls = import_expression(ps->Left_range(), input_mapping);
                     RTLIL::SigSpec prs = import_expression(ps->Right_range(), input_mapping);
                     if (ok && pls.is_fully_const() && prs.is_fully_const()) {
                         // Element's range governs the part-select arithmetic.
-                        // Source order of preference: Elem_typespec's first
-                        // range; otherwise field_ranges[idx_exprs.size()]
-                        // (the dimension just past the consumed ones).
+                        // Source order of preference: the selected member's
+                        // own range; Elem_typespec's first range; otherwise
+                        // field_ranges[idx_exprs.size()] (the dimension just
+                        // past the consumed ones).
                         int elem_rl = sub_width - 1, elem_rr = 0;
                         const UHDM::range* elem_range = nullptr;
-                        if (idx_exprs.size() == 1 && field_elem_rts &&
+                        if (tail_member_ts) {
+                            const UHDM::typespec* mt = resolve_type_param_typespec(tail_member_ts, inst);
+                            const UHDM::VectorOfrange* mrngs = nullptr;
+                            if (auto mlt = dynamic_cast<const UHDM::logic_typespec*>(mt)) mrngs = mlt->Ranges();
+                            else if (auto mbt = dynamic_cast<const UHDM::bit_typespec*>(mt)) mrngs = mbt->Ranges();
+                            if (mrngs && !mrngs->empty()) elem_range = (*mrngs)[0];
+                        }
+                        if (!elem_range && !tail_member_ts && idx_exprs.size() == 1 && field_elem_rts &&
                             field_elem_rts->Actual_typespec()) {
                             auto et = field_elem_rts->Actual_typespec();
                             const UHDM::VectorOfrange* erngs = nullptr;
@@ -21380,7 +21421,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             else if (auto ebt = dynamic_cast<const UHDM::bit_typespec*>(et)) erngs = ebt->Ranges();
                             if (erngs && !erngs->empty()) elem_range = (*erngs)[0];
                         }
-                        if (!elem_range && field_ranges->size() > idx_exprs.size()) {
+                        if (!elem_range && !tail_member_ts && field_ranges->size() > idx_exprs.size()) {
                             elem_range = (*field_ranges)[idx_exprs.size()];
                         }
                         if (elem_range && elem_range->Left_expr() && elem_range->Right_expr()) {

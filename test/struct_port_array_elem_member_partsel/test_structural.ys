@@ -1,0 +1,7 @@
+# Element k of d_req is 96 bits above the 8-bit burst field; its `reps` member
+# is the element's TOP 32 bits: element 0 at req_i[95:64], element 1 at
+# req_i[191:160].  The defect read the element's low 32 bits instead.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -set valid_i 1 -prove rep_o[31:0] req_i[95:64] -prove rep_o[63:32] req_i[191:160]
