@@ -2846,13 +2846,30 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 std::string src_base = std::string(aref->VpiName());
                                 if (iface_inst_vars_.count(src_base + "[0]")) {
                                     bool any = false;
-                                    for (int i = 0; iface_inst_vars_.count(
-                                             src_base + "[" + std::to_string(i) + "]"); i++) {
-                                        std::string elem = src_base + "[" + std::to_string(i) + "]";
+                                    int n_el = 0;
+                                    while (iface_inst_vars_.count(src_base + "[" + std::to_string(n_el) + "]")) n_el++;
+                                    // Pair by POSITION when both declared ranges
+                                    // are known (see iface_array_decl_range).
+                                    int aL = 0, aR = n_el - 1, fL = 0, fR = n_el - 1;
+                                    bool got_a = iface_array_decl_range(src_base, uhdm_module->VpiParent(), aL, aR);
+                                    bool got_f = iface_port_decl_range(port, fL, fR);
+                                    bool by_pos = got_a && got_f &&
+                                                  std::abs(aL - aR) + 1 == n_el && std::abs(fL - fR) + 1 == n_el;
+                                    uhdm_trace("UHDM: interface array %s -> %s[]: %d elements, actual %s[%d:%d], formal %s[%d:%d], parent=%s lowconn=%s, %s\n",
+                                        src_base.c_str(), port_name.c_str(), n_el, got_a ? "" : "?", aL, aR, got_f ? "" : "?", fL, fR,
+                                        uhdm_module->VpiParent() ? UhdmName(uhdm_module->VpiParent()->UhdmType()).c_str() : "null",
+                                        port->Low_conn() ? UhdmName(port->Low_conn()->UhdmType()).c_str() : "null",
+                                        by_pos ? "paired by position" : "paired by index");
+                                    if (!by_pos) { aL = 0; aR = n_el - 1; fL = 0; fR = n_el - 1; }
+                                    for (int k = 0; k < n_el; k++) {
+                                        int ai = array_ordinal_index(aL, aR, k);
+                                        int fi = array_ordinal_index(fL, fR, k);
+                                        std::string elem = src_base + "[" + std::to_string(ai) + "]";
+                                        if (!iface_inst_vars_.count(elem)) continue;
                                         for (auto &f : iface_inst_vars_[elem]) {
                                             std::string src_full = elem + "." + f;
                                             std::string dst_port = port_name + "[" +
-                                                std::to_string(i) + "]." + f;
+                                                std::to_string(fi) + "]." + f;
                                             // iface_inst_vars_ lists EVERY signal of
                                             // the interface, but an array of MODPORT
                                             // ports (`myif.man man [N]`) declares only
