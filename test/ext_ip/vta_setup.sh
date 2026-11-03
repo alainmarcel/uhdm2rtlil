@@ -33,6 +33,19 @@ fi
 sbt --version 2>&1 | tail -1
 
 cd "$ROOT/hardware/chisel"
+# hardware/chisel/Makefile probes for Verilator's include directory with
+# TAB-indented `ifeq` lines, which GNU make reads as a recipe when the probe
+# runs: "Makefile:26: *** recipe commences before first target" on every CI
+# run.  The probe only runs when VERILATOR_INC_DIR is empty, and `make verilog`
+# never uses it, so point it at the installed Verilator (or anywhere).
+if [ -z "$VERILATOR_INC_DIR" ]; then
+  vbin=$(command -v verilator || true)
+  if [ -n "$vbin" ] && [ -d "$(dirname "$(dirname "$vbin")")/share/verilator/include" ]; then
+    export VERILATOR_INC_DIR="$(dirname "$(dirname "$vbin")")/share/verilator/include"
+  else
+    export VERILATOR_INC_DIR=/usr/share/verilator/include
+  fi
+fi
 JAVA_OPTS="${JAVA_OPTS:--Xmx6g}" make verilog CONFIG="$CONFIG"
 
 out="$ROOT/build/chisel/VTA.$CONFIG.sv"

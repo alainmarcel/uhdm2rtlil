@@ -25,17 +25,14 @@ set -e
 ROOT=$PWD                              # the riscv-boom checkout ($EXT_IP_ROOT/riscv-boom)
 ROCKET=${ROCKET_DIR:-$(cd "$ROOT/../rocket-chip" && pwd)}
 HARNESS=${BOOM_HARNESS:-$(cd "$(dirname "$0")/boom_harness" && pwd)}
-TOOLS=${ROCKET_TOOLS:-$HOME/ext/tools}
-FIRTOOL_VERSION=1.162.0
 CONFIG=${BOOM_CONFIG:-boomsweep.LargeBoomV4Config}
 TOP=${BOOM_TOP:-freechips.rocketchip.system.TestHarness}
 OUT=$ROOT/boom_sv
 
-export PATH="$TOOLS/bin:$TOOLS/firtool-$FIRTOOL_VERSION/bin:$PATH"
 [ -d "$ROCKET" ] || { echo "boom_setup: no rocket-chip checkout at $ROCKET" >&2; exit 2; }
-command -v mill    >/dev/null || { echo "boom_setup: mill missing -- run rocket_setup.sh first" >&2; exit 2; }
-command -v firtool >/dev/null || { echo "boom_setup: firtool missing -- run rocket_setup.sh first" >&2; exit 2; }
-command -v dtc     >/dev/null || { echo "boom_setup: dtc missing -- run rocket_setup.sh first" >&2; exit 2; }
+# mill, firtool and dtc: installed here when missing (a cold CI runner has
+# none of them -- rocket_setup.sh runs in ANOTHER job), shared with it.
+source "$(dirname "$0")/rocket_tools.sh" "$ROCKET"
 
 cd "$ROCKET"
 git submodule update --init --recursive --depth 1 2>/dev/null || git submodule update --init --recursive

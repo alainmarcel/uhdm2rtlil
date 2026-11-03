@@ -101,9 +101,14 @@ jobs:
           # layers (logic link, AXI4-MM / AXI4-Stream configurations, LPIF,
           # SPI-AIB, channel alignment), 397 modules.  Two shards: ~6000 s of
           # row time measured locally, the largest row 683 s.
+          # The runner was shut down ("received a shutdown signal ... exit
+          # code 143") 15 minutes into every run since 10-31, right after a
+          # 300 s SAT timeout on `app_avmm_csr`: two uncapped rows exhausting
+          # the 16 GB runner, the cvw shape above.  Capped the same way.
           - family: aib-protocols
             shards: 2
             timeout: 330
+            mem_limit_kb: "7000000"
           # chipsalliance/aib-phy-hardware @ a0295cd2: the AIB 2.0 rev1.1 PHY's
           # digital RTL (adapter, Avalon config, calibration FSMs, redundancy,
           # aib_phy_top), 75 rows over the analog behavioural models as
@@ -212,8 +217,11 @@ jobs:
           # ultraembedded/biriscv @ be4b5d3b: the dual-issue RV32 core, its
           # caches and their RAMs, the TCM and the two SoC tops.  44 rows,
           # ~50 min of row time measured locally.
+          # Same shutdown signal every night since 10-31, after the
+          # `biriscv_regfile` / `icache_data_ram` SAT timeouts: capped.
           - family: biriscv
             timeout: 480
+            mem_limit_kb: "7000000"
           # ZipCPU (dgisselq/zipcpu @ 7f1f0b4a): the CPU core, its caches, the
           # Wishbone / AXI peripherals and the four SoC tops.  51 rows, ~40 min
           # of row time measured locally.

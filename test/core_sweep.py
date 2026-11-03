@@ -1756,6 +1756,13 @@ def _generate_ext(family, man, root):
         return
     cwd = root / g["cwd"]
     env = dict(os.environ, **g.get("env", {}))
+    # `$PWD` in a manifest command means the GENERATOR's cwd.  The token
+    # expansion below runs in the harness process, whose PWD is test/, so
+    # VeeR's `RV_ROOT=$PWD BUILD_PATH=$PWD/config perl configs/veer.config`
+    # ran with RV_ROOT=.../test: the configurator wrote nothing under the
+    # checkout, the marker stayed missing and all three VeeR nightlies
+    # failed (EH1, EH2, EL2; XiangShan's generator spells $PWD too).
+    env["PWD"] = str(cwd)
     # Where the harness keeps a family's own helper scripts (test/ext_ip/):
     # VeeRwolf's closure is produced by FuseSoC and the recipe is too long for
     # an inline `bash -c`, so its manifest runs
