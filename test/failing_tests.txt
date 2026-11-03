@@ -429,3 +429,12 @@ sv_tests/multi-declaration
 # `sat -prove d_o idma_busy_i` pins the element-wise copy, and the Verilator
 # co-sim passes.  UHDM is correct -- do NOT "fix" it to match.
 packed_array_of_structs_net_elem_write
+
+# ---- struct member write through an array-of-struct element in a generate
+# ---- block (2026-11-03) -------------------------------------------------------
+# read_verilog is the WRONG side: it DROPS every `l.ops[k].member = ...` write
+# through a packed array-of-struct element (q1 / q2 read all-zero, q3 is not
+# even produced), so the verilog-vs-uhdm comparison has nothing right to compare
+# against.  The read_slang miter (test_slang_equiv.ys) proves read_uhdm and the
+# structural proof pins the three member writes.  Do NOT "fix" read_uhdm to match.
+genscope_struct_array_elem_member_write

@@ -1,0 +1,6 @@
+# ops[1] = {ew8 = 0, ew16 = a[15:0], ew32 = 0}; ops[2].ew8 = {a[15:8], 0};
+# ops[0].ew32 = a.  Unresolved, every element reads 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -prove q1[55:48] 8'h00 -prove q1[47:32] a[15:0] -prove q1[31:0] 32'h0 -prove q2[47:32] a[15:0] -prove q2[55:48] 8'h00 -prove q3[47:40] a[15:8] -prove q3[39:32] 8'h00 -prove q3[31:0] a
