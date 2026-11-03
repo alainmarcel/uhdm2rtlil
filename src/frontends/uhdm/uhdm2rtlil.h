@@ -1404,6 +1404,7 @@ struct UhdmImporter {
     // process; nullptr when there is nothing to stage into.
     RTLIL::Wire* stage_level_sensitive_elem(RTLIL::Wire* ew,
                                             const std::string& ename);
+    RTLIL::SigSpec memwr_size_addr(RTLIL::SigSpec& addr, int aw);
     bool emit_dynamic_unpacked_array_elem_write(
         const std::string& base_name,
         const UHDM::any* idx_expr,

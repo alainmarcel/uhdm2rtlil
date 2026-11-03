@@ -42,3 +42,14 @@ sv_tests/operations-on-unpacked-arrays-variable-slice-rw
 sv_tests/packed-and-signed-structures
 sv_tests/structure
 sv_tests/structure-replication
+
+# ---- harness limit, not a reader defect (2026-11-03) -----------------------
+# mem_write_index_out_of_range: read_slang keeps the two-entry array as a
+# `$mem_v2` with a `$memwr_v2` write port, and yosys's satgen has NO model for
+# that cell -- `sat` aborts with "No SAT model available for cell ...
+# ($memwr_v2)" before it can compare anything, so the miter cannot run at all
+# on this test.  read_uhdm's side is proven instead by test_structural.ys,
+# which maps the memory (`memory_dff; memory_collect; memory_map`) and proves
+# that writes at index 2 and 3 leave both entries untouched while a write at
+# index 1 lands.  Same limitation as the sv_tests/arrays entries above.
+mem_write_index_out_of_range

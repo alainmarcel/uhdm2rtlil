@@ -17796,6 +17796,34 @@ struct NbInflightGuard {
     }
 };
 
+// Size a dynamic index to a memory write port's address width.  An index
+// WIDER than the port must not be truncated: a 2-bit `wr_tte_csm_thrid`
+// into the 2-entry `tte_csm_buf [1:0]` of OpenPiton's bw_r_dtlb wrapped
+// index 2 onto entry 0, where the LRM (7.4.6), read_slang (ABITS 2) and
+// Verilator ignore an out-of-range write.  Keep the low bits as the
+// address and hand back the 1-bit "index in range" condition the enable has
+// to carry (constant 1 when nothing was dropped, constant 0 when a constant
+// index can never hit).
+RTLIL::SigSpec UhdmImporter::memwr_size_addr(RTLIL::SigSpec& addr, int aw) {
+    RTLIL::SigSpec in_range(RTLIL::State::S1);
+    if (addr.size() > aw) {
+        RTLIL::SigSpec hi = addr.extract(aw, addr.size() - aw);
+        if (hi.is_fully_const()) {
+            if (!hi.is_fully_zero()) in_range = RTLIL::SigSpec(RTLIL::State::S0);
+        } else {
+            RTLIL::Wire* any_hi = module->addWire(NEW_ID, 1);
+            module->addReduceOr(NEW_ID, hi, any_hi);
+            RTLIL::Wire* ok = module->addWire(NEW_ID, 1);
+            module->addNot(NEW_ID, RTLIL::SigSpec(any_hi), ok);
+            in_range = RTLIL::SigSpec(ok);
+        }
+        addr = addr.extract(0, aw);
+    } else if (addr.size() < aw) {
+        addr.extend_u0(aw);
+    }
+    return in_range;
+}
+
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     NbInflightGuard nb_guard(this, uhdm_assign);
     // A COMPOUND assignment (`x[i] |= t`, `x[i] ^= t`, ...) must fold the
@@ -17901,12 +17929,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 if (const MemoryWriteInfo* infop = find_port(std::string(bs->VpiName()))) {
                     const MemoryWriteInfo& info = *infop;
                     RTLIL::SigSpec addr = import_expression(bs->VpiIndex());
-                    if (addr.size() != info.addr_wire->width) {
-                        if (addr.size() < info.addr_wire->width)
-                            addr.extend_u0(info.addr_wire->width);
-                        else
-                            addr = addr.extract(0, info.addr_wire->width);
-                    }
+                    RTLIL::SigSpec in_range = memwr_size_addr(addr, info.addr_wire->width);
                     RTLIL::SigSpec data;
                     if (auto rhs_any = uhdm_assign->Rhs()) {
                         if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
@@ -17920,10 +17943,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         RTLIL::SigSig(RTLIL::SigSpec(info.addr_wire), addr));
                     proc->root_case.actions.push_back(
                         RTLIL::SigSig(RTLIL::SigSpec(info.data_wire), data));
-                    // Whole-word write: enable every bit.
+                    // Whole-word write: enable every bit (unless the index is
+                    // out of the array's range, in which case the write is a
+                    // no-op per LRM 7.4.6).
+                    RTLIL::SigSpec en_all;
+                    for (int i = 0; i < info.en_wire->width; i++) en_all.append(in_range);
                     proc->root_case.actions.push_back(
-                        RTLIL::SigSig(RTLIL::SigSpec(info.en_wire),
-                                      RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
+                        RTLIL::SigSig(RTLIL::SigSpec(info.en_wire), en_all));
                     return;
                 }
             } else if (lhs_e->VpiType() == vpiVarSelect) {
@@ -17939,12 +17965,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     if (parse_mem_partial_select(vs, addr_expr, lo, hi, info.data_wire->width, &lin_addr)) {
                         int w = hi - lo + 1;
                         RTLIL::SigSpec addr = lin_addr.empty() ? import_expression(addr_expr) : lin_addr;
-                        if (addr.size() != info.addr_wire->width) {
-                            if (addr.size() < info.addr_wire->width)
-                                addr.extend_u0(info.addr_wire->width);
-                            else
-                                addr = addr.extract(0, info.addr_wire->width);
-                        }
+                        RTLIL::SigSpec in_range = memwr_size_addr(addr, info.addr_wire->width);
                         RTLIL::SigSpec data;
                         if (auto rhs_any = uhdm_assign->Rhs())
                             if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
@@ -17957,9 +17978,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             RTLIL::SigSig(RTLIL::SigSpec(info.addr_wire), addr));
                         proc->root_case.actions.push_back(
                             RTLIL::SigSig(RTLIL::SigSpec(info.data_wire).extract(lo, w), data));
+                        RTLIL::SigSpec en_slice;
+                        for (int i = 0; i < w; i++) en_slice.append(in_range);
                         proc->root_case.actions.push_back(
-                            RTLIL::SigSig(RTLIL::SigSpec(info.en_wire).extract(lo, w),
-                                          RTLIL::SigSpec(RTLIL::State::S1, w)));
+                            RTLIL::SigSig(RTLIL::SigSpec(info.en_wire).extract(lo, w), en_slice));
                         return;
                     }
                 }
@@ -20537,21 +20559,21 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // with a yosys assertion naming no signal at all.  That was 17
                             // of RSD's 144 rows, every one a module with an interface port
                             // AND a memory written from a case arm.
-                            if (addr.size() != info.addr_wire->width) {
-                                if (addr.size() < info.addr_wire->width)
-                                    addr.extend_u0(info.addr_wire->width);
-                                else
-                                    addr = addr.extract(0, info.addr_wire->width);
-                            }
+                            RTLIL::SigSpec in_range =
+                                memwr_size_addr(addr, info.addr_wire->width);
 
-                            // Assign to temp wires (whole-word write: enable all bits)
+                            // Assign to temp wires (whole-word write: enable
+                            // all bits, unless the index is out of the array's
+                            // range -- then the write is a no-op, LRM 7.4.6)
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(info.addr_wire), addr));
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(info.data_wire), data));
+                            RTLIL::SigSpec en_all;
+                            for (int i = 0; i < info.en_wire->width; i++)
+                                en_all.append(in_range);
                             case_rule->actions.push_back(RTLIL::SigSig(
-                                RTLIL::SigSpec(info.en_wire),
-                                RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
+                                RTLIL::SigSpec(info.en_wire), en_all));
                             // A BLOCKING write is visible to a later read of
                             // this memory in the same block.
                             if (assign->VpiBlocking())
@@ -20576,12 +20598,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             if (parse_mem_partial_select(vs, addr_expr, lo, hi, info.data_wire->width, &lin_addr)) {
                                 int w = hi - lo + 1;
                                 RTLIL::SigSpec addr = lin_addr.empty() ? import_expression(addr_expr) : lin_addr;
-                                if (addr.size() != info.addr_wire->width) {
-                                    if (addr.size() < info.addr_wire->width)
-                                        addr.extend_u0(info.addr_wire->width);
-                                    else
-                                        addr = addr.extract(0, info.addr_wire->width);
-                                }
+                                RTLIL::SigSpec in_range =
+                                    memwr_size_addr(addr, info.addr_wire->width);
                                 RTLIL::SigSpec data;
                                 if (auto rhs_any = assign->Rhs())
                                     if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
@@ -20606,9 +20624,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     RTLIL::SigSpec(info.addr_wire), addr));
                                 case_rule->actions.push_back(RTLIL::SigSig(
                                     RTLIL::SigSpec(info.data_wire).extract(lo, w), data));
+                                RTLIL::SigSpec en_slice;
+                                for (int i = 0; i < w; i++) en_slice.append(in_range);
                                 case_rule->actions.push_back(RTLIL::SigSig(
                                     RTLIL::SigSpec(info.en_wire).extract(lo, w),
-                                    RTLIL::SigSpec(RTLIL::State::S1, w)));
+                                    en_slice));
                                 if (assign->VpiBlocking())
                                     inflight_blocking_memwr_.push_back({info.mem_id,
                                         RTLIL::SigSpec(info.addr_wire), RTLIL::SigSpec(info.data_wire),
