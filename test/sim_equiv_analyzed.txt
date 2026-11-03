@@ -914,3 +914,14 @@ Test: readmemb_task
     Same as readmemh_task with `$readmemb` and a 16-word binary payload: the
     1008 unloaded words are undefined, yosys folds both frontends' netlists to
     the loaded words, and Verilator's two-state RTL reads 0 there instead.
+
+Test: typedef_test_18
+    `$bits(randstruct)` of `struct { rand bit i; randc integer b[9:0]; }` is
+    1 + 10 x 32 = 321 (LRM 20.6.2 counts every member; the rand qualifiers
+    change nothing).  read_uhdm and read_slang both build the constant 321
+    (the slang miter proves them equal) and read_verilog cannot parse the
+    qualifiers.  The co-sim's RTL side is Verilator, which evaluates the same
+    `$bits` to 1 -- it drops the rand-qualified members from the size -- so
+    every cycle differs by construction: a Verilator artefact, not a reader
+    difference.  The test exists because read_uhdm used to drop those members
+    too (1 bit); now it does not.

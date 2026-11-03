@@ -408,9 +408,6 @@ loopvar_index_in_hier_path
 # Each of these is ratcheted in structural_expected_fail.txt (and, where
 # read_slang parses the construct, slang_miter_expected_fail.txt); read_verilog
 # is the oracle, so the whole uhdm-vs-verilog comparison fails too.
-# A real literal written with an exponent and digit underscores (`1_0.5e-1`)
-# is folded to the wrong integer.
-sv_tests/real-constants
 
 # ---- inner-dimension geometry (2026-11-02) ---------------------------------
 # The query half of this test is fixed ($bits of the selected element is 256),

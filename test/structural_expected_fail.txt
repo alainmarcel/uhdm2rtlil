@@ -32,11 +32,6 @@ sv_tests/arrays-replication
 # all three elements read 32'x where read_slang gives 1, 0, 0.
 sv_tests/arrays-key-index
 
-# A RANGED enum member list (`enum {start=10, step[10]}`) does not create the
-# generated member names: read_uhdm reports `Reference to unknown signal: step0`
-# and fabricates a wire, where read_slang resolves step0..step9 to 11..20.
-sv_tests/enum_sequence
-
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
 
 
@@ -48,15 +43,6 @@ sv_tests/concat_op-bit_select
 
 # ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
 
-# ---- sv-tests conversion campaign, batch 5 (2026-10-31) -------------------
-
-# A RANGED enum member list with explicit bounds (`enum {start=10, stop[11:13]}`)
-# does not create stop11/stop12/stop13: read_uhdm reports
-# `Reference to unknown signal: stop11` and fabricates a wire, where read_slang
-# resolves them to 11, 12 and 13.  read_verilog cannot parse a ranged enum.  Same
-# defect as enum_sequence (the `step[10]` count form) above.
-sv_tests/enum_sequence_range
-
 # `always @(edge clk)` becomes a COMBINATIONAL LOGIC LOOP: read_uhdm emits a plain
 # $not driving `a` from `a`, so `check` reports four logic loops (one per bit).
 # No frontend synthesizes a dual-edge flop -- read_verilog cannot parse the form
@@ -64,13 +50,6 @@ sv_tests/enum_sequence_range
 # is the only one that silently produces a broken netlist instead of refusing.
 sv_tests/event_control_edge
 
-
-# A `let`'s FORMAL ARGUMENTS are not bound: read_uhdm reports
-# `Reference to unknown signal: x` (and y, z) for `let op(x, y, z) = |((x|y)&z);`
-# and the expression reads fabricated wires, so the output is 1'x where read_slang
-# gives 1.  read_verilog cannot parse `let` at all
-# (`syntax error, unexpected '='`), so read_slang is the oracle.
-sv_tests/let_construct
 
 
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
@@ -93,21 +72,7 @@ sv_tests/operations-on-unpacked-arrays-variable-slice-rw
 # 200.  The `unsigned` twin is correct on all three.
 sv_tests/packed-and-signed-structures
 
-# A struct member with a `rand`/`randc` QUALIFIER and an unpacked dimension is
-# DROPPED: `struct { rand bit i; randc integer b[9:0]; }` is 321 bits on
-# read_slang and 1 on read_uhdm.
-sv_tests/typedef_test_18
 
-
-
-# The EXPONENT of a real literal that also has UNDERSCORES is dropped:
-# 236.123_763_e-12 rounds to 0 on both references and reads 236 on read_uhdm.
-sv_tests/real-constants
-
-# TIME LITERALS are not scaled to the module's time unit: under 100ps/10ps,
-# read_slang gives 1ns=10 1us=10000 1ms=10000000 2.1ms=21000000 and read_uhdm
-# gives 1000000 / 1000 / 1000000000 / 2000000000 (1ns comes out LARGER than 1us).
-sv_tests/time-literals
 
 # Assignment-pattern defects on STRUCTS: with two TYPE KEYS for the same type the
 # FIRST wins instead of the LAST (`'{int:0, int:1}` gives a = 0, read_slang 1); a
