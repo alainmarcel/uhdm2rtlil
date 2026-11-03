@@ -67,11 +67,6 @@ sv_tests/operations-on-unpacked-arrays-variable-slice-rw
 # NOTE.md.  Each entry below is a measured reader defect; the test's NOTE.md has
 # the measurement and the reference that adjudicated it.
 
-# `struct packed signed` LOSES its signedness: 8'd200 read into a signed 32-bit
-# context must sign-extend to -56 (read_verilog and read_slang); read_uhdm gives
-# 200.  The `unsigned` twin is correct on all three.
-sv_tests/packed-and-signed-structures
-
 
 
 # Assignment-pattern defects on STRUCTS: with two TYPE KEYS for the same type the
