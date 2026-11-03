@@ -177,7 +177,7 @@ def read_analyzed_names():
     f = TEST_DIR / "sim_equiv_analyzed.txt"
     if f.exists():
         for line in f.read_text().splitlines():
-            m = re.match(r"Test:\s*([A-Za-z0-9_-]+)", line.strip())
+            m = re.match(r"Test:\s*([A-Za-z0-9_.+-]+)", line.strip())
             if m:
                 names.add(m.group(1))
     return names
