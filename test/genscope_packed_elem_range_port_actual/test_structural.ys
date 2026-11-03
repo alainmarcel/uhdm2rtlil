@@ -1,0 +1,7 @@
+# q_gen = a[0] ^ a[1] over 64 bits, q_gen8 = (a[0] >> 8) ^ (a[1] >> 8) low byte;
+# the control passes 2 bits of local_operands and reads 1 / 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt_clean
+sat -verify -set a 192'hfff00104fffefefe_0000000000004001_82300000007b7c21 -prove q_top 64'h82300000007b3c20 -prove q_gen 64'h82300000007b3c20 -prove q_gen8 64'h3c
+sat -verify -prove q_gen q_top
