@@ -1,0 +1,8 @@
+# The generate loops bounded by the table selects must elaborate (1 and 7
+# iterations) and the selected values must be the right elements.  With the
+# evaluator defect N, M and K fold to nothing: no loop body, z and m 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -prove z 16'd5 -prove m 8'd8
+sat -verify -prove y 8'b1010_1010 -set a 8'b1010_1011

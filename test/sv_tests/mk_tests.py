@@ -4293,7 +4293,7 @@ for _nm, _ty, _bits, _body, _bad in [
     ('typedef_test_9', 'my_array_t', 12, 'parameter j = 3;\nparameter k = 2;\ntypedef bit data_t;\n\ntypedef data_t my_array_t [k:0][j:0];\n', False),
     ('typedef_test_14', 'myalias', 1, 'package some_package;\n   typedef bit some_type;\nendpackage\n\ntypedef some_package::some_type myalias;\n', False),
     ('typedef_test_16', 'mystruct_t', 5, 'typedef struct packed {\n  logic [4:0] some_member;\n} mystruct_t;\n', False),
-    ('typedef_test_18', 'randstruct', 321, 'parameter K = 9;\n\ntypedef struct {\n  rand bit i;\n  randc integer b[K:0];\n} randstruct;\n', True),
+    ('typedef_test_18', 'randstruct', 321, 'parameter K = 9;\n\ntypedef struct {\n  rand bit i;\n  randc integer b[K:0];\n} randstruct;\n', False),  # FIXED 2026-11-02 (Surelog #4242)
     ('typedef_test_19', 'myenum_fwd', 32, 'typedef enum {\n  Global = 2,\n  Local = 3\n} myenum_fwd;\n', False),
     ('typedef_test_20', 'myenum_fwd', 4, "typedef enum logic[3:0] {\n  Global = 4'h2,\n  Local = 4'h3\n} myenum_fwd;\n", False),
     ('typedef_test_21', 'myenum_fwd', 4, "typedef enum bit[3:0] {\n  Global = 4'h2,\n  Local = 4'h3\n} myenum_fwd;\n", False),
@@ -5236,14 +5236,16 @@ endmodule
     ["sat -verify -prove t_ns 64'd10", "sat -verify -prove t_us 64'd10000",
      "sat -verify -prove t_ms 64'd10000000", "sat -verify -prove t_real 64'd21000000",
      "sat -verify -prove w 1'b1 -set x 1'b1"],
-    note="""RATCHET -- TIME LITERALS are not scaled to the module's time unit.
+    note="""FIXED 2026-11-02 (was a RATCHET) -- TIME LITERALS were not scaled to the module's
+time unit.  Surelog, not the reader: the literal was parsed as an integer (2.1 ->
+2), converted to picoseconds with the ns and us factors SWAPPED, and never related
+to the module's `timescale` at all.
 
 Under `timescale 100ps/10ps`, 1ns is 10 units, 1us is 10000, 1ms is 10000000 and
 the real 2.1ms rounds to 21000000.  read_slang gives exactly those; read_uhdm
-gives 1000000 / 1000 / 1000000000 / 2000000000 -- not a consistent unit at all
-(1ns comes out LARGER than 1us).  read_verilog cannot parse the literals.  The fs
-and ps literals are below the unit and round to 0, so they are not proven.
-Listed in structural_expected_fail.txt and slang_miter_expected_fail.txt.
+used to give 1000000 / 1000 / 1000000000 / 2000000000 -- not a consistent unit at
+all (1ns came out LARGER than 1us).  read_verilog cannot parse the literals.  The
+fs and ps literals are below the unit and round to 0, so they are not proven.
 """)
 add("reorder_stream_sim", "Upstream streams a constant and prints the result.",
     """module top(input logic [31:0] a, output logic [31:0] b);

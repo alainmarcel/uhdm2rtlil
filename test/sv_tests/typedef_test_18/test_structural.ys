@@ -1,4 +1,4 @@
-# $bits of the type must be 321, as read_slang measures it -- read_uhdm gives a different width, which is why this is a RATCHET; see NOTE.md.
+# $bits of the type must be 321, as read_slang measures it.
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top test
 proc

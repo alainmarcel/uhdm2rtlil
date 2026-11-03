@@ -154,7 +154,6 @@ func_local_accumulator_in_ff
 arrays
 arrays-key-index
 arrays-replication
-enum_sequence
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
 # Co-sim divergences that are a DIRECT CONSEQUENCE of a reader defect already
 # tracked, with its measurement, in structural_expected_fail.txt (and in
@@ -166,20 +165,12 @@ enum_sequence
 #                                              the wrong bits (188 of 200 cycles)
 concat_op-bit_select
 # ---- sv-tests conversion campaign, batch 5 (2026-10-31) ------------------
-# Both divergences are a DIRECT CONSEQUENCE of a reader defect already tracked,
+# A divergence that is a DIRECT CONSEQUENCE of a reader defect already tracked,
 # with its measurement, in structural_expected_fail.txt:
-#   enum_sequence_range : the ranged enum's generated members are not created, so
-#                         stop11 reads 0 where the RTL gives 11
 #   event_control_edge  : `@(edge clk)` becomes a combinational logic loop, so the
 #                         register never advances
 # Both lists must lose the entry in the commit that fixes the defect.
-enum_sequence_range
 event_control_edge
-# ---- sv-tests conversion campaign, batch 6 (2026-11-01) ------------------
-# Divergences caused by reader defects tracked, with their measurements, in
-# structural_expected_fail.txt:
-#   let_construct     : a `let`'s formal arguments are never bound (output is 1'x)
-let_construct
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
 #   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an
@@ -191,11 +182,7 @@ operations-on-unpacked-arrays-variable-slice-rw
 # IS wrong, so the divergence is expected until the reader fix lands):
 # packed SIGNED struct read unsigned (0x92 vs 0xffffff92)
 packed-and-signed-structures
-# real literal with exponent + underscores folded wrong
-real-constants
 # struct type-key / pattern order, replicated pattern dropped, element pattern
 structure
 structure-arrays
 structure-replication
-# time literals (`10ns`) folded in the wrong unit
-time-literals
