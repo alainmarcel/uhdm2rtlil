@@ -13471,22 +13471,43 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             const UHDM::VectorOfrange* rgs = nullptr;
             if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at2))
                 if (!lt->Elem_typespec()) rgs = lt->Ranges();
+            int dli = 0, dri = 0; bool have_decl = false;
             if (rgs && rgs->size() == 1) {
                 auto r0 = (*rgs)[0];
                 RTLIL::SigSpec dl = import_expression(r0->Left_expr(), input_mapping);
                 RTLIL::SigSpec dr = import_expression(r0->Right_expr(), input_mapping);
                 if (dl.is_fully_const() && dr.is_fully_const()) {
-                    int dli = dl.as_const().as_int(), dri = dr.as_const().as_int();
-                    int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
-                    int ilo = std::min(left, right), ihi = std::max(left, right);
-                    if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
-                        ilo >= dlow && ihi <= dhigh) {
-                        offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
-                                              : (dhigh - ihi);    // ascending  [lo:hi]
-                        uhdm_trace("    part_select: non-zero-based vector [%d:%d], "
-                            "select [%d:%d] -> bits [%d+:%d]\n",
-                            dli, dri, left, right, offset, width);
-                    }
+                    dli = dl.as_const().as_int(); dri = dr.as_const().as_int();
+                    have_decl = true;
+                }
+            } else if (!rgs && !base_signal_name.empty()) {
+                // No Actual_group (a part_select in a module DEFINITION has
+                // none) -- the declared range is still on the module's own
+                // wire of that name (`reg [31:16] shift_right_fill_r`,
+                // start_offset 16).  Without it the IN-FLIGHT value of such a
+                // register -- not a wire, so the geometry branch below never
+                // sees it -- was sliced at the declared indices and
+                // `fill[31:24]` came back X: biriscv's ALU lost every
+                // arithmetic-shift fill bit, but only as a CHILD of
+                // biriscv_exec (the top-level instance has the Actual_group).
+                RTLIL::Wire* dw = find_wire_in_scope(base_signal_name, "");
+                if (dw && (dw->start_offset != 0 || dw->upto) &&
+                    dw->width == base.size()) {
+                    if (dw->upto) { dli = dw->start_offset; dri = dw->start_offset + dw->width - 1; }
+                    else          { dli = dw->start_offset + dw->width - 1; dri = dw->start_offset; }
+                    have_decl = true;
+                }
+            }
+            if (have_decl) {
+                int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+                int ilo = std::min(left, right), ihi = std::max(left, right);
+                if (dlow != 0 && base.size() == dhigh - dlow + 1 &&
+                    ilo >= dlow && ihi <= dhigh) {
+                    offset = (dli >= dri) ? (ilo - dlow)      // descending [hi:lo]
+                                          : (dhigh - ihi);    // ascending  [lo:hi]
+                    uhdm_trace("    part_select: non-zero-based vector [%d:%d], "
+                        "select [%d:%d] -> bits [%d+:%d]\n",
+                        dli, dri, left, right, offset, width);
                 }
             }
         }
@@ -14993,6 +15014,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
     // Dynamic bit select - check for packed multidimensional array element access
     int element_width = packed_elem_w;
     int outer_left = packed_outer_l, outer_right = packed_outer_r;
+    // The net/var of the SAME NAME in the current instance, for the typespec
+    // fallback below when the bit_select carries no Actual_group.
+    const UHDM::any* named_obj = nullptr;
 
     // Elaborated packed-array-of-STRUCT variable (`dtype [FifoDepth-1:0]
     // mem_q` with a type-param struct dtype — CVA6 cva6_fifo_v3): the
@@ -15044,12 +15068,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 if (mi->Nets())
                     for (auto n0 : *mi->Nets())
                         if (std::string(n0->VpiName()) == signal_name) {
+                            if (!named_obj) named_obj = n0;
                             try_packed_obj(n0);
                             if (element_width > 1) break;
                         }
                 if (element_width <= 1 && mi->Variables())
                     for (auto v0 : *mi->Variables())
                         if (std::string(v0->VpiName()) == signal_name) {
+                            if (!named_obj) named_obj = v0;
                             try_packed_obj(v0);
                             if (element_width > 1) break;
                         }
@@ -15057,9 +15083,20 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         }
     }
 
-    // Fall back to UHDM typespec detection if no wire attributes
+    // Fall back to UHDM typespec detection if no wire attributes.  A
+    // bit_select in a module DEFINITION often has no Actual_group at all; the
+    // definition's own net of that name then carries the declared typespec
+    // (`type_mprf_v [1:31] mprf_int` -- a logic_typespec with the outer range
+    // and the typedef as Elem_typespec).  Without it a CHILD module's dynamic
+    // element read `mprf_int[rs2_addr]` degenerated to ONE BIT of the flat
+    // array while the write beside it placed the full 32-bit element (SCR1's
+    // register file: every rs1/rs2 read of a written register returned 0, the
+    // top-level module read fine because its elaborated packed_array_var was
+    // found by name).
     if (element_width <= 1) {
-        if (auto actual_group = uhdm_bit->Actual_group()) {
+        const UHDM::any* actual_group = uhdm_bit->Actual_group();
+        if (!actual_group) actual_group = named_obj;
+        if (actual_group) {
             const UHDM::ref_typespec* net_ref_ts = nullptr;
             if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(actual_group)) {
                 net_ref_ts = logic_net->Typespec();
