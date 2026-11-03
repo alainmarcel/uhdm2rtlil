@@ -16,10 +16,13 @@ ibex_ex_block
 
 
 # ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
-# The same seven reader defects as the sv_tests block in
-# structural_expected_fail.txt, seen from the other side: read_slang computes
-# upstream's values and read_uhdm does not, so the miter finds a counterexample.
-# Both lists must lose the entry in the commit that fixes the defect.
+# HARNESS LIMIT, not a reader defect (the reader defect was fixed and the
+# structural / co-sim entries of these three tests removed with it): each
+# test's constant-initialised unpacked array stays a `$mem_v2` with a
+# `$meminit` in read_slang's netlist, and satgen has no model for a memory
+# cell, so `sat` cannot build the miter at all ("No SAT model available").
+# The values are proven by each test's test_structural.ys instead, and
+# read_slang's own `eval` of the outputs agrees with them.
 sv_tests/arrays
 sv_tests/arrays-replication
 sv_tests/arrays-key-index

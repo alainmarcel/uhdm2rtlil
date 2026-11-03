@@ -4021,6 +4021,60 @@ const module_inst* UhdmImporter::find_elab_instance(const module_inst* def) {
     return it->second.front();
 }
 
+// Build an unpacked-array initialiser's item list (LRM 10.9.1): a plain
+// `'{a, b, c}` is its operands; a replication `'{N{a, b}}` is its element list
+// repeated N times.  Nested at either level -- a replicated ROW inside a 2-D
+// pattern (`'{'{0,1,2}, '{3{4}}}`) or a replicated OUTER pattern
+// (`'{2{'{3{4, 5}}}}`) -- so a caller walks rows and cells the same way.  A
+// node that is neither is returned as the single item.  Before this the 2-D
+// initialiser skipped any row that was not a plain pattern and the 1-D one
+// knew a replication only at the top level: the skipped elements read x
+// (sv-tests arrays, arrays-replication).
+std::vector<const UHDM::any*> UhdmImporter::pattern_items(const UHDM::any* node) {
+    std::vector<const UHDM::any*> out;
+    auto op = dynamic_cast<const UHDM::operation*>(node);
+    if (op && op->VpiOpType() == vpiAssignmentPatternOp && op->Operands()) {
+        for (auto o : *op->Operands()) out.push_back(o);
+        return out;
+    }
+    if (op && op->VpiOpType() == vpiMultiAssignmentPatternOp && op->Operands() &&
+        op->Operands()->size() == 2) {
+        auto& ops = *op->Operands();
+        RTLIL::SigSpec cnt = import_expression(any_cast<const UHDM::expr*>(ops[0]));
+        std::vector<const UHDM::any*> unit;
+        auto inner = dynamic_cast<const UHDM::operation*>(ops[1]);
+        if (inner && inner->VpiOpType() == vpiConcatOp && inner->Operands())
+            for (auto e : *inner->Operands()) unit.push_back(e);
+        if (unit.empty()) unit.push_back(ops[1]);
+        if (cnt.is_fully_const())
+            for (int r = 0; r < cnt.as_const().as_int(); r++)
+                for (auto u : unit) out.push_back(u);
+        return out;
+    }
+    out.push_back(node);
+    return out;
+}
+
+// A keyed item of an unpacked-array pattern: `'{1: v, default: d}`.  Surelog
+// puts an INDEX key in the tagged_pattern's name and `default` in its typespec.
+static bool pattern_item_key(const UHDM::any* item, bool& is_default, long& index) {
+    auto tp = dynamic_cast<const UHDM::tagged_pattern*>(item);
+    if (!tp) return false;
+    is_default = false; index = 0;
+    std::string nm = std::string(tp->VpiName());
+    if (nm.empty() && tp->Typespec()) {
+        nm = std::string(tp->Typespec()->VpiName());
+        if (auto a = tp->Typespec()->Actual_typespec())
+            if (nm.empty()) nm = std::string(a->VpiName());
+    }
+    if (nm == "default") { is_default = true; return true; }
+    if (!nm.empty() && (isdigit((unsigned char)nm[0]) || nm[0] == '-')) {
+        index = std::strtol(nm.c_str(), nullptr, 10);
+        return true;
+    }
+    return false;
+}
+
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Per-module array classification sets are recomputed below for THIS
     // module; restore the caller's on exit.  A child imported from inside the
@@ -5575,30 +5629,46 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 // Build the per-element value list from the
                                 // initializer pattern, then drive each element.
                                 std::vector<RTLIL::SigSpec> vals;
-                                if (init_op->VpiOpType() == vpiAssignmentPatternOp &&
-                                    init_op->Operands()) {
-                                    for (auto cell_any : *init_op->Operands())
-                                        if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any))
-                                            vals.push_back(import_expression(ce));
-                                } else if (init_op->VpiOpType() == vpiMultiAssignmentPatternOp &&
-                                           init_op->Operands() &&
-                                           init_op->Operands()->size() == 2) {
-                                    // `'{N{a, b, ...}}`: operand[0] is the repeat
-                                    // count, operand[1] the element list to repeat
-                                    // (MultiAssignmentPatternOfConcat: `'{3{4,5}}`).
-                                    auto& ops = *init_op->Operands();
-                                    RTLIL::SigSpec cnt = import_expression(any_cast<const UHDM::expr*>(ops[0]));
-                                    std::vector<RTLIL::SigSpec> unit;
-                                    if (auto inner = dynamic_cast<const UHDM::operation*>(ops[1])) {
-                                        if (inner->Operands())
-                                            for (auto e : *inner->Operands())
-                                                unit.push_back(import_expression(any_cast<const UHDM::expr*>(e)));
+                                if (init_op->VpiOpType() == vpiAssignmentPatternOp ||
+                                    init_op->VpiOpType() == vpiMultiAssignmentPatternOp) {
+                                    // Positional items in declaration order;
+                                    // `'{k: v}` lands on declared index k and
+                                    // `'{default: d}` fills what is left
+                                    // (sv-tests arrays-key-index).
+                                    std::vector<const UHDM::any*> items = pattern_items(init_op);
+                                    int left_idx = 0;
+                                    if (array_var->Ranges() && !array_var->Ranges()->empty()) {
+                                        auto r = (*array_var->Ranges())[0];
+                                        if (r->Left_expr()) {
+                                            RTLIL::SigSpec l = import_expression(r->Left_expr());
+                                            if (l.is_fully_const()) left_idx = l.as_const().as_int();
+                                        }
                                     }
-                                    if (unit.empty())
-                                        unit.push_back(import_expression(any_cast<const UHDM::expr*>(ops[1])));
-                                    if (cnt.is_fully_const())
-                                        for (int r = 0; r < cnt.as_const().as_int(); r++)
-                                            for (auto& u : unit) vals.push_back(u);
+                                    bool keyed = false;
+                                    RTLIL::SigSpec defval;
+                                    bool have_def = false;
+                                    std::vector<RTLIL::SigSpec> slot(array_size);
+                                    std::vector<bool> set(array_size, false);
+                                    for (auto item : items) {
+                                        bool isdef = false; long k = 0;
+                                        if (pattern_item_key(item, isdef, k)) {
+                                            keyed = true;
+                                            auto tp = any_cast<const UHDM::tagged_pattern*>(item);
+                                            RTLIL::SigSpec v = tp->Pattern()
+                                                ? import_expression(any_cast<const UHDM::expr*>(tp->Pattern()))
+                                                : RTLIL::SigSpec();
+                                            if (isdef) { defval = v; have_def = true; continue; }
+                                            long pos = array_ascending ? (k - left_idx) : (left_idx - k);
+                                            if (pos >= 0 && pos < array_size) { slot[pos] = v; set[pos] = true; }
+                                        } else if (auto ce = dynamic_cast<const UHDM::expr*>(item)) {
+                                            vals.push_back(import_expression(ce));
+                                        }
+                                    }
+                                    if (keyed) {
+                                        vals.clear();
+                                        for (int i = 0; i < array_size; i++)
+                                            vals.push_back(set[i] ? slot[i] : (have_def ? defval : RTLIL::SigSpec()));
+                                    }
                                 }
                                 if ((int)vals.size() == array_size) {
                                     for (int idx = 0; idx < array_size; idx++) {
@@ -5716,7 +5786,60 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             // right offset yields the source value.
                             if (auto init_any = array_var->Expr()) {
                                 if (auto init_op = dynamic_cast<const UHDM::operation*>(init_any)) {
-                                    if (init_op->VpiOpType() == vpiAssignmentPatternOp &&
+                                    // A ONE-dimensional typedef'd array (`typedef int
+                                    // triple [1:3]; triple b = '{1: 1, default: 0}`)
+                                    // reaches this flat-wire path too, and its
+                                    // initialiser was never imported at all (sv-tests
+                                    // arrays-key-index read x).  Import the pattern
+                                    // against the array type; a positional pattern
+                                    // lists the first declared index first, which an
+                                    // ASCENDING range keeps at the LOW offset (the
+                                    // layout var_select reads), so its elements are
+                                    // reversed; a keyed pattern is laid out by the
+                                    // importer already.
+                                    if ((init_op->VpiOpType() == vpiAssignmentPatternOp ||
+                                         init_op->VpiOpType() == vpiMultiAssignmentPatternOp) &&
+                                        !wire->attributes.count(RTLIL::escape_id("unpacked_elem_width"))) {
+                                        const UHDM::array_typespec* ats1 = nullptr;
+                                        if (array_var->Typespec())
+                                            ats1 = dynamic_cast<const UHDM::array_typespec*>(array_var->Typespec()->Actual_typespec());
+                                        int n1 = 0; bool asc1 = false;
+                                        if (ats1 && ats1->Ranges() && ats1->Ranges()->size() == 1) {
+                                            auto r = (*ats1->Ranges())[0];
+                                            if (r->Left_expr() && r->Right_expr()) {
+                                                RTLIL::SigSpec l = import_expression(r->Left_expr());
+                                                RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                                                if (l.is_fully_const() && rr.is_fully_const()) {
+                                                    int li = l.as_const().as_int(), ri = rr.as_const().as_int();
+                                                    n1 = std::abs(li - ri) + 1; asc1 = li < ri;
+                                                }
+                                            }
+                                        }
+                                        bool keyed1 = false;
+                                        if (init_op->Operands())
+                                            for (auto o : *init_op->Operands())
+                                                if (o->UhdmType() == uhdmtagged_pattern) keyed1 = true;
+                                        int saved_w = expression_context_width;
+                                        const UHDM::typespec* saved_ts = expression_context_typespec;
+                                        expression_context_width = wire->width;
+                                        expression_context_typespec = ats1;
+                                        RTLIL::SigSpec v = import_expression(any_cast<const UHDM::expr*>(init_op));
+                                        expression_context_width = saved_w;
+                                        expression_context_typespec = saved_ts;
+                                        if (v.size() == wire->width && v.is_fully_const()) {
+                                            if (!keyed1 && asc1 && n1 > 1 && wire->width % n1 == 0) {
+                                                int ew = wire->width / n1;
+                                                RTLIL::SigSpec rv;
+                                                for (int i = n1 - 1; i >= 0; i--) rv.append(v.extract(i * ew, ew));
+                                                v = rv;
+                                            }
+                                            module->connect(RTLIL::SigSpec(wire), v);
+                                            uhdm_trace("UHDM: typedef'd array '%s' initialised from its pattern (%d bits)\n",
+                                                       array_name.c_str(), v.size());
+                                        }
+                                    }
+                                    if ((init_op->VpiOpType() == vpiAssignmentPatternOp ||
+                                         init_op->VpiOpType() == vpiMultiAssignmentPatternOp) &&
                                         wire->attributes.count(RTLIL::escape_id("unpacked_elem_width"))) {
                                         int elem_w = wire->attributes
                                             .at(RTLIL::escape_id("unpacked_elem_width")).as_int();
@@ -5732,7 +5855,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                         // it from the high slot
                                         // (2DUnpackedFunctionArgument).
                                         bool outer_asc = false, inner_asc = false;
-                                        int outer_cnt = (int)init_op->Operands()->size();
+                                        int outer_cnt = (int)pattern_items(init_op).size();
                                         int inner_cnt = inner_sz;
                                         if (array_var->Ranges() && array_var->Ranges()->size() >= 2) {
                                             auto dir = [&](int di, bool& asc, int& sz) {
@@ -5748,17 +5871,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                             dir(0, outer_asc, outer_cnt);
                                             dir(1, inner_asc, inner_cnt);
                                         }
-                                        if (init_op->Operands()) {
+                                        {
                                             int row_idx = 0;
-                                            for (auto row_any : *init_op->Operands()) {
+                                            for (auto row_any : pattern_items(init_op)) {
                                                 auto row_op = dynamic_cast<const UHDM::operation*>(row_any);
-                                                if (!row_op || row_op->VpiOpType() != vpiAssignmentPatternOp) {
+                                                if (!row_op || (row_op->VpiOpType() != vpiAssignmentPatternOp &&
+                                                                row_op->VpiOpType() != vpiMultiAssignmentPatternOp)) {
                                                     row_idx++;
                                                     continue;
                                                 }
-                                                if (!row_op->Operands()) { row_idx++; continue; }
                                                 int col_idx = 0;
-                                                for (auto cell_any : *row_op->Operands()) {
+                                                for (auto cell_any : pattern_items(row_op)) {
                                                     if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
                                                         RTLIL::SigSpec cs = import_expression(ce);
                                                         if (cs.is_fully_const()) {

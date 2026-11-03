@@ -143,17 +143,6 @@ extnets
 # without gating; the structural check in structural_expected_fail.txt is the
 # ratchet that fires when it is fixed.
 func_local_accumulator_in_ff
-# ---- sv-tests conversion campaign, 2026-10-31 ------------------------------
-# Six conversions whose co-sim divergence is a DIRECT CONSEQUENCE of a reader
-# defect that is already tracked, with its measurement, in
-# structural_expected_fail.txt and slang_miter_expected_fail.txt.  They are
-# listed here rather than in sim_equiv_analyzed.txt because the miter correctly
-# calls them a BUG, which would hard-fail the test: the divergence is real and
-# the netlist is wrong.  All three lists must lose the entry in the commit that
-# fixes the defect.
-arrays
-arrays-key-index
-arrays-replication
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) ------------------
 # Co-sim divergences that are a DIRECT CONSEQUENCE of a reader defect already
 # tracked, with its measurement, in structural_expected_fail.txt (and in

@@ -20,18 +20,6 @@
 # unnoticed.
 
 
-# A REPLICATION inside an unpacked-array assignment pattern is dropped: every
-# element it should fill reads 32'x.  `'{'{0,1,2},'{3{4}}}` fills row 1 correctly
-# and leaves row 2 entirely X; `'{2{'{3{4, 5}}}}` leaves all of both rows X.
-# read_slang fills both.  read_verilog cannot parse the pattern at all, so the
-# slang miter and this proof are the only gates.
-sv_tests/arrays
-sv_tests/arrays-replication
-
-# An INDEX-KEYED assignment pattern (`'{1:1, default:0}`) is dropped entirely:
-# all three elements read 32'x where read_slang gives 1, 0, 0.
-sv_tests/arrays-key-index
-
 # ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
 
 

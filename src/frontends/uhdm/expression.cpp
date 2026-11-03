@@ -8676,7 +8676,16 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // CVA6 cva6_tlb match_vmid): every ELEMENT gets V — for a plain
             // vector the elements are single bits, so `'{default: 1}` is
             // all-ones, NOT the literal 1 the generic loop below produced.
-            if (deftp && !members && deftp->Pattern()) {
+            // ...unless the pattern ALSO carries index keys (`'{1: v, default:
+            // d}`): then the default fills only what the keys leave, which the
+            // keyed-array branch further down does (sv-tests arrays-key-index).
+            bool has_index_key = false;
+            for (auto operand : *uhdm_op->Operands())
+                if (operand->UhdmType() == uhdmtagged_pattern) {
+                    std::string nm = std::string(any_cast<const UHDM::tagged_pattern*>(operand)->VpiName());
+                    if (!nm.empty() && (isdigit((unsigned char)nm[0]) || nm[0] == '-')) has_index_key = true;
+                }
+            if (deftp && !members && deftp->Pattern() && !has_index_key) {
                 int ew = 1, tw = 0;
                 if (ats) {
                     tw = get_width_from_typespec(ats, inst);
@@ -8926,6 +8935,88 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         elem_struct_ts = struct_ts;
                         struct_ts = nullptr;
                         pelem_w = sw;
+                    }
+                }
+            }
+            // A KEYED pattern on an ARRAY target -- `'{1: v, default: d}` on
+            // `int b [1:3]` (LRM 10.9.1; sv-tests arrays-key-index): Surelog
+            // puts an index key in the tagged_pattern's name and `default` in
+            // its typespec.  The loop below knows tags only as struct member
+            // names, so every element read x.  Place each keyed value on its
+            // declared index, fill the rest with the default, and lay the
+            // elements out the way the variable initialiser does (the first
+            // declared index at the LOW offset of an ascending range, at the
+            // HIGH offset of a descending one).
+            if (!struct_ts) {
+                bool any_key = false;
+                for (auto operand : *uhdm_op->Operands())
+                    if (operand->UhdmType() == uhdmtagged_pattern) {
+                        auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                        std::string nm = std::string(tp->VpiName());
+                        if (nm.empty() && tp->Typespec() && tp->Typespec()->Actual_typespec())
+                            nm = std::string(tp->Typespec()->Actual_typespec()->VpiName());
+                        if (nm == "default" || (!nm.empty() && (isdigit((unsigned char)nm[0]) || nm[0] == '-')))
+                            any_key = true;
+                    }
+                const UHDM::typespec* ats2 = nullptr;
+                if (uhdm_op->Typespec()) ats2 = uhdm_op->Typespec()->Actual_typespec();
+                if (!ats2 && uhdm_op->VpiParent())
+                    if (auto pv = dynamic_cast<const UHDM::variables*>(uhdm_op->VpiParent()))
+                        if (pv->Typespec()) ats2 = pv->Typespec()->Actual_typespec();
+                if (!ats2) ats2 = assignment_lhs_typespec(uhdm_op);
+                if ((!ats2 || !dynamic_cast<const UHDM::array_typespec*>(ats2)) && expression_context_typespec &&
+                    dynamic_cast<const UHDM::array_typespec*>(expression_context_typespec))
+                    ats2 = expression_context_typespec;
+                const UHDM::array_typespec* arr_ts = ats2 ? dynamic_cast<const UHDM::array_typespec*>(ats2) : nullptr;
+                if (any_key && arr_ts && arr_ts->Ranges() && arr_ts->Ranges()->size() == 1) {
+                    auto r = (*arr_ts->Ranges())[0];
+                    RTLIL::SigSpec ls = r->Left_expr() ? import_expression(r->Left_expr(), input_mapping) : RTLIL::SigSpec();
+                    RTLIL::SigSpec rs = r->Right_expr() ? import_expression(r->Right_expr(), input_mapping) : RTLIL::SigSpec();
+                    int total = get_width_from_typespec(arr_ts, inst);
+                    if (ls.is_fully_const() && rs.is_fully_const() && total > 0) {
+                        int li = ls.as_const().as_int(), ri = rs.as_const().as_int();
+                        int n = std::abs(li - ri) + 1;
+                        bool asc = li < ri;
+                        int ew = (n > 0 && total % n == 0) ? total / n : 0;
+                        if (ew > 0) {
+                            std::vector<RTLIL::SigSpec> slot(n);
+                            std::vector<bool> set(n, false);
+                            RTLIL::SigSpec defval; bool have_def = false;
+                            int pos_i = 0;
+                            for (auto operand : *uhdm_op->Operands()) {
+                                const expr* ve = nullptr; std::string nm;
+                                if (operand->UhdmType() == uhdmtagged_pattern) {
+                                    auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                                    nm = std::string(tp->VpiName());
+                                    if (nm.empty() && tp->Typespec() && tp->Typespec()->Actual_typespec())
+                                        nm = std::string(tp->Typespec()->Actual_typespec()->VpiName());
+                                    if (tp->Pattern()) ve = any_cast<const expr*>(tp->Pattern());
+                                } else {
+                                    ve = any_cast<const expr*>(operand);
+                                }
+                                if (!ve) continue;
+                                int saved_ctx = expression_context_width;
+                                expression_context_width = ew;
+                                RTLIL::SigSpec v = import_expression(ve, input_mapping);
+                                expression_context_width = saved_ctx;
+                                if (v.size() < ew) v.extend_u0(ew); else if (v.size() > ew) v = v.extract(0, ew);
+                                if (nm == "default") { defval = v; have_def = true; continue; }
+                                int pos;
+                                if (!nm.empty()) { long k = std::strtol(nm.c_str(), nullptr, 10); pos = asc ? (k - li) : (li - k); }
+                                else pos = pos_i++;
+                                if (pos >= 0 && pos < n) { slot[pos] = v; set[pos] = true; }
+                            }
+                            RTLIL::SigSpec result;
+                            // Position 0 (the first declared index) at the LOW
+                            // offset for an ascending range: append it first.
+                            for (int p = 0; p < n; p++) {
+                                int q = asc ? p : (n - 1 - p);
+                                RTLIL::SigSpec v = set[q] ? slot[q] : (have_def ? defval : RTLIL::SigSpec(RTLIL::State::Sx, ew));
+                                result.append(v);
+                            }
+                            uhdm_trace("UHDM: keyed array pattern: %d elements x %d bits\n", n, ew);
+                            return result;
+                        }
                     }
                 }
             }
