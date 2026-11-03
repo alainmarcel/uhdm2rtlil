@@ -1,0 +1,8 @@
+# Both field writes land in the addressed slot and the other slot keeps its
+# input: idx 1 -> q1 = {m, t} = 8'ha5, q0 = b0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean; flatten
+sat -verify -set v 1 -set idx 1 -set t 4'h5 -set m 4'ha -set b0 8'h11 -set b1 8'h22 -prove q1 8'ha5 -prove q0 8'h11
+sat -verify -set v 1 -set idx 0 -set t 4'h5 -set m 4'ha -set b0 8'h11 -set b1 8'h22 -prove q0 8'ha5 -prove q1 8'h22
+sat -verify -set v 0 -prove q0 b0 -prove q1 b1
