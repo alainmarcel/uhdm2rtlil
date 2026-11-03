@@ -1,0 +1,5 @@
+# Both instances pass their 32-bit operand through and report $bits(T) = 32.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt_clean
+sat -verify -prove q1 d -prove q2 d -prove w1 8'd32 -prove w2 8'd32
