@@ -1580,6 +1580,52 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         if (uhdm_net->Typespec() && uhdm_net->Typespec()->Actual_typespec())
             stamp_packed_attrs_from_def(w, std::string(mi->VpiDefName()), netname,
                                         uhdm_net->Typespec()->Actual_typespec());
+    // A net declared as a packed array of a TYPEDEF'D STRUCT (`idma_pkg::
+    // idma_busy_t [NumBEs-1:0] backend_busy_d`, iDMA's mp dist midend)
+    // carries the packed_array_typespec itself as its elaborated typespec:
+    // Elem_typespec is the struct, Ranges the outer dimension.  Neither
+    // def-view match above fits that shape, so the net had no element
+    // geometry and `backend_busy_d[i] = idma_busy_i[i]` in the comb loop
+    // wrote ONE BIT per element (bit i of the array from bit 8*i of the
+    // port): only element 0's low bit ever followed the input, and
+    // `&backend_busy_q` -- the midend's busy output -- stuck at 0
+    // (cheshire's idma_mp_midend_synth, formal `differs`).  Stamp the
+    // geometry straight from the typespec.
+    // The definition view (which module bodies are imported from) carries
+    // such a net as a packed_array_net whose Ranges() hold the outer
+    // dimension and whose Elements() hold the struct_net; the elaborated
+    // view carries a logic_net with the packed_array_typespec.
+    const UHDM::ref_typespec* net_rts = nullptr;
+    if (auto ln0 = dynamic_cast<const UHDM::logic_net*>(uhdm_net)) net_rts = ln0->Typespec();
+    if (!net_rts) net_rts = uhdm_net->Typespec();
+    const UHDM::VectorOfrange* pa_ranges = nullptr;
+    if (auto pan0 = dynamic_cast<const UHDM::packed_array_net*>(uhdm_net))
+        pa_ranges = pan0->Ranges();
+    else if (net_rts && net_rts->Actual_typespec())
+        if (auto pts = dynamic_cast<const UHDM::packed_array_typespec*>(net_rts->Actual_typespec()))
+            if (pts->Elem_typespec() && pts->Elem_typespec()->Actual_typespec())
+                pa_ranges = pts->Ranges();
+    if (w && !w->attributes.count(RTLIL::escape_id("packed_elem_width")) && pa_ranges) {
+        {
+            if (!pa_ranges->empty()) {
+                auto r0 = (*pa_ranges)[0];
+                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    int ol = l.as_const().as_int(), orr = r.as_const().as_int();
+                    int outer = std::abs(ol - orr) + 1;
+                    if (outer > 1 && w->width % outer == 0 && w->width / outer > 1) {
+                        int ew = w->width / outer;
+                        w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
+                        w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
+                        w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
+                        uhdm_trace("UHDM: packed array-of-struct net '%s': elem=%d outer=[%d:%d]\n",
+                            netname.c_str(), ew, ol, orr);
+                    }
+                }
+            }
+        }
+    }
 
     // Check if net is signed
     if (auto ref_typespec = uhdm_net->Typespec()) {

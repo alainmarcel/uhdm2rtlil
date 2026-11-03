@@ -420,3 +420,12 @@ loopvar_index_in_hier_path
 # read_verilog flattens the array to 50 wires of 256 bits and writes element 0.
 # multi-dim-basic (reads only, no element write) passes; this is the write path.
 sv_tests/multi-declaration
+
+# ---- packed array of a package struct as a port (2026-11-03) -----------------
+# read_verilog is the WRONG side: it sizes the `p::busy_t [NumBEs-1:0]` ports
+# (5 x 8-bit struct = 40 bits) as 8 bits -- one element -- so its netlist is
+# `connect \d_o { 3'111 \idma_busy_i [4:0] }` against a 40-bit read_uhdm.  The
+# read_slang miter (test_slang_equiv.ys) proves read_uhdm, the structural
+# `sat -prove d_o idma_busy_i` pins the element-wise copy, and the Verilator
+# co-sim passes.  UHDM is correct -- do NOT "fix" it to match.
+packed_array_of_structs_net_elem_write
