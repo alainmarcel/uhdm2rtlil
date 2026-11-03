@@ -4680,6 +4680,28 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
                 uhdm_trace("    Event expression type: %s (vpiType=%d)\n", 
                     UhdmName(event_expr->UhdmType()).c_str(), event_expr->VpiType());
                 
+                // `@(edge clk)` -- Surelog codes the dual-edge keyword as
+                // vpiAnyEdge, which is neither posedge nor negedge: the block
+                // was scored COMBINATIONAL and `a <= ~a` became a `$not`
+                // feeding itself, one logic loop per bit (sv-tests
+                // event_control_edge).  No frontend builds a dual-edge flop
+                // (read_verilog cannot parse the form, read_slang refuses it);
+                // refuse it with the source location instead.
+                {
+                    std::function<const operation*(const any*)> find_any_edge = [&](const any* nd) -> const operation* {
+                        if (!nd || nd->VpiType() != vpiOperation) return nullptr;
+                        auto o = any_cast<const operation*>(nd);
+                        if (o->VpiOpType() == vpiAnyEdge) return o;
+                        if (o->Operands())
+                            for (auto sub : *o->Operands())
+                                if (auto r = find_any_edge(sub)) return r;
+                        return nullptr;
+                    };
+                    if (const operation* ae = find_any_edge(event_expr))
+                        log_error("`@(edge ...)` at %s:%d: a dual-edge sensitivity is not synthesizable "
+                                  "(no frontend builds a dual-edge flop; read_slang refuses it as well)\n",
+                                  std::string(ae->VpiFile()).c_str(), ae->VpiLineNo());
+                }
                 if (event_expr->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(event_expr);
                     uhdm_trace("    Operation type: %d (vpiPosedgeOp=%d, vpiNegedgeOp=%d, vpiEventOrOp=%d)\n", 

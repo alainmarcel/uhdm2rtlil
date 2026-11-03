@@ -164,13 +164,6 @@ arrays-replication
 #   concat_op-bit_select                     : a select on a concatenation takes
 #                                              the wrong bits (188 of 200 cycles)
 concat_op-bit_select
-# ---- sv-tests conversion campaign, batch 5 (2026-10-31) ------------------
-# A divergence that is a DIRECT CONSEQUENCE of a reader defect already tracked,
-# with its measurement, in structural_expected_fail.txt:
-#   event_control_edge  : `@(edge clk)` becomes a combinational logic loop, so the
-#                         register never advances
-# Both lists must lose the entry in the commit that fixes the defect.
-event_control_edge
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) ------------------
 # Divergences caused by reader defects measured in structural_expected_fail.txt:
 #   operations-on-unpacked-arrays-variable-slice-rw : an indexed part-select of an

@@ -41,17 +41,6 @@ sv_tests/arrays-key-index
 # at all (`syntax error, unexpected '['`), so read_slang is the oracle.
 sv_tests/concat_op-bit_select
 
-# ---- sv-tests conversion campaign, batch 4 (2026-10-31) -------------------
-
-# `always @(edge clk)` becomes a COMBINATIONAL LOGIC LOOP: read_uhdm emits a plain
-# $not driving `a` from `a`, so `check` reports four logic loops (one per bit).
-# No frontend synthesizes a dual-edge flop -- read_verilog cannot parse the form
-# and read_slang REFUSES it ("@(edge) will not be synthesized") -- but read_uhdm
-# is the only one that silently produces a broken netlist instead of refusing.
-sv_tests/event_control_edge
-
-
-
 # ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
 
 # An INDEXED PART-SELECT of an UNPACKED array loses the array: read_uhdm warns

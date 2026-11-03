@@ -1,16 +1,14 @@
-RATCHET -- `@(edge clk)` becomes a COMBINATIONAL LOGIC LOOP.
+NOT SYNTHESIZABLE -- classified, not converted.
 
-Measured 2026-10-31:
+Class: dual-edge sensitivity
+A dual-edge sensitivity (`@(edge clk)`) describes a flop no frontend builds: read_verilog cannot parse the form, read_slang refuses it (`@(edge) will not be synthesized`) and read_uhdm refuses it too, so there is no netlist to claim.
 
-* `read_verilog` cannot parse it: `syntax error, unexpected TOK_ID`.
-* `read_slang` REFUSES it explicitly:
-  `@(edge) will not be synthesized (override with '--allow-dual-edge-ff')`.
-* `read_uhdm` accepts it and emits a plain `$not` driving `a` from `a`, so
-  `check` reports FOUR logic loops (one per bit) and `check -assert` fails.
+Upstream evidence:
+    	wire clk = 0;
+    	always @(edge clk) a = ~a;
+    endmodule
 
-So no frontend synthesizes a dual-edge flop -- that part is a shared ceiling --
-but read_uhdm is the only one that silently produces a BROKEN netlist instead of
-refusing, and a logic loop is never an acceptable lowering.  Either emitting a
-dual-edge register or refusing the construct would close this; until then the
-assertion above pins the current state.  Listed in structural_expected_fail.txt,
-and it must be removed from it in the commit that fixes this.
+There is no synthesizable DUT in which this construct's behaviour is
+observable, so the directory keeps `orig.sv` only and stays inert in discovery
+(no `dut.sv`).  If the construct ever gains a netlist form, re-triage by
+grepping NOTE.md for this class name.

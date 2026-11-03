@@ -51,6 +51,11 @@ CLASSES = [
      r"\$dist_\w+|\$random\b|\$urandom_range",
      "A random distribution is a simulation service and is not deterministic, so a "
      "netlist cannot carry its answer."),
+    ("dual-edge sensitivity",
+     r"@\s*\(\s*edge\b",
+     "A dual-edge sensitivity (`@(edge clk)`) describes a flop no frontend builds: "
+     "read_verilog cannot parse the form, read_slang refuses it (`@(edge) will not "
+     "be synthesized`) and read_uhdm refuses it too, so there is no netlist to claim."),
     ("SVA expect",
      r"^\s*expect\s*\(|\bexpect\s*\(\s*@",
      "`expect` blocks the executing process until a sequence matches: it is a "
