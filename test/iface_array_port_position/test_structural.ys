@@ -1,0 +1,9 @@
+# The VALUE gate: with sel = 0 the child drives its FIRST port element, which
+# is the actual's element [1] (p1_*), and reads that element's gnt.  Pairing
+# by index routes everything to p0_* instead.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -prove p1_req 1 -prove p0_req 0 -prove p1_add 8'hA5 -set sel 0 -set req_i 1 -set add_i 8'hA5
+sat -verify -prove p0_req 1 -prove p1_req 0 -set sel 1 -set req_i 1
+sat -verify -prove gnt_o 1 -set sel 0 -set p1_gnt 1 -set p0_gnt 0

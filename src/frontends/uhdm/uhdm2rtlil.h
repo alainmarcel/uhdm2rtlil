@@ -1600,6 +1600,13 @@ struct UhdmImporter {
     // wires) — usually 0, but a `[N:1]` declaration starts at 1.  -1 when no
     // element wire exists (not an expanded array).
     int expanded_array_low(const std::string& base_name);
+    // Declared [left:right] of an interface ARRAY: the actual named `name`
+    // declared in `scope_inst` (a module_inst or gen_scope, elaborated copy
+    // consulted too), or the formal behind a child port's Low_conn.
+    bool iface_array_decl_range(const std::string& name, const UHDM::any* scope_inst, int& l, int& r);
+    bool iface_port_decl_range(const UHDM::port* p, int& l, int& r);
+    // Ordinal k (0-based, from the declared LEFT) of a [l:r] array -> index.
+    static int array_ordinal_index(int l, int r, int k) { return l <= r ? l + k : l - k; }
     std::string expanded_array_base(const std::string& name);
     void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);

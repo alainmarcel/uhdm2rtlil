@@ -3319,13 +3319,23 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             if (!rn.empty() && rn != std::string(iface->VpiName()) &&
                                 iface_inst_vars_.count(rn + "[0]")) {
                                 int bound = 0, nelem = 0;
-                                for (int k = 0; iface_inst_vars_.count(rn + "[" + std::to_string(k) + "]"); k++) {
-                                    std::string elem = rn + "[" + std::to_string(k) + "]";
-                                    nelem++;
+                                while (iface_inst_vars_.count(rn + "[" + std::to_string(nelem) + "]")) nelem++;
+                                // Pair by POSITION when both declared ranges
+                                // are known (see iface_array_decl_range).
+                                int aL = 0, aR = nelem - 1, fL = 0, fR = nelem - 1;
+                                bool by_pos = iface_array_decl_range(rn, current_instance, aL, aR) &&
+                                              iface_port_decl_range(port, fL, fR) &&
+                                              std::abs(aL - aR) + 1 == nelem && std::abs(fL - fR) + 1 == nelem;
+                                if (!by_pos) { aL = 0; aR = nelem - 1; fL = 0; fR = nelem - 1; }
+                                for (int k = 0; k < nelem; k++) {
+                                    int ai = array_ordinal_index(aL, aR, k);
+                                    int fi = array_ordinal_index(fL, fR, k);
+                                    std::string elem = rn + "[" + std::to_string(ai) + "]";
+                                    if (!iface_inst_vars_.count(elem)) continue;
                                     for (auto &var_name : iface_inst_vars_[elem]) {
                                         std::string full_signal_name = elem + "." + var_name;
                                         if (!name_map.count(full_signal_name)) continue;
-                                        cell->setPort(RTLIL::escape_id(port_name + "[" + std::to_string(k) + "]." + var_name),
+                                        cell->setPort(RTLIL::escape_id(port_name + "[" + std::to_string(fi) + "]." + var_name),
                                                       name_map[full_signal_name]);
                                         bound++;
                                     }

@@ -9,6 +9,7 @@
 #include <functional>
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/gen_scope.h>
+#include <uhdm/module_array.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -1276,6 +1277,78 @@ void UhdmImporter::create_interface_module_with_width(const std::string& interfa
     }
     
     uhdm_trace("UHDM: Created interface module %s\n", param_module_name.c_str());
+}
+
+// An interface-array ACTUAL `[N-1:0]` bound to a `[N]` (= [0:N-1]) FORMAL
+// connects by POSITION (LRM 7.6 / 23.3.3): element N-1 of the actual is the
+// first element of the formal.  The pairing loops used the declared INDEX on
+// both sides, so every `[N]`-declared interface-array port fed from a
+// `[N-1:0]` array (the sweeps' generated wrappers, core-v-mcu's tcdm_demux
+// `XBAR_TCDM_BUS.Master slave_ports [NR_OUTPUTS]`) had its elements reversed
+// against read_slang and Verilator.  These two helpers recover the declared
+// ranges so the loops can pair ordinals.
+static bool range_bounds(UhdmImporter& imp, const UHDM::VectorOfrange* rgs, int& l, int& r) {
+    if (!rgs || rgs->empty()) return false;
+    auto r0 = (*rgs)[0];
+    if (!r0->Left_expr() || !r0->Right_expr()) return false;
+    RTLIL::SigSpec ls = imp.import_expression(r0->Left_expr());
+    RTLIL::SigSpec rs = imp.import_expression(r0->Right_expr());
+    if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+    l = ls.as_int(); r = rs.as_int();
+    return true;
+}
+
+bool UhdmImporter::iface_array_decl_range(const std::string& name, const UHDM::any* scope_inst, int& l, int& r) {
+    if (name.empty()) return false;
+    // Surelog lists an instantiated interface array (`BUS ports_i [1:0] ();`)
+    // under the parent's Module_arrays() as a module_array named after it;
+    // a port-declared one is an interface_array.  Both derive from
+    // instance_array and carry the declared range.
+    auto scan_ia = [&](const UHDM::VectorOfinterface_array* ias) -> bool {
+        if (!ias) return false;
+        for (auto ia : *ias)
+            if (std::string(ia->VpiName()) == name && range_bounds(*this, ia->Ranges(), l, r))
+                return true;
+        return false;
+    };
+    auto scan_ma = [&](const UHDM::VectorOfmodule_array* mas) -> bool {
+        if (!mas) return false;
+        for (auto ma : *mas)
+            if (std::string(ma->VpiName()) == name && range_bounds(*this, ma->Ranges(), l, r))
+                return true;
+        return false;
+    };
+    const UHDM::any* cur = scope_inst;
+    while (cur) {
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(cur)) {
+            if (scan_ia(mi->Interface_arrays()) || scan_ma(mi->Module_arrays())) return true;
+            // Surelog keeps the module_array on the module DEFINITION (the
+            // elaborated instance lists only the element interface_insts),
+            // and a child is imported from the definition view whose arrays
+            // may be empty the other way round -- look at both views.
+            if (auto ei = find_elab_instance(mi))
+                if (ei != mi && (scan_ia(ei->Interface_arrays()) || scan_ma(ei->Module_arrays()))) return true;
+            if (uhdm_design && uhdm_design->AllModules()) {
+                std::string def = std::string(mi->VpiDefName());
+                for (auto m : *uhdm_design->AllModules())
+                    if (m != mi && std::string(m->VpiDefName()) == def &&
+                        (scan_ia(m->Interface_arrays()) || scan_ma(m->Module_arrays())))
+                        return true;
+            }
+            return false;
+        }
+        if (auto gs = dynamic_cast<const UHDM::gen_scope*>(cur))
+            if (scan_ia(gs->Interface_arrays()) || scan_ma(gs->Module_arrays())) return true;
+        cur = cur->VpiParent();
+    }
+    return false;
+}
+
+bool UhdmImporter::iface_port_decl_range(const UHDM::port* p, int& l, int& r) {
+    if (!p || !p->Low_conn() || p->Low_conn()->UhdmType() != uhdmref_obj) return false;
+    const UHDM::any* a = any_cast<const ref_obj*>(p->Low_conn())->Actual_group();
+    if (!a || a->UhdmType() != uhdminterface_array) return false;
+    return range_bounds(*this, any_cast<const UHDM::interface_array*>(a)->Ranges(), l, r);
 }
 
 YOSYS_NAMESPACE_END
