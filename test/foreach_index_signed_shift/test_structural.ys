@@ -1,0 +1,8 @@
+# shift 0: identity; shift +1: rotate left by one element; shift -1 (fill 0,
+# consumed 1): rotate right by one element -- {1,4,3,2} = 16'h1432.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -set fill_i 3'd0 -set cons_i 3'd0 -set data_i 16'h4321 -prove shifted_o 16'h4321
+sat -verify -set fill_i 3'd1 -set cons_i 3'd0 -set data_i 16'h4321 -prove shifted_o 16'h3214
+sat -verify -set fill_i 3'd0 -set cons_i 3'd1 -set data_i 16'h4321 -prove shifted_o 16'h1432

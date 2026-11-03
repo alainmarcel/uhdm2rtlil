@@ -148,6 +148,15 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
         return false;
     }
     if (auto r = any_cast<const UHDM::ref_obj*>(e)) {
+        // A `foreach` index variable is an `int` (LRM 12.7.3): SIGNED.
+        // Surelog types it with the iterated array's ELEMENT typespec and
+        // binds its uses to a fabricated logic_net, both unsigned, so
+        // `i + s_shift_amount` with a signed negative amount zero-extended
+        // the amount and the serial link's stream chopper rotated its
+        // elements the wrong way (cheshire slink_ch_alloc, 15 diverging
+        // co-simulated cycles; a `for (int i ...)` over the same body was
+        // right).  The unroller records the names while a loop is open.
+        if (foreach_loop_vars_.count(std::string(r->VpiName()))) return true;
         // The SV base integer types int/integer/shortint/longint/byte are
         // SIGNED by default (only `... unsigned` is unsigned), but Surelog
         // often leaves VpiSigned unset on an inferred typespec — e.g. a plain
@@ -8933,10 +8942,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             if (fe && foreach_loop_bounds(fe, var, low, count)) {
                 bool had = loop_values.count(var);
                 int saved = had ? loop_values[var] : 0;
+                bool fv_had = foreach_loop_vars_.count(var);
+                foreach_loop_vars_.insert(var);
                 for (int i = 0; i < count; i++) {
                     loop_values[var] = low + i;
                     import_statement_sync(fe->VpiStmt(), sync, is_reset);
                 }
+                if (!fv_had) foreach_loop_vars_.erase(var);
                 if (had) loop_values[var] = saved; else loop_values.erase(var);
             } else {
                 log_warning("Cannot unroll foreach in sync context\n");
@@ -10306,10 +10318,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             if (fe && foreach_loop_bounds(fe, var, low, count)) {
                 bool had = loop_values.count(var);
                 int saved = had ? loop_values[var] : 0;
+                bool fv_had = foreach_loop_vars_.count(var);
+                foreach_loop_vars_.insert(var);
                 for (int i = 0; i < count; i++) {
                     loop_values[var] = low + i;
                     import_statement_comb(fe->VpiStmt(), proc);
                 }
+                if (!fv_had) foreach_loop_vars_.erase(var);
                 if (had) loop_values[var] = saved; else loop_values.erase(var);
             } else {
                 log_warning("Cannot unroll foreach in comb context\n");
