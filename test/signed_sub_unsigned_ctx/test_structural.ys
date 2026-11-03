@@ -1,0 +1,7 @@
+# 8'h51 - 8'hff - 1 at 9 bits, unsigned context: 0x051 - 0x0ff - 1 = 0x151
+# (borrow set).  The fully signed form stays sign-extended: 81 - (-1) = 0x052.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -set a 8'h51 -set b 8'hff -set c 1 -set v 1 -prove sub_v 9'h151 -prove sub_c 9'h151 -prove sub_ss 9'h052 -prove add_v 9'h151 -prove borrow 8'h01
+sat -verify -set a 8'h10 -set b 8'h20 -set c 0 -set v 1 -prove sub_v 9'h1f0 -prove sub_ss 9'h1f0

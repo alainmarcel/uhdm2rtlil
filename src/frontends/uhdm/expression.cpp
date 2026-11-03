@@ -10565,6 +10565,16 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // a mixed `u1 - s2` / `s1 - u2` is UNSIGNED (operands treated as
                 // unsigned) — was wrongly signed (operators mode 45/46).
                 bool is_signed = operands_all_signed(uhdm_op);
+                // ... and an UNSIGNED CONTEXT forces unsigned extension even
+                // when both operands are signed, exactly as the add branch
+                // does: in `$signed(a) - $signed(b) - c` the outer subtract is
+                // unsigned (c is), so the inner one must zero-extend its
+                // operands to the context width.  Sign-extending them gave
+                // 0x051 for 8'h51 - 8'hff - 1 at 9 bits where the LRM (and
+                // read_verilog, read_slang, Verilator) give 0x151 -- spatz's
+                // SIMD lane lost the borrow of every VMSBC and read_uhdm
+                // disagreed with the RTL on result_o.
+                if (ctx_unsigned_entry) is_signed = false;
 
                 // Extend each operand to result_width so the cell's
                 // A_WIDTH / B_WIDTH match Y_WIDTH cleanly (matches the
