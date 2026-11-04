@@ -1103,6 +1103,12 @@ struct UhdmImporter {
     const UHDM::packed_array_typespec* def_packed_array_match_ts(
         const std::string& def_name, const std::string& var_name,
         const UHDM::typespec* elab_at);
+    // Expand an assignment-pattern node into its item list: a plain pattern
+    // `'{a, b, c}` yields its operands, a replication `'{N{a, b}}` yields its
+    // element list repeated N times, and anything else yields itself as the
+    // single item -- so a caller walks rows and cells of a 2-D pattern the
+    // same way whichever level the replication sits at.
+    std::vector<const UHDM::any*> pattern_items(const UHDM::any* node);
     void stamp_packed_attrs_from_def(RTLIL::Wire* wire,
                                      const std::string& def_name,
                                      const std::string& var_name,
