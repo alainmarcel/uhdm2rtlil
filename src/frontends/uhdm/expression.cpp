@@ -23367,9 +23367,15 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (tail_ref) {
                     auto bref = any_cast<const ref_obj*>(peA[0]);
                     std::string bname = std::string(bref->VpiName());
-                    RTLIL::Wire* bw = name_map.count(bname)
-                                          ? name_map[bname]
-                                          : module->wire(RTLIL::escape_id(bname));
+                    // The base may live in the CURRENT GENERATE SCOPE
+                    // (`\gen_64b_ipu.lane_signal_inp` for the bare
+                    // `lane_signal_inp` the path names): a bare-name lookup
+                    // found nothing and every `lane_signal_inp.ops[k].ew16 =
+                    // ...` of spatz_ipu's distributor was left unresolved, so
+                    // the SIMD lanes saw all-zero operands.  Resolve through
+                    // the scope stack first, then the module, as every other
+                    // base lookup does.
+                    RTLIL::Wire* bw = find_wire_in_scope(bname, "");
                     const UHDM::typespec* bts = nullptr;
                     if (auto rt = bref->Typespec()) bts = rt->Actual_typespec();
                     if (!bts)
