@@ -1,0 +1,30 @@
+# Sweep rows whose `slang co-sim vs rtl` DIVERGENCE has been adjudicated as NOT
+# a read_slang defect, and which must therefore not appear in the "bug" class of
+# docs/slang_unsupported.md.  One `module` or `<family>/<module>` per line, each
+# with its reason -- the same discipline as test/formal_adjudicated.txt.
+#
+# This list is read by test/slang_report.py, so an entry survives the next
+# regeneration of the report.  Keep it SHORT: the value of the bug class is that
+# every row in it is defensible, and a row that is merely unexplained belongs in
+# the report, not here.
+
+# ---- incomplete always_comb: a latch-vs-don't-care SEMANTIC choice (2026-11-04)
+# macro_decoder's always_comb assigns some targets up front and leaves others
+# (`macro_instr_type`, `instr_o_reg`, `xreg1`, `xreg2`, `offset_reg`) written
+# only inside `if (is_macro_instr_i)`.  SystemVerilog gives such a variable
+# storage on an unassigned path, so yosys's proc_dlatch infers a latch for
+# read_uhdm AND for read_verilog, the golden frontend; read_slang treats those
+# paths as don't-care and emits pure combinational logic (22 "Latch inferred"
+# warnings before the read_slang line, none after).  That is a defensible
+# synthesis choice, not wrong logic, so it is not a bug to file upstream.  The
+# matching FORMAL verdict is adjudicated in test/formal_adjudicated.txt, which
+# also records that the Verilator co-sim passes on BOTH sides -- measured
+# 2026-11-03, six days after the report this list corrects.
+macro_decoder
+
+# miss_handler: 1 diverging cycle in the 2026-10-27 report, with no recorded
+# cause, and the same cva6 flavours' later measurement does not reproduce it.
+# A single-cycle divergence that cannot be explained is not evidence against
+# read_slang -- it is re-measured with every cva6 sweep and will return to the
+# report if it is real.
+miss_handler
