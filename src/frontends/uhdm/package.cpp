@@ -127,7 +127,37 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                         if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
                             RTLIL::Module* saved_module = module;
                             module = nullptr;
-                            RTLIL::SigSpec value_spec = import_expression(re);
+                            RTLIL::SigSpec value_spec;
+                            // A CONSTANT FUNCTION as the value -- PULP obi_pkg's
+                            //   localparam obi_cfg_t ObiDefaultConfig =
+                            //       obi_default_cfg(32, 32, 1, ObiMinimalOptionalConfig);
+                            // -- reaches us as an UNFOLDED func_call: Surelog leaves
+                            // it unfolded even under -elabuhdm.  import_expression
+                            // then walks the function body with no call context, so
+                            // every FORMAL is unresolved ("unresolved reference
+                            // 'DataWidth' in package-parameter context") and the whole
+                            // struct came out empty -- every `Cfg.DataWidth` relayed
+                            // into an OBI module measured 1 bit and the UART rows
+                            // returned one bit of read data (cheshire obi_uart,
+                            // obi_uart_tx, apb_uart, reg_uart_wrap).  UHDM's ExprEval
+                            // binds the formals and folds an assignment-pattern return
+                            // value (chipsalliance/UHDM #1178), so try it first and
+                            // keep import_expression as the fallback.
+                            if (re->UhdmType() == uhdmfunc_call) {
+                                ExprEval eval;
+                                bool invalidValue = false;
+                                UHDM::expr* res = eval.reduceExpr(re, invalidValue, nullptr,
+                                                            pa->VpiParent(), true);
+                                if (res && !invalidValue &&
+                                    res->UhdmType() == uhdmconstant) {
+                                    RTLIL::SigSpec cv =
+                                        import_constant(any_cast<const UHDM::constant*>(res));
+                                    if (cv.is_fully_const() && cv.is_fully_def())
+                                        value_spec = cv;
+                                }
+                            }
+                            if (value_spec.empty())
+                                value_spec = import_expression(re);
                             module = saved_module;
                             if (value_spec.is_fully_const()) {
                                 int width = 32;
