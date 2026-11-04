@@ -6239,9 +6239,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     } else if (auto struct_v = dynamic_cast<const UHDM::struct_var*>(var)) {
                         // Handle signedness for struct packed signed
-                        if (struct_v->VpiSigned()) {
+                        bool sv_signed = struct_v->VpiSigned();
+                        if (!sv_signed) {
+                            // `struct packed signed { ... } p;` (LRM 7.2.1):
+                            // Surelog records the header's signing on the
+                            // struct_typespec, never on the variable, so an
+                            // ANONYMOUS signed struct declared as a module
+                            // variable arrives here unsigned.  (The TYPEDEF'd
+                            // form reaches import_net instead, which already
+                            // reads the typespec.)
+                            if (auto sve = dynamic_cast<const UHDM::expr*>(var))
+                                if (auto vts = sve->Typespec())
+                                    if (auto ats = vts->Actual_typespec())
+                                        if (ats->UhdmType() == uhdmstruct_typespec)
+                                            if (auto sts = dynamic_cast<const UHDM::struct_typespec*>(ats))
+                                                sv_signed = sts->VpiSigned();
+                        }
+                        if (sv_signed) {
                             wire->is_signed = true;
-                            uhdm_trace("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
+                            uhdm_trace("UHDM: struct_var '%s' signed, setting is_signed=true\n", var_name.c_str());
                         }
                         // Packed struct with an aggregate initializer
                         // (`hw2reg_wrap_t hw2reg_wrap = {c, d}`): drive the

@@ -169,8 +169,6 @@ operations-on-unpacked-arrays-variable-slice-rw
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # Co-sim rows of tests ratcheted in structural_expected_fail.txt (the netlist
 # IS wrong, so the divergence is expected until the reader fix lands):
-# packed SIGNED struct read unsigned (0x92 vs 0xffffff92)
-packed-and-signed-structures
 # struct type-key / pattern order, replicated pattern dropped, element pattern
 structure
 structure-arrays

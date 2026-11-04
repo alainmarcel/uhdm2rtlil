@@ -1346,6 +1346,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     if (auto ts = dynamic_cast<const UHDM::long_int_typespec*>(actual_typespec))
                         is_signed = ts->VpiSigned();
                     break;
+                case uhdmstruct_typespec:
+                    // `struct packed signed {...}` (sv-tests
+                    // packed-and-signed-structures): the whole vector is signed.
+                    if (auto ts = dynamic_cast<const UHDM::struct_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    break;
                 default:
                     // Other typespec types are not handled
                     break;
@@ -1671,6 +1677,11 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     if (auto ts = dynamic_cast<const UHDM::long_int_typespec*>(actual_typespec))
                         is_signed = ts->VpiSigned();
                     uhdm_trace("UHDM: long_int_typespec VpiSigned=%d\n", is_signed);
+                    break;
+                case uhdmstruct_typespec:
+                    // `struct packed signed {...}`: the whole vector is signed.
+                    if (auto ts = dynamic_cast<const UHDM::struct_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
                     break;
                 default:
                     // Other typespec types are not handled
@@ -3884,6 +3895,9 @@ bool UhdmImporter::is_typespec_signed(const UHDM::any* ts) {
             break;
         case uhdmbyte_typespec:
             if (auto t = dynamic_cast<const UHDM::byte_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmstruct_typespec:
+            if (auto t = dynamic_cast<const UHDM::struct_typespec*>(ts)) return t->VpiSigned();
             break;
         case uhdmbit_typespec:
             if (auto t = dynamic_cast<const UHDM::bit_typespec*>(ts)) return t->VpiSigned();
