@@ -169,6 +169,26 @@ def read_names_file(path):
 
 
 # ---------------------------------------------------------------- ibex / rp32
+def read_formal_adjudicated():
+    """Module names whose formal `differs` is a RECORDED non-defect.
+
+    `sweep_testdirs` can mark a formal difference known through
+    `slang_miter_expected_fail.txt`, but `sweep_cva6` and the ext_ip flow had
+    no way to record one, so a row whose difference had been adjudicated kept
+    printing `❌ differs` and was re-triaged every nightly.  An entry here must
+    say WHY, exactly like the ratchet lists, and the summary reports any listed
+    row that now PROVES so the entry is removed with the fix.
+    """
+    names = set()
+    f = TEST_DIR / "formal_adjudicated.txt"
+    if f.exists():
+        for line in f.read_text().splitlines():
+            line = line.split("#")[0].strip()
+            if line:
+                names.add(line)
+    return names
+
+
 def read_analyzed_names():
     """Names from sim_equiv_analyzed.txt (`Test: <name>` headers) — co-sim
     divergences that were ADJUDICATED as non-bugs (SAT miter proves
@@ -1970,6 +1990,24 @@ def sweep_caliptra(jobs, cycles=300, flt=None):
 
 # -------------------------------------------------------------------- report
 def render(core, rows, cycles):
+    # Formal differences that have been ADJUDICATED (the reference is the
+    # outlier, or the difference is on a path the design never takes) are
+    # recorded in test/formal_adjudicated.txt and rendered as a soft warning,
+    # so a nightly does not re-triage them.  A listed row that now PROVES is
+    # called out in the summary: the entry must go with the fix, the same
+    # ratchet discipline the expected-fail lists use.
+    _adj = read_formal_adjudicated()
+    _adj_proven = []
+    if _adj:
+        for r in rows:
+            m = r.get("module", "")
+            if m not in _adj and f"{core}/{m}" not in _adj:
+                continue
+            f_cell = r.get("formal", "")
+            if "differs" in f_cell:
+                r["formal"] = "⚠ known-diff (adjudicated)"
+            elif "equivalent" in f_cell:
+                _adj_proven.append(m)
     # The pavona sweep adds a structural opt-level "check" column (undriven-net
     # detection on the flattened+opt'd read_uhdm netlist) — a fast dropped-driver
     # probe that runs on every module without needing a deep co-sim.
@@ -2023,6 +2061,11 @@ def render(core, rows, cycles):
               f"(⚠ rows, excluded), "
               f"{len(rows) - comparable - nadj} not comparable "
               f"(skipped / no run)."]
+    if _adj_proven:
+        lines += [f"**Adjudicated formal rows that now PROVE "
+                  f"({len(_adj_proven)}):** {', '.join(sorted(_adj_proven))} — "
+                  f"remove them from `test/formal_adjudicated.txt`, the entry "
+                  f"is stale."]
     if has_check:
         nclean = sum(1 for r in rows if r.get("check", "").startswith("✅"))
         ndirty = sum(1 for r in rows if r.get("check", "").startswith("❌"))
