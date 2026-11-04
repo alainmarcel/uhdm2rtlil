@@ -1367,6 +1367,11 @@ struct UhdmImporter {
     // `loop_values` entry (publish the post-loop value instead) -- see the
     // comment at the `fl_had_outer` computation in process.cpp.
     std::vector<std::string> unrolling_loop_vars_;
+    // Names of the `foreach` index variables whose loops are mid-unroll.  The
+    // LRM (12.7.3) types them `int`, i.e. SIGNED; Surelog gives them the
+    // iterated array's element typespec instead, so is_expr_signed() consults
+    // this set before the UHDM object.
+    std::set<std::string> foreach_loop_vars_;
 
     void record_concat_tf_local_inflight(const RTLIL::SigSpec& lhs,
                                          const RTLIL::SigSpec& rhs);
