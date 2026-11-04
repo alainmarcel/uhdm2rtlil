@@ -1,0 +1,39 @@
+# Sweep rows whose formal `differs` against read_slang has been ADJUDICATED as
+# a NON-DEFECT.  One module name per line (or `<core>/<module>` to scope it to
+# one sweep), and every entry must say WHY -- the same discipline as
+# test/slang_miter_expected_fail.txt, which covers the sweep_testdirs families.
+# This list covers the ones that had no hook at all: sweep_cva6 and the ext_ip
+# flow.
+#
+# This is a RATCHET: the sweep's summary names any listed row that now PROVES,
+# so a stale entry is reported rather than hiding a fix.  An entry here does
+# NOT excuse a co-sim divergence -- those are tracked separately and a row with
+# one is never adjudicated here.
+
+# ---- incomplete always_comb: read_slang is the outlier (2026-11-03) --------
+# Both decoders have an `always_comb` that assigns some of its targets up front
+# and leaves others (`macro_instr_type`, `instr_o_reg`, `xreg1`, `xreg2`,
+# `offset_reg`; zcmt_decoder's `instr_o`) written only inside
+# `if (is_macro_instr_i)` and its nested `unique case`es.  SystemVerilog gives
+# such a variable storage on an unassigned path, so yosys's proc_dlatch infers
+# a latch -- for read_uhdm AND for read_verilog, the golden frontend.
+# read_slang instead treats those paths as don't-care and emits pure
+# combinational logic: each module's miter log has every "Latch inferred"
+# warning BEFORE the `read_slang` line and none after it (22 for macro_decoder,
+# 5 for zcmt_decoder).  A latch holds where slang's logic is a function of the
+# inputs alone, so the miter differs on a path the design never takes, which is
+# why the Verilator co-sim passes on both sides.  read_uhdm agrees with
+# read_verilog; the reference is the odd one out.  Applies to every CVA6
+# flavour the sweep builds (default, HPDcache, H-extension, RV32).
+macro_decoder
+zcmt_decoder
+
+# Same class, openc910 and opene906 (2 rows): pmu's state machines are
+# `always @(cur_state ...)` blocks whose `case (cur_state)` has NO default arm
+# and NO pre-case assignment (pmu.v:378-455 for `next_state`, likewise
+# `pg_next_state`, `x_tap2_sm.tap2_nxt_st`, and the incomplete APB read decode
+# at pmu.v:216 for `pmu_apb_prdata[3:0]`), so an unlisted state leaves them
+# unassigned and a latch is the faithful lowering.  3 "Latch inferred" warnings
+# in the FIRST PROC_DLATCH pass of its miter log (read_uhdm) and 0 in the
+# second (read_slang).  Co-sim passes on both sides.
+pmu
