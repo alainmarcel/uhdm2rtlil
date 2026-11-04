@@ -17572,7 +17572,25 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
         RTLIL::Wire* tw_i = find_own_temp_wire(base_name);
         RTLIL::SigSpec tgt_i = tw_i ? RTLIL::SigSpec(tw_i) : RTLIL::SigSpec(base_wire);
         if (tgt_i.size() == base_w) {
-            RTLIL::SigSpec fold = case_inflight_value(fold_root, tgt_i);
+            RTLIL::SigSpec fold = case_tree_writes_target(fold_root, tgt_i)
+                                      ? case_inflight_value(fold_root, tgt_i)
+                                      : RTLIL::SigSpec(tgt_i);
+            // A switch is attached to its parent case only AFTER its arms are
+            // imported, so a SIBLING arm's write is not reachable from the
+            // root yet while this arm is being imported.  The byte-enable
+            // loop of snitch's register_file_3r_2w_be,
+            //     else if (WriteEnable_A) for (int i = 0; i < NUM_BYTE; i++)
+            //         if (WriteBE_A[i]) MemContent_A_int[WriteAddr_A][i] <= WriteData_A[i];
+            // unrolls into sibling `if (WriteBE_A[i])` switches under one
+            // `else if` case: byte 1's read-modify-write started from the
+            // REGISTERED word, byte 0's write was clobbered, and only the
+            // last enabled byte of every store landed (265 diverging
+            // co-simulated cycles).  Fold the cases whose arms are being
+            // imported on top of the root fold, as the unpacked emitter does.
+            for (RTLIL::CaseRule* enc : fold_enclosing_cases_)
+                if (!case_tree_contains(fold_root, enc) &&
+                    case_tree_writes_target(enc, tgt_i))
+                    fold = case_inflight_value(enc, tgt_i, &fold);
             if (fold.size() == base_w && fold != tgt_i) {
                 cur = fold;
                 if (mode_debug)
