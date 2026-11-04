@@ -1,0 +1,8 @@
+# The default-valued struct parameter must fold: DataWidth 32 (so d_o passes
+# all 32 bits through the child) and the nested Opt.AUserWidth 3.  Unfolded,
+# every field reads 0 and d_o is one bit wide.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt_clean
+sat -verify -prove w_o 32'd32 -prove au_o 32'd3
+sat -verify -set d_i 32'h4f13_a55a -prove d_o 32'h4f13_a55a
