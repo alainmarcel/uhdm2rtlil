@@ -6349,6 +6349,24 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                     vr = lv2->Ranges();
                 else if (auto pv2 = dynamic_cast<const UHDM::packed_array_var*>(var))
                     vr = pv2->Ranges();
+                // A plain multi-range declaration
+                // (`logic [NUM_OPERANDS-1:0][LANE_WIDTH-1:0] local_operands`)
+                // carries NO ranges on the variable: they live on its
+                // logic_typespec.  Without the geometry an element-RANGE
+                // select used as a child port actual,
+                // `.operands_i(local_operands[1:0])` in fpnew's multi-format
+                // slice, was imported as a 2-BIT slice and the lane's divider
+                // / sqrt unit saw garbage operands (core-v-mcu fpnew_top).
+                if ((!vr || vr->empty()) && var) {
+                    const UHDM::ref_typespec* rt = nullptr;
+                    if (auto lv3 = dynamic_cast<const UHDM::logic_var*>(var)) rt = lv3->Typespec();
+                    else if (auto pv3 = dynamic_cast<const UHDM::packed_array_var*>(var)) rt = pv3->Typespec();
+                    if (rt && rt->Actual_typespec() &&
+                        rt->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+                        auto lts = any_cast<const UHDM::logic_typespec*>(rt->Actual_typespec());
+                        if (lts->Ranges() && lts->Ranges()->size() >= 2) vr = lts->Ranges();
+                    }
+                }
                 if (vr && !vr->empty() && width > 1) {
                     auto r0 = (*vr)[0];
                     RTLIL::SigSpec l = import_expression(r0->Left_expr());
