@@ -1,0 +1,12 @@
+# oper 0 matches no arm and there is no default clause, so every pre-case value
+# stands: flags = {pre_x, result[15], ~|result, 0, 0}.  With the X-fill, all
+# five bits read x (and 0 after setundef).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -set oper 5'd0 -set result 16'h0000 -set pre_x 1'b1 -prove flags 5'b10100
+sat -verify -set oper 5'd0 -set result 16'h8000 -set pre_x 1'b0 -prove flags 5'b01000
+sat -verify -set oper 5'd3 -set result 16'h0001 -set pre_x 1'b1 -prove flags 5'b10000
+# a listed arm still overrides, and the explicit-default control is unchanged
+sat -verify -set oper 5'd5 -set result 16'h0000 -set pre_x 1'b0 -prove flags 5'b01010
+sat -verify -set oper 5'd0 -set result 16'h0000 -prove flags_def 5'b00110

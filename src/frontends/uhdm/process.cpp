@@ -20135,6 +20135,22 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
         if (!sig.lhs_expr) continue;
         // Keep the user's explicit default value for this signal.
         if (default_assigned.count(sig.name)) continue;
+        // ... and keep a PRE-CASE default too.  A signal the block already
+        // assigned before the case has a defined value on the unmatched path
+        // (LRM 12.5: with no matching item and no default clause, NO statement
+        // executes), so the don't-care fill must not clobber it.
+        // `current_comb_values` was just reset to the pre-case snapshot, so an
+        // entry here means exactly that.  fx68k's ALU writes every CCR flag
+        // before `unique case (oper)`:
+        //     ccrTemp[XF] = pswCcr[XF];  ccrTemp[CF] = 0;  ccrTemp[VF] = 0;
+        //     ccrTemp[ZF] = isByte ? ~(|result[7:0]) : ~(|result);
+        //     ccrTemp[NF] = isByte ? result[7] : result[15];
+        //     unique case (oper) ... endcase    // no default, no arm for 0
+        // so an `oper` no arm lists X'd all five flags instead of leaving the
+        // zero flag set: `ze` was wrong from the second cycle on (fx68kAlu,
+        // 100 of 301 diverging co-simulated cycles, read_slang clean).
+        if (!in_always_ff_context && current_comb_values.count(sig.name))
+            continue;
         // FF (non-blocking) signals hold; only blocking temps get X'd.
         if (in_always_ff_context && !blocking_names.count(sig.name)) continue;
         RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
