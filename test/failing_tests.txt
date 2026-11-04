@@ -409,17 +409,6 @@ loopvar_index_in_hier_path
 # read_slang parses the construct, slang_miter_expected_fail.txt); read_verilog
 # is the oracle, so the whole uhdm-vs-verilog comparison fails too.
 
-# ---- inner-dimension geometry (2026-11-02) ---------------------------------
-# The query half of this test is fixed ($bits of the selected element is 256),
-# but the uhdm-vs-verilog comparison still fails on the WIRE GEOMETRY of a 2-D
-# unpacked array written by element: `bit [7:0][31:0] arr_a [1:5][1:10]` is one
-# 12800-bit canonical wire with per-ROW aliases (`connect \arr_a [2559:0]
-# \arr_a[1]`), and the always_comb write `arr_a[1][1] = x` lands on the
-# canonical wire's low 256 bits -- which the row alias ALSO drives, so the
-# element is doubly driven and the read `a_o = arr_a[255:0]` is not `x`.
-# read_verilog flattens the array to 50 wires of 256 bits and writes element 0.
-# multi-dim-basic (reads only, no element write) passes; this is the write path.
-sv_tests/multi-declaration
 
 # ---- packed array of a package struct as a port (2026-11-03) -----------------
 # read_verilog is the WRONG side: it sizes the `p::busy_t [NumBEs-1:0]` ports
@@ -438,3 +427,17 @@ packed_array_of_structs_net_elem_write
 # against.  The read_slang miter (test_slang_equiv.ys) proves read_uhdm and the
 # structural proof pins the three member writes.  Do NOT "fix" read_uhdm to match.
 genscope_struct_array_elem_member_write
+
+# ---- 2-D unpacked array: dead row aliases (2026-11-03) ----------------------
+# NARROWED, not fixed: the DOUBLE DRIVE this entry used to describe is gone --
+# `arr_a[1][1] = x` writes the canonical wire and the per-row aliases are now
+# pulled FROM it (`connect \arr_a[1] \arr_a [2559:0]`), not pushed into it.
+# What is left is cosmetic but still trips the harness's X-assignment check:
+# read_uhdm creates one PUBLIC alias per row of `bit [7:0][31:0] arr_a [1:5][1:10]`,
+# nothing reads them, and plain `opt_clean` keeps a public wire -- so four of
+# the five survive synthesis as `assign \arr_a[k] = 2560'hxxx` (the rows the
+# source never writes), where read_verilog flattens the array and emits none.
+# The test's own value proof passes and its co-sim passes; only the
+# uhdm-vs-verilog comparison sees the dead wires.  Closing it means not
+# creating a row alias no access names, which needs the by-name access scan.
+sv_tests/multi-declaration
