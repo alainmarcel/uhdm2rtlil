@@ -1,0 +1,8 @@
+# Gray 3'b110 is binary 3'b100, gray 3'b011 is binary 3'b010: bin[1] and
+# bin[0] need the XOR over the HIGHER gray bits that the inner loop supplies.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+sat -verify -set gray_i 3'b110 -prove bin_o 3'b100
+sat -verify -set gray_i 3'b011 -prove bin_o 3'b010
+sat -verify -set gray_i 3'b101 -prove bin_o 3'b110

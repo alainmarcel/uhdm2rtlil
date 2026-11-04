@@ -2349,14 +2349,37 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 // A start value like `PTR_WIDTH-1` is an
                                 // operation, not a constant; reduce it the same
                                 // way the end value is (below).
+                                //
+                                // A NESTED loop's start names the ENCLOSING
+                                // loop's variable -- `for (index_j = index_i +
+                                // 1; ...)` in aib-protocols' asyncfifo
+                                // f_gray2binary -- and UHDM's reducer, which
+                                // knows nothing of the inlined iteration,
+                                // folded `index_i + 1` to 0: every inner loop
+                                // ran from 0 and the gray-to-binary XOR chain
+                                // was wrong on every bit but the top one
+                                // (276 diverging co-simulated cycles on
+                                // rd_numfilled, read_slang clean).  Fold it
+                                // first with the iteration values the outer
+                                // loops have published in loop_values.
                                 const operation* op = any_cast<const operation*>(rhs);
-                                ExprEval eval; bool invalidValue = false;
-                                expr* res = eval.reduceExpr(
-                                    const_cast<operation*>(op), invalidValue,
-                                    current_instance, op->VpiParent(), true);
-                                if (res && res->UhdmType() == uhdmconstant)
-                                    init_spec = import_constant(
-                                        any_cast<const constant*>(res));
+                                if (!loop_values.empty()) {
+                                    std::map<std::string, RTLIL::Const> lv;
+                                    for (auto& kv : loop_values)
+                                        lv[kv.first] = RTLIL::Const(kv.second, 32);
+                                    RTLIL::Const c = evaluate_operation_const(op, lv);
+                                    if (c.size() > 0 && c.is_fully_def())
+                                        init_spec = RTLIL::SigSpec(c);
+                                }
+                                if (init_spec.empty()) {
+                                    ExprEval eval; bool invalidValue = false;
+                                    expr* res = eval.reduceExpr(
+                                        const_cast<operation*>(op), invalidValue,
+                                        current_instance, op->VpiParent(), true);
+                                    if (res && res->UhdmType() == uhdmconstant)
+                                        init_spec = import_constant(
+                                            any_cast<const constant*>(res));
+                                }
                             } else {
                                 // ref_obj to a parameter, etc.
                                 init_spec = import_expression(
