@@ -5341,6 +5341,19 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         bool elem_driven =
                             async_reset_filled_arrays.count(array_name) > 0 ||
                             proc_elem_written.count(array_name) > 0;
+                        // ... but a 2-D array whose geometry was stamped above
+                        // (`unpacked_elem_width` & co) has its ELEMENT writes
+                        // lowered onto the FLAT wire -- `arr[1][1] = x` becomes
+                        // `$0\arr[255:0]`, not a write of row alias `\arr[1]`.
+                        // Assembling the flat FROM the rows then drives the same
+                        // bits twice: from the process AND from a row alias
+                        // nothing ever writes.  sv-tests multi-declaration
+                        // (`bit [7:0][31:0] arr_a [1:5][1:10]`) read its element
+                        // back through that conflict.  The rows stay READ
+                        // aliases pulled from the flat, which is what the
+                        // element-write path and every whole read expect.
+                        if (ranges->size() == 2 && inner_count > 1)
+                            elem_driven = false;
                         for (int i = 0; i < array_size; i++) {
                             std::string ename =
                                 array_name + "[" + std::to_string(array_low + i) + "]";
