@@ -1,0 +1,7 @@
+# Writing index 2 (and 3) must leave both entries untouched; index 1 lands.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean; memory_dff; memory_collect; memory_map; opt_clean
+sat -verify -seq 3 -set-init-zero -set we 1 -set idx 2'd2 -set d 8'hab -prove q0 8'h00 -prove q1 8'h00
+sat -verify -seq 3 -set-init-zero -set we 1 -set idx 2'd3 -set d 8'hab -prove q0 8'h00 -prove q1 8'h00
+sat -verify -seq 3 -prove-skip 1 -set-init-zero -set we 1 -set idx 2'd1 -set d 8'hab -prove q1 8'hab -prove q0 8'h00
