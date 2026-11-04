@@ -1,0 +1,7 @@
+# Each dimension's local is 16 bits wide and passes its low 16 bits through:
+# rep_o[15:0] = reps_i[15:0] and rep_o[47:32] = reps_i[47:32]; a 3-bit local
+# (the all-ones fold) leaves bits 3..15 constant.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -prove rep_o[15:0] reps_i[15:0] -prove rep_o[47:32] reps_i[47:32] -prove rep_o[31:16] 16'd0

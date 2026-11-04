@@ -1,0 +1,6 @@
+# The value gate: d_o must be d_i, all 32 bits.  With Cfg.DataWidth unresolved
+# rsp_data is 1 bit and d_o[31:1] is constant 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean
+sat -verify -prove d_o d_i -prove au_o d_i[2:0]
