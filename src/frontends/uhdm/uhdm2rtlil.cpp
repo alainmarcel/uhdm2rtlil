@@ -5674,7 +5674,23 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                             long pos = array_ascending ? (k - left_idx) : (left_idx - k);
                                             if (pos >= 0 && pos < array_size) { slot[pos] = v; set[pos] = true; }
                                         } else if (auto ce = dynamic_cast<const UHDM::expr*>(item)) {
+                                            // One ELEMENT: size it to the element and, for an
+                                            // array of structs, thread the element struct so a
+                                            // nested `'{0, 0}` packs its members (sv-tests
+                                            // structure-arrays read ms[0] = {0, 1}).
+                                            const UHDM::typespec* elem_ts = nullptr;
+                                            if (array_var->Variables() && !array_var->Variables()->empty())
+                                                if (auto ev = array_var->Variables()->at(0))
+                                                    if (ev->Typespec()) elem_ts = ev->Typespec()->Actual_typespec();
+                                            int saved_w = expression_context_width;
+                                            const UHDM::typespec* saved_ts = expression_context_typespec;
+                                            expression_context_width = element_width;
+                                            if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                                            elem_ts->UhdmType() == uhdmunion_typespec))
+                                                expression_context_typespec = elem_ts;
                                             vals.push_back(import_expression(ce));
+                                            expression_context_typespec = saved_ts;
+                                            expression_context_width = saved_w;
                                         }
                                     }
                                     if (keyed) {
@@ -6564,7 +6580,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
                     if (v->Expr()) {
                         uhdm_trace("UHDM: Processing initializer for %s\n", var_name.c_str());
+                        // Size and type the initialiser by the struct it fills: a
+                        // replication (`'{3{1}}`) or a type-keyed pattern needs the
+                        // member widths (sv-tests structure, structure-replication).
+                        int saved_w_ = expression_context_width;
+                        const UHDM::typespec* saved_ts_ = expression_context_typespec;
+                        expression_context_width = wire->width;
+                        if (auto vv_ = dynamic_cast<const UHDM::variables*>(v))
+                            if (vv_->Typespec() && vv_->Typespec()->Actual_typespec())
+                                expression_context_typespec = vv_->Typespec()->Actual_typespec();
                         RTLIL::SigSpec init_val = import_expression(v->Expr());
+                        expression_context_typespec = saved_ts_;
+                        expression_context_width = saved_w_;
                         if (init_val.size() > 0) {
                             if (init_val.size() < wire->width)
                                 init_val.extend_u0(wire->width, false);
