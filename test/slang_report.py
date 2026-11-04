@@ -43,6 +43,7 @@ CLASSES = [  # (kind, label, regex) -- first match wins; "incomplete" rows leave
     # css_mcu0_el2_veer_wrapper's `el2_mem_export`, still open).  Must come
     # FIRST: these otherwise match the generic "strict" type rules and would be
     # reported as slang limitations.
+    ("incomplete", "slang co-sim divergence adjudicated NOT a slang defect (latch-vs-don't-care, or unexplained single cycle)", r"^COSIM_ADJUDICATED"),
     ("incomplete", "our generated interface wrapper is incomplete -- not a slang verdict", r"_ifc\.sv:\d+:\d+: error:"),
     ("incomplete", "test invalid on purpose (yosys `tests/errors`)", r"^run/errors/"),
     ("incomplete", "a module no file of the test defines", r"unknown module|unknown class or package"),
@@ -208,6 +209,27 @@ def parse_md_table(path):
             continue
         yield dict(zip(hdr, c))
 
+def load_cosim_adjudicated():
+    """Modules whose slang co-sim divergence is adjudicated NOT a slang defect.
+
+    Returns a set of "module" and "family/module" keys; see
+    test/slang_cosim_adjudicated.txt for the reason against each entry.  The
+    list exists so a reasoned exclusion survives regeneration of the report --
+    the bug class is only worth anything if every row in it is defensible.
+    """
+    f = os.path.join(ROOT, "test", "slang_cosim_adjudicated.txt")
+    keys = set()
+    if os.path.exists(f):
+        for ln in open(f):
+            ln = ln.split("#", 1)[0].strip()
+            if ln:
+                keys.add(ln)
+    return keys
+
+
+COSIM_ADJUDICATED = load_cosim_adjudicated()
+
+
 def load_sweeps(root):
     rows = []
     for f in sorted(glob.glob(os.path.join(root, "**", "*-sweep-report", "*.md"), recursive=True)):
@@ -230,7 +252,16 @@ def load_sweeps(root):
                 rows.append(dict(set="sweep", fam=fam, name=mod, status="INCOMPLETE", diag=formal, ucos=ucos))
                 continue
             if scos.startswith("❌"):
-                if ucos.startswith("✅"):
+                if ucos.startswith("✅") and (mod in COSIM_ADJUDICATED or
+                                              f"{fam}/{mod}" in COSIM_ADJUDICATED):
+                    # Adjudicated as not a slang defect -- out of the bug class,
+                    # but still counted and named so the arithmetic against
+                    # benchmarking.md's diverge column still adds up.
+                    rows.append(dict(set="sweep", fam=fam, name=mod, status="INCOMPLETE",
+                                     diag="COSIM_ADJUDICATED slang " + scos + "; read_uhdm " + ucos
+                                          + " -- adjudicated not a read_slang defect"
+                                            " (test/slang_cosim_adjudicated.txt)", ucos=ucos))
+                elif ucos.startswith("✅"):
                     rows.append(dict(set="sweep", fam=fam, name=mod, status="FAIL",
                                      diag="SLANG_COSIM_DIVERGES " + scos + "; read_uhdm " + ucos, ucos=ucos))
                 else:
@@ -363,11 +394,13 @@ def main():
     # the two documents, so say how the numbers add up.
     _n_div = sum(1 for r in report if r["set"] == "sweep" and r["diag"].startswith("SLANG_COSIM_DIVERGES"))
     _n_shared = sum(1 for r in incomplete if r["set"] == "sweep" and r["diag"].startswith("both netlists diverge"))
+    _n_adj = sum(1 for r in incomplete if r["set"] == "sweep" and r["diag"].startswith("COSIM_ADJUDICATED"))
     A(f"**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is "
-      f"{_n_div + _n_shared} rows over these sweeps = **{_n_div}** where the slang netlist diverges and read_uhdm's "
-      f"tracks the RTL (the *bug* class below) + **{_n_shared}** where BOTH netlists diverge identically (a testbench "
-      f"artefact, in [incomplete_testcases.md](incomplete_testcases.md)).  The other direction -- read_slang clean, "
-      f"read_uhdm diverging -- is the last section of this file.\n")
+      f"{_n_div + _n_shared + _n_adj} rows over these sweeps = **{_n_div}** where the slang netlist diverges and "
+      f"read_uhdm's tracks the RTL (the *bug* class below) + **{_n_shared}** where BOTH netlists diverge identically "
+      f"(a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md))"
+      + (f" + **{_n_adj}** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt)" if _n_adj else "")
+      + f".  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.\n")
 
     A("## Failure classes\n")
     A("| kind | class | internal | yosys | sweeps |")

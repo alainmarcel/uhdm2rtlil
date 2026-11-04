@@ -83,7 +83,7 @@ The yosys line counts every generated `run/` directory, 29 of which the regressi
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 
-**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 130 rows over these sweeps = **38** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **92** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
+**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 130 rows over these sweeps = **31** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **92** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **7** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
 
 ## Failure classes
 
@@ -113,7 +113,7 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | synth-limit | flip-flop with multiple / non-canonical asynchronous loads | 3 | 4 | 0 |
 | synth-limit | net declaration initializer / `$readmemh` (sv-elab) | 0 | 0 | 6 |
 | synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 1 | 3 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 38 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 31 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 6 | 5 | 7 |
 | bug | `Feature unimplemented` | 5 | 1 | 3 |
 | unclassified | ERROR: 'MEM_CACHE_STREAM_ID' cannot be used in an expression | 0 | 0 | 1 |
@@ -1517,7 +1517,7 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 
 read_slang crashed, or produced a netlist that does not behave like the RTL while read_uhdm's does: a defect to report upstream (sv-elab, vendored in third_party/yosys/frontends/slang).
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 38
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 31
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -1527,15 +1527,8 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep caliptra-ss | [`recovery_handler`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/third_party/i3c-core/src/recovery/recovery_handler.sv#L25) | ❌ 6 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py caliptra-ss recovery_handler` |
 | sweep caliptra-ss | [`width_converter_8toN`](https://github.com/chipsalliance/caliptra-ss/blob/dfa6c631dbfc00c8e0c7e6b256619d03d74f0bdc/third_party/i3c-core/src/ctrl/width_converter_8toN.sv#L13) | ❌ 58 div; read_uhdm ✅ PASS (301 cycles, 138 active) | R3 `python3 ext_flow.py caliptra-ss width_converter_8toN` |
 | sweep cv32e40p | [`cv32e40p_register_file`](https://github.com/openhwfoundation/cv32e40p/blob/6033d2b1be3295ec774d17ac4cf226faacfdeb08/rtl/cv32e40p_register_file_latch.sv#L32) | ❌ 230 div; read_uhdm ✅ PASS (301 cycles, 271 active) | R3 `python3 ext_flow.py cv32e40p cv32e40p_register_file` |
-| sweep cva6 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6 --filter '^macro_decoder$'` |
-| sweep cva6 | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6 --filter '^miss_handler$'` |
-| sweep cva6-hext | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^macro_decoder$'` |
-| sweep cva6-hext | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hext --filter '^miss_handler$'` |
-| sweep cva6-hpdcache | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^macro_decoder$'` |
-| sweep cva6-hpdcache | [`miss_handler`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/miss_handler.sv#L19) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-hpdcache --filter '^miss_handler$'` |
 | sweep cva6-rv32 | [`cache_ctrl`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/cache_ctrl.sv#L21) | ❌ 4 div; read_uhdm ✅ PASS (300 cycles, 298 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cache_ctrl$'` |
 | sweep cva6-rv32 | [`cva6_ptw`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cva6_mmu/cva6_ptw.sv#L23) | ❌ 300 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^cva6_ptw$'` |
-| sweep cva6-rv32 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^macro_decoder$'` |
 | sweep cva6-rv32 | [`std_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_cache_subsystem.sv#L18) | ❌ 30 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_cache_subsystem$'` |
 | sweep cva6-rv32 | [`std_nbdcache`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_nbdcache.sv#L16) | ❌ 100 div; read_uhdm ✅ PASS (300 cycles, 294 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_nbdcache$'` |
 | sweep cvfpu | [`fpnew_fma_multi`](https://github.com/openhwfoundation/cvfpu/blob/77811635cb7e8649f1d9484733ee6a0bdb44a0e6/src/fpnew_fma_multi.sv#L18) | ❌ 19 div; read_uhdm ✅ PASS (301 cycles, 298 active) | R3 `python3 ext_flow.py cvfpu fpnew_fma_multi` |
