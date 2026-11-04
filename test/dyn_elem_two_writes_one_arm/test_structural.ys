@@ -1,0 +1,11 @@
+# Both writes of the CAS arm must land: with idx 0, n[0] takes d0 and n[1]
+# takes d1; with idx 1 the slots swap.  Without the fix the FIRST write's
+# case actions are removed by the second write's emission, so q0/q1 keep
+# b0/b1 where d0 should be.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean; flatten
+sat -verify -set v 1 -set cas 1 -set idx 0 -prove q0 d0 -prove q1 d1
+sat -verify -set v 1 -set cas 1 -set idx 1 -prove q1 d0 -prove q0 d1
+sat -verify -set v 1 -set cas 0 -set idx 1 -prove q1 d0 -prove q0 b0
+sat -verify -set v 0 -prove q0 b0 -prove q1 b1
