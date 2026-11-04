@@ -29,16 +29,6 @@
 # at all (`syntax error, unexpected '['`), so read_slang is the oracle.
 sv_tests/concat_op-bit_select
 
-# ---- sv-tests conversion campaign, batch 8 (2026-11-01) -------------------
-
-# An INDEXED PART-SELECT of an UNPACKED array loses the array: read_uhdm warns
-# `Base signal 'arr_a' not found in module or generate scope` for both operands of
-# `arr_b[4+:c] = arr_a[1+:c]` and the destination reads all-zeros, where read_slang
-# performs the copy.  read_verilog rejects the form (`Invalid array access`).  The
-# PACKED counterpart is correct -- operations-on-packed-arrays-variable-slice-rw
-# passes -- so the gap is the unpacked case.
-sv_tests/operations-on-unpacked-arrays-variable-slice-rw
-
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # The last conversions: every directory in test/sv_tests/ now has a dut.sv or a
 # NOTE.md.  Each entry below is a measured reader defect; the test's NOTE.md has
