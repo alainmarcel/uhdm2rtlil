@@ -14876,22 +14876,51 @@ bool UhdmImporter::emit_dynamic_unpacked_array_partial_write(
 
     const UHDM::any* idx_expr = (*vs->Exprs())[0];
     const UHDM::any* sel      = (*vs->Exprs())[1];
-    if (!idx_expr || !sel || sel->VpiType() != vpiIndexedPartSelect) return false;
-    auto ips = any_cast<const UHDM::indexed_part_select*>(sel);
-    if (!ips || !ips->Base_expr() || !ips->Width_expr()) return false;
+    if (!idx_expr || !sel) return false;
+    int off = -1, w = 0;
+    if (sel->VpiType() == vpiIndexedPartSelect) {
+        auto ips = any_cast<const UHDM::indexed_part_select*>(sel);
+        if (!ips || !ips->Base_expr() || !ips->Width_expr()) return false;
 
-    // Both the base offset and the width must fold — an unrolled `i*8` does.
-    RTLIL::SigSpec base_s  = import_expression(
-        dynamic_cast<const UHDM::expr*>(ips->Base_expr()));
-    RTLIL::SigSpec width_s = import_expression(
-        dynamic_cast<const UHDM::expr*>(ips->Width_expr()));
-    if (!base_s.is_fully_const() || !width_s.is_fully_const()) return false;
-    int off = base_s.as_const().as_int();
-    int w   = width_s.as_const().as_int();
-    if (w <= 0 || off < 0) return false;
-    // vpiIndexedPartSelectType 1 = `+:` (ascending from the base), 2 = `-:`.
-    if (ips->VpiIndexedPartSelectType() == 2) off = off - w + 1;
-    if (off < 0) return false;
+        // Both the base offset and the width must fold — an unrolled `i*8` does.
+        RTLIL::SigSpec base_s  = import_expression(
+            dynamic_cast<const UHDM::expr*>(ips->Base_expr()));
+        RTLIL::SigSpec width_s = import_expression(
+            dynamic_cast<const UHDM::expr*>(ips->Width_expr()));
+        if (!base_s.is_fully_const() || !width_s.is_fully_const()) return false;
+        off = base_s.as_const().as_int();
+        w   = width_s.as_const().as_int();
+        if (w <= 0 || off < 0) return false;
+        // vpiIndexedPartSelectType 1 = `+:` (ascending from the base), 2 = `-:`.
+        if (ips->VpiIndexedPartSelectType() == 2) off = off - w + 1;
+        if (off < 0) return false;
+    } else if (sel->VpiType() == vpiPartSelect) {
+        // `arr[idx][HI:LO] = v` -- a CONSTANT part-select tail, the shape of
+        // a field write into a dynamically addressed command word
+        // (OpenPiton noc1buffer's
+        // `command_buffer_next[command_wrindex][`L15_NOC1BUFFER_REQTYPE] = ...`,
+        // where the macro expands to `HI:LO`).  Only the `+:` form was
+        // recognised, so this one fell through to the generic LHS import,
+        // which READ the element (a mux over every slot) and assigned the
+        // field into that anonymous read result: every field of every
+        // queued command was lost and the encoder issued empty requests.
+        auto ps = any_cast<const UHDM::part_select*>(sel);
+        if (!ps || !ps->Left_range() || !ps->Right_range()) return false;
+        bool sf = force_const_fold;
+        force_const_fold = true;
+        RTLIL::SigSpec l = import_expression(
+            dynamic_cast<const UHDM::expr*>(ps->Left_range()));
+        RTLIL::SigSpec r = import_expression(
+            dynamic_cast<const UHDM::expr*>(ps->Right_range()));
+        force_const_fold = sf;
+        if (!l.is_fully_const() || !r.is_fully_const()) return false;
+        int li = l.as_const().as_int(), ri = r.as_const().as_int();
+        off = std::min(li, ri);
+        w   = std::abs(li - ri) + 1;
+        if (off < 0 || w <= 0) return false;
+    } else {
+        return false;
+    }
 
     return emit_dynamic_unpacked_array_elem_write(
         base_name, idx_expr, rhs_any, off, w, proc, case_rule);
