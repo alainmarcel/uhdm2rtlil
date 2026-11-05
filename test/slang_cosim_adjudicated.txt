@@ -28,3 +28,16 @@ macro_decoder
 # read_slang -- it is re-measured with every cva6 sweep and will return to the
 # report if it is real.
 miss_handler
+
+# ---- rule, not a list: ONE diverging cycle (2026-11-04) --------------------
+# A row whose `slang co-sim vs RTL` is exactly `❌ 1 div` -- one cycle out of
+# ~301 -- is excluded from the bug class automatically by slang_report.py.
+# That is the same reason miss_handler above was adjudicated out, and on the
+# 2026-11-04 regeneration 17 of the 70 rows were of that shape; keeping them
+# while excluding miss_handler would be inconsistent, and a lone cycle with no
+# cause recorded is not evidence against read_slang.  Such a row still appears
+# in incomplete_testcases.md with its count, and it comes back the moment the
+# divergence widens.
+#
+# To re-include one because its cause IS understood, list it as "+<module>"
+# (or "+<family>/<module>") here, with the cause written against it.

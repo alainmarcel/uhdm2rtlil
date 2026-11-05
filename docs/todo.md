@@ -10,8 +10,8 @@ recorded beside that family's numbers.
 
 ## Done — swept and supported
 
-59 designs: 41 external-IP families in `sweep-ext.yml` (manifests are
-`test/ext_ip/<name>.json`) and 18 with a workflow of their own.
+60 designs: 41 external-IP families in `sweep-ext.yml` (manifests are
+`test/ext_ip/<name>.json`) and 19 with a workflow of their own.
 
 | Design | Repo | Swept by |
 |---|---|---|
@@ -63,6 +63,7 @@ recorded beside that family's numbers.
 | RSD | [rsd-devel/rsd](https://github.com/rsd-devel/rsd) | `sweep-rsd.yml` |
 | SERV | [olofk/serv](https://github.com/olofk/serv) | `serv.json` (`sweep-ext.yml`) |
 | Snitch cluster | [pulp-platform/snitch_cluster](https://github.com/pulp-platform/snitch_cluster) | `snitch.json` (`sweep-ext.yml`) |
+| Converted sv-tests (synthesizable rewrites) | [chipsalliance/sv-tests](https://github.com/chipsalliance/sv-tests) | `sweep-sv-synth-tests.yml` (the 435 converted tests under `test/sv_tests`, with the formal miter, the opt-check and both co-sims; `sweep-sv-tests.yml` runs the upstream corpus itself) |
 | Syntacore SCR1 | [syntacore/scr1](https://github.com/syntacore/scr1) | `sweep-scr1.yml` |
 | TNoC | [taichi-ishitani/tnoc](https://github.com/taichi-ishitani/tnoc) | `sweep-tnoc.yml` |
 | VeeR EH1 | [chipsalliance/Cores-VeeR-EH1](https://github.com/chipsalliance/Cores-VeeR-EH1) | `sweep-veer-eh1.yml` |
