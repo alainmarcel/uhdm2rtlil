@@ -1,0 +1,14 @@
+# bundle_t = ops[1:0], ops[1] at [191:96] and ops[0] at [95:0]; inside ops_t
+# (96 bits) b is [95:64], h is [63:32], w is [31:0].  For d = 32'haabbccdd:
+#   ops[0].b[0] -> o[71:64]   = dd      ops[0].b[3] -> o[95:88]  = aa
+#   ops[0].h[1] -> o[63:48]   = aabb    ops[1].w    -> o[127:96] = aabbccdd
+# Everything else stays 0.  A bit-select misread writes single bits near the
+# member's LSB instead, so the proof fails on the unfixed reader.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove o 192'h0000000000000000aabbccddaa0000ddaabb000000000000 -set d 32'haabbccdd
+sat -verify -prove wbit 1'b0 -set d 32'haabbccdd
+sat -verify -prove wbit 1'b1 -set d 32'haabbccff
