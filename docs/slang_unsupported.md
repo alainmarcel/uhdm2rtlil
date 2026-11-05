@@ -83,7 +83,7 @@ The yosys line counts every generated `run/` directory, 29 of which the regressi
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 
-**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 130 rows over these sweeps = **31** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **92** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **7** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
+**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 130 rows over these sweeps = **31** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **92** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **7** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  That accounting covers the families of the 2026-10-27 download only; the **sv-synth-tests** family (435 converted sv-tests, first nightly 2026-11-03) was not in it and contributes one more row to the bug class, measured 2026-11-04 from run 41825876518 -- so the class is **32**.  Its sibling **sv-tests** (708 upstream files) contributes none: those tests mostly have no outputs, so the co-sim does not run.  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
 
 ## Failure classes
 
@@ -113,7 +113,7 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | synth-limit | flip-flop with multiple / non-canonical asynchronous loads | 3 | 4 | 0 |
 | synth-limit | net declaration initializer / `$readmemh` (sv-elab) | 0 | 0 | 6 |
 | synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 1 | 3 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 31 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 32 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 6 | 5 | 7 |
 | bug | `Feature unimplemented` | 5 | 1 | 3 |
 | unclassified | ERROR: 'MEM_CACHE_STREAM_ID' cannot be used in an expression | 0 | 0 | 1 |
@@ -1517,7 +1517,7 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 
 read_slang crashed, or produced a netlist that does not behave like the RTL while read_uhdm's does: a defect to report upstream (sv-elab, vendored in third_party/yosys/frontends/slang).
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 31
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 32
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -1545,6 +1545,7 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep rsd | [`ReadyBitTable`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ReadyBitTable.sv#L20) | ❌ 40 div; read_uhdm ✅ PASS (301 cycles, 227 active) | R3 `python3 ext_flow.py rsd ReadyBitTable` |
 | sweep rsd | [`StoreQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreQueue.sv#L19) | ❌ 29 div; read_uhdm ✅ PASS (301 cycles, 294 active) | R3 `python3 ext_flow.py rsd StoreQueue` |
 | sweep rsd | [`WakeupLogic`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/WakeupLogic.sv#L15) | ❌ 5 div; read_uhdm ✅ PASS (301 cycles, 18 active) | R3 `python3 ext_flow.py rsd WakeupLogic` |
+| sweep sv-synth-tests | [`unpacked-structures-members-default-value`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/unpacked-structures-members-default-value) | ❌ 300 div; read_uhdm ✅ PASS (300 cycles, 580 active) | R4 `python3 core_sweep.py sv-synth-tests --filter '^unpacked-structures-members-default-value$'` |
 | sweep veer-eh2 | [`eh2_dec_tlu_top`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/dec/eh2_dec_tlu_top.sv#L26) | ❌ 46 div; read_uhdm ✅ PASS (301 cycles, 295 active) | R3 `python3 ext_flow.py veer-eh2 eh2_dec_tlu_top` |
 | sweep veer-eh2 | [`eh2_veer`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/eh2_veer.sv#L23) | ❌ 2 div; read_uhdm ✅ PASS (301 cycles, 274 active) | R3 `python3 ext_flow.py veer-eh2 eh2_veer` |
 | sweep verilog-pcie | [`pcie_axil_master`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/pcie_axil_master.v#L34) | ❌ 219 div; read_uhdm ✅ PASS (301 cycles, 205 active) | R3 `python3 ext_flow.py verilog-pcie pcie_axil_master` |
