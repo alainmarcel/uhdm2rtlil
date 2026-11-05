@@ -441,3 +441,15 @@ genscope_struct_array_elem_member_write
 # uhdm-vs-verilog comparison sees the dead wires.  Closing it means not
 # creating a row alias no access names, which needs the by-name access scan.
 sv_tests/multi-declaration
+
+# struct_array_elem_member_elem_write: read_verilog is the WRONG SIDE.  It
+# measures `bn` -- a packed array of packed structs (`ops_t [1:0] ops`) inside
+# a struct -- as 66 bits where it is 192, and folds every output to a constant
+# zero, so test_equivalence.sh reports "No logic gates - comparing constant
+# wire values" and then a mismatch against our correct expression
+# (gold=192'h0, gate={64'h0, d, d[31:24], 16'h0, d[7:0], d[31:16], 48'h0}).
+# The design is proven two other ways instead: test_structural.ys pins the bit
+# placement of all three member shapes with `sat -verify -prove`, and
+# test_slang_equiv.ys miters us against read_slang, which sizes the struct
+# correctly.  Both fail on the unfixed reader.
+struct_array_elem_member_elem_write

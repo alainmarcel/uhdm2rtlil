@@ -23826,6 +23826,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         : nullptr;
                                 int lw = elem_w;
                                 bool good = true;
+                                const UHDM::typespec* last_mts = nullptr;
                                 for (size_t t = 0; t < tail_names.size() && good; t++) {
                                     const std::string& nm = tail_names[t];
                                     good = false;
@@ -23843,6 +23844,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                             }
                                         if (std::string(m->VpiName()) == nm) {
                                             total += loff; lw = mw; good = mw > 0;
+                                            last_mts = mts;
                                             cur = (mts && mts->UhdmType() == uhdmstruct_typespec)
                                                       ? any_cast<const UHDM::struct_typespec*>(mts)
                                                       : nullptr;
@@ -23856,6 +23858,61 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 int sel_off = 0, sel_w = lw;
                                 RTLIL::SigSpec sel_dyn;
                                 bool sel_ok = true;
+                                // A trailing index on a member that is ITSELF a
+                                // PACKED ARRAY selects an ELEMENT, not a bit:
+                                // `ops[k].ew16[j]` with `logic [1:0][15:0] ew16`
+                                // is 16 bits at j*16, and treating it as one bit
+                                // at offset j wrote a single bit per lane --
+                                // snitch spatz_ipu's distributor drove bits
+                                // [112] and [113] of lane_signal_inp where
+                                // read_slang drives [127:112] and [143:128], so
+                                // three of the four SIMD lanes saw zero
+                                // operands and result_o kept only its ew64
+                                // half.  Measure the element geometry from the
+                                // member's own ranges; a plain vector member
+                                // (no element typespec) keeps bit semantics.
+                                int sel_elem_w = 1, sel_lo = 0, sel_hi = 0;
+                                bool sel_desc = true, sel_is_arr = false;
+                                if (good && tail_sel && last_mts) {
+                                    const UHDM::VectorOfrange* srg = nullptr;
+                                    const UHDM::typespec* selem = nullptr;
+                                    if (last_mts->UhdmType() == uhdmpacked_array_typespec) {
+                                        auto pa = any_cast<const UHDM::packed_array_typespec*>(last_mts);
+                                        srg = pa->Ranges();
+                                        if (pa->Elem_typespec()) selem = pa->Elem_typespec()->Actual_typespec();
+                                    } else if (last_mts->UhdmType() == uhdmlogic_typespec) {
+                                        auto lt = any_cast<const UHDM::logic_typespec*>(last_mts);
+                                        srg = lt->Ranges();
+                                        if (lt->Elem_typespec()) selem = lt->Elem_typespec()->Actual_typespec();
+                                    }
+                                    // Only an OUTER dimension over a non-trivial
+                                    // element makes the index an element select.
+                                    // The geometry arrives in BOTH documented
+                                    // shapes (CLAUDE.md, packed multidim
+                                    // typespec variants): `logic [3:0][7:0] ew8`
+                                    // is ONE logic_typespec carrying two ranges
+                                    // and NO Elem_typespec, while a typedef'd
+                                    // element gives one range plus an
+                                    // Elem_typespec.  Requiring Elem_typespec
+                                    // alone matched neither of spatz_ipu's
+                                    // members and left the index a bit select.
+                                    if (srg && (srg->size() >= 2 || selem)) {
+                                        auto r0 = (*srg)[0];
+                                        RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+                                        RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
+                                        if (l.is_fully_const() && r.is_fully_const()) {
+                                            int dl = l.as_const().as_int(), dr = r.as_const().as_int();
+                                            int n = std::abs(dl - dr) + 1;
+                                            if (n > 1 && lw % n == 0 && lw / n > 1) {
+                                                sel_elem_w = lw / n;
+                                                sel_lo = std::min(dl, dr);
+                                                sel_hi = std::max(dl, dr);
+                                                sel_desc = dl >= dr;
+                                                sel_is_arr = true;
+                                            }
+                                        }
+                                    }
+                                }
                                 if (good && tail_sel) {
                                     if (tail_sel->UhdmType() == uhdmbit_select) {
                                         auto tbs = any_cast<const bit_select*>(tail_sel);
@@ -23865,9 +23922,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         if (ix.empty()) sel_ok = false;
                                         else if (ix.is_fully_const()) {
                                             int i = ix.as_const().as_int();
-                                            if (i >= 0 && i < lw) { sel_off = i; sel_w = 1; }
-                                            else sel_ok = false;
-                                        } else { sel_dyn = ix; sel_w = 1; }
+                                            if (sel_is_arr) {
+                                                if (i >= sel_lo && i <= sel_hi) {
+                                                    sel_off = (sel_desc ? (i - sel_lo)
+                                                                        : (sel_hi - i)) * sel_elem_w;
+                                                    sel_w = sel_elem_w;
+                                                } else sel_ok = false;
+                                            } else if (i >= 0 && i < lw) {
+                                                sel_off = i; sel_w = 1;
+                                            } else sel_ok = false;
+                                        } else { sel_dyn = ix; sel_w = sel_is_arr ? sel_elem_w : 1; }
                                     } else {
                                         auto tps = any_cast<const part_select*>(tail_sel);
                                         RTLIL::SigSpec l = import_expression(tps->Left_range(), input_mapping);
