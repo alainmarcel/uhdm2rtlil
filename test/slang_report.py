@@ -197,17 +197,35 @@ def load_tests(tsv):
     return rows
 
 def parse_md_table(path):
+    """Yield the rows of EVERY table in a markdown file, keyed by its own header.
+
+    A report may hold more than one table, and the one we want need not be the
+    first: sv-tests-sweep.md opens with a 4-column per-FRONTEND summary and the
+    per-test table (7 columns) comes after it.  Latching onto the first header
+    and skipping every row whose width differs -- which this did -- silently
+    dropped all ~1000 per-test rows of that family, so sv-tests contributed
+    nothing to the report no matter how fresh the download was.  A markdown
+    header is the line directly above the `|---|---|` separator, so promote the
+    previous line whenever a separator is seen; that re-syncs on each table.
+    """
     hdr = None
+    prev = None
     for line in open(path):
-        if not line.startswith("| "):
+        # NOTE the separator row is "|---|---|", which does NOT start with
+        # "| " -- testing for that prefix (as this once did) filters it out
+        # before it can be recognised, so match a bare leading pipe.
+        if not line.startswith("|"):
+            prev = None
             continue
         c = [x.strip() for x in line.strip().strip("|").split("|")]
-        if hdr is None:
-            hdr = [h.lower() for h in c]
+        if c and all(x and set(x) <= set("-:") for x in c):
+            if prev is not None and len(prev) == len(c):
+                hdr = [h.lower() for h in prev]   # the line above a separator
+            prev = None
             continue
-        if not c or set(c[0]) <= set("-: ") or len(c) != len(hdr):
-            continue
-        yield dict(zip(hdr, c))
+        if hdr is not None and len(c) == len(hdr):
+            yield dict(zip(hdr, c))
+        prev = c
 
 def load_cosim_adjudicated():
     """Modules whose slang co-sim divergence is adjudicated NOT a slang defect.
