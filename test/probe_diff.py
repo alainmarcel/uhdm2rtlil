@@ -198,6 +198,8 @@ def main():
     show("BOTH netlists diverge -- harness/modelling, not a reader defect",
          sorted(shared, key=lambda r: (r[0], r[1].count("."), r[1])))
     if ours:
+        print("\n  drill into one of these with:")
+        print("    python3 probe_signal.py %s '<name fragment>' --from <T> --to <T>" % w)
         t0 = min(r[0] for r in ours)
         print("\nearliest OURS divergence at t=%s; %d signal(s) there:"
               % (t0, sum(1 for r in ours if r[0] == t0)))

@@ -514,6 +514,65 @@ step 1–2 name it (e.g. `tcb_ifu.req_dly[DLY]` undriven), read just that subtre
 even emitted the driver, then build a minimal DUT reproducing it before fixing
 the importer. `uhdm_path.log` in the test dir is the textual UHDM tree for that.
 
+## Localising a sweep co-sim divergence: the INTERNAL PROBE pass
+
+The co-sim prints the OUTPUT that diverges, which on a large module is many
+layers downstream of the cause -- `HWSTRB` for cvw wallypipelinedcore,
+`vrf_wbe_o` for snitch spatz_vfu, `cfg_rdata_o` for cheshire
+axi_rt_unit_top_synth.  Guessing the construct from an output name does not
+scale: six minimal repros written from three of those names all PASSED on both
+readers.  Probe the internals instead.
+
+```bash
+# 1. dump a VCD of the DUT subtree from every side
+cd test && COSIM_PROBE=1 python3 ext_ip/ext_flow.py <family> <module>
+#    (or directly: python3 netlist_cosim.py ... --probe)
+
+# 2. name the signals that diverge EARLIEST
+python3 probe_diff.py ext_ip/work/<family>/<module>/cosim
+
+# 3. read one of them on each side, around that time
+python3 probe_signal.py ext_ip/work/<family>/<module>/cosim \
+        'regbus_guard.select' --from 0 --to 30000
+```
+
+`probe_diff.py` reports read_slang as the adjudicator: a signal where WE differ
+from the RTL and slang agrees with it is ours; one where both differ is a
+harness or modelling artefact and is listed apart.  `probe_signal.py` drives
+`vcd-inspect` (tools/vcd_mcp.cpp, built by the top-level CMake into
+`build/vcd-inspect`), which indexes a trace once and answers windowed queries
+with binary searches; `--serve` keeps it resident across questions.
+
+Three things this pass had to get right, each of which silently breaks it:
+
+* **`--probe` must NOT flatten the netlist.**  Flattening is what makes the
+  co-sim fast, but it turns every internal wire into one escaped `a.b.c`
+  identifier, and **Verilator 5.048 cannot trace those**: once a name is long
+  enough to be hash-shortened it aborts with `Internal Error:
+  ../V3String.cpp:657: String not in reverse hash map
+  '__Vhsh...__BRA__63__03a9__KET__'`, identically under `--trace`,
+  `--trace-fst` and `--trace-structs`.  Unflattened, names stay short and carry
+  real hierarchy -- which is also what makes them match the RTL's paths.  The
+  read_slang netlist still cannot be traced (its internal names are escaped
+  even unflattened), so the slang column is often absent.
+* **One cause fans out.**  The first run on axi_rt_unit_top_synth reported 134
+  diverging signals -- the same wire aliased at two scopes plus everything
+  downstream.  probe_diff groups by (rtl series, uhdm series) and keeps the
+  shallowest name, which collapsed those 134 to 4.
+* **A divergence AT t=0 is real** (a reset or initial value that never reaches
+  the netlist), so `--settle` defaults to -1.  It defaulted to 0 against a
+  `t <= settle` test and reported ZERO divergences on a row that provably has
+  one.
+
+Worked example: axi_rt_unit_top_synth's `cfg_rdata_o` reads 0 where the RTL
+gives `'hbadca51e`.  The pass names
+`i_axi_rt_unit_top.i_axi_rt_regbus_guard.select` = `0x1` on the RTL and `0x2`
+on ours at t=0 -- at reset we route the regbus to the special-register port
+where the RTL routes it to the error slave.  Three hypotheses (the ERR_VAL
+override not binding, `('1 << 2)` mis-sized in isolation, and localising via
+the guard submodule -- which elaborates at `SubAddrWidth = 0` standalone and is
+therefore meaningless) had all been disproven before this named it in one run.
+
 ## Undriven Nets: what they mean, and why read_uhdm does NOT X-fill them
 
 An undriven net in the read_uhdm netlist is either a DROPPED DRIVER (our bug)
