@@ -9,17 +9,17 @@
 //   * has a persistent --serve mode (Unix-domain socket): the file is parsed
 //     once and held in RAM; subsequent queries connect and return instantly.
 //
-// CLI is a drop-in match for the Python tool:
+// CLI:
 //
-//   vcd-inspect <vcd> --list   PATTERN
-//   vcd-inspect <vcd> --count  PATTERN
-//   vcd-inspect <vcd> --signal PATTERN [--signal PATTERN ...] [--from T] [--to T]
+//   vcd-mcp <vcd> --list   PATTERN
+//   vcd-mcp <vcd> --count  PATTERN
+//   vcd-mcp <vcd> --signal PATTERN [--signal PATTERN ...] [--from T] [--to T]
 //   common: --from T --to T --limit N --full-names
 //   pattern: substring by default; prefix with "re:" for ECMAScript regex.
 //
 // Server:
-//   vcd-inspect <vcd> --serve [--sock PATH]      # load once, listen forever
-//   vcd-inspect <vcd> --list PATTERN             # auto-connects if a server is
+//   vcd-mcp <vcd> --serve [--sock PATH]      # load once, listen forever
+//   vcd-mcp <vcd> --list PATTERN             # auto-connects if a server is
 //                                                #   up for this vcd, else loads
 //                                                #   in-process (one-shot).
 //   --no-server  forces in-process one-shot (skip the socket).
@@ -81,7 +81,7 @@ static inline bool pack_id(const char* s, int n, uint64_t& out) {
 }
 
 // ----------------------------------------------------------------------------
-// Value formatting (mirror the Python tool's choices)
+// Value formatting: hex for vectors, bare 0/1/x/z for scalars.
 // ----------------------------------------------------------------------------
 
 // Binary bit-string -> "0x..." if pure 0/1, else the raw bit-string (x/z cases).
@@ -256,7 +256,7 @@ static bool load_vcd(const char* path, Model& m, bool verbose) {
     if (!in_data) { munmap((void*)base, size); close(fd); return false; }
 
     if (verbose)
-        fprintf(stderr, "[vcd-inspect] header: %zu names, %zu unique ids (%.1fs)\n",
+        fprintf(stderr, "[vcd-mcp] header: %zu names, %zu unique ids (%.1fs)\n",
                 m.names.size(), m.ids.size(), now_sec() - t0);
 
     // ---- value-change data ----
@@ -309,14 +309,14 @@ static bool load_vcd(const char* path, Model& m, bool verbose) {
                 }
             }
         }
-        // 'r'/'R' reals and '$...' directives are ignored (as in the Python tool).
+        // 'r'/'R' reals and '$...' directives are ignored: nothing compares them.
         p = next;
     }
 
     if (verbose) {
         size_t total = 0;
         for (auto& id : m.ids) total += id.t.size();
-        fprintf(stderr, "[vcd-inspect] data: %zu transitions, end @ %lu ps (%.1fs total)\n",
+        fprintf(stderr, "[vcd-mcp] data: %zu transitions, end @ %lu ps (%.1fs total)\n",
                 total, (unsigned long)curT, now_sec() - t0);
     }
     munmap((void*)base, size);
@@ -675,7 +675,7 @@ static bool recv_tokens(int fd, std::vector<std::string>& toks) {
 
 static int run_server(const char* vcd, const std::string& sockpath) {
     Model m;
-    fprintf(stderr, "[vcd-inspect] loading %s ...\n", vcd);
+    fprintf(stderr, "[vcd-mcp] loading %s ...\n", vcd);
     if (!load_vcd(vcd, m, true)) { fprintf(stderr, "load failed\n"); return 1; }
 
     int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -689,7 +689,7 @@ static int run_server(const char* vcd, const std::string& sockpath) {
     if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) != 0) { perror("bind"); return 1; }
     if (listen(sfd, 16) != 0) { perror("listen"); return 1; }
     signal(SIGPIPE, SIG_IGN);
-    fprintf(stderr, "[vcd-inspect] ready, serving on %s (Ctrl-C to stop)\n", sockpath.c_str());
+    fprintf(stderr, "[vcd-mcp] ready, serving on %s (Ctrl-C to stop)\n", sockpath.c_str());
 
     for (;;) {
         int cfd = accept(sfd, nullptr, nullptr);
@@ -736,7 +736,7 @@ static bool try_client(const std::string& sockpath, const Options& o) {
 
 static void usage() {
     fprintf(stderr,
-        "usage: vcd-inspect <vcd> [--serve] [--sock PATH] [--no-server]\n"
+        "usage: vcd-mcp <vcd> [--serve] [--sock PATH] [--no-server]\n"
         "                   (--list PAT | --count PAT | --signal PAT [--signal PAT ...]\n"
         "                    | --changed PAT --from T --to T)\n"
         "                   [--from T] [--to T] [--limit N] [--full-names]\n"
@@ -782,8 +782,8 @@ int main(int argc, char** argv) {
 
     // One-shot fallback: load in-process.
     if (!no_server)
-        fprintf(stderr, "[vcd-inspect] no server on %s; loading in-process "
-                        "(start one with: vcd-inspect %s --serve)\n",
+        fprintf(stderr, "[vcd-mcp] no server on %s; loading in-process "
+                        "(start one with: vcd-mcp %s --serve)\n",
                 sockpath.c_str(), vcd.c_str());
     Model m;
     if (!load_vcd(vcd.c_str(), m, false)) { fprintf(stderr, "load failed\n"); return 1; }

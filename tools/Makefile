@@ -1,7 +1,7 @@
-# vcd-inspect: indexed VCD inspector used by the co-sim internal-probe flow
+# vcd-mcp: indexed VCD inspector used by the co-sim internal-probe flow
 # (test/netlist_cosim.py --probe, test/probe_diff.py, test/probe_signal.py).
 #
-#   make -C tools            # -> tools/vcd-inspect
+#   make -C tools            # -> tools/vcd-mcp
 #   make -C tools clean
 #
 # -march=native is deliberately NOT used: the binary is committed-source but
@@ -10,12 +10,12 @@ CXX      ?= g++
 CXXFLAGS ?= -O2 -std=c++17 -Wall -Wno-unused-function
 LDFLAGS  ?=
 
-all: vcd-inspect
+all: vcd-mcp
 
-vcd-inspect: vcd_mcp.cpp
+vcd-mcp: vcd_mcp.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f vcd-inspect
+	rm -f vcd-mcp
 
 .PHONY: all clean

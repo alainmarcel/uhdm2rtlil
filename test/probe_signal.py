@@ -3,15 +3,15 @@
 
 `probe_diff.py` names WHICH internal signal diverges first; this answers the
 next question -- what does it actually do on each side, around that time.  It
-drives `vcd-inspect` (tools/vcd_mcp.cpp, built by the top-level CMake into
-build/vcd-inspect), which indexes each trace once and answers windowed queries
+drives `vcd-mcp` (tools/vcd_mcp.cpp, built by the top-level CMake into
+build/vcd-mcp), which indexes each trace once and answers windowed queries
 with binary searches instead of re-parsing a full-hierarchy VCD per question.
 
   python3 probe_signal.py <workdir> <pattern> [--from T] [--to T] [--limit N]
   python3 probe_signal.py <workdir> --list <pattern>      # what matches
   python3 probe_signal.py <workdir> --serve               # keep traces in RAM
 
-PATTERN is a substring, or "re:..." for a regex -- vcd-inspect's own syntax.
+PATTERN is a substring, or "re:..." for a regex -- vcd-mcp's own syntax.
 With --serve running, later queries reuse the parsed traces over a socket.
 """
 import argparse, os, shutil, subprocess, sys
@@ -22,14 +22,14 @@ TAGS = ("rtl", "uhdm", "slang")
 
 def find_inspect():
     here = Path(__file__).resolve().parent.parent
-    for c in (here / "build" / "vcd-inspect", here / "tools" / "vcd-inspect"):
+    for c in (here / "build" / "vcd-mcp", here / "tools" / "vcd-mcp"):
         if c.is_file() and os.access(c, os.X_OK):
             return str(c)
-    w = shutil.which("vcd-inspect")
+    w = shutil.which("vcd-mcp")
     if w:
         return w
-    sys.exit("probe_signal: vcd-inspect not found -- build it with "
-             "`cmake --build build --target vcd-inspect` (or `make -C tools`)")
+    sys.exit("probe_signal: vcd-mcp not found -- build it with "
+             "`cmake --build build --target vcd-mcp` (or `make -C tools`)")
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     ap.add_argument("--to", dest="t_to", type=int)
     ap.add_argument("--limit", type=int, default=20)
     ap.add_argument("--serve", action="store_true",
-                    help="start a resident vcd-inspect per trace and exit")
+                    help="start a resident vcd-mcp per trace and exit")
     a = ap.parse_args()
     exe = find_inspect()
     vcds = {t: os.path.join(a.work, f"probe_{t}.vcd") for t in TAGS}

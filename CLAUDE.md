@@ -539,8 +539,8 @@ python3 probe_signal.py ext_ip/work/<family>/<module>/cosim \
 `probe_diff.py` reports read_slang as the adjudicator: a signal where WE differ
 from the RTL and slang agrees with it is ours; one where both differ is a
 harness or modelling artefact and is listed apart.  `probe_signal.py` drives
-`vcd-inspect` (tools/vcd_mcp.cpp, built by the top-level CMake into
-`build/vcd-inspect`), which indexes a trace once and answers windowed queries
+`vcd-mcp` (tools/vcd_mcp.cpp, built by the top-level CMake into
+`build/vcd-mcp`), which indexes a trace once and answers windowed queries
 with binary searches; `--serve` keeps it resident across questions.
 
 Three things this pass had to get right, each of which silently breaks it:

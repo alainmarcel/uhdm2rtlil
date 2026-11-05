@@ -228,7 +228,7 @@ add_custom_command(
 add_custom_target(extract_clocks_resets ALL DEPENDS ${EXTRACT_CR_SO})
 
 # ---------------------------------------------------------------------------
-# vcd-inspect: indexed VCD inspector for the co-sim internal-probe flow.
+# vcd-mcp: indexed VCD inspector for the co-sim internal-probe flow.
 #
 # `test/netlist_cosim.py --probe` dumps a VCD of the DUT subtree from every
 # side; this reads them.  It mmaps the file, indexes it once per id into
@@ -240,8 +240,8 @@ add_custom_target(extract_clocks_resets ALL DEPENDS ${EXTRACT_CR_SO})
 # add_executable and costs a couple of seconds; it lands next to the plugin in
 # the build directory and `test/probe_diff.py` / `test/probe_signal.py` find it
 # there (falling back to $PATH, then to a slower in-process Python parse).
-add_executable(vcd-inspect ${CMAKE_CURRENT_SOURCE_DIR}/tools/vcd_mcp.cpp)
-set_target_properties(vcd-inspect PROPERTIES
+add_executable(vcd-mcp ${CMAKE_CURRENT_SOURCE_DIR}/tools/vcd_mcp.cpp)
+set_target_properties(vcd-mcp PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
