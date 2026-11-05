@@ -8243,6 +8243,49 @@ void UhdmImporter::equality_extend_operands(const operation* uhdm_op,
 // Self-determined width of an operand for context sizing (LRM 11.6.1): an
 // UNSIZED literal is 32 bits (LRM 5.7.1) even though Surelog stores it at 64,
 // a sized literal is its size, anything else its self-determined width.
+// Does this expression's self-size come out 0 because it BOTTOMS OUT in an
+// unbased unsized literal (`'0` `'1` `'x` `'z`)?
+//
+// Such a literal has no width of its own -- LRM 5.7.1 sizes it to its context
+// -- so `context_operand_width` reports 0 for it, and 0 is also what an
+// expression it dominates reports (a shift takes its left operand's width).
+// That 0 means "take the context", NOT "width unknown", and the two must be
+// told apart: a comparison that treats it as unknown gives up on establishing
+// a context at all, and then the literal is imported at one bit.
+//
+// Only the WIDTH-DETERMINING operands are followed (LRM 11.6.1, Table 11-21):
+// a shift's left operand, an arithmetic/bitwise operator's operands, a
+// conditional's two results.  A shift AMOUNT is self-determined and cannot
+// make the whole expression context-determined.
+static bool unsized_fill_dominates(const UHDM::any* o) {
+    if (!o) return false;
+    if (auto c = any_cast<const UHDM::constant*>(o))
+        return c->VpiSize() == -1;
+    if (o->UhdmType() != uhdmoperation) return false;
+    auto op = any_cast<const UHDM::operation*>(o);
+    auto ops = op->Operands();
+    if (!ops || ops->empty()) return false;
+    switch (op->VpiOpType()) {
+        case vpiLShiftOp: case vpiRShiftOp:
+        case vpiArithLShiftOp: case vpiArithRShiftOp: case vpiPowerOp:
+        case vpiMinusOp: case vpiPlusOp: case vpiBitNegOp:
+            return unsized_fill_dominates((*ops)[0]);
+        case vpiAddOp: case vpiSubOp: case vpiMultOp: case vpiDivOp:
+        case vpiModOp: case vpiBitAndOp: case vpiBitOrOp:
+        case vpiBitXorOp: case vpiBitXnorOp:
+            return ops->size() > 1 &&
+                   (unsized_fill_dominates((*ops)[0]) ||
+                    unsized_fill_dominates((*ops)[1]));
+        case vpiConditionOp:
+            return ops->size() > 2 &&
+                   (unsized_fill_dominates((*ops)[1]) ||
+                    unsized_fill_dominates((*ops)[2]));
+        default:
+            return false;
+    }
+}
+
+
 int UhdmImporter::context_operand_width(const any* o,
         const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (auto c = any_cast<const constant*>(o)) {
@@ -9972,8 +10015,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
             int sa = context_operand_width((*uhdm_op->Operands())[0], input_mapping);
             int sb = context_operand_width((*uhdm_op->Operands())[1], input_mapping);
-            if (sa > 0 && sb > 0)
+            if (sa > 0 && sb > 0) {
                 expression_context_width = std::max(sa, sb);
+            } else if (sa > 0 && unsized_fill_dominates((*uhdm_op->Operands())[1])) {
+                // The other operand is context-determined, so THIS one's size
+                // is the common width (LRM 11.8.2).  Requiring both to be
+                // known abandoned the context entirely, and the literal was
+                // then imported at one bit: axi_rt's regbus guard compares
+                // `req_i.addr[SubAddrWidth-1:0] == ('1 << 2)`, and `1'b1 << 2`
+                // truncates to ZERO -- the netlist read `! req_i[48:38]`, so
+                // at reset the guard routed the regbus to its special-register
+                // port instead of the error slave and cfg_rdata_o came back 0
+                // rather than 'hbadca51e.
+                expression_context_width = sa;
+            } else if (sb > 0 && unsized_fill_dominates((*uhdm_op->Operands())[0])) {
+                expression_context_width = sb;
+            }
         }
         bool ops_all_signed = false;
         if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {

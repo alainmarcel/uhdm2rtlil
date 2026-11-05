@@ -1,0 +1,20 @@
+# '1 sized to the comparison width, then shifted left 2:
+#   32-bit context -> 32'hfffffffc      11-bit context -> 11'h7fc
+# A one-bit '1 shifts to 0, which makes every compare "== 0" -- the three
+# part-select forms and the whole-vector form all fail that way on the
+# unfixed reader.  '0 << 2 is 0 in either reading, so h_zero pins that the
+# fix did not turn the ZERO fill into something else.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+proc
+opt -full
+check -assert
+sat -verify -prove h_whole  1'b1 -set a 32'hfffffffc
+sat -verify -prove h_whole  1'b0 -set a 32'h00000000
+sat -verify -prove h_const  1'b1 -set a 32'h000007fc
+sat -verify -prove h_const  1'b0 -set a 32'h00000000
+sat -verify -prove h_param  1'b1 -set a 32'h000007fc
+sat -verify -prove h_struct 1'b1 -set req_i 40'h0007fc00
+sat -verify -prove h_struct 1'b0 -set req_i 40'h0000000000
+sat -verify -prove h_zero   1'b1 -set a 32'h00000000
+sat -verify -prove v_assign 32'hfffffffc
