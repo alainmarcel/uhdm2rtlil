@@ -704,6 +704,12 @@ def _uhdm_only_cosim(w, m, top, cycles, ties, mem):
             "--top", f"{m}_uhdm", "--rtl-top", top,
             "--srcs", str(w / "srcs.txt"), "--incs", str(w / "incs.txt"),
             "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
+    # COSIM_PROBE=1 asks for a VCD of the DUT subtree from every side, so
+    # probe_diff.py can name the first INTERNAL signal that diverges instead
+    # of only the output that shows it.  Off by default: the traces are large
+    # and the nightly does not need them.
+    if os.environ.get("COSIM_PROBE") == "1":
+        ccmd.append("--probe")
     if mem:
         ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in ccmd]
     rc, out = sh(ccmd, cwd=w, timeout=3600)
@@ -1062,6 +1068,12 @@ sat -verify -prove-asserts -seq {seq} -set-init-zero miter
                 "--top", f"{m}_uhdm", "--rtl-top", top,
                 "--srcs", str(w / "srcs.txt"), "--incs", str(w / "incs.txt"),
                 "--cycles", str(cycles), "--ties", str(cw / "ties.json")]
+        # COSIM_PROBE=1 asks for a VCD of the DUT subtree from every side, so
+        # probe_diff.py can name the first INTERNAL signal that diverges instead
+        # of only the output that shows it.  Off by default: the traces are large
+        # and the nightly does not need them.
+        if os.environ.get("COSIM_PROBE") == "1":
+            ccmd.append("--probe")
         if mem:
             ccmd = ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in ccmd]
         rc4, out4 = sh(ccmd, cwd=w, timeout=3600)
