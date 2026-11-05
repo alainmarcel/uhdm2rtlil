@@ -51,6 +51,10 @@ ap.add_argument("--iface-flat", action="store_true",
 ap.add_argument("--extra-src", action="append", default=[])
 ap.add_argument("--cycles", type=int, default=300)
 ap.add_argument("--seed", type=int, default=1)
+ap.add_argument("--probe", action="store_true",
+                help="dump a VCD of the DUT subtree from every side (probe_<tag>.vcd) "
+                     "so probe_diff.py can name the first INTERNAL signal that "
+                     "diverges, instead of only the output that shows it")
 ap.add_argument("--ties")
 ap.add_argument("--timeout", type=int, default=3600)
 args = ap.parse_args()
@@ -108,6 +112,14 @@ def netlist(tag, il, nl):
             if b"endmodule" in fh.read():
                 return True
     mod = args.top if tag == 'uhdm' else args.top.replace('_uhdm', '_slang')
+    # --probe keeps the HIERARCHY.  Flattening is what makes the netlist fast,
+    # but it turns every internal wire into one escaped `a.b.c` identifier, and
+    # Verilator 5.048 cannot trace those: once a name is long enough to be
+    # hash-shortened it hits "Internal Error: String not in reverse hash map
+    # '__Vhsh...__BRA__63__03a9__KET__'" under --trace, --trace-fst and
+    # --trace-structs alike.  Unflattened, names stay short and the VCD carries
+    # real hierarchy -- which is also what makes them match the RTL's paths.
+    flat = "" if args.probe else "flatten\nopt_clean"
     # The netlist module takes the RTL name in the written Verilog (below):
     # yosys's `rename` asserts on these instance ILs.
     ys = f"""read_rtlil {il}
@@ -117,8 +129,7 @@ proc
 # wires, which flatten replicates per instance -- caliptra_top peaked at 20 GB
 # (killed the 16 GB CI runner); cleaning first peaks at 8.5 GB.
 opt_clean
-flatten
-opt_clean
+{flat}
 hierarchy -top {mod}
 memory -nomap
 opt_clean
@@ -331,6 +342,13 @@ tb.append("  always @(posedge tb_clk) begin")
 tb.append(f"    #1 $display(\"C%0d {fmt}\", cyc, {argl});")
 tb.append("    if (cyc >= CYCLES) $finish;")
 tb.append("  end")
+if args.probe:
+    # One fixed name per run; the runner renames it per side.  Dumping the DUT
+    # subtree (not all of tb) keeps the file to the signals being compared.
+    tb.append("  initial begin")
+    tb.append("    $dumpfile(\"probe.vcd\");")
+    tb.append("    $dumpvars(0, dut);")
+    tb.append("  end")
 tb.append("endmodule")
 text = "\n".join(tb) + "\n"
 plain = f"  {TOP} dut (\n    {conns}\n  );"
@@ -431,6 +449,10 @@ VFLAGS = ["--binary", "-j", "0", "--timing", "--no-assert", "-Wno-fatal", "-Wno-
           # only guards simulation speed.  Waive it, else the row has no co-sim.
           "-Wno-BLKANDNBLK", "--x-assign", "0", "--x-initial", "0", "-DSYNTHESIS",
           "--top-module", "tb", "-O1"]
+if args.probe:
+    # --trace-structs keeps packed members addressable by name on the RTL side;
+    # the netlist side is flat either way.
+    VFLAGS += ["--trace", "--trace-structs", "--trace-depth", "99"]
 incs = [f"+incdir+{d}" for d in paths(args.incs)]
 srcs = paths(args.srcs) + list(args.extra_src)
 # A DPI import with no implementation links nowhere: CORE-V Wally's memory
@@ -518,6 +540,13 @@ for tag, flags in builds.items():
             have_slang = False
             continue
         sys.exit(1)
+    if args.probe:
+        vcd = WORK / "probe.vcd"
+        if vcd.exists():
+            vcd.replace(WORK / f"probe_{tag}.vcd")
+            print(f"{tag_name}: {tag} probe VCD -> probe_{tag}.vcd")
+        else:
+            print(f"{tag_name}: {tag} produced NO probe VCD")
     traces[tag] = [l for l in (r.stdout or "").splitlines() if l.startswith("C")]
     if not traces[tag]:
         print(f"{tag_name}: {tag} simulation produced no trace")
