@@ -27,12 +27,6 @@ sv_tests/arrays
 sv_tests/arrays-replication
 sv_tests/arrays-key-index
 
-# ---- sv-tests conversion campaign, batch 3b (2026-10-31) -------------------
-# read_slang computes upstream's values and read_uhdm does not, so the miter
-# finds a counterexample.  Reasons are recorded against the same tests in
-# structural_expected_fail.txt.
-sv_tests/concat_op-bit_select
-
 
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # read_slang computes upstream's values and read_uhdm does not.  Reasons against
