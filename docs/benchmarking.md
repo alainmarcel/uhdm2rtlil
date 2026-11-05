@@ -113,8 +113,14 @@ succeeded and the per-family reports of those are used, but
   * **NaxRiscv, CV32E40X, CV32E40S and OpenE906** landed after the run started
     and have no nightly at all.
 
-So the 8786 rows UNDERSTATE the corpus, by roughly the 1085 rows of those four
-empty families plus the partial ones.
+So the 8786 rows UNDERSTATED the corpus, by roughly the 1085 rows of those four
+empty families plus the partial ones.  **Resolved on 2026-11-04**: every one of
+those shards now publishes a report, and the four contribute exactly the
+predicted **1085** rows (BOOM 422, Gemmini 384, Rocket Chip 235, biRISC-V 44),
+while Cheshire reports its full 266, aib-protocols its 397 and OpenPiton its
+852.  The aggregate is now **12322 rows, 9351 formally proven, `read_uhdm`
+10195 co-sim passes, `read_slang` 10024**, measured over the 79 family reports
+in `build/sweeps/_night1104`.
 
 Run ids: ibex 40657392141, rp32 40660737218, fx68k 40706997811, scr1
 40660315121, rggen 40713316491, veer-eh1 40668403252, tnoc 40715474861,

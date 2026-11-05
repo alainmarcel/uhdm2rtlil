@@ -236,16 +236,20 @@ def load_cosim_adjudicated():
     the bug class is only worth anything if every row in it is defensible.
     """
     f = os.path.join(ROOT, "test", "slang_cosim_adjudicated.txt")
-    keys = set()
+    keys, keep = set(), set()
     if os.path.exists(f):
         for ln in open(f):
             ln = ln.split("#", 1)[0].strip()
-            if ln:
+            if not ln:
+                continue
+            if ln.startswith("+"):
+                keep.add(ln[1:].strip())   # a 1-div row WITH a recorded cause
+            else:
                 keys.add(ln)
-    return keys
+    return keys, keep
 
 
-COSIM_ADJUDICATED = load_cosim_adjudicated()
+COSIM_ADJUDICATED, COSIM_KEEP_SINGLE = load_cosim_adjudicated()
 
 
 def load_sweeps(root):
@@ -270,15 +274,26 @@ def load_sweeps(root):
                 rows.append(dict(set="sweep", fam=fam, name=mod, status="INCOMPLETE", diag=formal, ucos=ucos))
                 continue
             if scos.startswith("❌"):
-                if ucos.startswith("✅") and (mod in COSIM_ADJUDICATED or
+                # ONE diverging cycle out of ~301, with no cause recorded, is
+                # not evidence against read_slang -- it is the reason
+                # miss_handler was adjudicated out, and keeping 17 such rows
+                # while excluding that one would be inconsistent.  A single-cycle
+                # row whose cause IS known is re-included by listing it as
+                # "+<module>" in test/slang_cosim_adjudicated.txt.
+                lone = (re.match(r"❌\s*1\s+div\b", scos) is not None
+                        and mod not in COSIM_KEEP_SINGLE
+                        and f"{fam}/{mod}" not in COSIM_KEEP_SINGLE)
+                if ucos.startswith("✅") and (lone or mod in COSIM_ADJUDICATED or
                                               f"{fam}/{mod}" in COSIM_ADJUDICATED):
                     # Adjudicated as not a slang defect -- out of the bug class,
                     # but still counted and named so the arithmetic against
                     # benchmarking.md's diverge column still adds up.
                     rows.append(dict(set="sweep", fam=fam, name=mod, status="INCOMPLETE",
                                      diag="COSIM_ADJUDICATED slang " + scos + "; read_uhdm " + ucos
-                                          + " -- adjudicated not a read_slang defect"
-                                            " (test/slang_cosim_adjudicated.txt)", ucos=ucos))
+                                          + (" -- a single diverging cycle with no recorded cause"
+                                             if lone else
+                                             " -- adjudicated not a read_slang defect")
+                                          + " (test/slang_cosim_adjudicated.txt)", ucos=ucos))
                 elif ucos.startswith("✅"):
                     rows.append(dict(set="sweep", fam=fam, name=mod, status="FAIL",
                                      diag="SLANG_COSIM_DIVERGES " + scos + "; read_uhdm " + ucos, ucos=ucos))

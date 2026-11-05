@@ -45,9 +45,10 @@ proof gap is never mistaken for a bug.
 
 **Benchmarking against the reference frontend.**  Every row also co-simulates
 the `read_slang` netlist, so the reference is measured by the same yardstick:
-over the 2026-10-28 nightlies, **8786 rows, 7162 formally proven, `read_uhdm`
-7094 co-sim passes / 78 divergences / 96 adjudicated artefacts, `read_slang`
-7026 / 41 / 93** (own divergences / artefacts both netlists share or rows with no oracle), 0 undriven anywhere.
+over the 2026-11-04 nightlies, **12322 rows, 9351 formally proven, `read_uhdm`
+10195 co-sim passes, `read_slang` 10024**, 0 undriven anywhere.  The jump from
+the 2026-10-28 figure (8786 rows) is coverage, not a change of result: the four
+families that used to report nothing now do.
 
 NVDLA's own figure is **776 / 914 proven**.  Its 41 slang-CLEAN co-sim
 divergences are closed, and so are its 29 rows with no `read_slang` oracle:
@@ -60,13 +61,17 @@ diverges identically on each (an `assign #1` delay on OpenC910's `axi2ahb`, a
 ternary asynchronous reset on three OpenPiton flop primitives — neither
 expressible by any yosys frontend).
 
-**What the aggregate does NOT contain.**  BOOM, Gemmini, Rocket Chip and
-biRISC-V contribute ZERO rows to it: their external-IP shards fail, so their
-reports are empty and their entries below carry local figures.  Cheshire's
-nightly reports only 30 rows against the 266 its local sweep measures -- the CI
-run sweeps just the vendored `UsbOhciAxi4` modules -- so its entry carries the
-local numbers too, and the discrepancy is an open harness question rather than
-a result.  Rows whose figure is a local sweep are marked **(local)**.  The
+**What the aggregate contains, as of 2026-11-04.**  The four families that
+contributed ZERO rows to the 2026-10-28 aggregate -- BOOM, Gemmini, Rocket Chip
+and biRISC-V, whose external-IP shards used to fail and publish empty reports --
+now report from CI: **BOOM 422, Gemmini 384, Rocket Chip 235, biRISC-V 44 =
+1085 rows**, which is exactly the shortfall
+[benchmarking.md](benchmarking.md) predicted.  The partial families are complete
+too: **Cheshire reports its full 266** (it reported 30, sweeping only the
+vendored `UsbOhciAxi4` modules -- that open harness question is closed),
+**aib-protocols 397** (was 198) and **OpenPiton 852** (was 756).  So no entry
+below needs a **(local)** figure on these grounds any more; a row still marked
+**(local)** is one with no nightly at all.  The
 per-core table, the provenance of
 every number, the reference frontend's own record and the nightly 4-frontend
 matrix (`uhdm` / `sv2v` / `slang` / `verilog`, 1847 tests: `uhdm` reads 1815,

@@ -35,27 +35,27 @@ Yosys suite -- the same run as the sharded
 workflow (every PR + nightly); the developer run is
 `cd test && ./run_parallel.sh 6 --no-cva6` (the internal tests, ~24 min), and
 a PR lands only on a clean run.  The counts are the regression's own summary
-of main at `b4073a653` (2026-11-02, run 41474238595), not a tally kept by
+of main at `564e43d94` (2026-11-04, run 41947821999 — the v0.70.1 tag), not a tally kept by
 hand; "upstream" is the 516 generated yosys tests the suite scores.  The 11
 upstream failures are the Yosys 0.70 bump's, each recorded in
 `test/failing_tests.txt`.
 
 | | Total | Internal SV | Upstream Yosys |
 |---|---|---|---|
-| Tests | 2336 | 1820 | 516 |
-| Functional | 2287 (98%) | 1782 | 505 |
+| Tests | 2360 | 1844 | 516 |
+| Functional | 2310 (98%) | 1805 | 505 |
 | True failures | 11 | **0** | 11 |
 | Crashes | **0** | **0** | **0** |
 
 - **0 Miter-Formal escapes** — no UHDM≠Verilog difference slips past
   `equiv_induct`.  This is the number that matters: every equivalence failure
   is one `equiv_induct` caught.
-- **999** tests formally equivalent UHDM vs Verilog; **783** UHDM-only
+- **1012** tests formally equivalent UHDM vs Verilog; **793** UHDM-only
   (constructs `read_verilog` cannot parse) verified against Verilator;
-  **688 / 705** SV-only designs also proven against `read_slang` (17 known-fail,
-  each with its reason in `test/slang_miter_expected_fail.txt`), and **550**
-  carry a `test_structural.ys` netlist-SHAPE gate (532 pass, 18 known-fail in
-  `test/structural_expected_fail.txt`) for defects no formal check
+  **722 / 727** SV-only designs also proven against `read_slang` (5 known-fail,
+  each with its reason in `test/slang_miter_expected_fail.txt`), and **574**
+  carry a `test_structural.ys` netlist-SHAPE gate (**574 pass, 0 known-fail** --
+  `test/structural_expected_fail.txt` is EMPTY) for defects no formal check
   can see (a dropped flop, a missing `$mem` or a dropped clock connection still
   "works" — it just returns constants).
 - **18 equivalence failures**, each with a recorded verdict in
