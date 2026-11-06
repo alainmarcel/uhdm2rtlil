@@ -3707,11 +3707,23 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
         this->module = design->addModule(NEW_ID);
         for (auto port : *uhdm_module->Ports()) {
             int w = get_width(port, uhdm_module);
+            if (mode_debug) {
+                const UHDM::typespec* pts = (port->Typespec() ? port->Typespec()->Actual_typespec() : nullptr);
+                const UHDM::any* lca = nullptr;
+                if (port->Low_conn() && port->Low_conn()->UhdmType() == uhdmref_obj)
+                    lca = any_cast<const UHDM::ref_obj*>(port->Low_conn())->Actual_group();
+                uhdm_trace("UHDM:   typaram port '%s' w=%d port_ts=%s lowconn=%s\n",
+                           std::string(port->VpiName()).c_str(), w,
+                           pts ? UHDM::UhdmName(pts->UhdmType()).c_str() : "none",
+                           lca ? UHDM::UhdmName(lca->UhdmType()).c_str() : "none");
+            }
             sig += "_" + std::to_string(w);
         }
         discard_eval_module(this->module);
         this->module = saved_m;
     }
+    uhdm_trace("UHDM: type_param_signature(%s) = %s\n",
+               std::string(uhdm_module->VpiFullName()).c_str(), sig.c_str());
     return sig;
 }
 

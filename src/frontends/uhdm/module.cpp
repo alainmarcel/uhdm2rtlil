@@ -4016,9 +4016,19 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                 if (lc->UhdmType() == uhdmref_obj) {
                     if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
                         UHDM::UHDM_OBJECT_TYPE at = a->UhdmType();
+                        // An ENUM-typed `parameter type` port too: cvw's
+                        // `flopenl #(.TYPE(statetype))` has `logic [WIDTH-1:0]`
+                        // (8) as the port's own typespec and the enum only on
+                        // the Low_conn enum_var, so hptw's 4-bit walker state
+                        // measured 8, its instance was then folded onto the
+                        // paramod of ebufsmarb's 2-bit `statetype`, and the
+                        // page-table walker FSM was stuck from reset
+                        // (wallypipelinedcore, 298 diverging co-simulated
+                        // cycles).
                         if (a != uhdm_obj &&
                             (at == uhdmstruct_var || at == uhdmpacked_array_var ||
-                             at == uhdmarray_var || at == uhdmunion_var)) {
+                             at == uhdmarray_var || at == uhdmunion_var ||
+                             at == uhdmenum_var)) {
                             int aw = get_width(a, inst);
                             if (aw > 1) {
                                 uhdm_trace("UHDM: Port '%s' width from Low_conn %s: %d\n",
