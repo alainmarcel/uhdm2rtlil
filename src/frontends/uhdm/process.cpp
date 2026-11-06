@@ -14416,6 +14416,17 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     else if (!ips->VpiName().empty()) base_name = std::string(ips->VpiName());
     if (base_name.empty()) return false;
     RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
+    // A base declared inside a GENERATE scope is the module wire
+    // `<scope>.<name>`; the bare lookup missed it and this emitter declined,
+    // so the write fell through to a plain expression import of the LHS and
+    // landed on a fresh unconnected wire (snitch spatz_vfu's
+    // `ipu_result_valid_d[ipu_result_pnt_q*ELENB*N_IPU +: ELENB*N_IPU] =
+    // int_ipu_result_valid` in gen_pipeline_ipu: the valid never set).
+    if (!base_wire && !gen_scope_stack.empty())
+        if (RTLIL::Wire* sw = scoped_wire(base_name)) {
+            base_wire = sw;
+            base_name = RTLIL::unescape_id(sw->name);
+        }
     if (!base_wire) return false;
     int base_w = base_wire->width;
 
