@@ -908,6 +908,10 @@ struct UhdmImporter {
     // module->wire() lookup returns null there.
     RTLIL::Wire* scoped_wire(const std::string& bare_name);
     std::string scoped_assigned_name(const std::string& nm);
+    RTLIL::SigSpec import_struct_param_indexed_member(
+        const UHDM::parameter* base_param, const UHDM::any* sel_elem,
+        const std::string& member_name, const UHDM::module_inst* mi,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     // Same, for the RTLIL memory a gen-scope array was registered under.  The
     // generate is replicated, so a memory declared in one gets a scoped name —
     // two iterations would otherwise collide on a single bare memory.
