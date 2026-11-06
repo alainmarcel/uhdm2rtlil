@@ -925,3 +925,14 @@ Test: typedef_test_18
     every cycle differs by construction: a Verilator artefact, not a reader
     difference.  The test exists because read_uhdm used to drop those members
     too (1 bit); now it does not.
+
+Test: memwr_oor_addr_ignored
+    The DUT exists to write a memory through an index WIDER than the memory
+    (a 9-bit address into 128 entries): LRM 7.4.6 ignores an out-of-range
+    write, read_slang and read_verilog drop it, and read_uhdm now does too.
+    Verilator WRAPS the index of a power-of-two array instead (the same
+    convention #1469 recorded for OpenPiton's TLB reads), so under random
+    stimulus the RTL keeps a word the netlists never store (rdata rtl=0x5
+    nl=0x0 once in 300 cycles).  The read address is 7 bits, so no read is
+    ever out of range; the divergence is the write convention alone.
+    CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range write.
