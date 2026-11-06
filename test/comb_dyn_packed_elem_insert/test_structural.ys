@@ -1,0 +1,6 @@
+# The inserted half-word must replace the whole selected element pair.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt -fast
+sat -verify -prove r_o 32'h04E53169 -set a_i 32'hFB1B3169 -set c_i 32'h04E5B168 -set s_i 0
+sat -verify -prove r_o 32'h3169B168 -set a_i 32'hFB1B3169 -set c_i 32'h04E5B168 -set s_i 1
