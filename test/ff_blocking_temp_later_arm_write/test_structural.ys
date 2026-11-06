@@ -1,0 +1,14 @@
+# The VALUE at the point of the read is the gate: in step 2 the first entry's
+# else arm does `tmp = ram[1]; q <= tmp;` while a LATER arm of the same block
+# writes `tmp = ram[0]`; q must take ram[1].  Proven from reset with a
+# directed 2-step sequence (ram[1] := 0x5A, then the read-back).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast; memory; opt -fast
+# step 1: write ram[1] := 5A (wsel=2, we=1, tri_en=0; q := 5A write-thru)
+# step 2: wsel=2, we=1, tri_en=1 -> tmp = ram[1] -> q <= 5A; and rsel=1, re=1,
+#         rd=0 -> tmp = ram[0] (= 0) with no q write: q must stay 5A, not 0
+sat -verify -seq 3 -set-init-zero -set-at 3 we 0 -set-at 3 re 0 \
+    -set-at 1 we 1 -set-at 1 tri_en 0 -set-at 1 wsel 2 -set-at 1 wd 8'h5A -set-at 1 re 0 \
+    -set-at 2 we 1 -set-at 2 tri_en 1 -set-at 2 wsel 2 -set-at 2 re 1 -set-at 2 rsel 1 -set-at 2 rd 0 -set-at 2 wd 8'h11 \
+    -prove-skip 2 -prove q 8'h5A -prove q2 8'h5A
