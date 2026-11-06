@@ -10123,8 +10123,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     RTLIL::CaseRule* cr = new RTLIL::CaseRule;
                     cr->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
                     add_src_attribute(cr->attributes, for_loop);
+                    // The body runs only when the guard holds, so its writes
+                    // must reach the in-flight values MUXED under the guard --
+                    // exactly what the `break` / conjunction route below does
+                    // with thread_comb_if.  Imported into the case alone, each
+                    // iteration's write was recorded UNCONDITIONALLY: cheshire
+                    // obi_uart_tx's `for (i = 0; i <= word_len_bits; i++)
+                    // word_len_mask[i] = 1'b1` left `word_len_mask` in flight
+                    // as the constant 8'hFF, so the later `char_tx &
+                    // word_len_mask` masked nothing and a 5-bit word kept its
+                    // top bits (8 diverging co-simulated cycles, read_slang
+                    // clean).  The RTLIL switch itself was right; only the
+                    // same-block READ was wrong.
+                    auto saved_ccv = current_comb_values;
                     import_statement_comb(fl_body, cr);
+                    auto then_ccv = current_comb_values;
+                    current_comb_values = saved_ccv;
                     sw->cases.push_back(cr);
+                    RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
+                    sw->cases.push_back(dead_case);
+                    thread_comb_if(guard_sig, cr, nullptr, &saved_ccv, &then_ccv, nullptr);
                     proc->root_case.switches.push_back(sw);
                 }
                 // Post-loop value of the iter var is whatever it would be
