@@ -1,0 +1,9 @@
+# One latch per (word, byte): 4 words x 4 bytes, 8 bits each.  Without the
+# fix the scan registered no element, no hold default was emitted, and proc
+# inferred 0 latches -- the array was combinational.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt_clean
+select -assert-count 16 t:$dlatch
+select -assert-count 0 t:$dff

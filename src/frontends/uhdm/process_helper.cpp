@@ -998,6 +998,43 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             signals.push_back(sig);
                             log("extract_assigned_signals: Found assignment to var select of '%s'\n", nm.c_str());
                         } else if (!nm.empty() && vsel->Exprs() && !vsel->Exprs()->empty() &&
+                                   expanded_array_low(nm) >= 0 &&
+                                   offset_is_dynamic((*vsel->Exprs())[0]) &&
+                                   index_is_loop_constant((*vsel->Exprs())[0])) {
+                            // A LOOP-INDEXED first index on a per-element-wire
+                            // array with a further select (`mem[k][l] = d[l]`
+                            // under `for (k) for (l)`): the loop is unrolled,
+                            // so every copy writes ONE element at a constant
+                            // index -- which elements is unknowable here, so
+                            // register them ALL, exactly as the bit-select
+                            // branch does for `arr[k] = v`.  Reporting nothing
+                            // left every element without a `$0\` temp and
+                            // hold default: the unrolled byte writes landed on
+                            // the element wires straight from the case tree,
+                            // so an `always_latch` over them inferred NO latch
+                            // (0 `$dlatch` where read_slang has 1024) and the
+                            // PULP latch_scm register_file_1w_multi_port_read_be
+                            // held every word only while its gated clock was
+                            // high (pulpissimo + snitch, formal `differs`).
+                            int low = expanded_array_low(nm);
+                            std::string ab = expanded_array_base(nm);
+                            if (ab.empty()) ab = nm;
+                            int n = 0;
+                            while (module->wire(RTLIL::escape_id(
+                                       ab + "[" + std::to_string(low + n) + "]")))
+                                n++;
+                            log("extract_assigned_signals: loop-indexed var select write to expanded array '%s' -> all %d elements\n",
+                                ab.c_str(), n);
+                            for (int k = low; k < low + n; k++) {
+                                AssignedSignal es = sig;
+                                es.name = ab + "[" + std::to_string(k) + "]";
+                                es.is_part_select = false;
+                                es.lhs_expr = nullptr;
+                                bool dup = false;
+                                for (auto& ex : signals) if (ex.name == es.name) { dup = true; break; }
+                                if (!dup) signals.push_back(es);
+                            }
+                        } else if (!nm.empty() && vsel->Exprs() && !vsel->Exprs()->empty() &&
                                    expanded_array_low(nm) >= 0) {
                             // ...except a CONSTANT first index on a per-element-wire
                             // array (`q[0][i*39+:39] <= ...`, OpenTitan
