@@ -1,0 +1,7 @@
+# The values are the gate: the folded widths (5 and 6 -> w_o = 30) and the
+# 5-bit `addr` member of the request struct sized over the folded Cfg.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove w_o 8'd30
+sat -verify -prove d_o 32'hFFFFFFEA -set a_i 5'b10101 -set d_i 32'hFFFFFFFF
