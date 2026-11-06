@@ -1,0 +1,8 @@
+# A write to TX_CH1_CFG (addr 6) must land in element 1 of both packed 2-D
+# registers on the next edge.  Without the fix element 1 had no sync update
+# and ds_o[3:2] / mode_o[3:2] stayed 0 for ever.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; async2sync; opt -fast
+sat -seq 2 -set-init-zero -set rstn_i 1 -set-at 1 valid_i 1 -set-at 1 addr_i 6 -set-at 1 data_i 32'h2D07 -set-at 2 valid_i 0 -prove ds_o 4'b1100 -prove mode_o 4'b0100 -prove-skip 1 -verify
+sat -seq 2 -set-init-zero -set rstn_i 1 -set-at 1 valid_i 1 -set-at 1 addr_i 1 -set-at 1 data_i 32'h2D07 -set-at 2 valid_i 0 -prove ds_o 4'b0011 -prove mode_o 4'b0001 -prove-skip 1 -verify
