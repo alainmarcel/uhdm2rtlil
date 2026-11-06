@@ -1,0 +1,13 @@
+# The VALUES are the gate: the mask read in the same always_comb must be the
+# guarded 5..8-bit mask, not the unconditional 8'hFF.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove mask_o 8'h1F -set wl 2'b00
+sat -verify -prove mask_o 8'h3F -set wl 2'b01
+sat -verify -prove mask_o 8'h7F -set wl 2'b10
+sat -verify -prove mask_o 8'hFF -set wl 2'b11
+sat -verify -prove y 8'h04 -set wl 2'b00 -set d 8'h84
+sat -verify -prove y 8'h24 -set wl 2'b01 -set d 8'hE4
+sat -verify -prove y2 8'h04 -set wl 2'b00 -set d 8'h84
+sat -verify -prove y2 8'h00 -set wl 2'b11 -set d 8'h84
