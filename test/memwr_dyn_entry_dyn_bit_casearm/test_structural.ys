@@ -1,0 +1,5 @@
+# Write 0xFF to entry 3 (op 2), clear bit 5 of entry 3 from the case arm (op 1): 0xDF.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean; memory_collect; memory_map; opt
+sat -seq 3 -set-init-zero -set rst_n 1 -set ridx 3 -set-at 1 op 2 -set-at 1 idx 3 -set-at 1 wdata 8'hFF -set-at 2 op 1 -set-at 2 idx 3 -set-at 2 off 1 -set-at 3 op 0 -prove rdata 8'hDF -prove-skip 2 -verify

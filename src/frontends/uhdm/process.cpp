@@ -13960,8 +13960,19 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             const var_select* vs = any_cast<const var_select*>(lhs_expr);
             std::string signal_name = std::string(vs->VpiName());
             RTLIL::IdString mem_id = resolve_mem_id(signal_name);
+            // A ONE-dimensional memory written through a var_select
+            // (`mem[idx][bit] <= v`, `mem[idx][hi:lo] <= v`) took this branch
+            // only for two or more unpacked dimensions; with one it fell
+            // through to "regular assignment", which imports the LHS as a
+            // READ and loses the write.  OpenPiton's l15_hmc clears one valid
+            // bit of a dynamically indexed entry that way
+            // (`data_mem_f[wr_index][`L15_HMC_DATA_WIDTH+wr_offset_in] <= 1'b0`)
+            // and the entry stayed valid (formal `differs`, co-sim PASS).
+            // The constant slice goes through parse_mem_partial_select as
+            // before; a DYNAMIC bit index becomes a one-hot enable
+            // (`1 << bit`) with the data bit replicated across the word.
             if (module->memories.count(mem_id) > 0 &&
-                mem_unpacked_dims(module->memories.at(mem_id)) >= 2) {
+                mem_unpacked_dims(module->memories.at(mem_id)) >= 1) {
                 if (!current_memory_writes.empty() && current_memory_writes.count(signal_name)) {
                     uhdm_trace("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
                     return;
@@ -13970,7 +13981,75 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 const expr* addr_expr = nullptr;
                 int lo = 0, hi = 0;
                 RTLIL::SigSpec addr;
-                if (parse_mem_partial_select(vs, addr_expr, lo, hi, memory->width, &addr) && !addr.empty()) {
+                int mem_abits = 1;
+                while ((1 << mem_abits) < memory->size) mem_abits++;
+                bool parsed = parse_mem_partial_select(vs, addr_expr, lo, hi, memory->width, &addr);
+                RTLIL::SigSpec addr_in_range(RTLIL::State::S1);
+                if (parsed && addr.empty() && addr_expr) {
+                    addr = import_expression(addr_expr);
+                    addr_in_range = memwr_size_addr(addr, mem_abits);
+                }
+                if (!parsed && mem_unpacked_dims(memory) == 1 && vs->Exprs() &&
+                    vs->Exprs()->size() == 2 &&
+                    (*vs->Exprs())[1]->VpiType() != vpiPartSelect &&
+                    (*vs->Exprs())[1]->VpiType() != vpiIndexedPartSelect) {
+                    auto a0 = dynamic_cast<const expr*>((*vs->Exprs())[0]);
+                    auto b1 = dynamic_cast<const expr*>((*vs->Exprs())[1]);
+                    if (a0 && b1) {
+                        RTLIL::SigSpec waddr = import_expression(a0);
+                        RTLIL::SigSpec in_range = memwr_size_addr(waddr, mem_abits);
+                        RTLIL::SigSpec bidx = import_expression(b1);
+                        RTLIL::SigSpec data;
+                        if (auto rhs_any = uhdm_assign->Rhs())
+                            if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                                int prev_ctx = expression_context_width;
+                                expression_context_width = 1;
+                                data = import_expression(rhs_expr);
+                                expression_context_width = prev_ctx;
+                            }
+                        if (data.size() < 1) data = RTLIL::SigSpec(RTLIL::State::S0);
+                        RTLIL::SigSpec dbit = data.extract(0, 1);
+                        RTLIL::SigSpec full_data;
+                        for (int i = 0; i < memory->width; i++) full_data.append(dbit);
+                        RTLIL::Wire* onehot = module->addWire(NEW_ID, memory->width);
+                        module->addShl(NEW_ID, RTLIL::SigSpec(RTLIL::Const(1, memory->width)),
+                                       bidx, onehot, false);
+                        RTLIL::SigSpec gate = current_condition.empty()
+                                                  ? RTLIL::SigSpec(RTLIL::State::S1)
+                                                  : current_condition;
+                        if (!(in_range.is_fully_const() && in_range.as_bool())) {
+                            RTLIL::Wire* g = module->addWire(NEW_ID, 1);
+                            module->addAnd(NEW_ID, gate, in_range, g);
+                            gate = RTLIL::SigSpec(g);
+                        }
+                        RTLIL::SigSpec enable;
+                        if (gate.is_fully_const() && gate.as_bool()) {
+                            enable = RTLIL::SigSpec(onehot);
+                        } else {
+                            RTLIL::SigSpec gate_rep;
+                            for (int i = 0; i < memory->width; i++) gate_rep.append(gate);
+                            RTLIL::Wire* en_w = module->addWire(NEW_ID, memory->width);
+                            module->addAnd(NEW_ID, RTLIL::SigSpec(onehot), gate_rep, en_w);
+                            enable = RTLIL::SigSpec(en_w);
+                        }
+                        int nprev_writes = (int)sync->mem_write_actions.size();
+                        std::vector<RTLIL::State> pmask(nprev_writes, RTLIL::State::S0);
+                        for (int j = 0; j < nprev_writes; j++)
+                            if (sync->mem_write_actions[j].memid == mem_id)
+                                pmask[j] = RTLIL::State::S1;
+                        sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
+                        RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
+                        action.memid = mem_id;
+                        action.address = waddr;
+                        action.data = full_data;
+                        action.priority_mask = RTLIL::Const(pmask);
+                        action.enable = enable;
+                        uhdm_trace("            Memory write to %s[%s][%s]: dynamic bit, one-hot enable\n",
+                                   signal_name.c_str(), log_signal(waddr), log_signal(bidx));
+                        return;
+                    }
+                }
+                if (parsed && !addr.empty()) {
                     int w = hi - lo + 1;
                     RTLIL::SigSpec data;
                     if (auto rhs_any = uhdm_assign->Rhs()) {
@@ -13988,6 +14067,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     RTLIL::SigSpec one = current_condition.empty()
                                              ? RTLIL::SigSpec(RTLIL::State::S1)
                                              : current_condition;
+                    if (!(addr_in_range.is_fully_const() && addr_in_range.as_bool())) {
+                        RTLIL::Wire* g = module->addWire(NEW_ID, 1);
+                        module->addAnd(NEW_ID, one, addr_in_range, g);
+                        one = RTLIL::SigSpec(g);
+                    }
                     RTLIL::SigSpec enable;
                     for (int i = 0; i < memory->width; i++)
                         enable.append((i >= lo && i <= hi) ? one : RTLIL::SigSpec(RTLIL::State::S0));
@@ -20823,6 +20907,66 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         RTLIL::SigSpec(info.addr_wire), RTLIL::SigSpec(info.data_wire),
                                         RTLIL::SigSpec(info.en_wire)});
                                 return;
+                                }
+                            } else if (vs->Exprs() && vs->Exprs()->size() == 2 &&
+                                       (*vs->Exprs())[1]->VpiType() != vpiPartSelect &&
+                                       (*vs->Exprs())[1]->VpiType() != vpiIndexedPartSelect &&
+                                       mem_unpacked_dims(module->memories.count(info.mem_id)
+                                                             ? module->memories.at(info.mem_id) : nullptr) == 1) {
+                                // A DYNAMIC bit of a dynamically indexed entry
+                                // (`data_mem_f[wr_index][`L15_HMC_DATA_WIDTH+wr_offset_in]
+                                // <= 1'b0`, OpenPiton l15_hmc's flush arm): the
+                                // slice parser wants a constant bit, and without
+                                // this arm the statement fell out to the generic
+                                // path, which imported the target as a READ -- the
+                                // index was computed and consumed by nothing, the
+                                // valid bit never cleared (formal `differs`, co-sim
+                                // PASS).  One-hot enable, data bit replicated.
+                                auto a0 = dynamic_cast<const expr*>((*vs->Exprs())[0]);
+                                auto b1 = dynamic_cast<const expr*>((*vs->Exprs())[1]);
+                                if (a0 && b1) {
+                                    RTLIL::SigSpec addr = import_expression(a0);
+                                    RTLIL::SigSpec in_range =
+                                        memwr_size_addr(addr, info.addr_wire->width);
+                                    RTLIL::SigSpec bidx = import_expression(b1);
+                                    RTLIL::SigSpec data;
+                                    if (auto rhs_any = assign->Rhs())
+                                        if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                                            int prev_ctx = expression_context_width;
+                                            expression_context_width = 1;
+                                            data = import_expression(rhs_expr);
+                                            expression_context_width = prev_ctx;
+                                        }
+                                    if (data.size() < 1) data = RTLIL::SigSpec(RTLIL::State::S0);
+                                    RTLIL::SigSpec dbit = data.extract(0, 1);
+                                    int ww = info.data_wire->width;
+                                    RTLIL::SigSpec full_data;
+                                    for (int i = 0; i < ww; i++) full_data.append(dbit);
+                                    RTLIL::Wire* onehot = module->addWire(NEW_ID, ww);
+                                    module->addShl(NEW_ID, RTLIL::SigSpec(RTLIL::Const(1, ww)),
+                                                   bidx, onehot, false);
+                                    RTLIL::SigSpec en(onehot);
+                                    if (!(in_range.is_fully_const() && in_range.as_bool())) {
+                                        RTLIL::SigSpec rep;
+                                        for (int i = 0; i < ww; i++) rep.append(in_range);
+                                        RTLIL::Wire* g = module->addWire(NEW_ID, ww);
+                                        module->addAnd(NEW_ID, RTLIL::SigSpec(onehot), rep, g);
+                                        en = RTLIL::SigSpec(g);
+                                    }
+                                    case_rule->actions.push_back(RTLIL::SigSig(
+                                        RTLIL::SigSpec(info.addr_wire), addr));
+                                    case_rule->actions.push_back(RTLIL::SigSig(
+                                        RTLIL::SigSpec(info.data_wire), full_data));
+                                    case_rule->actions.push_back(RTLIL::SigSig(
+                                        RTLIL::SigSpec(info.en_wire), en));
+                                    if (assign->VpiBlocking())
+                                        inflight_blocking_memwr_.push_back({info.mem_id,
+                                            RTLIL::SigSpec(info.addr_wire), RTLIL::SigSpec(info.data_wire),
+                                            RTLIL::SigSpec(info.en_wire)});
+                                    if (mode_debug)
+                                        uhdm_trace("        Memory write to %s[%s][%s]: dynamic bit, one-hot enable\n",
+                                            std::string(vs->VpiName()).c_str(), log_signal(addr), log_signal(bidx));
+                                    return;
                                 }
                             }
                         }
