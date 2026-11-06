@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt -fast
+sat -verify -prove slot_needed 3'd4 -set out_size 3'd7 -set sel 1
+sat -verify -prove slot_needed 3'd4 -set out_size 3'd7 -set sel 0
+sat -verify -prove s2 3'd0 -set out_size 3'd7 -set sel 0
