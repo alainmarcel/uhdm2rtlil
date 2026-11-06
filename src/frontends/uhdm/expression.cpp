@@ -12249,7 +12249,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // blocking targets, so registers (non-blocking `<=`) are unaffected and a
     // blocking accumulator's own RHS (`t = t+1`) still reads the old `\t`
     // because the map entry is added only after the assignment.
-    if (in_always_ff_body_mode) {
+    // Never for a WRITE TARGET: the entry is now the temp's in-flight VALUE
+    // (a mux, or another signal), and the LHS must stay the wire.
+    if (in_always_ff_body_mode && !importing_write_target) {
         auto bt = ff_blocking_temps.find(ref_name);
         if (bt != ff_blocking_temps.end())
             return bt->second;
@@ -13609,7 +13611,10 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     // must read the in-flight `$0\tmp`, not the stale registered `\tmp` — the
     // same redirect import_ref_obj applies to whole-signal reads.  Without it
     // the read picks up the FF Q and the consumer gets an extra cycle of delay.
-    if (in_always_ff_body_mode && !base_signal_name.empty()) {
+    // Never for a WRITE TARGET (`tmp[7:0] = ...`): the entry is the temp's
+    // in-flight VALUE and the target must stay the wire.
+    if (in_always_ff_body_mode && !base_signal_name.empty() &&
+        !importing_write_target) {
         auto bt = ff_blocking_temps.find(base_signal_name);
         if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
             base = bt->second;

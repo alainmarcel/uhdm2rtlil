@@ -591,6 +591,15 @@ struct UhdmImporter {
     // is only correct for a RHS read; on an LHS it would make the write target a
     // constant and drop the write).
     bool comb_lhs_keep_base = false;
+    // Set while an assignment's LHS is imported: a WRITE TARGET must resolve
+    // to its wire, never to the in-flight VALUE a same-name read would get
+    // (ff_blocking_temps in an always_ff body).
+    bool importing_write_target = false;
+    // Set while import_assignment_comb imports a BLOCKING assignment, so the
+    // emission helpers it reaches (emit_comb_assign and the bit-select early
+    // returns) can record the write into ff_blocking_temps in an always_ff
+    // body; a non-blocking write leaves it false and is never recorded.
+    bool ff_current_assign_blocking_ = false;
     // While unrolling a comb for-loop whose body contains `break`, the 1-bit
     // flag wire for the CURRENT iteration; the vpiBreak handler drives it to 1
     // under the branch conditions that reach the break, so the post-loop value
@@ -676,6 +685,12 @@ struct UhdmImporter {
     const std::map<std::string, RTLIL::SigSpec>* comb_read_map() const {
         if (!current_comb_process) return nullptr;
         return in_always_ff_body_mode ? &ff_blocking_temps : &current_comb_values;
+    }
+    // The map a branch import snapshots / merges: the blocking-temp map in
+    // an always_ff body, the comb value map otherwise.
+    std::map<std::string, RTLIL::SigSpec>& branch_vals() {
+        return (in_always_ff_body_mode || in_always_ff_context) ? ff_blocking_temps
+                                                                : current_comb_values;
     }
 
     // Set when the current if-chain is inside a `priority if` / `unique if`
@@ -1221,6 +1236,7 @@ struct UhdmImporter {
     void import_for_stmt(const UHDM::for_stmt* uhdm_for, RTLIL::Process* proc);
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
     void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
+    void record_ff_blocking_write(const RTLIL::SigSpec& lhs, const RTLIL::SigSpec& rhs);
     void thread_comb_if(RTLIL::SigSpec cond, RTLIL::CaseRule* then_case, RTLIL::CaseRule* else_case,
                         const std::map<std::string, RTLIL::SigSpec>* pre_ccv = nullptr,
                         const std::map<std::string, RTLIL::SigSpec>* then_ccv = nullptr,

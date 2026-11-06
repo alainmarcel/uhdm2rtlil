@@ -2341,6 +2341,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             }
 
             if (if_else_stmt) {
+                // Blocking temps in flight before the reset/clocked arms: each
+                // arm starts from this state (see the note at the then import).
+                auto saved_rst_vals = ff_blocking_temps;
 
                         // Import the condition (!rst_n)
                         if (auto cond = if_else_stmt->VpiCondition()) {
@@ -2379,7 +2382,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 current_ff_clock_sig = clock_sig;
                                 uhdm_trace("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
 
+                                // The reset arm and the clocked arm are the two
+                                // arms of ONE if/else: a blocking temp the reset
+                                // arm sets (`state = 1'b0; i = 0;`) must not be
+                                // in flight when the clocked arm is imported, or
+                                // its `case (state)` folds to that constant and
+                                // the FSM is dead (sincos).  The generic branch
+                                // importers snapshot/restore branch_vals(); this
+                                // hand-built switch has to do the same.
                                 import_statement_comb(then_stmt, case_true);
+                                ff_blocking_temps = saved_rst_vals;
 
                                 // Clear context
                                 current_signal_temp_wires.clear();
@@ -2435,6 +2447,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 attached_async_switch = true;
                                 RTLIL::CaseRule* saved_fold_root = ff_inflight_fold_root_;
                                 ff_inflight_fold_root_ = &yosys_proc->root_case;
+                                ff_blocking_temps = saved_rst_vals;
                                 import_statement_comb(else_stmt, case_false);
                                 ff_inflight_fold_root_ = saved_fold_root;
                                 in_always_ff_body_mode = saved_ff_body_mode;
@@ -9124,6 +9137,13 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
     remove_target_from_switches(&proc->root_case, mapped_lhs);
     proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
 
+    // always_ff body: a BLOCKING write (whole, bit- or part-select -- the
+    // unrolled shift register `register[i] = register[i-1]` reaches this
+    // helper straight from the bit-select early return) records the temp's
+    // in-flight VALUE so a later same-block read sees it.
+    if (in_always_ff_body_mode && ff_current_assign_blocking_)
+        record_ff_blocking_write(lhs, rhs);
+
     // Update value tracking so subsequent expressions see the new value.
     // Skipped in always_ff body mode (NB semantics: reads use original register values).
     if (!in_always_ff_body_mode && lhs.is_wire()) {
@@ -10157,10 +10177,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     // top bits (8 diverging co-simulated cycles, read_slang
                     // clean).  The RTLIL switch itself was right; only the
                     // same-block READ was wrong.
-                    auto saved_ccv = current_comb_values;
+                    auto saved_ccv = branch_vals();
                     import_statement_comb(fl_body, cr);
-                    auto then_ccv = current_comb_values;
-                    current_comb_values = saved_ccv;
+                    auto then_ccv = branch_vals();
+                    branch_vals() = saved_ccv;
                     sw->cases.push_back(cr);
                     RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
                     sw->cases.push_back(dead_case);
@@ -10243,10 +10263,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                             RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
                             live_case->compare.push_back(
                                 RTLIL::SigSpec(RTLIL::State::S1));
-                            auto saved_ccv = current_comb_values;
+                            auto saved_ccv = branch_vals();
                             import_statement_comb(fl_body, live_case);
-                            auto then_ccv = current_comb_values;
-                            current_comb_values = saved_ccv;
+                            auto then_ccv = branch_vals();
+                            branch_vals() = saved_ccv;
                             sw->cases.push_back(live_case);
                             RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
                             sw->cases.push_back(dead_case);
@@ -10608,10 +10628,10 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
                 sw->signal = live;
                 RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
                 live_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
-                auto saved_ccv = current_comb_values;
+                auto saved_ccv = branch_vals();
                 import_statement_comb(stmt, live_case);
-                auto then_ccv = current_comb_values;
-                current_comb_values = saved_ccv;
+                auto then_ccv = branch_vals();
+                branch_vals() = saved_ccv;
                 sw->cases.push_back(live_case);
                 RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
                 sw->cases.push_back(dead_case);
@@ -17921,6 +17941,12 @@ RTLIL::SigSpec UhdmImporter::memwr_size_addr(RTLIL::SigSpec& addr, int aw) {
 
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     NbInflightGuard nb_guard(this, uhdm_assign);
+    struct FfBlockingFlagGuard {
+        bool& f; bool saved;
+        FfBlockingFlagGuard(bool& flag, bool v) : f(flag), saved(flag) { f = v; }
+        ~FfBlockingFlagGuard() { f = saved; }
+    } ff_blocking_flag_guard(ff_current_assign_blocking_,
+                             uhdm_assign && uhdm_assign->VpiBlocking());
     // A COMPOUND assignment (`x[i] |= t`, `x[i] ^= t`, ...) must fold the
     // target's CURRENT value into the RHS.  The generic path below does that
     // just before emitting (see "Handle compound assignment operators"), but
@@ -18397,8 +18423,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                      lt == vpiIndexedPartSelect || lt == vpiVarSelect);
         bool saved_keep = comb_lhs_keep_base;
         if (keep) comb_lhs_keep_base = true;
+        bool saved_wt = importing_write_target;
+        importing_write_target = true;
         if (!tf_local_lhs(lhs_expr, lhs))
             lhs = import_expression(lhs_expr);
+        importing_write_target = saved_wt;
         comb_lhs_keep_base = saved_keep;
     }
 
@@ -18668,8 +18697,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 }
                 // In always_ff body mode, a BLOCKING temp read same-cycle must
                 // resolve to its in-flight $0\ value (see CaseRule path).
-                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking())
-                    ff_blocking_temps[signal_name] = RTLIL::SigSpec(temp_wire);
+                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking()) {
+                    // The VALUE, not the shared `$0\` temp: see thread_comb_if.
+                    record_ff_blocking_write(lhs, rhs);
+                    if (alias_it != comb_value_aliases.end() &&
+                        ff_blocking_temps.count(signal_name))
+                        ff_blocking_temps[alias_it->second] = ff_blocking_temps[signal_name];
+                }
                 return;
             }
             // Whole-element write (`arr[k] = v`) on a mixed array whose flat
@@ -18768,19 +18802,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 // `$0\<base>` next-state temp, which carries the sequential
                 // blocking state (hold-default = old value, per-bit writes
                 // overwrite).  Mirrors the full-wire path above.
-                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking()) {
-                    for (const auto& ch : lhs.chunks()) {
-                        if (!ch.wire) continue;
-                        std::string bn = ch.wire->name.str();
-                        if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
-                        // This process's temp — may be the RANGED
-                        // `$0\<sig>[msb:lsb]` form, which a bare
-                        // `$0\<sig>` lookup never finds (see below).
-                        if (RTLIL::Wire* tw = find_own_temp_wire(bn))
-                            if (tw->width == ch.wire->width)
-                                ff_blocking_temps[bn] = RTLIL::SigSpec(tw);
-                    }
-                }
+                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking())
+                    record_ff_blocking_write(lhs, rhs);
                 // Comb: record each FULL-wire chunk's in-flight value (a
                 // whole-array copy `counter_d = counter_q` lowers to a concat
                 // over element wires) so a later dynamic-index element write's
@@ -18881,6 +18904,12 @@ static void remove_target_from_switches(RTLIL::CaseRule* cr,
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
     NbInflightGuard nb_guard(this, uhdm_assign);
+    struct FfBlockingFlagGuard {
+        bool& f; bool saved;
+        FfBlockingFlagGuard(bool& flag, bool v) : f(flag), saved(flag) { f = v; }
+        ~FfBlockingFlagGuard() { f = saved; }
+    } ff_blocking_flag_guard(ff_current_assign_blocking_,
+                             uhdm_assign && uhdm_assign->VpiBlocking());
 
 
 
@@ -19370,11 +19399,11 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
         add_src_attribute(sw->attributes, ws);
         RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
-        auto saved_ccv = current_comb_values;
+        auto saved_ccv = branch_vals();
         import_statement_comb(ws->VpiStmt(), true_case);
         emit(true_case, left - 1);
-        auto then_ccv = current_comb_values;
-        current_comb_values = saved_ccv;
+        auto then_ccv = branch_vals();
+        branch_vals() = saved_ccv;
         sw->cases.push_back(true_case);
         sw->cases.push_back(new RTLIL::CaseRule);
         cr->switches.push_back(sw);
@@ -19403,13 +19432,65 @@ int UhdmImporter::case_context_width(const case_stmt* cs) {
     return w;
 }
 
+// A BLOCKING write inside an always_ff body: record the temp's in-flight
+// VALUE under its base name.  A chunk that covers the whole wire takes the
+// RHS slice; a part-select SPLICES the slice into the current in-flight value
+// (the entry so far, else the register itself) -- OpenPiton's TLBs write their
+// read temps through a full-width range, `tmp_data[42:0] = tte_data_ram[j]`,
+// so the range form has to behave exactly like the whole-wire one.  Falls back
+// to the process's `$0\` temp only when the slice cannot be placed.
+void UhdmImporter::record_ff_blocking_write(const RTLIL::SigSpec& lhs,
+                                            const RTLIL::SigSpec& rhs) {
+    int off = 0;
+    for (const auto& ch : lhs.chunks()) {
+        if (!ch.wire) { off += ch.width; continue; }
+        std::string bn = ch.wire->name.str();
+        if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
+        RTLIL::Wire* tw = find_own_temp_wire(bn);
+        if (!tw || tw->width != ch.wire->width) { off += ch.width; continue; }
+        RTLIL::SigSpec slice = (off + ch.width <= rhs.size())
+                                   ? rhs.extract(off, ch.width)
+                                   : RTLIL::SigSpec();
+        if (slice.size() != ch.width) {
+            ff_blocking_temps[bn] = RTLIL::SigSpec(tw);
+        } else if (ch.offset == 0 && ch.width == ch.wire->width) {
+            ff_blocking_temps[bn] = slice;
+        } else {
+            RTLIL::SigSpec cur;
+            auto it = ff_blocking_temps.find(bn);
+            if (it != ff_blocking_temps.end() && it->second.size() == ch.wire->width)
+                cur = it->second;
+            else
+                cur = RTLIL::SigSpec(ch.wire);
+            cur.replace(ch.offset, slice);
+            ff_blocking_temps[bn] = cur;
+        }
+        uhdm_trace("        ff blocking temp %s := %s\n", bn.c_str(),
+                   log_signal(ff_blocking_temps[bn]));
+        off += ch.width;
+    }
+}
+
 void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                                   RTLIL::CaseRule* then_case,
                                   RTLIL::CaseRule* else_case,
                                   const std::map<std::string, RTLIL::SigSpec>* pre_ccv,
                                   const std::map<std::string, RTLIL::SigSpec>* then_ccv,
                                   const std::map<std::string, RTLIL::SigSpec>* else_ccv) {
-    if (in_always_ff_body_mode) return;
+    // In an always_ff body the ACTIVE map is ff_blocking_temps: BLOCKING
+    // temps are value-tracked and merged per arm exactly like comb
+    // variables, while the non-blocking register writes in the arms'
+    // actions are NOT scanned (a register keeps its pre-edge value for every
+    // same-block read).  Before this the ff body recorded a blocking temp as
+    // its shared `$0\<sig>` next-state wire, which carries the process's
+    // FINAL value: OpenPiton bw_r_itlb's
+    //     if (...) begin tmp_data = tte_data_ram[15]; rd_tte_data <= tmp_data; end
+    // followed by other arms that also write tmp_data read whichever write
+    // came LAST in the block (32 diverging co-simulated cycles, formal
+    // differs; read_verilog threads SSA temps $1\tmp..$6\tmp for the same
+    // reason).
+    auto& vals = branch_vals();
+    const bool ff_mode = in_always_ff_body_mode || in_always_ff_context;
     // Last write wins within each branch.
     //
     // A CONCATENATION target (`{int_result, lower_bits} = ...`) is one action
@@ -19433,7 +19514,7 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
                 if (!c.wire || c.offset != 0 || c.width != c.wire->width) { whole = false; break; }
             if (!whole) continue;
             // Key the chunks the way emit_comb_assign records
-            // current_comb_values (the whole wire name, only a leading
+            // vals (the whole wire name, only a leading
             // backslash stripped), NOT the way comb_blocking_base names a
             // single-wire target: a plain write to the same temp in the other
             // arm reaches this merge through the ccv snapshot diff below,
@@ -19447,8 +19528,10 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
             }
         }
     };
-    scan(then_case, then_vals);
-    scan(else_case, else_vals);
+    if (!ff_mode) {
+        scan(then_case, then_vals);
+        scan(else_case, else_vals);
+    }
     // Snapshot-diff capture: any name whose in-flight value CHANGED during a
     // branch import (vs the pre-branch snapshot) was written in that branch —
     // possibly deep inside nested constructs.  Overrides the action scan
@@ -19477,9 +19560,9 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
         if (auto ai = comb_value_aliases.find(nm); ai != comb_value_aliases.end())
             alias = ai->second;
         RTLIL::SigSpec pre;
-        if (auto it = current_comb_values.find(alias); it != current_comb_values.end())
+        if (auto it = vals.find(alias); it != vals.end())
             pre = it->second;
-        else if (auto it2 = current_comb_values.find(nm); it2 != current_comb_values.end())
+        else if (auto it2 = vals.find(nm); it2 != vals.end())
             pre = it2->second;
         else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm))) {
             // An inlined function's local (`<fn>$func$<file>:<line>$<id>.<name>`)
@@ -19505,15 +19588,15 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
         if (tv == ev) {
             // BOTH branches agree on the value — no mux needed, but the
             // merged value must still be RECORDED: skipping silently leaves
-            // the stale pre-if value in current_comb_values, and a later
+            // the stale pre-if value in vals, and a later
             // read in the same block sees the old value.  hpdcache_ctrl_pe's
             // uncacheable-request handling sets `st1_nop = 1'b1` in BOTH
             // arms of `if (cachedir_hit_i)`, and the later
             // `nop = st1_nop | st2_nop` read 0 — rtab_req_ready_o went
             // high while a stage-1 fence request was pending.
             if (tv != pre) {
-                current_comb_values[nm] = tv;
-                if (alias != nm) current_comb_values[alias] = tv;
+                vals[nm] = tv;
+                if (alias != nm) vals[alias] = tv;
             }
             continue;
         }
@@ -19551,8 +19634,9 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
             module->addMux(NEW_ID, ev, tv, cond, m);
             merged = RTLIL::SigSpec(m);
         }
-        current_comb_values[nm] = merged;
-        if (alias != nm) current_comb_values[alias] = merged;
+        vals[nm] = merged;
+        if (alias != nm) vals[alias] = merged;
+        uhdm_trace("    thread_comb_if: %s merged := %s (ff=%d)\n", nm.c_str(), log_signal(merged), ff_mode ? 1 : 0);
     }
 }
 
@@ -19628,7 +19712,6 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
                                     RTLIL::SwitchRule* sw,
                                     const std::map<std::string, RTLIL::SigSpec>& pre_ccv,
                                     const std::vector<std::map<std::string, RTLIL::SigSpec>>& arm_ccv) {
-    if (in_always_ff_body_mode) return;
     if (!sw || case_sig.empty()) return;
 
     // Wildcard compares (casez/casex) can't be modelled by an equality mux:
@@ -19706,7 +19789,7 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
         }
 
         if (result != pre)
-            current_comb_values[nm] = result;
+            branch_vals()[nm] = result;
     }
 }
 
@@ -19780,7 +19863,7 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         // writes LIVE, so without restores the then-branch's values leak
         // into the else-branch import AND thread_comb_if's "pre" lookup
         // reads a branch's own value instead of the pre-if value.
-        auto saved_ccv = current_comb_values;
+        auto saved_ccv = branch_vals();
 
         // Import then statement
         if (auto then_stmt = uhdm_if_else->VpiStmt()) {
@@ -19790,8 +19873,8 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         }
         // Capture the branch's final in-flight values (incl. nested-construct
         // writes threaded during the import) BEFORE restoring.
-        auto then_ccv = current_comb_values;
-        current_comb_values = saved_ccv;
+        auto then_ccv = branch_vals();
+        branch_vals() = saved_ccv;
 
         sw->cases.push_back(true_case);
 
@@ -19807,8 +19890,8 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             import_statement_comb(else_stmt, else_case);
             uhdm_trace("    Else case has %d actions after import\n", (int)else_case->actions.size());
             uhdm_trace("    Else case has %d switches after import\n", (int)else_case->switches.size());
-            auto else_ccv = current_comb_values;
-            current_comb_values = saved_ccv;
+            auto else_ccv = branch_vals();
+            branch_vals() = saved_ccv;
 
             sw->cases.push_back(else_case);
             thread_comb_if(condition_sig, true_case, else_case,
@@ -19909,7 +19992,7 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         // reads as if unconditional — `sgn = 1'b0; if (op==…) sgn = 1'b1;
         // less = …sgn…` read sgn as constant 1 (CVA6 alu.sv:199; UHDM != slang
         // SAT miter, masked by a read_verilog blind spot).
-        auto saved_ccv = current_comb_values;
+        auto saved_ccv = branch_vals();
 
         // Import then statement
         if (auto then_stmt = uhdm_if->VpiStmt()) {
@@ -19917,8 +20000,8 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
                 uhdm_trace("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
-        auto then_ccv = current_comb_values;
-        current_comb_values = saved_ccv;
+        auto then_ccv = branch_vals();
+        branch_vals() = saved_ccv;
 
         sw->cases.push_back(true_case);
 
@@ -20441,7 +20524,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     // per-arm value — including signals written inside nested if/case — rather
     // than the polluted live current_comb_values.  Arms are independent (SV):
     // each starts from pre_ccv, not the previous arm's writes.
-    std::map<std::string, RTLIL::SigSpec> pre_ccv = current_comb_values;
+    std::map<std::string, RTLIL::SigSpec> pre_ccv = branch_vals();
     std::vector<std::map<std::string, RTLIL::SigSpec>> arm_ccv;
 
     if (!items.empty()) {
@@ -20458,10 +20541,10 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                     uhdm_trace("      Case value: %s (width=%d)\n", log_signal(sig), sig.size());
             }
             // Import the body from the pre-case state, then capture the result.
-            current_comb_values = pre_ccv;
+            branch_vals() = pre_ccv;
             if (d.stmt)
                 import_statement_comb(d.stmt, d.rule);
-            arm_ccv.push_back(current_comb_values);
+            arm_ccv.push_back(branch_vals());
             sw->cases.push_back(d.rule);
         }
     } else {
@@ -20474,7 +20557,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     }
 
     // Reset to the pre-case state; thread_comb_case rebuilds the merged value.
-    current_comb_values = pre_ccv;
+    branch_vals() = pre_ccv;
 
     if (has_full_case_attr)
         emit_full_case_default(uhdm_case, sw);
@@ -20779,8 +20862,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             comb_lhs_keep_base = (lhs_map_ != nullptr) || llt_ == vpiVarSelect ||
                                                  llt_ == vpiHierPath;
                             RTLIL::SigSpec lhs_sig;
-                            if (!tf_local_lhs(lhs, lhs_sig))
-                                lhs_sig = import_expression(lhs, lhs_map_);
+                            {
+                                bool saved_wt = importing_write_target;
+                                importing_write_target = true;
+                                if (!tf_local_lhs(lhs, lhs_sig))
+                                    lhs_sig = import_expression(lhs, lhs_map_);
+                                importing_write_target = saved_wt;
+                            }
                             comb_lhs_keep_base = false;
                             // Declaration initializer (`automatic logic [3:0]
                             // index = addr - BASE;` in a case arm): the Lhs is
@@ -21330,14 +21418,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // one, 273 co-sim divergences).
                             if ((in_always_ff_body_mode || in_always_ff_context) &&
                                     assign->VpiBlocking() && !lhs_sig.empty()) {
-                                RTLIL::SigChunk fc = *lhs_sig.chunks().begin();
-                                if (fc.wire) {
-                                    std::string bn = fc.wire->name.str();
-                                    if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
-                                    if (RTLIL::Wire* t0 = find_own_temp_wire(bn))
-                                        if (t0->width == fc.wire->width)
-                                            ff_blocking_temps[bn] = RTLIL::SigSpec(t0);
-                                }
+                                // The VALUE (merged per arm by thread_comb_if /
+                                // thread_comb_case), a part-select spliced in.
+                                record_ff_blocking_write(lhs_sig, rhs_sig);
                             }
                             // In always_comb, track the in-flight blocking value
                             // for a full single-wire write so a later read in the
@@ -21505,10 +21588,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         sw->signal = live;
                         RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
                         live_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
-                        auto saved_ccv = current_comb_values;
+                        auto saved_ccv = branch_vals();
                         import_statement_comb(stmt, live_case);
-                        auto then_ccv = current_comb_values;
-                        current_comb_values = saved_ccv;
+                        auto then_ccv = branch_vals();
+                        branch_vals() = saved_ccv;
                         sw->cases.push_back(live_case);
                         RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
                         sw->cases.push_back(dead_case);
@@ -21685,10 +21768,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             RTLIL::CaseRule* live_case = new RTLIL::CaseRule;
                             live_case->compare.push_back(
                                 RTLIL::SigSpec(RTLIL::State::S1));
-                            auto saved_ccv = current_comb_values;
+                            auto saved_ccv = branch_vals();
                             import_statement_comb(fl_body, live_case);
-                            auto then_ccv = current_comb_values;
-                            current_comb_values = saved_ccv;
+                            auto then_ccv = branch_vals();
+                            branch_vals() = saved_ccv;
                             sw->cases.push_back(live_case);
                             RTLIL::CaseRule* dead_case = new RTLIL::CaseRule;
                             sw->cases.push_back(dead_case);
@@ -21888,7 +21971,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             // state (started from the snapshot) so thread_comb_case sees the
             // true per-arm value incl. nested if/case writes (see the primary
             // call site for the CVA6 compressed_decoder failure this fixes).
-            std::map<std::string, RTLIL::SigSpec> pre_ccv = current_comb_values;
+            std::map<std::string, RTLIL::SigSpec> pre_ccv = branch_vals();
             std::vector<std::map<std::string, RTLIL::SigSpec>> arm_ccv;
             arm_ccv.reserve(ci_data.size());
 
@@ -21902,16 +21985,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     d.rule->compare.push_back(sig);
                     uhdm_trace("        Case item expression: %s\n", log_signal(sig));
                 }
-                current_comb_values = pre_ccv;
+                branch_vals() = pre_ccv;
                 if (d.stmt) {
                     uhdm_trace("        Importing case item body (type=%d)\n", d.stmt->VpiType());
                     import_statement_comb(d.stmt, d.rule);
                 }
-                arm_ccv.push_back(current_comb_values);
+                arm_ccv.push_back(branch_vals());
                 sw->cases.push_back(d.rule);
             }
 
-            current_comb_values = pre_ccv;
+            branch_vals() = pre_ccv;
 
             if (has_full_case_attr)
                 emit_full_case_default(uhdm_case, sw);
@@ -22002,7 +22085,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
                 // Save/restore current_comb_values so the branch's blocking
                 // writes don't leak past the if (see if_else case).
-                auto saved_ccv = current_comb_values;
+                auto saved_ccv = branch_vals();
 
                 // Import then statement
                 if (auto then_stmt = if_stmt->VpiStmt()) {
@@ -22012,8 +22095,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     import_statement_comb(then_stmt, true_case);
                     fold_enclosing_cases_.pop_back();
                 }
-                auto then_ccv = current_comb_values;
-                current_comb_values = saved_ccv;
+                auto then_ccv = branch_vals();
+                branch_vals() = saved_ccv;
 
                 sw->cases.push_back(true_case);
 
@@ -22088,7 +22171,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 // let each branch mutate a private copy, and restore — otherwise
                 // `if (…) x = 0; else x -= 1;` computes the else as `0 - 1`
                 // (the then-branch's value) instead of the pre-if value.
-                auto saved_ccv = current_comb_values;
+                auto saved_ccv = branch_vals();
 
                 // Import then statement
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
@@ -22100,8 +22183,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
 
                 sw->cases.push_back(true_case);
-                auto then_ccv = current_comb_values;
-                current_comb_values = saved_ccv;
+                auto then_ccv = branch_vals();
+                branch_vals() = saved_ccv;
 
                 // Handle else branch
                 RTLIL::CaseRule* else_case = nullptr;
@@ -22117,8 +22200,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     fold_enclosing_cases_.push_back(case_rule);
                     import_statement_comb(else_stmt, else_case);
                     fold_enclosing_cases_.pop_back();
-                    else_ccv = current_comb_values;
-                    current_comb_values = saved_ccv;
+                    else_ccv = branch_vals();
+                    branch_vals() = saved_ccv;
 
                     sw->cases.push_back(else_case);
                 } else {
