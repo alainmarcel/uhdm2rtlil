@@ -2196,6 +2196,32 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             for (const auto& sig : assigned_signals) {
                 // Skip if we already created a temp wire for this signal
                 if (processed_signals.count(sig.name)) {
+                    // ...unless this is a SECOND part-select write of the same
+                    // signal at a DIFFERENT slice (`r_ds[0] <= d[1:0]` in one
+                    // case arm, `r_ds[1] <= d[1:0]` in another, on a packed
+                    // `logic [1:0][1:0] r_ds` -- core-v-mcu udma_filter_reg_if,
+                    // whose every per-channel register is written that way).
+                    // The first entry recorded ITS slice in part_slice and the
+                    // sync update below covered only that one: element 1 was
+                    // written into the temp and never updated (co-sim PASS at 6
+                    // active cycles, formal `differs`).  Forget the single
+                    // slice; the full-width temp then takes the written-bits
+                    // path, which emits one update per run of written bits.
+                    auto ps = part_slice.find(sig.name);
+                    if (ps != part_slice.end() && sig.is_part_select && sig.lhs_expr) {
+                        RTLIL::SigSpec lhs2 = import_expression(sig.lhs_expr);
+                        if (lhs2.size() > 0 && lhs2.chunks().size() == 1) {
+                            RTLIL::SigChunk fc2 = *lhs2.chunks().begin();
+                            if (fc2.wire && fc2.wire->name == RTLIL::escape_id(sig.name) &&
+                                (fc2.offset != ps->second.first || fc2.width != ps->second.second)) {
+                                uhdm_trace("      Second part-select slice %s[%d +: %d] (first was [%d +: %d]): "
+                                           "updating every written run instead\n",
+                                           sig.name.c_str(), fc2.offset, fc2.width,
+                                           ps->second.first, ps->second.second);
+                                part_slice.erase(ps);
+                            }
+                        }
+                    }
                     continue;
                 }
                 
