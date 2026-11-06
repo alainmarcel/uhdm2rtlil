@@ -907,6 +907,7 @@ struct UhdmImporter {
     // Inside a generate scope the wire is `<gen path>.<name>`; a bare
     // module->wire() lookup returns null there.
     RTLIL::Wire* scoped_wire(const std::string& bare_name);
+    std::string scoped_assigned_name(const std::string& nm);
     // Same, for the RTLIL memory a gen-scope array was registered under.  The
     // generate is replicated, so a memory declared in one gets a scoped name —
     // two iterations would otherwise collide on a single bare memory.

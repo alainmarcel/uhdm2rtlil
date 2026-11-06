@@ -639,6 +639,24 @@ bool UhdmImporter::index_is_loop_constant(const UHDM::any* e) {
     }
 }
 
+// The REAL wire name of an assigned-signal entry: a target declared inside a
+// generate scope (`gen_p.vd`) is a module wire under its scoped name, while
+// the UHDM select still carries the bare `vd`.  The plain-ref branch of
+// extract_assigned_signals resolves that; the bit-/part-/indexed-part-select
+// branches did not, so a comb block's `vd = vq; … vd[8 +: 8] = v_i;` inside
+// a generate `if` registered `gen_p.vd` (whole) AND `vd` (part), the whole-
+// write prune never matched them, and the part write got its own ranged
+// `$0\gen_p.vd[15:8]` temp with a self-hold default next to the full
+// `$0\gen_p.vd` -- two STa updates on the same bits, the clear never reached
+// the slice (snitch spatz_vfu's ipu_result_valid_d stayed 0, 170 co-simulated
+// divergences).
+std::string UhdmImporter::scoped_assigned_name(const std::string& nm) {
+    if (nm.empty() || gen_scope_stack.empty()) return nm;
+    if (module->wire(RTLIL::escape_id(nm))) return nm;
+    if (RTLIL::Wire* sw = scoped_wire(nm)) return RTLIL::unescape_id(sw->name);
+    return nm;
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
 
@@ -750,6 +768,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         }
                         if (dyn_off) sig.lhs_expr = nullptr;
 
+                        sig.name = scoped_assigned_name(sig.name);
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to indexed part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiPartSelect) {
@@ -825,6 +844,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             }
                         }
                         if (!elem_array_handled) {
+                            sig.name = scoped_assigned_name(sig.name);
                             signals.push_back(sig);
                             log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
                         }
@@ -956,6 +976,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             }
                         }
 
+                        sig.name = scoped_assigned_name(sig.name);
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to bit select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiVarSelect) {
