@@ -1,0 +1,10 @@
+# The result wire must be driven (the control plugin leaves 4 bits undriven)
+# and carry the enum values the case selects.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+check -assert
+flatten; opt -fast
+sat -verify -prove y_o 4'd1 -set r_i 4'd5
+sat -verify -prove y_o 4'd2 -set r_i 4'd6
+sat -verify -prove y_o 4'd0 -set r_i 4'd3
