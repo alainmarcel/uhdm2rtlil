@@ -37,3 +37,20 @@ zcmt_decoder
 # in the FIRST PROC_DLATCH pass of its miter log (read_uhdm) and 0 in the
 # second (read_slang).  Co-sim passes on both sides.
 pmu
+
+# ---- out-of-range array READ, X by the LRM (2026-11-05) ---------------------
+# OpenPiton's TLBs declare `reg [TLB_CSM] tte_csm_buf [1:0]` and index it with
+# the 2-bit `wr_tte_csm_thrid`; the cex (bw_r_dtlb, -show-inputs: thrid=3,
+# wr_csm_sel=0, wr_vld=1 at steps 1-2) takes the `tte_csm_ram[j] <=
+# tte_csm_buf[wr_tte_csm_thrid]` arm with thrid 3, a READ past the end of the
+# array.  LRM 7.4.6 makes that read X.  read_uhdm sizes the port address to
+# the memory (ABITS 1) and reads entry 1 -- exactly what Verilator does, which
+# is why the co-sim PASSES on both rows -- while read_slang keeps the 2-bit
+# address (ABITS 2) and yosys's memory model leaves an out-of-range read
+# unconstrained, so the SAT miter can always pick a different value.  No
+# netlist is wrong on a defined input; the difference exists only where the
+# source reads X.  (The sister out-of-range WRITE is ignored by both the LRM
+# and read_uhdm since #1446.)  Co-sims: both `✅ PASS (301 cycles)` after the
+# always_ff blocking-temp fix.
+openpiton/bw_r_dtlb
+openpiton/bw_r_itlb
