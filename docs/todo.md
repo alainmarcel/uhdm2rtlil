@@ -10,7 +10,7 @@ recorded beside that family's numbers.
 
 ## Done — swept and supported
 
-60 designs: 41 external-IP families in `sweep-ext.yml` (manifests are
+61 designs: 42 external-IP families in `sweep-ext.yml` (manifests are
 `test/ext_ip/<name>.json`) and 19 with a workflow of their own.
 
 | Design | Repo | Swept by |
@@ -45,6 +45,7 @@ recorded beside that family's numbers.
 | OpenHW CV32E40P | [openhwfoundation/cv32e40p](https://github.com/openhwfoundation/cv32e40p) | `cv32e40p.json` (`sweep-ext.yml`) |
 | OpenHW CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | `cv32e40s.json` (`sweep-ext.yml`) |
 | OpenHW CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | `cv32e40x.json` (`sweep-ext.yml`) |
+| OpenHW CV32E41P | [openhwfoundation/cv32e41p](https://github.com/openhwfoundation/cv32e41p) | `cv32e41p.json` (`sweep-ext.yml`) |
 | OpenHW CVE2 | [openhwgroup/cve2](https://github.com/openhwgroup/cve2) | `cve2.json` (`sweep-ext.yml`) |
 | OpenHW CVFPU | [openhwfoundation/cvfpu](https://github.com/openhwfoundation/cvfpu) | `cvfpu.json` (`sweep-ext.yml`) |
 | OpenPiton | [PrincetonUniversity/openpiton](https://github.com/PrincetonUniversity/openpiton) | `openpiton.json` (`sweep-ext.yml`) |
@@ -80,7 +81,6 @@ recorded beside that family's numbers.
 
 | Candidate | Repo | What it needs |
 |---|---|---|
-| **cv32e41p** | [openhwfoundation/cv32e41p](https://github.com/openhwfoundation/cv32e41p) | The manifest is written (`test/ext_ip/cv32e41p.json`, the cv32e40x shape over a separate checkout) and the survey reads 23 / 23 with 0 undriven — but it is **not committed and not in the matrix**.  The next thing to land. |
 | **OpenTitan `top_earlgrey`** | [lowRISC/opentitan](https://github.com/lowRISC/opentitan) | **Reads, and co-simulates THREE-WAY, clean; what it lacks is a WORKFLOW.**  Closure is the CAPI=2 `.core` graph walked directly -- **633 files**, 2 incdirs, 0 unresolved cores.  A closure TRAP to keep: every top ships its own `top_pkg` / `top_racl_pkg` under the SAME core leaf, and they DISAGREE (earlgrey `TL_AUW`=23, darjeeling 28), so another top's copy must be filtered by PATH, not by role resolution -- Surelog accepts the duplicate silently and only read_slang refuses it.  Measured 2026-10-31 on the clean closure: `read_uhdm` **0 `Reference to unknown signal` warnings** (was 7; closed by #1394 #1395 #1396 #1397, two of them real miscompiles), 15 m 17 s, **13.0 GB** peak; `read_slang` reads the same closure in **2.87 GB**; Verilator co-sim of both netlists against the behavioural RTL is **NO_DIVERGENCE over 301 cycles, 292 with an output change** (`uhdm_vs_rtl=0 slang_vs_rtl=0`), on a 302 MB netlist, at **6.2 GB** peak, all three traces carrying 305 distinct values.  So the remaining blocker is narrow and specific: **our reader needs 13.0 GB where read_slang needs 2.9 GB**, and 13.0 GB does not fit a 16 GB runner with margin -- the co-sim step itself would.  No flat shim is needed (89 ports, all plain `input`/`output` of package struct types).  Surelog still reports one elaboration error, `alert_handler_reg_pkg::AsyncOn`. |
 | **BlackParrot whole-core rows** | [black-parrot/black-parrot](https://github.com/black-parrot/black-parrot) | Twelve rows (`bp_processor`, `bp_unicore*`, `bp_core*`, `bp_multicore`, `bp_cacc_tile_node`) exceed the runner's 12 GB Surelog cap.  Measured and unresolved; the family's per-module rows are swept. |
 | **i3c-core (standalone)** | [chipsalliance/i3c-core](https://github.com/chipsalliance/i3c-core) | **Low priority — already measured twice**: caliptra-ss sweeps its vendored copy and the OpenTitan library its own `i3c_*` rows.  A standalone row set at upstream head adds only freshness. |

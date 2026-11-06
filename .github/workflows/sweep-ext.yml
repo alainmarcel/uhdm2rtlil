@@ -159,6 +159,13 @@ jobs:
           # 48 rows.
           - family: cv32e40s
             timeout: 330
+          # openhwfoundation/cv32e41p @ b5d1ba14: the CORE-V CV32E41P -- the
+          # RV32IMFC core with the PULP extensions (hardware loops, post-
+          # increment load / store, the APU dispatcher).  Its own
+          # cv32e41p_manifest.flist is the closure: rtl/include's three
+          # packages, every rtl/*.sv and bhv's simulation clock gate.  23 rows.
+          - family: cv32e41p
+            timeout: 330
           # openhwfoundation/core-v-mcu @ 61fe7db2: the OpenHW microcontroller
           # around CV32E40P -- APB peripherals, the uDMA subsystem, the L2 /
           # TCDM interconnect and the FC glue, over the PULP libraries it

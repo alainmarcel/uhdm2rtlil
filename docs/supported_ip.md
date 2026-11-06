@@ -120,6 +120,7 @@ not landed yet.
 | PULP tech_cells_generic | [pulp-platform/tech_cells_generic](https://github.com/pulp-platform/tech_cells_generic) | [`55cb5451`](https://github.com/pulp-platform/tech_cells_generic/commit/55cb5451) | **44 / 50** (local) | 3 of 53 | 0 |
 | PULP register_interface | [pulp-platform/register_interface](https://github.com/pulp-platform/register_interface) | [`d6e1d4cd`](https://github.com/pulp-platform/register_interface/commit/d6e1d4cd) | **11 / 11** (local) | 8 of 19 | 0 |
 | CV32E40S | [openhwfoundation/cv32e40s](https://github.com/openhwfoundation/cv32e40s) | [`9d9cae78`](https://github.com/openhwfoundation/cv32e40s/commit/9d9cae78) | **36 / 42** (local) | 6 of 48 | 0 |
+| CV32E41P | [openhwfoundation/cv32e41p](https://github.com/openhwfoundation/cv32e41p) | [`b5d1ba14`](https://github.com/openhwfoundation/cv32e41p/commit/b5d1ba14) | **17 / 21** (local sweep 2026-11-06; first nightly pending) | 2 of 23 | 0 |
 | CV32E40X | [openhwfoundation/cv32e40x](https://github.com/openhwfoundation/cv32e40x) | [`d952cd63`](https://github.com/openhwfoundation/cv32e40x/commit/d952cd63) | **30 / 35** (local) | 7 of 42 | 0 |
 | NaxRiscv | [SpinalHDL/NaxRiscv](https://github.com/SpinalHDL/NaxRiscv) | [`9f452d50`](https://github.com/SpinalHDL/NaxRiscv/commit/9f452d50) | **17 / 24** (local) | 0 of 24 | 0 |
 | Rocket Chip | [chipsalliance/rocket-chip](https://github.com/chipsalliance/rocket-chip) | [`ece7b9ad`](https://github.com/chipsalliance/rocket-chip/commit/ece7b9ad) | **176 / 235** (local) | 0 of 235 | 0 |

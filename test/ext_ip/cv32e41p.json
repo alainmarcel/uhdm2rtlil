@@ -1,0 +1,55 @@
+{
+ "title": "OpenHW CV32E41P",
+ "url": "https://github.com/openhwfoundation/cv32e41p",
+ "repos": [
+  {
+   "url": "https://github.com/openhwfoundation/cv32e41p",
+   "commit": "b5d1ba149f06f0d5e02717df849afccb61ef4e15",
+   "dir": "cv32e41p"
+  }
+ ],
+ "roots": [
+  "cv32e41p/rtl/include/*.sv",
+  "cv32e41p/rtl/*.sv",
+  "cv32e41p/bhv/cv32e41p_sim_clock_gate.sv"
+ ],
+ "incdirs": [
+  "cv32e41p/rtl/include",
+  "cv32e41p/bhv",
+  "cv32e41p/bhv/include"
+ ],
+ "defines": [],
+ "modules": "auto",
+ "sweep_paths": [
+  "cv32e41p/rtl/"
+ ],
+ "exclude": [
+  "^(?!cv32e41p_)",
+  "_tb$",
+  "^tb_",
+  "^cv32e41p_sim_",
+  "^cv32e41p_core_log$",
+  "^cv32e41p_(tracer|apu_tracer)$",
+  "_sva$"
+ ],
+ "seq": 4,
+ "timeout": 300,
+ "want": "proven",
+ "_note": [
+  "",
+  "The CORE-V CV32E41P: the RV32IMFC core with the PULP extensions -- the",
+  "4-stage pipeline, the ALU and its divider, the APU dispatcher, the CS",
+  "registers, the hardware loop controller and the OBI load / store unit.  Its",
+  "own cv32e41p_manifest.flist is the closure: rtl/include's three packages,",
+  "every rtl/*.sv, and bhv's simulation clock gate.",
+  "",
+  "The last of the four OpenHW cores on the todo list (cv32e40p, cv32e40x and",
+  "cv32e40s are the others).  The RVFI tracer, core_log and the sva/ assertion",
+  "modules are not rows.",
+  "",
+  "fpnew / common_cells / tech_cells_generic are Bender dependencies for the",
+  "FPU configuration only; the sweep reads the core at its own defaults, where",
+  "the FPU is not instantiated, so they are not roots here.  cv32e40p.json is",
+  "the family that sweeps the fpnew closure."
+ ]
+}
