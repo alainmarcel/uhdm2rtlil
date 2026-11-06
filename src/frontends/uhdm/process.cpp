@@ -9570,17 +9570,23 @@ bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
         if (rts && rts->Actual_typespec()) ats = rts->Actual_typespec();
     }
 
+    // The iterated OBJECT comes first.  An array object (array_var /
+    // array_net / packed_array_var / packed_array_net) carries its OUTER
+    // dimension on its own Ranges() and its typespec names the ELEMENT type,
+    // so the typespec's ranges are the element's and must not be used: a
+    // port declared `element_t [Width-1:0] data_i` with `element_t` a TYPE
+    // PARAMETER bound to a 64-bit vector is a packed_array_var ranged
+    // `[Width-1:0]` whose ref_var typespec is the 64-bit `data_t`, and
+    // `foreach (data_i[i])` ran 64 times over the bits of one element
+    // instead of once per element -- cheshire's serial-link stream chopper
+    // (slink_ch_alloc, NumChannels = 1) rotated its single channel bit by
+    // bit and sent zero (13 diverging co-simulated cycles, read_slang clean).
+    // A module-level `int test [4]` is the same shape with a BARE
+    // array_typespec (sv-tests foreach_loop / foreach_loop_synth).  The
+    // definition's ref_var has no Actual_group, so the object is also found
+    // by name on the current instance.
     const UHDM::VectorOfrange* ranges = nullptr;
-    if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) ranges = arrts->Ranges();
-    else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pkts->Ranges();
-    else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lts->Ranges();
-    // A module-level `int test [4]` presents its ref_var with a BARE
-    // array_typespec (no ranges, no element): the unpacked dimension lives on
-    // the array_var / array_net OBJECT itself.  Resolve the reference and take
-    // the object's Ranges() (sv-tests foreach_loop / foreach_loop_synth were
-    // reported "Cannot unroll foreach in comb context" and their sums and
-    // copies came out undriven).
-    if (!ranges || ranges->empty()) {
+    if (!dynamic_cast<const UHDM::hier_path*>(arr)) {
         const UHDM::any* actual = nullptr;
         if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) actual = rv->Actual_group();
         else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) actual = ro->Actual_group();
@@ -9594,11 +9600,27 @@ bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
                     if (!actual && mi->Array_nets())
                         for (auto n : *mi->Array_nets())
                             if (std::string(n->VpiName()) == an) { actual = n; break; }
+                    if (!actual && mi->Nets())
+                        for (auto n : *mi->Nets())
+                            if (std::string(n->VpiName()) == an) { actual = n; break; }
                 }
             }
         }
-        if (auto av = dynamic_cast<const UHDM::array_var*>(actual)) ranges = av->Ranges();
-        else if (auto an = dynamic_cast<const UHDM::array_net*>(actual)) ranges = an->Ranges();
+        const UHDM::VectorOfrange* obj_ranges = nullptr;
+        if (auto av = dynamic_cast<const UHDM::array_var*>(actual)) obj_ranges = av->Ranges();
+        else if (auto an = dynamic_cast<const UHDM::array_net*>(actual)) obj_ranges = an->Ranges();
+        else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) obj_ranges = pv->Ranges();
+        else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) obj_ranges = pn->Ranges();
+        if (obj_ranges && !obj_ranges->empty()) {
+            ranges = obj_ranges;
+            uhdm_trace("    foreach_loop_bounds: dimension from the %s object's own range\n",
+                       std::string(actual->VpiName()).c_str());
+        }
+    }
+    if (!ranges || ranges->empty()) {
+        if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) ranges = arrts->Ranges();
+        else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) ranges = pkts->Ranges();
+        else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) ranges = lts->Ranges();
     }
     if (!ranges || ranges->empty()) return false;
 
