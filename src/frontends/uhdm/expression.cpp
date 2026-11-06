@@ -22271,6 +22271,30 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         
         if (mode_debug)
             uhdm_trace("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
+
+        // `P.Member[i][j]` on a struct PARAMETER (fpnew's
+        // `FPUImplementation.PipeRegs[ADDMUL][el_type]`): resolved from the
+        // parameter's value BEFORE decodeHierPath, which returns null or an
+        // unresolved operation for a selected member and left the read X
+        // (import_struct_param_indexed_member).
+        if (member_name.find('[') != std::string::npos && uhdm_hier->Path_elems() &&
+            uhdm_hier->Path_elems()->size() == 2) {
+            const UHDM::parameter* bp = nullptr;
+            if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                bp = dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+            auto mi0 = dynamic_cast<const UHDM::module_inst*>(current_instance);
+            if (bp && mi0) {
+                RTLIL::SigSpec folded = import_struct_param_indexed_member(
+                    bp, (*uhdm_hier->Path_elems())[1],
+                    member_name.substr(0, member_name.find('[')), mi0, input_mapping);
+                if (!folded.empty()) {
+                    if (mode_debug)
+                        uhdm_trace("    hier_path '%s' folded via indexed struct-parameter member\n",
+                                   path_name.c_str());
+                    return folded;
+                }
+            }
+        }
         
         // A FUNCTION LOCAL or FORMAL: its value is staged in input_mapping and
         // its declaration (the ref_obj's actual, a ref_var / struct_var /
@@ -23489,6 +23513,29 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                              : std::string();
                 const UHDM::module_inst* mi =
                     dynamic_cast<const UHDM::module_inst*>(current_instance);
+                // An INDEXED packed-array member of a struct parameter,
+                // `P.Tab[i][j]` -- fpnew's
+                // `FPUImplementation.PipeRegs[ADDMUL][el_type]` with a runtime
+                // enum as the second index (snitch spatz_vfu: FPUlatency read X,
+                // so the IntraLane reduction never saw its drain condition, 132
+                // co-simulated divergences).  The field-name paths below match
+                // bare member names only.  Fold the whole parameter against its
+                // struct type, slice the member, then apply the indices: a
+                // constant one as a slice, a runtime one as a $shiftx over the
+                // member's constant table.
+                if (base_param && field_name.find('[') != std::string::npos && mi &&
+                    mi->Param_assigns() && uhdm_hier->Path_elems() &&
+                    uhdm_hier->Path_elems()->size() == 2) {
+                    RTLIL::SigSpec folded = import_struct_param_indexed_member(
+                        base_param, (*uhdm_hier->Path_elems())[1],
+                        field_name.substr(0, field_name.find('[')), mi, input_mapping);
+                    if (!folded.empty()) {
+                        if (mode_debug)
+                            uhdm_trace("    hier_path '%s' folded via indexed struct-parameter member\n",
+                                       path_name.c_str());
+                        return folded;
+                    }
+                }
                 if (base_param && !field_name.empty() && mi && mi->Param_assigns()) {
                     const UHDM::any* prhs = nullptr;
                     for (auto pa : *mi->Param_assigns())
@@ -24324,6 +24371,246 @@ bool UhdmImporter::flat_struct_array_geom(const std::string& base_name,
     if (st_out) *st_out = st;
     if (elem_w_out) *elem_w_out = ew;
     return true;
+}
+
+
+// `P.Member[i][j]` on a struct PARAMETER: see the call site in the hier_path
+// importer.  Returns an empty SigSpec when any step cannot be done, so the
+// caller falls through to its older paths.
+RTLIL::SigSpec UhdmImporter::import_struct_param_indexed_member(
+        const UHDM::parameter* base_param, const UHDM::any* sel_elem,
+        const std::string& member_name, const UHDM::module_inst* mi,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    auto bail = [&](int step) -> RTLIL::SigSpec {
+        if (mode_debug)
+            uhdm_trace("    struct-param indexed member '%s': bail at step %d\n",
+                       member_name.c_str(), step);
+        return RTLIL::SigSpec();
+    };
+    if (!base_param || !sel_elem || member_name.empty() || !mi) return bail(1);
+    // The struct type of the parameter.
+    const UHDM::typespec* pts = nullptr;
+    if (base_param->Typespec()) pts = base_param->Typespec()->Actual_typespec();
+    if (pts) pts = resolve_type_param_typespec(pts, current_instance);
+    auto sts = dynamic_cast<const UHDM::struct_typespec*>(pts);
+    if (!sts) return bail(2);
+    int struct_w = get_width_from_typespec(sts, current_instance);
+    if (struct_w <= 0) return bail(3);
+    // The parameter's value: the elaborated param_assign RHS folded against
+    // the struct type (an assignment pattern, a cast, or a constant).
+    const UHDM::any* prhs = nullptr;
+    if (mi->Param_assigns())
+        for (auto pa : *mi->Param_assigns())
+            if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == std::string(base_param->VpiName())) {
+                prhs = pa->Rhs();
+                break;
+            }
+    if (!prhs) prhs = base_param->Expr();
+    auto prhs_e = dynamic_cast<const UHDM::expr*>(prhs);
+    // The member's slice and type.
+    int moff = 0, mw = 0;
+    const UHDM::typespec* mts = nullptr;
+    if (!calculate_struct_member_offset(sts, member_name, current_instance, moff, mw, &mts) ||
+        mw <= 0 || !mts || moff + mw > struct_w)
+        return bail(4);
+    auto fold = [&](const UHDM::expr* e, const UHDM::typespec* ts, int w) -> RTLIL::SigSpec {
+        bool saved_fcf = force_const_fold;
+        int saved_ctx = expression_context_width;
+        const UHDM::typespec* saved_ts = expression_context_typespec;
+        force_const_fold = true;
+        expression_context_width = w;
+        expression_context_typespec = ts;
+        RTLIL::SigSpec v = import_expression(e, input_mapping);
+        expression_context_typespec = saved_ts;
+        expression_context_width = saved_ctx;
+        force_const_fold = saved_fcf;
+        return v;
+    };
+    // The member's value.  Preferred: the member's OWN entry of the
+    // parameter's assignment pattern (tagged by the member's name, or
+    // positional in declaration order), folded against the member type --
+    // the same route the plain-field read below takes.  Fallback: fold the
+    // whole parameter (a cast such as `fpu_implementation_t'(0)`, or a
+    // constant) and slice the member out of it.
+    RTLIL::SigSpec member;
+    if (prhs_e && prhs_e->UhdmType() == uhdmoperation) {
+        auto pop = any_cast<const UHDM::operation*>(prhs_e);
+        if (pop->VpiOpType() == vpiAssignmentPatternOp && pop->Operands()) {
+            bool any_tagged = false;
+            for (auto o : *pop->Operands())
+                if (o->UhdmType() == uhdmtagged_pattern) { any_tagged = true; break; }
+            const UHDM::expr* me = nullptr;
+            if (any_tagged) {
+                for (auto o : *pop->Operands()) {
+                    if (o->UhdmType() != uhdmtagged_pattern) continue;
+                    auto tp = any_cast<const UHDM::tagged_pattern*>(o);
+                    std::string fname;
+                    if (tp->Typespec() && tp->Typespec()->Actual_typespec())
+                        fname = std::string(tp->Typespec()->Actual_typespec()->VpiName());
+                    if (fname == member_name && tp->Pattern())
+                        me = dynamic_cast<const UHDM::expr*>(tp->Pattern());
+                }
+            } else if (sts->Members()) {
+                int fidx = -1, i2 = 0;
+                for (auto m2 : *sts->Members()) {
+                    if (std::string(m2->VpiName()) == member_name) fidx = i2;
+                    i2++;
+                }
+                if (fidx >= 0 && (int)pop->Operands()->size() == (int)sts->Members()->size())
+                    me = dynamic_cast<const UHDM::expr*>((*pop->Operands())[fidx]);
+            }
+            if (me) {
+                RTLIL::SigSpec v = fold(me, mts, mw);
+                if (!v.empty() && v.is_fully_const()) {
+                    if (v.size() < mw) v.extend_u0(mw);
+                    else if (v.size() > mw) v = v.extract(0, mw);
+                    member = v;
+                }
+            }
+        }
+    }
+    if (member.empty()) {
+        // The module's own parameter constant (what the parameter import
+        // already folded -- a cast like `fpu_implementation_t'(0)` lands here
+        // as an all-zero struct), else fold the RHS now.
+        RTLIL::SigSpec whole;
+        auto pit = module->parameter_default_values.find(
+            RTLIL::escape_id(std::string(base_param->VpiName())));
+        if (pit != module->parameter_default_values.end() &&
+            pit->second.size() == struct_w && pit->second.is_fully_def())
+            whole = RTLIL::SigSpec(pit->second);
+        if (whole.empty() && prhs_e) whole = fold(prhs_e, sts, struct_w);
+        if (whole.empty() || !whole.is_fully_const()) return bail(5);
+        if (whole.size() < struct_w) whole.extend_u0(struct_w);
+        else if (whole.size() > struct_w) whole = whole.extract(0, struct_w);
+        member = whole.extract(moff, mw);
+    }
+    if (mode_debug)
+        uhdm_trace("    struct-param indexed member '%s': member=%s moff=%d mw=%d\n",
+                   member_name.c_str(), log_signal(member), moff, mw);
+    // Flatten the member's packed dimensions, outermost first; the leaf is
+    // the innermost vector (`int unsigned` = 32).
+    std::vector<std::pair<int,int>> dims;   // (left, right)
+    int leaf_w = 0;
+    const UHDM::typespec* cur = resolve_type_param_typespec(mts, current_instance);
+    for (int guard = 0; cur && guard < 16; guard++) {
+        auto push_ranges = [&](const UHDM::VectorOfrange* rs, bool drop_last) -> bool {
+            if (!rs) return true;
+            size_t n = rs->size();
+            for (size_t i = 0; i < n; i++) {
+                if (drop_last && i + 1 == n) break;
+                auto r = (*rs)[i];
+                if (!r->Left_expr() || !r->Right_expr()) return false;
+                RTLIL::SigSpec l = import_expression(r->Left_expr());
+                RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                if (!l.is_fully_const() || !rr.is_fully_const()) return false;
+                dims.push_back({l.as_const().as_int(), rr.as_const().as_int()});
+            }
+            return true;
+        };
+        if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(cur)) {
+            if (!push_ranges(pat->Ranges(), false)) return bail(6);
+            cur = (pat->Elem_typespec() && pat->Elem_typespec()->Actual_typespec())
+                      ? resolve_type_param_typespec(pat->Elem_typespec()->Actual_typespec(), current_instance)
+                      : nullptr;
+            if (!cur) { leaf_w = 1; break; }
+            continue;
+        }
+        if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(cur)) {
+            if (lts->Elem_typespec() && lts->Elem_typespec()->Actual_typespec()) {
+                const UHDM::typespec* inner =
+                    resolve_type_param_typespec(lts->Elem_typespec()->Actual_typespec(), current_instance);
+                // A typedef ALIAS over a packed-array typedef (`typedef
+                // fmt_unsigned_t [0:5] opgrp_fmt_unsigned_t`) is a
+                // logic_typespec whose Elem_typespec is ANOTHER logic_typespec
+                // with its own Elem_typespec, and whose Ranges DUPLICATE that
+                // inner alias's range (see CLAUDE.md, packed typespec
+                // variants) -- counting them twice made the table 6x too wide.
+                auto inner_l = dynamic_cast<const UHDM::logic_typespec*>(inner);
+                bool redundant = inner_l && inner_l->Elem_typespec() &&
+                                 inner_l->Elem_typespec()->Actual_typespec() &&
+                                 lts->Ranges() && inner_l->Ranges() &&
+                                 lts->Ranges()->size() == inner_l->Ranges()->size();
+                if (!redundant && !push_ranges(lts->Ranges(), false)) return bail(7);
+                cur = inner;
+                continue;
+            }
+            // Plain vector: the LAST range is the leaf width.
+            if (!push_ranges(lts->Ranges(), true)) return bail(8);
+            if (lts->Ranges() && !lts->Ranges()->empty()) {
+                auto r = lts->Ranges()->back();
+                RTLIL::SigSpec l = import_expression(r->Left_expr());
+                RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                if (!l.is_fully_const() || !rr.is_fully_const()) return bail(9);
+                leaf_w = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+            } else leaf_w = 1;
+            break;
+        }
+        leaf_w = get_width_from_typespec(cur, current_instance);
+        break;
+    }
+    if (leaf_w <= 0) return bail(10);
+    long long total = leaf_w;
+    for (auto& d : dims) total *= (std::abs(d.first - d.second) + 1);
+    if (total != mw) {
+        if (mode_debug) {
+            std::string ds;
+            for (auto& d : dims) ds += "[" + std::to_string(d.first) + ":" + std::to_string(d.second) + "]";
+            uhdm_trace("    struct-param indexed member '%s': dims=%s leaf=%d total=%lld mw=%d mts=%s\n",
+                       member_name.c_str(), ds.c_str(), leaf_w, total, mw,
+                       UHDM::UhdmName(mts->UhdmType()).c_str());
+        }
+        return bail(11);
+    }
+    // The indices, outermost first.
+    std::vector<const UHDM::any*> idx;
+    if (auto vs = dynamic_cast<const UHDM::var_select*>(sel_elem)) {
+        if (vs->Exprs()) for (auto e : *vs->Exprs()) idx.push_back(e);
+    } else if (auto bs = dynamic_cast<const UHDM::bit_select*>(sel_elem)) {
+        idx.push_back(bs->VpiIndex());
+    } else return bail(12);
+    if (idx.empty() || idx.size() > dims.size()) return bail(13);
+    int const_off = 0;
+    RTLIL::SigSpec dyn_shamt;
+    for (size_t k = 0; k < idx.size(); k++) {
+        long long stride = leaf_w;
+        for (size_t m = k + 1; m < dims.size(); m++) stride *= (std::abs(dims[m].first - dims[m].second) + 1);
+        int left = dims[k].first, right = dims[k].second;
+        bool desc = left >= right;
+        int lo = std::min(left, right), hi = std::max(left, right);
+        RTLIL::SigSpec iv = import_expression(any_cast<const UHDM::expr*>(idx[k]), input_mapping);
+        if (iv.empty()) return bail(14);
+        if (iv.is_fully_const() && iv.is_fully_def()) {
+            int i = iv.as_const().as_int();
+            if (i < lo || i > hi) return bail(15);   // out of range: leave to the caller (X)
+            const_off += (int)((desc ? (i - lo) : (hi - i)) * stride);
+        } else {
+            // Runtime index: position = desc ? idx - lo : hi - idx, scaled by the stride.
+            int w = std::max(iv.size(), 32);
+            RTLIL::SigSpec ivw = iv; ivw.extend_u0(w);
+            RTLIL::SigSpec pos;
+            if (desc) pos = lo ? module->Sub(NEW_ID, ivw, RTLIL::SigSpec(RTLIL::Const(lo, w))) : ivw;
+            else pos = module->Sub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(hi, w)), ivw);
+            RTLIL::SigSpec scaled = module->Mul(NEW_ID, pos, RTLIL::SigSpec(RTLIL::Const((int)stride, w)));
+            dyn_shamt = dyn_shamt.empty() ? scaled : RTLIL::SigSpec(module->Add(NEW_ID, dyn_shamt, scaled));
+        }
+    }
+    long long res_w = leaf_w;
+    for (size_t m = idx.size(); m < dims.size(); m++) res_w *= (std::abs(dims[m].first - dims[m].second) + 1);
+    if (mode_debug) {
+        std::string ds;
+        for (auto& d : dims) ds += "[" + std::to_string(d.first) + ":" + std::to_string(d.second) + "]";
+        uhdm_trace("    struct-param indexed member: dims=%s leaf=%d nidx=%zu const_off=%d dyn=%s res_w=%lld\n",
+                   ds.c_str(), leaf_w, idx.size(), const_off, log_signal(dyn_shamt), res_w);
+    }
+    RTLIL::SigSpec src = member;
+    if (!dyn_shamt.empty()) {
+        if (const_off) dyn_shamt = module->Add(NEW_ID, dyn_shamt, RTLIL::SigSpec(RTLIL::Const(const_off, dyn_shamt.size())));
+        src = module->Shiftx(NEW_ID, member, dyn_shamt);
+        const_off = 0;
+    }
+    if (const_off + res_w > src.size()) return bail(16);
+    return src.extract(const_off, (int)res_w);
 }
 
 bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std::string& member_path,

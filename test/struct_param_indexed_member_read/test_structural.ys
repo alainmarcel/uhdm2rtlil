@@ -1,0 +1,19 @@
+# Rows are spelled out (no '{default:}' on a packed row -- a separate, known
+# fold defect) and every 3-bit select value is a legal format.  PipeRegs[ADDMUL=0]
+# is the LAST row '{12,...,5}: element [F64=0] is its rightmost value 5, [F16A=4]
+# is 9, [FX2=7] its leftmost 12; PipeRegs[CONV=3][F32=1] is row '{1,...,8}
+# element [1] = 7.  The runtime index must select the entry, never X.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove lat_c_o 6'd7
+sat -verify -prove lat_o 6'd5 -set sel_i 3'd0
+sat -verify -prove lat_o 6'd9 -set sel_i 3'd4
+sat -verify -prove lat_o 6'd12 -set sel_i 3'd7
+# The alias chain is ASCENDING (`[0:N-1]`): the first pattern row is index 0
+# (ADDMUL) and its first value is element [0]; CONV is the last row '{12,...,5}
+# whose [F32=1] is 11.
+sat -verify -prove lat2_c_o 6'd11
+sat -verify -prove lat2_o 6'd1 -set sel_i 3'd0
+sat -verify -prove lat2_o 6'd8 -set sel_i 3'd7
+sat -verify -prove zero_o 6'd1 -set sel_i 3'd3
