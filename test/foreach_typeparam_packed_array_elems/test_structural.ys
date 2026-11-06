@@ -1,0 +1,9 @@
+# The iteration COUNT and the element reversal are the gate: one iteration per
+# element of the outer packed dimension, each moving a whole 64-bit element.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove cnt1 8'd1
+sat -verify -prove cnt2 8'd2
+sat -verify -prove y1 64'h0123456789ABCDEF -set d1 64'h0123456789ABCDEF
+sat -verify -prove y2 128'h00000000000000020000000000000001 -set d2 128'h00000000000000010000000000000002
