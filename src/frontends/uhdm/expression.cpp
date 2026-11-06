@@ -15826,6 +15826,16 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             (!comb_lhs_keep_base ||
              !module->wire(RTLIL::escape_id(base_signal_name)))) {
             base = input_mapping->at(base_signal_name);
+            // The IN-FLIGHT value of a packed 2-D base read back in the same
+            // block (`simd_result[2*i +: 2] = simd_result[2*i +: 2] >> 1` after
+            // `simd_result[2*i +: 2] = a + b`, snitch dspu's SIMD average):
+            // the geometry still comes from the declared wire, or `[off +: n]`
+            // selects n BITS of the in-flight value where the wire path below
+            // selects n ELEMENTS -- the half-word average came out as 1.
+            if (RTLIL::Wire* gw = module->wire(RTLIL::escape_id(base_signal_name)))
+                { if (gw->width == base.size()) geom_wire = gw; }
+            else if (RTLIL::Wire* sw = scoped_wire(base_signal_name))
+                { if (sw->width == base.size()) geom_wire = sw; }
         } else
         // If this is a for-loop variable, substitute its current constant value
         if (loop_values.count(base_signal_name)) {
