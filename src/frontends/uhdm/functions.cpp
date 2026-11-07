@@ -2843,7 +2843,41 @@ void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string&
                             if (module && module->parameter_default_values.count(param_id)) {
                                 is_parameter = true;
                             }
-                            
+                            // `f2 = b;` where b is a MODULE signal (an input,
+                            // a net, a module-level variable) is a plain read,
+                            // not a result accumulator: a return variable is
+                            // one the function DECLARES.  Taking the module
+                            // signal as the return variable mapped it onto the
+                            // result wire and left the inlined result undriven
+                            // (YosysHQ/yosys#3327: `a = f1(); f1 = f2(); f2 =
+                            // b;` gave `a` no driver at all).
+                            bool is_module_signal = false;
+                            if (!is_input_param && !is_parameter && rhs_ref->Actual_group()) {
+                                const UHDM::any* act = rhs_ref->Actual_group();
+                                bool declared_in_func = false;
+                                if (func_def && func_def->Variables())
+                                    for (auto fv : *func_def->Variables())
+                                        if (fv == act || std::string(fv->VpiName()) == var_name) { declared_in_func = true; break; }
+                                if (!declared_in_func && func_def && func_def->Return() &&
+                                    std::string(func_def->Return()->VpiName()) == var_name)
+                                    declared_in_func = true;
+                                if (!declared_in_func) {
+                                    int at = act->UhdmType();
+                                    if (at == uhdmlogic_net || at == uhdmnet || at == uhdmarray_net ||
+                                        at == uhdmpacked_array_net || at == uhdmstruct_net)
+                                        is_module_signal = true;
+                                    else if (auto pv = act->VpiParent())
+                                        if (pv->UhdmType() == uhdmmodule_inst || pv->UhdmType() == uhdminterface_inst ||
+                                            pv->UhdmType() == uhdmgen_scope || pv->UhdmType() == uhdmgen_scope_array ||
+                                            pv->UhdmType() == uhdmpackage)
+                                            is_module_signal = true;
+                                }
+                            }
+                            if (is_module_signal) {
+                                if (mode_debug)
+                                    uhdm_trace("UHDM: Skipping module signal '%s' in function %s (not a return variable)\n",
+                                        var_name.c_str(), func_name.c_str());
+                            } else
                             if (!is_input_param && !is_parameter) {
                                 return_vars.insert(var_name);
                                 if (mode_debug) {
