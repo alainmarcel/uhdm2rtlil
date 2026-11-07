@@ -819,6 +819,12 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 
     finalize_dead_selfhold_defaults();
 
+    // A declaration initialiser on a variable a child INSTANCE's output port
+    // drives (`logic q_inst = 0; ff1 u0 (clk, d, q_inst);`, YosysHQ/yosys
+    // #6165) must be an `\init` only; the module-level post-pass could not see
+    // that driver because instance cells are created after the body.
+    drop_init_procs_driven_by_instances();
+
     uhdm_trace("UHDM: Finished import_design\n");
     log_flush();
 
@@ -7567,8 +7573,6 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
             walk_case(&kv.second->root_case);
         }
-
-        // Remove init-only processes whose target wire has other drivers.
         std::vector<RTLIL::IdString> to_remove;
         for (auto& kv : module->processes) {
             if (!is_init_proc(kv.second)) continue;
