@@ -10096,9 +10096,26 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 (op_type == vpiLShiftOp || op_type == vpiRShiftOp ||
                  op_type == vpiArithLShiftOp || op_type == vpiArithRShiftOp ||
                  op_type == vpiPowerOp) && operands.size() == 1;
+            // The shifted VALUE (operand 0) is context-determined, and the
+            // context is the widest of the assignment target and the
+            // operand's own width (LRM 11.8.2) -- so `(out_size+1) >> 1`
+            // into a 3-bit target adds at 32 bits (the unsized `1`), shifts,
+            // and truncates LAST: 7+1 = 8, >>1 = 4.  Imported under the
+            // target's 3 bits alone the sum wrapped to 0 first and NVDLA's
+            // read-ingress `slot_needed = (out_size+1)>>1` said 0 slots for
+            // a 7-beat request (NV_NVDLA_CVIF/MCIF_READ_IG_bpt, formal
+            // `differs`, co-sim PASS).  read_verilog and read_slang both give 4.
+            const bool ctx_det_shift_lhs =
+                (op_type == vpiLShiftOp || op_type == vpiRShiftOp ||
+                 op_type == vpiArithLShiftOp || op_type == vpiArithRShiftOp) &&
+                operands.empty() && expression_context_width > 0;
             int cond_saved_ctx = expression_context_width;
             bool cond_saved_fcf = force_const_fold;
             bool cond_saved_unsigned = expression_context_unsigned;
+            if (ctx_det_shift_lhs) {
+                int sdw = self_determined_width(operand, input_mapping);
+                if (sdw > expression_context_width) expression_context_width = sdw;
+            }
             if (((op_type == vpiConditionOp || op_type == vpiMultiConcatOp) &&
                  operands.empty()) || self_det_rhs) {
                 expression_context_width = 0;
@@ -10120,6 +10137,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
             }
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
+            if (ctx_det_shift_lhs)
+                expression_context_width = cond_saved_ctx;
             if (op_type == vpiConditionOp || op_type == vpiMultiConcatOp || self_det_rhs) {
                 expression_context_width = cond_saved_ctx;
                 force_const_fold = cond_saved_fcf;
