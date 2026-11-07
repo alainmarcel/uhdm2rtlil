@@ -1,0 +1,9 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+check -assert
+# dinit = a ; dtarget = a & b ; ready = address = dtarget ^ a
+sat -verify -prove dinit 1'b1 -prove dtarget 1'b0 -prove ready 1'b1 -set a 1'b1 -set b 1'b0
+sat -verify -prove dinit 1'b1 -prove dtarget 1'b1 -prove ready 1'b0 -set a 1'b1 -set b 1'b1
+sat -verify -prove dinit2 1'b1 -prove dtarget2 1'b1 -prove ready2 1'b0 -set c 1'b1 -set d 1'b1
+sat -verify -prove dinit2 1'b0 -prove dtarget2 1'b0 -prove ready2 1'b0 -set c 1'b0 -set d 1'b1

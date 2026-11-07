@@ -524,6 +524,23 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         // creation below is skipped.
                         modport_field_dir_[module->name.str() + ":" + portname +
                                            ":" + sig_name] = io->VpiDirection();
+                        // A RENAMED member (`output .Dout(dinit)`, YosysHQ/
+                        // yosys#2316): the io_decl's Expr() is a ref to the
+                        // interface member the port name stands for.  The
+                        // module sees `<port>.Dout`; its width comes from
+                        // `dinit`, and the instance pairing below connects it
+                        // to `<inst>.dinit`.  Unrecorded, the pairing looked
+                        // for `<inst>.Dout`, found nothing, and the renamed
+                        // ports of every child were left unconnected.
+                        std::string member_name = sig_name;
+                        if (auto ie = io->Expr()) {
+                            std::string en = std::string(ie->VpiName());
+                            if (!en.empty() && en != sig_name) {
+                                member_name = en;
+                                modport_field_src_[module->name.str() + ":" + portname +
+                                                   ":" + sig_name] = en;
+                            }
+                        }
                         std::string full_name = elem_prefix + "." + sig_name;
                         if (name_map.count(full_name)) continue;
                         // Find the matching net/variable in the interface
@@ -531,14 +548,14 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         const UHDM::any* width_obj = nullptr;
                         if (iface_inst->Nets()) {
                             for (auto n : *iface_inst->Nets()) {
-                                if (std::string(n->VpiName()) == sig_name) {
+                                if (std::string(n->VpiName()) == member_name) {
                                     width_obj = n; break;
                                 }
                             }
                         }
                         if (!width_obj && iface_inst->Variables()) {
                             for (auto v : *iface_inst->Variables()) {
-                                if (std::string(v->VpiName()) == sig_name) {
+                                if (std::string(v->VpiName()) == member_name) {
                                     width_obj = v; break;
                                 }
                             }
@@ -3588,6 +3605,10 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         //   ...does not have a port named
                         //   'iccm_mem_export.ic_tag_data_raw_pre'.
                         std::set<std::string> mp_fields;
+                        // port-side field -> interface member it stands for,
+                        // different only for a RENAMED modport port
+                        // (`output .Dout(dinit)`, YosysHQ/yosys#2316).
+                        std::map<std::string, std::string> mp_src;
                         if (!mp_name.empty() && uhdm_design &&
                             uhdm_design->AllInterfaces())
                             for (auto ii : *uhdm_design->AllInterfaces()) {
@@ -3595,19 +3616,37 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                                 for (auto m : *ii->Modports()) {
                                     if (std::string(m->VpiName()) != mp_name ||
                                         !m->Io_decls()) continue;
-                                    for (auto io : *m->Io_decls())
-                                        mp_fields.insert(std::string(io->VpiName()));
+                                    for (auto io : *m->Io_decls()) {
+                                        std::string fn = std::string(io->VpiName());
+                                        mp_fields.insert(fn);
+                                        if (auto ie = io->Expr()) {
+                                            std::string en = std::string(ie->VpiName());
+                                            if (!en.empty() && en != fn) mp_src[fn] = en;
+                                        }
+                                    }
                                 }
                                 if (!mp_fields.empty()) break;
                             }
                         uhdm_trace("    Port %s connected to modport %s of interface %s\n",
                             port_name.c_str(), mp_name.c_str(), src_name.c_str());
                         bool any_field = false;
+                        std::set<std::string> iface_vars(it->second.begin(), it->second.end());
                         for (auto &var_name : it->second) {
                             if (!mp_fields.empty() && !mp_fields.count(var_name))
                                 continue;
                             std::string full_signal_name = src_name + "." + var_name;
                             std::string port_signal_name = port_name + "." + var_name;
+                            RTLIL::Wire* src_w = name_map.count(full_signal_name)
+                                ? name_map[full_signal_name]
+                                : module->wire(RTLIL::escape_id(full_signal_name));
+                            if (!src_w) continue;
+                            cell->setPort(RTLIL::escape_id(port_signal_name), src_w);
+                            any_field = true;
+                        }
+                        for (auto &kv : mp_src) {
+                            if (!iface_vars.count(kv.second)) continue;
+                            std::string full_signal_name = src_name + "." + kv.second;
+                            std::string port_signal_name = port_name + "." + kv.first;
                             RTLIL::Wire* src_w = name_map.count(full_signal_name)
                                 ? name_map[full_signal_name]
                                 : module->wire(RTLIL::escape_id(full_signal_name));

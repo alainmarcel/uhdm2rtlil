@@ -339,6 +339,12 @@ struct UhdmImporter {
     // modport direction, and expanded in a different iteration) inherit the right
     // per-signal direction.
     std::map<std::string, int> modport_field_dir_;
+    // A modport port that RENAMES an interface member -- `modport M(output
+    // .Dout(dinit))` (LRM 25.5.4) -- is declared on the module as `<port>.Dout`
+    // but connects to the instance's `<inst>.dinit`.  Keyed like
+    // modport_field_dir_ ("<module>:<port>:<field>"), value = the member the
+    // modport expression names.  Absent for a plain `output dinit`.
+    std::map<std::string, std::string> modport_field_src_;
 
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
