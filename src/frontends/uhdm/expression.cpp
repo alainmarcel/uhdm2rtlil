@@ -8730,6 +8730,18 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
             if (deftp && !members && deftp->Pattern() && !has_index_key) {
                 int ew = 1, tw = 0;
+                // A VARIABLE INITIALISER (`logic [1:0][7:0] ini = '{default:
+                // 8'hA5}`, YosysHQ/yosys#6120) has no assignment LHS to read
+                // the target shape from; the importer threads the variable's
+                // own typespec through expression_context_typespec instead.
+                // Only accept it when it measures the whole context width --
+                // the element-target trap the comment above describes is a
+                // type wider than the context.
+                if (!ats && expression_context_typespec && expression_context_width > 0 &&
+                    (expression_context_typespec->UhdmType() == uhdmlogic_typespec ||
+                     expression_context_typespec->UhdmType() == uhdmpacked_array_typespec) &&
+                    get_width_from_typespec(expression_context_typespec, inst) == expression_context_width)
+                    ats = expression_context_typespec;
                 if (ats) {
                     tw = get_width_from_typespec(ats, inst);
                     if (auto pt = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {

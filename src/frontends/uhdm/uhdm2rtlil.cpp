@@ -6528,7 +6528,21 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
 
+                    // Import the initialiser AGAINST THE VARIABLE'S TYPE, as the
+                    // packed_array_var / struct_var branch below already does:
+                    // an assignment pattern (`logic [1:0][7:0] ini = '{default:
+                    // 8'hA5}`, YosysHQ/yosys#6120) needs the target's shape to
+                    // fill every element -- imported bare it was one 8-bit
+                    // element, zero-extended to the 16-bit variable, and
+                    // ini[1] read 0.
+                    int saved_ctx_w_ = expression_context_width;
+                    const UHDM::typespec* saved_ctx_ts_ = expression_context_typespec;
+                    expression_context_width = wire->width;
+                    if (logic_var->Typespec() && logic_var->Typespec()->Actual_typespec())
+                        expression_context_typespec = logic_var->Typespec()->Actual_typespec();
                     RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
+                    expression_context_typespec = saved_ctx_ts_;
+                    expression_context_width = saved_ctx_w_;
                     if (init_value.size() > 0) {
                         RTLIL::SigSpec lhs(wire);
 
