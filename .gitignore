@@ -106,3 +106,5 @@ test/**/check_undriven.ys
 test/**/auto_slang_equiv.ys
 # run_parallel.sh's per-shard logs and merged result files.
 test/parallel_results/
+# the yosys-issue harvest's fetched tracker bodies (test/yosys_issues/harvest.py fetch)
+test/yosys_issues/harvest/
