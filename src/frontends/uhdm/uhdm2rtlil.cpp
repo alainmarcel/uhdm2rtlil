@@ -3705,6 +3705,23 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
     if (uhdm_module->Ports()) {
         RTLIL::Module* saved_m = this->module;
         this->module = design->addModule(NEW_ID);
+        // Measure the ports AGAINST THIS INSTANCE.  A port typed by the
+        // module's own `parameter type T` resolves `T` through
+        // resolve_type_param_typespec_step, which consults `current_instance`
+        // first -- the instance whose BODY is being imported, not the child
+        // whose signature is wanted.  While the body of a 75-bit
+        // `cc_spill_register #(.T(w_chan_t), .Bypass(1))` was imported, its
+        // inner `cc_spill_register_flushable #(.T(T))` resolved `T` against
+        // whatever instance was current and measured 7 bits (the B channel),
+        // so the W spill register's inner stage became the 7-bit paramod --
+        // which in turn bound ITS inner to the 75-bit flushable: PULP
+        // axi_id_serialize_intf's B channel went through a 75-bit register
+        // (formal `differs`, co-sim PASS).  The elaborated instance passed in
+        // carries its own bindings; point the resolver at it.
+        const UHDM::module_inst* saved_ci = current_instance;
+        const UHDM::scope* saved_cs = current_scope;
+        current_instance = uhdm_module;
+        current_scope = nullptr;
         for (auto port : *uhdm_module->Ports()) {
             int w = get_width(port, uhdm_module);
             if (mode_debug) {
@@ -3719,6 +3736,8 @@ std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
             }
             sig += "_" + std::to_string(w);
         }
+        current_instance = saved_ci;
+        current_scope = saved_cs;
         discard_eval_module(this->module);
         this->module = saved_m;
     }
