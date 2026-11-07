@@ -34,64 +34,85 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 |---|---|---|---|---|
 | internal tests | 1392 | 135 | 132 | 3 |
 | yosys tests | 495 | 147 | 97 | 50 |
-| sweep adams-bridge | 1 rows read | 1 | 0 | 1 |
-| sweep aes | 1 rows read | 1 | 1 | 0 |
-| sweep aib-phy-hardware | 3 rows read | 3 | 3 | 0 |
-| sweep aib-protocols | 9 rows read | 9 | 9 | 0 |
-| sweep axi | 12 rows read | 12 | 5 | 7 |
-| sweep biriscv | 4 rows read | 4 | 4 | 0 |
-| sweep black-parrot | 43 rows read | 43 | 31 | 12 |
-| sweep boom | 23 rows read | 23 | 4 | 19 |
-| sweep caliptra-ss | 17 rows read | 17 | 13 | 4 |
-| sweep cheshire | 52 rows read | 52 | 30 | 22 |
-| sweep common_cells | 1 rows read | 1 | 0 | 1 |
-| sweep core-v-mcu | 39 rows read | 39 | 27 | 12 |
-| sweep cv32e40p | 5 rows read | 5 | 1 | 4 |
-| sweep cv32e40s | 8 rows read | 8 | 6 | 2 |
-| sweep cv32e40x | 9 rows read | 9 | 7 | 2 |
-| sweep cva6 | 14 rows read | 14 | 0 | 14 |
-| sweep cva6-hext | 14 rows read | 14 | 0 | 14 |
-| sweep cva6-hpdcache | 14 rows read | 14 | 0 | 14 |
-| sweep cva6-rv32 | 25 rows read | 25 | 4 | 21 |
-| sweep cve2 | 4 rows read | 4 | 2 | 2 |
-| sweep cvfpu | 2 rows read | 2 | 2 | 0 |
-| sweep cvw | 6 rows read | 6 | 5 | 1 |
-| sweep dragonfly | 3 rows read | 3 | 0 | 3 |
-| sweep egret | 4 rows read | 4 | 0 | 4 |
-| sweep fx68k | 8 rows read | 8 | 2 | 6 |
-| sweep gemmini | 13 rows read | 13 | 6 | 7 |
-| sweep hazard3 | 5 rows read | 5 | 3 | 2 |
-| sweep hdmi | 2 rows read | 2 | 2 | 0 |
-| sweep ibex | 6 rows read | 6 | 3 | 3 |
-| sweep kmac | 1 rows read | 1 | 1 | 0 |
-| sweep nvdla | 5 rows read | 5 | 3 | 2 |
-| sweep openc910 | 5 rows read | 5 | 1 | 4 |
-| sweep opene906 | 1 rows read | 1 | 0 | 1 |
-| sweep openpiton | 94 rows read | 94 | 11 | 83 |
-| sweep opentitan | 5 rows read | 5 | 1 | 4 |
-| sweep opentitan-ip | 43 rows read | 43 | 23 | 20 |
-| sweep pavona | 2 rows read | 2 | 0 | 2 |
-| sweep periph | 1 rows read | 1 | 0 | 1 |
-| sweep periph5 | 1 rows read | 1 | 0 | 1 |
-| sweep pulpissimo | 55 rows read | 55 | 32 | 23 |
-| sweep rocket-chip | 7 rows read | 7 | 4 | 3 |
-| sweep rp32 | 11 rows read | 11 | 3 | 8 |
-| sweep rsd | 22 rows read | 22 | 5 | 17 |
-| sweep serv | 1 rows read | 1 | 0 | 1 |
-| sweep snitch | 20 rows read | 20 | 10 | 10 |
-| sweep sonata-system | 9 rows read | 9 | 6 | 3 |
-| sweep sv-synth-tests | 22 rows read | 22 | 1 | 21 |
-| sweep tech_cells_generic | 3 rows read | 3 | 2 | 1 |
-| sweep tlul | 2 rows read | 2 | 0 | 2 |
-| sweep tnoc | 23 rows read | 23 | 6 | 17 |
-| sweep veer-eh1 | 1 rows read | 1 | 1 | 0 |
-| sweep veer-eh2 | 6 rows read | 6 | 6 | 0 |
-| sweep veer-el2 | 5 rows read | 5 | 5 | 0 |
-| sweep veerwolf | 3 rows read | 3 | 2 | 1 |
-| sweep verilog-ethernet | 20 rows read | 20 | 18 | 2 |
-| sweep verilog-pcie | 19 rows read | 19 | 7 | 12 |
-| sweep xiangshan-core-full | 3 rows read | 3 | 1 | 2 |
-| sweep zipcpu | 1 rows read | 1 | 1 | 0 |
+| sweep acc | 12 modules | 0 | 0 | 0 |
+| sweep adams-bridge | 117 modules | 1 | 0 | 1 |
+| sweep aes | 36 modules | 1 | 1 | 0 |
+| sweep aib-phy-hardware | 75 modules | 3 | 3 | 0 |
+| sweep aib-protocols | 397 modules | 9 | 9 | 0 |
+| sweep apb | 8 modules | 0 | 0 | 0 |
+| sweep axi | 108 modules | 12 | 5 | 7 |
+| sweep biriscv | 44 modules | 4 | 4 | 0 |
+| sweep black-parrot | 125 modules | 43 | 31 | 12 |
+| sweep boom | 422 modules | 23 | 4 | 19 |
+| sweep caliptra | 22 modules | 0 | 0 | 0 |
+| sweep caliptra-ss | 273 modules | 17 | 13 | 4 |
+| sweep cheshire | 266 modules | 52 | 30 | 22 |
+| sweep common_cells | 120 modules | 1 | 0 | 1 |
+| sweep core-v-mcu | 455 modules | 39 | 27 | 12 |
+| sweep csrng | 19 modules | 0 | 0 | 0 |
+| sweep cv32e40p | 26 modules | 5 | 1 | 4 |
+| sweep cv32e40s | 48 modules | 8 | 6 | 2 |
+| sweep cv32e40x | 42 modules | 9 | 7 | 2 |
+| sweep cva6 | 142 modules | 14 | 0 | 14 |
+| sweep cva6-chip | 138 modules | 0 | 0 | 0 |
+| sweep cva6-hext | 142 modules | 14 | 0 | 14 |
+| sweep cva6-hpdcache | 145 modules | 14 | 0 | 14 |
+| sweep cva6-rv32 | 142 modules | 25 | 4 | 21 |
+| sweep cve2 | 23 modules | 4 | 2 | 2 |
+| sweep cvfpu | 20 modules | 2 | 2 | 0 |
+| sweep cvw | 220 modules | 6 | 5 | 1 |
+| sweep dragonfly | 52 modules | 3 | 0 | 3 |
+| sweep edn | 6 modules | 0 | 0 | 0 |
+| sweep egret | 48 modules | 4 | 0 | 4 |
+| sweep entropy_src | 15 modules | 0 | 0 | 0 |
+| sweep fx68k | 22 modules | 8 | 2 | 6 |
+| sweep gemmini | 384 modules | 13 | 6 | 7 |
+| sweep hazard3 | 25 modules | 5 | 3 | 2 |
+| sweep hdmi | 11 modules | 2 | 2 | 0 |
+| sweep hmac | 10 modules | 0 | 0 | 0 |
+| sweep ibex | 28 modules | 6 | 3 | 3 |
+| sweep keymgr | 12 modules | 0 | 0 | 0 |
+| sweep kmac | 15 modules | 1 | 1 | 0 |
+| sweep litex | 4 modules | 0 | 0 | 0 |
+| sweep naxriscv | 24 modules | 0 | 0 | 0 |
+| sweep nvdla | 914 modules | 5 | 3 | 2 |
+| sweep openc910 | 482 modules | 5 | 1 | 4 |
+| sweep opene906 | 255 modules | 1 | 0 | 1 |
+| sweep openpiton | 852 modules | 94 | 11 | 83 |
+| sweep opentitan | 32 modules | 5 | 1 | 4 |
+| sweep opentitan-ip | 605 modules | 43 | 23 | 20 |
+| sweep pavona | 26 modules | 2 | 0 | 2 |
+| sweep periph | 29 modules | 1 | 0 | 1 |
+| sweep periph2 | 33 modules | 0 | 0 | 0 |
+| sweep periph3 | 18 modules | 0 | 0 | 0 |
+| sweep periph4 | 17 modules | 0 | 0 | 0 |
+| sweep periph5 | 31 modules | 1 | 0 | 1 |
+| sweep pulpissimo | 327 modules | 55 | 32 | 23 |
+| sweep register_interface | 19 modules | 0 | 0 | 0 |
+| sweep rggen | 25 modules | 0 | 0 | 0 |
+| sweep rocket-chip | 235 modules | 7 | 4 | 3 |
+| sweep rp32 | 13 modules | 11 | 3 | 8 |
+| sweep rsd | 165 modules | 22 | 5 | 17 |
+| sweep scr1 | 37 modules | 0 | 0 | 0 |
+| sweep serv | 29 modules | 1 | 0 | 1 |
+| sweep snitch | 104 modules | 20 | 10 | 10 |
+| sweep sonata-system | 37 modules | 9 | 6 | 3 |
+| sweep sv-synth-tests | 434 modules | 22 | 1 | 21 |
+| sweep sv-tests | 708 modules | 0 | 0 | 0 |
+| sweep tech_cells_generic | 52 modules | 3 | 2 | 1 |
+| sweep tlul | 21 modules | 2 | 0 | 2 |
+| sweep tnoc | 43 modules | 23 | 6 | 17 |
+| sweep veer-eh1 | 67 modules | 1 | 1 | 0 |
+| sweep veer-eh2 | 100 modules | 6 | 6 | 0 |
+| sweep veer-el2 | 91 modules | 5 | 5 | 0 |
+| sweep veerwolf | 26 modules | 3 | 2 | 1 |
+| sweep verilog-ethernet | 129 modules | 20 | 18 | 2 |
+| sweep verilog-pcie | 93 modules | 19 | 7 | 12 |
+| sweep vexriscv | 3 modules | 0 | 0 | 0 |
+| sweep vta | 66 modules | 0 | 0 | 0 |
+| sweep xiangshan | 21 modules | 0 | 0 | 0 |
+| sweep xiangshan-core-full | 2002 modules | 3 | 1 | 2 |
+| sweep zipcpu | 51 modules | 1 | 1 | 0 |
 
 The yosys line counts every generated `run/` directory, 29 of which the regression does not score (the deliberately invalid `tests/errors` and tests that produce no RTLIL under any frontend); the regression's own count is 547.
 
@@ -902,28 +923,28 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main` (2cccba608, 2026-11-06): this class is EMPTY.**  Every row
-that was ever listed here co-simulates clean with the `read_uhdm` netlist
-(`R3` recipe, 301 cycles), so none is listed.  The fixes that emptied it:
-[#1443](https://github.com/alainmarcel/uhdm2rtlil/pull/1443),
-[#1464](https://github.com/alainmarcel/uhdm2rtlil/pull/1464),
-[#1466](https://github.com/alainmarcel/uhdm2rtlil/pull/1466) (with Surelog
-[#4248](https://github.com/chipsalliance/Surelog/pull/4248)),
-[#1467](https://github.com/alainmarcel/uhdm2rtlil/pull/1467),
-[#1468](https://github.com/alainmarcel/uhdm2rtlil/pull/1468),
-[#1470](https://github.com/alainmarcel/uhdm2rtlil/pull/1470),
-[#1471](https://github.com/alainmarcel/uhdm2rtlil/pull/1471),
-[#1472](https://github.com/alainmarcel/uhdm2rtlil/pull/1472) and
-[#1473](https://github.com/alainmarcel/uhdm2rtlil/pull/1473) -- a `$bits` over
-a type-parameter port, an unbased unsized literal in a comparison, a comb `for`
-with a runtime bound, `foreach` over a type-parameter packed array, an always_ff
-blocking temp read as the block's final value, generate-scope select writes
-resolved by their bare name, an indexed struct-parameter member read as X, and
-an enum-bound `parameter type` port sized from its generic default.
+**Status on `main`: this class is EMPTY.**  10 row(s) ever listed here co-simulate clean
+with the `read_uhdm` netlist on `main` and are not listed; the fixes that
+closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
-A row that appears here again is a regression, not a stale entry: the entry
-must name the sweep, the module, the divergence count and the fix that closes
-it, and leave as soon as the row co-simulates clean on `main`.
+| row | closed by |
+|---|---|
+| `cheshire/apb_uart` | #1466 (Surelog #4248: `$bits(port.member)` over a type-parameter port), 2026-11-06 |
+| `cheshire/axi_rt_unit_top_synth` | #1464 (unbased unsized literal in a comparison), 2026-11-06 |
+| `cheshire/obi_uart_tx` | #1467 (comb `for` with a runtime bound: guarded writes recorded unconditionally), 2026-11-06 |
+| `cheshire/reg_uart_wrap` | #1466 (same as apb_uart, seen through reg_to_apb), 2026-11-06 |
+| `cheshire/slink_ch_alloc` | #1443 (`foreach` index unsigned) + #1468 (`foreach` over a type-parameter packed array), 2026-11-06 |
+| `cvw/wallypipelinedcore` | #1473 (enum-bound `parameter type` port sized from its generic default), 2026-11-06 |
+| `openpiton/bw_r_dtlb` | #1470 (always_ff blocking temp read as the block's final value); formal differs adjudicated #1469, 2026-11-06 |
+| `openpiton/bw_r_itlb` | #1470; formal differs adjudicated #1469, 2026-11-06 |
+| `snitch/spatz_ipu` | #1437 + #1441 + #1470, 2026-11-06 |
+| `snitch/spatz_vfu` | #1471 (generate-scope select writes by bare name) + #1472 (indexed struct-parameter member read as X), 2026-11-06 |
+
+A row listed below is open: the latest sweep reports show it diverging with the
+`read_uhdm` netlist and it is not in the closed list.  A closed row that comes back
+is a regression, not a stale entry.
+
+**0** open row(s).
 
 Two of the divergences localised on the way were the REFERENCE's, not ours,
 and are recorded rather than fixed: Verilator masks an out-of-range index into
@@ -931,3 +952,4 @@ a power-of-two array (OpenPiton's `tte_csm_buf[3]` on a 2-entry buffer wraps to
 entry 1 in the RTL and the slang netlist alike; iverilog and `read_uhdm` ignore
 the write, LRM 7.4.6), and the matching out-of-range READ is X by the LRM, which
 the SAT miter can always tell apart (`test/formal_adjudicated.txt`).
+
