@@ -32,7 +32,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 
 | set | tests / modules | read_slang fails | of which in this report | in incomplete_testcases.md |
 |---|---|---|---|---|
-| internal tests | 1392 | 135 | 132 | 3 |
+| internal tests | 1834 | 147 | 144 | 3 |
 | yosys tests | 495 | 147 | 97 | 50 |
 | sweep acc | 12 modules | 0 | 0 | 0 |
 | sweep adams-bridge | 117 modules | 1 | 0 | 1 |
@@ -124,12 +124,12 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 
 | kind | class | internal | yosys | sweeps |
 |---|---|---|---|---|
-| sim-only | `#` delay / timing control | 14 | 11 | 10 |
+| sim-only | `#` delay / timing control | 15 | 11 | 10 |
+| sim-only | unsupported system task (`$past`, `$stable`, `$fopen`, ...) | 9 | 5 | 3 |
 | sim-only | non-blocking assignment in design initialization | 5 | 4 | 6 |
-| sim-only | unsupported system task (`$past`, `$stable`, `$fopen`, ...) | 6 | 5 | 3 |
+| sim-only | net state read in design initialization | 10 | 1 | 0 |
 | sim-only | SystemVerilog assertion (SVA) feature | 5 | 6 | 0 |
-| sim-only | net state read in design initialization | 7 | 1 | 0 |
-| sim-only | unsynthesizable feature (string, event, dynamic size) | 5 | 1 | 2 |
+| sim-only | unsynthesizable feature (string, event, dynamic size) | 6 | 1 | 2 |
 | strict | type rule (packed dims on int type, port initializer, member access, argument count, ...) | 18 | 9 | 49 |
 | strict | syntax slang rejects (`expected ...`, macro, binary digit) | 10 | 12 | 29 |
 | strict | name used before declaration / undeclared | 4 | 4 | 36 |
@@ -144,18 +144,19 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | strict | hierarchical reference inside a constant function call (`$bits(inst.sig)`) | 0 | 0 | 6 |
 | strict | redefinition / duplicate definition | 1 | 3 | 1 |
 | synth-limit | flip-flop with multiple / non-canonical asynchronous loads | 3 | 5 | 9 |
-| synth-limit | `unsupported language feature` | 9 | 3 | 0 |
+| synth-limit | `unsupported language feature` | 10 | 3 | 0 |
 | synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 0 | 7 |
 | synth-limit | read_slang did not finish within the sweep's time budget | 0 | 0 | 7 |
 | synth-limit | net declaration initializer / `$readmemh` (sv-elab) | 0 | 0 | 6 |
 | bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 54 |
-| bug | internal frontend error / failed assert / abort / bad_alloc | 7 | 4 | 10 |
+| bug | internal frontend error / failed assert / abort / bad_alloc | 9 | 4 | 10 |
 | bug | `Feature unimplemented` | 5 | 1 | 9 |
 | unclassified | ERROR: 'obi_inst_req_t' cannot be used in an expression | 0 | 0 | 8 |
 | unclassified | ERROR: replication constant can only be zero inside of a concatenation | 0 | 0 | 7 |
 | unclassified | ERROR: 'MEM_CACHE_STREAM_ID' cannot be used in an expression | 0 | 0 | 2 |
 | unclassified | ERROR: unroll limit of 4000 exhausted [--unroll-limit=] | 0 | 0 | 2 |
 | unclassified | dut.sv:26: ERROR: assignment pattern does not cover all elements of ty | 1 | 0 | 0 |
+| unclassified | dut.sv:11: ERROR: unroll limit of 4000 exhausted [--unroll-limit=] | 1 | 0 | 0 |
 | unclassified | ERROR: invalid target type 'req_t' (aka 'logic') for assignment patter | 0 | 0 | 1 |
 | unclassified | ERROR: invalid target type 'mst_req_t' (aka 'logic') for assignment pa | 0 | 0 | 1 |
 | unclassified | ERROR: argument of type 'integer' connects to 'ref' port of inequivale | 0 | 0 | 1 |
@@ -166,7 +167,7 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 
 Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regression's co-sim never sees them); slang rejects them unless told `--ignore-timing` / `--ignore-assertions` / `--ignore-initial`.
 
-### `#` delay / timing control -- 35
+### `#` delay / timing control -- 36
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -178,6 +179,7 @@ Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regr
 | internal test | [`fsm_using_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fsm_using_function) | dut.sv:61: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one fsm_using_function` |
 | internal test | [`initial_seq_values`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/initial_seq_values) | dut.sv:21: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one initial_seq_values` |
 | internal test | [`power_state`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/power_state) | dut.sv:17: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one power_state` |
+| internal test | [`sv_tests/cont_assignment_delay`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/cont_assignment_delay) | dut.sv:8: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sv_tests/cont_assignment_delay` |
 | internal test | [`sva_counter`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_counter) | dut.sv:16: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_counter` |
 | internal test | [`sva_range`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_range) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_range` |
 | internal test | [`sva_throughout`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_throughout) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R1 `./slang_coverage_sweep.sh --one sva_throughout` |
@@ -206,6 +208,28 @@ Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regr
 | yosys test | [`run/sva/sva_value_change_changed_wide`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_changed_wide) | dut.sv:6: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_changed_wide` |
 | yosys test | [`run/sva/sva_value_change_rose`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_value_change_rose) | dut.sv:5: ERROR: unsynthesizable timing control (ignore with '--ignore-timing') | R2 `./slang_coverage_sweep.sh --one run/sva/sva_value_change_rose` |
 
+### unsupported system task (`$past`, `$stable`, `$fopen`, ...) -- 17
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`GetC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/GetC) | dut.sv:3: ERROR: unsupported system task 'getc' | R1 `./slang_coverage_sweep.sh --one GetC` |
+| internal test | [`MonitorInputPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MonitorInputPort) | dut.sv:3: ERROR: unsupported system task '$monitor' | R1 `./slang_coverage_sweep.sh --one MonitorInputPort` |
+| internal test | [`PutC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PutC) | dut.sv:5: ERROR: unsupported system task 'putc' | R1 `./slang_coverage_sweep.sh --one PutC` |
+| internal test | [`SizeOfGeneratedWireArray`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/SizeOfGeneratedWireArray) | dut.sv:9: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one SizeOfGeneratedWireArray` |
+| internal test | [`named_genblk_cascade`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/named_genblk_cascade) | dut.sv:26: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one named_genblk_cascade` |
+| internal test | [`sv_tests/countbits_function`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/countbits_function) | dut.sv:11: ERROR: unsupported system task '$countbits' | R1 `./slang_coverage_sweep.sh --one sv_tests/countbits_function` |
+| internal test | [`sv_tests/display_boh`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/display_boh) | dut.sv:10: ERROR: unsupported system task '$displayb' | R1 `./slang_coverage_sweep.sh --one sv_tests/display_boh` |
+| internal test | [`sv_tests/write_boh`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/write_boh) | dut.sv:8: ERROR: unsupported system task '$writeb' | R1 `./slang_coverage_sweep.sh --one sv_tests/write_boh` |
+| internal test | [`sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_sim) | dut.sv:24: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported | R1 `./slang_coverage_sweep.sh --one sva_value_change_sim` |
+| sweep core-v-mcu | [`rand_stream_mst`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/common_verification/src/rand_stream_mst.sv#L12) | ERROR: unsupported system task 'randomize' | R3 `python3 ext_flow.py core-v-mcu rand_stream_mst` |
+| sweep veer-eh2 | [`eh2_veer_wrapper`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/eh2_veer_wrapper.sv#L23) | ERROR: unsupported system task '$assertoff' | R3 `python3 ext_flow.py veer-eh2 eh2_veer_wrapper` |
+| sweep zipcpu | [`zipwb`](https://github.com/ZipCPU/zipcpu/blob/42606d2d6ef55df313772232977621b2d72f0159/rtl/core/zipwb.v#L101) | ERROR: unsupported system task '$finish' | R3 `python3 ext_flow.py zipcpu zipwb` |
+| yosys test | [`run/asicworld/code_hdl_models_arbiter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_hdl_models_arbiter_tb) | dut.v:22: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_hdl_models_arbiter_tb` |
+| yosys test | [`run/asicworld/code_verilog_tutorial_first_counter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_first_counter_tb) | dut.v:9: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_first_counter_tb` |
+| yosys test | [`run/asicworld/code_verilog_tutorial_fsm_full_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_fsm_full_tb) | dut.v:10: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_fsm_full_tb` |
+| yosys test | [`run/fmt/always_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_full) | dut.v:8: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/always_full` |
+| yosys test | [`run/fmt/initial_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/initial_display) | dut.v:7: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/initial_display` |
+
 ### non-blocking assignment in design initialization -- 15
 
 | set | test | diagnostic | recipe |
@@ -226,24 +250,21 @@ Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regr
 | yosys test | [`run/sat/grom_computer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/grom_computer) | ram_memory.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/grom_computer` |
 | yosys test | [`run/sat/ram_memory`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/ram_memory) | dut.v:13: ERROR: non-blocking assignments unsupported in design initialization | R2 `./slang_coverage_sweep.sh --one run/sat/ram_memory` |
 
-### unsupported system task (`$past`, `$stable`, `$fopen`, ...) -- 14
+### net state read in design initialization -- 11
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
-| internal test | [`GetC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/GetC) | dut.sv:3: ERROR: unsupported system task 'getc' | R1 `./slang_coverage_sweep.sh --one GetC` |
-| internal test | [`MonitorInputPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/MonitorInputPort) | dut.sv:3: ERROR: unsupported system task '$monitor' | R1 `./slang_coverage_sweep.sh --one MonitorInputPort` |
-| internal test | [`PutC`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/PutC) | dut.sv:5: ERROR: unsupported system task 'putc' | R1 `./slang_coverage_sweep.sh --one PutC` |
-| internal test | [`SizeOfGeneratedWireArray`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/SizeOfGeneratedWireArray) | dut.sv:9: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one SizeOfGeneratedWireArray` |
-| internal test | [`named_genblk_cascade`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/named_genblk_cascade) | dut.sv:26: ERROR: unsupported system task '$bits' | R1 `./slang_coverage_sweep.sh --one named_genblk_cascade` |
-| internal test | [`sva_value_change_sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sva_value_change_sim) | dut.sv:24: ERROR: $past gating_expr (3rd argument) and clocking_event (4th argument) are not supported | R1 `./slang_coverage_sweep.sh --one sva_value_change_sim` |
-| sweep core-v-mcu | [`rand_stream_mst`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/common_verification/src/rand_stream_mst.sv#L12) | ERROR: unsupported system task 'randomize' | R3 `python3 ext_flow.py core-v-mcu rand_stream_mst` |
-| sweep veer-eh2 | [`eh2_veer_wrapper`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/eh2_veer_wrapper.sv#L23) | ERROR: unsupported system task '$assertoff' | R3 `python3 ext_flow.py veer-eh2 eh2_veer_wrapper` |
-| sweep zipcpu | [`zipwb`](https://github.com/ZipCPU/zipcpu/blob/42606d2d6ef55df313772232977621b2d72f0159/rtl/core/zipwb.v#L101) | ERROR: unsupported system task '$finish' | R3 `python3 ext_flow.py zipcpu zipwb` |
-| yosys test | [`run/asicworld/code_hdl_models_arbiter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_hdl_models_arbiter_tb) | dut.v:22: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_hdl_models_arbiter_tb` |
-| yosys test | [`run/asicworld/code_verilog_tutorial_first_counter_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_first_counter_tb) | dut.v:9: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_first_counter_tb` |
-| yosys test | [`run/asicworld/code_verilog_tutorial_fsm_full_tb`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/asicworld/code_verilog_tutorial_fsm_full_tb) | dut.v:10: ERROR: too few arguments for '$fopen'; expected 1 but 0 were provided | R2 `./slang_coverage_sweep.sh --one run/asicworld/code_verilog_tutorial_fsm_full_tb` |
-| yosys test | [`run/fmt/always_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/always_full) | dut.v:8: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/always_full` |
-| yosys test | [`run/fmt/initial_display`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/initial_display) | dut.v:7: ERROR: unknown format specifier '%+' | R2 `./slang_coverage_sweep.sh --one run/fmt/initial_display` |
+| internal test | [`InterfaceWithPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/InterfaceWithPort) | dut.sv:2: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one InterfaceWithPort` |
+| internal test | [`array_init_2d`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/array_init_2d) | dut.sv:30: ERROR: internal error: evaluation does not resolve to a constant in design initialization | R1 `./slang_coverage_sweep.sh --one array_init_2d` |
+| internal test | [`fib_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib_simple) | dut.sv:21: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one fib_simple` |
+| internal test | [`function_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/function_output) | dut.sv:16: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one function_output` |
+| internal test | [`ibex_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top` |
+| internal test | [`ibex_top_tracing`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top_tracing) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top_tracing` |
+| internal test | [`ibex_tracer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_tracer) | ibex_tracer.sv:77: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_tracer` |
+| internal test | [`sv_tests/assert_test`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/assert_test) | dut.sv:7: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one sv_tests/assert_test` |
+| internal test | [`sv_tests/assume_test`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/assume_test) | dut.sv:7: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one sv_tests/assume_test` |
+| internal test | [`sv_tests/cover_test`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/cover_test) | dut.sv:7: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one sv_tests/cover_test` |
+| yosys test | [`run/opt/opt_share_cat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_share_cat) | dut.v:10: ERROR: reading net state during design initialization unsupported | R2 `./slang_coverage_sweep.sh --one run/opt/opt_share_cat` |
 
 ### SystemVerilog assertion (SVA) feature -- 11
 
@@ -261,20 +282,7 @@ Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regr
 | yosys test | [`run/sva/nested_clk_else`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/nested_clk_else) | dut.sv:4: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/nested_clk_else` |
 | yosys test | [`run/sva/sva_not`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sva/sva_not) | dut.sv:25: ERROR: encountered unsupported SVA feature | R2 `./slang_coverage_sweep.sh --one run/sva/sva_not` |
 
-### net state read in design initialization -- 8
-
-| set | test | diagnostic | recipe |
-|---|---|---|---|
-| internal test | [`InterfaceWithPort`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/InterfaceWithPort) | dut.sv:2: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one InterfaceWithPort` |
-| internal test | [`array_init_2d`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/array_init_2d) | dut.sv:30: ERROR: internal error: evaluation does not resolve to a constant in design initialization | R1 `./slang_coverage_sweep.sh --one array_init_2d` |
-| internal test | [`fib_simple`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/fib_simple) | dut.sv:21: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one fib_simple` |
-| internal test | [`function_output`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/function_output) | dut.sv:16: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one function_output` |
-| internal test | [`ibex_top`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top` |
-| internal test | [`ibex_top_tracing`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_top_tracing) | ibex_top.sv:578: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_top_tracing` |
-| internal test | [`ibex_tracer`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/ibex_tracer) | ibex_tracer.sv:77: ERROR: reading net state during design initialization unsupported | R1 `./slang_coverage_sweep.sh --one ibex_tracer` |
-| yosys test | [`run/opt/opt_share_cat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/opt/opt_share_cat) | dut.v:10: ERROR: reading net state during design initialization unsupported | R2 `./slang_coverage_sweep.sh --one run/opt/opt_share_cat` |
-
-### unsynthesizable feature (string, event, dynamic size) -- 8
+### unsynthesizable feature (string, event, dynamic size) -- 9
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -283,6 +291,7 @@ Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regr
 | internal test | [`RealValue`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/RealValue) | dut.sv:3: ERROR: value of type 'real' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one RealValue` |
 | internal test | [`cdc_static_basic`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/cdc_static_basic) | dut.sv:6: ERROR: value of type 'real' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one cdc_static_basic` |
 | internal test | [`display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/display_lm) | dut.sv:11: ERROR: unsynthesizable feature | R1 `./slang_coverage_sweep.sh --one display_lm` |
+| internal test | [`sv_tests/basic-union`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/basic-union) | dut.sv:10: ERROR: value of type 'union' is unsupported for conversion to bits in this context | R1 `./slang_coverage_sweep.sh --one sv_tests/basic-union` |
 | sweep core-v-mcu | [`generic_memory`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/vendor/pulp_platform_tech_cells_generic/src/deprecated/generic_memory.sv#L11) | ERROR: expression of type string with dynamic size unsupported for synthesis | R3 `python3 ext_flow.py core-v-mcu generic_memory` |
 | sweep core-v-mcu | [`uart_tb_rx`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/vip/uart_tb_rx.sv#L21) | ERROR: value of type 'real' is unsupported for conversion to bits in this context | R3 `python3 ext_flow.py core-v-mcu uart_tb_rx` |
 | yosys test | [`run/fmt/display_lm`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/fmt/display_lm) | dut.v:11: ERROR: unsynthesizable feature | R2 `./slang_coverage_sweep.sh --one run/fmt/display_lm` |
@@ -676,7 +685,7 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 | yosys test | [`run/techmap/dfflibmap-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap-sim) | dut.v:12: ERROR: multiple asynchronous loads unsupported | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap-sim` |
 | yosys test | [`run/techmap/dfflibmap_dffsr_mixedpol-sim`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/techmap/dfflibmap_dffsr_mixedpol-sim) | dut.v:3: ERROR: multiple asynchronous loads unsupported | R2 `./slang_coverage_sweep.sh --one run/techmap/dfflibmap_dffsr_mixedpol-sim` |
 
-### `unsupported language feature` -- 12
+### `unsupported language feature` -- 13
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -689,6 +698,7 @@ Constructs sv-elab, read_slang's synthesis layer, does not lower yet.
 | internal test | [`Repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/Repeat) | dut.sv:4: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one Repeat` |
 | internal test | [`TaskReturn`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/TaskReturn) | dut.sv:3: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one TaskReturn` |
 | internal test | [`counters_repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/counters_repeat) | dut.sv:29: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one counters_repeat` |
+| internal test | [`sv_tests/repeat_loop`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/repeat_loop) | dut.sv:12: ERROR: unsupported language feature | R1 `./slang_coverage_sweep.sh --one sv_tests/repeat_loop` |
 | yosys test | [`run/memlib/memlib_block_sp`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp) | dut.v:77: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp` |
 | yosys test | [`run/memlib/memlib_block_sp_full`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/memlib/memlib_block_sp_full) | dut.v:78: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/memlib/memlib_block_sp_full` |
 | yosys test | [`run/sat/counters-repeat`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/sat/counters-repeat) | dut.v:29: ERROR: unsupported language feature | R2 `./slang_coverage_sweep.sh --one run/sat/counters-repeat` |
@@ -791,7 +801,7 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep verilog-pcie | [`pcie_s10_cfg`](https://github.com/alexforencich/verilog-pcie/blob/25156a9a162c41c60f11f41590c7d006d015ae5a/rtl/pcie_s10_cfg.v#L34) | ❌ 103 div; read_uhdm ✅ PASS (301 cycles, 24 active) | R3 `python3 ext_flow.py verilog-pcie pcie_s10_cfg` |
 | sweep xiangshan-core-full | [`TLBuffer_14`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/ext_ip/xiangshan-core-full.json) | ❌ 6 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py xiangshan-core-full TLBuffer_14` |
 
-### internal frontend error / failed assert / abort / bad_alloc -- 21
+### internal frontend error / failed assert / abort / bad_alloc -- 23
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
@@ -802,6 +812,8 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | internal test | [`add_sub_bind_if`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/add_sub_bind_if) | ERROR: Internal frontend error at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3562, see details above | R1 `./slang_coverage_sweep.sh --one add_sub_bind_if` |
 | internal test | [`named_check_in_unrolled_loop`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/named_check_in_unrolled_loop) | ERROR: Assert `count_id(cell->name) == 0' failed in third_party/yosys/kernel/rtlil.cc:2881. | R1 `./slang_coverage_sweep.sh --one named_check_in_unrolled_loop` |
 | internal test | [`repwhile`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/repwhile) | ERROR: Assert `vbit.variable.kind == Variable::Static' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553. | R1 `./slang_coverage_sweep.sh --one repwhile` |
+| internal test | [`sv_tests/vector_scalared`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/vector_scalared) | ERROR: Assert `false && "unreachable"' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3247. | R1 `./slang_coverage_sweep.sh --one sv_tests/vector_scalared` |
+| internal test | [`sv_tests/vector_vectored`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/vector_vectored) | ERROR: Assert `false && "unreachable"' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3247. | R1 `./slang_coverage_sweep.sh --one sv_tests/vector_vectored` |
 | sweep aib-phy-hardware | [`aib_channel_n`](https://github.com/chipsalliance/aib-phy-hardware/blob/a0295cd2b90768c6cfd0795e5754e86dc2b6f747/v2.0/rev1.1/rtl/bca/src/rtl/aib_top/aib_channel_n.v#L6) | ERROR: Assert `type->isBitstreamType() && type->isFixedSize()' failed in third_party/yosys/frontends/slang/lib/src/naming.cc:71. | R3 `python3 ext_flow.py aib-phy-hardware aib_channel_n` |
 | sweep aib-phy-hardware | [`aibio_ana_top`](https://github.com/chipsalliance/aib-phy-hardware/blob/a0295cd2b90768c6cfd0795e5754e86dc2b6f747/v2.0/rev1.1/rtl/bca/src/rtl/aib_top/aibio_ana_top.v#L5) | ERROR: Assert `type->isBitstreamType() && type->isFixedSize()' failed in third_party/yosys/frontends/slang/lib/src/naming.cc:71. | R3 `python3 ext_flow.py aib-phy-hardware aibio_ana_top` |
 | sweep axi | [`axi_chan_logger`](https://github.com/pulp-platform/axi/blob/70b8e54fd460e3308e58be596ceb3566a6e3576e/src/axi_test.sv#L2609) | ERROR: Assert `vbit.variable.kind == Variable::Static' failed in third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:553. | R3 `python3 ext_flow.py axi axi_chan_logger` |
@@ -885,6 +897,12 @@ No rule matched -- add one to CLASSES in test/slang_report.py.
 | set | test | diagnostic | recipe |
 |---|---|---|---|
 | internal test | [`param_unpacked_struct_array_default_pattern`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/param_unpacked_struct_array_default_pattern) | dut.sv:26: ERROR: assignment pattern does not cover all elements of type 'logic[7:0]' | R1 `./slang_coverage_sweep.sh --one param_unpacked_struct_array_default_pattern` |
+
+### dut.sv:11: ERROR: unroll limit of 4000 exhausted [--unroll-limit=] -- 1
+
+| set | test | diagnostic | recipe |
+|---|---|---|---|
+| internal test | [`sv_tests/while_loop`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/sv_tests/while_loop) | dut.sv:11: ERROR: unroll limit of 4000 exhausted [--unroll-limit=] | R1 `./slang_coverage_sweep.sh --one sv_tests/while_loop` |
 
 ### ERROR: invalid target type 'req_t' (aka 'logic') for assignment patter -- 1
 

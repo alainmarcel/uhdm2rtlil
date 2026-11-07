@@ -135,7 +135,10 @@ if [ -n "$ONE" ]; then
 fi
 
 {
-    for d in */; do d=${d%/}; case "$d" in run|parallel_results|ext_ip|cva6_equiv|cva6_chip|pavona_*|caliptra_chip|ibex|rp32|opentitan_equiv) continue;; esac
+    # `sv_tests/*/` too: the 441 converted chipsalliance/sv-tests live one
+    # level down, run_all_tests.sh scores them as internal tests, and leaving
+    # them out made the report count 1392 internal tests for a suite of 1831.
+    for d in */ sv_tests/*/; do d=${d%/}; case "$d" in run|parallel_results|ext_ip|cva6_equiv|cva6_chip|pavona_*|caliptra_chip|ibex|rp32|opentitan_equiv|sv_tests) continue;; esac
         [ -f "$d/test_verilog_read.ys" ] || [ -f "$d/dut.sv" ] || [ -f "$d/dut.v" ] || [ -f "$d/project.f" ] || continue; echo "$d"; done
     # -L: run/ may be a symlink to a built tree's test/run (a docs worktree).
     find -L run -name test_verilog_read.ys -printf '%h\n' | sort
