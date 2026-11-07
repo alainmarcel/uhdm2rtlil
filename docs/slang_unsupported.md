@@ -898,29 +898,32 @@ No rule matched -- add one to CLASSES in test/slang_report.py.
 ## The other direction: `read_slang` right, `read_uhdm` wrong
 
 A document that can only record another tool's mistakes is not a measurement.
-These sweep rows co-simulate clean with the `read_slang` netlist and diverge with
-ours; they are OUR defects, tracked in the sweeps, listed here in the same format.
+A sweep row that co-simulates clean with the `read_slang` netlist and diverges
+with ours is OUR defect; such rows are tracked in the sweeps and listed here in
+the same format as the classes above, with their status on `main` only.
 
-**Status 2026-11-06: this class is EMPTY on `main`.**  The nightlies named at
-the top of this file (2026-11-05 / 06) still list **9** rows, because they ran
-before the fixes landed; every one of them was re-measured on `main`
-(2cccba608) on 2026-11-06 with the `R3` recipe and co-simulates clean.  The
-table keeps both verdicts so the next regenerated report can be checked
-against it; a row listed by a nightly after the date of its fix is a
-regression, not a stale entry.
+**Status on `main` (2cccba608, 2026-11-06): this class is EMPTY.**  Every row
+that was ever listed here co-simulates clean with the `read_uhdm` netlist
+(`R3` recipe, 301 cycles), so none is listed.  The fixes that emptied it:
+[#1443](https://github.com/alainmarcel/uhdm2rtlil/pull/1443),
+[#1464](https://github.com/alainmarcel/uhdm2rtlil/pull/1464),
+[#1466](https://github.com/alainmarcel/uhdm2rtlil/pull/1466) (with Surelog
+[#4248](https://github.com/chipsalliance/Surelog/pull/4248)),
+[#1467](https://github.com/alainmarcel/uhdm2rtlil/pull/1467),
+[#1468](https://github.com/alainmarcel/uhdm2rtlil/pull/1468),
+[#1470](https://github.com/alainmarcel/uhdm2rtlil/pull/1470),
+[#1471](https://github.com/alainmarcel/uhdm2rtlil/pull/1471),
+[#1472](https://github.com/alainmarcel/uhdm2rtlil/pull/1472) and
+[#1473](https://github.com/alainmarcel/uhdm2rtlil/pull/1473) -- a `$bits` over
+a type-parameter port, an unbased unsized literal in a comparison, a comb `for`
+with a runtime bound, `foreach` over a type-parameter packed array, an always_ff
+blocking temp read as the block's final value, generate-scope select writes
+resolved by their bare name, an indexed struct-parameter member read as X, and
+an enum-bound `parameter type` port sized from its generic default.
 
-| set | test | nightly verdict (2026-11-05) | on `main` 2026-11-06 | fixed by |
-|---|---|---|---|---|
-| sweep cheshire | [`apb_uart`](https://github.com/pulp-platform/cheshire/blob/a315a828abb61cf3cb9f4419b910ebe6739b90bf/.bender/git/checkouts/apb_uart-38dcfab592cbc1a1/src/apb_uart.sv#L10) | read_uhdm ❌ 5 div (slang clean) | ✅ equivalent · ✅ PASS (301 cycles) | [#1466](https://github.com/alainmarcel/uhdm2rtlil/pull/1466) (Surelog [#4248](https://github.com/chipsalliance/Surelog/pull/4248): `$bits(port.member)` over a type-parameter port) |
-| sweep cheshire | [`axi_rt_unit_top_synth`](https://github.com/pulp-platform/cheshire/blob/a315a828abb61cf3cb9f4419b910ebe6739b90bf/.bender/git/checkouts/axi_rt-7cef46f372eaf0fb/src/axi_rt_unit_top_synth.sv#L16) | read_uhdm ❌ 2 div (slang clean) | ❓ SAT timeout · ✅ PASS (301 cycles) | [#1464](https://github.com/alainmarcel/uhdm2rtlil/pull/1464) (unbased unsized literal in a comparison) |
-| sweep cheshire | [`obi_uart_tx`](https://github.com/pulp-platform/cheshire/blob/a315a828abb61cf3cb9f4419b910ebe6739b90bf/.bender/git/checkouts/obi_peripherals-9423aa14f6eba9a7/hw/obi_uart/obi_uart_tx.sv#L11) | read_uhdm ❌ 8 div (slang clean) | ✅ equivalent · ✅ PASS (301 cycles) | [#1467](https://github.com/alainmarcel/uhdm2rtlil/pull/1467) (comb `for` with a runtime bound: guarded writes recorded unconditionally) |
-| sweep cheshire | [`reg_uart_wrap`](https://github.com/pulp-platform/cheshire/blob/a315a828abb61cf3cb9f4419b910ebe6739b90bf/.bender/git/checkouts/apb_uart-38dcfab592cbc1a1/src/reg_uart_wrap.sv#L12) | read_uhdm ❌ 109 div (slang clean) | ✅ equivalent · ✅ PASS (301 cycles) | [#1466](https://github.com/alainmarcel/uhdm2rtlil/pull/1466) (same as `apb_uart`, seen through `reg_to_apb`) |
-| sweep cheshire | [`slink_ch_alloc`](https://github.com/pulp-platform/cheshire/blob/a315a828abb61cf3cb9f4419b910ebe6739b90bf/.bender/git/checkouts/serial_link-6e09ea4800bad616/src/channel_allocator/slink_ch_alloc.sv#L7) | read_uhdm ❌ 13 div (slang clean) | ✅ equivalent · ✅ PASS (301 cycles) | [#1443](https://github.com/alainmarcel/uhdm2rtlil/pull/1443) (`foreach` index unsigned) + [#1468](https://github.com/alainmarcel/uhdm2rtlil/pull/1468) (`foreach` over a type-parameter packed array iterated the element's bits) |
-| sweep cvw | [`wallypipelinedcore`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/wally/wallypipelinedcore.sv#L30) | read_uhdm ❌ 298 div (slang clean), formal ❓ SAT timeout | ✅ equivalent · ✅ PASS (301 cycles) | [#1473](https://github.com/alainmarcel/uhdm2rtlil/pull/1473) (enum-bound `parameter type` port sized from the generic default: two `statetype`s folded onto one `flopenl` paramod) |
-| sweep openpiton | [`bw_r_dtlb`](https://github.com/PrincetonUniversity/openpiton/blob/1c6bfd2d2ea53ddd7b6f933fa2d439d1a540e207/piton/design/chip/tile/sparc/srams/rtl/bw_r_dtlb.tmp.v#L75) | read_uhdm ❌ 3 div (slang clean) | ❌ differs (adjudicated, [#1469](https://github.com/alainmarcel/uhdm2rtlil/pull/1469): out-of-range array read, X by the LRM) · ✅ PASS (301 cycles) | [#1470](https://github.com/alainmarcel/uhdm2rtlil/pull/1470) (always_ff blocking temp read as the block's final value) |
-| sweep openpiton | [`bw_r_itlb`](https://github.com/PrincetonUniversity/openpiton/blob/1c6bfd2d2ea53ddd7b6f933fa2d439d1a540e207/piton/design/chip/tile/sparc/srams/rtl/bw_r_itlb.tmp.v#L75) | read_uhdm ❌ 32 div (slang clean) | ❌ differs (adjudicated, [#1469](https://github.com/alainmarcel/uhdm2rtlil/pull/1469)) · ✅ PASS (301 cycles) | [#1470](https://github.com/alainmarcel/uhdm2rtlil/pull/1470) |
-| sweep snitch | [`spatz_ipu`](https://github.com/pulp-platform/snitch_cluster/blob/ccde489fb287543e548e844fc6cb4943eee4797a/.bender/git/checkouts/spatz_vpu-28dec15f71cb230c/hw/src/spatz_ipu.sv#L10) | read_uhdm ❌ 12 div (slang clean) on 2026-11-04; clean in the 11-05 nightly | ❓ SAT timeout · ✅ PASS (301 cycles) | [#1437](https://github.com/alainmarcel/uhdm2rtlil/pull/1437), [#1441](https://github.com/alainmarcel/uhdm2rtlil/pull/1441), [#1470](https://github.com/alainmarcel/uhdm2rtlil/pull/1470) |
-| sweep snitch | [`spatz_vfu`](https://github.com/pulp-platform/snitch_cluster/blob/ccde489fb287543e548e844fc6cb4943eee4797a/.bender/git/checkouts/spatz_vpu-28dec15f71cb230c/hw/src/spatz_vfu.sv#L15) | read_uhdm ❌ 170 div (slang n/a) | ❌ differs (SAT, not yet adjudicated) · ✅ PASS (301 cycles) | [#1471](https://github.com/alainmarcel/uhdm2rtlil/pull/1471) (generate-scope select writes resolved by bare name) + [#1472](https://github.com/alainmarcel/uhdm2rtlil/pull/1472) (indexed struct-parameter member read as X) |
+A row that appears here again is a regression, not a stale entry: the entry
+must name the sweep, the module, the divergence count and the fix that closes
+it, and leave as soon as the row co-simulates clean on `main`.
 
 Two of the divergences localised on the way were the REFERENCE's, not ours,
 and are recorded rather than fixed: Verilator masks an out-of-range index into
@@ -928,7 +931,3 @@ a power-of-two array (OpenPiton's `tte_csm_buf[3]` on a 2-entry buffer wraps to
 entry 1 in the RTL and the slang netlist alike; iverilog and `read_uhdm` ignore
 the write, LRM 7.4.6), and the matching out-of-range READ is X by the LRM, which
 the SAT miter can always tell apart (`test/formal_adjudicated.txt`).
-
-What still fails formally on these rows is the SAT budget (axi_rt_unit_top_synth,
-spatz_ipu, spatz_vfu) and the adjudicated X reads above -- no row of this class
-diverges in co-simulation.
