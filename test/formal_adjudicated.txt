@@ -54,3 +54,114 @@ pmu
 # always_ff blocking-temp fix.
 openpiton/bw_r_dtlb
 openpiton/bw_r_itlb
+
+# ---- yosys memory_dff marks a reachable collision "don't care" (2026-11-06) --
+# verilog-ethernet's axis_fifo loads its output pipeline register from the
+# memory every cycle (`m_axis_pipe_reg[0] <= mem[rd_ptr_reg]`, unconditional
+# on validity) and writes `mem[wr_ptr_reg] <= s_axis` in the same block, so
+# an empty FIFO reads and writes the SAME word in one cycle.  Yosys 0.70's
+# memory_dff merges our output FF into the read port and, for every
+# same-clock write port, reports "don't care on collision" -- its
+# QuickConeSat answers UNSAT to "can read and write collide", though a full
+# `sat` on the same netlist finds the collision at once (rst=0, tvalid=1,
+# rd_ptr == wr_ptr).  The merged port then returns X on the collision, the
+# miter zeroes it and read_slang -- whose `m_axis_pipe_reg` is a $mem of its
+# own, so nothing merges -- keeps the word.  Both rows PROVE with the
+# ` memory_dff; opt_clean;` step removed from the miter recipe, and a
+# directed `sat` on our netlist alone loads the register correctly without
+# the merge.  (read_verilog on the same source asserts inside memory_dff,
+# mem.cc:492 `port.en == State::S1`.)  axis_fifo_adapter instantiates
+# axis_fifo; verilog-pcie vendors the same file.  Co-sim PASS on all four.
+verilog-ethernet/axis_fifo
+verilog-ethernet/axis_fifo_adapter
+verilog-pcie/axis_fifo
+verilog-pcie/axis_fifo_adapter
+
+# ---- incomplete always_comb, read_slang is the outlier (2026-11-06) --------
+# core-v-mcu serial_deglitch's `always_comb` assigns `q_o` only when the
+# counter is saturated or zero and nothing in between, so the output keeps
+# its value -- a latch, which read_uhdm and read_verilog both infer ("Latch
+# inferred for signal q_o" in the miter log's first PROC_DLATCH pass, none in
+# read_slang's).  The macro_decoder class above.  Co-sim PASS (1 active
+# cycle: the stimulus never leaves the hold region).
+core-v-mcu/serial_deglitch
+
+# ---- a struct member the source never assigns, read_slang leaves it FREE --
+# cheshire's obi_demux drives every field of `mgr_ports_req_o[i]` in its
+# `always_comb` except `rready`, which only `gen_rready` assigns and
+# `ObiDefaultConfig` has `UseRReady: 0`.  read_uhdm latches the unassigned
+# bit (it holds 0 from the all-zero init); read_slang lowers it to a
+# `$bwmux` fed from the signal itself, which the SAT solver treats as an
+# unconstrained bit -- `sat -prove dut.mgr_ports_req_o[0] 0` with every
+# input defined FAILS on the read_slang netlist alone.  The counterexample
+# differs on exactly bits 0 / 112 / 224 / 336 (the four `rready`s) and on
+# nothing else.  Co-sim PASS (300 active cycles).
+cheshire/obi_demux
+
+# ---- a same-address write on both ports the source forbids (2026-11-06) ---
+# prim_ram_2p's two write blocks are clocked by `clk_a_i` and `clk_b_i`,
+# two DIFFERENT nets inside the model that prim_ram_2p_adv ties to one
+# clock, and the model asserts `NoSameAddrWritePortA_A` /
+# `NoSameAddrWritePortB_A`: a same-cycle write to one address from both
+# ports never happens by contract.  The miter deletes the asserts and drives
+# exactly that (a_addr == b_addr, both write, both masks partial); then
+# which port's masked read-modify-write lands last is a write-port order the
+# frontends number differently (read_uhdm port A, read_slang port B).  The
+# source-order merge of #1440 cannot apply: at import the two clocks are
+# distinct signals.  Co-sim PASS (185 active cycles).
+opentitan-ip/prim_ram_2p_adv
+
+# ---- `break` leaves later array elements unassigned, read_slang is the --
+# ---- outlier (2026-11-06) ------------------------------------------------
+# RSD's Bimodal predictor writes `next.phtPrevValue[i]` / `next.brPredTaken[i]`
+# in a `for` that `break`s on the first taken prediction, and `phtWA[i]` /
+# `phtWV[i]` / `phtPrevValue[i]` in a second loop that `break`s on a
+# mispredict: element 1 of each is left unassigned on those paths, so its
+# value holds -- a latch, which read_uhdm and read_verilog infer (5 "Latch
+# inferred" warnings in the miter's first PROC_DLATCH pass, none in
+# read_slang's).  The macro_decoder class.  The other signals in the
+# counterexample (`phtWE`, `phtWA`, `port_i.brResult`) differ only in the
+# ORDER the two frontends flatten an unpacked array into one vector
+# (element 0 low on read_uhdm, high on read_slang), identically on both
+# sides' outputs.  Co-sim PASS (53 active cycles).
+rsd/Bimodal
+
+# ---- an INOUT pad the miter cannot drive (2026-11-06) ----------------------
+# generic_pad / pad_functional_pd / pad_functional_pu (core-v-mcu, and the
+# tech_cells_generic originals of the two pads) and gpio
+# (openc910, opene906) resolve a tristate `inout` pad: with the output enable
+# off the pad is `z` and the input buffer reads it back.  The ext miter runs
+# `tribuf -formal`, zeroes undriven nets on each side separately and then
+# compares a net no testbench drives: read_uhdm's pad reads 0, read_slang's
+# reads all ones (on the read_slang netlist ALONE `sat -prove b_pad_gpio_porta
+# 0` with every input defined SUCCEEDS, so the value is an artefact of the
+# miter's inout handling, not of the frontend).  Every differing signal in
+# the four counterexamples is the pad or its read-back (`out_o`,
+# `gpio_ext_porta*`).  Co-sim PASS on all (0 to 118 active cycles).
+core-v-mcu/generic_pad
+core-v-mcu/pad_functional_pd
+core-v-mcu/pad_functional_pu
+tech_cells_generic/pad_functional_pd
+tech_cells_generic/pad_functional_pu
+openc910/gpio
+opene906/gpio
+# caliptra-ss's spi_host_axi_synth wrapper builds the same thing out of plain
+# outputs: `assign cio_csb_o[i] = cio_csb_en[i] ? cio_csb[i] : 1'bz` (a
+# "fake pad"); with the enables low both chip selects are `z`, read_uhdm's
+# read 0 and read_slang's 1 while the core's own `cio_csb_o` is 11 on both.
+caliptra-ss/spi_host_axi_synth
+
+# ---- a 2^32-word constant table at the module's defaults (2026-11-06) ------
+# pulpissimo's asic_autogen_rom / fpga_autogen_rom declare
+# `const logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] MEM = { ... }` with
+# `NUM_WORDS = 2**ADDR_WIDTH` and a default ADDR_WIDTH of 32 -- a 2^37-bit
+# vector initialised from a 2048-word concatenation (zero-extended at the
+# top, last entry at word 0).  read_uhdm reads word 1 as 0x0840006F, which is
+# the second-to-last entry of the source table; read_slang reads every word
+# as 0 at that width -- and its OWN co-sim diverges on fpga_autogen_rom for
+# 300 of 301 cycles while read_uhdm's passes.  The counterexample differs on
+# `Q` alone.  The table
+# is only meaningful at the ADDR_WIDTH the SoC instantiates it with (11).
+# Co-sim PASS (17 active cycles).
+pulpissimo/asic_autogen_rom
+pulpissimo/fpga_autogen_rom
