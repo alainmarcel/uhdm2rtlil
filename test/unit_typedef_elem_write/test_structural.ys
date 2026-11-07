@@ -1,0 +1,10 @@
+# q = 11 x 8'h69; a write of 8'h96 to element i must replace THAT byte only.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove d 88'h69696969696969696969_96 -set we 1 -set idx 0 -set q 88'h6969696969696969696969
+sat -verify -prove d 88'h6969696969696969_96_6969 -set we 1 -set idx 2 -set q 88'h6969696969696969696969
+sat -verify -prove d 88'h96_69696969696969696969 -set we 1 -set idx 10 -set q 88'h6969696969696969696969
+sat -verify -prove d 88'h6969696969696969696969 -set we 0 -set idx 3 -set q 88'h6969696969696969696969
+sat -verify -prove e2 8'h96 -set we 1 -set idx 2 -set q 88'h6969696969696969696969
+sat -verify -prove e2 8'h69 -set we 1 -set idx 1 -set q 88'h6969696969696969696969

@@ -17578,6 +17578,33 @@ bool UhdmImporter::emit_dynamic_packed_select_write(
             r0r = 0;
         }
     }
+    // The wire's OWN geometry wins over the net typespec's ranges: import_port
+    // stamps packed_elem_width / packed_outer_left / packed_outer_right from
+    // the PORT typespec, which for `mubi8_t [N-1:0] d` with a $unit
+    // (compilation-unit) typedef is the whole packed array, where the NET's
+    // typespec is only the element `mubi8_t` (CLAUDE.md, port vs net
+    // typespec).  Read from the net, the element's own range [7:0] became
+    // the OUTER dimension: an 11-element array of bytes was written as 8
+    // elements of 11 bits, so `d[idx] = v` smeared over the neighbours (bit 8
+    // cleared on a write to element 0).  A package or module typedef carries
+    // the full shape on the net too, so this only ever corrects a disagreement.
+    if (dim2_size == 0 && base_wire &&
+        base_wire->attributes.count(RTLIL::escape_id("packed_elem_width")) &&
+        base_wire->attributes.count(RTLIL::escape_id("packed_outer_left")) &&
+        base_wire->attributes.count(RTLIL::escape_id("packed_outer_right"))) {
+        int aew = base_wire->attributes.at(RTLIL::escape_id("packed_elem_width")).as_int();
+        int al = base_wire->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int();
+        int ar = base_wire->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int();
+        int aouter = std::abs(al - ar) + 1;
+        if (aew > 0 && aouter > 0 && aew * aouter == base_w &&
+            (aew != elem_w || aouter != outer_size)) {
+            if (mode_debug)
+                uhdm_trace("    dyn_packed_select_write: '%s' geometry from wire attributes elem=%d outer=[%d:%d] (typespec gave elem=%d outer=%d)\n",
+                           base_name.c_str(), aew, al, ar, elem_w, outer_size);
+            elem_w = aew; outer_size = aouter; r0l = al; r0r = ar;
+            outer_low = std::min(al, ar);
+        }
+    }
     // A 1-element ARRAY of wide elements (`dtype [0:0] mem` — fifo DEPTH=1)
     // still element-indexes.  A 1x1-bit array (`wordptr_t [0:0] words_d`,
     // hpdcache_data_upsize at DEPTH=1) is handled here too: the old
