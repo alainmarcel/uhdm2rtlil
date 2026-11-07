@@ -1,0 +1,8 @@
+# The value, not the shape: with the in-flight select taken in bits the
+# unsigned average of 0xC050 / 0x00A0 with 0x431A read 1.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt -fast
+eval -set a_i 32'hC05000A0 -set b_i 32'h0000431A -set s_i 0 -show r_o
+sat -verify -prove r_o 32'h602821DD -set a_i 32'hC05000A0 -set b_i 32'h0000431A -set s_i 0
+sat -verify -prove r_o 32'hE02821DD -set a_i 32'hC05000A0 -set b_i 32'h0000431A -set s_i 1
