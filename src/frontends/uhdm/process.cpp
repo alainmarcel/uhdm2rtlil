@@ -15166,6 +15166,19 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
                                                          : nullptr;
     RTLIL::SigSpec idx = import_expression(idx_expr_obj, idx_map);
     if (idx.size() == 0 || idx.is_fully_const()) return false;  // static path
+    // An in-flight index that is constant ARITHMETIC -- `qp = 0; arr[qp] = a;
+    // qp = qp + 1; arr[qp] = b;` (YosysHQ/yosys#3456) -- arrives as the
+    // output of an $add over two constants that nothing folded.  Both writes
+    // then took the dynamic path, and element 0's hold-mux started from the
+    // chain's "old value" wire instead of `a`: element 0 was left undriven.
+    // Fold it; a constant index is one plain element write, emitted below
+    // once the array's representation is known.
+    bool folded_const_idx = false;
+    if (idx_map) {
+        ConstEval ce(module);
+        RTLIL::SigSpec t = idx;
+        if (ce.eval(t) && t.is_fully_const()) { idx = t; folded_const_idx = true; }
+    }
 
     // Width actually written per element: the whole element, or just the slice.
     if (slice_off < 0) { slice_off = 0; slice_w = elem_w; }
@@ -15193,6 +15206,48 @@ bool UhdmImporter::emit_dynamic_unpacked_array_elem_write(
     RTLIL::Wire* flat_tw = module->wire("$0\\" + base_name);
     bool use_flat = flat_w && flat_w->width == elem_w * num_elems &&
                     (proc != nullptr || flat_tw != nullptr);
+
+    if (folded_const_idx) {
+        int k = idx.as_const().as_int();
+        if (k < array_low || k >= array_low + num_elems) return true;  // LRM 7.4.6: ignored
+        std::string ename = base_name + "[" + std::to_string(k) + "]";
+        RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
+        if (!ew && !use_flat) return false;
+        int off = (k - array_low) * elem_w;
+        if (use_flat) {
+            if (proc)
+                emit_comb_assign(RTLIL::SigSpec(flat_w).extract(off + slice_off, slice_w), rhs, proc);
+            else {
+                RTLIL::SigSpec tgt = RTLIL::SigSpec(flat_tw).extract(off + slice_off, slice_w);
+                remove_target_from_switches(case_rule, tgt);
+                case_rule->actions.push_back(RTLIL::SigSig(tgt, rhs));
+            }
+            if (!nb_mode) {
+                RTLIL::SigSpec curbase = current_comb_values.count(base_name)
+                                             ? current_comb_values.at(base_name)
+                                             : RTLIL::SigSpec(flat_w);
+                curbase.replace(off + slice_off, rhs);
+                current_comb_values[base_name] = curbase;
+            }
+        } else {
+            if (proc) {
+                emit_comb_assign(RTLIL::SigSpec(ew).extract(slice_off, slice_w), rhs, proc);
+            } else {
+                RTLIL::Wire* tw = module->wire("$0\\" + ename);
+                RTLIL::SigSpec tgt = (tw ? RTLIL::SigSpec(tw) : RTLIL::SigSpec(ew)).extract(slice_off, slice_w);
+                remove_target_from_switches(case_rule, tgt);
+                case_rule->actions.push_back(RTLIL::SigSig(tgt, rhs));
+                if (!nb_mode) {
+                    RTLIL::SigSpec cur = current_comb_values.count(ename)
+                                             ? current_comb_values.at(ename) : RTLIL::SigSpec(ew);
+                    if (partial) { cur.replace(slice_off, rhs); current_comb_values[ename] = cur; }
+                    else current_comb_values[ename] = rhs;
+                }
+            }
+        }
+        uhdm_trace("    dynamic element write: index folded to %d -> static write to %s\n", k, ename.c_str());
+        return true;
+    }
 
     for (int k = array_low; k < array_low + num_elems; k++) {
         std::string ename = base_name + "[" + std::to_string(k) + "]";
