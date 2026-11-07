@@ -531,6 +531,14 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
 
 
 SV_SYNTH_DIR = TEST_DIR / "sv_tests"
+# The NESTED families: one directory of single-file `dut.sv` tests each,
+# named `<subdir>/<test>` by the regression's tools and ratchet lists.
+#   sv-synth-tests   test/sv_tests/      the converted chipsalliance/sv-tests
+#   sv-yosys-issues  test/yosys_issues/  every SystemVerilog snippet from the
+#                    YosysHQ/yosys issue tracker that Surelog parses
+#                    (test/yosys_issues/harvest.py), plus the hand-written
+#                    test/yosys_issue_<n>_* tests of the regression
+NESTED_FAMILIES = {"sv-synth-tests": "sv_tests", "sv-yosys-issues": "yosys_issues"}
 
 
 def _auto_top(d):
@@ -559,11 +567,20 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
     known_fail = read_names_file(TEST_DIR / "slang_miter_expected_fail.txt")
     analyzed = read_analyzed_names()
     baselined = read_names_file(TEST_DIR / "sim_equiv_warn_baseline.txt")
-    nested = prefix == "sv-synth-tests"
+    nested = prefix in NESTED_FAMILIES
     if nested:
-        dirs = sorted(d for d in SV_SYNTH_DIR.iterdir()
+        sub = TEST_DIR / NESTED_FAMILIES[prefix]
+        dirs = sorted(d for d in sub.iterdir()
                       if d.is_dir() and (d / "dut.sv").exists()
                       and (flt is None or re.search(flt, d.name)))
+        if prefix == "sv-yosys-issues":
+            # ...and the regression's own yosys_issue_<n>_* tests, which
+            # carry the hand-proven form of an issue (test_structural.ys,
+            # a committed miter): same table, one row each.
+            dirs += sorted(d for d in TEST_DIR.iterdir()
+                           if d.is_dir() and d.name.startswith("yosys_issue_")
+                           and (d / "dut.sv").exists()
+                           and (flt is None or re.search(flt, d.name)))
     else:
         dirs = sorted(d for d in TEST_DIR.iterdir()
                       if d.is_dir() and d.name.startswith(prefix + "_")
@@ -574,7 +591,8 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
     def one(d):
         # `name` is what the regression's tools and ratchet lists call the
         # test (`sv_tests/<dir>` for the nested family); the row shows the dir.
-        name = f"sv_tests/{d.name}" if nested else d.name
+        name = (f"{NESTED_FAMILIES[prefix]}/{d.name}"
+                if nested and d.parent != TEST_DIR else d.name)
         row = {"module": d.name, "formal": "— (no miter)", "cosim": "—",
                "check": "—", "conflicts": "—"}
         # Elaborate (surelog + read check) if the UHDM is missing.
@@ -2112,7 +2130,8 @@ def main():
                                      "entropy_src", "keymgr", "periph", "periph2", "periph3", "periph4", "periph5",
                                      "egret", "dragonfly", "caliptra", "cva6-chip",
                                      "cva6-hpdcache", "cva6-hext", "cva6-rv32",
-                                     "opentitan", "sv-synth-tests"] + _ext_families())
+                                     "opentitan", "sv-synth-tests",
+                                     "sv-yosys-issues"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)

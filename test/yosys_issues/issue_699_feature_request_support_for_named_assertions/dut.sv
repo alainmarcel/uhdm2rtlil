@@ -1,0 +1,19 @@
+// YosysHQ/yosys#699 (closed): Feature request: support for named assertions
+// https://github.com/YosysHQ/yosys/issues/699
+// Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
+
+// ---- b0.sv
+module counter(clk, en);
+	input clk;
+	input en;
+	reg [3:0] X;
+	initial begin
+		X = 4'd1;
+	end
+	always @(posedge clk) begin
+		X <= en ? ( (X == 4'd15) ? 4'd1 : (X + 4'd1) ) : X ;
+	end
+	property1: assert property ( X != 4'd0 );
+	property2: assert property ( X > 4'd0 );
+endmodule
+

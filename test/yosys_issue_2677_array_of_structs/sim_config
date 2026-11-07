@@ -1,0 +1,5 @@
+# read_verilog (yosys 0.70) cannot read this SystemVerilog -- the issue this
+# test is named after is that very limitation -- so its netlist is not a
+# reference here.  The gates are the read_slang miter / test_structural.ys
+# and the Verilator co-sim against the RTL.
+SKIP_FORMAL=1

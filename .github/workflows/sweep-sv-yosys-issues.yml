@@ -1,0 +1,42 @@
+# Sweep the YosysHQ/yosys SystemVerilog-issue corpus: every test/yosys_issues/
+# issue_<n>_*/dut.sv -- the code block(s) of a yosys issue that Surelog parses,
+# harvested by test/yosys_issues/harvest.py from the tracker (906 issues
+# matched the SystemVerilog label and keyword searches; 174 code variants
+# parse as SystemVerilog) -- plus the regression's hand-written
+# test/yosys_issue_<n>_* tests, which carry the proven form of an issue.
+#
+# Each row gets the columns the other sweeps report: the read_uhdm-vs-
+# read_slang formal miter (auto-generated over dut.sv), the undriven-net
+# check, the read_slang co-sim against the RTL, and the read_uhdm co-sim --
+# so "is yosys issue #n supported by read_uhdm" is one row of one table,
+# re-measured nightly, and a new issue is one harvest run away.
+#
+# The regression does NOT run the harvested corpus (many snippets are
+# read_verilog bug reports with no read_verilog reference, or have no ports
+# to co-simulate); it does run the yosys_issue_<n>_* tests.
+name: Sweep sv-yosys-issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per test"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "41 4 * * *"   # nightly 04:41 UTC, after sv-synth-tests' 04:11
+
+concurrency:
+  group: sweep-sv-yosys-issues-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: sv-yosys-issues
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 120
+      # ~200 small single-file tests: two shards, four concurrent rows each.
+      shards: 2
+      jobs: "4"
