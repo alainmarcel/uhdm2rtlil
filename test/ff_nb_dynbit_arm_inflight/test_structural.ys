@@ -1,0 +1,5 @@
+# Set bit 6 (write arm), then clear bit 5 (read arm): bit 6 must survive.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean; memory_collect; memory_map; opt
+sat -seq 3 -set-init-zero -set rst_n 1 -set-at 1 wv_i 1 -set-at 1 widx_i 6 -set-at 1 d_i 1 -set-at 1 cv_i 1 -set-at 1 cidx_i 6 -set-at 1 rv_i 0 -set-at 2 wv_i 0 -set-at 2 rv_i 1 -set-at 2 ridx_i 5 -set-at 2 cv_i 0 -set-at 3 wv_i 0 -set-at 3 rv_i 0 -set-at 3 cv_i 0 -prove v_o 8'b01000000 -prove-skip 2 -verify
