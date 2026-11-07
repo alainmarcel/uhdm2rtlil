@@ -2418,6 +2418,83 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 import_statement_comb(stmt, &yosys_proc->root_case);
             }
 
+            // A body that is NOT an `if (reset)` but still names the reset --
+            //     always_ff @(posedge ck, posedge r) q <= r ? '0 : d;
+            // (YosysHQ/yosys#3657, where read_verilog aborts on a non-constant
+            // reset value and read_slang refuses the shape) -- was imported
+            // by NEITHER branch above: the registers were set up, no write
+            // ever reached the case tree, the hold-only temps were dropped
+            // and every flop of the block vanished (q undriven, one warning).
+            // Build the if/else the author left implicit: the clocked arm is
+            // the body itself; the reset arm is a COPY of it folded under
+            // `reset = <active level>` with ConstEval, which turns the
+            // `r ? '0 : d` mux into the constant proc_arst needs.  A value
+            // the fold cannot make constant stays as it is (an async LOAD
+            // would need $aldff), and proc reports it exactly as it does for
+            // the other frontends.
+            if (!if_else_stmt && !assigned_signals.empty() && stmt &&
+                !reset_sig.empty() && !yosys_proc->attributes.count(ID("is_sr_ff"))) {
+                RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                sw->signal = reset_sig;
+                std::string body_src = get_src_attribute(stmt);
+                if (!body_src.empty())
+                    sw->attributes[ID::src] = RTLIL::Const(body_src);
+                RTLIL::CaseRule* case_false = new RTLIL::CaseRule;
+                current_temp_wires.clear();
+                comb_signal_temp_map.clear();
+                current_lhs_specs.clear();
+                for (const auto& [sig_name, temp_wire] : temp_wires)
+                    current_signal_temp_wires[sig_name] = temp_wire;
+                in_always_ff_context = true;
+                current_ff_clock_sig = clock_sig;
+                bool saved_ff_body_mode = in_always_ff_body_mode;
+                in_always_ff_body_mode = true;
+                // Attach before importing, as the if/else path does, so an
+                // in-flight fold sees the hold defaults in root_case.
+                RTLIL::CaseRule* case_true = new RTLIL::CaseRule;
+                case_true->compare.push_back(RTLIL::Const(reset_posedge ? 1 : 0, 1));
+                sw->cases.push_back(case_true);
+                sw->cases.push_back(case_false);
+                yosys_proc->root_case.switches.push_back(sw);
+                RTLIL::CaseRule* saved_fold_root = ff_inflight_fold_root_;
+                ff_inflight_fold_root_ = &yosys_proc->root_case;
+                import_statement_comb(stmt, case_false);
+                ff_inflight_fold_root_ = saved_fold_root;
+                in_always_ff_body_mode = saved_ff_body_mode;
+                current_signal_temp_wires.clear();
+
+                // The reset arm: the same actions, evaluated with the reset
+                // signal pinned at its active level.
+                ConstEval ce(module);
+                ce.set(reset_sig, RTLIL::Const(reset_posedge ? 1 : 0, 1));
+                std::function<void(const RTLIL::CaseRule*, RTLIL::CaseRule*)> fold_into =
+                    [&](const RTLIL::CaseRule* from, RTLIL::CaseRule* to) {
+                        for (const auto& a : from->actions) {
+                            RTLIL::SigSpec v = a.second;
+                            ce.eval(v);
+                            to->actions.push_back(RTLIL::SigSig(a.first, v));
+                        }
+                        for (auto fsw : from->switches) {
+                            RTLIL::SwitchRule* tsw = new RTLIL::SwitchRule;
+                            tsw->signal = fsw->signal;
+                            ce.eval(tsw->signal);
+                            tsw->attributes = fsw->attributes;
+                            for (auto fc : fsw->cases) {
+                                RTLIL::CaseRule* tc = new RTLIL::CaseRule;
+                                tc->compare = fc->compare;
+                                tc->attributes = fc->attributes;
+                                fold_into(fc, tc);
+                                tsw->cases.push_back(tc);
+                            }
+                            to->switches.push_back(tsw);
+                        }
+                    };
+                fold_into(case_false, case_true);
+                uhdm_trace("      Async-reset always_ff without an if(reset): built the "
+                           "reset arm by folding the body under reset=%d\n",
+                           reset_posedge ? 1 : 0);
+            }
+
             if (if_else_stmt) {
                 // Blocking temps in flight before the reset/clocked arms: each
                 // arm starts from this state (see the note at the then import).

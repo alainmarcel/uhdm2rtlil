@@ -1,0 +1,19 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+# three async-reset flops, nothing dropped and nothing left undriven
+select -assert-count 3 t:$adff
+check -assert
+opt -fast -nodffe -nosdff
+# async2sync routes the reset value straight to Q while the reset is active
+async2sync
+dffunmap
+opt -fast -nodffe -nosdff
+sat -verify -seq 1 -prove q 1'b0 -set r 1'b1
+sat -verify -seq 1 -prove w 4'd0 -set r 1'b0
+sat -verify -seq 1 -prove s 2'b11 -set r 1'b1
+# and the clocked value is the data path: with the reset inactive, q follows d
+# after one clock; w counts; s shifts d in
+sat -verify -seq 2 -set r 1'b0 -set d 1'b1 -prove q 1'b1 -prove-skip 1
+sat -verify -seq 2 -set r 1'b0 -set d 1'b0 -prove q 1'b0 -prove-skip 1
+sat -verify -seq 3 -set r 1'b0 -set-init-zero -set-at 1 d 1'b1 -set-at 2 d 1'b0 -set-at 3 d 1'b0 -prove s 2'b10 -prove-skip 2

@@ -1,0 +1,5 @@
+# read_verilog (yosys 0.70) aborts on this shape -- the issue it is named after
+# is that very bug report -- so its netlist cannot be the reference here.  The
+# gates are test_structural.ys (the LRM values) and the Verilator co-sim
+# against the RTL.
+SKIP_FORMAL=1
