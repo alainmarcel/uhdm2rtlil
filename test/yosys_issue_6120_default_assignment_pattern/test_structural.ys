@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove q 32'hDEADBEEF -set d 32'hDEADBEEF
+sat -verify -prove p2 32'h12345678
+sat -verify -prove i1 8'hA5
