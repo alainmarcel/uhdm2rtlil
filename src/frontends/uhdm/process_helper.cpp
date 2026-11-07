@@ -349,6 +349,14 @@ void UhdmImporter::collect_for_loop_var_names(const any* stmt, std::set<std::str
             collect_for_loop_var_names(for_loop->VpiStmt(), names);
             break;
         }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            if (fe->VpiLoopVars())
+                for (auto lv : *fe->VpiLoopVars())
+                    if (lv && !lv->VpiName().empty()) names.insert(std::string(lv->VpiName()));
+            collect_for_loop_var_names(fe->VpiStmt(), names);
+            break;
+        }
         case vpiBegin:
         case vpiNamedBegin: {
             if (auto stmts = begin_block_stmts(stmt))
@@ -568,6 +576,10 @@ void UhdmImporter::collect_live_assigned_signals(const any* stmt, bool live,
         }
         case vpiFor:
             collect_live_assigned_signals(any_cast<const for_stmt*>(stmt)->VpiStmt(),
+                                          live, out, fold_guards);
+            break;
+        case vpiForeachStmt:
+            collect_live_assigned_signals(any_cast<const UHDM::foreach_stmt*>(stmt)->VpiStmt(),
                                           live, out, fold_guards);
             break;
         case vpiCase: {
@@ -1513,8 +1525,20 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             // `fuse_hek_seed` and `fuse_manuf_dbg_unlock_token`).
             auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
             if (fe && fe->VpiStmt()) {
+                // The loop vars are per-iteration constants for the body scan,
+                // as a for loop's are: without them `my_array[src] <= d` in an
+                // always_ff was taken for a DYNAMIC element write, skipped by
+                // the register scan, and never got a flop (YosysHQ/yosys#5878).
+                std::vector<std::string> added_lv;
+                if (fe->VpiLoopVars())
+                    for (auto lv : *fe->VpiLoopVars()) {
+                        if (!lv) continue;
+                        std::string nm = std::string(lv->VpiName());
+                        if (!nm.empty() && scan_loop_vars_.insert(nm).second) added_lv.push_back(nm);
+                    }
                 std::vector<AssignedSignal> body_signals;
                 extract_assigned_signals(fe->VpiStmt(), body_signals);
+                for (auto& nm : added_lv) scan_loop_vars_.erase(nm);
                 for (auto& sig : body_signals) {
                     // Same normalisation the for-loop path applies: a
                     // loop-var-indexed LHS cannot be resolved here, so it is
@@ -1935,6 +1959,11 @@ void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std
             collect_blocking_assigned_names(f->VpiStmt(), signal_names);
             break;
         }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            collect_blocking_assigned_names(fe->VpiStmt(), signal_names);
+            break;
+        }
         case vpiRepeat: {
             const UHDM::repeat* r = any_cast<const UHDM::repeat*>(stmt);
             collect_blocking_assigned_names(r->VpiStmt(), signal_names);
@@ -2253,6 +2282,11 @@ void UhdmImporter::collect_memory_write_lhs(const any* stmt,
             if (auto b = f->VpiStmt()) collect_memory_write_lhs(b, out, module);
             break;
         }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            if (auto b = fe->VpiStmt()) collect_memory_write_lhs(b, out, module);
+            break;
+        }
         case vpiRepeat: {
             const UHDM::repeat* r = any_cast<const UHDM::repeat*>(stmt);
             if (auto b = r->VpiStmt()) collect_memory_write_lhs(b, out, module);
@@ -2330,6 +2364,11 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
             if (auto body = for_loop->VpiStmt()) {
                 scan_for_memory_writes(body, memory_names, module);
             }
+            break;
+        }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            if (auto body = fe->VpiStmt()) scan_for_memory_writes(body, memory_names, module);
             break;
         }
         case vpiRepeat: {
@@ -2446,6 +2485,11 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
         case vpiFor: {
             const for_stmt* f = any_cast<const for_stmt*>(stmt);
             if (f->VpiStmt()) collect_dynamic_expanded_array_writes(f->VpiStmt(), names, module);
+            break;
+        }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+            if (fe->VpiStmt()) collect_dynamic_expanded_array_writes(fe->VpiStmt(), names, module);
             break;
         }
         case vpiRepeat: {
@@ -2645,6 +2689,10 @@ static bool stmt_writes_array_(const UHDM::any* st, const std::string& name) {
         case vpiFor: {
             auto f = any_cast<const UHDM::for_stmt*>(st);
             return f && stmt_writes_array_(f->VpiStmt(), name);
+        }
+        case vpiForeachStmt: {
+            auto fe = any_cast<const UHDM::foreach_stmt*>(st);
+            return fe && stmt_writes_array_(fe->VpiStmt(), name);
         }
         default: return false;
     }
@@ -2964,6 +3012,27 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                     if (for_s->VpiForInitStmts())
                         for (auto st : *for_s->VpiForInitStmts()) note_init(st);
                     bool ok = check_array_access(for_s->VpiStmt(), cur_depth + 1);
+                    for (auto& nm : added) loop_vars.erase(nm);
+                    if (!ok) return false;
+                }
+                break;
+            }
+            case vpiForeachStmt: {
+                // A foreach loop var is a compile-time index like a for
+                // loop's (the importer unrolls both).
+                auto fe = any_cast<const UHDM::foreach_stmt*>(stmt);
+                if (fe) {
+                    std::vector<std::string> added;
+                    if (fe->VpiLoopVars())
+                        for (auto lv : *fe->VpiLoopVars()) {
+                            if (!lv) continue;
+                            std::string nm = std::string(lv->VpiName());
+                            if (!scanning_initial && !nm.empty() && !loop_vars.count(nm)) {
+                                loop_vars.insert(nm);
+                                added.push_back(nm);
+                            }
+                        }
+                    bool ok = check_array_access(fe->VpiStmt(), cur_depth + 1);
                     for (auto& nm : added) loop_vars.erase(nm);
                     if (!ok) return false;
                 }

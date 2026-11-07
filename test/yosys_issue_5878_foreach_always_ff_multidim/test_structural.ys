@@ -1,0 +1,14 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+check -assert
+opt -fast -nodffe -nosdff
+dffunmap
+# flops exist for both arrays (the sat proofs below cover every element's bits)
+select -assert-min 2 t:$dff
+# the 3-D array: element [sch][0][src] takes data[sch] + src when enabled
+sat -verify -seq 2 -set en 6'b111111 -set da 3'd1 -set db 3'd4 -prove a1 3'd2 -prove a2 3'd3 -prove a3 3'd4 -prove b1 3'd5 -prove b2 3'd6 -prove b3 3'd7 -prove-skip 1
+# the reduction over every element: ^(2,3,4,5,6,7) = 1 ^ 0 ^ 1 ^ 0 ^ 0 ^ 1 = 1
+sat -verify -seq 2 -set en 6'b111111 -set da 3'd1 -set db 3'd4 -prove out 1'b1 -prove-skip 1
+# the 1-D [3:1] array: element i takes d1 + i
+sat -verify -seq 2 -set en1 3'b111 -set d1 4'd4 -prove o1 4'd5 -prove o2 4'd6 -prove o3 4'd7 -prove-skip 1
