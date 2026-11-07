@@ -2816,6 +2816,27 @@ void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string&
                             if (rhs_ref->Actual_group() && rhs_ref->Actual_group()->VpiType() == vpiParameter) {
                                 is_parameter = true;
                             }
+                            // An ENUM CONSTANT (or any other constant) on the
+                            // right of `f = X` is a VALUE, not a local the
+                            // body stages the result in.  Aliasing it to the
+                            // result wire turned every `pushpop_reg_length =
+                            // RA_S0` of cv32e40x_pkg's register-list decoder
+                            // into `result = result`: the function's result
+                            // had no driver, `decode.registers_saved` read 0
+                            // and the push/pop sequencer computed `sreg` from
+                            // it (cv32e40x / cv32e40s sequencer, formal
+                            // `differs`, co-sim PASS).  The parameter test
+                            // above never saw it: the actual is an enum_const.
+                            if (rhs_ref->Actual_group()) {
+                                auto at = rhs_ref->Actual_group()->UhdmType();
+                                if (at == uhdmenum_const || at == uhdmconstant ||
+                                    at == uhdmparameter || at == uhdmtype_parameter)
+                                    is_parameter = true;
+                            }
+                            if (!is_parameter) {
+                                build_enum_const_map();
+                                if (enum_const_values_.count(var_name)) is_parameter = true;
+                            }
                             
                             // Also check module parameters
                             RTLIL::IdString param_id = RTLIL::escape_id(var_name);
