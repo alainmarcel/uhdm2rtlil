@@ -1245,6 +1245,58 @@ void UhdmImporter::merge_memwr_syncs()
     }
 }
 
+// A variable with a declaration initialiser (`logic q_inst = 0;`) that a
+// child instance's OUTPUT PORT drives (`ff1 u0 (clk, d, q_inst);`) gets its
+// initialiser as an `\init` attribute plus an init-only STa process -- the
+// same lowering as `reg x = 0` next to an always block, where the module-level
+// post-pass removes the STa once it sees the always block drive the wire.
+// That pass runs before the instance cells exist, so an instance-driven
+// variable kept its STa: `proc` lowered it to a constant driver beside the
+// port, flatten tied the port actual to 1'0, and the register the instance
+// holds never reached q_inst (YosysHQ/yosys#6165, where yosys's own frontend
+// has the same defect).  Runs once after every module and cell is in place.
+void UhdmImporter::drop_init_procs_driven_by_instances() {
+    auto is_init_proc = [](const RTLIL::Process* proc) -> bool {
+        if (proc->syncs.size() != 1) return false;
+        if (proc->syncs[0]->type != RTLIL::SyncType::STa) return false;
+        if (proc->syncs[0]->actions.size() != 1) return false;
+        return proc->syncs[0]->actions[0].second.is_fully_const();
+    };
+    for (RTLIL::Module* mod : design->modules()) {
+        std::set<RTLIL::Wire*> inst_driven;
+        for (RTLIL::Cell* cell : mod->cells()) {
+            RTLIL::Module* def = design->module(cell->type);
+            for (auto& conn : cell->connections()) {
+                bool is_out = false;
+                if (def) {
+                    RTLIL::Wire* pw = def->wire(conn.first);
+                    is_out = pw && pw->port_output;
+                } else if (cell->known()) {
+                    is_out = cell->output(conn.first);
+                }
+                if (!is_out) continue;
+                for (auto& ch : conn.second.chunks())
+                    if (ch.wire) inst_driven.insert(ch.wire);
+            }
+        }
+        if (inst_driven.empty()) continue;
+        std::vector<RTLIL::IdString> to_remove;
+        for (auto& kv : mod->processes) {
+            if (!is_init_proc(kv.second)) continue;
+            const RTLIL::SigSpec& lhs = kv.second->syncs[0]->actions[0].first;
+            for (auto& ch : lhs.chunks())
+                if (ch.wire && inst_driven.count(ch.wire)) {
+                    if (mode_debug)
+                        log("  Removing init-only STa process for '%s' (an instance output drives it)\n",
+                            ch.wire->name.c_str());
+                    to_remove.push_back(kv.first);
+                    break;
+                }
+        }
+        for (auto& id : to_remove) mod->processes.erase(id);
+    }
+}
+
 void UhdmImporter::finalize_dead_selfhold_defaults()
 {
     for (auto* mod : design->modules()) {
