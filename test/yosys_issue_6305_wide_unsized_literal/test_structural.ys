@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove y 64'h0000000800000001
+sat -verify -prove z 64'h000000ffffffffff -set a 64'hffffffffffffffff
+sat -verify -prove z 64'h000000ff00000000 -set a 64'hffffffff00000000

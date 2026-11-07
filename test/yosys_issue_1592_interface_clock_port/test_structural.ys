@@ -1,0 +1,5 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+select -assert-min 1 t:$dff t:$sdff t:$adff t:$dffe t:$sdffe %u
+sat -verify -seq 3 -set-init-zero -set rst 1'b0 -prove-skip 2 -prove keep 8'd2

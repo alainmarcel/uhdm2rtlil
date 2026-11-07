@@ -1,0 +1,13 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove y 40'h00FFFFFFFF
+sat -verify -prove z 40'h0080000000
+sat -verify -prove w 40'h00FFFFFFFF
+# The SIGNED half -- y1 == 1, y2 == 1, ws == 40'hFF80000000 -- is NOT proven
+# here: Surelog hands `'shFFFFFFFF == -1` over already folded to 0 and
+# `'sh80000000` already resized to 40 zero-extended bits (UHDM's
+# ExprEval::get_value ignores the `'s`, Surelog's adjustSize hex branch has no
+# sign handling).  The read_slang miter (test_slang_equiv.ys) carries those
+# values and is listed in slang_miter_expected_fail.txt until UHDM + Surelog
+# are fixed; the co-sim divergence is in sim_equiv_analyzed.txt.

@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 1 w:x
+flatten; proc; opt -fast
+sat -verify -prove q1 16'hffff
+sat -verify -prove q2 16'hA5C3 -set x 16'hA5C3
+sat -verify -prove q3 4'h5 -set x 16'hA5C3
