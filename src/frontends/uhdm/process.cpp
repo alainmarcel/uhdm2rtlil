@@ -9921,8 +9921,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     // Use value tracking for cell input (current value after previous assignments)
                     RTLIL::SigSpec cell_input = import_expression(operand,
                         current_comb_process ? &current_comb_values : nullptr);
-                    // Get actual wire for side-effect target (without value tracking)
-                    RTLIL::SigSpec target_wire = import_expression(operand, nullptr);
+                    // Get actual wire for side-effect target (without value tracking).
+                    // A task / void-function FORMAL or local (`val++` in an
+                    // inlined body, YosysHQ/yosys#5157) is no module wire:
+                    // resolve it to its staged temp first, or a 1-bit module
+                    // wire of that name is fabricated and the write is lost.
+                    RTLIL::SigSpec target_wire;
+                    if (!tf_local_lhs(operand, target_wire) || target_wire.empty())
+                        target_wire = import_expression(operand, nullptr);
                     if (cell_input.size() > 0) {
                         RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
                         RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
@@ -10930,6 +10936,7 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
 
     // Process IO declarations - create wires and set up mappings
     std::map<std::string, RTLIL::SigSpec> output_targets; // output param name -> caller's output SigSpec
+    std::vector<std::pair<std::string, RTLIL::SigSpec>> inout_inflight_seed;
     if (io_decls) {
         int arg_idx = 0;
         for (auto io_any : *io_decls) {
@@ -10977,10 +10984,55 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_val));
                 // Map task param to the caller's arg value for expression evaluation
                 task_mapping[param_name] = arg_val;
-            } else if (direction == vpiOutput && args && arg_idx < (int)args->size()) {
-                // Output param: map to temp wire, remember caller target
+            } else if ((direction == vpiOutput || direction == vpiInout) && args && arg_idx < (int)args->size()) {
+                // Output param: map to temp wire, remember caller target.
+                // An INOUT formal (`task automatic t(inout logic [7:0] val);
+                // val++;`, YosysHQ/yosys#5157 -- where read_verilog has the
+                // same bug) is both: it ENTERS with the actual's in-flight
+                // value, like an input, and LEAVES through the write-back
+                // below, like an output.  It was handled as neither, so the
+                // body's `val++` updated a formal nobody had seeded and
+                // nobody copied back, and the call was a no-op (out = in).
                 task_mapping[param_name] = RTLIL::SigSpec(temp_wire);
                 auto arg = (*args)[arg_idx];
+                if (direction == vpiInout) {
+                    RTLIL::SigSpec in_val;
+                    if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
+                        in_val = mapped_select_actual(arg_expr);
+                        if (in_val.empty())
+                            in_val = import_expression(arg_expr,
+                                outer_mapping ? outer_mapping
+                                              : (current_comb_process ? &current_comb_values : nullptr));
+                    }
+                    if (!in_val.empty() && in_val.size() != width) {
+                        if (in_val.size() < width)
+                            in_val.extend_u0(width, in_val.is_wire() && in_val.as_wire()->is_signed);
+                        else
+                            in_val = in_val.extract(0, width);
+                    }
+                    // Seed the formal's temp with the entry value and keep
+                    // the formal MAPPED TO THE TEMP (as an output is): the
+                    // body's writes inside an if/case arm land on the temp
+                    // through TaskMapBridge, and the write-back below copies
+                    // the temp.  Mapping the formal to the entry VALUE
+                    // instead made the write-back copy that value and the
+                    // arms' `val++` / `--val` were lost again.
+                    if (!in_val.empty()) {
+                        proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), in_val));
+                        // ... and thread it as the temp's IN-FLIGHT value, the
+                        // key mapped_inflight() consults: a read of `val`
+                        // before the body writes it must see the entry
+                        // value, not the temp WIRE (its final value, a
+                        // combinational loop through the process).
+                        // Seeded AFTER the current_comb_values -> task_mapping
+                        // copy below: a key already in task_mapping is saved
+                        // and RESTORED by the body's TaskMapBridge, which put
+                        // the entry value back over the arms' merged value.
+                        std::string tk = temp_wire->name.str();
+                        if (!tk.empty() && tk[0] == '\\') tk = tk.substr(1);
+                        inout_inflight_seed.push_back({tk, in_val});
+                    }
+                }
                 if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
                     // Through the outer body's mapping a local actual is its
                     // `$0\` temp wire; the write-back below then lands on
@@ -11090,6 +11142,11 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
             task_mapping[sig_name] = sig_val;
         }
     }
+
+    // An INOUT formal's entry value as its temp's in-flight value (see the
+    // io_decl loop); placed here so the TaskMapBridge does not restore it.
+    for (auto& kv : inout_inflight_seed)
+        current_comb_values[kv.first] = kv.second;
 
     // Process the task body
     bool saved_returned = tf_call_returned;
@@ -22742,7 +22799,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     const expr* operand = any_cast<const expr*>((*op->Operands())[0]);
                     RTLIL::SigSpec cell_input = import_expression(operand,
                         current_comb_process ? &current_comb_values : nullptr);
-                    RTLIL::SigSpec target_wire = import_expression(operand, nullptr);
+                    // An inlined task / void-function formal or local as the
+                    // target (`val++` in an if arm of the body,
+                    // YosysHQ/yosys#5157) resolves to its staged temp; the
+                    // bare import fabricated a 1-bit module wire `val`.
+                    RTLIL::SigSpec target_wire;
+                    if (!tf_local_lhs(operand, target_wire) || target_wire.empty())
+                        target_wire = import_expression(operand, nullptr);
                     if (cell_input.size() > 0) {
                         RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
                         RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());

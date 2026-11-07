@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -prove out_val 8'd17 -set in_val 8'd16 -set cond 1'b1
+sat -verify -prove out_val 8'd15 -set in_val 8'd16 -set cond 1'b0
+sat -verify -prove out_twice 8'd22 -set in_val 8'd16
