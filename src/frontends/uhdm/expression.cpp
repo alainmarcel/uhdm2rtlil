@@ -17556,6 +17556,30 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // the SIGN fell off the top -- every `round to +/- 1` came out
             // positive (`FRound` 0x3c00 where the RTL says 0xbc00).
             const UHDM::any* last = uhdm_hier->Path_elems()->back();
+            // An ELEMENT or BIT select with a runtime index, or more than one
+            // index (`Cfg.Tab[row_i][sel_i]`, `Cfg.ReadOnly[sel_i]`): the
+            // indexed-member fold knows the member's packed dimensions and
+            // builds the $shiftx; the slices below handle a constant index only
+            // and used to return the WHOLE field for anything else (bit 0 of
+            // it after the assignment's truncation).
+            if (last && uhdm_hier->Path_elems()->size() == 2 &&
+                (last->UhdmType() == uhdmvar_select || last->UhdmType() == uhdmbit_select)) {
+                const UHDM::parameter* bp = nullptr;
+                if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                    bp = dynamic_cast<const UHDM::parameter*>(r0->Actual_group());
+                auto mi0 = dynamic_cast<const module_inst*>(current_instance);
+                std::string mname = std::string(last->VpiName());
+                if (size_t b = mname.find('['); b != std::string::npos) mname = mname.substr(0, b);
+                if (bp && mi0 && !mname.empty()) {
+                    RTLIL::SigSpec folded = import_struct_param_indexed_member(
+                        bp, last, mname, mi0, input_mapping);
+                    if (!folded.empty()) {
+                        uhdm_trace("    hier_path: %s folded via indexed struct-parameter member (field path)\n",
+                            path_name.c_str());
+                        return folded;
+                    }
+                }
+            }
             auto slice = [&](int msb, int lsb) {
                 if (lsb > msb) std::swap(msb, lsb);
                 if (lsb < 0 || msb >= val.size()) return;
@@ -17576,8 +17600,19 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::SigSpec i = bs->VpiIndex()
                     ? import_expression(any_cast<const expr*>(bs->VpiIndex()), input_mapping)
                     : RTLIL::SigSpec();
-                if (i.is_fully_const() && !i.empty())
+                if (i.is_fully_const() && !i.empty()) {
                     slice(i.as_const().as_int(), i.as_const().as_int());
+                } else if (!i.empty()) {
+                    // A RUNTIME bit index (`Cfg.ReadOnly[sel_i]`): the whole
+                    // field came back at its declared width and the
+                    // assignment kept its bit 0 -- `Cfg.ReadOnly[sel_i]` read
+                    // 1 for every sel_i.  Select the bit from the constant.
+                    RTLIL::Wire* yw = module->addWire(NEW_ID, 1);
+                    module->addShiftx(NEW_ID, val, i, yw, false);
+                    uhdm_trace("    hier_path: %s -> bit [%s] of %lld via struct parameter field (w=%d)\n",
+                        path_name.c_str(), log_signal(i), iv, fw);
+                    return RTLIL::SigSpec(yw);
+                }
             }
             uhdm_trace("    hier_path: %s -> %lld via struct parameter field (w=%d"
                 "%s)\n", path_name.c_str(), iv, fw,
@@ -24521,6 +24556,9 @@ RTLIL::SigSpec UhdmImporter::import_struct_param_indexed_member(
     // the innermost vector (`int unsigned` = 32).
     std::vector<std::pair<int,int>> dims;   // (left, right)
     int leaf_w = 0;
+    // The leaf vector's own range, for a bit-select that reaches INTO it
+    // (`Cfg.PMPEntryReadOnly[i]` on a `bit [63:0]` member).
+    int leaf_left = 0, leaf_right = 0;
     const UHDM::typespec* cur = resolve_type_param_typespec(mts, current_instance);
     for (int guard = 0; cur && guard < 16; guard++) {
         auto push_ranges = [&](const UHDM::VectorOfrange* rs, bool drop_last) -> bool {
@@ -24571,11 +24609,15 @@ RTLIL::SigSpec UhdmImporter::import_struct_param_indexed_member(
                 RTLIL::SigSpec l = import_expression(r->Left_expr());
                 RTLIL::SigSpec rr = import_expression(r->Right_expr());
                 if (!l.is_fully_const() || !rr.is_fully_const()) return bail(9);
-                leaf_w = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+                leaf_left = l.as_const().as_int();
+                leaf_right = rr.as_const().as_int();
+                leaf_w = std::abs(leaf_left - leaf_right) + 1;
             } else leaf_w = 1;
             break;
         }
         leaf_w = get_width_from_typespec(cur, current_instance);
+        leaf_left = leaf_w - 1;
+        leaf_right = 0;
         break;
     }
     if (leaf_w <= 0) return bail(10);
@@ -24598,6 +24640,16 @@ RTLIL::SigSpec UhdmImporter::import_struct_param_indexed_member(
     } else if (auto bs = dynamic_cast<const UHDM::bit_select*>(sel_elem)) {
         idx.push_back(bs->VpiIndex());
     } else return bail(12);
+    // One index more than there are packed dimensions selects a BIT of the
+    // leaf vector: `CVA6Cfg.PMPEntryReadOnly[i]` on `bit [63:0]` (no
+    // dimension at all, one index) or `Tab[i][j][b]`.  The leaf becomes one
+    // more dimension with a 1-bit element.  CVA6's csr_regfile read that
+    // bit as X, folded `if (!Cfg.PMPEntryReadOnly[i])` to its ELSE arm and
+    // never wrote a pmpcfg entry (cva6-rv32 formal `differs`).
+    if (idx.size() == dims.size() + 1 && leaf_w >= 1) {
+        dims.push_back({leaf_left, leaf_right});
+        leaf_w = 1;
+    }
     if (idx.empty() || idx.size() > dims.size()) return bail(13);
     int const_off = 0;
     RTLIL::SigSpec dyn_shamt;
