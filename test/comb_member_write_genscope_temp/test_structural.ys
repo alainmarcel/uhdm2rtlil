@@ -1,0 +1,10 @@
+# One always_comb writes a generate-local struct register WHOLE and then one
+# MEMBER of it.  Both writes must land in ONE temp: `check -assert` fails on a
+# doubly-driven low byte, and the proof pins the member override.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+check -assert
+flatten; opt -fast
+sat -verify -prove combined_o 23'h5A_55 -set held_data 59'h0_5A7F_00000000 -set data_intg 7'h55
+sat -verify -prove combined_o 23'h00_7F -set held_data 59'h0_0000_00000000 -set data_intg 7'h7F
