@@ -14472,14 +14472,61 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
 
     // For [offset -: width] the LSB lives at offset - (width - 1)
     bool indexed_up = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
-    RTLIL::SigSpec shamt = offset;
-    if (!indexed_up && part_w > 1) {
+
+    // A packed 2-D base (`logic [3:0][7:0] simd_result`, stamped with
+    // packed_elem_width / packed_outer_* by import_net): `[off +: n]`
+    // selects n ELEMENTS, so the write covers n * elem_w bits at
+    // (off - low) * elem_w.  This emitter worked in bits -- snitch dspu's
+    // `simd_result[2*imm6[0] +: 2] = simd_op_a[1:0]` (pv.insert, half-word)
+    // wrote TWO BITS at bit 2*imm6[0] instead of two 8-bit elements at
+    // 16*imm6[0] (formal `differs`, co-sim PASS).  The read side of the
+    // same select already scales (import_indexed_part_select); do the
+    // same here, in ELEMENT units for the alignment test below and in
+    // bits for everything after it.  An ascending outer range is left to
+    // the generic path.
+    int pk_ew = 1, pk_lo = 0;
+    {
+        auto& ga = base_wire->attributes;
+        auto ew_id = RTLIL::escape_id("packed_elem_width");
+        auto ol_id = RTLIL::escape_id("packed_outer_left");
+        auto or_id = RTLIL::escape_id("packed_outer_right");
+        if (ga.count(ew_id) && ga.count(ol_id) && ga.count(or_id)) {
+            int ew = ga.at(ew_id).as_int();
+            int ol = ga.at(ol_id).as_int(), orr = ga.at(or_id).as_int();
+            int nelem = std::abs(ol - orr) + 1;
+            if (ew > 1 && ew * nelem == base_w) {
+                if (ol < orr) return false;
+                pk_ew = ew; pk_lo = orr;
+            }
+        }
+    }
+    const int part_elems = part_w;          // element units (== bits when pk_ew == 1)
+    RTLIL::SigSpec eidx = offset;           // low element of the select
+    if (!indexed_up && part_elems > 1) {
         RTLIL::Wire* sub_w = module->addWire(NEW_ID, offset.size());
         module->addSub(NEW_ID, offset,
-                       RTLIL::SigSpec(RTLIL::Const(part_w - 1, offset.size())),
+                       RTLIL::SigSpec(RTLIL::Const(part_elems - 1, offset.size())),
                        sub_w);
-        shamt = RTLIL::SigSpec(sub_w);
+        eidx = RTLIL::SigSpec(sub_w);
     }
+    if (pk_ew > 1) {
+        if (pk_lo != 0) {
+            RTLIL::Wire* sub_w = module->addWire(NEW_ID, eidx.size());
+            module->addSub(NEW_ID, eidx,
+                           RTLIL::SigSpec(RTLIL::Const(pk_lo, eidx.size())), sub_w);
+            eidx = RTLIL::SigSpec(sub_w);
+        }
+        RTLIL::SigSpec eidx_ext = eidx;
+        eidx_ext.extend_u0(32, false);
+        RTLIL::Wire* prod = module->addWire(NEW_ID, 32);
+        module->addMul(NEW_ID, eidx_ext, RTLIL::SigSpec(RTLIL::Const(pk_ew, 32)), prod, false);
+        eidx = RTLIL::SigSpec(prod);
+        part_w = part_elems * pk_ew;
+        if (part_w > base_w) return false;
+        uhdm_trace("    dynamic indexed part-select write: packed elements [%s +: %d] (elem_w=%d) -> %d bits\n",
+                   log_signal(offset), part_elems, pk_ew, part_w);
+    }
+    RTLIL::SigSpec shamt = eidx;
 
     // RHS sized/signed to part_w
     if (!rhs_any) return false;
@@ -14515,7 +14562,7 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     // element-indexed forms `W*idx` / `idx*W` (a mult by a multiple of part_w)
     // or `idx << s` with s >= log2(part_w).  (The RTLIL offset bits can't show
     // this — `8*sel` is a $mul whose low bits are not statically zero.)
-    bool part_aligned = (part_w == 1);
+    bool part_aligned = (part_elems == 1);
     if (!part_aligned) {
         if (auto op = dynamic_cast<const UHDM::operation*>(base_idx_expr)) {
             int ot = op->VpiOpType();
@@ -14532,12 +14579,12 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
                 long c0, c1;
                 bool k0 = ceval((*ops)[0], c0), k1 = ceval((*ops)[1], c1);
                 if (ot == vpiMultOp) {
-                    if ((k0 && c0 != 0 && c0 % part_w == 0) ||
-                        (k1 && c1 != 0 && c1 % part_w == 0))
+                    if ((k0 && c0 != 0 && c0 % part_elems == 0) ||
+                        (k1 && c1 != 0 && c1 % part_elems == 0))
                         part_aligned = true;
                 } else if (ot == vpiLShiftOp && k1) {
-                    int lb = 0; while ((1 << lb) < part_w) lb++;
-                    if ((part_w & (part_w - 1)) == 0 && c1 >= lb)
+                    int lb = 0; while ((1 << lb) < part_elems) lb++;
+                    if ((part_elems & (part_elems - 1)) == 0 && c1 >= lb)
                         part_aligned = true;
                 }
             }
@@ -14548,8 +14595,8 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
         indexed_up && base_w % part_w == 0 && base_w / part_w <= 64) {
         int nelem = base_w / part_w;
         RTLIL::Wire* base_tw = case_rule ? module->wire("$0\\" + base_name) : nullptr;
-        int iw = std::max(GetSize(offset), 32);
-        RTLIL::SigSpec off_ext = offset;
+        int iw = std::max(GetSize(shamt), 32);
+        RTLIL::SigSpec off_ext = shamt;     // bit offset of the select's low end
         off_ext.extend_u0(iw, false);
         for (int k = 0; k < nelem; k++) {
             int soff = k * part_w;
