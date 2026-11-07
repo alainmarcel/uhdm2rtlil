@@ -1,0 +1,6 @@
+# Writing address 259 must leave entry 3 alone; writing address 3 must land.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt_clean; memory_collect; memory_map; opt
+sat -seq 2 -set-init-zero -set reset 0 -set raddr 7'b0000011 -set-at 1 we 1 -set-at 1 waddr 9'b100000011 -set-at 1 wdata 3'b101 -set-at 2 we 0 -prove rdata 3'b000 -prove-skip 1 -verify
+sat -seq 2 -set-init-zero -set reset 0 -set raddr 7'b0000011 -set-at 1 we 1 -set-at 1 waddr 9'b000000011 -set-at 1 wdata 3'b101 -set-at 2 we 0 -prove rdata 3'b101 -prove-skip 1 -verify

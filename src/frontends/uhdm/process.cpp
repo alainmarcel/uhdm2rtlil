@@ -6551,8 +6551,16 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
                     // width assert.
                     RTLIL::SigSpec addr = mem_write.address;
                     int aw = memwr_addr_wires[i]->width;
-                    if (addr.size() < aw) addr.extend_u0(aw);
-                    else if (addr.size() > aw) addr = addr.extract(0, aw);
+                    // An index WIDER than the port must not simply be
+                    // truncated: the LRM (7.4.6) ignores an out-of-range
+                    // write, read_slang keeps the full address and drops it,
+                    // and only the wrapped low bits reached here -- cvw's
+                    // cacheLRU (a 128-entry `LRUMemory` indexed by a 9-bit
+                    // PAdr at the module's defaults) stored set 259 in set 3.
+                    // memwr_size_addr hands back the in-range condition the
+                    // enable has to carry (#1446 did this for the case-arm
+                    // emitters; this is the always_ff pending-write one).
+                    RTLIL::SigSpec in_range = memwr_size_addr(addr, aw);
                     RTLIL::SigSpec data = mem_write.data;
                     int dw = memwr_data_wires[i]->width;
                     if (mem_write.slice_w > 0) {
@@ -6582,6 +6590,18 @@ void UhdmImporter::emit_pending_memory_writes(RTLIL::SyncRule* sync) {
                         enable.append(mem_write.condition.empty()
                                           ? RTLIL::SigSpec(RTLIL::Const(1, 1))
                                           : mem_write.condition);
+                    }
+                    if (!(in_range.is_fully_const() && in_range.as_bool())) {
+                        RTLIL::SigSpec gated;
+                        for (int j = 0; j < dw; j++) {
+                            RTLIL::SigSpec b = enable.extract(j, 1);
+                            if (b.is_fully_const() && !b.as_bool()) { gated.append(b); continue; }
+                            if (in_range.is_fully_const()) { gated.append(in_range); continue; }
+                            RTLIL::Wire* g = module->addWire(NEW_ID, 1);
+                            module->addAnd(NEW_ID, b, in_range, g);
+                            gated.append(RTLIL::SigSpec(g));
+                        }
+                        enable = gated;
                     }
                     module->connect(RTLIL::SigSpec(memwr_en_wires[i]), enable);
                 
@@ -13902,11 +13922,13 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 // memory's ABITS — otherwise it crashes reconciling a
                 // 32-bit-addr clear (`for(i) mem[i]<=0`) against the normal
                 // 4-bit-addr data write (simple_memory).
+                RTLIL::SigSpec addr_in_range(RTLIL::State::S1);
                 {
                     int abits = 1;
                     while ((1 << abits) < memory->size) abits++;
-                    if (addr.size() > abits) addr = addr.extract(0, abits);
-                    else if (addr.size() < abits) addr.extend_u0(abits, false);
+                    // Same rule as the pending-write emitter above: a wider
+                    // index keeps its in-range condition for the enable.
+                    addr_in_range = memwr_size_addr(addr, abits);
                 }
 
                 // Get data - check if it needs variable substitution.
@@ -13965,15 +13987,26 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 action.priority_mask = RTLIL::Const(pmask);
                 
                 // Use current condition as enable if we're inside an if statement
-                if (!current_condition.empty()) {
-                    // Expand condition to match memory width
+                RTLIL::SigSpec en_bit = current_condition.empty()
+                    ? RTLIL::SigSpec(RTLIL::State::S1) : current_condition;
+                if (!(addr_in_range.is_fully_const() && addr_in_range.as_bool())) {
+                    if (addr_in_range.is_fully_const()) {
+                        en_bit = addr_in_range;
+                    } else if (en_bit.is_fully_const() && en_bit.as_bool()) {
+                        en_bit = addr_in_range;
+                    } else {
+                        RTLIL::Wire* g = module->addWire(NEW_ID, 1);
+                        module->addAnd(NEW_ID, en_bit, addr_in_range, g);
+                        en_bit = RTLIL::SigSpec(g);
+                    }
+                }
+                {
+                    // Expand to match memory width
                     RTLIL::SigSpec enable;
                     for (int i = 0; i < memory->width; i++) {
-                        enable.append(current_condition);
+                        enable.append(en_bit);
                     }
                     action.enable = enable;
-                } else {
-                    action.enable = RTLIL::SigSpec(RTLIL::State::S1, memory->width);
                 }
                 
                 // Source attributes would go on the process, not sync rule
