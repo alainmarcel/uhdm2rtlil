@@ -308,6 +308,11 @@ def load_sweeps(root):
             if scos in ("error", "vacuous") or scos.startswith("skip"):
                 rows.append(dict(set="sweep", fam=fam, name=mod, status="INCOMPLETE",
                                  diag="slang co-sim " + scos + "; read_uhdm " + (ucos or "—"), ucos=ucos))
+                continue
+            # A module read_slang reads and matches: counted (so the Totals
+            # table's "modules" column is the family's size, not its failure
+            # count) but never listed.
+            rows.append(dict(set="sweep", fam=fam, name=mod, status="OK", diag="", ucos=ucos))
     return rows
 
 # ---------------------------------------------------------------- emit
@@ -407,12 +412,12 @@ def main():
         return sum(1 for r in report if pred(r)), sum(1 for r in incomplete if pred(r))
     for key in ["internal", "upstream"] + sorted(k for k in totals if k.startswith("sweep:")):
         t = totals[key]
-        n = sum(v for k2, v in t.items() if k2 in ("OK", "FAIL", "TIMEOUT", "INCOMPLETE"))
+        n = sum(v for k2, v in t.items() if k2 in ("OK", "FAIL", "TIMEOUT", "INCOMPLETE", "UHDM_WRONG"))
         if key.startswith("sweep:"):
             fam = key[6:]
             rep, inc = cnt(lambda r: r["set"] == "sweep" and r["fam"] == fam)
             n_fail = rep + inc
-            A(f"| sweep {fam} | {n} rows read | {n_fail} | {rep} | {inc} |")
+            A(f"| sweep {fam} | {n} modules | {n_fail} | {rep} | {inc} |")
         else:
             rep, inc = cnt(lambda r: r["set"] == key)
             A(f"| {'internal tests' if key == 'internal' else 'yosys tests'} | {n} | {t['FAIL'] + t['TIMEOUT']} | {rep} | {inc} |")
@@ -464,23 +469,57 @@ def main():
             A("")
     A("## The other direction: `read_slang` right, `read_uhdm` wrong\n")
     A("A document that can only record another tool's mistakes is not a measurement.")
-    A("These sweep rows co-simulate clean with the `read_slang` netlist and diverge with")
-    A("ours; they are OUR defects, tracked in the sweeps, listed here in the same format.\n")
+    A("A sweep row that co-simulates clean with the `read_slang` netlist and diverges")
+    A("with ours is OUR defect; such rows are tracked in the sweeps and listed here in")
+    A("the same format as the classes above, with their status on `main` only.\n")
+    # Rows closed on `main` (test/slang_uhdm_div_closed.txt: `family/module #
+    # PR`) are dropped here even when the downloaded sweep reports -- which
+    # predate the fix -- still show them.  A closed row that comes back in a
+    # report NEWER than its fix is a regression; the ratchet file carries the
+    # fix date so that can be told apart.
+    closed = {}
+    try:
+        for line in open(os.path.join(ROOT, "test", "slang_uhdm_div_closed.txt")):
+            body, _, note = line.partition("#")
+            body = body.strip()
+            if body:
+                closed[body] = note.strip()
+    except OSError:
+        pass
+    still = [r for r in ours if f"{r['fam']}/{r['name']}" not in closed and r["name"] not in closed]
+    if closed:
+        A("**Status on `main`: %s.**  %d row(s) ever listed here co-simulate clean"
+          % ("this class is EMPTY" if not still else f"{len(still)} row(s) open", len(closed)))
+        A("with the `read_uhdm` netlist on `main` and are not listed; the fixes that")
+        A("closed them, by row, are in `test/slang_uhdm_div_closed.txt`:")
+        A("")
+        A("| row | closed by |")
+        A("|---|---|")
+        for k in sorted(closed):
+            A(f"| `{k}` | {closed[k]} |")
+        A("")
+    A("A row listed below is open: the latest sweep reports show it diverging with the")
+    A("`read_uhdm` netlist and it is not in the closed list.  A closed row that comes back")
+    A("is a regression, not a stale entry.\n")
+    ours = still
     # This section gets its OWN vintage stamp.  It is the one most likely to be
     # read in isolation (someone follows a link straight to the anchor) and the
     # one where being a day stale does the most damage: it lists OUR defects, so
     # a stale row claims a bug that may already be fixed.  The file-level
     # provenance note above is not enough for a reader who never saw it.
-    if _sw_when:
-        A(f"Measured {_sw_when}, from the sweep artifacts named at the top of this file.")
-        A("A row fixed after that date is still listed here until the sweeps are")
-        A("re-downloaded and this report regenerated -- check the row before trusting it")
-        A(f"(`{sorted({r['rid'] for r in ours})[0] if ours else 'R3'}`-style recipe per row below re-measures it in minutes).\n")
-    A(f"**{len(ours)}** rows.\n")
-    A("| set | test | verdicts | recipe |")
-    A("|---|---|---|---|")
-    for r in sorted(ours, key=lambda r: (r["setlabel"], r["name"])):
-        A(f"| {r['setlabel']} | {r['link']} | {clean_diag(r['diag'])} | {r['rid']} {r['cmd']} |")
+    A(f"**{len(ours)}** open row(s).\n")
+    if ours:
+        A("| set | test | verdicts | recipe |")
+        A("|---|---|---|---|")
+        for r in sorted(ours, key=lambda r: (r["setlabel"], r["name"])):
+            A(f"| {r['setlabel']} | {r['link']} | {clean_diag(r['diag'])} | {r['rid']} {r['cmd']} |")
+        A("")
+    A("Two of the divergences localised on the way were the REFERENCE's, not ours,")
+    A("and are recorded rather than fixed: Verilator masks an out-of-range index into")
+    A("a power-of-two array (OpenPiton's `tte_csm_buf[3]` on a 2-entry buffer wraps to")
+    A("entry 1 in the RTL and the slang netlist alike; iverilog and `read_uhdm` ignore")
+    A("the write, LRM 7.4.6), and the matching out-of-range READ is X by the LRM, which")
+    A("the SAT miter can always tell apart (`test/formal_adjudicated.txt`).")
     A("")
     open(a.out, "w").write("\n".join(L) + "\n")
 
