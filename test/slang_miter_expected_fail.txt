@@ -42,3 +42,9 @@ sv_tests/arrays-key-index
 # that writes at index 2 and 3 leave both entries untouched while a write at
 # index 1 lands.  Same limitation as the sv_tests/arrays entries above.
 mem_write_index_out_of_range
+# yosys#6401's `union packed signed` cast: the result must be SIGNED (Icarus and
+# read_slang: 64'hFFFF_FFFF_FFFF_FFAC into a 64-bit output), but UHDM's
+# union_typespec has no signedness property, so Surelog cannot record `packed
+# signed` on a union and read_uhdm zero-extends.  Needs the UHDM model
+# (vpiSigned on union_typespec) and Surelog; nothing the reader can do.
+yosys_issue_6401_union_signed_cast

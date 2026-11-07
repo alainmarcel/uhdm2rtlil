@@ -1,0 +1,25 @@
+# Reference values from Icarus Verilog (yosys tests/verilog/signed_casts.ys).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+sat -verify -prove shift_unsized 33'h0_8000_0000
+sat -verify -prove shift_sized 33'h0_8000_0000
+sat -verify -prove shift_parameter 33'h0_8000_0000
+sat -verify -prove shift_subtract 33'h0_7fff_ffff
+sat -verify -prove multiply_widened 10'd150
+sat -verify -prove byte_signed 64'hFFFF_FFFF_FFFF_FFAC
+sat -verify -prove typedef_signed 64'hFFFF_FFFF_FFFF_FFAC
+sat -verify -prove typedef_unsigned 64'hAC
+sat -verify -prove struct_signed 64'hFFFF_FFFF_FFFF_FFAC
+sat -verify -prove union_unsigned 64'h0000_0000_0000_00AC
+sat -verify -prove shortint_widened 64'hAC
+sat -verify -prove add_parameter_width 8'h04
+sat -verify -prove add_literal_width 8'h04
+sat -verify -prove add_cast_parameters 8'h04
+sat -verify -prove subtract_mixed_widths 8'hfe
+sat -verify -prove add_negative 8'd0
+sat -verify -prove negate_cast 8'hfb
+sat -verify -prove complement_cast 8'hfa
+sat -verify -prove add_cast_signal 8'h04 -set in 4'd5
+sat -verify -prove add_widened 9'h104
+sat -verify -prove concat_cast 2'b10
