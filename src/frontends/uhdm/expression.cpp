@@ -11750,8 +11750,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // Non-constant operand: emit `$pos` so synthesis correctly
                     // sign- or zero-extends.  Pass src_signed so the resulting
                     // cell sets A_SIGNED appropriately.
-                    if (operand.size() == target_width)
-                        return operand;
+                    if (operand.size() == target_width) {
+                        // An equal-width cast still CHANGES THE TYPE: a type
+                        // cast to a signed type (`byte'(a)`,
+                        // `signed_byte'(a)`, a `struct packed signed`) makes
+                        // the result signed, and to an unsigned one
+                        // (`unsigned_byte'($signed(a))`) makes it unsigned --
+                        // the enclosing assignment sign- or zero-extends on
+                        // THAT (YosysHQ/yosys#6401).  Returning the operand
+                        // kept its own signedness, so `byte'(8'hAC)` into a
+                        // 64-bit output zero-extended where Icarus, slang and
+                        // the LRM (6.24.1) give 64'hFFFF_FFFF_FFFF_FFAC.  A
+                        // size cast keeps the operand's signedness, so only
+                        // a disagreement needs the re-typed wire.
+                        bool eff_signed = operand.is_wire() ? operand.as_wire()->is_signed : src_signed;
+                        if (eff_signed == target_signed) return operand;
+                        RTLIL::Wire* retyped = module->addWire(NEW_ID, target_width);
+                        retyped->is_signed = target_signed;
+                        add_src_attribute(retyped->attributes, uhdm_op);
+                        module->connect(RTLIL::SigSpec(retyped), operand);
+                        return RTLIL::SigSpec(retyped);
+                    }
                     RTLIL::Wire* result_wire = module->addWire(NEW_ID, target_width);
                     result_wire->is_signed = target_signed;
                     add_src_attribute(result_wire->attributes, uhdm_op);

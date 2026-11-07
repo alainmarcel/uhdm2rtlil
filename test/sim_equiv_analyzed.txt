@@ -936,3 +936,15 @@ Test: memwr_oor_addr_ignored
     nl=0x0 once in 300 cycles).  The read address is 7 bits, so no read is
     ever out of range; the divergence is the write convention alone.
     CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range write.
+
+Test: yosys_issue_6401_union_signed_cast
+    KNOWN READER GAP, deliberately kept diverging.  `signed_union'(a)` with
+    `typedef union packed signed { logic [7:0] value; } signed_union;` must
+    give a SIGNED 8-bit result, so the 64-bit output sign-extends 8'hAC to
+    64'hFFFF_FFFF_FFFF_FFAC (the RTL, Icarus and read_slang agree -- it is
+    YosysHQ/yosys#6401's union case).  read_uhdm zero-extends because UHDM's
+    union_typespec has no signedness property, so Surelog cannot record
+    `packed signed` on a union and the cast handler sees an unsigned type.
+    The fix is a UHDM model change (vpiSigned on union_typespec) plus
+    Surelog; nothing in the reader can recover it.  The same test is in
+    slang_miter_expected_fail.txt for the same reason.
