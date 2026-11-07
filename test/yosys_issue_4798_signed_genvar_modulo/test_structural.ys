@@ -1,0 +1,8 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+sat -verify -prove y_next0 8'h22 -prove y_prev2 8'h22 -prove y_next2 8'h44 -set sheet 40'h55_44_33_22_11
+sat -verify -prove m_neg 8'hFF -prove m_pos 8'h04
+# the out-of-range read is X (an unsigned fold selected ELEMENT 0 = 8'h11 instead)
+setundef -zero -undriven
+sat -verify -prove y_prev0 8'h00 -set sheet 40'h55_44_33_22_11

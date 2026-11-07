@@ -10294,12 +10294,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 break;
             case vpiDivOp:
                 if (operands.size() == 2 && operands[1].as_const().as_int() != 0) {
-                    result = RTLIL::const_div(operands[0].as_const(), operands[1].as_const(), false, false, 32);
+                    // Signed when BOTH operands are (LRM 11.8.1), as the
+                    // runtime handler decides it: a genvar is an int, so
+                    // `(col - 1) % 5` at col = 0 is -1 (out of range, X),
+                    // not 4294967295 % 5 = 0 -- which selected ELEMENT 0 of
+                    // the sheet in sha3's theta step (YosysHQ/yosys#4798).
+                    bool s = operands_all_signed(uhdm_op);
+                    result = RTLIL::const_div(operands[0].as_const(), operands[1].as_const(), s, s, 32);
                 }
                 break;
             case vpiModOp:
                 if (operands.size() == 2 && operands[1].as_const().as_int() != 0) {
-                    result = RTLIL::const_mod(operands[0].as_const(), operands[1].as_const(), false, false, 32);
+                    bool s = operands_all_signed(uhdm_op);
+                    result = RTLIL::const_mod(operands[0].as_const(), operands[1].as_const(), s, s, 32);
                 }
                 break;
             case vpiPowerOp:
