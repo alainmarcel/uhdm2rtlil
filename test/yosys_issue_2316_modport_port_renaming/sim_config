@@ -1,0 +1,4 @@
+# read_verilog (yosys 0.70) has the very bug this test is about (#2316), so its
+# netlist is not a reference; the gates are the read_slang miter / test_structural.ys
+# and the Verilator co-sim against the RTL.
+SKIP_FORMAL=1

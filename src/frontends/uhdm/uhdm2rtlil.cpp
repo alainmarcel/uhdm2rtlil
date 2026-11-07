@@ -2932,6 +2932,16 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     for (const auto& f : field_names) {
                                         std::string src_full = src_name + "." + f;
                                         std::string dst_port = port_name + "." + f;
+                                        // A RENAMED modport port (`output
+                                        // .Dout(dinit)`, YosysHQ/yosys#2316):
+                                        // the child's `<port>.Dout` is the
+                                        // instance's `<inst>.dinit`.
+                                        if (tgt_mod) {
+                                            auto rn = modport_field_src_.find(
+                                                tgt_mod->name.str() + ":" + port_name + ":" + f);
+                                            if (rn != modport_field_src_.end())
+                                                src_full = src_name + "." + rn->second;
+                                        }
                                         RTLIL::Wire* src_w = nullptr;
                                         if (name_map.count(src_full))
                                             src_w = name_map[src_full];
@@ -3088,6 +3098,17 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     for (const auto& f : field_names) {
                                         std::string src_full = src_name + "." + f;
                                         std::string dst_port = port_name + "." + f;
+                                        // A RENAMED modport port (`output
+                                        // .Dout(dinit)`, YosysHQ/yosys#2316): the
+                                        // child's `<port>.Dout` is the instance's
+                                        // `<inst>.dinit` (same as the whole-instance
+                                        // pairing above).
+                                        if (tgt_mod) {
+                                            auto rn = modport_field_src_.find(
+                                                tgt_mod->name.str() + ":" + port_name + ":" + f);
+                                            if (rn != modport_field_src_.end())
+                                                src_full = src_name + "." + rn->second;
+                                        }
                                         RTLIL::Wire* src_w = nullptr;
                                         if (name_map.count(src_full))
                                             src_w = name_map[src_full];
