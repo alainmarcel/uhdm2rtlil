@@ -48,3 +48,12 @@ mem_write_index_out_of_range
 # signed` on a union and read_uhdm zero-extends.  Needs the UHDM model
 # (vpiSigned on union_typespec) and Surelog; nothing the reader can do.
 yosys_issue_6401_union_signed_cast
+# yosys#6346's SIGNED unsized based literals: `'shFFFFFFFF == -1` and
+# `'shFFFFFFFF < 0` are 1 and `wire signed [39:0] ww = 'sh80000000` is
+# 40'hFF80000000 (read_slang, Icarus, LRM 5.7.1); read_uhdm gives 0 / 0 /
+# 40'h0080000000 because Surelog folds the comparisons as unsigned and resizes
+# the literal zero-extended before the reader sees it (UHDM
+# templates/ExprEval.cpp get_value ignores the `'s` on a hex literal; Surelog
+# CompileHelper::adjustSize's hex branch lacks the sign handling its binary
+# branch has).  The unsigned half of the same test is proven structurally.
+yosys_issue_6346_unsized_literal_bit31
