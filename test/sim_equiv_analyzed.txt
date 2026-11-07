@@ -948,3 +948,22 @@ Test: yosys_issue_6401_union_signed_cast
     The fix is a UHDM model change (vpiSigned on union_typespec) plus
     Surelog; nothing in the reader can recover it.  The same test is in
     slang_miter_expected_fail.txt for the same reason.
+Test: yosys_issue_6346_unsized_literal_bit31
+    KNOWN SURELOG/UHDM GAP, deliberately kept diverging.  The signed unsized
+    literals `'shFFFFFFFF` (compared with -1 and with 0) and `'sh80000000`
+    (into a signed 40-bit wire) reach read_uhdm already folded / resized as
+    UNSIGNED by Surelog: y1 and y2 read 0 and ws reads 40'h0080000000 where
+    the RTL (Verilator), Icarus and read_slang give 1, 1 and 40'hFF80000000.
+    UHDM's ExprEval::get_value ignores the `'s` of a hex literal and Surelog's
+    adjustSize hex branch zero-extends; nothing in the reader can recover the
+    sign.  Same test in slang_miter_expected_fail.txt.
+
+Test: yosys_issue_6307_oor_mem2reg_write
+    The DUT exists to write a 4-entry register array through a 3-bit index
+    (`r[a] = 4'h7` with a up to 7, YosysHQ/yosys#6307): LRM 7.4.6 ignores an
+    out-of-range write, so z0 / z1 keep 1 / 2 for a = 4 and a = 5 -- what the
+    issue asks for and what read_uhdm and read_slang give.  Verilator WRAPS
+    the index of a power-of-two array instead (the same convention recorded
+    for memwr_oor_addr_ignored and OpenPiton's TLB reads), so under random
+    stimulus the RTL shows z0 = 7 whenever a = 4 (rtl=0x7 nl=0x1).
+    CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range write.

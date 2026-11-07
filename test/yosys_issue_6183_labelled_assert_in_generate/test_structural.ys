@@ -1,0 +1,5 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-min 4 t:$check
+flatten; proc; opt -fast; delete t:$check
+sat -verify -prove out 4'b0101 -set in 4'b1010
