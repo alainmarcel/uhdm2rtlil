@@ -14879,12 +14879,25 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                     // multi-dim type (keccak theta's `plane_t c; c[x]`) — on its
                     // typespec, so bitselect_outer_dim covers both; without the
                     // typespec fallback c[x] kept elem_w=1 and only the LSB read.
-                    int elem_w = 1, outer_lo = 0;
+                    int elem_w = 1, outer_lo = 0, outer_hi = 0;
+                    bool packed_dim = false;
                     const UHDM::any* ag = uhdm_bit->Actual_group();
                     if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
                     if (ag)
-                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
-                    int off = (idx - outer_lo) * elem_w;
+                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo, &outer_hi, &packed_dim);
+                    // An ASCENDING formal range (`input [1:7] cw`) puts index
+                    // `lo` at the TOP: `cw[1]` is the MSB.  Read as if
+                    // `[7:1]`, every bit of RSD-style `[1:7]` Hamming code
+                    // ran backwards (YosysHQ/yosys#2411: `synd[2] = cw[5] ^
+                    // cw[4] ^ cw[6] ^ cw[7]` computed from the wrong bits).
+                    // bitselect_outer_dim reports an ascending range as
+                    // outer_hi == -1.
+                    // Only a PACKED range: an unpacked `req_i[4]` keeps
+                    // element 0 at the low offset.
+                    int osz = elem_w > 0 ? it->second.size() / elem_w : 0;
+                    int off = (outer_hi == -1 && packed_dim && osz > 0)
+                        ? (outer_lo + osz - 1 - idx) * elem_w
+                        : (idx - outer_lo) * elem_w;
                     if (off >= 0 && off + elem_w <= it->second.size()) {
                         return mapped_inflight(it->second.extract(off, elem_w));
                     }
@@ -14897,17 +14910,25 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
                 // sram_ctrl scrambling was wrong.  Extract the element with
                 // a $shiftx sized by the formal's outer dimension.
                 {
-                    int elem_w = 1, outer_lo = 0;
+                    int elem_w = 1, outer_lo = 0, outer_hi = 0;
+                    bool packed_dim = false;
                     const UHDM::any* ag = uhdm_bit->Actual_group();
                     if (!ag) ag = find_enclosing_tf_decl(uhdm_bit, signal_name);
                     if (ag)
-                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo);
+                        bitselect_outer_dim(ag, it->second.size(), elem_w, outer_lo, &outer_hi, &packed_dim);
                     if (elem_w <= 0 || elem_w > it->second.size()) elem_w = 1;
                     int iw = std::max(GetSize(index), 32);
                     RTLIL::SigSpec idx_ext = index;
                     idx_ext.extend_u0(iw, false);
                     RTLIL::SigSpec slot = idx_ext;
-                    if (outer_lo != 0)
+                    int osz_d = it->second.size() / elem_w;
+                    if (outer_hi == -1 && packed_dim && osz_d > 0) {
+                        // ascending range: slot = (lo + osz - 1) - idx (see
+                        // the constant-index path above, YosysHQ/yosys#2411)
+                        slot = module->Sub(NEW_ID,
+                                           RTLIL::SigSpec(RTLIL::Const(outer_lo + osz_d - 1, iw)),
+                                           idx_ext);
+                    } else if (outer_lo != 0)
                         slot = module->Sub(NEW_ID, idx_ext,
                                            RTLIL::SigSpec(RTLIL::Const(outer_lo, iw)));
                     RTLIL::SigSpec off = elem_w == 1 ? slot
