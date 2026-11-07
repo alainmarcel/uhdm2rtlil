@@ -3739,9 +3739,21 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // path: if this process writes several slices of the
                     // same base wire they need to share one full-width
                     // temp; single-slice writes keep per-slice temps.
+                    // Keyed by the resolved base wire (see the comb site's
+                    // base_key): a whole write and a member write of one
+                    // generate-local register are spelled differently by the
+                    // scan and must still share ONE full-width temp.
+                    auto base_key_ff = [&](const AssignedSignal& s) -> std::string {
+                        if (RTLIL::Wire* w = find_wire_in_scope(s.name, "")) {
+                            std::string n = w->name.str();
+                            if (!n.empty() && n[0] == '\\') n = n.substr(1);
+                            return n;
+                        }
+                        return s.name;
+                    };
                     std::map<std::string, int> base_slice_count_ff;
                     for (const auto& sig : assigned_signals)
-                        base_slice_count_ff[sig.name]++;
+                        base_slice_count_ff[base_key_ff(sig)]++;
 
                     // Base-wire bits this process actually writes, per dedup_key.
                     // The sync rule below drives ONLY these bits — even when the
@@ -3797,7 +3809,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             lhs_spec.size() <
                                 lhs_spec.chunks().begin()->wire->width;
                         bool collapse_to_base =
-                            lhs_is_slice && base_slice_count_ff[sig.name] > 1;
+                            lhs_is_slice && base_slice_count_ff[base_key_ff(sig)] > 1;
                         std::string dedup_key;
                         if (lhs_spec.size() > 0) {
                             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
@@ -4127,9 +4139,26 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // When only a single slice is written, fall back to a per-slice
     // dedup key so per-bit generate-block writes don't collide
     // across processes (see `simple/gen_test1.v`).
+    // Count per RESOLVED base wire, not per the scan's spelling of it: a
+    // generate-local struct register written whole (`combined_user =
+    // held_data.a_user`, scanned as `gen_integ_handling.combined_user`) and
+    // then by member (`combined_user.data_intg = data_intg`, scanned by the
+    // hier_path's bare base `combined_user`) counted as two different bases,
+    // the member write kept a per-slice `$0\<wire>[6:0]` temp beside the
+    // whole write's `$0\<wire>`, and both syncs drove the register's low
+    // bits -- OpenTitan tlul_sram_byte's 7 driver conflicts (pavona periph
+    // sram_ctrl, the sram_ctrl instances of every chip).
+    auto base_key = [&](const AssignedSignal& s) -> std::string {
+        if (RTLIL::Wire* w = find_wire_in_scope(s.name, "")) {
+            std::string n = w->name.str();
+            if (!n.empty() && n[0] == '\\') n = n.substr(1);
+            return n;
+        }
+        return s.name;
+    };
     std::map<std::string, int> base_slice_count;
     for (const auto& sig : assigned_signals)
-        base_slice_count[sig.name]++;
+        base_slice_count[base_key(sig)]++;
 
     // MIXED unpacked arrays (flat `\arr` + alias elements `\arr[k]`, alias-
     // connected by import_module) that this process writes WHOLE (`arr = src`).
@@ -4333,7 +4362,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             lhs_spec.chunks().begin()->wire != nullptr &&
             lhs_spec.size() < lhs_spec.chunks().begin()->wire->width;
         bool collapse_to_base =
-            lhs_is_slice && (base_slice_count[sig.name] > 1 || retargeted_to_flat);
+            lhs_is_slice && (base_slice_count[base_key(sig)] > 1 || retargeted_to_flat);
         std::string dedup_key;
         if (lhs_spec.size() > 0) {
             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
