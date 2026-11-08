@@ -1,0 +1,12 @@
+# Both ends of each range match, and the neighbours outside do not.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; memory_map; flatten; opt
+sat -set addr 32'h0fff -prove y 4'hf -verify
+sat -set addr 32'h1000 -set b 4'h9 -prove y 4'h9 -verify
+sat -set addr 32'h4fff -set b 4'h9 -prove y 4'h9 -verify
+sat -set addr 32'h5000 -prove y 4'hf -verify
+sat -set addr 32'h9000 -prove y 4'hf -verify
+sat -set addr 32'h9001 -prove y 4'h5 -verify
+sat -set addr 32'h9ffe -prove y 4'h5 -verify
+sat -set addr 32'h9fff -prove y 4'hf -verify

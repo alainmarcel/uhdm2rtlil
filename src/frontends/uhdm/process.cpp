@@ -398,6 +398,46 @@ void UhdmImporter::import_immediate_assume(const UHDM::immediate_assume* assume_
 }
 
 // Import a process statement (always block)
+// `case (x) inside [lo:hi]: ...` -- the RTLIL switch matches by equality, so a
+// range has to become compare values.  It used to be ENUMERATED one value per
+// compare, silently CAPPED at 4096: cheshire clic's
+//     unique case (reg_req_i.addr[ADDR_W-1:0]) inside
+//       [MCLICINT_START:MCLICINT_END]: ...      // 'h01000 .. 'h04fff
+// matched only 'h1000..'h1fff, and every interrupt-register access above
+// that fell to the `default` arm (pready / prdata of the error slave).
+// Decompose the range into ALIGNED PREFIX CUBES instead -- low bits
+// don't-care (`-`), at most ~2w of them, exact for any span:
+// [0x1000:0x4fff] -> 0001----, 001-----, 0100---- (12 low bits elided).
+std::vector<RTLIL::Const> UhdmImporter::case_inside_range_cubes(long long lo, long long hi, int w) {
+    std::vector<RTLIL::Const> out;
+    if (w <= 0) return out;
+    if (lo > hi) std::swap(lo, hi);
+    if (lo < 0 || w > 62) {
+        // Out of the cube decomposition's domain: the old enumeration.
+        for (long long v = lo; v <= hi && (v - lo) < 4096; v++)
+            out.push_back(RTLIL::Const((int)v, w));
+        return out;
+    }
+    unsigned long long cur = (unsigned long long)lo, top = (unsigned long long)hi;
+    unsigned long long lim = (w >= 63) ? ~0ULL : ((1ULL << w) - 1);
+    if (top > lim) top = lim;
+    while (cur <= top) {
+        int k = 0;
+        while (k < w && ((cur >> k) & 1ULL) == 0 &&
+               cur + (1ULL << (k + 1)) - 1 <= top)
+            k++;
+        std::vector<RTLIL::State> bits(w);
+        for (int b = 0; b < w; b++)
+            bits[b] = b < k ? RTLIL::State::Sa
+                            : (((cur >> b) & 1ULL) ? RTLIL::State::S1 : RTLIL::State::S0);
+        out.push_back(RTLIL::Const(bits));
+        unsigned long long step = 1ULL << k;
+        if (cur + step < cur) break;   // wrapped past the top
+        cur += step;
+    }
+    return out;
+}
+
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
 
@@ -21145,9 +21185,8 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                                             int hi = hs.as_const().as_int();
                                             if (lo > hi) std::swap(lo, hi);
                                             int w = std::max(ls.size(), hs.size());
-                                            // Cap to avoid pathological expansion.
-                                            for (int v = lo; v <= hi && (v - lo) < 4096; v++) {
-                                                RTLIL::SigSpec s(RTLIL::Const(v, w));
+                                            for (const RTLIL::Const& cube : case_inside_range_cubes(lo, hi, w)) {
+                                                RTLIL::SigSpec s(cube);
                                                 ctx_width = std::max(ctx_width, s.size());
                                                 all_signed = false;
                                                 d.exprs.push_back({s, false});
@@ -22658,8 +22697,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                     int hi = hs.as_const().as_int();
                                                     if (lo > hi) std::swap(lo, hi);
                                                     int w = std::max(ls.size(), hs.size());
-                                                    for (int v = lo; v <= hi && (v - lo) < 4096; v++) {
-                                                        RTLIL::SigSpec s(RTLIL::Const(v, w));
+                                                    for (const RTLIL::Const& cube : case_inside_range_cubes(lo, hi, w)) {
+                                                        RTLIL::SigSpec s(cube);
                                                         ctx_width = std::max(ctx_width, s.size());
                                                         all_signed = false;
                                                         d.exprs.push_back({s, false});
