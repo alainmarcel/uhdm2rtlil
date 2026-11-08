@@ -70,3 +70,13 @@ yosys_issues/issue_1193_systemverilog_frontend_does_not_implement_semant
 # muxes on its enable path, which the miter's latch modelling does not match.
 # Not a reader defect.
 yosys_issues/issue_5942_fsm_pass_corrupts_transparent_latch_enable
+# yosys#6290 (sv-yosys-issues sweep): an empty `always_comb` leaves output `y`
+# assigned nowhere.  read_slang drives it with a constant `2'x`, read_uhdm
+# leaves it undriven (the CLAUDE.md "undriven vs constant X" class): the same
+# X, which the miter models as two different free values.  Not a reader defect.
+yosys_issues/issue_6290_design_check_crashes_with_stack_overflow
+# yosys#5946 (sv-yosys-issues sweep): a fuzzer-generated design with latches.
+# read_uhdm is PROVEN equivalent to read_verilog (uhdm-vs-verilog miter,
+# seq 4); read_slang encodes the latches through enable muxes, as in #5942
+# above.  Not a reader defect.
+yosys_issues/issue_5946_opt_clean_misidentifies_live_latch_feeding
