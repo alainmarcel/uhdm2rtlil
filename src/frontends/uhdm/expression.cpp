@@ -18123,6 +18123,74 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // function-call pipeline.
                 return process_function_with_context(fdef, args, tmp, nullptr);
             }
+            // The built-in ENUM methods (LRM 6.19.5): `state.next()`,
+            // `.prev()`, `.first()`, `.last()`, `.num()`.  They have no
+            // Function() -- Surelog hands them over as a bare method call --
+            // and the fall-through below warned and returned nothing, so
+            // `state <= state.next();` had no RHS and the whole always_ff
+            // was dropped (YosysHQ/yosys#248).  next(N) / prev(N) wrap, and
+            // a value that is no member yields the first member (6.19.5.4).
+            if (!fdef && (func_name == "next" || func_name == "prev" || func_name == "first" ||
+                          func_name == "last" || func_name == "num") &&
+                uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+                const UHDM::any* base_el = (*uhdm_hier->Path_elems())[0];
+                const UHDM::ref_typespec* rt = nullptr;
+                if (auto ro = dynamic_cast<const UHDM::ref_obj*>(base_el)) {
+                    if (auto ag = ro->Actual_group())
+                        if (auto ex = dynamic_cast<const UHDM::expr*>(ag)) rt = ex->Typespec();
+                    if (!rt) rt = ro->Typespec();
+                } else if (auto ex = dynamic_cast<const UHDM::expr*>(base_el)) {
+                    rt = ex->Typespec();
+                }
+                const UHDM::enum_typespec* ets = rt
+                    ? dynamic_cast<const UHDM::enum_typespec*>(rt->Actual_typespec()) : nullptr;
+                if (ets && ets->Enum_consts() && !ets->Enum_consts()->empty()) {
+                    std::vector<RTLIL::Const> vals;
+                    int w = 0;
+                    if (auto bt = ets->Base_typespec())
+                        if (auto bts = bt->Actual_typespec())
+                            w = get_width_from_typespec(bts, current_instance);
+                    for (auto ec : *ets->Enum_consts()) {
+                        RTLIL::Const v = extract_const_from_value(std::string(ec->VpiValue()));
+                        if (v.size() == 0) v = RTLIL::Const(0, 32);
+                        vals.push_back(v);
+                    }
+                    if (w <= 0) {
+                        // no base type: the enum is `int`, but keep the
+                        // widest literal when every member fits a narrower one
+                        w = 32;
+                    }
+                    for (auto& v : vals) {
+                        bool neg = v.size() > 0 && v.back() == RTLIL::State::S1 && v.as_int(true) < 0;
+                        v.resize(w, neg ? RTLIL::State::S1 : RTLIL::State::S0);
+                    }
+                    int n = (int)vals.size();
+                    if (func_name == "num") return RTLIL::SigSpec(RTLIL::Const(n, 32));
+                    if (func_name == "first") return RTLIL::SigSpec(vals[0]);
+                    if (func_name == "last") return RTLIL::SigSpec(vals[n - 1]);
+                    int step = 1;
+                    if (mfc->Tf_call_args() && !mfc->Tf_call_args()->empty()) {
+                        RTLIL::SigSpec a0 = import_expression(
+                            any_cast<const expr*>((*mfc->Tf_call_args())[0]), input_mapping);
+                        if (a0.is_fully_const()) step = a0.as_const().as_int();
+                    }
+                    if (func_name == "prev") step = -step;
+                    step %= n; if (step < 0) step += n;
+                    RTLIL::SigSpec base = import_expression(
+                        any_cast<const expr*>(base_el), input_mapping);
+                    if (base.size() < w) base.extend_u0(w, false);
+                    else if (base.size() > w) base = base.extract(0, w);
+                    RTLIL::SigSpec result = RTLIL::SigSpec(vals[0]);
+                    for (int k = 0; k < n; k++) {
+                        RTLIL::SigSpec eq = module->Eq(NEW_ID, base, RTLIL::SigSpec(vals[k]));
+                        result = module->Mux(NEW_ID, result, RTLIL::SigSpec(vals[(k + step) % n]), eq);
+                    }
+                    if (mode_debug)
+                        uhdm_trace("    enum method %s() over %d members (step %d)\n",
+                            func_name.c_str(), n, step);
+                    return result;
+                }
+            }
             log_warning("UHDM: hier_path function '%s' — no Function() and "
                         "no match in current module's Task_funcs\n",
                         func_name.c_str());

@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast -nodffe -nosdff; dffunmap
+sat -verify -seq 1 -prove fst 2'd0 -prove lst 2'd2 -prove n 3
+# reset at step 1, then the state walks S0 S1 S2 S0 and state_p walks S2 S1 S0 S2
+sat -verify -seq 5 -set-at 1 rst 1'b1 -set-at 2 rst 1'b0 -set-at 3 rst 1'b0 -set-at 4 rst 1'b0 -set-at 5 rst 1'b0 -prove-skip 4 -prove st 2'd0 -prove prv 2'd2
+sat -verify -seq 4 -set-at 1 rst 1'b1 -set-at 2 rst 1'b0 -set-at 3 rst 1'b0 -set-at 4 rst 1'b0 -prove-skip 3 -prove st 2'd2 -prove prv 2'd0
