@@ -1,0 +1,5 @@
+# PERM = [1, 2, 10, 4, 0, 8, 7, 5, 9, 3, 6]; IDX = (3*i + 1) % 11.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -prove p[0] 4'd1 -prove p[2] 4'd10 -prove p[10] 4'd6 -prove q[0] 4'd1 -prove q[10] 4'd9 -verify
