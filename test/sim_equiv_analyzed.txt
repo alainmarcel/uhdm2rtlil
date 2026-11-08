@@ -967,3 +967,19 @@ Test: yosys_issue_6307_oor_mem2reg_write
     for memwr_oor_addr_ignored and OpenPiton's TLB reads), so under random
     stimulus the RTL shows z0 = 7 whenever a = 4 (rtl=0x7 nl=0x1).
     CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range write.
+
+Test: issue_1990_dynamic_bit_write_with_signed_expression
+    sv-yosys-issues row (YosysHQ/yosys#1990): `dout[n^1 +: 1] = din[n]` with a
+    SIGNED 5-bit `n` indexes a 32-bit vector out of range whenever n < 0.  The
+    LRM makes that read X (and the write is ignored); Verilator substitutes a
+    concrete value.  read_uhdm and read_slang are PROVEN equivalent on this row
+    (the sweep's slang miter) and diverge from the RTL identically (62 cycles
+    each).  CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range index.
+
+Test: issue_589_regression_in_synthesis_for_synchronous_memory_v0
+    sv-yosys-issues row (YosysHQ/yosys#589): coreir_mem reads `data[raddr]`
+    from a memory nothing initialises, and at its default depth = 1 the
+    address port is the degenerate `[$clog2(1)-1:0]` = [-1:0].  The netlist's
+    uninitialised read is X; Verilator picks a value.  read_uhdm and read_slang
+    are proven equivalent on the row and both diverge from the RTL (153 / 135
+    cycles).  CONFIRMED ARTIFACT: an uninitialised memory read.
