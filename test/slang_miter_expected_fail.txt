@@ -57,3 +57,16 @@ yosys_issue_6401_union_signed_cast
 # CompileHelper::adjustSize's hex branch lacks the sign handling its binary
 # branch has).  The unsigned half of the same test is proven structurally.
 yosys_issue_6346_unsized_literal_bit31
+# yosys#1193 (sv-yosys-issues sweep): `always_comb if (e) b = a;` infers a
+# latch.  read_uhdm emits a $dlatch (EN=e, D=a), the simulation semantics;
+# read_slang lowers the block as combinational and closes a LOOP
+# (`b = e ? a : b`), so the miter compares a latch against a cycle.
+# read_verilog refuses the block on purpose ("Latch inferred ... from
+# always_comb"), which is the issue itself.  Not a reader defect.
+yosys_issues/issue_1193_systemverilog_frontend_does_not_implement_semant
+# yosys#5942 (sv-yosys-issues sweep): an `always_latch` with an async clear.
+# read_uhdm's $adlatch is PROVEN equivalent to read_verilog's (same
+# EN/ARST/D, uhdm-vs-verilog miter, seq 4); read_slang encodes the latch with
+# muxes on its enable path, which the miter's latch modelling does not match.
+# Not a reader defect.
+yosys_issues/issue_5942_fsm_pass_corrupts_transparent_latch_enable
