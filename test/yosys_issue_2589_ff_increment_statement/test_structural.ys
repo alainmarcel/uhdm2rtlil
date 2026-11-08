@@ -1,0 +1,11 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+check -assert
+select -assert-count 6 t:$dff
+opt -fast -nodffe -nosdff
+# seq++ / two++ two++ / --dn / if (en) cnt++ : one step from a known state
+sat -verify -seq 2 -set-init seq 4'd5 -set-init two 4'd5 -set-init dn 4'd5 -set-init cnt 4'd5 -set-at 1 en 1'b1 -prove-skip 1 -prove seq 4'd6 -prove two 4'd7 -prove dn 4'd4 -prove cnt 4'd6
+sat -verify -seq 2 -set-init cnt 4'd5 -set-at 1 en 1'b0 -prove-skip 1 -prove cnt 4'd5
+# ++pre; seen <= pre;  -- the nonblocking read sees the incremented value
+sat -verify -seq 2 -set-init-zero -prove-skip 1 -prove pre 4'd1 -prove seen 4'd1

@@ -1320,6 +1320,11 @@ struct UhdmImporter {
     // "Cannot unroll foreach in <ctx> context" when a bound is not constant.
     void unroll_foreach(const UHDM::foreach_stmt* fe, const std::function<void()>& body,
                         const char* ctx);
+    // `x++` / `++x` / `x--` / `--x` as a statement, rewritten as the blocking
+    // assignment `x = x +/- 1` (cached per operation) so it takes the ordinary
+    // assignment path; nullptr if `op` is not such a statement.
+    const UHDM::assignment* incdec_stmt_as_assignment(const UHDM::operation* op);
+    std::map<const UHDM::operation*, const UHDM::assignment*> incdec_assign_cache_;
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::CaseRule* case_rule);
     void import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
