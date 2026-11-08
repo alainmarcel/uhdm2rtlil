@@ -1,0 +1,8 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+select -assert-count 0 t:$dlatch
+check -assert
+opt -fast
+sat -verify -prove o0 18'h2A5A5 -set conf_offset 18'h2A5A5
+sat -verify -prove o1 18'h15A5A -set conf_offset 18'h2A5A5
