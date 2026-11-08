@@ -1,0 +1,5 @@
+# Every field of x[0] carries the task's output: nq = ud0[8:0], pq = {!first, ud0[15:8]}, rl = ur.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -set ud0 16'hA5C3 -set first 0 -set ur 2'b10 -prove flat 20'b1_1100_0011__1_1010_0101__10 -verify
