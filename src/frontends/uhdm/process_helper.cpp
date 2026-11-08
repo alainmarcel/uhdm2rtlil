@@ -1004,7 +1004,44 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         std::string nm = std::string(vsel->VpiName());
                         // A per-element-wire array (\arr[0]..) isn't covered by a
                         // single base temp; leave those to the dynamic-write path.
-                        if (!nm.empty() && module->wire(RTLIL::escape_id(nm))) {
+                        // ...and that includes an array that ALSO has a flat
+                        // whole-array wire: passing it whole to a child
+                        // (`.r_i(reg_state)`, OpenTitan i3c_target_fsm) makes
+                        // `\reg_state` exist as an ALIAS assembled from the
+                        // element wires, and registering the write against it
+                        // left the per-element writes of the same block with no
+                        // `$0\` temps -- the async-reset always_ff came out with
+                        // NO sync rule at all, so reg_state behaved as
+                        // combinational logic and dropped every write the next
+                        // cycle (190 diverging co-simulated cycles, read_slang
+                        // clean).  The element branches below handle it.
+                        // Only when the flat wire is that assembled ALIAS
+                        // (`connect \reg_state {\reg_state[6] .. [0]}`): when
+                        // it is the storage and the element wires are its
+                        // slices (`connect \mem[23] \mem [759:728]`, sv-tests
+                        // multi_dim_array_addressing_sim) the base is the right
+                        // target.
+                        // The flat wire is the STORAGE when an element wire is
+                        // connected to a slice of it; otherwise (an alias
+                        // assembled later from the elements) the element
+                        // branches below own the write.
+                        auto flat_is_storage = [&](const std::string& base) {
+                            RTLIL::Wire* bw = module->wire(RTLIL::escape_id(base));
+                            if (!bw) return false;
+                            int low = expanded_array_low(base);
+                            if (low < 0) return true;   // no element wires at all
+                            RTLIL::Wire* ew = module->wire(RTLIL::escape_id(
+                                base + "[" + std::to_string(low) + "]"));
+                            if (!ew) return true;
+                            for (auto& conn : module->connections())
+                                if (conn.first.is_wire() && conn.first.as_wire() == ew &&
+                                    conn.second.size() > 0 &&
+                                    conn.second[0].wire == bw)
+                                    return true;
+                            return false;
+                        };
+                        if (!nm.empty() && module->wire(RTLIL::escape_id(nm)) &&
+                            flat_is_storage(nm)) {
                             sig.name = nm;
                             sig.is_part_select = true;
                             signals.push_back(sig);
