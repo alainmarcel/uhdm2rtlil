@@ -1006,6 +1006,18 @@ def main() -> int:
         else:
             vsrcs.append(s)
     rc, out = run_verilator(work, paths, vsrcs, extra_flags=vflags)
+    # The ORIGINAL RTL's own assertion can fire under random stimulus (an
+    # `assume (rstn == 1'b1)` the testbench does not honour makes the design's
+    # `assert` meaningless) and `$stop` the run before a single output is
+    # compared -- the sv-yosys-issues rows for YosysHQ/yosys#2212 and #5286.
+    # Assertions never drive outputs and the netlist side has its $check
+    # cells deleted, so rerun with them disabled rather than report an error.
+    if "--no-assert" not in vflags and \
+            re.search(r"Assertion failed in TOP\.tb\.u_rtl\b", out):
+        print("  RTL assertion fired under random stimulus; "
+              "rerunning with --no-assert")
+        vflags = vflags + ["--no-assert"]
+        rc, out = run_verilator(work, paths, vsrcs, extra_flags=vflags)
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)
