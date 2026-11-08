@@ -12642,6 +12642,17 @@ bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_o
         uhdm_trace("    tf_local_lhs: %s decl=%s mapped=%s\n", nm.c_str(), decl ? "yes" : "no",
             it == current_comb_values.end() ? "no" : log_signal(it->second));
     if (!decl) return false;
+    // A local of an ALWAYS block, not of a task / function: its in-flight
+    // value is no write target.  PeakRDL's readback mux
+    //     automatic logic [31:0] readback_data_var;
+    //     readback_data_var = '0;
+    //     ... readback_data_var[0] = field_storage.msip[i0].pending.value;
+    // has the constant '0 in current_comb_values, which the guard above
+    // (single non-$func$ wire) does not catch, so the bit-select target
+    // became the CONSTANT `1'0` and every 1-bit field read back 0 (cheshire
+    // clint_reg `differs`).  An inlined body's statements are children of
+    // the task_func definition; an always block's are not.
+    if (!within_task_func(lhs_expr)) return false;
     if (it == current_comb_values.end() || it->second.empty()) return false;
     RTLIL::SigSpec cur = it->second;
     if (mem_hp) {

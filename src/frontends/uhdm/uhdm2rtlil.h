@@ -1572,6 +1572,20 @@ struct UhdmImporter {
     std::map<std::pair<const UHDM::module_inst*, std::string>, std::pair<int, int>>
         decl_vec_bounds_cache_;
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat, const UHDM::scope* inst = nullptr);
+    // True when `node` sits inside a task / function DEFINITION (an inlined
+    // body's statements are its children), false for an always block or
+    // module-level statement.  find_enclosing_tf_decl also answers for a
+    // begin-block local of an ALWAYS block, which is no task formal.
+    static bool within_task_func(const UHDM::any* node) {
+        for (const UHDM::any* p = node; p; p = p->VpiParent()) {
+            if (dynamic_cast<const UHDM::task_func*>(p)) return true;
+            if (dynamic_cast<const UHDM::process_stmt*>(p) ||
+                dynamic_cast<const UHDM::instance*>(p))
+                return false;
+        }
+        return false;
+    }
+    RTLIL::SigSpec import_struct_unpacked_member_select(const UHDM::ref_obj* bref, const UHDM::var_select* vs, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     // `PARAM[idx].field` where PARAM is an unpacked array of structs.  Empty
     // SigSpec when this is not that shape, so callers can fall through.

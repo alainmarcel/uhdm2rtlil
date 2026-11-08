@@ -14970,9 +14970,15 @@ RTLIL::SigSpec UhdmImporter::import_bit_select_inner(const bit_select* uhdm_bit,
         return RTLIL::SigSpec(out);
     }
 
+    // Only a TASK / FUNCTION scope shadows: find_enclosing_tf_decl also finds
+    // a begin-block local of an ALWAYS block, and input_mapping is then the
+    // in-flight value map -- after `readback_data_var = '0` the select of
+    // `readback_data_var[0]` returned that CONSTANT, even as a write target
+    // (`assign 1'0 <rhs>`; PeakRDL readback mux, cheshire clint_reg).
     bool shadowed_by_tf_scope =
         input_mapping && input_mapping->count(signal_name) > 0 &&
-        find_enclosing_tf_decl(uhdm_bit, signal_name) != nullptr;
+        find_enclosing_tf_decl(uhdm_bit, signal_name) != nullptr &&
+        within_task_func(uhdm_bit);
     RTLIL::Wire* wire = shadowed_by_tf_scope
                             ? nullptr
                             : find_wire_in_scope(signal_name, "bit select");
@@ -17005,6 +17011,102 @@ RTLIL::SigSpec UhdmImporter::mapped_inflight(const RTLIL::SigSpec& mapped) {
     auto f = current_comb_values.find(wn);
     if (f == current_comb_values.end() || f->second.size() != ch.wire->width) return mapped;
     return f->second.extract(ch.offset, ch.width);
+}
+
+// See the call site in import_hier_path: `base.member[i]..[j]` on an
+// unpacked-array member of a struct, all indices constant.  Empty when the
+// shape does not match exactly, so the caller falls through unchanged.
+RTLIL::SigSpec UhdmImporter::import_struct_unpacked_member_select(
+        const ref_obj* bref, const var_select* vs, const scope* inst,
+        const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    if (!bref || !vs || !vs->Exprs() || vs->Exprs()->empty() || !module)
+        return RTLIL::SigSpec();
+    std::string bname = std::string(bref->VpiName());
+    std::string fname = std::string(vs->VpiName());
+    if (bname.empty() || fname.empty()) return RTLIL::SigSpec();
+    RTLIL::Wire* bw = find_wire_in_scope(bname, "");
+    if (!bw) return RTLIL::SigSpec();
+    const UHDM::typespec* bts = nullptr;
+    if (auto rt = bref->Typespec()) bts = rt->Actual_typespec();
+    if (!bts)
+        if (auto ag = bref->Actual_group())
+            if (auto e = dynamic_cast<const UHDM::expr*>(ag))
+                if (auto rt2 = e->Typespec()) bts = rt2->Actual_typespec();
+    if (bts) bts = resolve_type_param_typespec(bts, inst);
+    if (!bts || bts->UhdmType() != uhdmstruct_typespec) return RTLIL::SigSpec();
+    auto st = any_cast<const UHDM::struct_typespec*>(bts);
+    if (!st->Members()) return RTLIL::SigSpec();
+    int off = 0, fw = 0, total = 0;
+    const UHDM::typespec* fts = nullptr;
+    for (int m2 = (int)st->Members()->size() - 1; m2 >= 0; m2--) {
+        auto m = (*st->Members())[m2];
+        int mw = 0;
+        const UHDM::typespec* mts = nullptr;
+        if (auto r = m->Typespec())
+            if ((mts = r->Actual_typespec())) {
+                mts = resolve_type_param_typespec(mts, inst);
+                mw = get_width_from_typespec(mts, inst);
+            }
+        if (mw <= 0) return RTLIL::SigSpec();
+        if (!fts && std::string(m->VpiName()) == fname) { fw = mw; fts = mts; off = total; }
+        total += mw;
+    }
+    if (!fts || fts->UhdmType() != uhdmarray_typespec || total != bw->width)
+        return RTLIL::SigSpec();
+    auto at = any_cast<const UHDM::array_typespec*>(fts);
+    if (!at->Ranges() || at->Ranges()->empty() || !at->Elem_typespec())
+        return RTLIL::SigSpec();
+    std::vector<std::pair<int, int>> dims;
+    for (auto r0 : *at->Ranges()) {
+        RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+        RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
+        if (!l.is_fully_const() || !r.is_fully_const()) return RTLIL::SigSpec();
+        dims.push_back({l.as_const().as_int(), r.as_const().as_int()});
+    }
+    int nelem = 1;
+    for (auto& d : dims) nelem *= std::abs(d.first - d.second) + 1;
+    if (nelem <= 0 || fw % nelem != 0) return RTLIL::SigSpec();
+    int elem_w = fw / nelem;
+    size_t nidx = vs->Exprs()->size();
+    if (nidx != dims.size() && nidx != dims.size() + 1) return RTLIL::SigSpec();
+    std::vector<int> idx;
+    for (auto e : *vs->Exprs()) {
+        auto ex = dynamic_cast<const expr*>(e);
+        if (!ex) return RTLIL::SigSpec();
+        RTLIL::SigSpec v = import_expression(ex, input_mapping);
+        if (v.empty() || !v.is_fully_const() || !v.is_fully_def()) return RTLIL::SigSpec();
+        idx.push_back(v.as_const().as_int());
+    }
+    int eoff = 0, stride = elem_w;
+    for (int k = (int)dims.size() - 1; k >= 0; k--) {
+        int dl = dims[k].first, dr = dims[k].second;
+        int lo = std::min(dl, dr), hi = std::max(dl, dr);
+        if (idx[k] < lo || idx[k] > hi) return RTLIL::SigSpec();
+        eoff += ((dl < dr) ? (hi - idx[k]) : (idx[k] - lo)) * stride;
+        stride *= (hi - lo + 1);
+    }
+    int sel_off = 0, sel_w = elem_w;
+    if (nidx == dims.size() + 1) {
+        // One trailing index: a bit of a single-range vector element.
+        const UHDM::typespec* ets = resolve_type_param_typespec(
+            at->Elem_typespec()->Actual_typespec(), inst);
+        if (!ets || ets->UhdmType() != uhdmlogic_typespec) return RTLIL::SigSpec();
+        auto lt = any_cast<const UHDM::logic_typespec*>(ets);
+        if (!lt->Ranges() || lt->Ranges()->size() != 1 || lt->Elem_typespec())
+            return RTLIL::SigSpec();
+        auto r0 = (*lt->Ranges())[0];
+        RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+        RTLIL::SigSpec r = import_expression(r0->Right_expr(), input_mapping);
+        if (!l.is_fully_const() || !r.is_fully_const()) return RTLIL::SigSpec();
+        int dl = l.as_const().as_int(), dr = r.as_const().as_int();
+        int lo = std::min(dl, dr), hi = std::max(dl, dr);
+        if (hi - lo + 1 != elem_w) return RTLIL::SigSpec();
+        int b = idx.back();
+        if (b < lo || b > hi) return RTLIL::SigSpec();
+        sel_off = (dl < dr) ? (hi - b) : (b - lo);
+        sel_w = 1;
+    }
+    return RTLIL::SigSpec(bw).extract(off + eoff + sel_off, sel_w);
 }
 
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
@@ -20009,6 +20111,30 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
+        }
+    }
+
+    // `s.member[i]..[j]` -- a var_select on an UNPACKED-ARRAY member of a
+    // struct, with every index constant, plus at most one trailing bit index
+    // into a vector element.  PeakRDL's address decoder writes
+    //     decoded_reg_strb.mtimecmp[i0][0] = cpuif_req_masked & (...);
+    // into `struct { logic msip[2]; logic [1:0] mtimecmp[2]; ... }`, and the
+    // generic member path took the member by NAME and dropped both indices:
+    // every strobe landed on the whole 4-bit member slice, zero-extended, so
+    // a write to mtimecmp[1] never strobed (cheshire clint_reg `differs`).
+    // Same layout as the other member paths: members from the LAST (LSB)
+    // up, an ascending unpacked dimension puts element `lo` at the top.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+        (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmref_obj &&
+        (*uhdm_hier->Path_elems())[1]->UhdmType() == uhdmvar_select) {
+        auto bref = any_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]);
+        auto vs = any_cast<const var_select*>((*uhdm_hier->Path_elems())[1]);
+        RTLIL::SigSpec res = import_struct_unpacked_member_select(bref, vs, inst, input_mapping);
+        if (!res.empty()) {
+            if (mode_debug)
+                uhdm_trace("    hier_path '%s' -> unpacked-array member select (%d bits)\n",
+                    path_name.c_str(), res.size());
+            return res;
         }
     }
 
@@ -24020,13 +24146,25 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // starts after the last one.
                 std::string fname;
                 std::vector<const UHDM::expr*> idx_exprs;
-                size_t tail0 = 2;
+                // The indexed array member may sit BELOW plain struct members
+                // -- PeakRDL's `field_storage.perf_regs.perf_cnt_en[i0].enable
+                // .value` (snitch_cluster_peripheral_reg: 4176 never-assigned
+                // bits, every perf-counter field unresolved).  `sel_at` is the
+                // position of the indexed member; peA[1 .. sel_at-1] are the
+                // member refs descended first (pre_members).
+                size_t sel_at = 1;
+                while (sel_at + 1 < peA.size() && peA[sel_at]->UhdmType() == uhdmref_obj)
+                    sel_at++;
+                std::vector<std::string> pre_members;
+                for (size_t q = 1; q < sel_at; q++)
+                    pre_members.push_back(std::string(peA[q]->VpiName()));
+                size_t tail0 = sel_at + 1;
                 bool tail_ref = peA[0]->UhdmType() == uhdmref_obj &&
-                                (peA[1]->UhdmType() == uhdmbit_select ||
-                                 peA[1]->UhdmType() == uhdmvar_select);
+                                (peA[sel_at]->UhdmType() == uhdmbit_select ||
+                                 peA[sel_at]->UhdmType() == uhdmvar_select);
                 if (tail_ref) {
-                    if (peA[1]->UhdmType() == uhdmbit_select) {
-                        auto abs = any_cast<const bit_select*>(peA[1]);
+                    if (peA[sel_at]->UhdmType() == uhdmbit_select) {
+                        auto abs = any_cast<const bit_select*>(peA[sel_at]);
                         fname = std::string(abs->VpiName());
                         if (abs->VpiIndex()) idx_exprs.push_back(abs->VpiIndex());
                         while (tail0 < peA.size() &&
@@ -24037,7 +24175,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             tail0++;
                         }
                     } else {
-                        auto avs = any_cast<const var_select*>(peA[1]);
+                        auto avs = any_cast<const var_select*>(peA[sel_at]);
                         fname = std::string(avs->VpiName());
                         if (avs->Exprs())
                             for (auto e : *avs->Exprs()) idx_exprs.push_back(e);
@@ -24140,10 +24278,35 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 UHDM::UhdmName(peA[t]->UhdmType()).c_str(),
                                 std::string(peA[t]->VpiName()).c_str());
                     }
+                    // Descend the plain members above the indexed one; their
+                    // offsets add up into pre_off and `bts` becomes the struct
+                    // that declares the array member.
+                    int pre_off = 0;
+                    for (size_t q = 0; q < pre_members.size() && bts; q++) {
+                        if (bts->UhdmType() != uhdmstruct_typespec) { bts = nullptr; break; }
+                        auto pst = any_cast<const UHDM::struct_typespec*>(bts);
+                        const UHDM::typespec* nxt = nullptr;
+                        int loff = 0;
+                        if (pst->Members())
+                            for (int m2 = (int)pst->Members()->size() - 1; m2 >= 0; m2--) {
+                                auto m = (*pst->Members())[m2];
+                                int mw = 0;
+                                const UHDM::typespec* mts = nullptr;
+                                if (auto r = m->Typespec())
+                                    if ((mts = r->Actual_typespec())) {
+                                        mts = resolve_type_param_typespec(mts, inst);
+                                        mw = get_width_from_typespec(mts, inst);
+                                    }
+                                if (std::string(m->VpiName()) == pre_members[q]) { nxt = mts; break; }
+                                loff += mw;
+                            }
+                        pre_off += loff;
+                        bts = nxt;
+                    }
                     if (bw && bts && bts->UhdmType() == uhdmstruct_typespec && idx_ok) {
                         // Offset of the ARRAY field within the base struct.
                         auto st = any_cast<const UHDM::struct_typespec*>(bts);
-                        int off = 0, fw = 0;
+                        int off = pre_off, fw = 0;
                         const UHDM::typespec* fts = nullptr;
                         bool ok = false;
                         if (st->Members())
@@ -24183,6 +24346,22 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 rg = lt->Ranges();
                                 if (lt->Elem_typespec())
                                     nxt = lt->Elem_typespec()->Actual_typespec();
+                            } else if (ets->UhdmType() == uhdmarray_typespec) {
+                                // An UNPACKED array field of an unpacked
+                                // struct -- PeakRDL's register blocks
+                                // (`struct { struct {...} low; ... }
+                                // mtimecmp[2];` in field_storage /
+                                // field_combo, written per genvar as
+                                // `field_combo.mtimecmp[i0].low.next`).  Without
+                                // it no dimension was found and every such
+                                // read and write was "Could not resolve
+                                // struct member access": cheshire clint_reg /
+                                // slink_reg / clic_apb / cheshire_soc_regs
+                                // never latched a register write.
+                                auto at = any_cast<const UHDM::array_typespec*>(ets);
+                                rg = at->Ranges();
+                                if (at->Elem_typespec())
+                                    nxt = at->Elem_typespec()->Actual_typespec();
                             }
                             if (!rg || rg->empty() || !nxt) break;
                             for (auto r0 : *rg) {
