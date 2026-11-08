@@ -125,6 +125,23 @@ def sh(cmd, cwd=None, timeout=None, env=None):
         return 124, out + "\n[timeout]"
 
 
+def _mem_capped(cmd):
+    """`cmd` under the MEM_LIMIT_KB address-space cap, when it is set.
+
+    The cap is inherited by every child, so wrapping the WORKFLOW call caps
+    Surelog, read_uhdm and the golden read_verilog alike.  Uncapped, one
+    sv-yosys-issues row took the whole CI runner down: read_verilog unrolls
+    YosysHQ/yosys#6433's `for (i = 0; i < PIPE - 1; ...)` at the module's
+    DEFAULT `PIPE = 0` -- 2^32 - 1 iterations -- and grew to 40 GB in three
+    minutes, so the 16 GB runner was shut down (exit 143) long before the
+    1200 s timeout and shard 2 reported nothing, twice.  Capped, that row's
+    read_verilog fails alone."""
+    mem = os.environ.get("MEM_LIMIT_KB")
+    if not mem:
+        return cmd
+    return ["bash", "-c", f"ulimit -Sv {mem}; exec \"$@\"", "--"] + [str(c) for c in cmd]
+
+
 def sh_stream(cmd, cwd=None, timeout=None, env=None):
     """Run a command, relaying its combined output line by line as it
     arrives (flushed, so a CI log shows progress), and kill its whole process
@@ -550,7 +567,12 @@ def _auto_top(d):
     rc, out = sh([str(yosys), "-m", str(plugin), "-p",
                   "read_uhdm slpp_all/surelog.uhdm; hierarchy -auto-top"],
                  cwd=d, timeout=600)
-    m = re.search(r"Automatically selected (\S+) as design top module", out or "")
+    # `Top module:` is printed however the top was chosen.  Matching only
+    # "Automatically selected ..." missed every `(* top *)` snippet
+    # ("Attribute `top' found on module ..."): the top fell back to the
+    # DIRECTORY name and the row read `setup error` in every column
+    # (sv-yosys-issues: 2589, 4653, 5957, 5979, 6041, 6063).
+    m = re.search(r"Top module:\s+(\S+)", out or "")
     return m.group(1).lstrip("\\") if m else None
 
 
@@ -597,7 +619,7 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
                "check": "—", "conflicts": "—"}
         # Elaborate (surelog + read check) if the UHDM is missing.
         if not (d / "slpp_all" / "surelog.uhdm").exists():
-            rc, _ = sh(["./test_uhdm_workflow.sh", name],
+            rc, _ = sh(_mem_capped(["./test_uhdm_workflow.sh", name]),
                        cwd=TEST_DIR, timeout=1200)
         if not (d / "slpp_all" / "surelog.uhdm").exists():
             row["formal"] = "elab-fail"

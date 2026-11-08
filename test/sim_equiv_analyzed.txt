@@ -967,3 +967,36 @@ Test: yosys_issue_6307_oor_mem2reg_write
     for memwr_oor_addr_ignored and OpenPiton's TLB reads), so under random
     stimulus the RTL shows z0 = 7 whenever a = 4 (rtl=0x7 nl=0x1).
     CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range write.
+
+Test: issue_1990_dynamic_bit_write_with_signed_expression
+    sv-yosys-issues row (YosysHQ/yosys#1990): `dout[n^1 +: 1] = din[n]` with a
+    SIGNED 5-bit `n` indexes a 32-bit vector out of range whenever n < 0.  The
+    LRM makes that read X (and the write is ignored); Verilator substitutes a
+    concrete value.  read_uhdm and read_slang are PROVEN equivalent on this row
+    (the sweep's slang miter) and diverge from the RTL identically (62 cycles
+    each).  CONFIRMED ARTIFACT: Verilator-vs-LRM on an out-of-range index.
+
+Test: issue_589_regression_in_synthesis_for_synchronous_memory_v0
+    sv-yosys-issues row (YosysHQ/yosys#589): coreir_mem reads `data[raddr]`
+    from a memory nothing initialises, and at its default depth = 1 the
+    address port is the degenerate `[$clog2(1)-1:0]` = [-1:0].  The netlist's
+    uninitialised read is X; Verilator picks a value.  read_uhdm and read_slang
+    are proven equivalent on the row and both diverge from the RTL (153 / 135
+    cycles).  CONFIRMED ARTIFACT: an uninitialised memory read.
+
+Test: issue_27_problem_with_hls_generated_code
+    sv-yosys-issues row (YosysHQ/yosys#27): `out1 = in1 <<< in2[arg2_bitsize-1:0]`
+    with arg2_bitsize = log2(32) = 5 but the DEFAULT BITSIZE_in2 = 1, so four of
+    the five shift-amount bits are out of range (X).  A shift by an amount with
+    X bits is X (LRM 11.4.10): read_uhdm gives `out1 = 1'x`, proven equivalent
+    to read_verilog.  Verilator reads the out-of-range bits as 0 and shifts by
+    in2[0].  read_slang cannot read the file.  CONFIRMED ARTIFACT: X shift
+    amount.
+
+Test: issue_273_design_size_increases_after_flattening
+    sv-yosys-issues row (YosysHQ/yosys#273): a GCD datapath + FSM whose FSM
+    uses BLOCKING assignments in `always @(posedge clk)`.  The 3 mismatches
+    are cycles 0 and 1 only (out rtl=0x29 nl=0x0, idle), before the reset
+    has taken effect; every later cycle matches.  read_uhdm is proven
+    equivalent to read_verilog from reset (12-step miter).  read_slang cannot
+    read the file.  CONFIRMED ARTIFACT: pre-reset start-up state.
