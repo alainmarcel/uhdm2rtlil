@@ -9306,6 +9306,34 @@ void UhdmImporter::record_concat_tf_local_inflight(const RTLIL::SigSpec& lhs,
     }
 }
 
+const UHDM::assignment* UhdmImporter::incdec_stmt_as_assignment(const UHDM::operation* op) {
+    if (!op) return nullptr;
+    int ot = op->VpiOpType();
+    if (!(ot == vpiPostIncOp || ot == vpiPreIncOp || ot == vpiPostDecOp || ot == vpiPreDecOp) ||
+        !op->Operands() || op->Operands()->empty())
+        return nullptr;
+    auto it = incdec_assign_cache_.find(op);
+    if (it != incdec_assign_cache_.end()) return it->second;
+    UHDM::Serializer* ser = uhdm_design->GetSerializer();
+    any* operand = (*op->Operands())[0];
+    UHDM::constant* one = ser->MakeConstant();
+    one->VpiValue("INT:1"); one->VpiDecompile("1"); one->VpiConstType(vpiIntConst); one->VpiSize(32);
+    UHDM::operation* sum = ser->MakeOperation();
+    sum->VpiOpType((ot == vpiPostIncOp || ot == vpiPreIncOp) ? vpiAddOp : vpiSubOp);
+    UHDM::VectorOfany* ops = ser->MakeAnyVec();
+    ops->push_back(operand); ops->push_back(one);
+    sum->Operands(ops); one->VpiParent(sum);
+    UHDM::assignment* asg = ser->MakeAssignment();
+    asg->Lhs(any_cast<expr*>(operand)); asg->Rhs(sum); sum->VpiParent(asg);
+    asg->VpiOpType(vpiAssignmentOp);
+    asg->VpiBlocking(true);
+    asg->VpiParent(const_cast<any*>(op->VpiParent()));
+    asg->VpiFile(op->VpiFile()); asg->VpiLineNo(op->VpiLineNo()); asg->VpiColumnNo(op->VpiColumnNo());
+    asg->VpiEndLineNo(op->VpiEndLineNo()); asg->VpiEndColumnNo(op->VpiEndColumnNo());
+    incdec_assign_cache_[op] = asg;
+    return asg;
+}
+
 void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc) {
     // Size match
     if (rhs.size() != lhs.size()) {
@@ -10100,37 +10128,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             break;
         }
         case vpiOperation: {
+            // `x++` / `++x` / `x--` / `--x` as a STATEMENT: a blocking
+            // `x = x +/- 1`.  Taking the ordinary assignment path gives it the
+            // always_ff temp, the in-flight blocking value a second `x++` in
+            // the same block must read, and a task formal's staged temp
+            // (YosysHQ/yosys#2589 and #5157).  The bespoke handler that was
+            // here wrote the REGISTER'S OWN WIRE from an $add of itself in
+            // always_ff -- a combinational loop and no flop.
             const operation* op = any_cast<const operation*>(uhdm_stmt);
-            int op_type = op->VpiOpType();
-            if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
-                op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
-                if (op->Operands() && !op->Operands()->empty()) {
-                    const expr* operand = any_cast<const expr*>((*op->Operands())[0]);
-                    // Use value tracking for cell input (current value after previous assignments)
-                    RTLIL::SigSpec cell_input = import_expression(operand,
-                        current_comb_process ? &current_comb_values : nullptr);
-                    // Get actual wire for side-effect target (without value tracking).
-                    // A task / void-function FORMAL or local (`val++` in an
-                    // inlined body, YosysHQ/yosys#5157) is no module wire:
-                    // resolve it to its staged temp first, or a 1-bit module
-                    // wire of that name is fabricated and the write is lost.
-                    RTLIL::SigSpec target_wire;
-                    if (!tf_local_lhs(operand, target_wire) || target_wire.empty())
-                        target_wire = import_expression(operand, nullptr);
-                    if (cell_input.size() > 0) {
-                        RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
-                        RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
-                        if (op_type == vpiPostIncOp || op_type == vpiPreIncOp) {
-                            module->addAdd(NEW_ID, cell_input, one, result, false);
-                        } else {
-                            module->addSub(NEW_ID, cell_input, one, result, false);
-                        }
-                        emit_comb_assign(target_wire, result, proc);
-                    }
-                }
-            } else {
-                log_warning("Unsupported operation type %d as statement\n", op_type);
-            }
+            if (const assignment* asg = incdec_stmt_as_assignment(op))
+                import_statement_comb(asg, proc);
+            else
+                log_warning("Unsupported operation type %d as statement\n", op ? op->VpiOpType() : 0);
             break;
         }
         case vpiFor: {
@@ -23044,42 +23053,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
 
         case vpiOperation: {
+            // See the Process* overload: an increment statement is the
+            // blocking assignment `x = x +/- 1`.
             const operation* op = any_cast<const operation*>(uhdm_stmt);
-            int op_type = op->VpiOpType();
-            if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
-                op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
-                if (op->Operands() && !op->Operands()->empty()) {
-                    const expr* operand = any_cast<const expr*>((*op->Operands())[0]);
-                    RTLIL::SigSpec cell_input = import_expression(operand,
-                        current_comb_process ? &current_comb_values : nullptr);
-                    // An inlined task / void-function formal or local as the
-                    // target (`val++` in an if arm of the body,
-                    // YosysHQ/yosys#5157) resolves to its staged temp; the
-                    // bare import fabricated a 1-bit module wire `val`.
-                    RTLIL::SigSpec target_wire;
-                    if (!tf_local_lhs(operand, target_wire) || target_wire.empty())
-                        target_wire = import_expression(operand, nullptr);
-                    if (cell_input.size() > 0) {
-                        RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
-                        RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
-                        if (op_type == vpiPostIncOp || op_type == vpiPreIncOp) {
-                            module->addAdd(NEW_ID, cell_input, one, result, false);
-                        } else {
-                            module->addSub(NEW_ID, cell_input, one, result, false);
-                        }
-                        case_rule->actions.push_back(RTLIL::SigSig(map_to_temp_wire(target_wire), result));
-                        // Update value tracking
-                        if (target_wire.is_wire()) {
-                            std::string sig_name = target_wire.as_wire()->name.str();
-                            if (sig_name[0] == '\\') sig_name = sig_name.substr(1);
-                            current_comb_values[sig_name] = result;
-                        }
-                    }
-                }
-            } else {
-                if (mode_debug)
-                    uhdm_trace("        Unsupported operation type %d as statement in case\n", op_type);
-            }
+            if (const assignment* asg = incdec_stmt_as_assignment(op))
+                import_statement_comb(asg, case_rule);
+            else if (mode_debug)
+                uhdm_trace("        Unsupported operation type %d as statement in case\n", op ? op->VpiOpType() : 0);
             break;
         }
 

@@ -1272,6 +1272,20 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        case vpiOperation: {
+            // `x++` / `++x` / `x--` / `--x` as a STATEMENT writes its operand
+            // (YosysHQ/yosys#2589: `always_ff @(posedge clk) seq++;`).  Without
+            // this the operand got no $0\ temp and no sync rule: the increment
+            // drove the register's own wire from an $add of itself -- a
+            // combinational loop and no flop at all.
+            auto op = any_cast<const operation*>(stmt);
+            int ot = op ? op->VpiOpType() : 0;
+            if ((ot == vpiPostIncOp || ot == vpiPreIncOp || ot == vpiPostDecOp || ot == vpiPreDecOp) &&
+                op->Operands() && !op->Operands()->empty())
+                if (auto operand = dynamic_cast<const expr*>((*op->Operands())[0]))
+                    extract_lhs_signals(operand, signals);
+            break;
+        }
         case vpiBegin:
         case vpiNamedBegin: {
             UHDM::VectorOfany* stmts = begin_block_stmts(stmt);
