@@ -1,0 +1,5 @@
+# read_verilog cannot parse an unpacked-array PORT declaration ("syntax error,
+# unexpected '['"), so there is no golden netlist, and the co-sim harness
+# cannot drive unpacked-array ports.  The gates are test_structural.ys (the
+# element and select offsets, proven) and the read_slang miter.
+SKIP_FORMAL=1

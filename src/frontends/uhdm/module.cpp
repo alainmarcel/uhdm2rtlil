@@ -909,6 +909,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     // at the LSB, which is what this importer does natively.
     bool unpacked_ascending = false;
     int unpacked_elem_w = 0;
+    int unpacked_elem_low = INT_MIN;   // packed low of one element, when known
     if (current_instance) {
         // Walk the module instance's Array_nets() (unpacked-array nets).
         auto module_scope =
@@ -933,13 +934,34 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         }
                     }
                     int elem_w = 0;
+                    int elem_low = INT_MIN;
                     if (an->Nets() && !an->Nets()->empty()) {
                         auto inner = (*an->Nets())[0];
                         elem_w = get_width(inner, current_instance);
+                        // The element's packed LOW bound, when it is a plain
+                        // one-range logic vector (or a scalar): a select
+                        // INSIDE an element of an N-D port (`w[i][j][k][2:0]`)
+                        // is relative to it.
+                        if (auto ie = dynamic_cast<const UHDM::expr*>(inner)) {
+                            const UHDM::any* its = ie->Typespec() ? ie->Typespec()->Actual_typespec() : nullptr;
+                            if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(its)) {
+                                if (!lt->Ranges() || lt->Ranges()->empty()) {
+                                    if (!lt->Elem_typespec()) elem_low = 0;
+                                } else if (lt->Ranges()->size() == 1 && !lt->Elem_typespec()) {
+                                    auto r0 = (*lt->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs.is_fully_const() &&
+                                        ls.as_int() >= rs.as_int())   // descending only
+                                        elem_low = rs.as_int();
+                                }
+                            }
+                        }
                     }
                     if (total > 0 && elem_w > 0) {
                         unpacked_count = total;
                         unpacked_elem_w = elem_w;
+                        unpacked_elem_low = elem_low;
                         width = total * elem_w;
                         uhdm_trace("UHDM: Port '%s' recovered unpacked dims from "
                             "Array_nets: %d * %d = %d bits\n",
@@ -1135,6 +1157,24 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
         // it the read took the first index as the element and the second
         // as a BIT of it -- one bit of each 5-bit register number in RSD's
         // ReadyBitTable (`readyRA[i*SRC_OP_NUM + j] = dispatchedSrcRegNum[i][j]`).
+        // Three or more unpacked dims (`input logic en [1:0][0:0][3:1]`,
+        // YosysHQ/yosys#5878): the per-element wires above are numbered
+        // FLAT, so a var_select that took its first index as the element
+        // read `en[i]` -- flat element i -- whatever the other indices said.
+        // Stamp every dim, outer -> inner, as "size:low,size:low,..." for the
+        // var_select reader.  Only for a DESCENDING outer dim: an ascending
+        // one is reversed later by reverse_unpacked_array_ports().
+        if (port_dims.size() >= 3 && unpacked_elem_w > 0 && !unpacked_ascending) {
+            std::string g;
+            for (auto& d : port_dims) {
+                if (!g.empty()) g += ",";
+                g += std::to_string(d.first) + ":" + std::to_string(d.second);
+            }
+            w->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(unpacked_elem_w);
+            w->attributes[RTLIL::escape_id("unpacked_nd_dims")] = RTLIL::Const(g);
+            if (unpacked_elem_low != INT_MIN)
+                w->attributes[RTLIL::escape_id("unpacked_nd_elem_low")] = RTLIL::Const(unpacked_elem_low);
+        }
         if (port_dims.size() == 2 && port_dims[1].first > 1 && unpacked_elem_w > 0) {
             w->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(unpacked_elem_w);
             w->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(port_dims[0].second);
