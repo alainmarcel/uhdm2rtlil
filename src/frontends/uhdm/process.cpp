@@ -9177,21 +9177,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             // `foreach (arr[i]) body` in a sync (always_ff) context — unroll
             // over the array dimension.
             auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
-            std::string var; int low = 0, count = 0;
-            if (fe && foreach_loop_bounds(fe, var, low, count)) {
-                bool had = loop_values.count(var);
-                int saved = had ? loop_values[var] : 0;
-                bool fv_had = foreach_loop_vars_.count(var);
-                foreach_loop_vars_.insert(var);
-                for (int i = 0; i < count; i++) {
-                    loop_values[var] = low + i;
-                    import_statement_sync(fe->VpiStmt(), sync, is_reset);
-                }
-                if (!fv_had) foreach_loop_vars_.erase(var);
-                if (had) loop_values[var] = saved; else loop_values.erase(var);
-            } else {
-                log_warning("Cannot unroll foreach in sync context\n");
-            }
+            if (fe) unroll_foreach(fe, [&]() { import_statement_sync(fe->VpiStmt(), sync, is_reset); }, "sync");
             break;
         }
         default:
@@ -9860,6 +9846,131 @@ bool UhdmImporter::foreach_loop_bounds(const UHDM::foreach_stmt* fe,
     low = std::min(l, r);
     count = std::abs(l - r) + 1;
     return count > 0 && count <= 4096;
+}
+
+// `foreach (arr[sch, disp, src])` over `logic [2:0] arr [1:0][0:0][3:1]`
+// (YosysHQ/yosys#5878): every loop var is one dimension, outermost first.
+// Only the single-var shape was unrolled; a multi-dimensional foreach fell
+// through with "Cannot unroll foreach" and its writes were dropped.  The
+// dimensions are read the way foreach_loop_bounds reads the first one: the
+// iterated OBJECT's own ranges (an array_var / array_net / packed_array_*
+// carries its unpacked dimensions there), else the typespec's; a loop var
+// slot past the last dimension continues into the ELEMENT typespec's packed
+// ranges.
+bool UhdmImporter::foreach_loop_dims(const UHDM::foreach_stmt* fe,
+                                     std::vector<ForeachDim>& dims) {
+    dims.clear();
+    if (!fe || !fe->VpiLoopVars() || fe->VpiLoopVars()->empty()) return false;
+    const any* arr = fe->Variable();
+    if (!arr) return false;
+    const UHDM::ref_typespec* rts = nullptr;
+    const UHDM::typespec* ats = nullptr;
+    if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) rts = rv->Typespec();
+    else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) rts = ro->Typespec();
+    else if (auto lvv = dynamic_cast<const UHDM::logic_var*>(arr)) rts = lvv->Typespec();
+    else if (auto hp = dynamic_cast<const UHDM::hier_path*>(arr)) ats = hier_path_member_typespec(hp);
+    if (!ats && rts && rts->Actual_typespec()) ats = rts->Actual_typespec();
+
+    std::vector<const UHDM::range*> all;
+    const UHDM::typespec* elem_ts = nullptr;
+    if (!dynamic_cast<const UHDM::hier_path*>(arr)) {
+        const UHDM::any* actual = nullptr;
+        if (auto rv = dynamic_cast<const UHDM::ref_var*>(arr)) actual = rv->Actual_group();
+        else if (auto ro = dynamic_cast<const UHDM::ref_obj*>(arr)) actual = ro->Actual_group();
+        if (!actual) {
+            std::string an = std::string(arr->VpiName());
+            if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                if (mi->Variables())
+                    for (auto v : *mi->Variables())
+                        if (std::string(v->VpiName()) == an) { actual = v; break; }
+                if (!actual && mi->Array_nets())
+                    for (auto n : *mi->Array_nets())
+                        if (std::string(n->VpiName()) == an) { actual = n; break; }
+                if (!actual && mi->Nets())
+                    for (auto n : *mi->Nets())
+                        if (std::string(n->VpiName()) == an) { actual = n; break; }
+            }
+        }
+        const UHDM::VectorOfrange* obj_ranges = nullptr;
+        if (auto av = dynamic_cast<const UHDM::array_var*>(actual)) obj_ranges = av->Ranges();
+        else if (auto an = dynamic_cast<const UHDM::array_net*>(actual)) obj_ranges = an->Ranges();
+        else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(actual)) obj_ranges = pv->Ranges();
+        else if (auto pn = dynamic_cast<const UHDM::packed_array_net*>(actual)) obj_ranges = pn->Ranges();
+        if (obj_ranges) for (auto r : *obj_ranges) all.push_back(r);
+        // The element type, for loop vars past the object's own dimensions.
+        if (auto av = dynamic_cast<const UHDM::array_var*>(actual)) {
+            if (av->Variables() && !av->Variables()->empty())
+                if (auto ets = (*av->Variables())[0]->Typespec())
+                    elem_ts = ets->Actual_typespec();
+        }
+    }
+    if (all.empty()) {
+        const UHDM::VectorOfrange* tr = nullptr;
+        if (auto arrts = dynamic_cast<const UHDM::array_typespec*>(ats)) {
+            tr = arrts->Ranges();
+            if (auto e = arrts->Elem_typespec()) elem_ts = e->Actual_typespec();
+        } else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(ats)) {
+            tr = pkts->Ranges();
+            if (auto e = pkts->Elem_typespec()) elem_ts = e->Actual_typespec();
+        } else if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ats)) tr = lts->Ranges();
+        if (tr) for (auto r : *tr) all.push_back(r);
+    }
+    if (elem_ts && all.size() < fe->VpiLoopVars()->size()) {
+        const UHDM::VectorOfrange* er = nullptr;
+        if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(elem_ts)) er = lts->Ranges();
+        else if (auto pkts = dynamic_cast<const UHDM::packed_array_typespec*>(elem_ts)) er = pkts->Ranges();
+        if (er) for (auto r : *er) all.push_back(r);
+    }
+    size_t nv = fe->VpiLoopVars()->size();
+    if (all.size() < nv) return false;
+    long total = 1;
+    for (size_t k = 0; k < nv; k++) {
+        const any* lv = (*fe->VpiLoopVars())[k];
+        std::string var = lv ? std::string(lv->VpiName()) : std::string();
+        if (var.empty()) continue;           // `arr[i, , k]`: dimension skipped
+        auto r0 = all[k];
+        if (!r0 || !r0->Left_expr() || !r0->Right_expr()) return false;
+        bool saved = force_const_fold;
+        force_const_fold = true;
+        RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+        RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+        force_const_fold = saved;
+        if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+        int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+        ForeachDim d;
+        d.var = var;
+        d.low = std::min(l, r);
+        d.count = std::abs(l - r) + 1;
+        if (d.count <= 0) return false;
+        total *= d.count;
+        if (total > 4096) return false;
+        dims.push_back(d);
+    }
+    return !dims.empty();
+}
+
+void UhdmImporter::unroll_foreach(const UHDM::foreach_stmt* fe,
+                                  const std::function<void()>& body, const char* ctx) {
+    std::vector<ForeachDim> dims;
+    if (!foreach_loop_dims(fe, dims)) {
+        log_warning("Cannot unroll foreach in %s context\n", ctx);
+        return;
+    }
+    std::function<void(size_t)> rec = [&](size_t k) {
+        if (k == dims.size()) { body(); return; }
+        const ForeachDim& d = dims[k];
+        bool had = loop_values.count(d.var);
+        int saved = had ? loop_values[d.var] : 0;
+        bool fv_had = foreach_loop_vars_.count(d.var);
+        foreach_loop_vars_.insert(d.var);
+        for (int i = 0; i < d.count; i++) {
+            loop_values[d.var] = d.low + i;
+            rec(k + 1);
+        }
+        if (!fv_had) foreach_loop_vars_.erase(d.var);
+        if (had) loop_values[d.var] = saved; else loop_values.erase(d.var);
+    };
+    rec(0);
 }
 
 // Import statement for combinational context
@@ -10610,21 +10721,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             // same static loop_values mechanism as vpiFor (kmac_msgfifo's
             // msgfifo_empty_all / packer_flush reductions were dropped).
             auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
-            std::string var; int low = 0, count = 0;
-            if (fe && foreach_loop_bounds(fe, var, low, count)) {
-                bool had = loop_values.count(var);
-                int saved = had ? loop_values[var] : 0;
-                bool fv_had = foreach_loop_vars_.count(var);
-                foreach_loop_vars_.insert(var);
-                for (int i = 0; i < count; i++) {
-                    loop_values[var] = low + i;
-                    import_statement_comb(fe->VpiStmt(), proc);
-                }
-                if (!fv_had) foreach_loop_vars_.erase(var);
-                if (had) loop_values[var] = saved; else loop_values.erase(var);
-            } else {
-                log_warning("Cannot unroll foreach in comb context\n");
-            }
+            if (fe) unroll_foreach(fe, [&]() { import_statement_comb(fe->VpiStmt(), proc); }, "comb");
             break;
         }
         case vpiWhile:
@@ -22940,18 +23037,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             // `foreach (arr[i]) body` inside an if/case branch — unroll over the
             // array dimension (same as the Process* overload).
             auto fe = any_cast<const UHDM::foreach_stmt*>(uhdm_stmt);
-            std::string var; int low = 0, count = 0;
-            if (fe && foreach_loop_bounds(fe, var, low, count)) {
-                bool had = loop_values.count(var);
-                int saved = had ? loop_values[var] : 0;
-                for (int i = 0; i < count; i++) {
-                    loop_values[var] = low + i;
-                    import_statement_comb(fe->VpiStmt(), case_rule);
-                }
-                if (had) loop_values[var] = saved; else loop_values.erase(var);
-            } else {
-                log_warning("Cannot unroll foreach in case context\n");
-            }
+            if (fe) unroll_foreach(fe, [&]() { import_statement_comb(fe->VpiStmt(), case_rule); }, "case");
             break;
         }
         case vpiWhile:

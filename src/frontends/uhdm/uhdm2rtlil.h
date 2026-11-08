@@ -10,6 +10,7 @@
 #ifndef UHDM2RTLIL_H
 #define UHDM2RTLIL_H
 
+#include <functional>
 #include <uhdm/uhdm.h>
 #include <uhdm/Serializer.h>
 #include <uhdm/ElaboratorListener.h>
@@ -1308,6 +1309,17 @@ struct UhdmImporter {
     // a constant-foldable range.
     bool foreach_loop_bounds(const UHDM::foreach_stmt* fe, std::string& var,
                              int& low, int& count);
+    // One unroll dimension of a `foreach (arr[i, j, k])`: loop var k runs
+    // over `count` values from `low` (a skipped slot, `arr[i, , k]`, has no
+    // entry).  Unpacked dimensions come first, in declaration order, then the
+    // element's packed ones -- the LRM's foreach order (12.7.3).
+    struct ForeachDim { std::string var; int low; int count; };
+    bool foreach_loop_dims(const UHDM::foreach_stmt* fe, std::vector<ForeachDim>& dims);
+    // Run `body` once per iteration of the (possibly multi-dimensional)
+    // foreach with every loop var published in loop_values, or warn
+    // "Cannot unroll foreach in <ctx> context" when a bound is not constant.
+    void unroll_foreach(const UHDM::foreach_stmt* fe, const std::function<void()>& body,
+                        const char* ctx);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::CaseRule* case_rule);
     void import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
