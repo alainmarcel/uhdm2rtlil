@@ -12433,12 +12433,17 @@ bool UhdmImporter::varselect_const_bitslice(
 }
 
 bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
-                                       int& elem_w, int& outer_lo, int* outer_hi) {
+                                       int& elem_w, int& outer_lo, int* outer_hi,
+                                       bool* packed_dim) {
     if (!ag || total_width <= 0) return false;
     UHDM::VectorOfrange* rngs = nullptr;
+    bool packed = true;
     if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
-    else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
-    else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
+    // An io_decl's own Ranges() are the formal's UNPACKED dimensions
+    // (`input logic req_i[4]`); a packed `input [1:7] cw` carries its range
+    // on the typespec below.
+    else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) { rngs = io->Ranges(); packed = false; }
+    else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) { rngs = av->Ranges(); packed = false; }
     else if (auto pv = dynamic_cast<const UHDM::packed_array_var*>(ag)) rngs = pv->Ranges();
     // An all-logic unpacked array is an array_NET (Surelog keys the
     // representation on the element type) with no typespec of its own; its
@@ -12446,7 +12451,7 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
     // `logic dataArrayWE[WAYS][PORTS]` (RSD DCacheArray, handed to a RAM as
     // its two port enables) ONE bit instead of the 2-bit row -- the RAM's
     // second port never wrote.
-    else if (auto an = dynamic_cast<const UHDM::array_net*>(ag)) rngs = an->Ranges();
+    else if (auto an = dynamic_cast<const UHDM::array_net*>(ag)) { rngs = an->Ranges(); packed = false; }
     else if (auto ln = dynamic_cast<const UHDM::logic_net*>(ag)) rngs = ln->Ranges();
     // A TYPEDEF'd multi-dim type (plane_t/box_t): the var carries no ranges of
     // its own — the dimensions live on its typespec's logic_typespec Ranges().
@@ -12457,6 +12462,7 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
     // reversed sp2v_e table came back as 8 one-bit values (ctr_we_o = 0x000024
     // instead of 0x924924).
     if (!rngs || rngs->empty()) {
+        packed = true;
         const UHDM::ref_typespec* rt = nullptr;
         if (auto e = dynamic_cast<const UHDM::expr*>(ag)) rt = e->Typespec();
         else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
@@ -12472,11 +12478,13 @@ bool UhdmImporter::bitselect_outer_dim(const UHDM::any* ag, int total_width,
                 // every `tbl[i] = <elem>` write fell back to ONE BIT at bit i.
                 // Arrays of one-bit elements were right by coincidence; wider
                 // ones lost every element past the first few.
-                else if (auto ats = dynamic_cast<const UHDM::array_typespec*>(a))
-                    rngs = ats->Ranges();
+                else if (auto ats = dynamic_cast<const UHDM::array_typespec*>(a)) {
+                    rngs = ats->Ranges(); packed = false;
+                }
             }
     }
     if (!rngs || rngs->empty()) return false;
+    if (packed_dim) *packed_dim = packed;
     auto r0 = (*rngs)[0];
     RTLIL::SigSpec l = import_expression(r0->Left_expr());
     RTLIL::SigSpec rr = import_expression(r0->Right_expr());
@@ -12660,10 +12668,16 @@ bool UhdmImporter::tf_local_lhs(const UHDM::any* lhs_expr, RTLIL::SigSpec& lhs_o
     auto bs = any_cast<const UHDM::bit_select*>(lhs_expr);
     RTLIL::SigSpec idx = import_expression(bs->VpiIndex(), &current_comb_values);
     if (idx.empty() || !idx.is_fully_const()) return false;
-    int elem_w = 1, outer_lo = 0;
-    bitselect_outer_dim(decl, cur.size(), elem_w, outer_lo);
+    int elem_w = 1, outer_lo = 0, outer_hi = 0;
+    bool packed_dim = false;
+    bitselect_outer_dim(decl, cur.size(), elem_w, outer_lo, &outer_hi, &packed_dim);
     if (elem_w <= 0) return false;
-    int off = (idx.as_const().as_int() - outer_lo) * elem_w;
+    int osz = cur.size() / elem_w;
+    // ascending PACKED range (`[1:7]`): index `lo` is the top element
+    // (yosys#2411); an unpacked `[0:3]` keeps element 0 at the low offset
+    int off = (outer_hi == -1 && packed_dim && osz > 0)
+        ? (outer_lo + osz - 1 - idx.as_const().as_int()) * elem_w
+        : (idx.as_const().as_int() - outer_lo) * elem_w;
     if (off < 0 || off + elem_w > cur.size()) return false;
     lhs_out = cur.extract(off, elem_w);
     return true;

@@ -1408,8 +1408,14 @@ struct UhdmImporter {
     // OR, for a TYPEDEF'd type, on its typespec's logic_typespec Ranges().
     // Returns false if the outer dim isn't a resolvable constant range.
     RTLIL::Const vpi_value_to_const(const std::string& val_str, int width);
+    // `packed_dim` (optional) reports whether the outer dimension is a PACKED
+    // one (typespec / net / var ranges) or an UNPACKED one (io_decl, array_var,
+    // array_net, array_typespec ranges).  Only a packed ascending range puts
+    // index `lo` at the TOP; an unpacked array keeps element `lo` at the low
+    // offset of its flattened vector.
     bool bitselect_outer_dim(const UHDM::any* ag, int total_width,
-                             int& elem_w, int& outer_lo, int* outer_hi = nullptr);
+                             int& elem_w, int& outer_lo, int* outer_hi = nullptr,
+                             bool* packed_dim = nullptr);
     const UHDM::any* find_enclosing_tf_decl(const UHDM::any* node, const std::string& name);
 
     // Set by import_hier_path's interface-member-select branch around the

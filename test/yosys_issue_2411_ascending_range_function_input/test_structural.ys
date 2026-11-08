@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast
+# i_cded = 7'b1011010 as [1:7]: cw[1..7] = 1,0,1,1,0,1,0 -> syndrome 0, word passes through
+sat -verify -prove o_cded 7'b1011010 -set i_cded 7'b1011010
+# i_cded = 7'b0000101: cw[5]=1, cw[7]=1 -> syndrome 3'b010 = 2 -> bit [2] (the 2nd from the top) flips
+sat -verify -prove o_cded 7'b0100101 -set i_cded 7'b0000101
