@@ -632,6 +632,70 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     iface_inst_vars_[interface_name].push_back(net_name);
                 }
             }
+            // A packed-STRUCT member can be MISSING from the interface_inst
+            // bound to a module's PORT.  `interface wrapper; st b; logic [2:0]
+            // c; endinterface` and `module baz(wrapper w, ...)`: the parent's
+            // own instance `work@top.w` lists `b` as a struct_net, but the
+            // elaborated port-side instance `work@top.u.w` lists only `c`
+            // (YosysHQ/yosys#2348's sv-yosys-issues row).  `\w.b` was then
+            // never created here, a 1-bit placeholder took its place, and
+            // every `w.b.<field>` read came out as a constant X.  The member
+            // is still declared by the interface DEFINITION, which is where
+            // record_struct_ts already takes the typespec from: create the
+            // missing struct/union members from it.  Only struct/union
+            // members -- the shape that is dropped -- and only names the
+            // instance itself did not provide.
+            if (uhdm_design && uhdm_design->AllInterfaces()) {
+                for (auto ii : *uhdm_design->AllInterfaces()) {
+                    std::string dn = std::string(ii->VpiDefName());
+                    if (dn.find("work@") == 0) dn = dn.substr(5);
+                    if (dn != iface_def || !ii->Nets()) continue;
+                    for (auto dnet : *ii->Nets()) {
+                        std::string net_name = std::string(dnet->VpiName());
+                        if (net_name.empty() || hidden_by_modport(net_name)) continue;
+                        std::string full_name = interface_name + "." + net_name;
+                        if (iface_signal_struct_ts_.count(full_name)) continue;
+                        // Skip what the instance itself provides (its own
+                        // Variables / Nets were handled above).
+                        bool inst_has = false;
+                        if (interface->Variables())
+                            for (auto v : *interface->Variables())
+                                if (std::string(v->VpiName()) == net_name) { inst_has = true; break; }
+                        if (!inst_has && interface->Nets())
+                            for (auto n : *interface->Nets())
+                                if (std::string(n->VpiName()) == net_name) { inst_has = true; break; }
+                        // An unpacked-ARRAY member (`T arr [2]`) is listed by
+                        // the definition among its plain nets but lives in the
+                        // instance's Array_nets: it is not dropped, and must
+                        // not be re-recorded as one scalar struct.
+                        if (!inst_has && interface->Array_nets())
+                            for (auto an : *interface->Array_nets())
+                                if (std::string(an->VpiName()) == net_name) { inst_has = true; break; }
+                        if (inst_has || iface_array_elem_width_.count(full_name)) continue;
+                        const UHDM::typespec* sts = record_struct_ts(full_name, net_name);
+                        if (!sts) continue;
+                        int width = get_width_from_typespec(sts, current_instance);
+                        if (width <= 0) { iface_signal_struct_ts_.erase(full_name); continue; }
+                        // The port import may already have made the member
+                        // wire (sized from the same typespec); a wire of any
+                        // other width is not this member -- leave it alone.
+                        RTLIL::Wire* wire = name_map.count(full_name) ? name_map[full_name]
+                                          : module->wire(RTLIL::escape_id(full_name));
+                        if (wire && wire->width != width) { iface_signal_struct_ts_.erase(full_name); continue; }
+                        if (mode_debug)
+                            uhdm_trace("UHDM: interface struct member %s (width=%d) from the definition%s\n",
+                                full_name.c_str(), width, wire ? " (wire exists)" : "");
+                        if (!wire) {
+                            wire = create_wire(full_name, width);
+                            add_src_attribute(wire->attributes, dnet);
+                            iface_inst_vars_[interface_name].push_back(net_name);
+                        }
+                        name_map[full_name] = wire;
+                        iface_signal_ts_[full_name] = sts;
+                    }
+                    break;
+                }
+            }
 
             // Materialize a flattened wire for an UNPACKED-ARRAY interface
             // signal that Surelog left ONLY in Array_nets() (a packed-struct
