@@ -3697,7 +3697,23 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // This will generate assignments to the temp wires
                     uhdm_trace("      Importing statement into process body for memory write handling\n");
                     log_flush();
+                    // Same in-flight context as the plain always_ff body (the
+                    // async-reset path does the same): without it a SECOND
+                    // dynamic write to one packed vector in this block
+                    // rebuilt it from the REGISTERED value and dropped the
+                    // first.  verilog-pcie pcie_us_axi_dma_wr's
+                    //     if (op_table_start_en)  op_table_active[start_ptr]  <= 1'b1;
+                    //     if (op_table_finish_en) op_table_active[finish_ptr] <= 1'b0;
+                    // shares its block with the op_table memories, so a start
+                    // and a finish in one cycle lost the start (16 diverging
+                    // co-simulated cycles, read_slang clean).
+                    bool saved_mw_ff_body_mode = in_always_ff_body_mode;
+                    RTLIL::CaseRule* saved_mw_fold_root = ff_inflight_fold_root_;
+                    in_always_ff_body_mode = true;
+                    ff_inflight_fold_root_ = &yosys_proc->root_case;
                     import_statement_comb(stmt, &yosys_proc->root_case);
+                    ff_inflight_fold_root_ = saved_mw_fold_root;
+                    in_always_ff_body_mode = saved_mw_ff_body_mode;
                     uhdm_trace("      Statement imported to process body\n");
                     log_flush();
                     current_temp_wires.clear();
