@@ -1000,3 +1000,25 @@ Test: issue_273_design_size_increases_after_flattening
     has taken effect; every later cycle matches.  read_uhdm is proven
     equivalent to read_verilog from reset (12-step miter).  read_slang cannot
     read the file.  CONFIRMED ARTIFACT: pre-reset start-up state.
+
+Test: issue_3278_synthesis_issue_with_shift_likely_alumacc
+    sv-yosys-issues row (YosysHQ/yosys#3278): `-$signed(-(inp1 << inp2))` and
+    `-($signed(5'(-a)))` -- signed negation over a shift and a size cast.
+    read_uhdm is PROVEN equivalent to read_verilog (uhdm-vs-verilog miter) and
+    read_slang diverges from the RTL in the same 10 cycles: the difference is
+    on the Verilator side of the signed arithmetic.  CONFIRMED ARTIFACT.
+
+Test: issue_4263_ast_fails_to_handle_implicit_wires
+    sv-yosys-issues row (YosysHQ/yosys#4263): two top-level modules, `gold`
+    (explicit per-iteration wire) and `gate` (an IMPLICIT net in each generate
+    iteration).  read_uhdm's `gate` is `a = b`, the LRM result; read_uhdm and
+    read_slang diverge from the RTL identically (139 cycles), which points at
+    the co-sim pairing a different top on each side, not at either reader.
+    CONFIRMED ARTIFACT: two-top harness pairing.
+
+Test: issue_5238_incorrect_handling_of_x_in_if_h1
+    sv-yosys-issues row (YosysHQ/yosys#5238): `logic q1 = 1'bx;` -- the DUT
+    starts a register at X on purpose, to test `if` on an X condition.  The 2
+    mismatches are Verilator's 2-state rendering of that X; read_uhdm and
+    read_slang diverge from the RTL identically and are proven equivalent to
+    each other.  CONFIRMED ARTIFACT: deliberate X initial value.
