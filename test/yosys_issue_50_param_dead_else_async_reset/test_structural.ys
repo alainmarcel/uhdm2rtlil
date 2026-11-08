@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten; opt_clean
+# c0: only q is a register; c1: q and qr
+select -assert-count 3 t:$adff

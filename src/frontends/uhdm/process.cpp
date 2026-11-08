@@ -22775,13 +22775,39 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 RTLIL::SigSpec condition_sig =
                     import_expression(condition, comb_read_map());
 
-                // Reduce multi-bit conditions to 1 bit for switch/compare matching
+                // Reduce multi-bit conditions to 1 bit for switch/compare
+                // matching -- a CONSTANT one to a constant bit, so the fold
+                // below sees it (see the vpiIf case above).
                 if (condition_sig.size() > 1) {
-                    condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+                    if (condition_sig.is_fully_def())
+                        condition_sig = condition_sig.as_const().as_bool()
+                                            ? RTLIL::SigSpec(RTLIL::State::S1)
+                                            : RTLIL::SigSpec(RTLIL::State::S0);
+                    else
+                        condition_sig = module->ReduceBool(NEW_ID, condition_sig);
                 }
 
                 if (mode_debug)
                     uhdm_trace("        If_else condition in case: %s\n", log_signal(condition_sig));
+
+                // Compile-time-constant condition: import only the taken
+                // branch, as the vpiIf case does.  A parameter-guarded if/else
+                // inside an async-reset block (`if (HIGH_LATENCY == 0) q <= a;
+                // else begin qr <= ...; end`, YosysHQ/yosys#50) otherwise kept
+                // the DEAD arm, so `qr` -- assigned nowhere live -- got a sync
+                // rule, held itself in the reset arm, and proc_arst aborted
+                // with "Async reset yields non-constant value 1'm".  Folded, it
+                // is hold-only and pruned, which is what read_verilog does.
+                // Only a fully DEFINED condition folds: an X one keeps its
+                // switch.
+                if (condition_sig.is_fully_def()) {
+                    const any* taken = condition_sig.as_const().as_bool()
+                                           ? if_else_stmt->VpiStmt()
+                                           : if_else_stmt->VpiElseStmt();
+                    if (taken) import_statement_comb(taken, case_rule);
+                    current_if_qualifier = saved_qualifier;
+                    break;
+                }
 
                 // Create a switch statement for the if
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
