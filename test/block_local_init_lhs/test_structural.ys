@@ -1,0 +1,5 @@
+# Every local carries its initialiser's value (vl = 768, cnt = 254).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -set vl 768 -set cnt 254 -set v 1 -prove d_int 10'd514 -prove last 1'b0 -prove d_logic 10'd1022 -prove d_integer 10'd1022 -prove d_bit 10'd0 -verify

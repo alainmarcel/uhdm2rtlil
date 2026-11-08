@@ -3311,6 +3311,56 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
         }
     }
 
+    // The LHS of a block-local DECLARATION'S OWN INITIALISER.  Surelog
+    // lowers `automatic int unsigned delta = spatz_req.vl - vreg_counter_q;`
+    // at the top of a begin block into a blocking assignment whose Lhs is the
+    // variable ITSELF (int_var / logic_var / integer_var / bit_var ...), not
+    // a ref_obj to it.  Only the logic_var case below knew one spelling of
+    // the local's wire (`$unnamed_block$N.<v>`); every other variable kind,
+    // and a logic_var whose wire is the plain name, fell to "Unsupported
+    // expression type", the action came out as `assign { } { }`, and every
+    // read of the local saw an undriven wire.  snitch spatz_vsldu's
+    // `delta <= (VRFWordBWidth - vreg_counter_q[...])` then read 0 <= ...,
+    // vreg_operation_last fired on the first beat and the slide unit
+    // finished every instruction early (273 diverging co-simulated cycles,
+    // read_slang clean).  Recognise the shape exactly -- the variable's
+    // parent is an assignment whose Lhs it is, and that assignment sits in
+    // the begin block that declares the variable -- and resolve it to the
+    // wire a READ of the local resolves to, so the write and the reads meet.
+    if (auto dv = dynamic_cast<const UHDM::variables*>(uhdm_expr)) {
+        const UHDM::any* ap = dv->VpiParent();
+        const UHDM::assignment* as = (ap && ap->UhdmType() == uhdmassignment)
+                                         ? any_cast<const UHDM::assignment*>(ap) : nullptr;
+        const UHDM::scope* sc = (as && as->Lhs() == dv && as->VpiParent())
+                                    ? dynamic_cast<const UHDM::scope*>(as->VpiParent()) : nullptr;
+        // The scope's Variables() can hold a CLONE of the declaration rather
+        // than the Lhs pointer itself, so match by name within that scope.
+        std::string vname = std::string(dv->VpiName());
+        // AUTOMATIC only: a STATIC local's initialiser runs once, before time
+        // 0 (LRM 6.21), not on every evaluation of the block -- read_slang
+        // rejects a non-constant one ("reading net state during design
+        // initialization"), and turning it into a per-evaluation assignment
+        // would invent behaviour the source does not have.
+        bool declared_here = false;
+        if (sc && sc->Variables() && !vname.empty())
+            for (auto v : *sc->Variables())
+                if (v == dv || std::string(v->VpiName()) == vname) {
+                    declared_here = dv->VpiAutomatic() ||
+                        (dynamic_cast<const UHDM::variables*>(v) &&
+                         dynamic_cast<const UHDM::variables*>(v)->VpiAutomatic());
+                    break;
+                }
+        if (declared_here && !vname.empty() && module) {
+            auto nm = name_map.find(vname);
+            if (nm != name_map.end() && nm->second) {
+                if (mode_debug)
+                    uhdm_trace("UHDM: block-local initialiser LHS '%s' -> %s\n",
+                        vname.c_str(), log_id(nm->second->name));
+                return RTLIL::SigSpec(nm->second);
+            }
+        }
+    }
+
     int obj_type = uhdm_expr->VpiType();
     
     if (mode_debug) {
