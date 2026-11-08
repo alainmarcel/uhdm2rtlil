@@ -1022,3 +1022,13 @@ Test: issue_5238_incorrect_handling_of_x_in_if_h1
     mismatches are Verilator's 2-state rendering of that X; read_uhdm and
     read_slang diverge from the RTL identically and are proven equivalent to
     each other.  CONFIRMED ARTIFACT: deliberate X initial value.
+
+Test: issue_4798_synthesis_with_nowidelut_gives_drastically_bette
+    sv-yosys-issues row (YosysHQ/yosys#4798): `sum_sheet[(col - 1) % 5]` with a
+    genvar `col` -- at col = 0 that is `(-1) % 5 = -1` (signed), an OUT-OF-RANGE
+    select of the packed `wire [4:0][63:0] sum_sheet`, which the LRM defines
+    as X.  read_uhdm warns and reads X; its `eval` output is BIT-IDENTICAL to
+    read_verilog's on three random 1600-bit vectors, with exactly the five
+    `o_state[row][0]` words X (320 bits).  read_slang rejects the file
+    (-Windex-oob).  Verilator returns a value for the out-of-range select, so
+    those words differ every cycle.  CONFIRMED ARTIFACT: out-of-range read.

@@ -1,6 +1,7 @@
 // YosysHQ/yosys#100 (closed): opt pass is optimizing my code away
 // https://github.com/YosysHQ/yosys/issues/100
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
+// HAND-EDITED (keep on re-harvest): typo STATE_ML -> STATE_M (undeclared name); the FSM itself is unchanged
 
 // ---- c0.sv
 module fsm (input clk, input a, b, c, output k, m, l);
@@ -17,7 +18,7 @@ module fsm (input clk, input a, b, c, output k, m, l);
     case (state)
       STATE_IDLE: begin
         if (a && b) begin
-          state <= STATE_ML;
+          state <= STATE_M;
         end else if (b) begin
           state <= STATE_K;
         end

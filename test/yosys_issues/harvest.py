@@ -199,7 +199,13 @@ def write(issues):
             d = HERE / name
             d.mkdir(exist_ok=True)
             p = d / "dut.sv"
-            if not p.exists() or p.read_text() != hdr + body:
+            # A dut.sv carrying a `HAND-EDITED` note was minimally fixed by
+            # hand (a typo, a missing typedef from another block, a wrapper
+            # top for an interface-port module) so the row exercises what
+            # the issue is about; never overwrite it.
+            if p.exists() and "HAND-EDITED" in p.read_text():
+                pass
+            elif not p.exists() or p.read_text() != hdr + body:
                 p.write_text(hdr + body)
             made += 1
             print(f"  {name}")
