@@ -4488,6 +4488,134 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // N-D (three or more dims) unpacked PORT element / sub-array
+                // read (`en[sch][disp][src]` on `input logic en [1:0][0:0][3:1]`,
+                // YosysHQ/yosys#5878): import_port stamped every dim as
+                // `unpacked_nd_dims`, outer -> inner.  Offset = sum over the
+                // given indices of (idx - low) * stride, the stride being the
+                // element width times every dim below; fewer indices than dims
+                // select a sub-array.  A dynamic index becomes a $shiftx (an
+                // out-of-range one reads X, LRM 7.4.6).
+                {
+                    RTLIL::Wire* nbw = mapped_base_wire ? mapped_base_wire
+                                                        : find_wire_in_scope(base_name);
+                    auto nd_it = nbw ? nbw->attributes.find(RTLIL::escape_id("unpacked_nd_dims"))
+                                     : decltype(nbw->attributes.end()){};
+                    if (nbw && nd_it != nbw->attributes.end() &&
+                        nbw->attributes.count(RTLIL::escape_id("unpacked_elem_width"))) {
+                        std::vector<std::pair<int,int>> nd;   // (size, low)
+                        {
+                            std::string g = nd_it->second.decode_string(), tok;
+                            std::stringstream ss(g);
+                            while (std::getline(ss, tok, ',')) {
+                                size_t c = tok.find(':');
+                                if (c == std::string::npos) { nd.clear(); break; }
+                                nd.push_back({std::stoi(tok.substr(0, c)), std::stoi(tok.substr(c + 1))});
+                            }
+                        }
+                        int nd_elem_w = nbw->attributes.at(RTLIL::escape_id("unpacked_elem_width")).as_int();
+                        size_t K = exprs->size();
+                        // One trailing select INSIDE the element (`w[i][j][k][2:0]`,
+                        // `w[i][j][k][3]`): resolved against the element's packed
+                        // low, and only when import_port knew it.
+                        const UHDM::any* tail = nullptr;
+                        if (!nd.empty() && K == nd.size() + 1 &&
+                            nbw->attributes.count(RTLIL::escape_id("unpacked_nd_elem_low"))) {
+                            tail = (*exprs)[K - 1];
+                            K--;
+                        }
+                        bool plain = !nd.empty() && K >= 1 && K <= nd.size() && nd_elem_w > 0 &&
+                                     (!tail || K == nd.size());
+                        for (size_t k = 0; plain && k < K; k++) {
+                            int t = (*exprs)[k]->VpiType();
+                            if (t == vpiPartSelect || t == vpiIndexedPartSelect) plain = false;
+                        }
+                        // The trailing select, as (lo, width) bits of the element;
+                        // a dynamic bit index is applied with $shiftx below.
+                        int tail_lo = 0, tail_w = -1;
+                        RTLIL::SigSpec tail_dyn;
+                        if (plain && tail) {
+                            int elow = nbw->attributes.at(RTLIL::escape_id("unpacked_nd_elem_low")).as_int();
+                            if (tail->VpiType() == vpiPartSelect) {
+                                auto ps = any_cast<const UHDM::part_select*>(tail);
+                                RTLIL::SigSpec l = import_expression(ps->Left_range(), input_mapping);
+                                RTLIL::SigSpec r = import_expression(ps->Right_range(), input_mapping);
+                                if (l.is_fully_const() && r.is_fully_const() && l.as_int() >= r.as_int()) {
+                                    tail_lo = r.as_int() - elow; tail_w = l.as_int() - r.as_int() + 1;
+                                } else plain = false;
+                            } else if (tail->VpiType() == vpiIndexedPartSelect) {
+                                plain = false;
+                            } else {
+                                RTLIL::SigSpec t = import_expression(any_cast<const UHDM::expr*>(tail), input_mapping);
+                                if (t.size() == 0) plain = false;
+                                else if (t.is_fully_const()) { tail_lo = t.as_const().as_int(true) - elow; tail_w = 1; }
+                                else { tail_dyn = t; tail_w = 1; }
+                            }
+                            if (plain && tail_dyn.empty() &&
+                                (tail_lo < 0 || tail_w <= 0 || tail_lo + tail_w > nd_elem_w))
+                                plain = false;   // out of the element: leave it to the generic path
+                        }
+                        auto apply_tail = [&](RTLIL::SigSpec elem) -> RTLIL::SigSpec {
+                            if (!tail) return elem;
+                            if (tail_dyn.empty()) return elem.extract(tail_lo, tail_w);
+                            int elow = nbw->attributes.at(RTLIL::escape_id("unpacked_nd_elem_low")).as_int();
+                            RTLIL::SigSpec t = tail_dyn;
+                            if (t.size() < 32) t.extend_u0(32, false); else if (t.size() > 32) t = t.extract(0, 32);
+                            RTLIL::SigSpec rel = module->Sub(NEW_ID, t, RTLIL::Const(elow, 32), true);
+                            RTLIL::Wire* y = module->addWire(NEW_ID, 1);
+                            module->addShiftx(NEW_ID, elem, rel, y, true);
+                            return RTLIL::SigSpec(y);
+                        };
+                        if (plain) {
+                            std::vector<long> stride(nd.size());
+                            long acc = nd_elem_w;
+                            for (int d = (int)nd.size() - 1; d >= 0; d--) { stride[d] = acc; acc *= nd[d].first; }
+                            int sub_w = (int)stride[K - 1];
+                            if (acc == nbw->width) {
+                                std::vector<RTLIL::SigSpec> ix;
+                                bool all_const = true;
+                                for (size_t k = 0; k < K; k++) {
+                                    ix.push_back(import_expression((*exprs)[k], input_mapping));
+                                    if (ix.back().size() == 0) { plain = false; break; }
+                                    if (!ix.back().is_fully_const()) all_const = false;
+                                }
+                                if (plain && all_const) {
+                                    long off = 0; bool in_range = true;
+                                    for (size_t k = 0; k < K; k++) {
+                                        long v = ix[k].as_const().as_int(true) - nd[k].second;
+                                        if (v < 0 || v >= nd[k].first) in_range = false;
+                                        off += v * stride[k];
+                                    }
+                                    if (mode_debug)
+                                        log("  vpiVarSelect: %zu-index read of %zu-D port %s -> [%ld+:%d]%s\n",
+                                            K, nd.size(), base_name.c_str(), off, sub_w,
+                                            in_range ? "" : " (out of range: X)");
+                                    if (!in_range)
+                                        return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, tail ? tail_w : sub_w));
+                                    return apply_tail(RTLIL::SigSpec(nbw).extract((int)off, sub_w));
+                                }
+                                if (plain) {
+                                    RTLIL::SigSpec off_sig(RTLIL::Const(0, 32));
+                                    for (size_t k = 0; k < K; k++) {
+                                        RTLIL::SigSpec i = ix[k];
+                                        if (i.size() < 32) i.extend_u0(32, false);
+                                        else if (i.size() > 32) i = i.extract(0, 32);
+                                        RTLIL::SigSpec rel = module->Sub(NEW_ID, i, RTLIL::Const(nd[k].second, 32), true);
+                                        RTLIL::SigSpec term = module->Mul(NEW_ID, rel, RTLIL::Const((int)stride[k], 32), true);
+                                        off_sig = module->Add(NEW_ID, off_sig, term, true);
+                                    }
+                                    RTLIL::Wire* y = module->addWire(NEW_ID, sub_w);
+                                    module->addShiftx(NEW_ID, RTLIL::SigSpec(nbw), off_sig, y, true);
+                                    if (mode_debug)
+                                        log("  vpiVarSelect: dynamic %zu-index read of %zu-D port %s ($shiftx, %d bits)\n",
+                                            K, nd.size(), base_name.c_str(), sub_w);
+                                    return apply_tail(RTLIL::SigSpec(y));
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // 2D unpacked array element access (`n[i][j]`).  When both
                 // indices are const and the base wire carries the
                 // `unpacked_*` metadata that `import_module` stamped on

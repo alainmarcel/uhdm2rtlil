@@ -1,0 +1,12 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt
+# the flat bit order of the 1-bit port is the element order
+sat -verify -seq 1 -prove e en
+# w[2][0][1] = (2-1)*24 + (0-0)*12 + (1-0)*4 = bit 28 -> w[31:28]
+sat -verify -seq 1 -set w 96'h00000000_00000000_F0000000 -prove w_c 4'hF
+# w[a[0]+1][b[0]][c%3] with a=1 b=0 c=1 -> w[2][0][1] again
+sat -verify -seq 1 -set a 2'd1 -set b 2'd0 -set c 2'd1 -set w 96'h00000000_00000000_F0000000 -prove w_d 4'hF
+# en[i][0][k%3+1] with i=1 k=2 -> en[1][0][3] = flat bit 5
+sat -verify -seq 1 -set i 1'b1 -set k 2'd2 -set en 6'b100000 -prove e_d 1'b1
+sat -verify -seq 1 -set i 1'b1 -set k 2'd2 -set en 6'b011111 -prove e_d 1'b0
