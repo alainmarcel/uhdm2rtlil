@@ -1,0 +1,6 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt -fast -nodffe -nosdff; dffunmap
+# foo = 1 sets out1 = 1; then foo = 0 matches nothing and out1 HOLDS
+sat -verify -seq 3 -set-init-zero -set-at 1 foo 2'd1 -set-at 2 foo 2'd0 -set-at 3 foo 2'd0 -prove out1 1'b1 -prove-skip 1
+sat -verify -seq 3 -set-init-zero -set-at 1 foo 2'd1 -set-at 2 foo 2'd0 -set-at 3 foo 2'd0 -prove out2 1'b1 -prove-skip 1

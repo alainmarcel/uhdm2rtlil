@@ -20894,6 +20894,16 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
     // fill), so only the comb path returns early.
     if (default_case && !in_always_ff_context)
         return;
+    // ... and in always_ff too when the default clause is EMPTY
+    // (`default;`, YosysHQ/yosys#2596): the author covered every value and
+    // said "nothing happens" -- a blocking temp the arms write must HOLD
+    // through it, the way read_slang and a simulator leave it.  The X-fill
+    // below restricted to blocking temps is for the IMPLICIT default of a
+    // `unique`/`priority` case without a default clause (picorv32's
+    // unreachable cpu_state fill); an explicit empty one is not that.
+    if (default_case && in_always_ff_context && default_case->actions.empty() &&
+        default_case->switches.empty())
+        return;
     if (!default_case) {
         default_case = new RTLIL::CaseRule;
         sw->cases.push_back(default_case);
