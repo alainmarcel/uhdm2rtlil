@@ -1,0 +1,10 @@
+# Every stage of every shift register is a flop, and d reaches each output
+# after exactly three clocks (four for the in-block chain's q_b).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+select -assert-min 1 t:$dff t:$adff t:$sdff %u
+sat -verify -seq 4 -set-at 1 d 1 -set-at 2 d 0 -set-at 3 d 0 -set-init-zero -prove-skip 3 -prove q_u 1 -prove q_p 1
+sat -verify -seq 4 -set-at 1 d 0 -set-at 2 d 0 -set-at 3 d 0 -set-init-zero -prove-skip 3 -prove q_u 0 -prove q_p 0
+sat -verify -seq 5 -set-at 1 d 1 -set-at 2 d 0 -set-at 3 d 0 -set-at 4 d 0 -set-init-zero -prove-skip 4 -prove q_b 1
+sat -verify -seq 2 -set-at 1 d 1 -set-init-zero -prove-skip 1 -prove tap_b 4'b0001
