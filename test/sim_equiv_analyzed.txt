@@ -1044,3 +1044,11 @@ Test: issue_2596_assertpmux_pass_generates_wrong_assertions_for
     same 73 of 300 cycles and are proven equivalent to each other.  CONFIRMED
     ARTIFACT: unmatched priority case under stimulus the snippet's assume
     forbids.
+
+Test: asserts
+    Upstream yosys test sat/asserts.v, first co-simulated once the harness
+    rebuilt RTL with an UNCLOCKED `assert property (y !== 1'b1)` removed
+    (Verilator rejects it).  Its only output y = state[2], and the 0..3 state
+    counter never sets bit 2 -- which is exactly what that assertion states.
+    The co-sim is vacuous (no output activity) on the RTL and on both
+    netlists alike.  CONFIRMED NOT A DIVERGENCE: constant output by design.
