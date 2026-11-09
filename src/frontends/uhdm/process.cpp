@@ -15175,7 +15175,14 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     // Base/offset expression — bail to the static path when it's a constant
     auto base_idx_expr = ips->Base_expr();
     if (!base_idx_expr) return false;
-    RTLIL::SigSpec offset = import_expression(base_idx_expr);
+    // The offset may read a BLOCKING temp of the same block -- `x = n % 2;
+    // o = n / 2; mem[(16*x)+(4*o) +: 4] = ...` inside an unrolled for
+    // (YosysHQ/yosys#4363) -- whose value is the in-flight one, a constant
+    // per iteration.  Imported against the raw wires it looked dynamic, and
+    // the read-modify-write below then read the block's own output: a
+    // combinational loop and an X result.  The bit-select write path already
+    // reads through comb_read_map(); do the same.
+    RTLIL::SigSpec offset = import_expression(base_idx_expr, comb_read_map());
     if (offset.is_fully_const()) return false;
 
     // For [offset -: width] the LSB lives at offset - (width - 1)
@@ -19299,8 +19306,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (keep) comb_lhs_keep_base = true;
         bool saved_wt = importing_write_target;
         importing_write_target = true;
+        // The base stays the target wire (comb_lhs_keep_base); the INDEX of a
+        // select target is a read and must see blocking temps' in-flight
+        // values (`q[(16*x)+(4*o) +: 4]` after `x = n % 2`, #4363).
         if (!tf_local_lhs(lhs_expr, lhs))
-            lhs = import_expression(lhs_expr);
+            lhs = import_expression(lhs_expr, keep ? comb_read_map() : nullptr);
         importing_write_target = saved_wt;
         comb_lhs_keep_base = saved_keep;
     }

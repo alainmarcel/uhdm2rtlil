@@ -1,0 +1,6 @@
+# No combinational loop, and the nibble shuffle / read-back values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+check -assert
+sat -verify -set wr 32'h87654321 -prove q 32'h86427531 -prove r 32'h86427531 -prove rb 32'h87654321
