@@ -11309,6 +11309,71 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
                             }
                         }
                     }
+                    // A MEMBER of such an element (`txd_data_o[t].rdata_nq` --
+                    // OpenTitan i3c_target_fsm passes three fields of one
+                    // array element to fmt_data_out): the same element wire,
+                    // narrowed to the member's slice.  Imported as an
+                    // expression it was the element's in-flight VALUE (after
+                    // `txd_data_o[t] = '0` a constant), the write-back had no
+                    // target, and every field stayed 0 (301 diverging
+                    // co-simulated cycles, read_slang clean).
+                    if (caller_out.empty() && arg_expr->VpiType() == vpiHierPath) {
+                        auto hp = any_cast<const hier_path*>(arg_expr);
+                        auto pe = hp->Path_elems();
+                        if (pe && pe->size() >= 2 && (*pe)[0]->VpiType() == vpiBitSelect) {
+                            bool refs = true;
+                            std::string mpath;
+                            for (size_t k = 1; k < pe->size(); k++) {
+                                if ((*pe)[k]->UhdmType() != uhdmref_obj) { refs = false; break; }
+                                if (k > 1) mpath += ".";
+                                mpath += std::string((*pe)[k]->VpiName());
+                            }
+                            auto bs = any_cast<const bit_select*>((*pe)[0]);
+                            std::string bn = std::string(bs->VpiName());
+                            RTLIL::SigSpec ix = bs->VpiIndex()
+                                ? import_expression(bs->VpiIndex(), outer_mapping) : RTLIL::SigSpec();
+                            // Element struct type: the array's element typespec.
+                            const UHDM::typespec* ets = nullptr;
+                            if (auto ag = bs->Actual_group()) {
+                                const UHDM::ref_typespec* rt = nullptr;
+                                if (auto e = dynamic_cast<const UHDM::expr*>(ag)) rt = e->Typespec();
+                                const UHDM::typespec* ats = rt ? rt->Actual_typespec() : nullptr;
+                                if (ats && ats->UhdmType() == uhdmarray_typespec) {
+                                    auto at = any_cast<const UHDM::array_typespec*>(ats);
+                                    if (at->Elem_typespec()) ets = at->Elem_typespec()->Actual_typespec();
+                                }
+                                if (!ets)
+                                    if (auto an = dynamic_cast<const UHDM::array_net*>(ag))
+                                        if (an->Nets() && !an->Nets()->empty())
+                                            if (auto n0 = dynamic_cast<const UHDM::expr*>((*an->Nets())[0]))
+                                                if (n0->Typespec()) ets = n0->Typespec()->Actual_typespec();
+                                if (!ets)
+                                    if (auto av = dynamic_cast<const UHDM::array_var*>(ag))
+                                        if (av->Variables() && !av->Variables()->empty())
+                                            if (auto v0 = dynamic_cast<const UHDM::expr*>((*av->Variables())[0]))
+                                                if (v0->Typespec()) ets = v0->Typespec()->Actual_typespec();
+                            }
+                            if (refs && ets && !bn.empty() && !ix.empty() && ix.is_fully_const()) {
+                                std::string en = bn + "[" + std::to_string(ix.as_const().as_int()) + "]";
+                                std::string gs = get_current_gen_scope();
+                                RTLIL::Wire* ew = nullptr;
+                                while (true) {
+                                    std::string q = gs.empty() ? en : gs + "." + en;
+                                    ew = name_map.count(q) ? name_map[q] : module->wire(RTLIL::escape_id(q));
+                                    if (ew || gs.empty()) break;
+                                    size_t d = gs.rfind('.');
+                                    gs = (d == std::string::npos) ? "" : gs.substr(0, d);
+                                }
+                                int moff = 0, mw = 0;
+                                if (ew && calculate_struct_member_offset(ets, mpath, current_instance, moff, mw) &&
+                                    mw > 0 && moff >= 0 && moff + mw <= ew->width) {
+                                    caller_out = RTLIL::SigSpec(ew).extract(moff, mw);
+                                    uhdm_trace("    import_tf_call_comb: output actual %s.%s -> %s [%d +: %d]\n",
+                                        en.c_str(), mpath.c_str(), log_id(ew->name), moff, mw);
+                                }
+                            }
+                        }
+                    }
                     if (caller_out.empty()) caller_out = import_expression(arg_expr, outer_mapping);
                     output_targets[param_name] = caller_out;
                 }
