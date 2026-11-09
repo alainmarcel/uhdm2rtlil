@@ -1,0 +1,5 @@
+# The always_ff keeps its clock: every reg_state element is a flop.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+select -assert-min 7 t:$adff t:$adffe t:$dff t:$dffe
