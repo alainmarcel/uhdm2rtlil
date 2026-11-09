@@ -194,17 +194,43 @@ bool UhdmImporter::stmt_self_accumulates_name(const UHDM::any* s,
                 if (stmt_self_accumulates_name(c, nm, depth + 1)) return true;
         return false;
     }
+    // A CONDITION that reads `nm` guarding a write of `nm` is the same
+    // feedback as `nm = f(nm)`: NVDLA's NV_DW_minmax keeps its running maximum
+    // in a local returned at the end,
+    //     for (k = 0; k < num_inputs; k = k+1) begin
+    //       a_v = a[width-1 : 0]; a = a >> width;
+    //       if (a_v >= value_v) value_v = a_v;
+    //     end
+    //     max_unsigned_value = value_v;
+    // and the alias made every `a_v >= value_v` compare against the call's
+    // RESULT wire -- a combinational loop that returned an arbitrary element
+    // (NV_NVDLA_CMAC_CORE_MAC_exp, formal `differs` against both read_slang
+    // and read_verilog).
     case uhdmif_stmt: {
         auto is2 = any_cast<const if_stmt*>(s);
-        return is2 && stmt_self_accumulates_name(is2->VpiStmt(), nm, depth + 1);
+        if (!is2) return false;
+        if (reads(is2->VpiCondition(), 0) && stmt_assigns_name(is2->VpiStmt(), nm, depth + 1))
+            return true;
+        return stmt_self_accumulates_name(is2->VpiStmt(), nm, depth + 1);
     }
     case uhdmif_else: {
         auto ie = any_cast<const if_else*>(s);
-        return ie && (stmt_self_accumulates_name(ie->VpiStmt(), nm, depth + 1) ||
-                      stmt_self_accumulates_name(ie->VpiElseStmt(), nm, depth + 1));
+        if (!ie) return false;
+        if (reads(ie->VpiCondition(), 0) &&
+            (stmt_assigns_name(ie->VpiStmt(), nm, depth + 1) ||
+             stmt_assigns_name(ie->VpiElseStmt(), nm, depth + 1)))
+            return true;
+        return stmt_self_accumulates_name(ie->VpiStmt(), nm, depth + 1) ||
+               stmt_self_accumulates_name(ie->VpiElseStmt(), nm, depth + 1);
     }
     case uhdmcase_stmt: {
         auto cs = any_cast<const case_stmt*>(s);
+        if (cs && cs->VpiCondition() && reads(cs->VpiCondition(), 0) && cs->Case_items())
+            for (auto ci : *cs->Case_items()) {
+                auto item = any_cast<const case_item*>(ci);
+                if (item && stmt_assigns_name(item->Stmt(), nm, depth + 1))
+                    return true;
+            }
         if (cs && cs->Case_items())
             for (auto ci : *cs->Case_items()) {
                 auto item = any_cast<const case_item*>(ci);
