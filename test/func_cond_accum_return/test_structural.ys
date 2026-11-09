@@ -1,0 +1,7 @@
+# No combinational loop, and the maximum nibble comes out: 0x809C -> C, 0x05EF -> F.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+check -assert
+sat -set a 16'h809c -prove v 4'hc -verify
+sat -set a 16'h05ef -prove v 4'hf -verify
