@@ -9380,9 +9380,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // every field then reads at the wrong offset (CVA6
                     // pmp_data_if: Cfg.NrExecuteRegionRules came out 0).
                     // Size positionally from the struct's members instead.
+                    // A REORDERED pattern (vpiReordered) lists its exprs
+                    // LSB-first -- the LAST member first.  cv32e40x's
+                    // `parameter dcsr_t DCSR_RESET_VAL = '{xdebugver: ...,
+                    // prv: PRIV_LVL_M, default: '0}` handed to a child's
+                    // `bit [31:0] RESETVALUE` arrives that way: sizing operand
+                    // k as member k put the 2-bit prv into the 4-bit
+                    // xdebugver slot and so on down, so the override folded to
+                    // 0x00088003 instead of 0x40000413 and every masked CSR
+                    // bit read the wrong constant (cv32e40x / cv32e40s /
+                    // cv32e40p / cv32e41p cs_registers, formal `differs`).
                     if (struct_ts && struct_ts->Members() &&
                         (int)struct_ts->Members()->size() == pat_count) {
-                        auto m = (*struct_ts->Members())[field_idx];
+                        int mi = uhdm_op->VpiReordered() ? pat_count - 1 - field_idx : field_idx;
+                        auto m = (*struct_ts->Members())[mi];
                         if (auto mt = m->Typespec())
                             if (auto at = mt->Actual_typespec()) {
                                 int w = get_width_from_typespec(at, inst);

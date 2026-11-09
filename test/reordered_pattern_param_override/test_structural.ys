@@ -1,0 +1,5 @@
+# The child's override carries the struct pattern's packed value.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -prove o 32'h40000413 -prove p 32'h40000413 -verify
