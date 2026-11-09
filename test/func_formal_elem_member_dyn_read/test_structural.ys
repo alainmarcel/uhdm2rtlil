@@ -1,0 +1,9 @@
+# Each in-range lane must return ITS element's member (not X, not 0).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt
+sat -verify -set s 4'b0000 -set d0 9'h111 -set d1 9'h122 -set d2 9'h0ab -prove y 9'h111
+sat -verify -set s 4'b0001 -set d0 9'h111 -set d1 9'h122 -set d2 9'h0ab -prove y 9'h122
+sat -verify -set s 4'b0010 -set d0 9'h111 -set d1 9'h122 -set d2 9'h0ab -prove y 9'h0ab
+sat -verify -set s 4'b0011 -set d3 9'h1c4 -prove y 9'h1c4
+sat -verify -set s 4'b0100 -set m0 9'h133 -prove y 9'h133

@@ -17296,6 +17296,33 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 bn.c_str(), member_path.c_str(), off, mw);
                             return out;
                         }
+                    } else if (simple && !ix.empty() && !ix.is_fully_const() && ts &&
+                               calculate_struct_member_offset(ts, member_path, inst, off, mw) &&
+                               mw > 0 && off >= 0 && off + mw <= elem_w) {
+                        // A RUNTIME element index (`intEX[sel.lane.intLane].value`
+                        // in RSD BypassNetwork's SelectData): the same slice,
+                        // shifted by `(ix - lo) * elem_w + off` with $shiftx, so
+                        // an index past the array reads X as the LRM says.  It
+                        // fell through to "Could not resolve struct member
+                        // access" and a constant X: SelectData returned 0 on
+                        // every bypass path and all of BypassNetwork's operand
+                        // outputs sat at 0 (120 diverging co-simulated cycles).
+                        int iw = std::max(GetSize(ix), 32);
+                        RTLIL::SigSpec ixe = ix;
+                        ixe.extend_u0(iw, false);
+                        RTLIL::SigSpec sh = ixe;
+                        if (outer_lo != 0)
+                            sh = module->Sub(NEW_ID, sh, RTLIL::Const(outer_lo, iw), false);
+                        if (elem_w != 1)
+                            sh = module->Mul(NEW_ID, sh, RTLIL::Const(elem_w, iw), false);
+                        if (off != 0)
+                            sh = module->Add(NEW_ID, sh, RTLIL::Const(off, iw), false);
+                        RTLIL::SigSpec out = module->addWire(NEW_ID, mw);
+                        module->addShiftx(NEW_ID, mit->second, sh, out, false);
+                        uhdm_trace("    hier_path '%s' -> dynamic element of staged formal %s, member %s [+%d, %d bits]\n",
+                            std::string(uhdm_hier->VpiName()).c_str(), bn.c_str(),
+                            member_path.c_str(), off, mw);
+                        return out;
                     }
                 }
             }
