@@ -4482,10 +4482,44 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
 
+    // A module's OWN parameter shadows a same-named parameter brought in by a
+    // WILDCARD package import (LRM 26.3: a local declaration takes precedence
+    // over a wildcard-imported name).  Surelog nevertheless re-binds the
+    // PACKAGE's param_assign onto the module's parameter object, so the
+    // instance lists two plain (non-override) assignments for it -- the
+    // module's own, located at the parameter's declaration, and the
+    // package's, located in the package -- and the later one won.  OpenTitan
+    // i3c_buffer declares `parameter BufAddrW = 9` and imports i3c_pkg, whose
+    // `localparam BufAddrW = $clog2(BufWords)` is 10: every member of its
+    // arb_data_t was measured 2 bits too high at the SRAM's port actuals,
+    // whose write / address then fell off the 64-bit struct and read as X.
+    // Skip a non-override assignment that sits AWAY from its parameter's
+    // declaration when the declaration's own assignment is also present.
+    auto at_decl = [](const UHDM::param_assign* pa) {
+        const any* l = pa->Lhs();
+        return l && pa->VpiLineNo() == l->VpiLineNo() &&
+               pa->VpiFile() == l->VpiFile();
+    };
+    std::set<const any*> lhs_with_decl_assign;
+    if (uhdm_module->Param_assigns())
+        for (auto pa : *uhdm_module->Param_assigns())
+            if (pa->Lhs() && at_decl(pa))
+                lhs_with_decl_assign.insert(pa->Lhs());
+
     // Import parameter overrides (param_assigns)
     if (uhdm_module->Param_assigns()) {
         uhdm_trace("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
         for (auto param_assign : *uhdm_module->Param_assigns()) {
+            if (param_assign->Lhs() && param_assign->Rhs() &&
+                !param_assign->VpiOverriden() && !at_decl(param_assign) &&
+                lhs_with_decl_assign.count(param_assign->Lhs())) {
+                uhdm_trace("UHDM: Skipping parameter assignment for '%s' from %s:%d "
+                           "(an imported package's; the module declares its own)\n",
+                    std::string(param_assign->Lhs()->VpiName()).c_str(),
+                    std::string(param_assign->VpiFile()).c_str(),
+                    param_assign->VpiLineNo());
+                continue;
+            }
             if (param_assign->Lhs() && param_assign->Rhs()) {
                 std::string param_name;
                 // Get parameter name from LHS
