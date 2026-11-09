@@ -1,0 +1,10 @@
+# The transposed array stays per-element wires (no $mem), and both the
+# direct element read and the clocked dynamic read see the transpose.
+# d = 16'h8421 -> m = {8,4,2,1}; cc[i][j] = m[j][i] -> cc[0] = 8, cc[1] = 4.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt_clean
+select -assert-count 0 t:$mem_v2 t:$memrd t:$memrd_v2
+flatten; opt
+sat -seq 1 -set d 16'h8421 -prove c1 4'h4 -verify
+sat -seq 2 -set-init-zero -set d 16'h8421 -set sel 2'd0 -prove-skip 1 -prove q 4'h8 -verify

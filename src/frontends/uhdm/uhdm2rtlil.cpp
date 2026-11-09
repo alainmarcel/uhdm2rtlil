@@ -4809,6 +4809,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         scan_gs = [&](const UHDM::gen_scope* gs) {
             if (!gs) return;
             scan_mods(gs->Modules());
+            // A CONTINUOUS ASSIGN in a generate scope that writes an element
+            // (or a bit of one) of a MODULE-level array drives it the same
+            // way an instance output does: a $memory has no port for it.
+            // OpenPiton oled_transform transposes its glyph rows with
+            //     for (i..) for (j..) assign char_cell[i][j] = char_map[j][i];
+            // and reads `char_cell[spi_cnt]` in an always block; the dynamic
+            // read made char_cell a $memory, every one of the 64 assigns
+            // became a memory READ whose data wire it drove, nothing wrote
+            // the memory, and ext_spi_data stayed 0 (formal `differs`).
+            if (gs->Cont_assigns())
+                for (auto ca : *gs->Cont_assigns())
+                    collect_elem_select_bases(ca->Lhs(), inst_elem_written_arrays);
             if (gs->Gen_scope_arrays())
                 for (auto gsa : *gs->Gen_scope_arrays())
                     if (gsa->Gen_scopes())
