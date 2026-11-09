@@ -16084,6 +16084,12 @@ bool UhdmImporter::declared_vector_bounds(const UHDM::any* node, const std::stri
             if (!obj && sc->Variables())
                 for (auto v0 : *sc->Variables())
                     if (std::string(v0->VpiName()) == name) { obj = v0; break; }
+            // A (local)parameter declared over a range (`localparam [5:15] p`)
+            // is sliced with source indices too (YosysHQ/yosys#3689).
+            if (!obj && sc->Parameters())
+                for (auto p0 : *sc->Parameters())
+                    if (p0->UhdmType() == UHDM::uhdmparameter &&
+                        std::string(p0->VpiName()) == name) { obj = p0; break; }
             if (obj)
                 break;
         }
@@ -16094,6 +16100,11 @@ bool UhdmImporter::declared_vector_bounds(const UHDM::any* node, const std::stri
         const UHDM::VectorOfrange* rgs = nullptr;
         if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ts))
             if (!lt->Elem_typespec()) rgs = lt->Ranges();
+        // `localparam [5:15] p` is typed by Surelog as an int_typespec that
+        // carries the declared range.
+        if (!rgs)
+            if (auto it2 = dynamic_cast<const UHDM::int_typespec*>(ts))
+                rgs = it2->Ranges();
         if (rgs && rgs->size() == 1) {
             auto r0 = (*rgs)[0];
             int saved = expression_context_width;
@@ -16151,6 +16162,9 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     RTLIL::SigSpec base;
     // The module wire the base resolved to (geometry attributes live there).
     RTLIL::Wire* geom_wire = nullptr;
+    // The base is a module (local)parameter: no wire, but its DECLARED range
+    // still maps source indices to bits (declared_vector_bounds).
+    bool base_is_param = false;
     if (!base_signal_name.empty()) {
         // A function argument (`repData64(input logic [..] data, ...)` used as
         // `data[offset*8+:16]`): the base is passed via input_mapping, not a
@@ -16213,6 +16227,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                 RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
                 if (module->parameter_default_values.count(param_id)) {
                     base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
+                    base_is_param = true;
                 } else if (package_parameter_map.count(base_signal_name)) {
                     // Package localparam sliced with a dynamic/indexed range,
                     // e.g. `ariane_pkg::SMODE_STATUS_WRITE_MASK[XLEN-1:0]`.
@@ -16375,10 +16390,10 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         // an internal `logic [3:2]` does not, so its bounds come from the
         // declaration, looked up by name (an indexed part-select carries no
         // vpiActual -- its vpiParent is the enclosing var_select).
-        if (pk_ew <= 1 && geom_wire && width > 0) {
+        if (pk_ew <= 1 && (geom_wire || base_is_param) && width > 0) {
             int dli = 0, dri = 0;
             bool have = false;
-            if (geom_wire->upto || geom_wire->start_offset != 0) {
+            if (geom_wire && (geom_wire->upto || geom_wire->start_offset != 0)) {
                 dri = geom_wire->start_offset;
                 dli = geom_wire->start_offset + geom_wire->width - 1;
                 if (geom_wire->upto) std::swap(dli, dri);
@@ -16432,6 +16447,49 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         RTLIL::Cell* sx = module->addShiftx(NEW_ID, base, sh, ow);
         add_src_attribute(sx->attributes, uhdm_indexed);
         return RTLIL::SigSpec(ow);
+    }
+
+    // A RUNTIME index into a vector whose declared range is not [N-1:0]
+    // (`localparam [5:15] p; p[15 + x -: 5]`, `logic [3:2] q; q[i +: 1]`)
+    // must be mapped through that range, exactly as the constant path above
+    // does: an ascending range puts source index k at bit (high - k).  The
+    // raw index used to drive the $shiftx directly, so YosysHQ/yosys#3689
+    // read the wrong bits for every x (read_slang right).  The shift is
+    // computed SIGNED and wide, so a select running off either end of the
+    // range shifts in X for the missing bits, as the LRM says (11.5.1).
+    if (pk_ew <= 1 && (geom_wire || base_is_param)) {
+        int dli = 0, dri = 0;
+        bool have = false;
+        if (geom_wire && (geom_wire->upto || geom_wire->start_offset != 0)) {
+            dri = geom_wire->start_offset;
+            dli = geom_wire->start_offset + geom_wire->width - 1;
+            if (geom_wire->upto) std::swap(dli, dri);
+            have = true;
+        } else {
+            have = declared_vector_bounds(uhdm_indexed, base_signal_name, dli, dri);
+        }
+        int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+        if (have && base.size() == dhigh - dlow + 1 && !(dli >= dri && dri == 0)) {
+            bool pos = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
+            int iw = std::max(GetSize(base_index), 32) + 2;
+            RTLIL::SigSpec ix = base_index;
+            ix.extend_u0(iw, false);                 // the index itself is unsigned
+            RTLIL::SigSpec sh;
+            if (dli >= dri) {
+                // descending [dli:dri]: low source index L sits at bit L - dri
+                int c = pos ? -dri : -(dri + width - 1);
+                sh = module->Add(NEW_ID, ix, RTLIL::SigSpec(RTLIL::Const(c, iw)), true);
+            } else {
+                // ascending [dli:dri]: the select's LSB is its HIGHEST source
+                // index H, at bit dhigh - H; H = ix + width - 1 (+:) or ix (-:)
+                int c = pos ? dhigh - width + 1 : dhigh;
+                sh = module->Sub(NEW_ID, RTLIL::SigSpec(RTLIL::Const(c, iw)), ix, true);
+            }
+            RTLIL::Wire* ow = module->addWire(NEW_ID, width);
+            RTLIL::Cell* sx = module->addShiftx(NEW_ID, base, sh, ow, true);
+            add_src_attribute(sx->attributes, uhdm_indexed);
+            return RTLIL::SigSpec(ow);
+        }
     }
 
     // Compute LSB shift amount

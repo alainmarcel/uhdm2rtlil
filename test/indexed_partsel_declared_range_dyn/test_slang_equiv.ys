@@ -1,0 +1,14 @@
+# read_uhdm == read_slang for every input (the selects stay in range).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+rename dut gate
+design -stash gate
+read_slang dut.sv --top dut
+proc; flatten; opt
+rename dut gold
+design -stash gold
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+sat -verify -prove-asserts -show-ports miter
