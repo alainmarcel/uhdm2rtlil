@@ -181,3 +181,27 @@ axi/axi_id_serialize_intf  # elaborated at the sweep's defaults the serializers 
 # writer-less $mem).  Entries 0..31 are never written either (the 2048
 # "never assigned" bits), equally X on both sides.
 openpiton/oled_transform
+
+# ---- `unique case (1'b1)` violated by the stimulus (2026-11-08) ------------
+# cva6 hpdcache_uncached selects its write command / atomic opcode with
+# `unique case (1'b1) req_op_q.is_amo_sc: ... req_op_q.is_amo_minu: ...`
+# over the bits of `req_op_q = req_op_i`, a ONE-HOT op code.  The miter's only
+# counterexamples drive several bits at once (`req_op_i` = 0011000000000 then
+# 0010010110101), which violates the `unique` and leaves the arm choice to the
+# implementation -- read_uhdm and read_slang pick differently (one bit of
+# mem_req_write_o.mem_req_atomic).  With `req_op_i` held at 0 or at each of
+# its 13 one-hot values the miter is PROVEN to depth 4.  The co-sim's shared
+# divergence (both readers 300 cycles) is the same random multi-hot stimulus.
+hpdcache_uncached
+
+# ---- reference honours `translate_off`; the sweep does not (2026-11-08) ----
+# cva6 tc_sram_wrapper.sv wraps its WHOLE tc_sram instance in
+# `// synthesis translate_off ... translate_on`.  read_slang honours the pragma,
+# so every tag and data SRAM of wt_dcache_mem is absent from the reference
+# (`assign rd_vld_bits_o = 8'h00`, no storage).  read_uhdm keeps them because
+# the sweep runs Surelog WITHOUT `-filterprotected`, and so does the Verilator
+# RTL -- which read_uhdm matches (co-sim PASS once func_dyn_select_local_write
+# landed).  The miter's cex reads back valid bits written two cycles earlier:
+# read_uhdm == RTL, read_slang = 0.  The sweeps keep the SIMULATION view of
+# translate_off for now; revisit if they move to `-filterprotected`.
+wt_dcache_mem
