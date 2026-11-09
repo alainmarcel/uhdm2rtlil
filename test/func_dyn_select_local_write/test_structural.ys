@@ -1,0 +1,9 @@
+# The inlined dynamic-index writes must neither be dropped nor close a
+# combinational loop (`r[i] ^= 1'b1` folded against its own SSA output):
+# a loop makes the slang miter VACUOUS, so it is gated separately.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt -fast
+check -assert
+# no inlined write may be dropped: bin2oh must drive req/we
+sat -prove-asserts -verify -set a 0 -set b 0 -set woff 4'b1000 -prove we 4'b0100 -prove req 4'b0100

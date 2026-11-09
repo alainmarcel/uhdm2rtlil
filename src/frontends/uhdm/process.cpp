@@ -13493,14 +13493,26 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     // was DROPPED silently (d_tmp kept its all-zero init).
                     std::string base;
                     int sel_off = -1, sel_w = -1;
+                    // A RUNTIME index (`out[in] = 1'b1` in CVA6
+                    // wt_dcache_mem's dcache_cl_bin2oh, called from an
+                    // always_comb arm) has no constant offset: dyn_off holds
+                    // the select's low-end bit offset and dyn_w its width.
+                    RTLIL::SigSpec dyn_off;
+                    int dyn_w = -1;
                     if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
                         // `local[k*W +: W] = …` — same class as the plain
                         // part-select below; without it the write was dropped
                         // with "dropped part/bit-select write".
                         auto ips = any_cast<const UHDM::indexed_part_select*>(lhs_expr);
                         base = std::string(ips->VpiName());
+                        // The base is SELF-DETERMINED (LRM 11.6.1): the
+                        // enclosing call's context width must not widen it,
+                        // or `r[k + 3'd6 +: 1]` stops wrapping at 3 bits.
+                        int saved_ictx = expression_context_width;
+                        expression_context_width = 0;
                         RTLIL::SigSpec b = import_expression(
                             any_cast<const expr*>(ips->Base_expr()), &func_mapping);
+                        expression_context_width = saved_ictx;
                         RTLIL::SigSpec w = import_expression(
                             any_cast<const expr*>(ips->Width_expr()), &func_mapping);
                         if (b.is_fully_const() && w.is_fully_const()) {
@@ -13508,6 +13520,18 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                             int wd = w.as_const().as_int();
                             if (ips->VpiIndexedPartSelectType() == 2) o = o - wd + 1;
                             if (wd > 0 && o >= 0) { sel_off = o; sel_w = wd; }
+                        } else if (w.is_fully_const() && w.as_const().as_int() > 0) {
+                            dyn_w = w.as_const().as_int();
+                            dyn_off = b;
+                            if (ips->VpiIndexedPartSelectType() == 2) {
+                                // `local[b -: W]`: the low end is b - W + 1.
+                                int iw = std::max(GetSize(b), 32);
+                                RTLIL::SigSpec bx = b; bx.extend_u0(iw, false);
+                                RTLIL::Wire* lo = module->addWire(NEW_ID, iw);
+                                module->addSub(NEW_ID, bx,
+                                    RTLIL::SigSpec(RTLIL::Const(dyn_w - 1, iw)), lo);
+                                dyn_off = RTLIL::SigSpec(lo);
+                            }
                         }
                     } else if (lhs_expr->VpiType() == vpiPartSelect) {
                         auto ps = any_cast<const part_select*>(lhs_expr);
@@ -13525,15 +13549,66 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     } else {
                         auto bs = any_cast<const bit_select*>(lhs_expr);
                         base = std::string(bs->VpiName());
+                        // Self-determined index (LRM 11.6.1), as above.
+                        int saved_ictx = expression_context_width;
+                        expression_context_width = 0;
                         RTLIL::SigSpec ix =
                             import_expression(bs->VpiIndex(), &func_mapping);
+                        expression_context_width = saved_ictx;
                         if (ix.is_fully_const()) {
                             sel_off = ix.as_const().as_int();
                             sel_w = 1;
+                        } else if (!ix.empty()) {
+                            dyn_off = ix;
+                            dyn_w = 1;
                         }
                     }
                     auto fit = base.empty() ? func_mapping.end()
                                             : func_mapping.find(base);
+                    if (fit != func_mapping.end() && sel_off < 0 &&
+                        dyn_w > 0 && dyn_w <= fit->second.size() && !rhs.empty()) {
+                        // Splice by shift-and-mask into the in-flight value:
+                        //   new = (cur & ~(ones_W << off)) | (rhs_W << off)
+                        // An offset past the end shifts both terms out, so
+                        // the write is ignored -- the LRM's rule for an
+                        // out-of-range index.  Previously the write was
+                        // DROPPED with a warning and the local kept its init:
+                        // bin2oh returned '0, so wt_dcache_mem never raised a
+                        // data-bank request outside a cache-line refill.
+                        RTLIL::SigSpec cur = fit->second;
+                        int bw = cur.size();
+                        RTLIL::SigSpec r2 = rhs;
+                        if (r2.size() < dyn_w) r2.extend_u0(dyn_w);
+                        else if (r2.size() > dyn_w) r2 = r2.extract(0, dyn_w);
+                        int cop = assign->VpiOpType();
+                        if (cop != 0 && cop != vpiAssignmentOp) {
+                            // Compound op: fold with the slice's in-flight value.
+                            RTLIL::Wire* old_sl = module->addWire(NEW_ID, dyn_w);
+                            module->addShr(NEW_ID, cur, dyn_off, RTLIL::SigSpec(old_sl), false);
+                            r2 = create_compound_op_cell(cop, RTLIL::SigSpec(old_sl), r2, assign);
+                            if (r2.size() < dyn_w) r2.extend_u0(dyn_w);
+                            else if (r2.size() > dyn_w) r2 = r2.extract(0, dyn_w);
+                        }
+                        RTLIL::SigSpec ones(RTLIL::Const(RTLIL::State::S1, dyn_w));
+                        ones.extend_u0(bw, false);
+                        RTLIL::SigSpec val = r2;
+                        val.extend_u0(bw, false);
+                        RTLIL::Wire* msk = module->addWire(NEW_ID, bw);
+                        module->addShl(NEW_ID, ones, dyn_off, RTLIL::SigSpec(msk), false);
+                        RTLIL::Wire* vsh = module->addWire(NEW_ID, bw);
+                        module->addShl(NEW_ID, val, dyn_off, RTLIL::SigSpec(vsh), false);
+                        RTLIL::Wire* nmsk = module->addWire(NEW_ID, bw);
+                        module->addNot(NEW_ID, RTLIL::SigSpec(msk), RTLIL::SigSpec(nmsk));
+                        RTLIL::Wire* clr = module->addWire(NEW_ID, bw);
+                        module->addAnd(NEW_ID, cur, RTLIL::SigSpec(nmsk), RTLIL::SigSpec(clr));
+                        RTLIL::Wire* nv = module->addWire(NEW_ID, bw);
+                        module->addOr(NEW_ID, RTLIL::SigSpec(clr), RTLIL::SigSpec(vsh), RTLIL::SigSpec(nv));
+                        func_mapping[base] = mask_write(base, RTLIL::SigSpec(nv));
+                        uhdm_trace("      inline_func_body_comb: %s[dyn %s +: %d] = %s\n",
+                            base.c_str(), log_signal(dyn_off).c_str(), dyn_w,
+                            log_signal(r2).c_str());
+                        break;
+                    }
                     if (fit != func_mapping.end() && sel_off >= 0 &&
                         sel_off + sel_w <= fit->second.size()) {
                         RTLIL::SigSpec cur = fit->second;

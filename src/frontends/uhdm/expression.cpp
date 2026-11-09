@@ -1904,7 +1904,12 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // Assigning to a bit of the return value
                     RTLIL::SigSpec index_sig;
                     if (bs->VpiIndex()) {
+                        // SELF-DETERMINED index (LRM 11.6.1): the call site's context
+                        // width must not widen `k + 3'd6`, or it stops wrapping.
+                        int saved_ictx = expression_context_width;
+                        expression_context_width = 0;
                         index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
+                        expression_context_width = saved_ictx;
                         if (mode_debug) {
                             uhdm_trace("      Bit select index for %s: is_const=%d, value=%s\n",
                                 base_name.c_str(), index_sig.is_fully_const(),
@@ -1950,7 +1955,12 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (it != input_mapping.end()) {
                         RTLIL::SigSpec index_sig;
                         if (bs->VpiIndex()) {
+                            // SELF-DETERMINED index (LRM 11.6.1): the call site's context
+                            // width must not widen `k + 3'd6`, or it stops wrapping.
+                            int saved_ictx = expression_context_width;
+                            expression_context_width = 0;
                             index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
+                            expression_context_width = saved_ictx;
                         }
 
                         if (index_sig.is_fully_const()) {
@@ -2055,6 +2065,34 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 data = data.extract(0, element_width);
                             else if (data.size() < element_width)
                                 data.extend_u0(element_width);
+                            // A COMPOUND operator (`r[i] ^= 1'b1`) folds with
+                            // the ELEMENT's value-so-far.  Left to the generic
+                            // combine below it was applied to the whole merged
+                            // word against the fresh SSA wire -- i.e. to its
+                            // own output, a combinational loop.
+                            {
+                                RTLIL::SigSpec cur = module->Shr(NEW_ID, old_sig, shamt, false);
+                                cur = cur.extract(0, element_width);
+                                bool did = true;
+                                switch (assign->VpiOpType()) {
+                                case vpiBitOrOp:  data = module->Or (NEW_ID, cur, data); break;
+                                case vpiBitAndOp: data = module->And(NEW_ID, cur, data); break;
+                                case vpiBitXorOp: data = module->Xor(NEW_ID, cur, data); break;
+                                case vpiAddOp:    data = module->Add(NEW_ID, cur, data); break;
+                                case vpiSubOp:    data = module->Sub(NEW_ID, cur, data); break;
+                                case vpiMultOp:   data = module->Mul(NEW_ID, cur, data); break;
+                                case vpiDivOp:    data = module->Div(NEW_ID, cur, data); break;
+                                case vpiModOp:    data = module->Mod(NEW_ID, cur, data); break;
+                                case vpiLShiftOp: data = module->Shl(NEW_ID, cur, data); break;
+                                case vpiRShiftOp: data = module->Shr(NEW_ID, cur, data); break;
+                                default: did = false;
+                                }
+                                if (did) {
+                                    if (data.size() > element_width)
+                                        data = data.extract(0, element_width);
+                                    compound_applied = true;
+                                }
+                            }
                             data.extend_u0(bw, false);
                             RTLIL::SigSpec data_sh =
                                 module->Shl(NEW_ID, data, shamt, false);
