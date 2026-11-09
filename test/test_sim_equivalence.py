@@ -98,6 +98,46 @@ TRANSLATE_OFF_RE = re.compile(
     re.IGNORECASE | re.DOTALL)
 
 
+def strip_unclocked_properties(text: str) -> str:
+    """Drop concurrent `assert|assume|cover|restrict property (...)` items
+    that have NO clock (the property does not start with `@`).  Verilator
+    rejects them outright -- `%Error-UNSUPPORTED: Unclocked assertion`, which
+    --no-assert does not avoid -- so the whole co-sim used to be skipped
+    (five sv-yosys-issues rows: the BTOR / SMT2 / assertpmux issues are ABOUT
+    such properties).  They never drive an output, and the netlist side has
+    its $check cells deleted, so the output comparison is unchanged.  A
+    preceding `label:` goes with the item; newlines are kept so Verilator's
+    line numbers still point at the original file."""
+    out, i = [], 0
+    pat = re.compile(r"(?:\b[A-Za-z_]\w*\s*:\s*)?"
+                     r"\b(?:assert|assume|cover|restrict)\s+property\s*\(")
+    while True:
+        m = pat.search(text, i)
+        if not m:
+            out.append(text[i:])
+            return "".join(out)
+        j = m.end()
+        k = j
+        while k < len(text) and text[k].isspace():
+            k += 1
+        if k < len(text) and text[k] == "@":        # clocked: keep it
+            out.append(text[i:j])
+            i = j
+            continue
+        depth, k = 1, j
+        while k < len(text) and depth:
+            depth += {"(": 1, ")": -1}.get(text[k], 0)
+            k += 1
+        while k < len(text) and (text[k] != ";" or depth):
+            depth += {"(": 1, ")": -1}.get(text[k], 0)
+            k += 1
+        k += 1                                       # the `;`
+        out.append(text[i:m.start()])
+        out.append("/* unclocked property removed for Verilator */"
+                   + "\n" * text.count("\n", m.start(), k))
+        i = k
+
+
 def strip_translate_off(text: str) -> str:
     """Remove `// synopsys translate_off ... translate_on` regions.
 
@@ -281,7 +321,7 @@ def detect_unpacked_array_ports(dut_path: Path,
         r"(?:\s+[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?){0,2}"  # 0-2 type/kind words (pkg::type too)
         r"(?:\s*\[[^\]]+\])*"                     # optional packed dims
         r"\s+([A-Za-z_]\w*)"                      # port name
-        r"\s*\[\s*(\d+|[A-Za-z_]\w*)\s*(-\s*1\s*:\s*0)?\s*\]"  # unpacked [N]/[P]/[N-1:0]
+        r"((?:\s*\[[^\]]+\])+)"                     # one or more unpacked dims
     )
     # A symbolic count ([PMPNumRegions], [IC_NUM_WAYS]) resolves through simple
     # `parameter`/`localparam NAME = <int>` definitions.  Scan the module header
@@ -304,21 +344,44 @@ def detect_unpacked_array_ports(dut_path: Path,
     # Module-header params win over any same-named package default.
     for n, v in param_re.findall(clean):
         params[n] = int(v)
-    for d, name, count, desc in port_re.findall(plist):
+    def _ev(expr: str):
+        """A constant dimension bound: integers, parameters, + - * /."""
+        e = re.sub(r"[A-Za-z_]\w*",
+                   lambda m: str(params[m.group(0)]) if m.group(0) in params
+                   else "X", expr)
+        if "X" in e or not re.fullmatch(r"[\d\s+\-*/()]+", e):
+            return None
+        try:
+            return int(eval(e, {"__builtins__": {}}))
+        except Exception:
+            return None
+    for d, name, dims_txt in port_re.findall(plist):
         # Filter out keywords accidentally captured as a port name.
         if name in ("input", "output", "inout", "wire", "reg",
                     "logic", "bit", "var"):
             continue
-        # Record (element_count, descending?) — the wrapper must mirror the
-        # DUT's unpacked-range FORM: a `[N-1:0]` (descending) port connected
-        # positionally to an ascending `[N]` wrapper array reverses the
-        # elements (left index binds to left index), which flipped every
-        # element read against the netlist's elem0-at-LSB flat view
-        # (unpacked_elem_partsel_comb sel_o, type_param_unpacked_port).
-        if count.isdigit():
-            result[name] = (int(count), bool(desc))
-        elif count in params:
-            result[name] = (params[count], bool(desc))
+        # Record the unpacked dims AS DECLARED, [(left, right), ...] outermost
+        # first.  The wrapper must mirror the DUT's range FORM: a `[N-1:0]`
+        # (descending) port connected positionally to an ascending `[N]`
+        # wrapper array reverses the elements (left index binds to left
+        # index), which flipped every element read against the netlist's flat
+        # view (unpacked_elem_partsel_comb sel_o, type_param_unpacked_port).
+        # `[N]` is `[0:N-1]`; ascending `[0:1]` and MULTI-dimensional ports
+        # (yosys_issue_340 `z [0:1]`, yosys_issue_5878 `w [2][3]`) used to be
+        # left out and Verilator refused the flat connection.
+        dims = []
+        for dt in re.findall(r"\[([^\]]+)\]", dims_txt):
+            if ":" in dt:
+                l, r = (_ev(x) for x in dt.split(":", 1))
+            else:
+                n_ = _ev(dt)
+                l, r = (0, n_ - 1) if n_ else (None, None)
+            if l is None or r is None:
+                dims = None
+                break
+            dims.append((l, r))
+        if dims:
+            result[name] = dims
     return result
 
 
@@ -535,25 +598,35 @@ def emit_wrapper_and_tb(dut_path: Path,
     intermediates: list[str] = []
     def conn(n: str, w: int, d: str) -> str:
         if unpacked and n in unpacked:
-            count, descending = unpacked[n]
+            dims = unpacked[n]
+            import itertools
+            axes = [list(range(l, r - 1, -1)) if l >= r else list(range(l, r + 1))
+                    for (l, r) in dims]
+            count = 1
+            for a in axes:
+                count *= len(a)
             if count > 0 and w % count == 0:
                 ew = w // count
-                dim = f"[{count-1}:0]" if descending else f"[{count}]"
+                dimtxt = "".join(f"[{l}:{r}]" for (l, r) in dims)
                 intermediates.append(
-                    f"  logic [{ew-1}:0] {n}_arr {dim};")
-                for i in range(count):
+                    f"  logic [{ew-1}:0] {n}_arr {dimtxt};")
+                # Elements in DECLARED order, leftmost index of the outermost
+                # dim first, take the flat port from its MSBs down (the LRM
+                # stream order, 11.4.14).  For one dim this is the old rule:
+                # descending keeps element i at slot i, ascending reverses.
+                for k, idx in enumerate(itertools.product(*axes)):
+                    slot = count - 1 - k
+                    sel = "".join(f"[{i}]" for i in idx)
                     # Direction-aware: an unpacked OUTPUT drives the array,
                     # and the flat wrapper port is rebuilt from its elements
                     # (the input-only form left the output port undriven and
                     # double-drove the array — ibex_ex_block imd_val_d_o).
-                    # descending dim: element i keeps slot i; ascending: reversed
-                    slot = i if descending else count - 1 - i
                     if d == "output":
                         intermediates.append(
-                            f"  assign {n}[{(slot+1)*ew-1}:{slot*ew}] = {n}_arr[{i}];")
+                            f"  assign {n}[{(slot+1)*ew-1}:{slot*ew}] = {n}_arr{sel};")
                     else:
                         intermediates.append(
-                            f"  assign {n}_arr[{i}] = {n}[{(slot+1)*ew-1}:{slot*ew}];")
+                            f"  assign {n}_arr{sel} = {n}[{(slot+1)*ew-1}:{slot*ew}];")
                 return f"    .{n}({n}_arr)"
         return f"    .{n}({n})"
     inst_conn = [conn(n, w, d) for (n, w, d) in ports]
@@ -842,6 +915,22 @@ def emit_wrapper_and_tb(dut_path: Path,
         "}",
         "",
     ]
+    # Verilator ENCODES a double underscore in a C++ member name: `__`
+    # becomes `___05F` (V3Ast encodeName), so a port named `_0_` is the member
+    # `rtl___05F0_`, not `rtl__0_`.  The raw spelling did not compile
+    # (sv-yosys-issues issue_4445, whose ports are `_0_`, `_1_`, ...).
+    def _vl_member(m):
+        name = m.group(1)
+        out, i = [], 0
+        while i < len(name):
+            if name.startswith("__", i):
+                out.append("___05F")
+                i += 2
+            else:
+                out.append(name[i])
+                i += 1
+        return "tb." + "".join(out)
+    cpp = [re.sub(r"\btb\.([A-Za-z_]\w*)", _vl_member, line) for line in cpp]
     (out_dir / "tb_main.cpp").write_text("\n".join(cpp))
 
 
@@ -1006,6 +1095,24 @@ def main() -> int:
         else:
             vsrcs.append(s)
     rc, out = run_verilator(work, paths, vsrcs, extra_flags=vflags)
+    # An UNCLOCKED concurrent property is a hard Verilator error even under
+    # --no-assert; rebuild the RTL side without those items (see
+    # strip_unclocked_properties).
+    if "Unclocked assertion" in out:
+        print("  Verilator rejects unclocked properties; "
+              "rebuilding the RTL side without them")
+        nsrcs = []
+        for v in vsrcs:
+            txt = Path(v).read_text(errors="replace")
+            new = strip_unclocked_properties(txt)
+            if new != txt:
+                dst = work / ("noprop_" + Path(v).name)
+                dst.write_text(new)
+                nsrcs.append(dst.resolve())
+            else:
+                nsrcs.append(v)
+        vsrcs = nsrcs
+        rc, out = run_verilator(work, paths, vsrcs, extra_flags=vflags)
     # The ORIGINAL RTL's own assertion can fire under random stimulus (an
     # `assume (rstn == 1'b1)` the testbench does not honour makes the design's
     # `assert` meaningless) and `$stop` the run before a single output is

@@ -2,6 +2,8 @@
 // https://github.com/YosysHQ/yosys/issues/4151
 // Code block(s) from the issue (variant h0); harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): the input redeclaration `bit [95:0] in_data` -> `wire`; Verilator rejects an input port redeclared as a variable (the inputs are driven by the testbench, so 2-state vs 4-state is moot); the optimized logic the issue is about is unchanged
+
 // ---- b0.sv
 module top(in_data, out_data);
   bit [1:0] _00_;
@@ -20,7 +22,7 @@ module top(in_data, out_data);
   bit [1:0] celloutsig_2z;
   bit celloutsig_3z;
   input [95:0] in_data;
-  bit [95:0] in_data;
+  wire [95:0] in_data;
   output out_data;
   bit out_data;
   assign celloutsig_1z = _01_ * _00_;

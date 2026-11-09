@@ -1032,3 +1032,15 @@ Test: issue_4798_synthesis_with_nowidelut_gives_drastically_bette
     `o_state[row][0]` words X (320 bits).  read_slang rejects the file
     (-Windex-oob).  Verilator returns a value for the out-of-range select, so
     those words differ every cycle.  CONFIRMED ARTIFACT: out-of-range read.
+
+Test: issue_2596_assertpmux_pass_generates_wrong_assertions_for
+    sv-yosys-issues row (YosysHQ/yosys#2596): first co-simulated once the
+    harness stopped skipping designs with UNCLOCKED properties (the
+    `assume property (foo == 3)` is dropped for Verilator).  The second
+    `priority case (foo)` lists only 2 and 1, so foo = 0 or 3 matches nothing:
+    a priority-case VIOLATION (LRM 12.5.3) that synthesis treats as don't-care
+    (no assignment, out2 is a free value) while the simulator keeps the old
+    register value.  read_uhdm and read_slang both diverge from the RTL on the
+    same 73 of 300 cycles and are proven equivalent to each other.  CONFIRMED
+    ARTIFACT: unmatched priority case under stimulus the snippet's assume
+    forbids.

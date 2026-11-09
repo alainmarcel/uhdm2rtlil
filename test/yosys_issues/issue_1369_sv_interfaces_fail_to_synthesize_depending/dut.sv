@@ -2,8 +2,11 @@
 // https://github.com/YosysHQ/yosys/issues/1369
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): output o observes the interface member iface_inst.x (the snippet had no output)
+
 // ---- b0.sv
-module top(input clk);
+module top(input clk, output logic o);
+    assign o = iface_inst.x;
     iface #(.YOSYS_BUG_KEEP_IFACE(1)) iface_inst();
     submod submod_inst(.clk, .ifaceport(iface_inst));
 endmodule
