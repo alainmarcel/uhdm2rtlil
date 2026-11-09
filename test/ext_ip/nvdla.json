@@ -238,6 +238,10 @@
   "NV_NVDLA_SDP_rdma": {
    "cosim": "artefact",
    "note": "adjudicated 2026-10-30: not a reader defect. read_slang reads this module but its netlist will not lower for Verilator, so the row has no reference. Co-simulated against the GOLDEN read_verilog netlist instead (netlist_cosim.py --slang-il, the OpenC910 / OpenPiton method): both netlists diverge from the RTL by the SAME count, 291 of 301 cycles -- an uninitialised RAM read, which each synthesis netlist resolves its own way while the behavioural model does not. All 28 of these rows that have an oracle match it EXACTLY after the level-sensitive dynamic element-write fix; before it they diverged wider than the oracle, which is what pointed at the defect."
+  },
+  "NV_NVDLA_sdp": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-11-09: not a reader defect. read_slang's netlist will not lower for Verilator (MODMISSING RAMPDP_160X16_GL_M2_D2), so the row has no reference. Co-simulated against the GOLDEN read_verilog netlist instead (netlist_cosim.py --slang-il): both netlists diverge from the RTL IDENTICALLY -- 1 of 301 cycles, the same signal (sdp_n2cvif_rd_cdt_lat_fifo_pop rtl=0, 1 on both) at the same cycle 8. That output is NV_NVDLA_SDP_NRDMA_eg's, whose row and NV_NVDLA_SDP_nrdma's are already adjudicated as the uninitialised lat_fifo RAM read each synthesis netlist resolves its own way."
   }
  }
 }
