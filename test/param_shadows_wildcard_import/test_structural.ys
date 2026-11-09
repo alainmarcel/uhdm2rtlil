@@ -1,0 +1,7 @@
+# mid's own `W = 9` must win over p::W (10): with the package value, the
+# child's port actuals s.write / s.addr are cut from bits 10 / [9:1] of a
+# 10-bit struct, so wr reads X and a is shifted.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt
+sat -verify -set d 10'b1000000011 -prove wr 1'b1 -prove a 10'b0000000011
