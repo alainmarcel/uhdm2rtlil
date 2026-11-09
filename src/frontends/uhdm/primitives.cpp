@@ -16,7 +16,52 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Import primitive gates from a module
+// Surelog builds a module DEFINITION's primitives from the parse tree with
+// CompileHelper::compileGateInstantiation, which assumes every gate has a
+// Name_of_instance.  An UNNAMED gate (`and (y, a, b);`, `buf (O, PAD);` --
+// legal, LRM 28.3.4) has none, so the walk starts at its SECOND terminal and
+// the definition holds a gate missing its output (and other unnamed gates
+// dropped altogether).  NetlistElaboration checks the node type and builds
+// the ELABORATED instance's gates correctly.  A top module is imported from
+// its elaborated instance and never saw this; every CHILD module with an
+// unnamed gate stopped the read with "Gate has insufficient terminals"
+// (pulpissimo hyper_macro via tech_cells_generic pad_functional_pd).
+//
+// So for a DEFINITION import take the primitives from an elaborated instance
+// of it -- same guard as the net-declaration-initialiser recovery in
+// import_module: a module that already IS an elaborated instance keeps its
+// own (the first instance of the definition may be a sibling $paramod).
+//
+// A definition NOTHING instantiates (a cell library file in the source list:
+// openpiton's u1.beh.v `bw_u1_ckbuf_1p5x` is `buf (clk, rclk);`) has no
+// elaborated copy to take from.  Its unnamed gates cannot be recovered, and
+// the module is dead -- `hierarchy -top` removes it -- so import_gate skips
+// them with a warning instead of stopping the whole read
+// (prims_from_unelab_def_).
+const module_inst* UhdmImporter::primitives_source(const module_inst* uhdm_module) {
+    prims_from_unelab_def_ = false;
+    if (!uhdm_module) return nullptr;
+    build_elab_index();
+    auto sit = elab_insts_by_def_.find(std::string(uhdm_module->VpiDefName()));
+    if (sit == elab_insts_by_def_.end()) {
+        prims_from_unelab_def_ = true;
+        return uhdm_module;
+    }
+    for (auto m : sit->second)
+        if (m == uhdm_module) return uhdm_module;
+    const module_inst* elab = find_elab_instance(uhdm_module);
+    if (elab && (elab->Primitives() || elab->Primitive_arrays())) {
+        if (mode_debug)
+            log("UHDM: taking primitives of definition %s from elaborated instance %s\n",
+                std::string(uhdm_module->VpiDefName()).c_str(),
+                std::string(elab->VpiFullName()).c_str());
+        return elab;
+    }
+    return uhdm_module;
+}
+
 void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
+    uhdm_module = primitives_source(uhdm_module);
     if (!uhdm_module) return;
     
     // Import primitive gates from module
@@ -33,6 +78,7 @@ void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
 
 // Import primitive gate arrays from a module
 void UhdmImporter::import_primitive_arrays(const module_inst* uhdm_module) {
+    uhdm_module = primitives_source(uhdm_module);
     if (!uhdm_module) return;
     
     // Check for Primitive_arrays() which should contain gate arrays
@@ -112,6 +158,13 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
     // For buf/not: multiple outputs, 1 input
     // For xor/xnor: 1 output, multiple inputs
     // For other gates: 1 output, 2 inputs
+    if (prims_from_unelab_def_ && std::string(uhdm_gate->VpiName()).empty()) {
+        log_warning("UHDM: skipping unnamed %s gate in module '%s', which nothing "
+                    "instantiates (Surelog's definition view of an unnamed gate is "
+                    "incomplete)\n", gate_type_str.c_str(),
+                    module ? log_id(module->name) : "?");
+        return;
+    }
     auto terms = *uhdm_gate->Prim_terms();
     if (terms.size() < 2) {
         log_error("UHDM: Gate has insufficient terminals (%d)\n", (int)terms.size());

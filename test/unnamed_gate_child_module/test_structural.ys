@@ -1,0 +1,13 @@
+# Every gate of the child, through both instances, computes its function.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten; proc; opt
+sat -verify -prove y0 1'0 -set a 1'1 -set b 1'0
+sat -verify -prove y0 1'1 -set a 1'1 -set b 1'1
+sat -verify -prove z0 1'1 -set a 1'1 -set b 1'1 -set c 1'1
+sat -verify -prove w0 1'0 -set c 1'1
+sat -verify -prove p0 1'1 -prove q0 1'1 -set a 1'1
+sat -verify -prove n0 1'0 -set b 1'1 -set c 1'1
+sat -verify -prove y1 1'1 -set a 1'0 -set c 1'1
+sat -verify -prove p1 1'0 -prove q1 1'0 -set a 1'1
+sat -verify -prove w1 1'1 -set b 1'0

@@ -1196,6 +1196,8 @@ struct UhdmImporter {
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);
     
     // Primitive gate support
+    const UHDM::module_inst* primitives_source(const UHDM::module_inst* uhdm_module);
+    bool prims_from_unelab_def_ = false;
     void import_primitives(const UHDM::module_inst* uhdm_module);
     void import_primitive_arrays(const UHDM::module_inst* uhdm_module);
     void import_gate(const UHDM::gate* uhdm_gate, const std::string& instance_name = "");
