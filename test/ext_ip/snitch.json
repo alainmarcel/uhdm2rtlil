@@ -72,6 +72,10 @@
   "/tb/",
   "_tb\\.sv$"
  ],
+ "slang_flags": [
+  "--unroll-limit",
+  "20000"
+ ],
  "seq": 4,
  "timeout": 300,
  "want": "proven",

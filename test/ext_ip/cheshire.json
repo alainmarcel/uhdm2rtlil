@@ -334,6 +334,14 @@
   ],
   "values": [
    [
+    "^UserErrBits$",
+    2
+   ],
+   [
+    "^UserErrBitsOffset$",
+    0
+   ],
+   [
     "(?i)addr_?width$",
     32
    ],
