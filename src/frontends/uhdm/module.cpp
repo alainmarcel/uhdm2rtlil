@@ -2807,6 +2807,61 @@ genscope_path:;
     return RTLIL::SigSpec();
 }
 
+// A MULTI-dim unpacked table built by a constant FUNCTION
+// (`localparam perm_lists_t PERMUTATIONS = get_permutations(PermuteKey)`,
+// `int unsigned [R][W]`; common_cells sub_per_hash / hash_block / cb_filter).
+// The compile-time evaluator stores a multi-dim unpacked local row-major with
+// element `lo` at the LSB, but a module-level unpacked parameter -- the layout
+// every select of it reads, and the one a '{...} literal produces -- reverses
+// each ASCENDING dimension (element 0 of `[N]` at the MSB).  Taken as is,
+// every PERMUTATIONS[r][i] read the mirrored entry and the hash wired the
+// wrong input bits.  Identity for anything that is not such a table.
+RTLIL::Const UhdmImporter::relayout_function_unpacked_table(const UHDM::any* param_obj,
+        const UHDM::any* rhs, const RTLIL::Const& value, const std::string& param_name) {
+    auto po = dynamic_cast<const UHDM::parameter*>(param_obj);
+    if (!rhs || rhs->UhdmType() != uhdmfunc_call || !po || !po->Typespec() ||
+        !po->Typespec()->Actual_typespec())
+        return value;
+    std::vector<std::pair<int, int>> pdims;   // (size, ascending)
+    const UHDM::typespec* ts = po->Typespec()->Actual_typespec();
+    while (ts && ts->UhdmType() == uhdmarray_typespec) {
+        auto at = any_cast<const UHDM::array_typespec*>(ts);
+        if (!at->Ranges() || at->Ranges()->empty()) return value;
+        for (auto rg : *at->Ranges()) {
+            RTLIL::SigSpec l = import_expression(rg->Left_expr());
+            RTLIL::SigSpec r = import_expression(rg->Right_expr());
+            if (!l.is_fully_const() || !r.is_fully_const()) return value;
+            int li = l.as_const().as_int(), ri = r.as_const().as_int();
+            pdims.push_back({std::abs(li - ri) + 1, li < ri ? 1 : 0});
+        }
+        ts = at->Elem_typespec() ? at->Elem_typespec()->Actual_typespec() : nullptr;
+    }
+    long long nel = 1;
+    for (auto& d : pdims) nel *= d.first;
+    if (pdims.size() < 2 || nel <= 0 || value.size() % nel != 0) return value;
+    int ew = value.size() / (int)nel;
+    std::vector<RTLIL::State> out(value.size(), RTLIL::State::S0);
+    std::vector<int> off(pdims.size(), 0);
+    for (long long f = 0; f < nel; f++) {
+        // f: the evaluator's flat index (row-major, offsets from lo)
+        long long rem = f;
+        for (int k = (int)pdims.size() - 1; k >= 0; k--) {
+            off[k] = (int)(rem % pdims[k].first);
+            rem /= pdims[k].first;
+        }
+        long long pos = 0;
+        for (size_t k = 0; k < pdims.size(); k++) {
+            int pk = pdims[k].second ? pdims[k].first - 1 - off[k] : off[k];
+            pos = pos * pdims[k].first + pk;
+        }
+        for (int b = 0; b < ew; b++)
+            out[pos * ew + b] = value[f * ew + b];
+    }
+    uhdm_trace("UHDM: Parameter '%s': function-built %zu-dim unpacked table re-laid "
+        "out to the module element order\n", param_name.c_str(), pdims.size());
+    return RTLIL::Const(out);
+}
+
 void UhdmImporter::import_parameter(const any* uhdm_param) {
     if (!uhdm_param) return;
     
@@ -2901,6 +2956,7 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
                     param_name.c_str(), iface_val.c_str());
             } else if (value_spec.is_fully_const()) {
                 param_value = value_spec.as_const();
+                param_value = relayout_function_unpacked_table(param_obj, expr, param_value, param_name);
                 has_value = true;
                 uhdm_trace("UHDM: Parameter '%s' has value: %s\n", param_name.c_str(),
                     param_value.as_string().c_str());

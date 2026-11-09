@@ -4683,6 +4683,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         have_value = true;
                     }
                     if (have_value) {
+                        param_value = relayout_function_unpacked_table(
+                            param_assign->Lhs(), rhs_expr, param_value, param_name);
                         // Override the parameter value
                         RTLIL::IdString param_id = RTLIL::escape_id(param_name);
                         // Only make non-localparam parameters externally visible
