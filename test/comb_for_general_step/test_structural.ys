@@ -1,0 +1,5 @@
+# The loop runs (sum 63) and leaves n at 2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -set a 8'h00 -prove y 8'd63 -prove z 8'd2 -verify

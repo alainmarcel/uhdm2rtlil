@@ -10223,6 +10223,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             bool fl_can_unroll = false;
             std::string fl_var;
             int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
+            // A GENERAL step `v = f(v)` (neither ++/-- nor `v +/- const`):
+            // the iteration values are precomputed by folding f.
+            const expr* fl_step_expr = nullptr;
             bool fl_inclusive = false;
             // Descending loop: `for (i = HI; i >= LO; i = i-1)` (MultipleAssignments
             // shift register).  fl_inc_val stays a positive magnitude; the
@@ -10473,9 +10476,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                     fl_inc_val = s.as_const().as_int();
                                     if (is_sub) fl_descending = true;
                                 } else fl_can_unroll = false;
-                            } else fl_can_unroll = false;
-                        } else fl_can_unroll = false;
+                            } else fl_step_expr = any_cast<const expr*>(ia->Rhs());
+                        } else fl_step_expr = any_cast<const expr*>(ia->Rhs());
                     } else fl_can_unroll = false;
+                    // A general step must assign the loop variable itself.
+                    if (fl_step_expr && !(ia->Lhs() && std::string(ia->Lhs()->VpiName()) == fl_var)) {
+                        fl_step_expr = nullptr;
+                        fl_can_unroll = false;
+                    }
                 }
             }
 
@@ -10605,6 +10613,40 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // independent switches whose last write wins; reversing the
                 // iteration order flips that so the FIRST matching iteration's
                 // write is the one that survives.
+                // The iteration values.  A GENERAL step (`num_in = num_in -
+                // (num_in/3)`, NVDLA's NV_DW02_tree carry-save reduction --
+                // every NV_NVDLA_CMAC multiplier) is folded value by value
+                // with the loop variable bound; it used to be "Cannot unroll
+                // for loop in comb context (complex bounds)" and the whole
+                // reduction was dropped, so the tree passed its first two
+                // inputs straight through.
+                std::vector<int64_t> fl_iters;
+                int64_t fl_after = 0;   // the first value that fails the bound
+                {
+                    int64_t iv = fl_start;
+                    int guard = 0;
+                    while (fl_more(iv) && guard++ < 1000000) {
+                        fl_iters.push_back(iv);
+                        if (fl_step_expr) {
+                            loop_values[fl_var] = (int)iv;
+                            bool saved_fcf = force_const_fold;
+                            force_const_fold = true;
+                            RTLIL::SigSpec nv = import_expression(fl_step_expr);
+                            force_const_fold = saved_fcf;
+                            if (nv.empty() || !nv.is_fully_const() || !nv.is_fully_def()) {
+                                log_warning("Cannot unroll for loop in comb context (step does not fold)\n");
+                                fl_iters.clear();
+                                break;
+                            }
+                            int64_t ni = nv.as_const().as_int(true);
+                            if (ni == iv) { fl_iters.clear(); break; }   // no progress
+                            iv = ni;
+                        } else {
+                            iv += fl_step;
+                        }
+                    }
+                    fl_after = iv;
+                }
                 bool has_break = body_has_break(fl_body);
                 // (index, break-flag) per iteration, for the post-loop value of
                 // the loop variable.
@@ -10626,7 +10668,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     uhdm_trace("    Comb for loop body has `break` — forward "
                         "iteration with live-guarded bodies\n");
                     RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
-                    for (int64_t i = fl_start; fl_more(i); i += fl_step) {
+                    for (int64_t i : fl_iters) {
                         loop_values[fl_var] = (int)i;
                         // Per-iteration break flag, defaulted to 0 in the
                         // root case; the vpiBreak handlers set it to 1 under
@@ -10678,14 +10720,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                                          module->And(NEW_ID, live, nb));
                     }
                 } else {
-                    for (int64_t i = fl_start; fl_more(i); i += fl_step) {
+                    for (int64_t i : fl_iters) {
                         loop_values[fl_var] = (int)i;
                         import_statement_comb(fl_body, proc);
                     }
                 }
                 // Keep post-loop variable value for subsequent statements in the same block
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
-                int64_t final_val = fl_descending ? loop_end - inc
+                int64_t final_val = fl_step_expr ? fl_after
+                                  : fl_descending ? loop_end - inc
                                                   : (fl_inclusive ? fl_end + fl_inc_val : fl_end);
                 if (fl_had_outer) loop_values[fl_var] = fl_outer_val;
                 else loop_values[fl_var] = (int)final_val;
