@@ -2,6 +2,8 @@
 // https://github.com/YosysHQ/yosys/issues/2423
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): loop bound i < DEPTH -> i <= DEPTH: out reads flipflop[DEPTH], which the original loop never wrote (out was X); the always_ff-local 'integer i' the issue is about is unchanged
+
 // ---- b0.sv
 `timescale 1us/1us
 
@@ -18,7 +20,7 @@ module test(aclk, in, out);
 
     always_ff @(posedge aclk) begin
         integer i;
-        for (i = 1; i < DEPTH; i++) begin
+        for (i = 1; i <= DEPTH; i++) begin
             flipflop[i] <= flipflop[i -1];
         end
     end

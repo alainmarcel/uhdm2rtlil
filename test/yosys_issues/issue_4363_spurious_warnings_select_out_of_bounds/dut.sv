@@ -2,6 +2,8 @@
 // https://github.com/YosysHQ/yosys/issues/4363
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): the SPRAM read data mem_do_w (never driven in the snippet, so rd_data was X) is looped back from mem_di_w; the computed part-select mapping the issue is about is unchanged
+
 // ---- c0.sv
 module top (
 	output reg  [31:0] rd_data,
@@ -11,6 +13,7 @@ module top (
 	// -------
 	wire [31:0] mem_do_w;
 	reg  [31:0] mem_di_w;
+	assign mem_do_w = mem_di_w;
 
 	// Map input data to/from 16*NW bit words
 	always @(*)

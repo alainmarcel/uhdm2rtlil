@@ -2,6 +2,8 @@
 // https://github.com/YosysHQ/yosys/issues/5366
 // Code block(s) from the issue (variant h1); harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): inputs / outputs are ports of simple_interface_test (inputs was the constant 2'b10 and the module had no ports); the interface + modport connections are unchanged
+
 // ---- b0.sv
 interface simple_if;
     logic data;
@@ -17,13 +19,10 @@ module receiver_mod(simple_if.receiver intf, output logic out);
     assign out = intf.data;
 endmodule
 
-module simple_interface_test;
-    logic [1:0] inputs;
-    logic [1:0] outputs;
+module simple_interface_test(input logic [1:0] inputs, output logic [1:0] outputs);
     
 
-    assign inputs = 2'b10; // inputs[1]=1, inputs[0]=0
-    
+        
 
     simple_if intf0();
     simple_if intf1();

@@ -2,6 +2,8 @@
 // https://github.com/YosysHQ/yosys/issues/589
 // Code block(s) from the issue (variant v1); harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): write data = rdata ^ D over a new input D (the memory only rewrote its own output, so J3 never changed); the synchronous memory itself is unchanged
+
 // ---- b0.sv
 module coreir_mem #(parameter depth=1, parameter has_init=1, parameter width=1) (
   input clk,
@@ -21,14 +23,14 @@ module coreir_mem #(parameter depth=1, parameter has_init=1, parameter width=1) 
 
 endmodule //coreir_mem
 
-module main (output [4:0] J3, input  CLKIN);
+module main (output [4:0] J3, input  CLKIN, input [7:0] D);
   wire [7:0] mem__rdata;
   coreir_mem #(.depth(16),.has_init(0),.width(8)) mem(
     .clk(CLKIN),
     .raddr(0),
     .rdata(mem__rdata),
     .waddr(0),
-    .wdata(mem__rdata),
+    .wdata(mem__rdata ^ D),
     .wen(1)
   );
   assign J3 = mem__rdata[4:0];

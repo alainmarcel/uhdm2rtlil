@@ -2,10 +2,14 @@
 // https://github.com/YosysHQ/yosys/issues/2465
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
+// HAND-EDITED (keep on re-harvest): output dout observes the memory read data (the snippet had no output)
+
 // ---- c0.sv
 module top (
-	input clk
+	input clk,
+	output logic [3:0] dout
 );
+assign dout = data_out;
 
 logic [3:0] mem [0:8];
 logic write;
