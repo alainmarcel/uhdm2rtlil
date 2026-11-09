@@ -27,7 +27,12 @@ PORT_RE = re.compile(
     # The type may hold one level of balanced parentheses: `logic
     # [$clog2(ENTRY_NUM)-1:0] wa[WRITE_NUM]` (RSD's RAM models) was skipped
     # by a paren-free type class, so `wa` / `ra` stayed unpacked ports.
-    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?P<type>(?:[^,;()]|\([^()]*\))*?)\s+(?P<name>[A-Za-z_]\w*)"
+    # The type is OPTIONAL: `output tx_desc_rready_o [NumTargets]` (OpenTitan
+    # i3c_target_fsm) has none, and requiring whitespace on both sides of an
+    # empty type skipped it -- the shim kept six scalar-element unpacked ports
+    # that read_uhdm and read_slang flatten in opposite element order, and the
+    # miter compared target 0 against target 1 (`differs` on nothing).
+    r"(?P<dir>\b(?:input|output|inout)\b)\s+(?:(?P<type>(?:[^,;()]|\([^()]*\))*?)\s+)?(?P<name>[A-Za-z_]\w*)"
     r"\s*(?P<dims>(?:\[[^\]]*\]\s*)+)(?=\s*(?:,|\)|$|//|/\*))", re.M)
 NETKW = {"wire", "var", "logic", "reg", "tri"}
 
@@ -151,7 +156,7 @@ def main():
 
     arrays = []
     def rewrite(m):
-        dirn, typ, name, dims = m.group("dir"), " ".join(m.group("type").split()), m.group("name"), m.group("dims")
+        dirn, typ, name, dims = m.group("dir"), " ".join((m.group("type") or "").split()), m.group("name"), m.group("dims")
         dl = re.findall(r"\[[^\]]*\]", dims)
         # A multi-dimensional unpacked port (`x [DW][SRC]`, RSD SourceCAM's
         # dispatchedSrcRegNum) is flattened too, row-major with the FIRST
