@@ -1587,6 +1587,7 @@ struct UhdmImporter {
     }
     RTLIL::SigSpec import_struct_unpacked_member_select(const UHDM::ref_obj* bref, const UHDM::var_select* vs, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     RTLIL::Const relayout_function_unpacked_table(const UHDM::any* param_obj, const UHDM::any* rhs, const RTLIL::Const& value, const std::string& param_name);
+    static std::vector<RTLIL::Const> case_inside_range_cubes(long long lo, long long hi, int w);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     // `PARAM[idx].field` where PARAM is an unpacked array of structs.  Empty
     // SigSpec when this is not that shape, so callers can fall through.
