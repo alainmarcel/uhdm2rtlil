@@ -819,6 +819,8 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 
     finalize_dead_selfhold_defaults();
 
+    finalize_unwritten_ff_holds();
+
     // A declaration initialiser on a variable a child INSTANCE's output port
     // drives (`logic q_inst = 0; ff1 u0 (clk, d, q_inst);`, YosysHQ/yosys
     // #6165) must be an `\init` only; the module-level post-pass could not see

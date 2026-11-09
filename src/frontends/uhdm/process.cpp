@@ -1337,6 +1337,96 @@ void UhdmImporter::drop_init_procs_driven_by_instances() {
     }
 }
 
+// Collect every temp bit an action anywhere in a case tree writes with
+// something OTHER than its own held value (hold_of: temp bit -> the register
+// bit it is the next-state of).
+static void collect_case_real_writes(const RTLIL::CaseRule* cs,
+                                     const dict<RTLIL::SigBit, RTLIL::SigBit>& hold_of,
+                                     pool<RTLIL::SigBit>& out)
+{
+    for (auto& act : cs->actions)
+        for (int i = 0; i < GetSize(act.first); i++) {
+            RTLIL::SigBit l = act.first[i];
+            if (!l.wire) continue;
+            auto it = hold_of.find(l);
+            if (it != hold_of.end() && it->second == act.second[i]) continue;
+            out.insert(l);
+        }
+    for (auto* sw : cs->switches)
+        for (auto* c : sw->cases)
+            collect_case_real_writes(c, hold_of, out);
+}
+
+void UhdmImporter::finalize_unwritten_ff_holds()
+{
+    for (auto* mod : design->modules()) {
+        for (auto& pit : mod->processes) {
+            RTLIL::Process* p = pit.second;
+            if (p->syncs.size() != 1) continue;
+            RTLIL::SyncRule* sync = p->syncs[0];
+            if (sync->type != RTLIL::SyncType::STp && sync->type != RTLIL::SyncType::STn)
+                continue;
+            if (!sync->mem_write_actions.empty()) continue;
+            dict<RTLIL::SigBit, RTLIL::SigBit> hold_of;   // temp bit -> register bit
+            for (auto& ua : sync->actions)
+                for (int i = 0; i < GetSize(ua.first); i++)
+                    if (ua.second[i].wire && ua.first[i].wire)
+                        hold_of[ua.second[i]] = ua.first[i];
+            // Only a bit with a HOLD DEFAULT in the root case (`$0\x[i] =
+            // \x[i]`) is a candidate: many clocked processes put the
+            // next-state value straight into the update (a mux output wire)
+            // with no temp and no hold, and those are written by definition.
+            pool<RTLIL::SigBit> held;
+            for (auto& act : p->root_case.actions)
+                for (int i = 0; i < GetSize(act.first); i++) {
+                    auto it = hold_of.find(act.first[i]);
+                    if (it != hold_of.end() && it->second == act.second[i])
+                        held.insert(act.first[i]);
+                }
+            if (held.empty()) continue;
+            pool<RTLIL::SigBit> written;
+            collect_case_real_writes(&p->root_case, hold_of, written);
+            // A body that writes a REGISTER bit directly (not its $0 temp) is
+            // not in the temp/hold/update form this reasons about -- leave
+            // it alone (iface_ff_genvar_partsel: an interface struct-member
+            // part-select written as `assign \sub.req [7:0] ...`).
+            {
+                pool<RTLIL::SigBit> regs;
+                for (auto& kv : hold_of) regs.insert(kv.second);
+                bool direct = false;
+                for (auto& b : written)
+                    if (regs.count(b)) { direct = true; break; }
+                if (direct) continue;
+            }
+            std::vector<RTLIL::SigSig> new_actions;
+            bool changed = false;
+            for (auto& ua : sync->actions) {
+                RTLIL::SigSpec keep_l, keep_r;
+                for (int i = 0; i < GetSize(ua.first); i++) {
+                    RTLIL::SigBit tb = ua.second[i], rb = ua.first[i];
+                    // A register with a declared initial value that nothing
+                    // writes is a legitimate constant -- keep its flop.
+                    bool has_init = rb.wire && rb.wire->attributes.count(ID::init);
+                    if (held.count(tb) && !has_init && !written.count(tb)) {
+                        changed = true;
+                        continue;
+                    }
+                    keep_l.append(rb);
+                    keep_r.append(tb);
+                }
+                if (GetSize(keep_l))
+                    new_actions.push_back(RTLIL::SigSig(keep_l, keep_r));
+            }
+            if (changed) {
+                if (mode_debug)
+                    log("  %s: dropped never-written hold bits from clocked process %s\n",
+                        log_id(mod), log_id(p->name));
+                sync->actions = new_actions;
+            }
+        }
+    }
+}
+
 void UhdmImporter::finalize_dead_selfhold_defaults()
 {
     for (auto* mod : design->modules()) {
@@ -3283,7 +3373,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 bool has_shift_register = false;
                 std::set<std::string> shift_register_arrays;
                 
-                if (stmt && ((stmt->VpiType() == vpiBegin) || (stmt->VpiType() == vpiNamedBegin))) {
+                // The `X[i] <= X[i-1]` "shift register" special case below was
+                // written for ONE test (mul_unsigned) and only ever handled an
+                // array NAMED `M` (two `TODO: Make generic` sites): any other
+                // array matching the pattern was detected, routed here, and got
+                // no element registers -- the whole always_ff body was dropped,
+                // even its other statements (YosysHQ/yosys#2423's
+                // `flipflop[i] <= flipflop[i-1]` came out as ONE flop wired
+                // D = Q = `in`; a plain `ff[0] <= in; for (...) ff[i] <= ff[i-1]`
+                // came out with no flop at all).  The general always_ff path
+                // unrolls the loop correctly, `M` included, so the special case
+                // is disabled.
+                if (false && stmt && ((stmt->VpiType() == vpiBegin) || (stmt->VpiType() == vpiNamedBegin))) {
                     UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
                     if (stmts) {
                         for (auto sub_stmt : *stmts) {

@@ -1042,6 +1042,7 @@ struct UhdmImporter {
     void finalize_process_action_widths();
     void merge_memwr_syncs();
     void finalize_dead_selfhold_defaults();
+    void finalize_unwritten_ff_holds();
     void drop_init_procs_driven_by_instances();
     // Per-module comb signals PROVEN write-before-read on every path of
     // their always_comb (definite-assignment prescan) — their held value is
