@@ -1,0 +1,19 @@
+# SAT miter, read_uhdm vs read_slang.  Unpatched, read_uhdm wrote the interface
+# register `sub.req` itself (not its $0 temp) beside the sync update, so the
+# register was double-driven and the netlist read X; with the fix both readers
+# register `o <= s` byte by byte.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename top gold
+design -stash gold
+read_slang dut.sv --top top
+hierarchy -check -top top
+flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+rename top gate
+design -stash gate
+design -copy-from gold -as gold gold
+design -copy-from gate -as gate gate
+miter -equiv -flatten -make_assert gold gate miter
+hierarchy -top miter
+sat -verify -prove-asserts -seq 6 -set-init-zero miter

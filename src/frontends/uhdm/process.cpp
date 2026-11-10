@@ -19730,6 +19730,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                             any_mapped = true;
                             continue;
                         }
+                        // A struct-field (hier_path) slice write keys its temp
+                        // by the slice but sizes it to the WHOLE base wire (for
+                        // hold-default coverage): land on that slice of it.
+                        // Missing it wrote the register itself beside the sync
+                        // update -- an interface struct member
+                        // `sub.req.wdt[i*8 +: 8] <=` in a generate-loop
+                        // always_ff (test/iface_ff_genvar_partsel).
+                        if (tw->width == ch.wire->width) {
+                            mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
+                            any_mapped = true;
+                            continue;
+                        }
                     }
                     // Fallback: this process's full-wire temp, sliced at this
                     // offset (dedup-bumped "$N\<wire>" when other processes

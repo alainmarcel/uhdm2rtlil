@@ -1,0 +1,9 @@
+# Unpatched, each generate-loop always_ff wrote `\sub.req [8i+7:8i]` directly
+# (not its $0 temp) beside the sync update: after proc every byte of the
+# register is driven twice.  `check -assert` fails on that.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten; proc; opt_clean
+check -assert
+# and the register must load `s` byte by byte: o == s one clock later.
+sat -verify -seq 2 -prove-skip 1 -set-at 1 s 32'hdeadbeef -prove o 32'hdeadbeef -set-init-zero
