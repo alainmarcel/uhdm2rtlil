@@ -1,0 +1,12 @@
+# read_slang / read_verilog values: z = (sel-1) >> 1, w = sel, h = 1 (runtime
+# selects and a bit-select, all mapped through the declared [hi:-lo] range).
+# `y = cyc_init(2)` is a CONSTANT call that Surelog folds at elaboration
+# (the reader receives BIN:0000000001): its fold slices the [W-1:-1] local
+# raw as well -- a Surelog/UHDM ExprEval gap, tracked through the
+# test_slang_equiv.ys entry in test/slang_miter_expected_fail.txt.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+sat -verify -prove z 10'd2 -set sel 4'd6
+sat -verify -prove w 4'd6 -set sel 4'd6
+sat -verify -prove h 1'b1

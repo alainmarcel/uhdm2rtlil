@@ -14147,8 +14147,15 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         // bound — `q[31:1]` warned "partially out of bounds" and padded X
         // (ibex_fetch_fifo's instr_addr_next collapsed to 31'x).  Map
         // through the declared range when no element scaling fired.
+        // No `offset != 0` gate: a vector declared with a NEGATIVE lower
+        // bound (`logic [TmCycW-1:-1] cnt`, OpenTitan i3c_timing_pkg's 'n.1'
+        // fixed-point cycle counter) is selected as `cnt[TmCycW-1:0]` -- low
+        // index 0, which is NOT bit 0 of the vector but bit 1 -- and the gate
+        // skipped the mapping exactly there (i3c_ctrl_req_gen read its
+        // tcas_d2 timing as 1 instead of 0).  The `dlow != 0` test below is
+        // what keeps the common zero-based case a no-op.
         if (width == std::abs(left - right) + 1 &&
-            offset == std::min(left, right) && offset != 0) {
+            offset == std::min(left, right)) {
             const UHDM::ref_typespec* rts2 = nullptr;
             if (auto ag = uhdm_part->Actual_group()) {
                 if (auto v = dynamic_cast<const UHDM::variables*>(ag)) rts2 = v->Typespec();
