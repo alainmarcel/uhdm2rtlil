@@ -21,6 +21,7 @@ of being passed on the command line.
 Usage: adjudicate.py <module> [cycles] [seed]
 """
 import re, sys, os, subprocess, glob
+_SELF = os.path.abspath(__file__)   # netlists regenerate when this script changes
 
 mod    = sys.argv[1]
 CYCLES = int(sys.argv[2]) if len(sys.argv) > 2 else 300
@@ -91,7 +92,7 @@ def _stale(path):
         return True
     m = os.path.getmtime(path)
     return any(os.path.exists(d) and os.path.getmtime(d) > m
-               for d in (PLUGIN, "slpp_all/surelog.uhdm"))
+               for d in (PLUGIN, "slpp_all/surelog.uhdm", _SELF))
 if _stale("adj_gold.v") or _stale("adj_gate.v"):
     open("adj.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
@@ -99,6 +100,7 @@ hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
+techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 rename {TOP} gold_{TOP}
 write_verilog -noattr adj_gold.v
 design -reset
@@ -107,6 +109,7 @@ hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
+techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 rename {TOP} gate_{TOP}
 write_verilog -noattr adj_gate.v
 """)

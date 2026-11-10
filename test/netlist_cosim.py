@@ -104,7 +104,9 @@ def netlist(tag, il, nl):
     il = Path(il).resolve()          # yosys runs in WORK; the IL path may be relative
     if not il.exists():
         return False
-    if nl.exists() and nl.stat().st_mtime >= il.stat().st_mtime:
+    # ...and is newer than THIS script, whose yosys recipe it was written by.
+    if (nl.exists() and nl.stat().st_mtime >= il.stat().st_mtime
+            and nl.stat().st_mtime >= Path(__file__).resolve().stat().st_mtime):
         # Reuse only a COMPLETE netlist (a full disk once left a truncated
         # one behind, and every later run failed on its last line).
         with open(nl, "rb") as fh:
@@ -137,6 +139,14 @@ delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
 bwmuxmap
 bmuxmap
 demuxmap
+# A $shift/$shiftx with a SIGNED shift amount is written as
+# `x[$signed(B) +: W]`, and Verilator reads a NEGATIVE base as 0 instead of
+# shifting in from above (verilator/verilator#8657, still open; triaged on
+# YosysHQ/yosys#6464 as the cause of five of ten sampled read_slang co-sim
+# divergences).  Lower just those cells to logic so the netlist simulates as
+# yosys evaluates it.
+techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
+opt_clean
 write_verilog -noattr -norename {nl}
 """
     (WORK / f"netlist_{tag}.ys").write_text(ys)
