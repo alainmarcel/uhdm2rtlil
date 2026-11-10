@@ -28,9 +28,9 @@ diverged identically).  The **class** column is the conclusion per row:
 | closed | 15 | closed by the two patches (Verilator #8657 lowering + slang PR 2106) |
 | chisel-mem-const | 15 | read of a never-written queue-memory entry before reset: yosys folds the always-constant data bit, Verilator reads 0 (X by LRM); adjudicated, not a read_slang defect |
 | shared | 12 | both netlists diverge identically from the RTL after the signed-shift lowering: the Verilator #8657 class on both sides, not a read_slang defect |
-| upstream-repro | 6 | still diverges with the newest sv-elab/slang AND upstream yosys main: a candidate read_slang defect to report with the repro |
+| upstream-repro | 7 | still diverges with the newest sv-elab/slang AND upstream yosys main: a candidate read_slang defect to report with the repro |
 | fixed-upstream | 3 | diverges on our pin, PASSES with sv-elab 2026-11-09 / slang v12.1: version drift, closes with the pin bump |
-| pending | 2 |  |
+| pending | 1 |  |
 | single | 1 | one diverging cycle, no recorded cause: listed as adjudicated (lone-cycle rule) |
 
 Recipes: a sweep row is `cd test && python3 core_sweep.py <family> --filter '^<module>$'`
@@ -62,8 +62,8 @@ with `YOSYS_FRONTEND=<upstream yosys>` (sv-synth rows).
 | 15 | cv32e40p | `cv32e40p_register_file` | ❌ 230 div | ❌ 230 div (shared: uhdm too) | ❌ 230 div (shared: uhdm too) | n/a (shared divergence, both netlists) | shared |
 | 16 | cva6-rv32 | `cache_ctrl` | ❌ 4 div | ✅ PASS | n/a (passes on pin) | n/a (passes on pin) | closed |
 | 17 | cva6-rv32 | `cva6_ptw` | ❌ 300 div | ✅ PASS | n/a (passes on pin) | n/a (passes on pin) | closed |
-| 18 | cva6-rv32 | `std_cache_subsystem` | ❌ 30 div | ⏳ | ⏳ | ⏳ | pending |
-| 19 | cva6-rv32 | `std_nbdcache` | ❌ 100 div | ❌ 1 div (uhdm ✅) | ❌ 1 div (uhdm ✅) | TODO custom (core family cva6-rv32) | single |
+| 18 | cva6-rv32 | `std_cache_subsystem` | ❌ 30 div | ❌ 10 div (uhdm ✅) | skip / uhdm error | not run: the co-sim of this SoC-level cache subsystem exceeded the local budget twice; the 11-10 nightly cva6-rv32 sweep confirms the pin (slang 10 div, read_uhdm PASS) | pending |
+| 19 | cva6-rv32 | `std_nbdcache` | ❌ 100 div | ❌ 1 div (uhdm ✅) | ❌ 1 div (uhdm ✅) | not run: upstream read_slang netlist co-sim timed out (3600 s) under load; the pin and the newest sv-elab both give 1 div | single |
 | 20 | cvfpu | `fpnew_fma_multi` | ❌ 19 div | ❌ 19 div (uhdm ✅) | ❌ 19 div (uhdm ✅) | ❌ 19 div (cosim FIRST-SLANG cycle 16 result_o rtl=ffffffffffff7fc0 slang=ffffffffffff5ae0) | upstream-repro |
 | 21 | gemmini | `AXI4Buffer_1` | ❌ 2 div | ❌ 2 div (uhdm ✅) | ❌ 2 div (uhdm ✅) | ❌ 2 div (cosim FIRST-SLANG cycle 0 auto_in_r_bits_last rtl=0 slang=1) | chisel-mem-const |
 | 22 | gemmini | `AXI4Buffer_2` | ❌ 2 div | ❌ 2 div (uhdm ✅) | ❌ 2 div (uhdm ✅) | ❌ 2 div (cosim FIRST-SLANG cycle 0 auto_in_r_bits_last rtl=0 slang=1) | chisel-mem-const |
@@ -91,7 +91,7 @@ with `YOSYS_FRONTEND=<upstream yosys>` (sv-synth rows).
 | 44 | rocket-chip | `ErrorDeviceWrapper` | ❌ 28 div | ❌ 28 div (uhdm ✅) | ❌ 28 div (uhdm ✅) | ❌ 28 div (cosim FIRST-SLANG cycle 0 auto_buffer_in_d_bits_denied rtl=0 slang=1) | chisel-mem-const |
 | 45 | rocket-chip | `TLBuffer_a32d64s2k2z4c_1` | ❌ 4 div | ❌ 4 div (uhdm ✅) | ❌ 4 div (uhdm ✅) | ❌ 4 div (cosim FIRST-SLANG cycle 0 auto_in_b_bits_opcode rtl=0 slang=6) | chisel-mem-const |
 | 46 | rsd | `ReadyBitTable` | ❌ 40 div | ❌ 40 div (uhdm ✅) | ❌ 40 div (uhdm ✅) | ❌ 40 div (same first div: cycle 1 dispatchedSrcReady) | upstream-repro |
-| 47 | rsd | `StoreQueue` | ❌ 29 div | ❌ 29 div (uhdm ✅) | ❌ 29 div (uhdm ✅) | error (see up/rsd__StoreQueue.log) | pending |
+| 47 | rsd | `StoreQueue` | ❌ 29 div | ❌ 29 div (uhdm ✅) | ❌ 29 div (uhdm ✅) | ❌ 29 div (cosim FIRST-SLANG cycle 0 port__retiredStoreWordWE rtl=0 slang=1) | upstream-repro |
 | 48 | rsd | `WakeupLogic` | ❌ 5 div | ❌ 5 div (shared: uhdm too) | ❌ 5 div (shared: uhdm too) | n/a (shared divergence, both netlists) | shared |
 | 49 | sv-synth-tests | `unpacked-structures-members-default-value` | ❌ 300 div | ❌ 300 div (uhdm ✅) | ✅ PASS | ✅ PASS (300 cycles, 0 mismatches) | fixed-upstream |
 | 50 | veer-eh2 | `eh2_dec_tlu_top` | ❌ 46 div | ❌ 46 div (shared: uhdm too) | ❌ 46 div (shared: uhdm too) | n/a (shared divergence, both netlists) | shared |

@@ -42,7 +42,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep apb | 8 modules | 0 | 0 | 0 |
 | sweep axi | 108 modules | 12 | 5 | 7 |
 | sweep biriscv | 44 modules | 4 | 4 | 0 |
-| sweep black-parrot | 125 modules | 43 | 31 | 12 |
+| sweep black-parrot | 125 modules | 43 | 29 | 14 |
 | sweep boom | 422 modules | 23 | 0 | 23 |
 | sweep caliptra | 22 modules | 0 | 0 | 0 |
 | sweep caliptra-ss | 273 modules | 15 | 11 | 4 |
@@ -93,7 +93,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep rggen | 25 modules | 0 | 0 | 0 |
 | sweep rocket-chip | 235 modules | 7 | 0 | 7 |
 | sweep rp32 | 13 modules | 11 | 3 | 8 |
-| sweep rsd | 165 modules | 22 | 5 | 17 |
+| sweep rsd | 165 modules | 22 | 4 | 18 |
 | sweep scr1 | 37 modules | 0 | 0 | 0 |
 | sweep serv | 29 modules | 1 | 0 | 1 |
 | sweep snitch | 104 modules | 19 | 9 | 10 |
@@ -120,7 +120,7 @@ The yosys line counts every generated `run/` directory, 29 of which the regressi
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 
-**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 185 rows over these sweeps = **15** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **130** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **40** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
+**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 185 rows over these sweeps = **12** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **133** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **40** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
 
 ## Failure classes
 
@@ -152,7 +152,7 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | synth-limit | mixed blocking / non-blocking assignment to one variable | 0 | 0 | 7 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 9 | 4 | 10 |
 | bug | `Feature unimplemented` | 5 | 1 | 9 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 15 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 12 |
 | unclassified | ERROR: 'obi_inst_req_t' cannot be used in an expression | 0 | 0 | 8 |
 | unclassified | ERROR: replication constant can only be zero inside of a concatenation | 0 | 0 | 7 |
 | unclassified | ERROR: 'MEM_CACHE_STREAM_ID' cannot be used in an expression | 0 | 0 | 2 |
@@ -803,12 +803,10 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep pulpissimo | [`tcdm_model`](https://github.com/pulp-platform/pulpissimo/blob/bfc3d9a1ef72443464509a22d948f0a6f5b65b4c/.bender/git/checkouts/pulp_io-8557a8d559d27a25/tb/tcdm_model.sv#L27) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:814, see AST and code line dump above | R3 `python3 ext_flow.py pulpissimo tcdm_model` |
 | yosys test | [`run/various/elab_sys_tasks`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/elab_sys_tasks) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above | R2 `./slang_coverage_sweep.sh --one run/various/elab_sys_tasks` |
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 15
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 12
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
-| sweep black-parrot | [`bp_be_issue_queue`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_be/src/v/bp_be_checker/bp_be_issue_queue.sv#L5) | ❌ 3 div; read_uhdm ✅ PASS (301 cycles, 294 active) | R3 `python3 ext_flow.py black-parrot bp_be_issue_queue` |
-| sweep black-parrot | [`bp_cce_src_sel`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_me/src/v/cce/bp_cce_src_sel.sv#L19) | ❌ 28 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py black-parrot bp_cce_src_sel` |
 | sweep black-parrot | [`bp_io_tile`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_top/src/v/bp_io_tile.sv#L6) | ❌ 2 div; read_uhdm ✅ PASS (301 cycles, 251 active) | R3 `python3 ext_flow.py black-parrot bp_io_tile` |
 | sweep core-v-mcu | [`fpnew_fma_multi`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/vendor/pulp_platform_fpnew/src/fpnew_fma_multi.sv#L16) | ❌ 14 div; read_uhdm ✅ PASS (301 cycles, 297 active) | R3 `python3 ext_flow.py core-v-mcu fpnew_fma_multi` |
 | sweep cva6-rv32 | [`std_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_cache_subsystem.sv#L18) | ❌ 10 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_cache_subsystem$'` |
@@ -820,7 +818,6 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep opentitan-ip | [`tlul_adapter_vh`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/tlul/rtl/tlul_adapter_vh.sv#L7) | ❌ 161 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py opentitan-ip tlul_adapter_vh` |
 | sweep rsd | [`ReadyBitTable`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ReadyBitTable.sv#L20) | ❌ 40 div; read_uhdm ✅ PASS (301 cycles, 227 active) | R3 `python3 ext_flow.py rsd ReadyBitTable` |
 | sweep rsd | [`StoreQueue`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/LoadStoreUnit/StoreQueue.sv#L19) | ❌ 29 div; read_uhdm ✅ PASS (301 cycles, 294 active) | R3 `python3 ext_flow.py rsd StoreQueue` |
-| sweep rsd | [`WakeupLogic`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/WakeupLogic.sv#L15) | ❌ 5 div; read_uhdm ✅ PASS (301 cycles, 18 active) | R3 `python3 ext_flow.py rsd WakeupLogic` |
 | sweep sv-synth-tests | [`unpacked-structures-members-default-value`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/.github/workflows/) | ❌ 300 div; read_uhdm ✅ PASS (300 cycles, 580 active) | R4 `python3 core_sweep.py sv-synth-tests --filter '^unpacked-structures-members-default-value$'` |
 
 ## unclassified
@@ -914,7 +911,7 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main`: 7 row(s) open.**  10 row(s) ever listed here co-simulate clean
+**Status on `main`: 8 row(s) open.**  10 row(s) ever listed here co-simulate clean
 with the `read_uhdm` netlist on `main` and are not listed; the fixes that
 closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
@@ -935,7 +932,7 @@ A row listed below is open: the latest sweep reports show it diverging with the
 `read_uhdm` netlist and it is not in the closed list.  A closed row that comes back
 is a regression, not a stale entry.
 
-**7** open row(s).
+**8** open row(s).
 
 | set | test | verdicts | recipe |
 |---|---|---|---|
@@ -944,6 +941,7 @@ is a regression, not a stale entry.
 | sweep cva6-rv32 | [`wt_dcache_wbuffer`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_dcache_wbuffer.sv#L52) | read_slang ✅ PASS; read_uhdm ❌ 290 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_dcache_wbuffer$'` |
 | sweep opentitan-ip | [`i3c_controller`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller.sv#L6) | read_slang ✅ PASS; read_uhdm ❌ 3 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller` |
 | sweep opentitan-ip | [`i3c_controller_fsm`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller_fsm.sv#L8) | read_slang ✅ PASS; read_uhdm ❌ 12 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller_fsm` |
+| sweep rsd | [`ProducerMatrix`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ProducerMatrix.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 22 div (slang clean) | R3 `python3 ext_flow.py rsd ProducerMatrix` |
 | sweep veer-eh2 | [`eh2_lsu`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/lsu/eh2_lsu.sv#L28) | read_slang ✅ PASS; read_uhdm ❌ 1 div (slang clean) | R3 `python3 ext_flow.py veer-eh2 eh2_lsu` |
 | sweep veer-eh2 | [`eh2_lsu_stbuf`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/lsu/eh2_lsu_stbuf.sv#L25) | read_slang ✅ PASS; read_uhdm ❌ 201 div (slang clean) | R3 `python3 ext_flow.py veer-eh2 eh2_lsu_stbuf` |
 
