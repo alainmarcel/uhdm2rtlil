@@ -53,7 +53,8 @@ def paths(fname):
 def netlist(tag, hier, nl):
     if not hier.exists():
         return False
-    if nl.exists() and nl.stat().st_mtime >= hier.stat().st_mtime:
+    if (nl.exists() and nl.stat().st_mtime >= hier.stat().st_mtime
+            and nl.stat().st_mtime >= Path(__file__).resolve().stat().st_mtime):
         return True
     ys = f"""read_rtlil {hier}
 hierarchy -top {TOP}
@@ -70,6 +71,7 @@ delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
 bwmuxmap
 bmuxmap
 demuxmap
+techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 write_verilog -noattr -norename {nl}
 """
     (WORK / f"netlist_{tag}.ys").write_text(ys)
