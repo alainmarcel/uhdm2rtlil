@@ -1,0 +1,16 @@
+# Unflattened: no conflicting drivers, and the value crosses the port.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; opt
+select -assert-count 1 child/w:p.x o:* %i
+select -assert-count 1 child/w:p.c i:* %i
+check -assert
+flatten; opt_clean
+sat -verify -set a 4'h5 -set k 4'h3 -prove y 4'h6
+# The original symptom: synthesised HIERARCHICALLY (as the co-sim does),
+# the doubly driven member read X.
+design -reset
+read_uhdm slpp_all/surelog.uhdm
+synth -auto-top
+flatten; opt
+sat -verify -set a 4'h5 -set k 4'h3 -prove y 4'h6

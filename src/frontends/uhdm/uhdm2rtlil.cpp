@@ -7913,6 +7913,45 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
 // Note: import_port, import_net, and import_continuous_assign are implemented in module.cpp
 
 // Expand interfaces - replace interface instances with their signals
+// Does anything inside `mod` drive (any bit of) `w`?  Module connects,
+// process actions / sync updates, and outputs of INTERNAL cells (a user
+// module's port directions are not known yet).
+static void case_lhs_wires(const RTLIL::CaseRule* cs, pool<RTLIL::Wire*>& out)
+{
+    for (auto& a : cs->actions)
+        for (auto& c : a.first.chunks())
+            if (c.wire) out.insert(c.wire);
+    for (auto* sw : cs->switches)
+        for (auto* c : sw->cases)
+            case_lhs_wires(c, out);
+}
+
+bool UhdmImporter::module_drives(RTLIL::Module* mod, RTLIL::Wire* w)
+{
+    auto& cache = driven_wires_cache_[mod];
+    if (!cache.first) {
+        cache.first = true;
+        pool<RTLIL::Wire*>& d = cache.second;
+        for (auto& conn : mod->connections())
+            for (auto& c : conn.first.chunks())
+                if (c.wire) d.insert(c.wire);
+        for (auto& pit : mod->processes) {
+            case_lhs_wires(&pit.second->root_case, d);
+            for (auto* sync : pit.second->syncs)
+                for (auto& ua : sync->actions)
+                    for (auto& c : ua.first.chunks())
+                        if (c.wire) d.insert(c.wire);
+        }
+        for (auto* cell : mod->cells())
+            if (cell->type.begins_with("$") && cell->known())
+                for (auto& conn : cell->connections())
+                    if (cell->output(conn.first))
+                        for (auto& c : conn.second.chunks())
+                            if (c.wire) d.insert(c.wire);
+    }
+    return cache.second.count(w) > 0;
+}
+
 void UhdmImporter::expand_interfaces() {
     uhdm_trace("UHDM: Expanding interfaces in design\n");
     
@@ -8271,6 +8310,18 @@ void UhdmImporter::expand_interfaces() {
                         signal_wire->port_output = true;
                     } else if (dir == 3) {     // vpiInout
                         signal_wire->port_input = true;
+                        signal_wire->port_output = true;
+                    } else if (module_drives(module, signal_wire)) {
+                        // A GENERIC interface port (`iface p`, no modport)
+                        // gives no member a direction; inheriting the port's
+                        // own (input) made a member this module DRIVES an
+                        // input it drives -- `assign ifaceport.x = 1;` in
+                        // YosysHQ/yosys#1369.  Flattened, the two connections
+                        // merge and it happens to work; synthesised
+                        // hierarchically the internal driver conflicts with
+                        // the input and the member reads X.  A driven member
+                        // is the module's output.
+                        signal_wire->port_input = false;
                         signal_wire->port_output = true;
                     } else {
                         signal_wire->port_input = interface_wire->port_input;
