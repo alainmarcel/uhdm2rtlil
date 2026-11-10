@@ -1,0 +1,8 @@
+# Bit-exact values of each select for every x; reference values from read_slang.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+sat -verify -set x 2'd0 -prove yp 5'b11001 -prove yq 5'b11010 -prove yu 5'b10110 -prove yr 4'b1101
+sat -verify -set x 2'd1 -prove yp 5'b10011 -prove yq 5'b10101 -prove yu 5'b01100 -prove yr 4'b0110
+sat -verify -set x 2'd2 -prove yp 5'b00111 -prove yq 5'b01011 -prove yu 5'b11001 -prove yr 4'b1011
+sat -verify -set x 2'd3 -prove yp 5'b01110 -prove yq 5'b10110 -prove yu 5'b10011 -prove yr 4'b0101

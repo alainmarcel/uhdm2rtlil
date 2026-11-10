@@ -1045,6 +1045,16 @@ Test: issue_2596_assertpmux_pass_generates_wrong_assertions_for
     ARTIFACT: unmatched priority case under stimulus the snippet's assume
     forbids.
 
+Test: issue_3689_error_for_partly_out_of_bounds
+    sv-yosys-issues row (YosysHQ/yosys#3689): `p[15 + x -: 5]` on
+    `localparam [5:15] p` runs off the declared range for every x >= 1, so
+    the missing bits are X (LRM 11.5.1) and so is `y[3]` from x = 4 on --
+    the snippet is ABOUT a partly out-of-bounds select.  Verilator reads
+    those X bits as 0 on the RTL side while the netlist's $shiftx yields X
+    (randomised by the co-sim).  read_uhdm and read_slang give the same
+    value for every x (1100, 100x, 00xx, 0xxx, xxxx) and diverge from the
+    RTL on the SAME cycles (13 of 300).  CONFIRMED
+
 Test: asserts
     Upstream yosys test sat/asserts.v, first co-simulated once the harness
     rebuilt RTL with an UNCLOCKED `assert property (y !== 1'b1)` removed

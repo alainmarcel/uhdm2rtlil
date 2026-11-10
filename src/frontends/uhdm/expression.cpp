@@ -16469,6 +16469,17 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             have = declared_vector_bounds(uhdm_indexed, base_signal_name, dli, dri);
         }
         int dlow = std::min(dli, dri), dhigh = std::max(dli, dri);
+        // A parameter's value takes its DECLARED width (LRM 6.20.2): an
+        // unsized initialiser (`localparam [5:15] p = 51681708;`) arrives as
+        // a 32/64-bit constant, which failed the width check below and fell
+        // to the raw-index $shiftx -- the very yosys#3689 snippet stayed
+        // wrong after the ascending-range mapping landed.
+        if (have && base_is_param && !geom_wire &&
+            base.size() != dhigh - dlow + 1 && base.is_fully_const()) {
+            const int dw = dhigh - dlow + 1;
+            if (base.size() > dw) base = base.extract(0, dw);
+            else base.extend_u0(dw, false);
+        }
         if (have && base.size() == dhigh - dlow + 1 && !(dli >= dri && dri == 0)) {
             bool pos = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
             int iw = std::max(GetSize(base_index), 32) + 2;
