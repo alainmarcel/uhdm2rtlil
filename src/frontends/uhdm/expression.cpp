@@ -3631,8 +3631,22 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // the base wire from there first so the element extraction below
                 // slices the staged argument value instead of finding nothing
                 // and returning X (2DFunctionArg / SelectFromUnpackedInFunction).
+                // Never for a WRITE TARGET (comb_lhs_keep_base) whose base IS
+                // a module wire: the packed N-D path below slices this wire,
+                // so a mapped base would make the write land on the block's
+                // in-flight VALUE instead of the signal.  That value is a
+                // single wire exactly when the whole vector was last written
+                // at once -- VeeR EH2's single-thread store buffer,
+                //   logic [NUM_THREADS-1:0][3:0] stbuf_numvld_any;   // NUM_THREADS = 1
+                //   stbuf_numvld_any[i][3:0] += {3'b0, (stbuf_vld[j] & ...)};
+                // where every `+=` after the first wrote the first one's
+                // result wire and read it back, so the count stopped at the
+                // first entry (eh2_lsu_stbuf: formally equivalent -> differs,
+                // 201 co-simulated cycles).  The part-select importer has the
+                // same rule (its "function-inline (legacy) path" lookup).
                 RTLIL::Wire* mapped_base_wire = nullptr;
-                if (input_mapping) {
+                if (input_mapping &&
+                    !(comb_lhs_keep_base && module->wire(RTLIL::escape_id(base_name)))) {
                     auto mit = input_mapping->find(base_name);
                     if (mit != input_mapping->end() && mit->second.is_wire())
                         mapped_base_wire = mit->second.as_wire();
