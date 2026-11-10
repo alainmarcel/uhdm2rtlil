@@ -1,0 +1,33 @@
+slang PR #2106 (MikePopoloski/slang, open as of 2026-11-09): with the
+`range-select-reversed` diagnostic a WARNING (its default), a reversed range
+select built a BAD node that every visitor silently skipped, so read_slang
+dropped the select from the netlist (YosysHQ/yosys#6464: cva6-rv32 cva6_ptw
+co-sim 300 div -> PASS).  Source hunk only; drop this file once the vendored
+slang carries the fix.
+
+diff --git a/source/ast/expressions/SelectExpressions.cpp b/source/ast/expressions/SelectExpressions.cpp
+index 35df3cc4d..86c9d64b3 100644
+--- a/source/ast/expressions/SelectExpressions.cpp
++++ b/source/ast/expressions/SelectExpressions.cpp
+@@ -531,7 +531,9 @@ Expression& RangeSelectExpression::fromSyntax(Compilation& comp, Expression& val
+                     diag << selectionRange.left << selectionRange.right;
+                     diag << valueType;
+                 }
+-                return badExpr(comp, result);
++                // Any diagnostic notwithstanding, reverse the range
++                // and allow the node be built
++                selectionRange = selectionRange.reverse();
+             }
+ 
+             if (!context.inUnevaluatedBranch())
+@@ -613,7 +615,9 @@ Expression& RangeSelectExpression::fromSyntax(Compilation& comp, Expression& val
+                     diag << selectionRange.left << selectionRange.right;
+                     diag << valueType;
+                 }
+-                return badExpr(comp, result);
++                // Any diagnostic notwithstanding, reverse the range
++                // and allow the node be built
++                selectionRange = selectionRange.reverse();
+             }
+         }
+         else {

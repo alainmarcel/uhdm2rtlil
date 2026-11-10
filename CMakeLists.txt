@@ -95,10 +95,17 @@ else()
         list(APPEND YOSYS_TOOLCHAIN_ARGS -D${v}=${${v}})
       endif()
     endforeach()
+    file(GLOB SLANG_PATCHES ${PROJECT_SOURCE_DIR}/patches/slang/*.patch)
     add_custom_target(yosys DEPENDS ${INSTALL_DIR}/bin/yosys)
     add_custom_command(
       OUTPUT ${INSTALL_DIR}/bin/yosys
       COMMAND ${CMAKE_COMMAND} -E echo "Compiling Yosys v0.70 via CMake, slang=${UHDM2RTLIL_ENABLE_SLANG}"
+      # Local fixes to the vendored slang not yet in a release (patches/slang/,
+      # each file says why and when to drop it).  Idempotent, so a re-run on an
+      # already patched tree is a no-op.
+      COMMAND ${CMAKE_COMMAND} -DPATCH_DIR=${PROJECT_SOURCE_DIR}/patches/slang
+              -DTARGET_DIR=${YOSYS_SRC_DIR}/libs/slang
+              -P ${PROJECT_SOURCE_DIR}/cmake/apply_patches.cmake
       COMMAND ${CMAKE_COMMAND} -B ${YOSYS_BUILD_DIR} -S ${YOSYS_SRC_DIR}
               -DCMAKE_BUILD_TYPE=Release
               -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
@@ -107,7 +114,7 @@ else()
       COMMAND ${CMAKE_COMMAND} --build ${YOSYS_BUILD_DIR} --parallel ${YOSYS_NPROC}
       COMMAND ${CMAKE_COMMAND} --install ${YOSYS_BUILD_DIR}
       WORKING_DIRECTORY "${YOSYS_SRC_DIR}"
-      DEPENDS ${YOSYS_SRC_DIR}/kernel/yosys.cc)
+      DEPENDS ${YOSYS_SRC_DIR}/kernel/yosys.cc ${SLANG_PATCHES})
   endif()
 endif()
 
