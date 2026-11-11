@@ -82,6 +82,18 @@ CLASSES = [  # (kind, label, regex) -- first match wins; "incomplete" rows leave
     ("bug", "`Feature unimplemented`", r"Feature unimplemented"),
     ("bug", "malformed RTLIL identifier emitted", r"control character or space"),
     ("bug", "netlist diverges from the RTL under Verilator (read_uhdm's does not)", r"^SLANG_COSIM_DIVERGES"),
+    # ---- 2026-11-11 re-catalogue of the rows no rule matched ----
+    ("strict", "syntax slang rejects (`expected ...`, macro, binary digit)",
+     r"replication constant can only be zero inside of a concatenation"),
+    ("strict", "assignment pattern leaves array elements uncovered / overrides a parameter that does not exist",
+     r"assignment pattern does not cover all elements"),
+    ("strict", "type rule (packed dims on int type, port initializer, member access, argument count, ...)",
+     r"connects to 'ref' port of inequivalent type"),
+    ("strict", "elaboration at a degenerate parameter default (type parameter left `logic`, parameter without a value, packed type too wide)",
+     r"invalid target type .* \(aka 'logic'\) for assignment pattern|does not provide a value for parameter|packed type of \d+ bits is too large"),
+    ("synth-limit", "loop unroll limit exhausted (`--unroll-limit`)", r"unroll limit of \d+ exhausted"),
+    ("bug", "a declared parameter or type-parameter name rejected as `cannot be used in an expression` (a type-parameter override on an interface instance, a parameter as a case label; minimal repros pass, so the failure is context-dependent)",
+     r"cannot be used in an expression"),
 ]
 KIND_ORDER = ["sim-only", "strict", "synth-limit", "bug", "unclassified"]
 KIND_BLURB = {
@@ -559,6 +571,20 @@ def main():
             return "undetermined -- the co-sim did not run for either netlist (no observable outputs, or Verilator cannot build the RTL)"
         if d.startswith("slang co-sim vacuous"):
             return "undetermined -- the co-sim ran but no output ever moved (vacuous)"
+        if "already driven" in d:
+            return "no frontend -- the miter's flatten finds a net driven twice in both netlists alike (an inout pad / tri-state or a multiply-driven RTL net); the co-sim column is the gate"
+        if "No SAT model available" in d:
+            return "no frontend -- satgen has no model for a memory cell the netlists keep (`$mem_v2`); the co-sim column is the gate"
+        if "Can't find gold module" in d:
+            return "harness -- the module is not a top under the sweep's defines, so no gold netlist was produced"
+        if "std::bad_alloc" in d:
+            return "Surelog -- elaboration ran out of memory on this design"
+        if "capnp" in d:
+            return "Surelog -- the elaborated UHDM exceeds the Cap'n Proto message size the writer allows"
+        if "Conflicting init values" in d:
+            return "read_uhdm -- two init values for one register bit reached the miter's `proc`; the co-sim passed, so the net behaves, but the netlist shape is wrong"
+        if d.startswith("error"):
+            return "undetermined -- the formal miter stopped with an error (recorded in the row); the co-sim column is the gate"
         return "undetermined"
     I = []; B = I.append
     B("# Test cases no frontend can be judged on\n")
