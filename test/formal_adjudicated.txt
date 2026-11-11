@@ -205,3 +205,14 @@ hpdcache_uncached
 # read_uhdm == RTL, read_slang = 0.  The sweeps keep the SIMULATION view of
 # translate_off for now; revisit if they move to `-filterprotected`.
 wt_dcache_mem
+# core-v-mcu soc_event_generator (2026-11-11): the miter stops in OPT_MERGE on
+# "Conflicting init values for signal 1'0 (\r_err [34] = 1'x != 1'0)".  Both
+# read_uhdm and the golden read_verilog netlist carry the identical 256-bit
+# $adff for r_err after `proc`; bits 34..255 are reset to 0 and only ever
+# cleared, so yosys's own `opt` ties them to constant 0 in OUR netlist (the
+# read_verilog D-logic keeps them as a mux), and the second
+# `setundef -undriven -init -zero` then leaves an x init on those constant-tied
+# bits, which ffinit rejects.  A yosys pass-sequence edge case on a functionally
+# correct netlist (co-sim PASS, 301 cycles); not a reader defect.  A harness
+# follow-up could drop `-init` from the second setundef.
+soc_event_generator
