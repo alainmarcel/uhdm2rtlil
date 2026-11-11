@@ -71,7 +71,7 @@ delete t:$check t:$assert t:$assume t:$print t:$scopeinfo
 bwmuxmap
 bmuxmap
 demuxmap
-techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
+techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 write_verilog -noattr -norename {nl}
 """
     (WORK / f"netlist_{tag}.ys").write_text(ys)

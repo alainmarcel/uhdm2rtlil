@@ -118,6 +118,19 @@ else()
   endif()
 endif()
 
+# The co-sim scripts lower $shift/$shiftx cells with a SIGNED amount before
+# write_verilog (Verilator #8657) through test/techmap_signed_shift.v, a narrow
+# lowering they reference as `+/techmap_signed_shift.v` -- Yosys's share
+# directory.  Ship the file there with every build/install.
+add_custom_command(
+  OUTPUT ${INSTALL_DIR}/share/yosys/techmap_signed_shift.v
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${INSTALL_DIR}/share/yosys
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/test/techmap_signed_shift.v
+          ${INSTALL_DIR}/share/yosys/techmap_signed_shift.v
+  DEPENDS ${PROJECT_SOURCE_DIR}/test/techmap_signed_shift.v)
+add_custom_target(techmap_signed_shift ALL
+  DEPENDS ${INSTALL_DIR}/share/yosys/techmap_signed_shift.v)
+
 
 # Build our main frontend
 set(UHDM_FRONTEND_SOURCES

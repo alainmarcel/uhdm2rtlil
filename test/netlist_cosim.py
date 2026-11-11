@@ -145,7 +145,7 @@ demuxmap
 # YosysHQ/yosys#6464 as the cause of five of ten sampled read_slang co-sim
 # divergences).  Lower just those cells to logic so the netlist simulates as
 # yosys evaluates it.
-techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
+techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 opt_clean
 write_verilog -noattr -norename {nl}
 """
