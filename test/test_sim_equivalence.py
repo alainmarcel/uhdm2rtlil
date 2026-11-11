@@ -45,7 +45,7 @@ def sh(cmd: list[str], cwd: Path | None = None, check: bool = True) -> str:
 
 def find_paths(project_root: Path) -> dict[str, Path]:
     paths = {
-        "yosys":          project_root / "out/current/bin/yosys",
+        "yosys":          Path(os.environ.get("YOSYS", project_root / "out/current/bin/yosys")),
         "uhdm_plugin":    project_root / "build/uhdm2rtlil.so",
         "cr_plugin":      project_root / "build/extract_clocks_resets.so",
         "simcells":       project_root / "out/current/share/yosys/simcells.v",
@@ -58,7 +58,11 @@ def find_paths(project_root: Path) -> dict[str, Path]:
     # fail here if absent; frontend_read_setup() reports a clear error instead.
     # slang (read_slang / sv-elab) is built into the yosys binary now, so there
     # is no separate plugin path.
-    paths["yosys_bin"]    = project_root / "out/current/bin/yosys"
+    paths["yosys_bin"]    = paths["yosys"]
+    # YOSYS_FRONTEND: an alternative yosys used ONLY to read the sources and
+    # write the netlist (e.g. an upstream build with a newer read_slang); the
+    # plugin steps keep the tree's own yosys, whose ABI the plugins match.
+    paths["yosys_frontend"] = Path(os.environ.get("YOSYS_FRONTEND", paths["yosys"]))
     paths["sv2v_bin"]     = project_root / "build/frontends/sv2v/bin/sv2v"
     return paths
 
@@ -1037,7 +1041,7 @@ def main() -> int:
         args.frontend, paths, uhdm, rtl_srcs, test_dir, lang,
         slang_args=project.get("slang"))
     print(f"▶ Generating synthesized netlist from {args.frontend} frontend")
-    yosys_top = synth_to_netlist(paths["yosys"], read_lines, plugin_args,
+    yosys_top = synth_to_netlist(paths["yosys_frontend"], read_lines, plugin_args,
                                  work / "dut_netlist.v")
     # Prefer the auto-top name Yosys actually selected; fall back to the
     # last-`module`-declaration heuristic when capture failed.

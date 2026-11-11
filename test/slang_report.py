@@ -88,7 +88,7 @@ KIND_BLURB = {
     "sim-only": "Simulation-only constructs. `read_verilog` and `read_uhdm` accept them (the regression's co-sim never sees them); slang rejects them unless told `--ignore-timing` / `--ignore-assertions` / `--ignore-initial`.",
     "strict": "LRM rules slang enforces and the other two frontends relax. The source is what a strict compiler rejects; the fix is in the design or in the test.",
     "synth-limit": "Constructs sv-elab, read_slang's synthesis layer, does not lower yet.",
-    "bug": "read_slang crashed, or produced a netlist that does not behave like the RTL while read_uhdm's does: a defect to report upstream (sv-elab, vendored in third_party/yosys/frontends/slang).",
+    "bug": "read_slang crashed, or produced a netlist that does not behave like the RTL while read_uhdm's does: a defect to report upstream (sv-elab, vendored in third_party/yosys/frontends/slang).  The 54 rows this class held on 2026-11-09 were each re-measured one by one on three toolchains after the Verilator #8657 lowering (#1542) and the slang PR 2106 patch (#1541) landed; the per-row result and classification are in [slang_cosim_retest_2026-11-10.md](slang_cosim_retest_2026-11-10.md).",
     "unclassified": "No rule matched -- add one to CLASSES in test/slang_report.py.",
 }
 

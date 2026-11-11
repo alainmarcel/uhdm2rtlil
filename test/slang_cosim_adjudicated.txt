@@ -41,3 +41,31 @@ miss_handler
 #
 # To re-include one because its cause IS understood, list it as "+<module>"
 # (or "+<family>/<module>") here, with the cause written against it.
+
+# ---- Chisel/firtool queues: read of a NEVER-WRITTEN memory entry before reset (2026-11-10)
+# In every one of these rows the diverging output is a field of a `Queue`'s
+# `ram_ext` read data whose EVERY write carries a constant (`nodeOut_r_bits_last
+# = 1'h1`, a TileLink `b_bits_opcode = 3'h6`, a `d_bits_denied` tied low), so
+# yosys folds the read-port bit to that constant in the read_slang netlist
+# (`assign ..._ram_ext_R0_data = { ..., 1'h1, ... }`).  The RTL simulation reads
+# the entry before anything was ever written to it -- X by the LRM, 0 under
+# Verilator -- so the two differ at cycle 0 and agree from the first enqueue on
+# (2-6 diverging cycles; ExecuteController's 301 because its queue is never
+# enqueued under the random stimulus).  read_uhdm's netlist keeps the `$memrd`
+# and reads the same uninitialised 0, which is why it "matches".  Verified on
+# every row by reading the diverging output's driver in cosim/slang_<mod>.v.
+boom/AXI4Buffer_1
+boom/AXI4Buffer_2
+boom/ErrorDeviceWrapper
+boom/TLBuffer_a32d64s4k2z4c_2
+gemmini/AXI4Buffer_1
+gemmini/AXI4Buffer_2
+gemmini/ErrorDeviceWrapper
+gemmini/ExecuteController
+gemmini/Queue5_ComputeCntlSignals
+gemmini/TLBuffer_a32d128s7k2z4u_2
+rocket-chip/AXI4Buffer_1
+rocket-chip/AXI4Buffer_2
+rocket-chip/ErrorDeviceWrapper
+rocket-chip/TLBuffer_a32d64s2k2z4c_1
+xiangshan-core-full/TLBuffer_14
