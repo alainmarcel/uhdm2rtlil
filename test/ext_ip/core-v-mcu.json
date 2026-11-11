@@ -52,6 +52,12 @@
  "seq": 4,
  "timeout": 300,
  "want": "proven",
+ "overrides": {
+  "cv32e40p_cs_registers": {
+   "want": "cex",
+   "note": "unique case (1'b1) VIOLATION stimulus: the cex raises csr_save_if_i / csr_save_id_i together with csr_save_ex_i (LRM: undefined); with csr_save_id_i = csr_save_if_i = 0 the seq-4 miter proves -- the vendored cv32e40p row, adjudicated the same way there"
+  }
+ },
  "_note": [
   "",
   "The CORE-V MCU: the OpenHW microcontroller built around CV32E40P -- the APB",
