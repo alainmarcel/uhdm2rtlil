@@ -1,0 +1,13 @@
+# A `+=` on a var_select of a PACKED 2-D vector whose outer dimension has ONE
+# element (`logic [0:0][3:0] num; num[i][3:0] += ...`): after the first write
+# the block's in-flight value of `num` is a single wire, and the var_select
+# importer took that wire as the write target, so every later `+=` wrote and
+# read the first result instead of accumulating (VeeR EH2 eh2_lsu_stbuf,
+# NUM_THREADS = 1: 201 co-simulated cycles, formally `differs`).  All eight
+# entries valid for thread 0 must count to 8.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+sat -verify -prove num 4'd8 -set vld 8'hff -set tid 8'h00
+sat -verify -prove num 4'd3 -set vld 8'h07 -set tid 8'h00
+sat -verify -prove num 4'd0 -set vld 8'hff -set tid 8'hff
