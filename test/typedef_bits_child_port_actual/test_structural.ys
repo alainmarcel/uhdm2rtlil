@@ -1,0 +1,11 @@
+# The mask passes through `child` untouched, so o must equal m_i.  Without the
+# fix the actual is sliced at the definition-default width of fl_t (2 bits per
+# element) and o is mostly undriven -- a wrong VALUE, so prove it.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+flatten
+proc
+opt
+sat -verify -set m_i 58'h2aaaaaaa5555555 -prove o 58'h2aaaaaaa5555555
+sat -verify -set m_i 58'h3ffffff00000001 -prove o 58'h3ffffff00000001
+check -assert

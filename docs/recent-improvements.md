@@ -4,6 +4,12 @@
 > UHDM→RTLIL frontend. Extracted from the main [README](../README.md) to keep it
 > concise; newest entries are near the top.
 
+### `$bits(typedef)` at a CHILD-CELL Port Actual Measured at the Definition's Defaults (`typedef_bits_child_port_actual`)
+- Test: `typedef struct packed { logic [$bits(fl_t)-1:0] mask; } ex_t` inside a module whose `fl_t` range depends on a DERIVED parameter default (`LSB = $clog2(DW/8)`), passed to a child as `.mask_i({ex[1].mask, ex[0].mask})`
+- **Bug — the port actual had no instance context**: child-cell port actuals are imported with `current_instance` null, so the `$bits(type)` handler walked the call's own parent chain into the module DEFINITION, where `fl_t` measures at the parameter defaults (`[-1:0]`).  The member came out 2 bits instead of 29.  A range Surelog can fold never reaches this path, which is why eight synthetic repros missed it; the test came from a line-ddmin of the real sources.
+- **Fix in `expression.cpp`**: when `current_instance` is null, search the cell being connected (`hier_instance_`) and its instance ancestors first.
+- Measured: cheshire `axi_riscv_lrsc` `id_queue.exists_mask_i` 3 bits -> 30.  The row needs a Surelog fix too (a nested generate-for over `$bits(type param)` ran 0 iterations, pending upstream); with both, `differs` -> `equivalent`, 0 undriven.
+
 ### A 3-Level Index into a Packed Array Whose Element Type Is a TYPE PARAMETER Wrote One Bit (`packed_typeparam_elem_three_levels`)
 - Test: `parameter type elem_t` bound to a packed 2-D typedef, `elem_t [RATIO-1:0][WAYS-1:0] arr`, written by a triple nested generate `arr[i][j][k] = ...`
 - **Bug — the stamped geometry carries outer + element + leaf, three numbers, i.e. TWO index levels**: a declared 2-D array over a typedef that is itself packed 2-D needs four, so the third index fell to the bit-select path and wrote ONE BIT of an 8-bit leaf word -- 4 one-bit connects of a 32-bit array, 28 bits left undriven.  CVA6's `hpdcache_memctrl` is this shape (`hpdcache_req_data_t [RATIO-1:0][ways-1:0] data_read_words`), in code the default configuration never instantiates.
