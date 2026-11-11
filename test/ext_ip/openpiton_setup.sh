@@ -23,6 +23,18 @@ ROOT=$PWD                      # the openpiton checkout ($EXT_IP_ROOT/openpiton)
 PYHP=$ROOT/piton/tools/bin/pyhp.py
 [ -f "$PYHP" ] || { echo "openpiton_setup: no pyhp.py at $PYHP" >&2; exit 2; }
 export PYTHONPATH="$ROOT/piton/tools/bin:$PYTHONPATH"
+# The environment OpenPiton's own simulation flow (piton/tools/src/sims/sims,2.0)
+# sets before running the templates.  The dynamic-node and io_xbar templates
+# import their parameter modules from $DV_ROOT/design/.../parameter, and
+# pyhplib.py reads the chipset device map from
+# $PROTOSYN_RUNTIME_DESIGN_PATH/$PROTOSYN_RUNTIME_BOARD/devices.xml, which for
+# a simulation build is piton/verif/env/manycore/devices.xml.  Without them 24
+# of the 91 templates raised inside a code segment, and pyhp.py STILL exited 0
+# and wrote the text around it: `input [:0] ec_cfg;` in
+# dynamic_node_top_para.tmp.v, a syntax error for every module above it.
+export DV_ROOT="$ROOT/piton"
+export PROTOSYN_RUNTIME_DESIGN_PATH="$DV_ROOT/verif/env/manycore"
+export PROTOSYN_RUNTIME_BOARD=""
 
 n=0; failed=0
 while IFS= read -r src; do
@@ -30,10 +42,16 @@ while IFS= read -r src; do
   base=${src%.pyv}             # .../define.h
   ext=${base##*.}              # h or v
   out=${base%.*}.tmp.$ext      # .../define.tmp.h
-  if python3 "$PYHP" "$src" > "$out" 2>/dev/null; then
+  # pyhp.py reports an exception raised in a template's code segment on
+  # stderr and carries on with exit status 0, so the status alone cannot be
+  # trusted: a traceback counts as a failure too.
+  if python3 "$PYHP" "$src" > "$out" 2> "$out.err" && ! grep -q "Traceback" "$out.err"; then
+    rm -f "$out.err"
     n=$((n+1))
   else
     echo "openpiton_setup: pyhp FAILED on $src" >&2
+    sed 's/^/    /' "$out.err" | tail -3 >&2
+    rm -f "$out.err"
     rm -f "$out"
     failed=$((failed+1))
   fi
