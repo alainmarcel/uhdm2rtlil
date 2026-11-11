@@ -35,6 +35,12 @@
  "seq": 4,
  "timeout": 300,
  "want": "proven",
+ "overrides": {
+  "cv32e41p_cs_registers": {
+   "want": "cex",
+   "note": "unique case (1'b1) VIOLATION stimulus: the cex raises csr_save_id_i and csr_save_ex_i together (LRM: undefined); with csr_save_id_i = csr_save_if_i = 0 the seq-4 miter proves -- the same artefact as cv32e40p_cs_registers, not a reader defect"
+  }
+ },
  "_note": [
   "",
   "The CORE-V CV32E41P: the RV32IMFC core with the PULP extensions -- the",
