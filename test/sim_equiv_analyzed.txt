@@ -1072,3 +1072,43 @@ Test: negative_lsb_range_select
     proven by test_structural.ys.  NOT a read_uhdm divergence: a Surelog/UHDM
     follow-up on the fix/partsel-fold-declared-range branch (UHDM #1179); the
     same entry explains the test's slang_miter_expected_fail.txt listing.
+
+Test: apbt1_interface
+    core-v-mcu, no read_slang oracle (read_slang fails on the closure).  Co-simulated
+    against the read_verilog netlist in the reference slot (2026-11-11): both
+    netlists diverge from the RTL identically, 195 of 301 cycles, first at cycle 0
+    on `lint_gnt` (rtl=1, both netlists 0) -- an un-reset / X-initialised state the
+    RTL simulation resolves differently from every synthesised netlist.  SHARED
+    DIVERGENCE with the golden frontend: NOT a read_uhdm defect.
+
+Test: tcdm_interface
+    core-v-mcu, no read_slang oracle.  Same measurement as apbt1_interface: the
+    read_verilog netlist diverges identically (216 of 301 cycles, first at cycle 0
+    on `soc_req`, rtl=1 vs 0 on both netlists).  SHARED DIVERGENCE with the golden
+    frontend: NOT a read_uhdm defect.
+
+Test: rstmgr_crash_info
+    opentitan-ip, no read_slang oracle and read_verilog cannot parse the OpenTitan
+    packages, so it was probed internally (2026-11-11): the only diverging signal
+    is the output `slot_o` (RTL nonzero, ours 0 from cycle 22).  At the sweep's
+    default parameters (CrashDumpWidth = 32 with RdWidth = 32) the module is
+    degenerate: CrashStoreSlot = 1, SlotCntWidth = $clog2(1) = 0, so the slot
+    index `slot_sel_i[SlotCntWidth-1:0]` is the reversed, partly out-of-range
+    select `[-1:0]` of a 4-bit input -- X by the LRM.  Verilator reads it as a
+    valid index into the single slot, we read 0.  A degenerate-default elaboration,
+    not a reader defect; meaningful only with CrashDumpWidth > RdWidth.
+
+Test: axi_rt_unit_top_xilinx
+    cheshire (axi_rt).  The Xilinx wrapper declares EVERY parameter with a
+    zero default (RtNumManagers = 0, RtAxiDataWidth = 0, ... axi_data_t =
+    logic [RtAxiDataWidth-1:0]) and is meant to be configured by the Vivado IP
+    integrator; the sweep elaborates it with a harness-bound configuration in
+    which the RTL still indexes out of range (read_slang refuses it: "cannot refer
+    to element 1 of 'axi_lite_data_t'" in axi_rt_regbus_guard, so there is no
+    oracle, and read_verilog cannot parse axi_pkg).  Probed internally
+    (2026-11-11): the pre-reset differences are X-init timing; the first
+    functional divergence (cycle 21) is RT unit 2's axi_isolate never seeing an
+    AW handshake that the RTL simulation performs, downstream of that degenerate
+    configuration.  The same unit with real parameters, axi_rt_unit_top_synth,
+    is formally proven and co-simulates clean.  A degenerate-configuration
+    artefact, not a reader lead.
