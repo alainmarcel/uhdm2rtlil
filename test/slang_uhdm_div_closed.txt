@@ -15,3 +15,8 @@ openpiton/bw_r_dtlb            # #1470 (always_ff blocking temp read as the bloc
 openpiton/bw_r_itlb            # #1470; formal differs adjudicated #1469, 2026-11-06
 snitch/spatz_ipu               # #1437 + #1441 + #1470, 2026-11-06
 snitch/spatz_vfu               # #1471 (generate-scope select writes by bare name) + #1472 (indexed struct-parameter member read as X), 2026-11-06
+veer-eh2/eh2_lsu_stbuf # #1543 (var-select write target kept on its wire; regression from #1537), 2026-11-11
+veer-eh2/eh2_lsu # #1543 (same, seen through eh2_lsu), 2026-11-11
+rsd/ProducerMatrix # #1543 (same class, `dispatchVector[i][ptr] = TRUE`), 2026-11-11
+cva6-rv32/wt_dcache_wbuffer # #1546 (function local written through a dynamic indexed part-select), 2026-11-11
+cva6-rv32/wt_dcache # #1546 (same, through wt_dcache_wbuffer), 2026-11-11
