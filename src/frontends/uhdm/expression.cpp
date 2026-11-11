@@ -6680,6 +6680,21 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             if (auto mi0 = dynamic_cast<const UHDM::module_inst*>(
                                     (const UHDM::any*)current_instance))
                                 chain.push_back(mi0);
+                            // A child cell's port actual is imported with
+                            // `current_instance` null (import_module_hierarchy
+                            // runs after the parent's body import returned),
+                            // and the call's own parent chain then leads to
+                            // the DEFINITION, where the typedef's ranges sit
+                            // at the parameter DEFAULTS.  axi_riscv_lrsc's
+                            // `.exists_mask_i(wifq_exists_inp.mask)` with
+                            // `logic [$bits(w_flight_t)-1:0] mask` measured
+                            // `mask` 3 bits instead of 30 and fed the queue
+                            // the wrong slices.  Search the cell being
+                            // connected and the instances above it first.
+                            else if (hier_instance_)
+                                for (const UHDM::any* up = hier_instance_; up; up = up->VpiParent())
+                                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(up))
+                                        chain.push_back(mi);
                             for (const UHDM::any* up = func_call->VpiParent();
                                  up; up = up->VpiParent())
                                 if (auto mi = dynamic_cast<const UHDM::module_inst*>(up))
