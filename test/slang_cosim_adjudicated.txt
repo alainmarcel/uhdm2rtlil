@@ -69,3 +69,12 @@ rocket-chip/AXI4Buffer_2
 rocket-chip/ErrorDeviceWrapper
 rocket-chip/TLBuffer_a32d64s2k2z4c_1
 xiangshan-core-full/TLBuffer_14
+
+# ---- `translate_off` regions: a synthesis-vs-simulation semantic choice (2026-11-11)
+# CVA6's wt_dcache_mem keeps simulation-only logic inside
+# `// pragma translate_off` ... `translate_on`.  read_slang honours the pragma
+# and drops the region (the synthesis reading); the sweep's RTL side under
+# Verilator and read_uhdm both keep it, so the two netlists differ by exactly
+# that region.  Adjudicated by the user on 2026-11-08 as a sweep-semantics
+# choice, not a read_slang defect (see docs on translate_off semantics).
+cva6-rv32/wt_dcache_mem

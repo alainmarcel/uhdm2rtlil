@@ -58,7 +58,7 @@ All recipes run from a built tree (`make -j$(nproc)`), from `test/`.
 | sweep cva6-chip | 138 modules | 0 | 0 | 0 |
 | sweep cva6-hext | 142 modules | 14 | 0 | 14 |
 | sweep cva6-hpdcache | 145 modules | 14 | 0 | 14 |
-| sweep cva6-rv32 | 142 modules | 20 | 2 | 18 |
+| sweep cva6-rv32 | 142 modules | 20 | 1 | 19 |
 | sweep cve2 | 23 modules | 4 | 2 | 2 |
 | sweep cvfpu | 20 modules | 2 | 2 | 0 |
 | sweep cvw | 220 modules | 6 | 5 | 1 |
@@ -120,7 +120,7 @@ The yosys line counts every generated `run/` directory, 29 of which the regressi
 
 The sweep lines count rows of the nightly tables (modules slang could not read, or whose slang netlist failed co-sim); modules slang reads and matches are not listed per family here -- see the README's sweep table.
 
-**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 185 rows over these sweeps = **12** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **133** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **40** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
+**Against the co-simulation table in [benchmarking.md](benchmarking.md):** its `read_slang` *diverge* column is 185 rows over these sweeps = **11** where the slang netlist diverges and read_uhdm's tracks the RTL (the *bug* class below) + **133** where BOTH netlists diverge identically (a testbench artefact, in [incomplete_testcases.md](incomplete_testcases.md)) + **41** adjudicated NOT a slang defect (test/slang_cosim_adjudicated.txt).  The other direction -- read_slang clean, read_uhdm diverging -- is the last section of this file.
 
 ## Failure classes
 
@@ -154,7 +154,7 @@ The sweep lines count rows of the nightly tables (modules slang could not read, 
 | synth-limit | loop unroll limit exhausted (`--unroll-limit`) | 1 | 0 | 1 |
 | bug | internal frontend error / failed assert / abort / bad_alloc | 9 | 4 | 10 |
 | bug | `Feature unimplemented` | 5 | 1 | 9 |
-| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 12 |
+| bug | netlist diverges from the RTL under Verilator (read_uhdm's does not) | 0 | 0 | 11 |
 | bug | a declared parameter or type-parameter name rejected as `cannot be used in an expression` (a type-parameter override on an interface instance, a parameter as a case label; minimal repros pass, so the failure is context-dependent) | 0 | 0 | 10 |
 
 ## sim-only
@@ -820,14 +820,13 @@ read_slang crashed, or produced a netlist that does not behave like the RTL whil
 | sweep pulpissimo | [`tcdm_model`](https://github.com/pulp-platform/pulpissimo/blob/bfc3d9a1ef72443464509a22d948f0a6f5b65b4c/.bender/git/checkouts/pulp_io-8557a8d559d27a25/tb/tcdm_model.sv#L27) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:814, see AST and code line dump above | R3 `python3 ext_flow.py pulpissimo tcdm_model` |
 | yosys test | [`run/various/elab_sys_tasks`](https://github.com/alainmarcel/uhdm2rtlil/tree/main/test/run/various/elab_sys_tasks) | ERROR: Feature unimplemented at third_party/yosys/frontends/slang/lib/src/slang_frontend.cc:3048, see AST and code line dump above | R2 `./slang_coverage_sweep.sh --one run/various/elab_sys_tasks` |
 
-### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 12
+### netlist diverges from the RTL under Verilator (read_uhdm's does not) -- 11
 
 | set | test | diagnostic | recipe |
 |---|---|---|---|
 | sweep black-parrot | [`bp_io_tile`](https://github.com/black-parrot/black-parrot/blob/710b0ea998c3b2f70ef9671d5619e439f13f826c/bp_top/src/v/bp_io_tile.sv#L6) | ❌ 2 div; read_uhdm ✅ PASS (301 cycles, 251 active) | R3 `python3 ext_flow.py black-parrot bp_io_tile` |
 | sweep core-v-mcu | [`fpnew_fma_multi`](https://github.com/openhwfoundation/core-v-mcu/blob/61fe7db2ebd13621975d97d484ef8fe99d3615a6/rtl/vendor/pulp_platform_fpnew/src/fpnew_fma_multi.sv#L16) | ❌ 14 div; read_uhdm ✅ PASS (301 cycles, 297 active) | R3 `python3 ext_flow.py core-v-mcu fpnew_fma_multi` |
 | sweep cva6-rv32 | [`std_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_cache_subsystem.sv#L18) | ❌ 10 div; read_uhdm ✅ PASS (300 cycles, 300 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_cache_subsystem$'` |
-| sweep cva6-rv32 | [`wt_dcache_mem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_dcache_mem.sv#L29) | ❌ 61 div; read_uhdm ✅ PASS (300 cycles, 293 active) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_dcache_mem$'` |
 | sweep cvfpu | [`fpnew_fma_multi`](https://github.com/openhwfoundation/cvfpu/blob/77811635cb7e8649f1d9484733ee6a0bdb44a0e6/src/fpnew_fma_multi.sv#L18) | ❌ 19 div; read_uhdm ✅ PASS (301 cycles, 298 active) | R3 `python3 ext_flow.py cvfpu fpnew_fma_multi` |
 | sweep hazard3 | [`hazard3_core`](https://github.com/Wren6991/Hazard3/blob/8af992930f71a69b0e06c38734c1094f41a05ca0/hdl/hazard3_core.v#L12) | ❌ 278 div; read_uhdm ✅ PASS (301 cycles, 249 active) | R3 `python3 ext_flow.py hazard3 hazard3_core` |
 | sweep hazard3 | [`hazard3_cpu_2port`](https://github.com/Wren6991/Hazard3/blob/8af992930f71a69b0e06c38734c1094f41a05ca0/hdl/hazard3_cpu_2port.v#L16) | ❌ 278 div; read_uhdm ✅ PASS (301 cycles, 300 active) | R3 `python3 ext_flow.py hazard3 hazard3_cpu_2port` |
@@ -859,7 +858,7 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main`: 3 row(s) open.**  15 row(s) ever listed here co-simulate clean
+**Status on `main`: 8 row(s) open.**  10 row(s) ever listed here co-simulate clean
 with the `read_uhdm` netlist on `main` and are not listed; the fixes that
 closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
@@ -870,28 +869,28 @@ closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 | `cheshire/obi_uart_tx` | #1467 (comb `for` with a runtime bound: guarded writes recorded unconditionally), 2026-11-06 |
 | `cheshire/reg_uart_wrap` | #1466 (same as apb_uart, seen through reg_to_apb), 2026-11-06 |
 | `cheshire/slink_ch_alloc` | #1443 (`foreach` index unsigned) + #1468 (`foreach` over a type-parameter packed array), 2026-11-06 |
-| `cva6-rv32/wt_dcache` | #1546 (same, through wt_dcache_wbuffer), 2026-11-11 |
-| `cva6-rv32/wt_dcache_wbuffer` | #1546 (function local written through a dynamic indexed part-select), 2026-11-11 |
 | `cvw/wallypipelinedcore` | #1473 (enum-bound `parameter type` port sized from its generic default), 2026-11-06 |
 | `openpiton/bw_r_dtlb` | #1470 (always_ff blocking temp read as the block's final value); formal differs adjudicated #1469, 2026-11-06 |
 | `openpiton/bw_r_itlb` | #1470; formal differs adjudicated #1469, 2026-11-06 |
-| `rsd/ProducerMatrix` | #1543 (same class, `dispatchVector[i][ptr] = TRUE`), 2026-11-11 |
 | `snitch/spatz_ipu` | #1437 + #1441 + #1470, 2026-11-06 |
 | `snitch/spatz_vfu` | #1471 (generate-scope select writes by bare name) + #1472 (indexed struct-parameter member read as X), 2026-11-06 |
-| `veer-eh2/eh2_lsu` | #1543 (same, seen through eh2_lsu), 2026-11-11 |
-| `veer-eh2/eh2_lsu_stbuf` | #1543 (var-select write target kept on its wire; regression from #1537), 2026-11-11 |
 
 A row listed below is open: the latest sweep reports show it diverging with the
 `read_uhdm` netlist and it is not in the closed list.  A closed row that comes back
 is a regression, not a stale entry.
 
-**3** open row(s).
+**8** open row(s).
 
 | set | test | verdicts | recipe |
 |---|---|---|---|
 | sweep cva6-rv32 | [`wt_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_cache_subsystem.sv#L22) | read_slang ✅ PASS; read_uhdm ❌ 4 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_cache_subsystem$'` |
+| sweep cva6-rv32 | [`wt_dcache`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_dcache.sv#L16) | read_slang ✅ PASS; read_uhdm ❌ 31 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_dcache$'` |
+| sweep cva6-rv32 | [`wt_dcache_wbuffer`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_dcache_wbuffer.sv#L52) | read_slang ✅ PASS; read_uhdm ❌ 290 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_dcache_wbuffer$'` |
 | sweep opentitan-ip | [`i3c_controller`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller.sv#L6) | read_slang ✅ PASS; read_uhdm ❌ 3 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller` |
 | sweep opentitan-ip | [`i3c_controller_fsm`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller_fsm.sv#L8) | read_slang ✅ PASS; read_uhdm ❌ 12 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller_fsm` |
+| sweep rsd | [`ProducerMatrix`](https://github.com/rsd-devel/rsd/blob/7b65f6ba0bce58d4d859082660123b7100aae975/Processor/Src/Scheduler/ProducerMatrix.sv#L12) | read_slang ✅ PASS; read_uhdm ❌ 22 div (slang clean) | R3 `python3 ext_flow.py rsd ProducerMatrix` |
+| sweep veer-eh2 | [`eh2_lsu`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/lsu/eh2_lsu.sv#L28) | read_slang ✅ PASS; read_uhdm ❌ 1 div (slang clean) | R3 `python3 ext_flow.py veer-eh2 eh2_lsu` |
+| sweep veer-eh2 | [`eh2_lsu_stbuf`](https://github.com/chipsalliance/Cores-VeeR-EH2/blob/32bdfe24c0194a5b625a70624144e4c6dec5f682/design/lsu/eh2_lsu_stbuf.sv#L25) | read_slang ✅ PASS; read_uhdm ❌ 201 div (slang clean) | R3 `python3 ext_flow.py veer-eh2 eh2_lsu_stbuf` |
 
 Two of the divergences localised on the way were the REFERENCE's, not ours,
 and are recorded rather than fixed: Verilator masks an out-of-range index into
