@@ -37,5 +37,8 @@ module dut (input logic [2:0] offset, input logic [1:0] size,
   assign be_o   = to_byte_enable8(offset, size);
   assign fill_o = f_fill(offset);
   assign cmp_o  = f_cmp(offset);
-  assign down_o = f_down(offset);
+  // offset 0 would select [0:-1]: an out-of-range write the LRM leaves
+  // undefined and the simulators disagree on (Verilator wraps the 3-bit
+  // index to bit 7, read_slang keeps the in-range bit) -- not asserted.
+  assign down_o = (offset != 3'd0) ? f_down(offset) : 8'h00;
 endmodule
