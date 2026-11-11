@@ -16,7 +16,7 @@ leaves out. For a sweep module, the family manifest's include dirs, defines and
 configuration binds are applied; `elab-fail` means neither frontend elaborates the
 module with them.
 
-**516** rows.
+**517** rows.
 
 | set | test | why it is incomplete | fails for | recipe |
 |---|---|---|---|---|
@@ -182,6 +182,7 @@ module with them.
 | sweep cva6-rv32 | [`load_store_unit`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/load_store_unit.sv#L16) | elab-fail | all frontends -- neither read_uhdm nor read_slang elaborates it at the sweep's configuration | R4 `python3 core_sweep.py cva6-rv32 --filter '^load_store_unit$'` |
 | sweep cva6-rv32 | [`macro_decoder`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/macro_decoder.sv#L17) | COSIM_ADJUDICATED slang ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 300 active) -- a single diverging cycle with no recorded cause (test/slang_cosim_adjudicated.txt) | undetermined | R4 `python3 core_sweep.py cva6-rv32 --filter '^macro_decoder$'` |
 | sweep cva6-rv32 | [`std_nbdcache`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/std_nbdcache.sv#L16) | COSIM_ADJUDICATED slang ❌ 1 div; read_uhdm ✅ PASS (300 cycles, 294 active) -- a single diverging cycle with no recorded cause (test/slang_cosim_adjudicated.txt) | undetermined | R4 `python3 core_sweep.py cva6-rv32 --filter '^std_nbdcache$'` |
+| sweep cva6-rv32 | [`wt_dcache_mem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_dcache_mem.sv#L29) | COSIM_ADJUDICATED slang ❌ 61 div; read_uhdm ✅ PASS (300 cycles, 293 active) -- adjudicated not a read_slang defect (test/slang_cosim_adjudicated.txt) | undetermined | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_dcache_mem$'` |
 | sweep cve2 | [`cve2_alu`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_alu.sv#L10) | both netlists diverge from the RTL: slang ❌ 18 div, read_uhdm ⚠ shared div (uhdm=18, slang=18) | no frontend -- both netlists diverge identically: a testbench artefact (an un-reset register reads X in the RTL, 0 in both netlists) | R3 `python3 ext_flow.py cve2 cve2_alu` |
 | sweep cve2 | [`cve2_ex_block`](https://github.com/openhwgroup/cve2/blob/d079e8c8e6a08b330940ae123876ba0612bec18d/rtl/cve2_ex_block.sv#L12) | both netlists diverge from the RTL: slang ❌ 14 div, read_uhdm ⚠ shared div (uhdm=14, slang=14) | no frontend -- both netlists diverge identically: a testbench artefact (an un-reset register reads X in the RTL, 0 in both netlists) | R3 `python3 ext_flow.py cve2 cve2_ex_block` |
 | sweep cvw | [`uart_apb`](https://github.com/openhwgroup/cvw/blob/bc7012a92273bf7cc5eb487f720be41e9d9e8447/src/uncore/uart_apb.sv#L32) | both netlists diverge from the RTL: slang ❌ 213 div, read_uhdm ⚠ shared div (uhdm=213, slang=213) | no frontend -- both netlists diverge identically: a testbench artefact (an un-reset register reads X in the RTL, 0 in both netlists) | R3 `python3 ext_flow.py cvw uart_apb` |
