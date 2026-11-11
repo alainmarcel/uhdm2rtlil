@@ -100,7 +100,7 @@ hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
-techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
+techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 rename {TOP} gold_{TOP}
 write_verilog -noattr adj_gold.v
 design -reset
@@ -109,7 +109,7 @@ hierarchy -check -top {TOP}
 flatten; proc; memory; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
-techmap -map +/techmap.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
+techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
 rename {TOP} gate_{TOP}
 write_verilog -noattr adj_gate.v
 """)
