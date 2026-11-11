@@ -24,6 +24,7 @@
  ],
  "roots": [
   "openpiton/piton/design/chip/rtl/*.v",
+  "openpiton/piton/design/chip/pll/rtl/*.v",
   "openpiton/piton/design/chip/tile/**/*.v",
   "openpiton/piton/design/chip/chip_bridge/**/*.v",
   "openpiton/piton/design/chip/jtag/**/*.v",
