@@ -32,7 +32,8 @@
  ],
  "incdirs": [
   "openpiton/piton/design/include",
-  "openpiton/piton/design/chip/tile/sparc/include"
+  "openpiton/piton/design/chip/tile/sparc/include",
+  "openpiton/piton/design/chipset/include"
  ],
  "defines": [
   "SYNTHESIS",
