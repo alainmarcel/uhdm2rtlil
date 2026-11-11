@@ -1843,6 +1843,89 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                     "bounds (base_size=%d)\n", base_name.c_str(),
                                     offset, width_val, base_spec.size());
                     }
+                } else if (width_val > 0 && ips->Base_expr() && base_name != func_name &&
+                           input_mapping.count(base_name) && !loop_accumulators.count(base_name)) {
+                    // DYNAMIC base on a function local: `be[offset +: 2] = '1`
+                    // in CVA6 wt_dcache_wbuffer's to_byte_enable8 (the
+                    // half-word / word arms of its `unique case (size)`).  The
+                    // constant-base path above cannot slice, and dropping the
+                    // write left `be` at its '0 initializer: the write buffer
+                    // never transferred a dirty half-word or word to the cache
+                    // (tx_be = 0, so dirty bits were never cleared and the
+                    // write request never raised) -- 216 / 290 diverging
+                    // co-simulated cycles against an RTL that read_slang
+                    // matched.  Same read-modify-write + SSA rename as the
+                    // dynamic bit-select write below, over a WIDTH-bit slice.
+                    RTLIL::SigSpec old_sig = input_mapping.at(base_name);
+                    int bw = old_sig.size();
+                    int ips_ew = func_local_elem_width(ips->Actual_group(), base_name);
+                    int w = width_val * (ips_ew > 0 ? ips_ew : 1);
+                    int saved_ictx = expression_context_width;
+                    expression_context_width = 0;   // self-determined index (LRM 11.6.1)
+                    RTLIL::SigSpec bsig = import_expression(
+                        any_cast<const expr*>(ips->Base_expr()), &input_mapping);
+                    expression_context_width = saved_ictx;
+                    if (w > 0 && w <= bw && !bsig.empty()) {
+                        RTLIL::SigSpec b32 = bsig;
+                        b32.extend_u0(32, false);
+                        // `-:` counts DOWN from the base: the LSB is base - (width - 1).
+                        if (ips->VpiIndexedPartSelectType() != vpiPosIndexed)
+                            b32 = module->Sub(NEW_ID, b32, RTLIL::Const(width_val - 1, 32), false);
+                        // The slice's LSB is a SIGNED position: `be[0 -: 2]`
+                        // reaches below bit 0 and the LRM keeps the in-range
+                        // bit (read_slang: 8'h01), which an unsigned `<<` by
+                        // -1 would wipe.  `$shift` with a signed amount shifts
+                        // right for a positive B, so B = -lsb puts the slice
+                        // at lsb and drops the bits that fall below 0.
+                        RTLIL::SigSpec shamt = b32;
+                        if (ips_ew > 1)
+                            shamt = module->Mul(NEW_ID, b32, RTLIL::Const(ips_ew, 32), true);
+                        RTLIL::SigSpec neg_shamt = module->Neg(NEW_ID, shamt, true);
+                        RTLIL::SigSpec mask_base(RTLIL::Const(RTLIL::State::S1, w));
+                        mask_base.extend_u0(bw, false);
+                        RTLIL::SigSpec mask = module->Shift(NEW_ID, mask_base, neg_shamt, true);
+                        RTLIL::SigSpec data = rhs_sig;
+                        if (data.size() > w) data = data.extract(0, w);
+                        else if (data.size() < w) data.extend_u0(w);
+                        {
+                            RTLIL::SigSpec cur = module->Shift(NEW_ID, old_sig, shamt, true);
+                            cur = cur.extract(0, w);
+                            bool did = true;
+                            switch (assign->VpiOpType()) {
+                            case vpiBitOrOp:  data = module->Or (NEW_ID, cur, data); break;
+                            case vpiBitAndOp: data = module->And(NEW_ID, cur, data); break;
+                            case vpiBitXorOp: data = module->Xor(NEW_ID, cur, data); break;
+                            case vpiAddOp:    data = module->Add(NEW_ID, cur, data); break;
+                            case vpiSubOp:    data = module->Sub(NEW_ID, cur, data); break;
+                            case vpiMultOp:   data = module->Mul(NEW_ID, cur, data); break;
+                            case vpiDivOp:    data = module->Div(NEW_ID, cur, data); break;
+                            case vpiModOp:    data = module->Mod(NEW_ID, cur, data); break;
+                            case vpiLShiftOp: data = module->Shl(NEW_ID, cur, data); break;
+                            case vpiRShiftOp: data = module->Shr(NEW_ID, cur, data); break;
+                            default: did = false;
+                            }
+                            if (did) {
+                                if (data.size() > w) data = data.extract(0, w);
+                                compound_applied = true;
+                            }
+                        }
+                        data.extend_u0(bw, false);
+                        RTLIL::SigSpec data_sh = module->Shift(NEW_ID, data, neg_shamt, true);
+                        RTLIL::SigSpec keep = module->And(NEW_ID, old_sig,
+                            module->Not(NEW_ID, mask, false), false);
+                        RTLIL::SigSpec merged = module->Or(NEW_ID, keep, data_sh, false);
+                        RTLIL::Wire* ssa_w = module->addWire(NEW_ID, bw);
+                        add_src_attribute(ssa_w->attributes, assign);
+                        lhs_sig = RTLIL::SigSpec(ssa_w);
+                        rhs_sig = merged;
+                        input_mapping[base_name] = RTLIL::SigSpec(ssa_w);
+                        if (mode_debug)
+                            uhdm_trace("UHDM: dynamic indexed part-select write %s[dyn +: %d] "
+                                "-> RMW + SSA rename\n", base_name.c_str(), w);
+                    } else {
+                        log_warning("Indexed part-select LHS %s[dyn +: %d] does not fit "
+                                    "the local (base_size=%d)\n", base_name.c_str(), w, bw);
+                    }
                 } else {
                     log_warning("Indexed part-select LHS %s has non-constant "
                                 "base/width\n", base_name.c_str());

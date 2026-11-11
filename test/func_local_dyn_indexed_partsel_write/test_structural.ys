@@ -1,0 +1,11 @@
+# read_slang values: half-word at offset 6 -> c0, word at offset 2 -> 3c,
+# 2'b11 at offset 6 -> c0, 0f ^ (3 << 2) -> 03, [7 -: 2] -> c0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+sat -verify -prove be_o 8'hc0 -set offset 3'd6 -set size 2'd1
+sat -verify -prove be_o 8'h3c -set offset 3'd2 -set size 2'd2
+sat -verify -prove be_o 8'h02 -set offset 3'd1 -set size 2'd0
+sat -verify -prove fill_o 8'hc0 -set offset 3'd6
+sat -verify -prove cmp_o 8'h03 -set offset 3'd2
+sat -verify -prove down_o 8'hc0 -set offset 3'd7
