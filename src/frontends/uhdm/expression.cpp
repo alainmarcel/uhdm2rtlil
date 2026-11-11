@@ -2738,7 +2738,33 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                 }
 
-                // Extract increment: i++ or i = i + 1
+                // Extract increment: i++ / i-- / i += N / i = i + N.  The step
+                // is the CONSTANT operand, not 1: OpenTitan i3c_controller_fsm's
+                // byte reversal `for (int unsigned ib = 0; ib < DataWidth; ib += 8)
+                // revb[DataWidth - ib - 8 +: 8] = wdata[ib +: 8]` unrolled 32
+                // overlapping byte writes instead of 4 and transmitted a
+                // scrambled word (11 co-simulated cycles, slang clean).
+                auto const_step = [&](const UHDM::any* e) -> int64_t {
+                    if (!e) return 1;
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    RTLIL::SigSpec v = import_expression(any_cast<const expr*>(e), &input_mapping);
+                    force_const_fold = saved_fcf;
+                    if (v.is_fully_const() && v.size() > 0 && v.size() <= 64) {
+                        int64_t n = v.as_const().as_int();
+                        if (n != 0) return n;
+                    }
+                    return 1;
+                };
+                // The constant operand of `i + N` / `N + i` / `i - N`.
+                auto step_of_op = [&](const operation* op) -> int64_t {
+                    if (!op || !op->Operands()) return 1;
+                    for (auto o : *op->Operands()) {
+                        if (o->UhdmType() == uhdmref_obj && std::string(o->VpiName()) == loop_var_name) continue;
+                        return const_step(o);
+                    }
+                    return 1;
+                };
                 if (can_unroll && inc_stmt->UhdmType() == uhdmoperation) {
                     const operation* inc_op = any_cast<const operation*>(inc_stmt);
                     int io = inc_op->VpiOpType();
@@ -2747,19 +2773,24 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     } else if (io == vpiPostDecOp || io == vpiPreDecOp) {
                         increment = -1;   // i-- / --i
                     } else if (io == vpiAddOp) {
-                        increment = 1; // i = i + 1
+                        increment = step_of_op(inc_op);      // i += N as an operation
                     } else if (io == vpiSubOp) {
-                        increment = -1; // i = i - 1
+                        increment = -step_of_op(inc_op);
                     }
                 } else if (can_unroll && inc_stmt->UhdmType() == uhdmassignment) {
-                    // Handle i = i + 1 / i = i - 1 style increment
+                    // i = i + N / i = i - N / i += N / i -= N
                     const assignment* inc_assign = any_cast<const assignment*>(inc_stmt);
-                    if (inc_assign->Rhs() && inc_assign->Rhs()->UhdmType() == uhdmoperation) {
+                    int aop = inc_assign->VpiOpType();
+                    if (aop == vpiAddOp) {
+                        increment = const_step(inc_assign->Rhs());
+                    } else if (aop == vpiSubOp) {
+                        increment = -const_step(inc_assign->Rhs());
+                    } else if (inc_assign->Rhs() && inc_assign->Rhs()->UhdmType() == uhdmoperation) {
                         const operation* add_op = any_cast<const operation*>(inc_assign->Rhs());
                         if (add_op->VpiOpType() == vpiAddOp) {
-                            increment = 1;
+                            increment = step_of_op(add_op);
                         } else if (add_op->VpiOpType() == vpiSubOp) {
-                            increment = -1;
+                            increment = -step_of_op(add_op);
                         }
                     }
                 }

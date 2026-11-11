@@ -1,0 +1,9 @@
+# read_slang values for wdata = 32'h496f4112: byte reversal 32'h12416f49,
+# half-word reversal 32'h4112496f.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top dut
+proc; flatten; opt
+sat -verify -prove o_b 32'h12416f49 -set wdata 32'h496f4112
+sat -verify -prove o_l 32'h12416f49 -set wdata 32'h496f4112
+sat -verify -prove o_h 32'h4112496f -set wdata 32'h496f4112
+sat -verify -prove o_d 32'h12416f49 -set wdata 32'h496f4112
