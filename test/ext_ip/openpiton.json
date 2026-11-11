@@ -57,7 +57,8 @@
   "openpiton/piton/design/include/l2.tmp.h",
   "openpiton/piton/design/include/iop.h",
   "openpiton/piton/design/include/sys.h",
-  "openpiton/piton/design/include/tlu.h"
+  "openpiton/piton/design/include/tlu.h",
+  "openpiton/piton/design/chipset/include/chipset_define.vh"
  ],
  "slang_flags": [
   "--single-unit"
@@ -175,6 +176,10 @@
   "synchronizer_asr": {
    "cosim": "artefact",
    "note": "adjudicated 2026-10-29: not a reader defect. This is OpenPiton's flop library writing the ASYNCHRONOUS RESET as a TERNARY, which yosys cannot infer from ANY frontend -- the same class that cost 61 rows and is closed elsewhere by the `YOSYS` define plus the swrvr_clib.v stand-in, but these primitives are the stand-in's own subjects. read_slang refuses them outright (`multiple asynchronous loads unsupported`), so the row had no reference and no verdict. Co-simulated against the GOLDEN read_verilog netlist instead: it diverges at the SAME cycle on the SAME signal for the SAME count (FIRST-SLANG cycle 11 sync_out rtl=1, slang_vs_rtl=13), i.e. SHARED_DIVERGENCE -- both frontends build the identical netlist and the RTL's asynchronous reset is what neither can express"
+  },
+  "uart_writer": {
+   "cosim": "artefact",
+   "note": "adjudicated 2026-11-11: not a reader defect. uart_writer reads its hard-wired message ROMs as `line_0[char_cnt]` with a 9-bit char_cnt over a 4-entry array, and keeps counting past the end of the line. The internal probe pass (COSIM_PROBE=1) shows the only divergence is at char_cnt = 4: Verilator WRAPS the out-of-range index onto entry 0 (0x44 'D') in the RTL, and so does read_slang's netlist, which keeps the array as a 4-word memory that write_verilog prints as a Verilog array; read_uhdm lowers the read as a select that yields X for an out-of-range address, which Verilator shows as 0. IEEE 1800-2017 7.4.6: reading an unpacked array with an out-of-range index returns the element type's default uninitialized value (X for a 4-state type), so the RTL's value there is Verilator's, not the language's. Same class as the OpenPiton TLB rows' index wrap."
   }
  }
 }
