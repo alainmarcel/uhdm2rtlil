@@ -1062,3 +1062,13 @@ Test: asserts
     counter never sets bit 2 -- which is exactly what that assertion states.
     The co-sim is vacuous (no output activity) on the RTL and on both
     netlists alike.  CONFIRMED NOT A DIVERGENCE: constant output by design.
+
+Test: negative_lsb_range_select
+    The test's `y = cyc_init(2)` is a CONSTANT function call that Surelog folds
+    at elaboration: the reader receives `BIN:0000000001` where the RTL (and
+    read_slang) give 0, because UHDM ExprEval's declared-range part-select fold
+    does not find a FUNCTION LOCAL's typespec (`logic [W-1:-1] cnt` sliced as
+    raw bits).  The reader's own cases -- the runtime selects z, w, h -- are
+    proven by test_structural.ys.  NOT a read_uhdm divergence: a Surelog/UHDM
+    follow-up on the fix/partsel-fold-declared-range branch (UHDM #1179); the
+    same entry explains the test's slang_miter_expected_fail.txt listing.

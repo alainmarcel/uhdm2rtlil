@@ -80,3 +80,13 @@ yosys_issues/issue_6290_design_check_crashes_with_stack_overflow
 # seq 4); read_slang encodes the latches through enable muxes, as in #5942
 # above.  Not a reader defect.
 yosys_issues/issue_5946_opt_clean_misidentifies_live_latch_feeding
+# A vector declared with a NEGATIVE lower bound (`logic [W-1:-1] cnt`, the
+# 'n.1' fixed-point counter of OpenTitan's i3c_timing_pkg) selected by its
+# declared indices (`cnt[W-1:0]` = the integer part).  The reader maps the
+# RUNTIME selects (test_structural.ys proves z, w, h); the miter still fails
+# on `y = cyc_init(2)`, a CONSTANT call Surelog folds at elaboration -- the
+# reader receives BIN:0000000001 -- because UHDM ExprEval's declared-range
+# part-select fold (declaredRange / getTypespecFunctor) does not find a
+# FUNCTION LOCAL's typespec and slices the raw bits.  Surelog/UHDM follow-up
+# on the fix/partsel-fold-declared-range branch (chipsalliance/UHDM#1179).
+negative_lsb_range_select

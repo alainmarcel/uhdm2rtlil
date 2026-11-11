@@ -1534,9 +1534,45 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             int lo = std::min(lv.as_int(), rv.as_int());
             int hi = std::max(lv.as_int(), rv.as_int());
             const RTLIL::Const& target = local_vars.at(nm);
+            // Map the select through the local's DECLARED range: the indices
+            // are the declaration's, not bit positions.  OpenTitan's
+            // i3c_timing_pkg keeps an 'n.1' fixed-point cycle count in
+            // `logic [TmCycW-1:-1] cnt` and returns `cnt[TmCycW-1:0]`, the
+            // integer part -- bits 1.. of the constant, not 0.. (read as raw
+            // bits, i3c_ctrl_req_gen's tcas_d2 timing came out 1 instead of 0).
+            int dli = 0, dri = 0; bool have_decl = false;
+            if (auto ag = ps->Actual_group()) {
+                const UHDM::ref_typespec* rts = nullptr;
+                if (auto v = dynamic_cast<const UHDM::variables*>(ag)) rts = v->Typespec();
+                const UHDM::typespec* at = rts ? rts->Actual_typespec() : nullptr;
+                const UHDM::VectorOfrange* rgs = nullptr;
+                if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(at))
+                    if (!lt->Elem_typespec()) rgs = lt->Ranges();
+                if (rgs && rgs->size() == 1) {
+                    // The bounds are module-level constants (`[TmCycW-1:-1]`,
+                    // a package localparam), which the local-variable
+                    // evaluator does not know: fold them as the importer does.
+                    auto r0 = (*rgs)[0];
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
+                    RTLIL::SigSpec dl = import_expression(any_cast<const expr*>(r0->Left_expr()));
+                    RTLIL::SigSpec dr = import_expression(any_cast<const expr*>(r0->Right_expr()));
+                    force_const_fold = saved_fcf;
+                    if (dl.is_fully_const() && dr.is_fully_const()) {
+                        dli = dl.as_const().as_int(); dri = dr.as_const().as_int();
+                        have_decl = (std::abs(dli - dri) + 1 == target.size()) &&
+                                    std::min(dli, dri) != 0;
+                    }
+                }
+            }
             std::vector<RTLIL::State> bits;
-            for (int b = lo; b <= hi; b++)
-                bits.push_back((b >= 0 && b < target.size()) ? target[b] : RTLIL::S0);
+            for (int b = lo; b <= hi; b++) {
+                int pos = b;
+                if (have_decl)
+                    pos = (dli >= dri) ? (b - std::min(dli, dri))   // descending [hi:lo]
+                                       : (std::max(dli, dri) - b);  // ascending  [lo:hi]
+                bits.push_back((pos >= 0 && pos < target.size()) ? target[pos] : RTLIL::S0);
+            }
             val = RTLIL::Const(bits);
         }
     } else if (operand->VpiType() == vpiHierPath) {
