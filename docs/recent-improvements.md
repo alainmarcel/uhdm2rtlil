@@ -4,6 +4,13 @@
 > UHDM→RTLIL frontend. Extracted from the main [README](../README.md) to keep it
 > concise; newest entries are near the top.
 
+### Surelog Bump: Five Upstream Elaboration Fixes (Surelog a8a2bbadf2, UHDM d3ddcdb5aa)
+- **Function-local declared-range part-select fold** (UHDM #1181, Surelog #4254): ExprEval folded `cnt[W-1:0]` on a function local `logic [W-1:-1] cnt` as raw bits, because the typespec lookup never searched the enclosing task_func.  `negative_lsb_range_select` now passes its read_slang miter (both ratchet entries removed); OpenTitan `i3c_controller_fsm` (12 div) and `i3c_controller` (3 div) -> ✅ equivalent + co-sim PASS.
+- **Bit-select of a struct-pattern parameter** (UHDM #1180, Surelog #4253): `RESETVALUE[i]` over a parameter bound to a struct assignment pattern folded to the i-th MEMBER, not bit i -- every cv32e40x/cv32e40s hardened CSR reset to the wrong value.  `cv32e40x_cs_registers` ❌ differs -> ✅ equivalent (co-sim 301 -> 161 div = read_slang's 161); `cv32e40s_cs_registers` co-sim now equals read_slang's (229 = 229) and its remaining cex is a `unique case (1'b1)` violation, adjudicated.
+- **Nested generate-for over `$bits(type param)`** (Surelog #4250): the inner loop ran 0 iterations in a generate scope, dropping 120 drivers in common_cells `id_queue`.  With #1556, cheshire `axi_riscv_lrsc` ❌ differs -> ✅ equivalent, 0 undriven (its co-sim divergence is shared with read_slang).
+- **Macro diamonds flagged as recursion** (Surelog #4251) and **a line comment at end of file** (Surelog #4252): preprocessor fixes for the OpenPiton elaboration failures.
+- Internal regression on the bump: 1904 tests, 0 unexpected; slang miter 787/794 (one fewer known fail).
+
 ### `$bits(typedef)` at a CHILD-CELL Port Actual Measured at the Definition's Defaults (`typedef_bits_child_port_actual`)
 - Test: `typedef struct packed { logic [$bits(fl_t)-1:0] mask; } ex_t` inside a module whose `fl_t` range depends on a DERIVED parameter default (`LSB = $clog2(DW/8)`), passed to a child as `.mask_i({ex[1].mask, ex[0].mask})`
 - **Bug — the port actual had no instance context**: child-cell port actuals are imported with `current_instance` null, so the `$bits(type)` handler walked the call's own parent chain into the module DEFINITION, where `fl_t` measures at the parameter defaults (`[-1:0]`).  The member came out 2 bits instead of 29.  A range Surelog can fold never reaches this path, which is why eight synthetic repros missed it; the test came from a line-ddmin of the real sources.

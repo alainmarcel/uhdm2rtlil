@@ -858,7 +858,7 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main`: 3 row(s) open.**  15 row(s) ever listed here co-simulate clean
+**Status on `main`: 1 row(s) open.**  17 row(s) ever listed here co-simulate clean
 with the `read_uhdm` netlist on `main` and are not listed; the fixes that
 closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
@@ -874,6 +874,8 @@ closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 | `cvw/wallypipelinedcore` | #1473 (enum-bound `parameter type` port sized from its generic default), 2026-11-06 |
 | `openpiton/bw_r_dtlb` | #1470 (always_ff blocking temp read as the block's final value); formal differs adjudicated #1469, 2026-11-06 |
 | `openpiton/bw_r_itlb` | #1470; formal differs adjudicated #1469, 2026-11-06 |
+| `opentitan-ip/i3c_controller` | same, through i3c_controller_fsm, 2026-11-11 |
+| `opentitan-ip/i3c_controller_fsm` | Surelog bump to a8a2bbadf2 (UHDM #1181: function-local declared-range part-select fold, `cnt[W-1:0]` on `logic [W-1:-1]`) + #1548, 2026-11-11 |
 | `rsd/ProducerMatrix` | #1543 (same class, `dispatchVector[i][ptr] = TRUE`), 2026-11-11 |
 | `snitch/spatz_ipu` | #1437 + #1441 + #1470, 2026-11-06 |
 | `snitch/spatz_vfu` | #1471 (generate-scope select writes by bare name) + #1472 (indexed struct-parameter member read as X), 2026-11-06 |
@@ -884,13 +886,11 @@ A row listed below is open: the latest sweep reports show it diverging with the
 `read_uhdm` netlist and it is not in the closed list.  A closed row that comes back
 is a regression, not a stale entry.
 
-**3** open row(s).
+**1** open row(s).
 
 | set | test | verdicts | recipe |
 |---|---|---|---|
 | sweep cva6-rv32 | [`wt_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_cache_subsystem.sv#L22) | read_slang ✅ PASS; read_uhdm ❌ 4 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_cache_subsystem$'` |
-| sweep opentitan-ip | [`i3c_controller`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller.sv#L6) | read_slang ✅ PASS; read_uhdm ❌ 3 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller` |
-| sweep opentitan-ip | [`i3c_controller_fsm`](https://github.com/lowRISC/opentitan/blob/f49474bc89c3ce8a99536329a1e16bf22936da37/hw/ip/i3c/rtl/i3c_controller_fsm.sv#L8) | read_slang ✅ PASS; read_uhdm ❌ 12 div (slang clean) | R3 `python3 ext_flow.py opentitan-ip i3c_controller_fsm` |
 
 Two of the divergences localised on the way were the REFERENCE's, not ours,
 and are recorded rather than fixed: Verilator masks an out-of-range index into

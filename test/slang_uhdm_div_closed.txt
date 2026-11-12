@@ -20,3 +20,5 @@ veer-eh2/eh2_lsu # #1543 (same, seen through eh2_lsu), 2026-11-11
 rsd/ProducerMatrix # #1543 (same class, `dispatchVector[i][ptr] = TRUE`), 2026-11-11
 cva6-rv32/wt_dcache_wbuffer # #1546 (function local written through a dynamic indexed part-select), 2026-11-11
 cva6-rv32/wt_dcache # #1546 (same, through wt_dcache_wbuffer), 2026-11-11
+opentitan-ip/i3c_controller_fsm # Surelog bump to a8a2bbadf2 (UHDM #1181: function-local declared-range part-select fold, `cnt[W-1:0]` on `logic [W-1:-1]`) + #1548, 2026-11-11
+opentitan-ip/i3c_controller # same, through i3c_controller_fsm, 2026-11-11
