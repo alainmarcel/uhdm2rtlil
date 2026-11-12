@@ -444,10 +444,15 @@ def _slang_args(d):
 
 def _error_in_slang_step(out):
     """True when the log's first ERROR is raised inside the `read_slang` step
-    (after its "Executing SLANG frontend" header, before the next pass)."""
+    (after its "Executing SLANG frontend" header, before the next pass) --
+    or when there is no ERROR at all and the log simply STOPS in that step:
+    read_slang killed by the address-space cap or a signal prints nothing
+    (sv-elab#175, a 4096-arm case that read_slang exhausts 16 GB on)."""
     err = out.find("ERROR:")
     if err < 0:
-        return False
+        if "End of script" in out:
+            return False
+        err = len(out)
     heads = [(m.start(), m.group(1)) for m in
              re.finditer(r"^\d+\. Executing (\S+)", out, re.M) if m.start() < err]
     return bool(heads) and heads[-1][1] == "SLANG"
