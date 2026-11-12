@@ -1,0 +1,30 @@
+// povik/sv-elab#110 (closed): Crash on use of function with 'logic' as input
+// https://github.com/povik/sv-elab/issues/110
+// Code block(s) from the issue; harvested by test/sv_elab_issues/harvest.py
+
+// ---- b0.sv
+// mwe_func_in_ff.sv
+function logic [8:0] my_sum(logic [7:0] a, logic [7:0] b);
+    logic [8:0] out;
+    out = a + b;
+    return out;
+endfunction;
+
+module mwe (
+	
+    input logic  i_clk,
+    input logic  i_rst_n,    
+    input  logic [7:0] in,
+    output logic [8:0] o1
+);
+
+    always_ff @( posedge i_clk or negedge i_rst_n ) begin : p_seq
+        if (~i_rst_n) begin
+            o1 <= 0;
+        end else begin
+            o1 <= my_sum(in,3);            
+        end
+    end    
+
+endmodule
+

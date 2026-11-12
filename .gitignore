@@ -108,3 +108,4 @@ test/**/auto_slang_equiv.ys
 test/parallel_results/
 # the yosys-issue harvest's fetched tracker bodies (test/yosys_issues/harvest.py fetch)
 test/yosys_issues/harvest/
+test/sv_elab_issues/harvest/

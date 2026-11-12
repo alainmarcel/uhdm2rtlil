@@ -37,6 +37,22 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 WORK = HERE / "harvest"
 SURELOG = REPO / "build" / "third_party" / "Surelog" / "bin" / "surelog"
+# The tracker harvested.  Another corpus (test/sv_elab_issues/harvest.py)
+# reuses this file through configure(): a different repository, a different
+# output directory, and -- for a tracker that is ALL SystemVerilog -- every
+# issue rather than the label + keyword searches.
+GH_OWNER, GH_NAME = "YosysHQ", "yosys"
+ALL_ISSUES = False
+SELF = "test/yosys_issues/harvest.py"
+# A block's variant tag when blocks are tried one by one (None: `s<i>`).
+BLOCK_TAG = lambda code: None
+
+
+def configure(owner, name, here, all_issues, self_path):
+    global GH_OWNER, GH_NAME, HERE, WORK, ALL_ISSUES, SELF
+    GH_OWNER, GH_NAME, ALL_ISSUES, SELF = owner, name, all_issues, self_path
+    HERE = Path(here).resolve()
+    WORK = HERE / "harvest"
 
 SEARCHES = ["read_verilog -sv", "systemverilog", "system verilog", "always_comb",
             "always_ff", "always_latch", "interface modport", "struct packed",
@@ -50,7 +66,7 @@ SVKW = re.compile(r'\b(logic|always_comb|always_ff|always_latch|interface|modpor
                   r'string|unique|priority|foreach|return|automatic|localparam type|'
                   r'parameter type|bind|assert property|let)\b|\'\{|\+\+|\+=|-=|\'\(|\$bits|\$clog2|::')
 MOD = re.compile(r'\b(module|package|interface|program|checker)\b')
-DEFN = re.compile(r'^\s*(?:module|interface|package|program)\s+([A-Za-z_][A-Za-z0-9_$]*)', re.M)
+DEFN = re.compile(r'^\s*(?:module|interface|package|program)\s+(\\\S+|[A-Za-z_][A-Za-z0-9_$]*)', re.M)
 HEREDOC = re.compile(r'<<\s*(\w+)\s*\n(.*?)\n\1\s*$', re.S | re.M)
 TRAILING_COMMA = re.compile(r',(\s*\n\s*)\)')
 
@@ -65,12 +81,14 @@ def gh(args):
 def fetch():
     WORK.mkdir(exist_ok=True)
     nums = set()
+    repo = f"{GH_OWNER}/{GH_NAME}"
+    label = [] if ALL_ISSUES else ["--label", "SystemVerilog"]
     for st in ("open", "closed"):
-        for it in json.loads(gh(["issue", "list", "-R", "YosysHQ/yosys", "--label", "SystemVerilog",
-                                 "--state", st, "--limit", "1000", "--json", "number"])):
+        for it in json.loads(gh(["issue", "list", "-R", repo] + label +
+                                ["--state", st, "--limit", "1000", "--json", "number"])):
             nums.add(it["number"])
-    for q in SEARCHES:
-        r = subprocess.run(["gh", "search", "issues", "--repo", "YosysHQ/yosys", q,
+    for q in ([] if ALL_ISSUES else SEARCHES):
+        r = subprocess.run(["gh", "search", "issues", "--repo", repo, q,
                             "--limit", "1000", "--json", "number"], capture_output=True, text=True)
         if r.returncode == 0:
             for it in json.loads(r.stdout):
@@ -84,7 +102,7 @@ def fetch():
     B = 60
     for i in range(0, len(todo), B):
         chunk = todo[i:i + B]
-        q = 'query{repository(owner:"YosysHQ",name:"yosys"){' + ''.join(
+        q = f'query{{repository(owner:"{GH_OWNER}",name:"{GH_NAME}"){{' + ''.join(
             f'i{n}:issue(number:{n}){{number title state createdAt body '
             f'labels(first:20){{nodes{{name}}}} comments(first:30){{nodes{{body}}}}}}'
             for n in chunk) + '}}'
@@ -108,7 +126,9 @@ def blocks_of(issue):
                 continue
             if code.lstrip().startswith(("yosys", "$", ">", "ERROR", "Warning")):
                 continue
-            if not SVKW.search(code) and lang not in ("systemverilog", "sv"):
+            # A tracker that is ALL SystemVerilog needs no keyword evidence:
+            # a plain-Verilog snippet there is still a frontend report.
+            if not ALL_ISSUES and not SVKW.search(code) and lang not in ("systemverilog", "sv"):
                 continue
             h = hashlib.md5(code.encode()).hexdigest()
             if h in seen:
@@ -183,7 +203,15 @@ def write(issues):
         it = issues[n]
         title, state = it["title"], it["state"].lower()
         seen_sets = set()
-        for tag, files in candidates(it):
+        cands = candidates(it)
+        # An all-SystemVerilog tracker pastes logs that quote the design
+        # ("of module top"), and they join the code in the combined
+        # candidate.  When no candidate parses, try each block on its own
+        # (`_s<i>`).
+        if ALL_ISSUES and not any(surelog_ok(f) for _, f in cands):
+            cands = [(BLOCK_TAG(c) or f"s{i}", [("b0.sv", c)])
+                     for i, (_, c) in enumerate(blocks_of(it))]
+        for tag, files in cands:
             key = hashlib.md5("".join(c for _, c in files).encode()).hexdigest()
             if key in seen_sets:
                 continue
@@ -191,10 +219,10 @@ def write(issues):
             if not surelog_ok(files):
                 continue
             name = f"issue_{n}_{slug(title)}" + (f"_{tag}" if tag else "")
-            hdr = (f"// YosysHQ/yosys#{n} ({state}): {title}\n"
-                   f"// https://github.com/YosysHQ/yosys/issues/{n}\n"
+            hdr = (f"// {GH_OWNER}/{GH_NAME}#{n} ({state}): {title}\n"
+                   f"// https://github.com/{GH_OWNER}/{GH_NAME}/issues/{n}\n"
                    f"// Code block(s) from the issue" + (f" (variant {tag})" if tag else "") +
-                   "; harvested by test/yosys_issues/harvest.py\n\n")
+                   f"; harvested by {SELF}\n\n")
             body = "".join(f"// ---- {fn}\n{c.rstrip()}\n\n" for fn, c in files)
             d = HERE / name
             d.mkdir(exist_ok=True)
@@ -212,8 +240,8 @@ def write(issues):
     print(f"{made} test directories")
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+def main(doc=__doc__):
+    ap = argparse.ArgumentParser(description=doc, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["fetch", "write", "all"])
     ap.add_argument("--only", help="regex over issue numbers")
     a = ap.parse_args()
