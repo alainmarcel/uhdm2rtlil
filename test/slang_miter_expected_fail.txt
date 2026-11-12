@@ -80,3 +80,25 @@ yosys_issues/issue_6290_design_check_crashes_with_stack_overflow
 # seq 4); read_slang encodes the latches through enable muxes, as in #5942
 # above.  Not a reader defect.
 yosys_issues/issue_5946_opt_clean_misidentifies_live_latch_feeding
+# sv-elab#56 (sv-elab-issues sweep): `always_comb if (a) y = b;` infers a
+# latch.  read_uhdm emits a $dlatch (EN=a, D=b), as read_verilog does;
+# read_slang closes a combinational LOOP (`y = a ? b : y`) -- the issue
+# itself.  Same class as yosys_issues/issue_1193.  Not a reader defect.
+sv_elab_issues/issue_56_lack_of_warnings_errors_for_unwanted
+# sv-elab#176 (sv-elab-issues sweep): `out6[exp] = base & 1` is a side
+# effect of a function called from a continuous assignment.  read_uhdm drives
+# out6[2:0] = 3'b010, what the RTL simulation computes (co-sim PASS);
+# read_slang leaves all of out6 X (its co-sim diverges every cycle).  out6[3]
+# is never assigned.  Not a reader defect.
+sv_elab_issues/issue_176_bug_constant_folding_in_function_appears
+# sv-elab#405 (sv-elab-issues sweep, OPEN upstream): `(* gclk *) reg gbl;
+# always @(posedge gbl)` is yosys's global-clock flop.  read_uhdm emits a
+# $ff, as read_verilog does; read_slang ignores the attribute (the issue).
+# Not a reader defect.
+sv_elab_issues/issue_405_gclk_not_honoured_always_posedge_gbl
+# sv-elab#73 (sv-elab-issues sweep): the FIFO's s_wr_ptr / s_rd_ptr are
+# never assigned, so both readers index the memory with X.  With the pointers
+# made inputs (2026-11-12) the read_uhdm-vs-read_slang miter PROVES (seq 4):
+# the difference is only how each models the undriven index.  Not a defect.
+sv_elab_issues/issue_73_oss_cad_suite_apparently_distributing_stale
+

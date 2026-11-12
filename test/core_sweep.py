@@ -442,6 +442,17 @@ def _slang_args(d):
     return "--ignore-assertions " + " ".join(incs)
 
 
+def _error_in_slang_step(out):
+    """True when the log's first ERROR is raised inside the `read_slang` step
+    (after its "Executing SLANG frontend" header, before the next pass)."""
+    err = out.find("ERROR:")
+    if err < 0:
+        return False
+    heads = [(m.start(), m.group(1)) for m in
+             re.finditer(r"^\d+\. Executing (\S+)", out, re.M) if m.start() < err]
+    return bool(heads) and heads[-1][1] == "SLANG"
+
+
 def _auto_slang_miter(d, top, known_fail, timeout=240, srcs=None, name=None):
     """Run an on-the-fly read_uhdm-vs-read_slang miter for a test dir that ships
     no committed `test_slang_equiv.ys`.  The miter is the same boilerplate the
@@ -522,6 +533,14 @@ sat -verify -prove-asserts -seq 4 -set-init-zero miter
     if re.search(r"unknown module|Design elaboration failed|Build failed:"
                  r"|is not part of the design", out):
         return "— (no miter: needs submodules)"
+    # read_slang ABORTING (an internal assertion, "Feature unimplemented",
+    # "Internal frontend error") is just as much "no reference" as it
+    # declining the construct -- sv-elab's own regress.sv r31 / r33 / r35 and
+    # sv-elab#93 abort in the vendored frontend.  Only when the error falls
+    # INSIDE the SLANG frontend step: a read_uhdm-side abort must stay a
+    # setup error.
+    if srcs != "-f project.f" and _error_in_slang_step(out):
+        return "no reference (read_slang fails)"
     if "SUCCESS!" in out:
         return "✅ equivalent (auto)"
     if rc == 124 or "[timeout]" in out:
@@ -581,6 +600,38 @@ def _auto_top(d):
     return m.group(1).lstrip("\\") if m else None
 
 
+def _only_empty_modules(d):
+    """True when every module read_uhdm imports from `d` is a blackbox.
+
+    read_uhdm marks a module with an EMPTY body as `(* blackbox *)` (a cell
+    library stub), and `hierarchy -auto-top` never picks a blackbox, so a
+    snippet that is nothing but port declarations (`module a(input real
+    a1); endmodule`, a `specify`-only module) has no top.  The row then fell
+    back to the DIRECTORY name as its top and read `error` in every column
+    (sv-elab-issues: 80, 172, 181, 296, 400) -- there is simply no logic."""
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    # Parse the RTLIL rather than `select =A:blackbox`: a blackbox with no
+    # wires (`(* blackbox *) module alu(); parameter FOO = 0; ...`) holds no
+    # selectable object, so `select -assert-min 1` miscounts it as absent.
+    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "-p",
+                  "read_uhdm slpp_all/surelog.uhdm; write_rtlil -"],
+                 cwd=d, timeout=600)
+    if rc != 0:
+        return False
+    boxed, attrs = [], []
+    for line in (out or "").splitlines():
+        line = line.strip()
+        if line.startswith("attribute "):
+            attrs.append(line.split()[1])
+        elif line.startswith("module "):
+            boxed.append("\\blackbox" in attrs)
+            attrs = []
+        elif not line.startswith("attribute"):
+            attrs = attrs if line == "" else []
+    return bool(boxed) and all(boxed)
+
+
 def sweep_testdirs(prefix, cycles, jobs, flt=None):
     """Sweep test/<prefix>_* dirs: slang miter + test_sim_equivalence.py.
 
@@ -631,7 +682,13 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
             row["cosim"] = "skip (no UHDM)"
             row["check"] = "— (no UHDM)"
             return row
-        top = (_auto_top(d) or d.name) if nested else _project_top(d)
+        top = _auto_top(d) if nested else _project_top(d)
+        if nested and top is None and _only_empty_modules(d):
+            row.update(formal="— (no logic: empty modules)",
+                       cosim="skip (empty modules)",
+                       check="— (empty modules)")
+            return row
+        top = top or d.name
         # Structural undriven-net probe (fast dropped-driver check, every dir).
         row["check"] = _undriven_check(d, top)
         row["conflicts"] = _conflict_cell(d)

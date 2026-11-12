@@ -1102,3 +1102,18 @@ Test: axi_rt_unit_top_xilinx
     configuration.  The same unit with real parameters, axi_rt_unit_top_synth,
     is formally proven and co-simulates clean.  A degenerate-configuration
     artefact, not a reader lead.
+
+Test: issue_73_oss_cad_suite_apparently_distributing_stale
+    sv-elab#73 (sv-elab-issues sweep).  The FIFO's read and write pointers
+    s_wr_ptr / s_rd_ptr are declared and never assigned, so every memory
+    access uses an X index: Verilator reads X as 0, the netlists keep X, and
+    read_uhdm (120 div) and read_slang (14 div) both diverge from the RTL.
+    With the pointers made inputs the read_uhdm-vs-read_slang miter proves
+    (2026-11-12).  A source-level X, not a reader defect.
+
+Test: issue_372_unsigned_comparison_treated_as_signed_h1
+    sv-elab#372 (sv-elab-issues sweep).  `y = (x < 8'bX0001000)` compares
+    against a literal with an X bit, which is X by the LRM; Verilator reads the
+    X as 0.  read_uhdm and read_slang are formally equivalent and diverge from
+    the RTL identically (300 div each).  A testbench artefact.
+
