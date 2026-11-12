@@ -858,7 +858,7 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main`: 1 row(s) open.**  17 row(s) ever listed here co-simulate clean
+**Status on `main`: this class is EMPTY.**  18 row(s) ever listed here co-simulate clean
 with the `read_uhdm` netlist on `main` and are not listed; the fixes that
 closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
@@ -869,6 +869,7 @@ closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 | `cheshire/obi_uart_tx` | #1467 (comb `for` with a runtime bound: guarded writes recorded unconditionally), 2026-11-06 |
 | `cheshire/reg_uart_wrap` | #1466 (same as apb_uart, seen through reg_to_apb), 2026-11-06 |
 | `cheshire/slink_ch_alloc` | #1443 (`foreach` index unsigned) + #1468 (`foreach` over a type-parameter packed array), 2026-11-06 |
+| `cva6-rv32/wt_cache_subsystem` | #1546 (same, through wt_dcache); co-sim 300 active cycles uhdm_vs_rtl=0 with `memory -nomap` (the mapped 36 tc_srams = 154 MB of Verilog do not compile in the co-sim budget; read_slang drops them in tc_sram_wrapper's `synthesis translate_off`, so it is no reference here), 2026-11-11 |
 | `cva6-rv32/wt_dcache` | #1546 (same, through wt_dcache_wbuffer), 2026-11-11 |
 | `cva6-rv32/wt_dcache_wbuffer` | #1546 (function local written through a dynamic indexed part-select), 2026-11-11 |
 | `cvw/wallypipelinedcore` | #1473 (enum-bound `parameter type` port sized from its generic default), 2026-11-06 |
@@ -886,11 +887,7 @@ A row listed below is open: the latest sweep reports show it diverging with the
 `read_uhdm` netlist and it is not in the closed list.  A closed row that comes back
 is a regression, not a stale entry.
 
-**1** open row(s).
-
-| set | test | verdicts | recipe |
-|---|---|---|---|
-| sweep cva6-rv32 | [`wt_cache_subsystem`](https://github.com/alainmarcel/uhdm2rtlil/blob/main/test/cva6_equiv/rtl/core/cache_subsystem/wt_cache_subsystem.sv#L22) | read_slang ✅ PASS; read_uhdm ❌ 4 div (slang clean) | R4 `python3 core_sweep.py cva6-rv32 --filter '^wt_cache_subsystem$'` |
+**0** open row(s).
 
 Two of the divergences localised on the way were the REFERENCE's, not ours,
 and are recorded rather than fixed: Verilator masks an out-of-range index into
