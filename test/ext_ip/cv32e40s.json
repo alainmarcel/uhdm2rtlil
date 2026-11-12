@@ -38,6 +38,12 @@
  "seq": 4,
  "timeout": 300,
  "want": "proven",
+ "overrides": {
+  "cv32e40s_cs_registers": {
+   "want": "cex",
+   "note": "unique case (1'b1) VIOLATION stimulus: the cex raises ctrl_fsm_i.csr_save_cause and ctrl_fsm_i.csr_restore_dret together (bits 30/31 of the 196-bit struct; LRM: undefined); the co-sim matches read_slang on every output sample (229 = 229, shared) -- the same artefact as cv32e40p/cv32e41p_cs_registers, not a reader defect.  The real reset-value bug (struct-pattern P[i] folded to a member) was fixed by Surelog #4253"
+  }
+ },
  "_note": [
   "",
   "The CORE-V CV32E40S: the SECURITY variant of the 4-stage RV32 core -- the",
