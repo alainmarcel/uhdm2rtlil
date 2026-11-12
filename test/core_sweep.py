@@ -555,7 +555,12 @@ SV_SYNTH_DIR = TEST_DIR / "sv_tests"
 #                    YosysHQ/yosys issue tracker that Surelog parses
 #                    (test/yosys_issues/harvest.py), plus the hand-written
 #                    test/yosys_issue_<n>_* tests of the regression
-NESTED_FAMILIES = {"sv-synth-tests": "sv_tests", "sv-yosys-issues": "yosys_issues"}
+#   sv-elab-issues   test/sv_elab_issues/  every SystemVerilog snippet from the
+#                    povik/sv-elab (read_slang) issue tracker, open and
+#                    closed, plus sv-elab's per-issue regression tests
+#                    (test/sv_elab_issues/harvest.py)
+NESTED_FAMILIES = {"sv-synth-tests": "sv_tests", "sv-yosys-issues": "yosys_issues",
+                   "sv-elab-issues": "sv_elab_issues"}
 
 
 def _auto_top(d):
@@ -2153,7 +2158,7 @@ def main():
                                      "egret", "dragonfly", "caliptra", "cva6-chip",
                                      "cva6-hpdcache", "cva6-hext", "cva6-rv32",
                                      "opentitan", "sv-synth-tests",
-                                     "sv-yosys-issues"] + _ext_families())
+                                     "sv-yosys-issues", "sv-elab-issues"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)

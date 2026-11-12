@@ -1,0 +1,36 @@
+# Sweep the povik/sv-elab issue corpus: every test/sv_elab_issues/
+# issue_<n>_*/dut.sv -- the code block(s) of an sv-elab issue (open or
+# closed) that Surelog parses, plus sv-elab's own per-issue regression test
+# (tests/various/issue<n>.ys), harvested by test/sv_elab_issues/harvest.py.
+#
+# sv-elab is the elaborator behind yosys's `read_slang`, the reference
+# frontend of every other sweep, so each issue is a construct a real design
+# asked of a SystemVerilog frontend.  Each row gets the usual columns: the
+# read_uhdm-vs-read_slang formal miter (auto-generated over dut.sv), the
+# undriven-net check, the read_slang co-sim and the read_uhdm co-sim -- "is
+# sv-elab issue #n supported by read_uhdm" is one row of one table.
+name: Sweep sv-elab-issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: "Co-sim cycles per test"
+        required: false
+        default: "300"
+  schedule:
+    - cron: "11 5 * * *"   # nightly 05:11 UTC, after sv-yosys-issues' 04:41
+
+concurrency:
+  group: sweep-sv-elab-issues-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    uses: ./.github/workflows/core-sweep.yml
+    with:
+      core: sv-elab-issues
+      cycles: ${{ github.event.inputs.cycles || '300' }}
+      timeout: 120
+      shards: 1
+      jobs: "4"
