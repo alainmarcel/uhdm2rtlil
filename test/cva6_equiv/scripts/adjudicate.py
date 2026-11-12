@@ -52,6 +52,17 @@ def sh(cmd, **kw):
 # PRE-fix read_uhdm netlist: after the otbn_mac_bignum_fsm struct-default fix
 # the formal column flipped to "equivalent" while the co-sim column still
 # printed the OLD divergence count, because only the miter netlist was rebuilt.
+# Memories of more than 64 words stay Verilog ARRAYS (`memory -nomap`, then
+# memory_map only the small ones).  Mapping expands a memory into flops + read
+# muxes: wt_cache_subsystem's 36 256-word tc_srams became 80k flops, a 154 MB
+# netlist Verilator could not compile in the sweep's 2400 s budget (the row
+# reported "skip"), and wt_dcache_mem took 1669 s to compile against 31 s.
+# Small memories stay MAPPED because an out-of-range index is simulated
+# differently by the two forms: hpdcache_sram_wmask_1rw at its ADDR_SIZE = 0
+# default is ONE word addressed by `logic [-1:0]`; mapped, it always reads
+# word 0 (as Verilator does on the RTL), as an array `mem[addr]` it diverged
+# 154 cycles on BOTH readers.  opt_mem runs either way (the ROM-init trap in
+# CLAUDE.md is unaffected).
 def _stale(path):
     if not os.path.exists(path):
         return True
@@ -63,7 +74,7 @@ if _stale("adj_gold.v") or _stale("adj_gate.v"):
     open("adj.ys", "w").write(f"""
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; setundef -undriven -zero
+flatten; proc; memory -nomap; memory_map t:$mem_v2 r:SIZE<=64 %i; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
@@ -72,7 +83,7 @@ write_verilog -noattr adj_gold.v
 design -reset
 read_slang --ignore-assertions -f {FLIST} {WRAP} --top {TOP}
 hierarchy -check -top {TOP}
-flatten; proc; memory; opt -fast; setundef -undriven -zero
+flatten; proc; memory -nomap; memory_map t:$mem_v2 r:SIZE<=64 %i; opt -fast; setundef -undriven -zero
 delete t:$check t:$assert t:$assume t:$print
 simplemap t:$bwmux
 techmap -map +/techmap_signed_shift.v t:$shift t:$shiftx %u r:B_SIGNED=1 %i
