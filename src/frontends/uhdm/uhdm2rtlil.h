@@ -1204,6 +1204,14 @@ struct UhdmImporter {
         const UHDM::any* step, RTLIL::CaseRule* case_rule, const UHDM::any* src, int bound);
     void collapse_composite_async_condition(RTLIL::Process* proc,
         const std::vector<std::pair<RTLIL::SigSpec, bool>>& triggers);
+    // Parameter values of the functions being inlined, innermost last:
+    // name -> value, from the function's own param_assigns.
+    std::vector<std::map<std::string, RTLIL::SigSpec>> func_param_binds_;
+    struct FuncParamBind {
+        UhdmImporter* imp; bool pushed = false;
+        FuncParamBind(UhdmImporter* i, const UHDM::task_func* f);
+        ~FuncParamBind() { if (pushed) imp->func_param_binds_.pop_back(); }
+    };
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

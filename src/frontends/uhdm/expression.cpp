@@ -12618,6 +12618,14 @@ bool UhdmImporter::ref_names_a_visible_type(const std::string& nm,
 }
 
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    // A parameter of the function being inlined (a static method of a
+    // parameterized class carries its specialization's values as the
+    // function's param_assigns, povik/sv-elab#308): innermost binding wins.
+    if (!func_param_binds_.empty() && uhdm_ref) {
+        std::string n(uhdm_ref->VpiName());
+        auto it = func_param_binds_.back().find(n);
+        if (it != func_param_binds_.back().end()) return it->second;
+    }
     // Break reference CYCLES.  A parameter whose value resolves back to itself
     // (directly, or around a chain of parameters) recursed through
     // import_expression until the stack was exhausted: CVA6's fpnew_top died
