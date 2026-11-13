@@ -3015,17 +3015,32 @@ bool UhdmImporter::slice_instance_array_actual(const UHDM::module_inst* uhdm_ins
     RTLIL::Wire* pw = tm ? tm->wire(RTLIL::escape_id(port_name)) : nullptr;
     if (!pw || pw->width <= 0 || actual.size() <= pw->width ||
         actual.size() % pw->width != 0) return false;
-    size_t lb = inst_name.rfind('[');
-    if (lb == std::string::npos) return false;
-    std::string ks = inst_name.substr(lb + 1, inst_name.size() - lb - 2);
     auto all_digits = [](const std::string& t) {
         if (t.empty()) return false;
         for (char c : t) if (c < '0' || c > '9') return false;
         return true;
     };
-    if (!all_digits(ks)) return false;
-    int k = atoi(ks.c_str());
-    std::string base = inst_name.substr(0, lb);
+    // `base[i][j][k]` -> base, {i, j, k}.  A member of a MULTI-dimensional
+    // instance array (`inst [3:0][2:0][1:0]`) carries one index per
+    // dimension; the actual is split over ALL members, slice 0 to the member
+    // with every index at its dimension's low end.
+    auto split = [&](const std::string& n, std::string& b, std::vector<int>& idx) {
+        idx.clear();
+        size_t e = n.size();
+        while (e > 0 && n[e - 1] == ']') {
+            size_t lb = n.rfind('[', e - 1);
+            if (lb == std::string::npos) return false;
+            std::string ks = n.substr(lb + 1, e - lb - 2);
+            if (!all_digits(ks)) return false;
+            idx.insert(idx.begin(), atoi(ks.c_str()));
+            e = lb;
+        }
+        b = n.substr(0, e);
+        return !idx.empty();
+    };
+    std::string base;
+    std::vector<int> my;
+    if (!split(inst_name, base, my)) return false;
     // siblings are named bare (`LRUMuxes[1]`) while inst_name may carry the
     // generate prefix
     if (size_t dot = base.rfind('.'); dot != std::string::npos) base = base.substr(dot + 1);
@@ -3041,17 +3056,30 @@ bool UhdmImporter::slice_instance_array_actual(const UHDM::module_inst* uhdm_ins
             sibs = pg->Modules();
     }
     if (!sibs) return false;
-    int n = 0, low = 1 << 30;
+    size_t nd = my.size();
+    std::vector<int> lo(nd, 1 << 30), hi(nd, -1);
+    int n = 0;
     for (auto sib : *sibs) {
-        std::string sn = std::string(sib->VpiName());
-        if (sn.size() > base.size() + 2 && sn.compare(0, base.size() + 1, base + "[") == 0 &&
-            sn.back() == ']') {
-            std::string sk = sn.substr(base.size() + 1, sn.size() - base.size() - 2);
-            if (all_digits(sk)) { n++; low = std::min(low, atoi(sk.c_str())); }
+        std::string sb;
+        std::vector<int> si;
+        if (!split(std::string(sib->VpiName()), sb, si) || sb != base || si.size() != nd)
+            continue;
+        n++;
+        for (size_t d = 0; d < nd; d++) {
+            lo[d] = std::min(lo[d], si[d]);
+            hi[d] = std::max(hi[d], si[d]);
         }
     }
     if (n <= 1 || actual.size() != pw->width * n) return false;
-    int pos = k - low;
+    // Linear position, the LAST dimension fastest (LRM 23.3.3.5: the
+    // rightmost index varies fastest along the actual).
+    int pos = 0;
+    for (size_t d = 0; d < nd; d++) {
+        int ext = hi[d] - lo[d] + 1;
+        int k = my[d] - lo[d];
+        if (k < 0 || k >= ext) return false;
+        pos = pos * ext + k;
+    }
     if (pos < 0 || pos >= n) return false;
     actual = actual.extract(pos * pw->width, pw->width);
     uhdm_trace("    Instance-array member %s: port %s takes slice %d of the actual\n",
