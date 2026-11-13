@@ -1198,6 +1198,8 @@ struct UhdmImporter {
     void tie_unassigned_two_state_to_zero(const UHDM::module_inst* uhdm_module);
     void finalize_two_state_ties();
     std::vector<std::pair<RTLIL::IdString, RTLIL::IdString>> two_state_tie_candidates_;
+    // Elements (bits of a vector) the initial-block interpreter wrote, per name.
+    std::map<std::string, std::set<int64_t>> interp_written_elems_;
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

@@ -26,3 +26,4 @@ cva6-rv32/wt_cache_subsystem # #1546 (same, through wt_dcache); co-sim 300 activ
 sv-elab-issues/issue_304_regression_keep_hierarchy_injects_constant_1 # Surelog bump to c99b16d9bd (Surelog #4255: a parameter-sized interface-array PORT elaborated one element), 2026-11-12
 sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r18 # task body assignment sized by its target (9-bit output formal kept the carry), 2026-11-12
 sv-elab-issues/issue_414_undriven_interface_outputs_has_conflicting_outpu # undriven modport output that the parent drives becomes an input port, 2026-11-12
+sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r34 # initial-block interpreter runs `forever` and writes back the vector bits it set, 2026-11-12

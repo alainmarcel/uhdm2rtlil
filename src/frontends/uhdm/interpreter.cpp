@@ -511,6 +511,7 @@ void UhdmImporter::interpret_statement(const any* stmt,
                             arrays[lhs_name].resize(array_index + 1, 0);
                         }
                         arrays[lhs_name][array_index] = rhs_value;
+                        interp_written_elems_[lhs_name].insert(array_index);
                         if (mode_debug) {
                             uhdm_trace("        Assign: %s[%lld] = %lld\n",
                                 lhs_name.c_str(), (long long)array_index, (long long)rhs_value);
@@ -795,6 +796,23 @@ void UhdmImporter::interpret_statement(const any* stmt,
                 if (evaluate_expression(ws->VpiCondition(), variables, arrays) == 0) break;
                 if (ws->VpiStmt())
                     interpret_statement(ws->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                if (break_flag) { break_flag = false; break; }
+                if (continue_flag) continue_flag = false;
+            }
+            break;
+        }
+
+        case uhdmforever_stmt: {
+            // `forever body` in an initial block: it terminates only through a
+            // `break` (sv-elab regress.sv r34, `if (i == 4) break; q[i] = 1;
+            // i = i + 1;`).  It was not interpreted at all, so the block
+            // produced no init and `q` stayed undriven.  Bounded like
+            // `while`: a loop that never breaks stops at MAX_ITERATIONS.
+            const UHDM::forever_stmt* fs = any_cast<const UHDM::forever_stmt*>(stmt);
+            int iter = 0;
+            const int MAX_ITERATIONS = 100000;
+            while (fs->VpiStmt() && iter++ < MAX_ITERATIONS) {
+                interpret_statement(fs->VpiStmt(), variables, arrays, break_flag, continue_flag);
                 if (break_flag) { break_flag = false; break; }
                 if (continue_flag) continue_flag = false;
             }

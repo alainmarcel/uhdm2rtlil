@@ -1,0 +1,6 @@
+# sv-elab regress.sv r34: q's initial value is 4'b1111 -- every bit the
+# loop writes before `break`.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+select -assert-count 1 w:q a:init=4'b1111 %i
