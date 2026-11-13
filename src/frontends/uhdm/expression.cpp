@@ -3565,6 +3565,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
     }
     
     switch (obj_type) {
+        case vpiTaggedPattern: {
+            // `tagged m e` used as a value of a tagged union (tagged.cpp)
+            return import_tagged_value(uhdm_expr, nullptr);
+        }
         case vpiConstant:
             return import_constant(any_cast<const constant*>(uhdm_expr));
         case vpiOperation:
@@ -8913,6 +8917,16 @@ bool UhdmImporter::try_eval_real(const UHDM::any* e, double& out, bool& saw_real
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
 
+    // `e matches p` and `a &&& b` (LRM 12.6, tagged.cpp)
+    if (op_type == vpiMatchOp || op_type == vpiCompAndOp)
+        return import_match_operation(uhdm_op);
+    // `u'(tagged m e)`: the wrapper desugar_case_matches() puts around a
+    // tagged-union value so every assignment path sees an expression.
+    if (op_type == vpiCastOp && uhdm_op->Operands() && uhdm_op->Operands()->size() == 1 &&
+        (*uhdm_op->Operands())[0]->UhdmType() == uhdmtagged_pattern && uhdm_op->Typespec())
+        return import_tagged_value((*uhdm_op->Operands())[0],
+                                   uhdm_op->Typespec()->Actual_typespec());
+
     // A constant REAL-valued tree folds here, at its outermost operation, in
     // double precision; the integer result is rounded once (LRM 6.12.2) at the
     // cast's or the context's width.  See try_eval_real.
@@ -12625,6 +12639,13 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         std::string n(uhdm_ref->VpiName());
         auto it = func_param_binds_.back().find(n);
         if (it != func_param_binds_.back().end()) return it->second;
+    }
+    // A pattern variable (`.v`) bound by the enclosing match: Surelog leaves
+    // its uses unbound (LRM 12.6, tagged.cpp).
+    if (uhdm_ref && !uhdm_ref->Actual_group() && !pattern_var_binds_.empty() &&
+        pattern_var_binds_module_ == module) {
+        auto it = pattern_var_binds_.find(std::string(uhdm_ref->VpiName()));
+        if (it != pattern_var_binds_.end()) return it->second;
     }
     // Break reference CYCLES.  A parameter whose value resolves back to itself
     // (directly, or around a chain of parameters) recursed through
