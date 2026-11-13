@@ -5081,8 +5081,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         lhs_writes(any_cast<const for_stmt*>(n)->VpiStmt());
                         break;
                     case vpiAssignment: case vpiAssignStmt: {
-                        auto a = any_cast<const assignment*>(n);
-                        const any* l = a->Lhs();
+                        // vpiAssignStmt is ALSO an `assign_stmt` (a procedural
+                        // continuous `assign q = 0;`), a different class:
+                        // the cast to `assignment` is null for it.
+                        const any* l = nullptr;
+                        if (auto a = any_cast<const assignment*>(n)) l = a->Lhs();
+                        else if (auto as = any_cast<const UHDM::assign_stmt*>(n)) l = as->Lhs();
                         if (l && (l->VpiType() == vpiBitSelect || l->VpiType() == vpiVarSelect) &&
                             !l->VpiName().empty())
                             comb_written.insert(std::string(l->VpiName()));
