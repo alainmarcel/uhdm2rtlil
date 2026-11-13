@@ -2405,6 +2405,17 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
 
                     // Map input parameter to temp wire for use in function body
                     input_mapping[io_name] = temp_wire;
+                    // A CONSTANT argument the body never writes is that
+                    // constant inside the body.  Mapped to the temp wire, the
+                    // guard of a recursive function never folded: `if (exp >
+                    // 0) pow = base * pow(base, exp - 1)` inlined both arms at
+                    // every level down to the depth limit, twice per level --
+                    // 2^21 inlinings, and read_uhdm never finished (sv-elab
+                    // regress.sv r20).  With the constant the guard folds and
+                    // the recursion stops where the source says.
+                    if (arg_val.is_fully_const() && func_def->Stmt() &&
+                        !function_body_writes_to(func_def->Stmt(), io_name))
+                        input_mapping[io_name] = arg_val;
                 } else if (direction == vpiOutput) {
                     // Output parameter - map directly to the output wire
                     // Assignments to this parameter in the function body will
@@ -2754,6 +2765,18 @@ bool UhdmImporter::function_body_writes_to(const any* stmt, const std::string& v
                 break;
             }
             if (lhs_name == var_name) return true;
+        }
+        return false;
+    }
+    case uhdmoperation: {
+        // `v++` / `++v` / `v--` / `--v` as a statement writes v too (a
+        // `for` body's `i++; continue;`, sv-elab#157).
+        auto op = any_cast<const UHDM::operation*>(stmt);
+        int t = op->VpiOpType();
+        if ((t == vpiPostIncOp || t == vpiPreIncOp || t == vpiPostDecOp || t == vpiPreDecOp) &&
+            op->Operands() && !op->Operands()->empty()) {
+            const any* o = (*op->Operands())[0];
+            if (!o->VpiName().empty() && std::string(o->VpiName()) == var_name) return true;
         }
         return false;
     }
