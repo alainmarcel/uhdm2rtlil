@@ -23670,6 +23670,7 @@ void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, 
     // will be in the map at the end, so we only emit init values for those.
     std::map<std::string, int64_t> variables;
     std::map<std::string, std::vector<int64_t>> arrays;
+    interp_written_elems_.clear();
     bool break_flag = false, continue_flag = false;
 
     if (auto stmt = uhdm_process->Stmt()) {
@@ -23701,6 +23702,44 @@ void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, 
             wire = module->wire(RTLIL::escape_id(name));
         if (wire)
             wire_to_value[wire] = {name, value};
+    }
+    // BIT writes to a plain vector (`q[i] = 1` on `logic [3:0] q`, sv-elab
+    // regress.sv r34's `forever` loop) land in `arrays`, element = bit, and
+    // were never written back: q got no init at all.  Emit one init per bit
+    // the block actually wrote -- a bit it never wrote keeps no init (X), so
+    // the zero-fill of the interpreter's vector is not trusted.  A memory is
+    // not a wire and is left alone; a whole-variable write of the same wire
+    // above already covers every bit.
+    std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>> bit_inits;
+    for (auto& [name, vals] : arrays) {
+        RTLIL::Wire* wire = nullptr;
+        if (!gen_scope.empty()) {
+            auto it = name_map.find(gen_scope + "." + name);
+            if (it != name_map.end()) wire = it->second;
+        }
+        if (!wire) {
+            auto it = name_map.find(name);
+            if (it != name_map.end()) wire = it->second;
+        }
+        if (!wire) wire = module->wire(RTLIL::escape_id(name));
+        if (!wire || wire_to_value.count(wire) ||
+            module->memories.count(RTLIL::escape_id(name)))
+            continue;
+        auto wit = interp_written_elems_.find(name);
+        if (wit == interp_written_elems_.end()) continue;
+        for (int64_t idx : wit->second) {
+            int64_t bit = wire->upto ? (wire->start_offset + wire->width - 1 - idx)
+                                     : (idx - wire->start_offset);
+            if (bit < 0 || bit >= wire->width || idx >= (int64_t)vals.size()) continue;
+            bit_inits.push_back({RTLIL::SigSpec(wire, (int)bit, 1),
+                                 RTLIL::SigSpec(RTLIL::Const(vals[idx] & 1, 1))});
+        }
+    }
+    for (auto& bi : bit_inits) {
+        sync_init->actions.push_back(RTLIL::SigSig(bi.first, bi.second));
+        if (mode_debug)
+            uhdm_trace("      Initial bit assignment: %s = %s\n",
+                log_signal(bi.first), log_signal(bi.second));
     }
     for (auto& [wire, name_val] : wire_to_value) {
         auto& [name, value] = name_val;
