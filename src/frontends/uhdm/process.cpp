@@ -13135,6 +13135,7 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
         log_warning("Function call has no function definition\n");
         return RTLIL::SigSpec();
     }
+    FuncParamBind fpb_bind_(this, func_def);
 
     std::string call_name = std::string(fc->VpiName());
     // The implicit return variable is named after the function DEFINITION, not

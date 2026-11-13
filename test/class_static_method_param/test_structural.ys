@@ -1,0 +1,7 @@
+# povik/sv-elab#308: each specialization rotates at its own width.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+sat -verify -set in1 8'h81 -set in2 16'h8001 -prove out1 8'h03 -prove out2 16'h0003

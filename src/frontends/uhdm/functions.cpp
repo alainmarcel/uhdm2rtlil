@@ -3017,10 +3017,36 @@ void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string&
 
 
 // New context-aware function processing implementation
+UhdmImporter::FuncParamBind::FuncParamBind(UhdmImporter* i, const UHDM::task_func* f) : imp(i) {
+    if (!f || !f->Param_assigns() || f->Param_assigns()->empty()) {
+        // A function without its own parameters, called from inside one that
+        // has them, must not see the caller's: push an empty frame.
+        if (f && !imp->func_param_binds_.empty()) {
+            imp->func_param_binds_.push_back({});
+            pushed = true;
+        }
+        return;
+    }
+    std::map<std::string, RTLIL::SigSpec> m;
+    // Values first, against the ENCLOSING bindings (an override may name an
+    // outer parameter), then push.
+    for (auto pa : *f->Param_assigns()) {
+        if (!pa->Lhs() || !pa->Rhs()) continue;
+        auto rhs = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+        if (!rhs) continue;
+        RTLIL::SigSpec v = imp->import_expression(rhs);
+        if (v.size() > 0 && v.is_fully_const())
+            m[std::string(pa->Lhs()->VpiName())] = v;
+    }
+    imp->func_param_binds_.push_back(std::move(m));
+    pushed = true;
+}
+
 RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_def,
                                                           const std::vector<RTLIL::SigSpec>& args,
                                                           const func_call* call_site,
                                                           FunctionCallContext* parent_ctx) {
+    FuncParamBind fpb_bind_(this, func_def);
     if (!func_def) {
         log_error("Function definition is null in process_function_with_context\n");
         return RTLIL::SigSpec();
