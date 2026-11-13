@@ -1,0 +1,9 @@
+# povik/sv-elab#222: never-assigned 2-state variables read 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+check -assert
+sat -verify -prove w1 0 -prove r 1
+sat -verify -set w2 0 -prove a_out 1

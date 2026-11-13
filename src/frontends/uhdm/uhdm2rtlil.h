@@ -1195,6 +1195,9 @@ struct UhdmImporter {
     void expand_interfaces();
     bool module_drives(RTLIL::Module* mod, RTLIL::Wire* w);
     bool parent_drives_member(RTLIL::Module* mod, RTLIL::Wire* member);
+    void tie_unassigned_two_state_to_zero(const UHDM::module_inst* uhdm_module);
+    void finalize_two_state_ties();
+    std::vector<std::pair<RTLIL::IdString, RTLIL::IdString>> two_state_tie_candidates_;
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

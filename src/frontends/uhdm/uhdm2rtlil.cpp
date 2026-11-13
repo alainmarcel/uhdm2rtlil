@@ -827,6 +827,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // that driver because instance cells are created after the body.
     drop_init_procs_driven_by_instances();
 
+    finalize_two_state_ties();
     uhdm_trace("UHDM: Finished import_design\n");
     log_flush();
 
@@ -7561,6 +7562,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         if (hit) w->attributes[RTLIL::escape_id("uhdm_src_lhs")] = RTLIL::Const(1);
     }
 
+    // A 2-STATE variable (`bit`, `byte`, `shortint`, `int`, `longint`) that
+    // the source never assigns anywhere holds its initial value, 0, for ever
+    // (LRM 6.8, Table 6-7) -- `output bit [1:4] w1` declared and never
+    // written (povik/sv-elab#222) is constant 0, not X.  It was left
+    // undriven, which every downstream pass reads as X (143 co-sim
+    // divergences against the RTL's 0).  This is not a driver analysis: it
+    // uses only what the SOURCE assigns (uhdm_src_lhs above), and skips any
+    // wire the reader itself drives or that reaches a child instance (whose
+    // port directions are unknown before `hierarchy`).
+    tie_unassigned_two_state_to_zero(uhdm_module);
+
     // Import concurrent assertions (assert property (...))
     if (uhdm_module->Assertions()) {
         uhdm_trace("UHDM: Found %d assertions to import\n", (int)uhdm_module->Assertions()->size());
@@ -8002,6 +8014,92 @@ bool UhdmImporter::parent_drives_member(RTLIL::Module* mod, RTLIL::Wire* member)
         }
     }
     return false;
+}
+
+static bool is_two_state_typespec(const UHDM::any* ts)
+{
+    if (auto rt = dynamic_cast<const UHDM::ref_typespec*>(ts)) ts = rt->Actual_typespec();
+    if (!ts) return false;
+    switch (ts->UhdmType()) {
+    case uhdmbit_typespec: case uhdmbyte_typespec: case uhdmshort_int_typespec:
+    case uhdmint_typespec: case uhdmlong_int_typespec:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void UhdmImporter::tie_unassigned_two_state_to_zero(const UHDM::module_inst* uhdm_module)
+{
+    if (!uhdm_module || !module) return;
+    // Names declared 2-state in this module: ports, nets and variables.
+    std::set<std::string> two_state;
+    auto note = [&](const UHDM::any* obj, const UHDM::any* ts) {
+        if (!obj) return;
+        std::string n(obj->VpiName());
+        if (n.empty()) return;
+        switch (obj->UhdmType()) {
+        case uhdmbit_var: case uhdmbyte_var: case uhdmshort_int_var:
+        case uhdmint_var: case uhdmlong_int_var:
+            two_state.insert(n); return;
+        default: break;
+        }
+        if (is_two_state_typespec(ts)) two_state.insert(n);
+    };
+    if (uhdm_module->Ports())
+        for (auto p : *uhdm_module->Ports()) note(p, p->Typespec());
+    if (uhdm_module->Nets())
+        for (auto n : *uhdm_module->Nets())
+            if (auto nn = dynamic_cast<const UHDM::net*>(n)) note(nn, nn->Typespec());
+    if (uhdm_module->Variables())
+        for (auto v : *uhdm_module->Variables())
+            if (auto ex = dynamic_cast<const UHDM::expr*>(v)) note(v, ex->Typespec());
+    if (two_state.empty()) return;
+
+    pool<RTLIL::Wire*> in_user_cells;
+    for (auto* cell : module->cells())
+        if (!cell->type.begins_with("$"))
+            for (auto& conn : cell->connections())
+                for (auto& c : conn.second.chunks())
+                    if (c.wire) in_user_cells.insert(c.wire);
+
+    for (auto w : module->wires()) {
+        std::string n = w->name.str();
+        if (n.empty() || n[0] != '\\') continue;
+        if (!two_state.count(n.substr(1))) continue;
+        if (w->port_input) continue;
+        if (w->attributes.count(RTLIL::escape_id("uhdm_src_lhs"))) continue;
+        two_state_tie_candidates_.push_back({module->name, w->name});
+    }
+}
+
+// The ties themselves, once the WHOLE design exists: a `bind` adds its
+// instance to the target module after that module was imported
+// (test/BindModuleWithOutputPorts: `rv_dm`'s `output int a` is driven only
+// by the bound `dmidpi`), and a blackbox is a stub, not a design.
+void UhdmImporter::finalize_two_state_ties()
+{
+    for (auto& [mod_name, wire_name] : two_state_tie_candidates_) {
+        RTLIL::Module* mod = design->module(mod_name);
+        if (!mod || mod->get_blackbox_attribute()) continue;
+        RTLIL::Wire* w = mod->wire(wire_name);
+        if (!w) continue;
+        bool in_user_cell = false;
+        for (auto* cell : mod->cells()) {
+            if (cell->type.begins_with("$")) continue;
+            for (auto& conn : cell->connections())
+                for (auto& c : conn.second.chunks())
+                    if (c.wire == w) in_user_cell = true;
+        }
+        driven_wires_cache_.erase(mod);
+        if (in_user_cell || module_drives(mod, w)) continue;
+        mod->connect(RTLIL::SigSpec(w), RTLIL::SigSpec(RTLIL::State::S0, w->width));
+        driven_wires_cache_.erase(mod);
+        if (mode_debug)
+            uhdm_trace("UHDM: 2-state %s.%s is never assigned: tied to its initial value 0\n",
+                mod->name.c_str(), w->name.c_str());
+    }
+    two_state_tie_candidates_.clear();
 }
 
 void UhdmImporter::expand_interfaces() {
