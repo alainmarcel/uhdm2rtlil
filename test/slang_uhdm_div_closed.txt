@@ -27,3 +27,4 @@ sv-elab-issues/issue_304_regression_keep_hierarchy_injects_constant_1 # Surelog 
 sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r18 # task body assignment sized by its target (9-bit output formal kept the carry), 2026-11-12
 sv-elab-issues/issue_414_undriven_interface_outputs_has_conflicting_outpu # undriven modport output that the parent drives becomes an input port, 2026-11-12
 sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r34 # initial-block interpreter runs `forever` and writes back the vector bits it set, 2026-11-12
+sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r20 # a constant argument folds into the inlined body and a constant if/else takes one arm: the recursion stops at its depth, 2026-11-13

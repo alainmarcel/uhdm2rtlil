@@ -1062,6 +1062,20 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             if (ie->VpiCondition()) {
                 cond = import_func_if_condition(ie->VpiCondition(), input_mapping);
             }
+
+            // A CONSTANT condition takes the live arm directly: the dead arm
+            // may recurse (`if (exp > 0) pow = base * pow(base, exp - 1); else
+            // pow = 1;` with a constant `exp`, sv-elab regress.sv r20), and
+            // importing it anyway inlined the recursion down to the depth
+            // limit at every level.  The one-armed if below already skips a
+            // constant-false body.
+            if (cond.is_fully_const() && cond.is_fully_def()) {
+                const any* live = cond.as_bool() ? ie->VpiStmt() : ie->VpiElseStmt();
+                if (live)
+                    process_stmt_to_case(live, case_rule, result_wire, input_mapping, func_name,
+                                         temp_counter, func_call_context, local_var_widths);
+                break;
+            }
             
             // Create a switch rule for the if-else with source location
             RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;

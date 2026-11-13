@@ -1,0 +1,8 @@
+# sv-elab regress.sv r20: the recursion stops at the constant depth; q = x^3.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+sat -verify -set x 5 -prove q 125
+sat -verify -set x 7 -prove q 343
