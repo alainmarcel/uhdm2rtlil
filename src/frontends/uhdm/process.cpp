@@ -10381,6 +10381,63 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 break;
             }
 
+            // A body that WRITES its own loop variable under a runtime
+            // condition (sv-elab#157: `for (int i = 0; i < 2; i++) begin
+            // k++; if (x) begin i++; continue; end break; end`) has no static
+            // iteration list: the unroller below binds `i` to compile-time
+            // values and the body's `i++` was lost (k = 2 where x = 1 gives
+            // 1).  Run it as `init; while (cond) { body; step }` over a wire
+            // carrying the loop variable.
+            if (current_comb_process && fl_init->VpiType() == vpiAssignment) {
+                const assignment* ia0 = any_cast<const assignment*>(fl_init);
+                std::string lv = (ia0 && ia0->Lhs()) ? std::string(ia0->Lhs()->VpiName()) : "";
+                if (!lv.empty() && function_body_writes_to(fl_body, lv)) {
+                    int bound = while_static_bound(fl_cond);
+                    if (bound <= 0 || bound > 256) bound = 256;
+                    // The loop variable gets its OWN wire even when the name
+                    // is already mapped: a same-named variable of another
+                    // block (`int i` of a sibling always_comb) would otherwise
+                    // be written from two processes, and partially -- a latch.
+                    auto nm = name_map.find(lv);
+                    bool had = nm != name_map.end();
+                    RTLIL::Wire* prev = had ? nm->second : nullptr;
+                    int w = 32;
+                    if (auto le = dynamic_cast<const expr*>(ia0->Lhs()))
+                        if (le->Typespec()) {
+                            int gw = get_width(ia0->Lhs(), current_instance);
+                            if (gw > 0) w = gw;
+                        }
+                    // A PUBLIC name: the comb in-flight values are looked up
+                    // for public wires (as for a block-local `int i`), and an
+                    // internal `$` name read back the wire's FINAL value -- a
+                    // combinational loop through the next iteration's guard.
+                    RTLIL::Wire* vw = module->addWire(RTLIL::IdString(
+                        stringf("\\$forvar$%s$%d", lv.c_str(), incr_autoidx())), w);
+                    name_map[lv] = vw;
+                    bool had_lv = loop_values.count(lv) > 0;
+                    int saved_lv = had_lv ? loop_values[lv] : 0;
+                    loop_values.erase(lv);
+                    uhdm_trace("    Comb for loop writes its variable %s in the body: "
+                               "symbolic unroll, bound %d\n", lv.c_str(), bound);
+                    // The init's LHS is the loop VARIABLE object itself
+                    // (`for (int i = 0; ...)`), which import_expression does
+                    // not take as a target ("Unsupported expression type:
+                    // int_var"): write its RHS to the loop wire directly, so
+                    // the first guard reads the start value.
+                    if (auto irhs = dynamic_cast<const expr*>(ia0->Rhs())) {
+                        RTLIL::SigSpec v = import_expression(irhs, comb_read_map());
+                        if (v.size() < w) v.extend_u0(w, true);
+                        else if (v.size() > w) v = v.extract(0, w);
+                        emit_comb_assign(RTLIL::SigSpec(vw), v, proc);
+                    }
+                    import_symbolic_loop_comb(fl_cond, fl_body, fl_inc, &proc->root_case,
+                                              for_loop, bound);
+                    if (had_lv) loop_values[lv] = saved_lv;
+                    if (had) name_map[lv] = prev; else name_map.erase(lv);
+                    break;
+                }
+            }
+
             bool fl_can_unroll = false;
             std::string fl_var;
             int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
@@ -20402,6 +20459,72 @@ static std::string comb_blocking_base(const RTLIL::SigSpec& target) {
 // dropped by the caller's ccv restore: CVA6 compressed_decoder's C.JR
 // `illegal_instr_o = (rs1 != '0) ? 0 : 1` two ifs deep in a case arm never
 // reached the trailing `if (illegal_instr_o) instr_o = instr_i;`.
+// A loop whose iterations depend on RUNTIME values, unrolled forward `bound`
+// times: iteration i runs under `live && cond` (cond imported against the
+// in-flight values the earlier iterations left), with its own break flag
+// (defaulted 0 in the root case, set by vpiBreak under the branches that
+// reach it) and, when given, the `for` STEP after the body -- a `continue`
+// skips only the rest of the body, never the step.  An iteration that broke
+// leaves `live` low for every later one.  Used by `while` with a `break`
+// and by a `for` whose body writes its own loop variable (sv-elab#157).
+void UhdmImporter::import_symbolic_loop_comb(const any* cond_expr, const any* body,
+                                             const any* step, RTLIL::CaseRule* case_rule,
+                                             const any* src, int bound) {
+    RTLIL::Process* proc = current_comb_process;
+    if (!proc || !cond_expr || !body) return;
+    RTLIL::SigSpec live = RTLIL::SigSpec(RTLIL::State::S1);
+    for (int it = 0; it < bound; it++) {
+        RTLIL::SigSpec cond = import_expression(any_cast<const expr*>(cond_expr), comb_read_map());
+        if (cond.size() > 1) {
+            if (cond.is_fully_const())
+                cond = cond.as_const().as_bool() ? RTLIL::SigSpec(RTLIL::State::S1)
+                                                 : RTLIL::SigSpec(RTLIL::State::S0);
+            else
+                cond = module->ReduceBool(NEW_ID, cond);
+        }
+        RTLIL::SigSpec run;
+        if (cond.is_fully_const())
+            run = cond.as_const().as_bool() ? live : RTLIL::SigSpec(RTLIL::State::S0);
+        else if (live.is_fully_const())
+            run = live.as_const().as_bool() ? cond : RTLIL::SigSpec(RTLIL::State::S0);
+        else
+            run = module->And(NEW_ID, live, cond);
+        if (run.is_fully_const() && !run.as_const().as_bool()) break;   // loop exits
+
+        RTLIL::Wire* bw = module->addWire(NEW_ID, 1);
+        proc->root_case.actions.push_back(
+            RTLIL::SigSig(RTLIL::SigSpec(bw), RTLIL::SigSpec(RTLIL::State::S0)));
+        RTLIL::SigSpec saved_bf = current_break_flag;
+        current_break_flag = RTLIL::SigSpec(bw);
+        auto saved_sites = current_break_sites;
+        current_break_sites.clear();
+
+        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+        sw->signal = run;
+        if (src) add_src_attribute(sw->attributes, src);
+        RTLIL::CaseRule* run_case = new RTLIL::CaseRule;
+        run_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+        auto saved_ccv = branch_vals();
+        auto saved_nb_ccv = current_comb_values;
+        import_statement_comb(body, run_case);
+        current_break_sites.clear();          // the step is not skipped by `continue`
+        if (step) import_statement_comb(step, run_case);
+        auto then_ccv = branch_vals();
+        branch_vals() = saved_ccv;
+        if (&branch_vals() != &current_comb_values) current_comb_values = saved_nb_ccv;
+        sw->cases.push_back(run_case);
+        sw->cases.push_back(new RTLIL::CaseRule);
+        case_rule->switches.push_back(sw);
+        thread_comb_if(run, run_case, nullptr, &saved_ccv, &then_ccv, nullptr);
+
+        current_break_flag = saved_bf;
+        current_break_sites = saved_sites;
+        RTLIL::SigSpec nb = module->Not(NEW_ID, RTLIL::SigSpec(bw));
+        live = (run.is_fully_const() && run.as_const().as_bool())
+                   ? nb : module->And(NEW_ID, run, nb);
+    }
+}
+
 // Static iteration bound of a `while` condition: the constant side of a
 // `<` / `<=` / `!=` conjunct (`i < WIDTH`), the minimum over `&&` operands;
 // 0 when nothing constant bounds it.
@@ -20451,6 +20574,19 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
     } else if (bound > kCap) {
         log_warning("while loop bound %d capped to %d iterations\n", bound, kCap);
         bound = kCap;
+    }
+    // A `break` under a RUNTIME condition (sv-elab#157: `while (i < 2) begin
+    // k++; if (x) break; i++; end`) was ignored: the vpiBreak handlers only
+    // act when a break flag is set, which only the `for` unroller did, so
+    // the loop ran on past the break (k = 2 where x = 1 gives 1).  Same
+    // scheme as the `for` unroller: forward iterations, each under `live &&
+    // cond` with its own break flag (defaulted 0 in the root case, set by
+    // vpiBreak under the branches that reach it); an iteration that broke
+    // leaves `live` low for every later one.
+    if (current_comb_process && body_has_break(ws->VpiStmt())) {
+        import_symbolic_loop_comb(ws->VpiCondition(), ws->VpiStmt(), nullptr,
+                                  case_rule, ws, bound);
+        return;
     }
     std::function<void(RTLIL::CaseRule*, int)> emit;
     emit = [&](RTLIL::CaseRule* cr, int left) {

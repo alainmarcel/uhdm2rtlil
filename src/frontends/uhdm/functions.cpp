@@ -2757,6 +2757,18 @@ bool UhdmImporter::function_body_writes_to(const any* stmt, const std::string& v
         }
         return false;
     }
+    case uhdmoperation: {
+        // `v++` / `++v` / `v--` / `--v` as a statement writes v too (a
+        // `for` body's `i++; continue;`, sv-elab#157).
+        auto op = any_cast<const UHDM::operation*>(stmt);
+        int t = op->VpiOpType();
+        if ((t == vpiPostIncOp || t == vpiPreIncOp || t == vpiPostDecOp || t == vpiPreDecOp) &&
+            op->Operands() && !op->Operands()->empty()) {
+            const any* o = (*op->Operands())[0];
+            if (!o->VpiName().empty() && std::string(o->VpiName()) == var_name) return true;
+        }
+        return false;
+    }
     case uhdmbegin: {
         const begin* bg = any_cast<const begin*>(stmt);
         if (bg && bg->Stmts())

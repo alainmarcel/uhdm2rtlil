@@ -1200,6 +1200,8 @@ struct UhdmImporter {
     std::vector<std::pair<RTLIL::IdString, RTLIL::IdString>> two_state_tie_candidates_;
     // Elements (bits of a vector) the initial-block interpreter wrote, per name.
     std::map<std::string, std::set<int64_t>> interp_written_elems_;
+    void import_symbolic_loop_comb(const UHDM::any* cond_expr, const UHDM::any* body,
+        const UHDM::any* step, RTLIL::CaseRule* case_rule, const UHDM::any* src, int bound);
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

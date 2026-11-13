@@ -1,0 +1,10 @@
+# povik/sv-elab#157: k1 = 1 and k2 = 1 for x = 0 and x = 1 (hand-computed;
+# k2 for x = 0 counts both iterations: 2).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+check -assert
+sat -verify -set x 1 -prove k1 1 -prove k2 1
+sat -verify -set x 0 -prove k1 1 -prove k2 2
