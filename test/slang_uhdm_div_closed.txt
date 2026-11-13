@@ -23,3 +23,4 @@ cva6-rv32/wt_dcache # #1546 (same, through wt_dcache_wbuffer), 2026-11-11
 opentitan-ip/i3c_controller_fsm # Surelog bump to a8a2bbadf2 (UHDM #1181: function-local declared-range part-select fold, `cnt[W-1:0]` on `logic [W-1:-1]`) + #1548, 2026-11-11
 opentitan-ip/i3c_controller # same, through i3c_controller_fsm, 2026-11-11
 cva6-rv32/wt_cache_subsystem # #1546 (same, through wt_dcache); co-sim 300 active cycles uhdm_vs_rtl=0 with `memory -nomap` (the mapped 36 tc_srams = 154 MB of Verilog do not compile in the co-sim budget; read_slang drops them in tc_sram_wrapper's `synthesis translate_off`, so it is no reference here), 2026-11-11
+sv-elab-issues/issue_304_regression_keep_hierarchy_injects_constant_1 # Surelog bump to c99b16d9bd (Surelog #4255: a parameter-sized interface-array PORT elaborated one element), 2026-11-12
