@@ -7956,6 +7956,54 @@ bool UhdmImporter::module_drives(RTLIL::Module* mod, RTLIL::Wire* w)
     return cache.second.count(w) > 0;
 }
 
+// True when an instance of a USER module (not an internal `$` cell), whose
+// port directions are unknown before `hierarchy`, connects to the interface
+// port `iface` -- the whole port, or any of its member wires `members`: the
+// instance may drive any of them.
+static bool port_reaches_user_cell(RTLIL::Module* mod, RTLIL::Wire* iface,
+                                   const std::vector<RTLIL::Wire*>& members)
+{
+    pool<RTLIL::Wire*> port_wires(members.begin(), members.end());
+    port_wires.insert(iface);
+    for (auto* cell : mod->cells()) {
+        if (cell->type.begins_with("$"))
+            continue;
+        for (auto& conn : cell->connections())
+            for (auto& c : conn.second.chunks())
+                if (c.wire && port_wires.count(c.wire))
+                    return true;
+    }
+    return false;
+}
+
+// True when some module instantiating `mod` drives, itself, the signal it
+// connects to `mod`'s port `member` (a cell of type `mod` -- or of a
+// `$paramod` of it -- whose connection for that port has a bit the parent's
+// own connections, processes or internal cells drive).
+bool UhdmImporter::parent_drives_member(RTLIL::Module* mod, RTLIL::Wire* member)
+{
+    std::string base = mod->name.str();
+    if (base.rfind("$paramod\\", 0) == 0) {
+        std::string rest = base.substr(10);
+        size_t bs = rest.find('\\');
+        base = "\\" + (bs == std::string::npos ? rest : rest.substr(0, bs));
+    }
+    for (auto* parent : design->modules()) {
+        if (parent == mod) continue;
+        for (auto* cell : parent->cells()) {
+            std::string ct = cell->type.str();
+            if (ct != mod->name.str() && ct != base &&
+                ct.rfind("$paramod" + base, 0) != 0)
+                continue;
+            if (!cell->hasPort(member->name)) continue;
+            for (auto& c : cell->getPort(member->name).chunks())
+                if (c.wire && module_drives(parent, c.wire))
+                    return true;
+        }
+    }
+    return false;
+}
+
 void UhdmImporter::expand_interfaces() {
     uhdm_trace("UHDM: Expanding interfaces in design\n");
     
@@ -8307,6 +8355,29 @@ void UhdmImporter::expand_interfaces() {
                         }
                     }
                     if (dir == 1) {            // vpiInput
+                        signal_wire->port_input = true;
+                        signal_wire->port_output = false;
+                    } else if (dir == 2 && !module_drives(module, signal_wire) &&
+                               !port_reaches_user_cell(module, interface_wire, signal_wires) &&
+                               parent_drives_member(module, signal_wire)) {
+                        // A modport OUTPUT this module never drives
+                        // (povik/sv-elab#414: `modport mp (output x, output
+                        // y)` and the module assigns only `p.y`).  As an
+                        // output port it is an undriven output that the
+                        // PARENT, which drives `p.x` itself, sees as a
+                        // second driver -- `opt` then aborts with "Cell port
+                        // top.u.p.x is driving constant bits".  Flattened
+                        // (read_slang's default) the boundary dissolves; to
+                        // keep it, the member is an INPUT, as the issue
+                        // concludes.  Only when a PARENT instantiating the
+                        // module drives that member itself -- the conflict
+                        // the issue is about; an undriven member nobody drives
+                        // stays an (undriven) output, as before.  A port any
+                        // CHILD instance connects to
+                        // -- member by member, or the whole interface passed
+                        // down (`.sub_if(u_if)`, test/svinterface1) -- is left
+                        // alone: whether the child drives a member is not
+                        // known before `hierarchy`.
                         signal_wire->port_input = true;
                         signal_wire->port_output = false;
                     } else if (dir == 2) {     // vpiOutput
