@@ -1194,6 +1194,7 @@ struct UhdmImporter {
     void create_interface_module_with_width(const std::string& interface_name, int width);
     void expand_interfaces();
     bool module_drives(RTLIL::Module* mod, RTLIL::Wire* w);
+    bool parent_drives_member(RTLIL::Module* mod, RTLIL::Wire* member);
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

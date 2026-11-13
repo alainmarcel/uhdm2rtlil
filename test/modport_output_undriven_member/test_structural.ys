@@ -1,0 +1,14 @@
+# povik/sv-elab#414: the modport output `user` never drives is an INPUT port,
+# the one it drives stays an OUTPUT, and the hierarchical netlist has no
+# driver conflict -- then x = 1, y = 0.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+select -assert-count 1 user/i:p.x
+select -assert-count 0 user/o:p.x
+select -assert-count 1 user/o:p.y
+proc
+opt
+check -assert
+flatten
+opt
+sat -verify -prove x 1 -prove y 0
