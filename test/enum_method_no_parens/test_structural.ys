@@ -1,0 +1,10 @@
+# povik/sv-elab#158: the parenthesis-less enum methods compute the LRM
+# values (prev / next wrap around r, g, b, w).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+sat -verify -set color1 0 -prove p 3 -prove n 1 -prove f 0 -prove l 3 -prove k 4
+sat -verify -set color1 1 -prove p 0 -prove n 2
+sat -verify -set color1 3 -prove p 2 -prove n 0
