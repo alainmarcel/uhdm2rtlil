@@ -438,6 +438,46 @@ std::vector<RTLIL::Const> UhdmImporter::case_inside_range_cubes(long long lo, lo
     return out;
 }
 
+// The first procedural continuous assignment (`assign`, `deassign`, `force`,
+// `release`) in a statement tree, or null.  Does not enter task / function
+// bodies.
+static const any* find_procedural_continuous_assign(const any* n) {
+    if (!n) return nullptr;
+    switch (n->VpiType()) {
+    case vpiAssignStmt: case vpiDeassign: case vpiForce: case vpiRelease:
+        return n;
+    case vpiBegin: case vpiNamedBegin: {
+        const VectorOfany* stmts = nullptr;
+        if (auto b = any_cast<const begin*>(n)) stmts = b->Stmts();
+        else if (auto nb = any_cast<const named_begin*>(n)) stmts = nb->Stmts();
+        if (stmts)
+            for (auto st : *stmts)
+                if (auto r = find_procedural_continuous_assign(st)) return r;
+        return nullptr;
+    }
+    case vpiIf:
+        if (auto i = any_cast<const if_stmt*>(n)) return find_procedural_continuous_assign(i->VpiStmt());
+        return nullptr;
+    case vpiIfElse:
+        if (auto ie = any_cast<const if_else*>(n)) {
+            if (auto r = find_procedural_continuous_assign(ie->VpiStmt())) return r;
+            return find_procedural_continuous_assign(ie->VpiElseStmt());
+        }
+        return nullptr;
+    case vpiCase:
+        if (auto cs = any_cast<const case_stmt*>(n))
+            if (cs->Case_items())
+                for (auto it : *cs->Case_items())
+                    if (auto r = find_procedural_continuous_assign(it->Stmt())) return r;
+        return nullptr;
+    case vpiEventControl:
+        if (auto ec = any_cast<const event_control*>(n)) return find_procedural_continuous_assign(ec->Stmt());
+        return nullptr;
+    default:
+        return nullptr;
+    }
+}
+
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
 
@@ -450,6 +490,26 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     if (uhdm_process->UhdmType() == uhdmfinal_stmt) {
         uhdm_trace("UHDM: skipping `final` block (simulation-only, not synthesizable)\n");
         return;
+    }
+
+    // A procedural CONTINUOUS assignment -- `assign` / `deassign` (IEEE 1800
+    // 10.6.1) or `force` / `release` (10.6.2) inside an always block --
+    // overrides the variable's other drivers for as long as it is active,
+    // which no netlist can express.  read_slang, read_verilog and Verilator
+    // all reject it (povik/sv-elab#166, #167), so fail with the construct and
+    // its location.  Only the always body is walked: a task body's
+    // `assign x = y` (test/TaskOutputArgument) is imported as an ordinary
+    // assignment and stays supported.
+    if (proc_type == vpiAlways || proc_type == vpiAlwaysFF ||
+        proc_type == vpiAlwaysComb || proc_type == vpiAlwaysLatch) {
+        if (auto al = any_cast<const always*>(uhdm_process))
+            if (const any* pc = find_procedural_continuous_assign(al->Stmt()))
+                log_error("%s: procedural continuous assignment (`%s`) in an always "
+                          "block is not synthesizable.\n",
+                          get_src_attribute(pc).c_str(),
+                          pc->VpiType() == vpiAssignStmt ? "assign" :
+                          pc->VpiType() == vpiDeassign ? "deassign" :
+                          pc->VpiType() == vpiForce ? "force" : "release");
     }
 
     uhdm_trace("UHDM: === Starting import_process ===\n");

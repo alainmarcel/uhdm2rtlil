@@ -453,3 +453,10 @@ sv_tests/multi-declaration
 # test_slang_equiv.ys miters us against read_slang, which sizes the struct
 # correctly.  Both fail on the unfixed reader.
 struct_array_elem_member_elem_write
+
+# A procedural continuous assignment (`assign`/`deassign`, `force`/`release`)
+# in an always block is not synthesizable; read_slang, read_verilog and
+# Verilator reject it too.  read_uhdm stops with "procedural continuous
+# assignment (`assign`) in an always block is not synthesizable" -- the
+# failure IS the expected outcome (it used to segfault; povik/sv-elab#166).
+proc_continuous_assign_rejected
