@@ -1117,3 +1117,12 @@ Test: issue_372_unsigned_comparison_treated_as_signed_h1
     X as 0.  read_uhdm and read_slang are formally equivalent and diverge from
     the RTL identically (300 div each).  A testbench artefact.
 
+
+Test: issue_158_support_prev_on_enum_values
+    sv-elab#158 (sv-elab-issues sweep).  `color2 = color1.prev` on a 32-bit
+    `int` enum {r, g, b} driven with random 32-bit values, almost none of
+    which are members.  LRM 6.19.5.3/6.19.5.4: next/prev of a non-member
+    return the enum's default initial value, 0; read_uhdm decodes exactly
+    that (0->2, 1->0, 2->1, else 0).  Verilator 5.048 indexes its table with
+    only the value's low bits: prev(4)=2, prev(5)=0, prev(32'hfffffffe)=1
+    (measured).  read_slang cannot read the design.  A simulator artefact.

@@ -858,7 +858,7 @@ A sweep row that co-simulates clean with the `read_slang` netlist and diverges
 with ours is OUR defect; such rows are tracked in the sweeps and listed here in
 the same format as the classes above, with their status on `main` only.
 
-**Status on `main`: this class is EMPTY.**  18 row(s) ever listed here co-simulate clean
+**Status on `main`: this class is EMPTY.**  22 row(s) ever listed here co-simulate clean
 with the `read_uhdm` netlist on `main` and are not listed; the fixes that
 closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 
@@ -880,6 +880,10 @@ closed them, by row, are in `test/slang_uhdm_div_closed.txt`:
 | `rsd/ProducerMatrix` | #1543 (same class, `dispatchVector[i][ptr] = TRUE`), 2026-11-11 |
 | `snitch/spatz_ipu` | #1437 + #1441 + #1470, 2026-11-06 |
 | `snitch/spatz_vfu` | #1471 (generate-scope select writes by bare name) + #1472 (indexed struct-parameter member read as X), 2026-11-06 |
+| `sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r18` | #1564 (task body assignment sized by its target: a 9-bit output formal kept the carry), 2026-11-12 |
+| `sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r20` | #1570 (a constant argument folds into the inlined body and a constant if/else takes one arm: the recursion stops at its depth), 2026-11-13 |
+| `sv-elab-issues/issue_304_regression_keep_hierarchy_injects_constant_1` | #1563 (Surelog #4255: a parameter-sized interface-array PORT elaborated one element), 2026-11-12 |
+| `sv-elab-issues/issue_414_undriven_interface_outputs_has_conflicting_outpu` | #1565 (an undriven modport output that the parent drives becomes an input port), 2026-11-12 |
 | `veer-eh2/eh2_lsu` | #1543 (same, seen through eh2_lsu), 2026-11-11 |
 | `veer-eh2/eh2_lsu_stbuf` | #1543 (var-select write target kept on its wire; regression from #1537), 2026-11-11 |
 
