@@ -12271,11 +12271,29 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             } else break;
             if (!a_lhs || !a_rhs) break;
 
-            // Import RHS with task_mapping for variable resolution
+            // Import RHS with task_mapping for variable resolution, sized by
+            // the LHS (SV context-determined width, as import_assignment_sync
+            // does): `o = x + y` with 8-bit x / y and a 9-bit OUTPUT formal
+            // `o` kept the carry nowhere -- 255 + 1 gave 0 (sv-elab
+            // regress.sv r18).  The LHS is resolved further down; its width
+            // is all that is needed here: a mapped formal / local, or a module
+            // wire of that name.
             RTLIL::SigSpec rhs;
             if (auto rhs_any = a_rhs) {
                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                    int lhs_ctx = 0;
+                    if (auto lro = any_cast<const ref_obj*>(a_lhs)) {
+                        std::string ln(lro->VpiName());
+                        auto mit = task_mapping.find(ln);
+                        if (mit != task_mapping.end())
+                            lhs_ctx = mit->second.size();
+                        else if (RTLIL::Wire* lw = module->wire(RTLIL::escape_id(ln)))
+                            lhs_ctx = lw->width;
+                    }
+                    int prev_ctx = expression_context_width;
+                    if (lhs_ctx > 0) expression_context_width = lhs_ctx;
                     rhs = import_expression(rhs_expr, &task_mapping);
+                    expression_context_width = prev_ctx;
                 }
             }
 

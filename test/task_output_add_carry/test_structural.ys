@@ -1,0 +1,8 @@
+# sv-elab regress.sv r18: the task's 9-bit output keeps the carry.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+sat -verify -set a 255 -set b 1 -prove out 256
+sat -verify -set a 200 -set b 100 -prove out 300
