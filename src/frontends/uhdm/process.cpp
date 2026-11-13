@@ -2833,6 +2833,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
                 
                 uhdm_trace("      Created %zu sync rules for SR flip-flop\n", all_edge_triggers.size());
+                collapse_composite_async_condition(yosys_proc, all_edge_triggers);
             } else {
                 // Normal async reset: create sync rules for clock and reset only
                 if (clock_sig.empty()) {
@@ -20523,6 +20524,65 @@ void UhdmImporter::import_symbolic_loop_comb(const any* cond_expr, const any* bo
         live = (run.is_fully_const() && run.as_const().as_bool())
                    ? nb : module->And(NEW_ID, run, nb);
     }
+}
+
+// `always @(posedge clk or negedge rst_a or negedge rst_b) if (!rst_a ||
+// !rst_b) q <= 1; else q <= d;` (povik/sv-elab#401): one asynchronous
+// condition over SEVERAL edge triggers.  The set/reset-flop path emits one
+// edge sync per trigger, and yosys's proc_arst turns an edge into an async
+// rule only when the root switch tests THAT signal -- an OR of them matches
+// none, three edge events remain, and proc_dff aborts ("Multiple edge
+// sensitive events found for this signal!").  When the top-level switch
+// tests a COMPOSITE condition (not a trigger, nor a negation / compare of
+// one), drive it onto a wire, switch on that wire, and replace the async
+// edge syncs by a single posedge of it: proc_arst then sees an ordinary
+// async reset.
+void UhdmImporter::collapse_composite_async_condition(
+    RTLIL::Process* proc, const std::vector<std::pair<RTLIL::SigSpec, bool>>& triggers) {
+    if (!proc || triggers.size() < 3 || proc->root_case.switches.empty()) return;
+    RTLIL::SwitchRule* sw = proc->root_case.switches.front();
+    if (!sw || sw->signal.size() != 1 || sw->cases.empty()) return;
+    const RTLIL::SigSpec& clk = triggers.front().first;
+    auto is_trigger = [&](const RTLIL::SigSpec& s) {
+        for (size_t i = 1; i < triggers.size(); i++)
+            if (triggers[i].first == s) return true;
+        return false;
+    };
+    if (is_trigger(sw->signal)) return;
+    for (auto cell : module->cells()) {
+        if (!cell->hasPort(ID::Y) || cell->getPort(ID::Y) != sw->signal) continue;
+        if (cell->type.in(ID($not), ID($logic_not), ID($eq), ID($ne), ID($eqx), ID($nex),
+                          ID($reduce_bool)) &&
+            cell->hasPort(ID::A) && is_trigger(cell->getPort(ID::A)))
+            return;   // a plain reset/set on one trigger: proc_arst handles it
+    }
+    RTLIL::SyncRule* clk_sync = nullptr;
+    for (auto sy : proc->syncs)
+        if ((sy->type == RTLIL::STp || sy->type == RTLIL::STn) && sy->signal == clk) {
+            clk_sync = sy;
+            break;
+        }
+    if (!clk_sync) return;
+    RTLIL::Wire* any_w = module->addWire(NEW_ID, 1);
+    module->connect(RTLIL::SigSpec(any_w), sw->signal);
+    sw->signal = RTLIL::SigSpec(any_w);
+    std::vector<RTLIL::SyncRule*> kept;
+    for (auto sy : proc->syncs) {
+        if ((sy->type == RTLIL::STp || sy->type == RTLIL::STn) && sy != clk_sync &&
+            is_trigger(sy->signal)) {
+            delete sy;
+            continue;
+        }
+        kept.push_back(sy);
+    }
+    RTLIL::SyncRule* any_sync = new RTLIL::SyncRule;
+    any_sync->type = RTLIL::STp;
+    any_sync->signal = RTLIL::SigSpec(any_w);
+    any_sync->actions = clk_sync->actions;
+    kept.push_back(any_sync);
+    proc->syncs = kept;
+    uhdm_trace("      Composite async condition over %zu triggers collapsed onto one "
+               "async signal\n", triggers.size() - 1);
 }
 
 // Static iteration bound of a `while` condition: the constant side of a

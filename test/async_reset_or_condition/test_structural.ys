@@ -1,0 +1,7 @@
+# povik/sv-elab#401: one async-reset flop whose reset is either input low.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+opt
+check -assert
+select -assert-count 1 t:$adff
