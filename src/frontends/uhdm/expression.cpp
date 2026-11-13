@@ -17517,6 +17517,85 @@ RTLIL::SigSpec UhdmImporter::import_enum_builtin_method(
     return result;
 }
 
+// `<child instance>.<parameter>` or `<child instance>.<parameter>[k]` read
+// from the current module; empty when the path is not that.
+RTLIL::SigSpec UhdmImporter::import_child_param_read(
+    const UHDM::hier_path* hp, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    const UHDM::module_inst* here = current_instance;
+    if (!here || !hp->Path_elems() || hp->Path_elems()->size() != 2) return RTLIL::SigSpec();
+    auto ro = dynamic_cast<const UHDM::ref_obj*>((*hp->Path_elems())[0]);
+    if (!ro || ro->UhdmType() != uhdmref_obj) return RTLIL::SigSpec();
+    std::string inst_name(ro->VpiName());
+    const UHDM::module_inst* child = nullptr;
+    if (here->Modules())
+        for (auto m : *here->Modules())
+            if (std::string(m->VpiName()) == inst_name) { child = m; break; }
+    if (!child || !child->Param_assigns()) return RTLIL::SigSpec();
+
+    const UHDM::any* tail = (*hp->Path_elems())[1];
+    std::string pname;
+    const UHDM::expr* index = nullptr;
+    if (auto bs = dynamic_cast<const UHDM::bit_select*>(tail)) {
+        pname = std::string(bs->VpiName());
+        index = bs->VpiIndex();
+    } else if (auto tr = dynamic_cast<const UHDM::ref_obj*>(tail)) {
+        pname = std::string(tr->VpiName());
+    } else {
+        return RTLIL::SigSpec();
+    }
+    const UHDM::param_assign* pa = nullptr;
+    for (auto a : *child->Param_assigns())
+        if (a->Lhs() && std::string(a->Lhs()->VpiName()) == pname) { pa = a; break; }
+    if (!pa || !pa->Rhs()) return RTLIL::SigSpec();
+    auto rhs = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+    if (!rhs) return RTLIL::SigSpec();
+    if (!index) {
+        if (rhs->UhdmType() == uhdmoperation &&
+            any_cast<const UHDM::operation*>(rhs)->VpiOpType() == vpiAssignmentPatternOp)
+            return RTLIL::SigSpec();   // a whole unpacked array: not a value
+        return import_expression(rhs, input_mapping);
+    }
+    auto op = dynamic_cast<const UHDM::operation*>(rhs);
+    if (!op || op->VpiOpType() != vpiAssignmentPatternOp || !op->Operands())
+        return RTLIL::SigSpec();
+    RTLIL::SigSpec iv = import_expression(index, input_mapping);
+    if (!iv.is_fully_const()) return RTLIL::SigSpec();
+    int k = iv.as_const().as_int(true);
+    // Element k's position among the pattern's operands follows the declared
+    // range: `P[2]` / `[0:1]` ascending (operand 0 is element 0), `[1:0]`
+    // descending (operand 0 is element 1).
+    int left = 0, right = (int)op->Operands()->size() - 1;
+    // The declared range is on the PARAMETER (`int D[1:0]` -> vpiRange), or
+    // on an array typespec.
+    const UHDM::VectorOfrange* rgs = nullptr;
+    if (auto lp = dynamic_cast<const UHDM::parameter*>(pa->Lhs())) {
+        rgs = lp->Ranges();
+        if ((!rgs || rgs->empty()) && lp->Typespec())
+            if (auto ats = dynamic_cast<const UHDM::array_typespec*>(lp->Typespec()->Actual_typespec()))
+                rgs = ats->Ranges();
+    }
+    if ((!rgs || rgs->empty()) && op->Typespec())
+        if (auto ats = dynamic_cast<const UHDM::array_typespec*>(op->Typespec()->Actual_typespec()))
+            rgs = ats->Ranges();
+    if (rgs && !rgs->empty()) {
+        auto rg = (*rgs)[0];
+        RTLIL::SigSpec l = import_expression(rg->Left_expr());
+        RTLIL::SigSpec r = import_expression(rg->Right_expr());
+        if (l.is_fully_const() && r.is_fully_const()) {
+            left = l.as_const().as_int(true);
+            right = r.as_const().as_int(true);
+        }
+    }
+    // A pattern Surelog REORDERED (vpiReordered) already lists the elements
+    // from the low index up; otherwise operand 0 is the LEFT element.
+    int pos = op->VpiReordered() ? k - std::min(left, right)
+            : ((left <= right) ? k - left : left - k);
+    if (pos < 0 || pos >= (int)op->Operands()->size()) return RTLIL::SigSpec();
+    auto el = dynamic_cast<const UHDM::expr*>((*op->Operands())[pos]);
+    if (!el) return RTLIL::SigSpec();
+    return import_expression(el, input_mapping);
+}
+
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         uhdm_trace("    Importing hier_path\n");
@@ -17546,6 +17625,19 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (r.size() > 0) return r;
             }
         }
+    }
+
+    // `inst.P` / `inst.P[k]`: a PARAMETER of a child instance read through a
+    // hierarchical reference (sv-elab regress.sv r33, `r33_leaf u (); assign
+    // w = u.P[1];` with `parameter int P[2] = '{0, 3}`).  Surelog binds
+    // neither path element, so the general resolution below treated `u` as
+    // a struct and drove X ("Could not resolve struct member access
+    // 'u.P[1]'").  The child's elaborated instance carries the parameter's
+    // value as a param_assign: a constant, or an assignment pattern whose
+    // element k is picked by the array's declared range.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        RTLIL::SigSpec r = import_child_param_read(uhdm_hier, input_mapping);
+        if (r.size() > 0) return r;
     }
 
     // `formal[k].member` inside a function or task body, where `formal` is an

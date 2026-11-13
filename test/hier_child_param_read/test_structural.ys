@@ -1,0 +1,7 @@
+# sv-elab regress.sv r33: hierarchical reads of a child's parameters.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+sat -verify -prove w 3 -prove v 11 -prove d1 5 -prove s 9
