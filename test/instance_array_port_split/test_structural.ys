@@ -1,0 +1,9 @@
+# regress.sv r15: bitout[10+k] = allbits[onebit[2k+1:2k]]; y2 = ~a2.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt
+check -assert
+# allbits = 0b10110100, onebit picks bits 2,3,1,0,2,3,1,0 (member 0 first)
+sat -verify -set allbits 8'b10110100 -set onebit 16'b0001101100011011 -set a2 6'b101001 -prove bitout 8'b00100010 -prove y2 6'b010110
