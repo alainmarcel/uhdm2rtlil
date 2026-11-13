@@ -1,0 +1,12 @@
+# povik/sv-elab#304: both elements of the parameter-sized interface-array
+# port are created and driven -- no undriven wire anywhere, and the second
+# element's register reaches the parent's outputs.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top top
+proc
+flatten
+opt_clean
+check -assert
+# one valid flop and one data flop per element: 2 each, not 1
+select -assert-count 2 o:valids %ci* t:$dff %i
+select -assert-count 2 o:datas %ci* t:$dff %i
