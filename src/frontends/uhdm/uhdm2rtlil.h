@@ -1212,6 +1212,32 @@ struct UhdmImporter {
         FuncParamBind(UhdmImporter* i, const UHDM::task_func* f);
         ~FuncParamBind() { if (pushed) imp->func_param_binds_.pop_back(); }
     };
+    // Tagged unions and pattern matching (LRM 7.3.2, 12.6) -- tagged.cpp.
+    struct TaggedLayout {
+        int tag_bits = 0;
+        int body = 0;                       // widest member
+        std::vector<std::pair<std::string, const UHDM::typespec*>> members;
+        std::vector<int> widths;
+        int width() const { return tag_bits + body; }
+        int index(const std::string& n) const {
+            for (size_t i = 0; i < members.size(); i++)
+                if (members[i].first == n) return (int)i;
+            return -1;
+        }
+    };
+    bool tagged_union_layout(const UHDM::typespec* ts, TaggedLayout& out);
+    const UHDM::typespec* match_typespec_of(const UHDM::any* e);
+    const UHDM::typespec* tagged_union_with_member(const std::string& member);
+    RTLIL::SigSpec import_tagged_value(const UHDM::any* tp, const UHDM::typespec* ts);
+    RTLIL::SigSpec import_pattern_match(const UHDM::any* pattern, RTLIL::SigSpec value,
+        const UHDM::typespec* ts, int case_type);
+    RTLIL::SigSpec import_match_operation(const UHDM::operation* op);
+    void desugar_case_matches();
+    // Pattern variables bound by the most recent match, per module.
+    std::map<std::string, RTLIL::SigSpec> pattern_var_binds_;
+    RTLIL::Module* pattern_var_binds_module_ = nullptr;
+    // casez / casex matches: the case type of a desugared match operation.
+    std::map<const UHDM::any*, int> match_case_type_;
     dict<RTLIL::Module*, std::pair<bool, pool<RTLIL::Wire*>>> driven_wires_cache_;
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);

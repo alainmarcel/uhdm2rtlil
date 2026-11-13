@@ -1,0 +1,28 @@
+# Tagged-union values and matches: read_verilog cannot parse a tagged union
+# and read_slang does not support it (povik/sv-elab#168), so prove the values.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+check -assert
+# tagged a 4'h7: tag 0, member left-justified below the tag
+sat -verify -set sel 2'd0 -set d 8'ha7 -prove t_o 10'b00_0111_0000
+sat -verify -set sel 2'd0 -set d 8'ha7 -prove y 8'h07 -prove m 1'b0 -prove z 8'h00
+# tagged b: binding, guard true, if-matches binding, wildcard
+sat -verify -set sel 2'd1 -set d 8'ha7 -prove t_o 10'b01_1010_0111
+sat -verify -set sel 2'd1 -set d 8'ha7 -prove y 8'ha7 -prove m 1'b1 -prove z 8'ha8
+# guard false -> default
+sat -verify -set sel 2'd1 -set d 8'h02 -prove y 8'hff -prove z 8'h03
+# void member
+sat -verify -set sel 2'd2 -set d 8'ha7 -prove t_o 10'b10_0000_0000 -prove y 8'hff -prove m 1'b0
+# structure pattern: constant field matches / does not
+sat -verify -set sel 2'd3 -set d 8'h5c -prove t_o 10'b11_0101_1100 -prove s 4'hc
+sat -verify -set sel 2'd3 -set d 8'h6c -prove s 4'hf
+# conditional operator with &&& guards
+sat -verify -set sel 2'd1 -set d 8'ha7 -prove k 8'ha7
+sat -verify -set sel 2'd1 -set d 8'ha6 -prove k 8'h00
+sat -verify -set sel 2'd1 -set d 8'h03 -prove k 8'h00
+sat -verify -set sel 2'd0 -set d 8'ha7 -prove k 8'h00
+sat -verify -set sel 2'd1 -set d 8'h02 -prove g 1'b1
+sat -verify -set sel 2'd1 -set d 8'h00 -prove g 1'b0
+sat -verify -set sel 2'd0 -set d 8'h02 -prove g 1'b0

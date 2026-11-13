@@ -5243,6 +5243,13 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         // Handle union_typespec: width = width of widest member
         if (typespec->UhdmType() == uhdmunion_typespec) {
             auto union_ts = dynamic_cast<const UHDM::union_typespec*>(typespec);
+            // A TAGGED union also carries its tag (LRM 7.3.2, tagged.cpp).
+            TaggedLayout tl;
+            if (union_ts && tagged_union_layout(union_ts, tl)) {
+                uhdm_trace("UHDM: tagged union width = %d (tag %d + body %d)\n",
+                           tl.width(), tl.tag_bits, tl.body);
+                return tl.width();
+            }
             if (union_ts && union_ts->Members()) {
                 int max_width = 0;
                 for (auto member : *union_ts->Members()) {

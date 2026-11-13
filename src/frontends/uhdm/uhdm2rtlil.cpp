@@ -373,6 +373,9 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     
     // Store the design for later access
     this->uhdm_design = uhdm_design;
+
+    // `case (e) matches` becomes an if/else chain before anything reads it.
+    desugar_case_matches();
     
     // First, identify top-level modules by checking vpiTop property
     std::set<std::string> top_level_module_names;

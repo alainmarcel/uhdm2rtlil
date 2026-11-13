@@ -148,6 +148,7 @@ set(UHDM_FRONTEND_SOURCES
     src/frontends/uhdm/package.cpp
     src/frontends/uhdm/interface.cpp
     src/frontends/uhdm/interpreter.cpp
+    src/frontends/uhdm/tagged.cpp
 )
 
 # Build as a shared library (Yosys plugin)
