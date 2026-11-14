@@ -102,3 +102,15 @@ sv_elab_issues/issue_405_gclk_not_honoured_always_posedge_gbl
 # the difference is only how each models the undriven index.  Not a defect.
 sv_elab_issues/issue_73_oss_cad_suite_apparently_distributing_stale
 
+# slang#829 (slang-issues sweep): struct member s.b is never assigned; x, y and
+# z all read it.  read_uhdm leaves s.b undriven (x = y = z = s.b after opt),
+# read_slang makes it a constant X: the same X, which the miter models as two
+# different free values (CLAUDE.md "undriven vs constant X").  Not a defect.
+slang_issues/issue_829_undriven_struct_members_do_not_trigger
+# slang#1493 (slang-issues sweep): outputs c and inout b are never assigned
+# (the always_comb latch bb reads c and drives nothing).  Same undriven-vs-
+# constant-X class as #829 above.  Not a defect.
+slang_issues/issue_1493_slang_slang_tidy_diagnostics_include_stack
+# slang#1521 (slang-issues sweep): output o_signal is never assigned.  Same
+# undriven-vs-constant-X class as #829 above.  Not a defect.
+slang_issues/issue_1521_syntaxrewriter_removes_endif_directive_when_repl_v1

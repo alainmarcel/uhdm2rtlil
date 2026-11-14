@@ -75,6 +75,7 @@ groups=[
  ('**sv-synth-tests** (the converted sv-tests of `test/sv_tests`)',['sv-synth-tests'],'[sv-synth-tests]('+W+'sweep-sv-synth-tests.yml)'),
  ('**sv-yosys-issues** (the YosysHQ/yosys SystemVerilog-issue corpus of `test/yosys_issues`)',['sv-yosys-issues'],'[sv-yosys-issues]('+W+'sweep-sv-yosys-issues.yml)'),
  ('**sv-elab-issues** (the povik/sv-elab issue corpus of `test/sv_elab_issues`)',['sv-elab-issues'],'[sv-elab-issues]('+W+'sweep-sv-elab-issues.yml)'),
+ ('**slang-issues** (the MikePopoloski/slang synthesizable issue corpus of `test/slang_issues`)',['slang-issues'],'[slang-issues]('+W+'sweep-slang-issues.yml)'),
 ]
 tot=collections.Counter(); seen=set()
 hdrs=['Core','Rows','Formal proven','`read_slang` co-simulated','pass','**diverge**','artefact / no oracle','`read_uhdm` co-simulated','pass','**diverge**','artefact','Undriven']

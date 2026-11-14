@@ -1126,3 +1126,16 @@ Test: issue_158_support_prev_on_enum_values
     that (0->2, 1->0, 2->1, else 0).  Verilator 5.048 indexes its table with
     only the value's low bits: prev(4)=2, prev(5)=0, prev(32'hfffffffe)=1
     (measured).  read_slang cannot read the design.  A simulator artefact.
+
+Test: issue_1526_signal_driven_from_initial_block_and
+    slang#1526 (slang-issues sweep).  A 1024x8 RAM initialised by an initial
+    loop and written / read in an always_ff.  read_uhdm and read_slang diverge
+    from the RTL IDENTICALLY (269 cycles each): a shared testbench artefact
+    of the initialised memory, not a reader defect.
+
+Test: issue_1581_slang_doesn_t_like_time_delays
+    slang#1581 (slang-issues sweep).  Every nonblocking assignment carries an
+    intra-assignment delay (`proto_o <= #TP ...`).  The RTL simulation applies
+    the delay and a synthesized netlist cannot, so the netlist's outputs lead
+    the RTL's by #TP at every sample.  read_slang cannot read the design.  A
+    testbench artefact (delays are ignored by synthesis).
