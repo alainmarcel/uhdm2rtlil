@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module Test;
+module Test (__o_test_a, __o_test_b);
   logic test_a;
   logic test_b;
 
@@ -19,5 +19,11 @@ module Test;
       1'b1: ;
     endcase
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_test_a;
+  assign __o_test_a = test_a;
+  output logic __o_test_b;
+  assign __o_test_b = test_b;
 endmodule
 

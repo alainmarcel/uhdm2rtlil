@@ -15,8 +15,12 @@ module receiver (output logic [31:0] width, bus_if.receiver_mp bus);
   end
 endmodule
 
-module top;
+module top (__i_narrow_bus_data);
   bus_if #(.WIDTH(8))  narrow_bus();
   receiver u_recv1(.bus(narrow_bus));  // Receives 8-bit data
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [7:0] __i_narrow_bus_data;
+  assign narrow_bus.data = __i_narrow_bus_data;
 endmodule
 

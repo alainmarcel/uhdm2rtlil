@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
 // ---- c0.sv
-module nonblock2;
+module nonblock2 (__o_a, __o_b);
   logic a, b;
 
   initial begin
@@ -17,5 +17,11 @@ module nonblock2;
     $monitor ($time, ,"a = %b b = %b", a, b);
     #100 $finish;
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_a;
+  assign __o_a = a;
+  output logic __o_b;
+  assign __o_b = b;
 endmodule
 

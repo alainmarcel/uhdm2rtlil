@@ -3,7 +3,8 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top(input clk_i, rst_n_i);
+module top(input clk_i, rst_n_i,
+  output logic __o_a);
     logic a;
     always_ff @(posedge clk_i or negedge rst_n_i) begin
         if(~rst_n_i) begin
@@ -11,5 +12,8 @@ module top(input clk_i, rst_n_i);
             a <= 1;
         end
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_a = a;
 endmodule // top
 

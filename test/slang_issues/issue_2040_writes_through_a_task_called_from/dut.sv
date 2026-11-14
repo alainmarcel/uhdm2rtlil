@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__i_clk, __o_q, __o_t);
   logic clk;
   logic [7:0] a, t, q;
   task automatic set_t(input logic [7:0] v);
@@ -18,5 +18,13 @@ module top;
     set_t(8'd7);
     set_q(8'd7);
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_clk;
+  assign clk = __i_clk;
+  output logic [7:0] __o_q;
+  assign __o_q = q;
+  output logic [7:0] __o_t;
+  assign __o_t = t;
 endmodule
 

@@ -9,9 +9,13 @@
 
 module mod(input logic sig);
 endmodule
-module top;
+module top (__i_sig1);
     logic sig1, sig2;
     `MAKE_INST(A, sig1)
     `MAKE_INST(B, sig2)
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_sig1;
+  assign sig1 = __i_sig1;
 endmodule
 

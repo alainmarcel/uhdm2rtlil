@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module testA;
+module testA (__i_data_in, __o_data_out);
 
     typedef struct packed {
         logic a;
@@ -20,6 +20,12 @@ module testA;
         .data_o(data_out)
     );
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [1:0] __i_data_in;
+  assign data_in = data_t'(__i_data_in);
+  output logic [1:0] __o_data_out;
+  assign __o_data_out = data_out;
 endmodule
 
 module testB #(

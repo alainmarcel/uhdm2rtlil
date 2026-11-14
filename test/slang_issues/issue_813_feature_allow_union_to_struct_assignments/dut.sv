@@ -26,7 +26,7 @@ typedef union packed {
     s3_t s3;
 } s4_t;
 
-module top;
+module top (__o_s1a, __o_s1b);
     s1_t s1a, s1b;
     s2_t s2;
     s4_t s4;
@@ -35,5 +35,11 @@ module top;
         s1a = s2;
         s1b = s4;
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [3:0] __o_s1a;
+  assign __o_s1a = s1a;
+  output logic [3:0] __o_s1b;
+  assign __o_s1b = s1b;
 endmodule
 

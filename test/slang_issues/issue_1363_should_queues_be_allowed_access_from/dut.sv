@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module queue_rw_tb;
+module queue_rw_tb (__o_clk, __o_item);
   logic clk;
   logic [7:0] queue[$]; // Dynamic queue
 
@@ -27,5 +27,11 @@ module queue_rw_tb;
   always_ff @(negedge clk) begin
     item = queue.pop_front();
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_clk;
+  assign __o_clk = clk;
+  output logic [7:0] __o_item;
+  assign __o_item = item;
 endmodule
 

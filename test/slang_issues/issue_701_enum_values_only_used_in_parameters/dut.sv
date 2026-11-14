@@ -15,7 +15,7 @@ module DUT #(
     end
 endmodule
 
-module top;
+module top (__o_a);
     typedef enum int {
         E0 = 0,
         E1 = 1,
@@ -36,5 +36,9 @@ module top;
             $display("a is 1");
         end
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_a;
+  assign __o_a = a;
 endmodule
 

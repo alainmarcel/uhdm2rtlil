@@ -18,9 +18,13 @@ module n(I.mst i);
     assign i.l = 1 ;
 endmodule 
 
-module top;
+module top (__o_i_l);
     I i();
     m u_m(i);
     n u_n(i);
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_i_l;
+  assign __o_i_l = i.l;
 endmodule
 

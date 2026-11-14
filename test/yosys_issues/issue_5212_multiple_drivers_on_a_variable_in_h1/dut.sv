@@ -18,7 +18,7 @@ module simple_sub (
     assign diff = a - b;
 endmodule
 
-module top;
+module top (__o_a, __o_a_out, __o_b, __o_b_out, __o_diff);
     logic [7:0] a, b, a_out, b_out, diff;
     
     assign a = 8'hAA;
@@ -32,5 +32,17 @@ module top;
         .diff(diff)
     );
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [7:0] __o_a;
+  assign __o_a = a;
+  output logic [7:0] __o_a_out;
+  assign __o_a_out = a_out;
+  output logic [7:0] __o_b;
+  assign __o_b = b;
+  output logic [7:0] __o_b_out;
+  assign __o_b_out = b_out;
+  output logic [7:0] __o_diff;
+  assign __o_diff = diff;
 endmodule
 

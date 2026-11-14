@@ -595,6 +595,17 @@ NESTED_FAMILIES = {"sv-synth-tests": "sv_tests", "sv-yosys-issues": "yosys_issue
                    "sv-elab-issues": "sv_elab_issues", "slang-issues": "slang_issues"}
 
 
+def _top_output_count(d, top):
+    """Number of output ports of `top` as read_uhdm reads it (-1 if unknown)."""
+    yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
+    plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
+    rc, out = sh(_mem_capped([str(yosys), "-m", str(plugin), "-p",
+                              f"read_uhdm slpp_all/surelog.uhdm; hierarchy -top {top}; "
+                              f"select -count {top}/o:*"]), cwd=d, timeout=600)
+    m = re.findall(r"(\d+) objects", out or "")
+    return int(m[-1]) if rc == 0 and m else -1
+
+
 def _auto_top(d):
     """The top `hierarchy -auto-top` picks for a single-file `dut.sv` test
     dir, or None.  The converted chipsalliance/sv-tests name their tops
@@ -719,6 +730,15 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         row["check"] = _undriven_check(d, top)
         row["conflicts"] = _conflict_cell(d)
         row["unresolved"] = _unresolved_cell(d)
+        # A top with no outputs has nothing to compare: its miter passes
+        # vacuously and its co-sim has nothing to observe.  Say so instead of
+        # reporting it "equivalent" (77 of the first slang-issues sweep's 104
+        # "proven" rows).  test/yosys_issues/observe.py gives a portless issue
+        # snippet ports; what is left here really has no observable output.
+        if nested and _top_output_count(d, top) == 0:
+            row.update(formal="— (no outputs: nothing to compare)",
+                       cosim="skip (no outputs)")
+            return row
         # 1. slang miter.  A committed test_slang_equiv.ys takes precedence
         # (hand-tuned lowering for the tricky modules); otherwise auto-generate
         # the standard boilerplate miter from project.f so a self-contained

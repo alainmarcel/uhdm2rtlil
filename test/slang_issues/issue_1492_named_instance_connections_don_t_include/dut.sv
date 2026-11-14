@@ -11,7 +11,7 @@ module passthrough (
 );
 endmodule
 
-module top;
+module top (__i_clk, __i_in, __i_rstb, __o_out);
 logic clk, rstb;
 logic in, out;
 
@@ -21,5 +21,15 @@ passthrough pt (
   .*
 );
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_clk;
+  assign clk = __i_clk;
+  input logic __i_in;
+  assign in = __i_in;
+  input logic __i_rstb;
+  assign rstb = __i_rstb;
+  output logic __o_out;
+  assign __o_out = out;
 endmodule
 

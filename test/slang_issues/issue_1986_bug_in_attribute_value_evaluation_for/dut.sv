@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__i_VDD_net, __i_VSS_net);
     logic VDD_net;
     logic VSS_net;
 
@@ -11,6 +11,12 @@ module top;
         .VDD(VDD_net),
         .VSS(VSS_net)
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_VDD_net;
+  assign VDD_net = __i_VDD_net;
+  input logic __i_VSS_net;
+  assign VSS_net = __i_VSS_net;
 endmodule
 
 module design_top(

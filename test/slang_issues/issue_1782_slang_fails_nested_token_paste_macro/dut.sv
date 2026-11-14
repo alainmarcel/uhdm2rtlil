@@ -59,7 +59,7 @@ module fixed_add #(
   assign sum = $signed(a) + $signed(b);
 endmodule
 
-module using_add;
+module using_add (__o_a, __o_b, __o_sum);
   `FIXED_LOCALPARAM(DATA, 4, 7);
   `FIXED_LOCALPARAM(SUM, 5, 7);
 
@@ -72,5 +72,13 @@ module using_add;
 
   // This line triggers diagnostics in slang-server
   `ADD2(sum, a, b);
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [10:0] __o_a;
+  assign __o_a = a;
+  output logic [10:0] __o_b;
+  assign __o_b = b;
+  output logic [11:0] __o_sum;
+  assign __o_sum = sum;
 endmodule
 

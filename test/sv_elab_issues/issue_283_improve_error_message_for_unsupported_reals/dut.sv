@@ -6,7 +6,11 @@
 module a (input real a1);
 endmodule: a
 
-module b();
+module b(__i_b1);
   a a_inst(.a1(b1));
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_b1;
+  assign b1 = __i_b1;
 endmodule: b
 

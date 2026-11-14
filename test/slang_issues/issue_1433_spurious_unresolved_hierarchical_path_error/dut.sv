@@ -28,7 +28,7 @@ module example(
    endgenerate;
 endmodule; // example
 
-module top();
+module top(__i_clk, __i_resetn, __o_reference);
 
     wire clk;
     wire  resetn;
@@ -39,5 +39,13 @@ module top();
    wire reference = top.dut.gg_inner[0].genblk1.i.innermost;
 
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_clk;
+  assign clk = __i_clk;
+  input logic __i_resetn;
+  assign resetn = __i_resetn;
+  output logic __o_reference;
+  assign __o_reference = reference;
 endmodule; // top
 

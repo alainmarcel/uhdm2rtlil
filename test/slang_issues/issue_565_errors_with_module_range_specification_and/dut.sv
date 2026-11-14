@@ -9,7 +9,7 @@ module M(
 );
 endmodule
 
-module top;
+module top (__i_a, __o_b);
     localparam N = 8;
 
     logic [N-1:0] a;
@@ -19,5 +19,11 @@ module top;
         .a,
         .b
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [7:0] __i_a;
+  assign a = __i_a;
+  output logic [7:0] __o_b;
+  assign __o_b = b;
 endmodule
 

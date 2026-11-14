@@ -16,7 +16,8 @@ function signed [7:0] incr_sum;
         end
 endfunction
 
-module test(input signed [7:0][2:0] a);
+module test(input signed [7:0][2:0] a,
+  output logic [23:0] __o_temp);
     generate genvar m;
     logic [7:0][2:0] temp;
         for (m = 0; m < 3; m=m+1) begin : t
@@ -25,5 +26,8 @@ module test(input signed [7:0][2:0] a);
             end
         end
     endgenerate
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_temp = temp;
 endmodule
 

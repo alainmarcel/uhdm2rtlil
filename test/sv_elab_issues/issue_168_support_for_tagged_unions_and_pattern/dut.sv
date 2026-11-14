@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/sv_elab_issues/harvest.py
 
 // ---- b0.sv
-module case_tb ();
+module case_tb (__i_tmp, __o_val);
 
 	typedef union tagged {
 		struct {
@@ -24,5 +24,11 @@ module case_tb ();
 	initial begin
           val = tmp matches tagged a '{4'b01zx, .v} ? 1 : 2;
 	end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [33:0] __i_tmp;
+  assign tmp = u'(__i_tmp);
+  output logic [3:0] __o_val;
+  assign __o_val = val;
 endmodule
 
