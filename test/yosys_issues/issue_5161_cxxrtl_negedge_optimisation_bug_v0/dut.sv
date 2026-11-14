@@ -3,7 +3,7 @@
 // Code block(s) from the issue (variant v0); harvested by test/yosys_issues/harvest.py
 
 // ---- b0.sv
-module bug;
+module bug (__o_clk, __o_reg_bug);
     reg [6:0] reg_bug;
     reg clk = 1;
     
@@ -15,5 +15,11 @@ module bug;
         #1 $display("reg_bug=%b expected=0011111 %s", 
                    reg_bug, reg_bug == 7'b0011111 ? "PASS" : "FAIL");
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_clk;
+  assign __o_clk = clk;
+  output logic [6:0] __o_reg_bug;
+  assign __o_reg_bug = reg_bug;
 endmodule
 

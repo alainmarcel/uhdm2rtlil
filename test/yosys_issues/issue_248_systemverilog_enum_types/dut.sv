@@ -3,7 +3,8 @@
 // Code block(s) from the issue; harvested by test/yosys_issues/harvest.py
 
 // ---- b0.sv
-module foo(input clk, input rst);
+module foo(input clk, input rst,
+  output logic [31:0] __o_state);
    typedef enum {S0, S1, S2} state_t;
    state_t state;
 
@@ -14,5 +15,8 @@ module foo(input clk, input rst);
       state <= state.next();     
     end
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_state = state;
 endmodule
 

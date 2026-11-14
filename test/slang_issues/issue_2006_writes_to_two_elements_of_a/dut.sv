@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__o_by_name, __o_dyn, __o_q);
   int by_name [string];
   int dyn [];
   int q [$];
@@ -20,5 +20,13 @@ module top;
 
   always_comb fixed[1] = 1;
   initial     fixed[2] = 4;
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_by_name;
+  assign __o_by_name = by_name;
+  output logic __o_dyn;
+  assign __o_dyn = dyn;
+  output logic __o_q;
+  assign __o_q = q;
 endmodule
 

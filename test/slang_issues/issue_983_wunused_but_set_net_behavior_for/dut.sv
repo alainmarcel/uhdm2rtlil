@@ -11,7 +11,7 @@ module m(
     tranif1(a, local_a, 1'b1);
 endmodule
 
-module top;
+module top (__o_a);
     wire a;
 
     m m1(
@@ -24,5 +24,9 @@ module top;
        .*
     );
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_a;
+  assign __o_a = a;
 endmodule
 

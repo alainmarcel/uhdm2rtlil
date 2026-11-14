@@ -27,7 +27,7 @@ module dut_device(
 );
 endmodule
 
-module top;
+module top (__i_intf_a, __o_intf_b);
     logic a;
     logic b;
 
@@ -37,5 +37,11 @@ module top;
         .a (intf.a),
         .b (intf.b)
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_intf_a;
+  output logic __o_intf_b;
+  assign intf.a = __i_intf_a;
+  assign __o_intf_b = intf.b;
 endmodule
 

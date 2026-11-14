@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__o_sig1);
     parameter W  = 16;
     parameter P1 = 8;
     parameter P2 = 2;
@@ -19,5 +19,9 @@ module top;
             end
         end
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [15:0] __o_sig1;
+  assign __o_sig1 = sig1;
 endmodule
 

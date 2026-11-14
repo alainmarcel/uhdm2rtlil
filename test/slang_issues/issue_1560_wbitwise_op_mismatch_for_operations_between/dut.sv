@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module test;
+module test (__o_pa, __o_vin, __o_vout);
   logic [15:0] vin, vout;
   logic [1:0][7:0] pa;
   
@@ -14,5 +14,13 @@ module test;
   end
 
   assign vout = vin ^ pa;
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [15:0] __o_pa;
+  assign __o_pa = pa;
+  output logic [15:0] __o_vin;
+  assign __o_vin = vin;
+  output logic [15:0] __o_vout;
+  assign __o_vout = vout;
 endmodule
 

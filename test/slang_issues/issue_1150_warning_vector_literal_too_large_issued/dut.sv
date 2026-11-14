@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module test ();
+module test (__o_a1, __o_a2);
 localparam logic signed [3:0] a0=4'sb1000;
 logic signed [3:0]  a1, a2;
 assign a1=4'shf;
@@ -14,5 +14,11 @@ initial begin
     $display("a2=%b [%d]",a2,a2);
     $finish;
 end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [3:0] __o_a1;
+  assign __o_a1 = a1;
+  output logic [3:0] __o_a2;
+  assign __o_a2 = a2;
 endmodule
 

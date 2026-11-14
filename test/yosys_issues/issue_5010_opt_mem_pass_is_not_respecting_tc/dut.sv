@@ -27,7 +27,7 @@ module comb_mem_d1 #(
   end
 endmodule
 
-module test();
+module test(__i_addr0, __i_clk, __i_reset, __o_read_data1, __o_read_data2, __o_write_data, __o_write_en);
   logic [3:0] addr0;
   logic [31:0] write_data;
   logic write_en;
@@ -83,5 +83,21 @@ module test();
 
   assign write_data = read_data1 + read_data2;
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [3:0] __i_addr0;
+  assign addr0 = __i_addr0;
+  input logic __i_clk;
+  assign clk = __i_clk;
+  input logic __i_reset;
+  assign reset = __i_reset;
+  output logic [31:0] __o_read_data1;
+  assign __o_read_data1 = read_data1;
+  output logic [31:0] __o_read_data2;
+  assign __o_read_data2 = read_data2;
+  output logic [31:0] __o_write_data;
+  assign __o_write_data = write_data;
+  output logic __o_write_en;
+  assign __o_write_en = write_en;
 endmodule
 

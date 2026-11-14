@@ -12,11 +12,15 @@ module top1(a);
        integer a;
 endmodule
 
-module top2(a);
+module top2(a, __o_c);
        var integer c;
        initial begin
                c = a; 
        end
        input integer a;
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [31:0] __o_c;
+  assign __o_c = c;
 endmodule
 

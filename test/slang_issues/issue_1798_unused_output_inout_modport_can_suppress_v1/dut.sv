@@ -16,7 +16,7 @@ module status_consumer(
     assign observed_status = intf.status;
 endmodule
 
-module top;
+module top (__o_observed_status);
     status_if intf();
     wire observed_status;
 
@@ -30,5 +30,9 @@ module top;
     //
     // Actual:
     // no warning
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_observed_status;
+  assign __o_observed_status = observed_status;
 endmodule
 

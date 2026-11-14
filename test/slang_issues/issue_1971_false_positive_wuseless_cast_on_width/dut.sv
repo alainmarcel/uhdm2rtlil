@@ -16,7 +16,7 @@ module width_adapter #(
     assign out = DST_W'(in);
 endmodule
 
-module top;
+module top (__i_a, __o_b, __o_c);
     logic [0:0] a;
     logic [0:0] b;
     logic [1:0] c;
@@ -32,5 +32,13 @@ module top;
         .in  (a),
         .out (c)
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_a;
+  assign a = __i_a;
+  output logic __o_b;
+  assign __o_b = b;
+  output logic [1:0] __o_c;
+  assign __o_c = c;
 endmodule
 

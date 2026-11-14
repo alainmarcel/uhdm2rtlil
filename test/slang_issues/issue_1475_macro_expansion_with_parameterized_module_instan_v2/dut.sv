@@ -4,7 +4,7 @@
 
 // ---- b0.sv
 // demo.v
-module demo_tb;
+module demo_tb (__o_clk, __o_do_fill, __o_rdw_fill, __o_reset);
     reg clk, reset;
     reg [3:0] do_fill;
     wire [3:0] rdw_fill;
@@ -36,6 +36,16 @@ module demo_tb;
         $finish;
     end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_clk;
+  assign __o_clk = clk;
+  output logic [3:0] __o_do_fill;
+  assign __o_do_fill = do_fill;
+  output logic [3:0] __o_rdw_fill;
+  assign __o_rdw_fill = rdw_fill;
+  output logic __o_reset;
+  assign __o_reset = reset;
 endmodule
 
 `define BUFFER(dst, src) `BUFFER_EX(dst, src, 1'b1, $bits(dst), 1)

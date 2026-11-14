@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/sv_elab_issues/harvest.py
 
 // ---- b0.sv
-module test;
+module test (__o_countA, __o_countB, __o_o1, __o_o2, __o_o3);
 
 reg i1, i2, o1, o2, o3;
 
@@ -42,5 +42,17 @@ initial begin
     $display("FAILED");
 end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [31:0] __o_countA;
+  assign __o_countA = countA;
+  output logic [31:0] __o_countB;
+  assign __o_countB = countB;
+  output logic __o_o1;
+  assign __o_o1 = o1;
+  output logic __o_o2;
+  assign __o_o2 = o2;
+  output logic __o_o3;
+  assign __o_o3 = o3;
 endmodule
 

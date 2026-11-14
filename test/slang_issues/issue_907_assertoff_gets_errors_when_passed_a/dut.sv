@@ -10,7 +10,7 @@ module M(
     myprop: assert property(@(posedge clk) disable iff (rst_b) ~1);
 endmodule
 
-module top;
+module top (__i_clk, __i_rst_b);
     logic clk;
     logic rst_b;
 
@@ -23,5 +23,11 @@ module top;
         $assertoff(0, m);
         $assertoff(0, m.myprop);
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_clk;
+  assign clk = __i_clk;
+  input logic __i_rst_b;
+  assign rst_b = __i_rst_b;
 endmodule
 

@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__i_a, __i_b, __i_clk, __o_s);
 
     string s;
     logic clk;
@@ -21,5 +21,15 @@ module top;
             b ? "12"   :
                 "0";
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_a;
+  assign a = __i_a;
+  input logic [1:0] __i_b;
+  assign b = __i_b;
+  input logic __i_clk;
+  assign clk = __i_clk;
+  output logic __o_s;
+  assign __o_s = s;
 endmodule
 

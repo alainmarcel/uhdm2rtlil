@@ -28,7 +28,7 @@ module i2c(
     );
 endmodule
 
-module top;
+module top (__o_scl, __o_scl_drive1, __o_scl_drive2, __o_scl_en1, __o_scl_en2);
     wire scl;
     logic scl_en1, scl_en2;
     logic scl_drive1, scl_drive2;
@@ -56,5 +56,17 @@ module top;
         .scl_drive (scl_drive2),
         .*
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_scl;
+  assign __o_scl = scl;
+  output logic __o_scl_drive1;
+  assign __o_scl_drive1 = scl_drive1;
+  output logic __o_scl_drive2;
+  assign __o_scl_drive2 = scl_drive2;
+  output logic __o_scl_en1;
+  assign __o_scl_en1 = scl_en1;
+  output logic __o_scl_en2;
+  assign __o_scl_en2 = scl_en2;
 endmodule
 
