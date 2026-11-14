@@ -20,6 +20,7 @@ import concurrent.futures as cf
 import glob
 import json
 import os
+import shutil
 import re
 import signal
 import subprocess
@@ -685,7 +686,20 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
                 if nested and d.parent != TEST_DIR else d.name)
         row = {"module": d.name, "formal": "— (no miter)", "cosim": "—",
                "check": "—", "conflicts": "—"}
-        # Elaborate (surelog + read check) if the UHDM is missing.
+        # Elaborate (surelog + read check) if the UHDM is missing -- or STALE:
+        # older than the Surelog binary or the row's sources.  A local sweep
+        # otherwise reuses a parse from an older Surelog, and the row reports
+        # what that Surelog produced (slang#868 read 300 divergences after the
+        # Surelog fix that closed it; sv-elab r15 an error).  CI checks out
+        # fresh, so only local sweeps were misled.
+        uhdm = d / "slpp_all" / "surelog.uhdm"
+        if uhdm.exists():
+            surelog = (TEST_DIR / ".." / "build" / "third_party" / "Surelog"
+                       / "bin" / "surelog")
+            newer = [p for p in (surelog, d / "dut.sv", d / "project.f")
+                     if p.exists() and p.stat().st_mtime > uhdm.stat().st_mtime]
+            if newer:
+                shutil.rmtree(d / "slpp_all", ignore_errors=True)
         if not (d / "slpp_all" / "surelog.uhdm").exists():
             rc, _ = sh(_mem_capped(["./test_uhdm_workflow.sh", name]),
                        cwd=TEST_DIR, timeout=1200)
