@@ -583,8 +583,11 @@ SV_SYNTH_DIR = TEST_DIR / "sv_tests"
 #                    povik/sv-elab (read_slang) issue tracker, open and
 #                    closed, plus sv-elab's per-issue regression tests
 #                    (test/sv_elab_issues/harvest.py)
+#   slang-issues     test/slang_issues/  the SYNTHESIZABLE SystemVerilog
+#                    snippets of the MikePopoloski/slang issue tracker, open
+#                    and closed (test/slang_issues/harvest.py)
 NESTED_FAMILIES = {"sv-synth-tests": "sv_tests", "sv-yosys-issues": "yosys_issues",
-                   "sv-elab-issues": "sv_elab_issues"}
+                   "sv-elab-issues": "sv_elab_issues", "slang-issues": "slang_issues"}
 
 
 def _auto_top(d):
@@ -2220,7 +2223,7 @@ def main():
                                      "egret", "dragonfly", "caliptra", "cva6-chip",
                                      "cva6-hpdcache", "cva6-hext", "cva6-rv32",
                                      "opentitan", "sv-synth-tests",
-                                     "sv-yosys-issues", "sv-elab-issues"] + _ext_families())
+                                     "sv-yosys-issues", "sv-elab-issues", "slang-issues"] + _ext_families())
     ap.add_argument("--cycles", type=int, default=300)
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--out", type=Path)
