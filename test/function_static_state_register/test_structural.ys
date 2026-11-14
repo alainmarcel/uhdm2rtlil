@@ -1,0 +1,10 @@
+# The static counter is ONE register initialised to 3, advanced by every call:
+# q reads 4, 5, 6 on successive clocks (folded at compile time, q was constant).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+select -assert-count 1 t:$dff %co1 w:next_val.cnt %i
+sat -verify -seq 2 -prove-skip 1 -prove q 4'd4
+sat -verify -seq 3 -prove-skip 2 -prove q 4'd5
+sat -verify -seq 4 -prove-skip 3 -prove q 4'd6

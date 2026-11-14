@@ -2552,8 +2552,88 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     bool have_ret_guard = stmt_contains_return(func_def->Stmt());
     if (have_ret_guard)
         input_mapping["$__ret_taken$"] = RTLIL::SigSpec(RTLIL::State::S0, 1);
+    // Static state (LRM 6.21): `static int slot = 5;` in an automatic
+    // function keeps its value across calls.  Back it with one module
+    // register `\<fn>.<var>`; the body reads its current value and the
+    // calling always_ff clocks the body's final value into it.
+    std::vector<std::pair<RTLIL::Wire*, std::string>> static_regs;
+    for (auto sv : function_static_state_vars(func_def)) {
+        std::string vn(sv->VpiName());
+        std::string rn = "\\" + func_name + "." + vn;
+        RTLIL::Wire* reg = module->wire(rn);
+        if (!reg) {
+            int w = local_var_widths.count(vn) ? local_var_widths[vn] : get_width(sv, current_instance);
+            reg = module->addWire(rn, w > 0 ? w : 32);
+            add_src_attribute(reg->attributes, sv);
+            RTLIL::Const init(0, reg->width);   // static int: 0 (LRM 6.8)
+            // The initialiser is on the variable, or (Surelog) a declaration
+            // assignment `slot = 5` at the head of the body whose LHS is the
+            // variable object itself.
+            const any* init_expr = sv->Expr();
+            std::function<void(const any*)> find_init = [&](const any* st) {
+                if (!st || init_expr) return;
+                if (st->UhdmType() == uhdmassignment) {
+                    auto as = any_cast<const assignment*>(st);
+                    if (as->Lhs() && dynamic_cast<const UHDM::variables*>(as->Lhs()) &&
+                        as->Lhs()->VpiName() == vn)
+                        init_expr = as->Rhs();
+                } else if (st->UhdmType() == uhdmbegin) {
+                    auto b = any_cast<const begin*>(st);
+                    if (b->Stmts()) for (auto x : *b->Stmts()) find_init(x);
+                } else if (st->UhdmType() == uhdmnamed_begin) {
+                    auto b = any_cast<const named_begin*>(st);
+                    if (b->Stmts()) for (auto x : *b->Stmts()) find_init(x);
+                }
+            };
+            find_init(func_def->Stmt());
+            if (init_expr) {
+                RTLIL::SigSpec iv = import_expression(any_cast<const expr*>(init_expr));
+                if (iv.is_fully_const()) { init = iv.as_const(); init.resize(reg->width, RTLIL::State::S0); }
+            }
+            reg->attributes[ID::init] = init;
+        }
+        auto inf = static_state_inflight_.find(reg);
+        input_mapping[vn] = inf != static_state_inflight_.end() ? inf->second : RTLIL::SigSpec(reg);
+        static_regs.push_back({reg, vn});
+    }
+    auto saved_static_vars = active_static_vars_;
+    for (auto& [reg, vn] : static_regs) active_static_vars_.insert(vn);
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
+    active_static_vars_ = saved_static_vars;
     if (have_ret_guard) input_mapping.erase("$__ret_taken$");
+    for (auto& [reg, vn] : static_regs) {
+        RTLIL::SigSpec next = input_mapping.count(vn) ? input_mapping[vn] : RTLIL::SigSpec(reg);
+        bool unconditional = true;
+        for (const any* p = fc ? fc->VpiParent() : nullptr; p; p = p->VpiParent()) {
+            int t = p->UhdmType();
+            if (t == uhdmalways || t == uhdminitial || t == uhdmfinal_stmt) break;
+            if (t == uhdmif_stmt || t == uhdmif_else || t == uhdmcase_stmt || t == uhdmcase_item ||
+                t == uhdmfor_stmt || t == uhdmwhile_stmt || t == uhdmrepeat || t == uhdmforeach_stmt ||
+                t == uhdmdo_while || t == uhdmforever_stmt ||
+                (t == uhdmoperation && any_cast<const operation*>(p)->VpiOpType() == vpiConditionOp)) {
+                unconditional = false;
+                break;
+            }
+        }
+        bool clocked = (in_always_ff_body_mode || in_always_ff_context) && !current_ff_clock_sig.empty();
+        if (!clocked || !unconditional) {
+            log_warning("%s: static variable '%s' of function '%s' keeps state across calls; "
+                        "only an unconditional call from an always_ff is supported -- it is read "
+                        "as its initial value here\n", get_src_attribute(fc ? (const any*)fc : func_def).c_str(),
+                        vn.c_str(), func_name.c_str());
+            continue;
+        }
+        static_state_inflight_[reg] = next;
+        bool pos = current_ff_edges.empty() ? true : current_ff_edges.front().second;
+        bool driven = false;
+        for (auto c : module->cells())
+            if (c->type == ID($dff) && c->hasPort(ID::Q) && c->getPort(ID::Q) == RTLIL::SigSpec(reg))
+                { c->setPort(ID::D, next); driven = true; }
+        if (!driven) {
+            RTLIL::Cell* ff = module->addDff(NEW_ID, current_ff_clock_sig, next, reg, pos);
+            if (fc) add_src_attribute(ff->attributes, fc);
+        }
+    }
     current_func_return_struct_ts = saved_ret_struct;
 
     // Create nosync wires for the function context (these get set to 'x)
@@ -2738,6 +2818,15 @@ void UhdmImporter::scan_for_direct_return_assignment(const any* stmt, const std:
 // indexed part-selects.  Used to decide whether a function parameter
 // passed by value can be const-folded — if the body mutates it, the
 // folded constant would be stale by the time the parameter is re-read.
+std::vector<const UHDM::variables*> UhdmImporter::function_static_state_vars(const UHDM::function* f) {
+    std::vector<const UHDM::variables*> out;
+    if (!f || !f->VpiAutomatic() || !f->Variables() || !f->Stmt()) return out;
+    for (auto v : *f->Variables())
+        if (!v->VpiAutomatic() && function_body_writes_to(f->Stmt(), std::string(v->VpiName())))
+            out.push_back(v);
+    return out;
+}
+
 bool UhdmImporter::function_body_writes_to(const any* stmt, const std::string& var_name) {
     if (!stmt) return false;
     int type = stmt->UhdmType();
@@ -3072,6 +3161,9 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     // be inlined (`packet_if.pack()`, `packet_if.get_ack()`).
     if (all_const && func_def->VpiParent() &&
         func_def->VpiParent()->UhdmType() == uhdminterface_inst)
+        all_const = false;
+    // A function with static state returns a different value on each call.
+    if (all_const && !function_static_state_vars(func_def).empty())
         all_const = false;
     if (all_const) {
         uhdm_trace("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());

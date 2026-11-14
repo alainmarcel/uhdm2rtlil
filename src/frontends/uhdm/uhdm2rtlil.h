@@ -1817,6 +1817,12 @@ struct UhdmImporter {
                                    std::set<std::string>& return_vars, const UHDM::function* func_def = nullptr);
     void scan_for_direct_return_assignment(const UHDM::any* stmt, const std::string& func_name, bool& found);
     bool function_body_writes_to(const UHDM::any* stmt, const std::string& var_name);
+    // Written `static` locals of an automatic function (LRM 6.21): state kept
+    // across calls.  Each is backed by one module register `\<fn>.<var>`.
+    std::vector<const UHDM::variables*> function_static_state_vars(const UHDM::function* f);
+    // value of a static-state register within the always_ff being imported
+    std::map<RTLIL::Wire*, RTLIL::SigSpec> static_state_inflight_;
+    std::set<std::string> active_static_vars_;   // while a body with static state is imported
     bool stmt_contains_return(const UHDM::any* s, int depth = 0);
     // A `break` that belongs to the loop whose body `s` is: nested loops own
     // their own breaks and are not descended into.

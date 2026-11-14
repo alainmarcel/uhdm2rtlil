@@ -1810,6 +1810,7 @@ static void drop_block_local_assigned(const any* stmt, std::vector<UhdmImporter:
 
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     current_ff_iff_cond = RTLIL::SigSpec();
+    static_state_inflight_.clear();   // function static state, per block
     uhdm_trace("    Importing always_ff block\n");
     log_flush();
     
