@@ -366,7 +366,7 @@ def _il_check(il, top):
                   f"proc\nflatten; opt_clean\n"
                   f"delete t:$check t:$assert t:$assume t:$print t:$scopeinfo\n"
                   f"opt_clean\ncheck\nselect -list a:uhdm_src_lhs\n")
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), ys.name],
+    rc, out = sh(_mem_capped([str(yosys), "-q", "-m", str(plugin), ys.name]),
                  cwd=il.parent, timeout=1800)
     out = out or ""
     if rc and "found and reported" not in out.lower():
@@ -495,7 +495,11 @@ hierarchy -top miter
 sat -verify -prove-asserts -seq 4 -set-init-zero miter
 """
     (d / "auto_slang_equiv.ys").write_text(script)
-    rc, out = sh([str(yosys), "-m", str(plugin), "auto_slang_equiv.ys"],
+    # Capped like the workflow call: read_slang on sv-elab#175's 4096-arm case
+    # grows past 60 GB, and uncapped it took the whole 16 GB CI runner down
+    # three minutes into the sweep (exit 143, no shard rows at all).  Capped,
+    # the row fails alone as "no reference (read_slang fails)".
+    rc, out = sh(_mem_capped([str(yosys), "-m", str(plugin), "auto_slang_equiv.ys"]),
                  cwd=d, timeout=timeout)
     out = out or ""
     # read_slang chokes on the lowRISC lint-sink pattern `logic unused_x = net;`
@@ -596,8 +600,8 @@ def _auto_top(d):
     `top` / `test` / whatever the LRM snippet used, never the directory."""
     yosys = TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"
     plugin = TEST_DIR / ".." / "build" / "uhdm2rtlil.so"
-    rc, out = sh([str(yosys), "-m", str(plugin), "-p",
-                  "read_uhdm slpp_all/surelog.uhdm; hierarchy -auto-top"],
+    rc, out = sh(_mem_capped([str(yosys), "-m", str(plugin), "-p",
+                              "read_uhdm slpp_all/surelog.uhdm; hierarchy -auto-top"]),
                  cwd=d, timeout=600)
     # `Top module:` is printed however the top was chosen.  Matching only
     # "Automatically selected ..." missed every `(* top *)` snippet
@@ -622,8 +626,8 @@ def _only_empty_modules(d):
     # Parse the RTLIL rather than `select =A:blackbox`: a blackbox with no
     # wires (`(* blackbox *) module alu(); parameter FOO = 0; ...`) holds no
     # selectable object, so `select -assert-min 1` miscounts it as absent.
-    rc, out = sh([str(yosys), "-q", "-m", str(plugin), "-p",
-                  "read_uhdm slpp_all/surelog.uhdm; write_rtlil -"],
+    rc, out = sh(_mem_capped([str(yosys), "-q", "-m", str(plugin), "-p",
+                              "read_uhdm slpp_all/surelog.uhdm; write_rtlil -"]),
                  cwd=d, timeout=600)
     if rc != 0:
         return False
@@ -706,9 +710,9 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         # the standard boilerplate miter from project.f so a self-contained
         # module is actually compared instead of showing a bare "no miter".
         if (d / "test_slang_equiv.ys").exists():
-            rc, _ = sh([str(TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"),
-                        "-m", str(TEST_DIR / ".." / "build" / "uhdm2rtlil.so"),
-                        "./test_slang_equiv.ys"], cwd=d, timeout=900)
+            rc, _ = sh(_mem_capped([str(TEST_DIR / ".." / "out" / "current" / "bin" / "yosys"),
+                                    "-m", str(TEST_DIR / ".." / "build" / "uhdm2rtlil.so"),
+                                    "./test_slang_equiv.ys"]), cwd=d, timeout=900)
             if rc == 0:
                 row["formal"] = "✅ equivalent"
             elif name in known_fail or d.name in known_fail:
@@ -735,16 +739,16 @@ def sweep_testdirs(prefix, cycles, jobs, flt=None):
         if cfg.exists() and "SKIP_SIM_EQUIV=1" in cfg.read_text():
             row["cosim"] = "skip (config)"
             return row
-        rc, out = sh([sys.executable, "test_sim_equivalence.py", name,
-                      "--cycles", str(cycles)], cwd=TEST_DIR, timeout=2400)
+        rc, out = sh(_mem_capped([sys.executable, "test_sim_equivalence.py", name,
+                                  "--cycles", str(cycles)]), cwd=TEST_DIR, timeout=2400)
         # Slang correctness baseline: the same co-sim with the read_slang
         # netlist on the netlist side -- unless the miter already found that
         # read_slang cannot read the test, in which case there is no netlist.
         if row["formal"].startswith("no reference"):
             rc2, out2 = 77, "SKIPPED: read_slang fails"
         else:
-            rc2, out2 = sh([sys.executable, "test_sim_equivalence.py", name,
-                            "--cycles", str(cycles), "--frontend", "slang"],
+            rc2, out2 = sh(_mem_capped([sys.executable, "test_sim_equivalence.py", name,
+                                        "--cycles", str(cycles), "--frontend", "slang"]),
                            cwd=TEST_DIR, timeout=2400)
         m2 = re.search(r"FAIL: \d+ cycles, (\d+) mismatches", out2)
         if row["formal"].startswith("no reference"):
