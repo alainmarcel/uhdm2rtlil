@@ -114,3 +114,7 @@ slang_issues/issue_1493_slang_slang_tidy_diagnostics_include_stack
 # slang#1521 (slang-issues sweep): output o_signal is never assigned.  Same
 # undriven-vs-constant-X class as #829 above.  Not a defect.
 slang_issues/issue_1521_syntaxrewriter_removes_endif_directive_when_repl_v1
+# slang#1443 (slang-issues sweep): pack_data[sel+j] reads past the vector for
+# sel+j > 255 -- X by the LRM; read_uhdm emits X, read_slang a value.  With
+# the index clamped in range the miter PROVES (seq 8).  Not a reader defect.
+slang_issues/issue_1443_overly_conservative_race_detection_for_separate

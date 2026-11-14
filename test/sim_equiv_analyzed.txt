@@ -1139,3 +1139,11 @@ Test: issue_1581_slang_doesn_t_like_time_delays
     the delay and a synthesized netlist cannot, so the netlist's outputs lead
     the RTL's by #TP at every sample.  read_slang cannot read the design.  A
     testbench artefact (delays are ignored by synthesis).
+
+Test: issue_1443_overly_conservative_race_detection_for_separate
+    slang#1443 (slang-issues sweep).  `out[j] <= pack_data[sel+j]` reads past
+    the 256-bit vector when sel+j > 255, which is X by the LRM; read_uhdm emits
+    X.  Verilator WRAPS the index (measured: v[256] reads v[0], v[257] reads
+    v[1]), and the read_slang netlist happens to match it.  With sel clamped
+    so the index stays in range, the read_uhdm-vs-read_slang miter PROVES
+    (seq 8).  A simulator artefact, not a reader defect.
