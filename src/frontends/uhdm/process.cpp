@@ -623,10 +623,36 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     
     // Handle different process types
     switch (proc_type) {
-        case vpiAlwaysFF:
+        case vpiAlwaysFF: {
+            // An `always_ff` must be clocked by an edge (LRM 9.2.2.4 models
+            // a flip-flop).  `always_ff @(*)` / `always_ff @(clk)` has none;
+            // read_slang and read_verilog reject it too, so say so plainly
+            // instead of failing deep in the sync-rule builder.
+            auto ao = dynamic_cast<const always*>(uhdm_process);
+            if (ao && ao->VpiAlwaysType() == vpiAlwaysFF) {
+                std::function<bool(const any*)> has_edge = [&](const any* e) -> bool {
+                    if (!e) return false;
+                    if (e->UhdmType() == uhdmoperation) {
+                        auto op = any_cast<const operation*>(e);
+                        if (op->VpiOpType() == vpiPosedgeOp || op->VpiOpType() == vpiNegedgeOp)
+                            return true;
+                        if (op->Operands())
+                            for (auto o : *op->Operands())
+                                if (has_edge(o)) return true;
+                    }
+                    return false;
+                };
+                auto ec = dynamic_cast<const event_control*>(ao->Stmt());
+                if (ec && !has_edge(ec->VpiCondition()))
+                    log_error("%s:%d: always_ff has no edge-sensitive event control "
+                              "(posedge/negedge): it does not model a flip-flop.\n",
+                              std::string(uhdm_process->VpiFile()).c_str(),
+                              uhdm_process->VpiLineNo());
+            }
             log("  Processing always_ff block\n");
             import_always_ff(uhdm_process, yosys_proc);
             break;
+        }
         case vpiAlwaysComb:
             log("  Processing always_comb block\n");
             import_always_comb(uhdm_process, yosys_proc);

@@ -460,3 +460,11 @@ struct_array_elem_member_elem_write
 # assignment (`assign`) in an always block is not synthesizable" -- the
 # failure IS the expected outcome (it used to segfault; povik/sv-elab#166).
 proc_continuous_assign_rejected
+
+# An `always_ff` with no edge-sensitive event control (`always_ff @(clk)`,
+# `always_ff @(*)`) does not model a flip-flop (LRM 9.2.2.4); read_slang and
+# read_verilog reject it too.  read_uhdm stops with "always_ff has no
+# edge-sensitive event control (posedge/negedge)" -- the failure IS the
+# expected outcome (it used to fail with an internal "Clock signal is empty
+# when creating sync rule"; MikePopoloski/slang#1206, #1660).
+always_ff_no_edge_rejected
