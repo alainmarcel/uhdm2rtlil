@@ -1,0 +1,9 @@
+# The instance keeps its three connections and the 66-bit add is wired through.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+select -assert-count 3 c:new_adder %x1 w:i0 w:i1 w:o1 %u %u %i
+flatten
+proc
+opt
+sat -verify -set i0 66'h5 -set i1 66'h7 -prove o1 66'hc
+sat -verify -set i0 66'h3ffffffffffffffff -set i1 66'h1 -prove o1 66'h0
