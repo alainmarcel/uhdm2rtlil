@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__o_n);
   
   wire [4:0] n;
   
@@ -11,5 +11,9 @@ module top;
   
   assign n[1] = ss[6];
   
-  endmodule
+  
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [4:0] __o_n;
+  assign __o_n = n;
+endmodule
 

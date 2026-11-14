@@ -8,11 +8,17 @@ interface intf (
 );
 endinterface
 
-module top;
+module top (__i_a, __i_intf_i_a);
     logic [4:0] a;
 
     intf intf_i(
         .*
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [4:0] __i_a;
+  input logic [4:0] __i_intf_i_a;
+  assign a = __i_a;
+  assign intf_i.a = __i_intf_i_a;
 endmodule
 

@@ -20,12 +20,20 @@ assign c = my_if.a;
 endmodule
 
 // ---- b2.sv
-module tb;
+module tb (__o_c, __o_my_if_a, __o_my_if_b);
 logic c;
 some_if my_if();
 dut_dummy dut (.my_if(my_if.master), .c(c));
 initial begin
   my_if.a = 1;
 end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_c;
+  output logic __o_my_if_a;
+  output logic __o_my_if_b;
+  assign __o_c = c;
+  assign __o_my_if_a = my_if.a;
+  assign __o_my_if_b = my_if.b;
 endmodule
 

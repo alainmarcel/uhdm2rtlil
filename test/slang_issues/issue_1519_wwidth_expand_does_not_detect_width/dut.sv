@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module top;
+module top (__o_b);
 
     localparam bit [4:0][7:0] A = {
         6'd2,
@@ -26,5 +26,9 @@ module top;
 
     end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [39:0] __o_b;
+  assign __o_b = b;
 endmodule
 

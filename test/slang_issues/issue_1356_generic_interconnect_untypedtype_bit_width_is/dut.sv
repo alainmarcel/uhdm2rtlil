@@ -3,11 +3,15 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- c0.sv
-module netlist;
+module netlist (__o_w);
   wire w;
   dut1 child1(w);
   dut2 child2(w);
   initial #10 $display(w);
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_w;
+  assign __o_w = w;
 endmodule
 module dut1(wand w);
   assign w = 1;

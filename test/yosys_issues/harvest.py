@@ -33,6 +33,9 @@ directory that already exists is rewritten only when its code changed.
 import argparse, collections, hashlib, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import observe  # noqa: E402
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 WORK = HERE / "harvest"
@@ -245,10 +248,15 @@ def write(issues):
             # hand (a typo, a missing typedef from another block, a wrapper
             # top for an interface-port module) so the row exercises what
             # the issue is about; never overwrite it.
-            if p.exists() and "HAND-EDITED" in p.read_text():
+            # observe.py gives a portless top controllable / observable ports
+            # (its OBSERVE_MARK line); that rewrite is kept like a hand edit.
+            if p.exists() and ("HAND-EDITED" in p.read_text() or
+                               observe.OBSERVE_MARK in p.read_text()):
                 pass
             elif not p.exists() or p.read_text() != hdr + body:
                 p.write_text(hdr + body)
+                observe._parse(d)
+                observe.observe(d)
             made += 1
             print(f"  {name}")
     print(f"{made} test directories")

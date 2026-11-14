@@ -15,8 +15,8 @@ module M2 #(
     parameter int W = 2
 ) (
     input logic clk,
-    input logic rst
-);
+    input logic rst,
+  output logic [1:0] __o_o, output logic __o_x_o);
     localparam int W_MAX = $clog2(W);
 
     logic [W_MAX:0] d, o;
@@ -28,5 +28,9 @@ module M2 #(
         .d   ({x_d, d}),
         .o   ({x_o, o})
     );
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_o = o;
+  assign __o_x_o = x_o;
 endmodule
 

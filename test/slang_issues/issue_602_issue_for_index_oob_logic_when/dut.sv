@@ -5,7 +5,7 @@
 // ---- b0.sv
 module top #(
     parameter [2:0][4:0] IDX_MAP = {5'd1, 5'd3, 5'd4}
-);
+) (__i_sig);
 
     logic [4:0] sig;
 
@@ -16,5 +16,9 @@ module top #(
         end
     end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic [4:0] __i_sig;
+  assign sig = __i_sig;
 endmodule
 

@@ -4,7 +4,7 @@
 
 // ---- b0.sv
 // sv-elab tests/various/regress.sv r31
-module r31;
+module r31 (__o_q);
 	logic [7:0] q;
 	initial begin
 		int i = 0;
@@ -13,5 +13,9 @@ module r31;
 			i = i + 1;
 		end
 	end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [7:0] __o_q;
+  assign __o_q = q;
 endmodule
 

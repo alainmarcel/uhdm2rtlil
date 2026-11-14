@@ -3,7 +3,7 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module Test;
+module Test (__o_a);
   logic [3:0][31:0] a;
 
   always_comb begin
@@ -22,5 +22,9 @@ module Test;
       end
     end
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [127:0] __o_a;
+  assign __o_a = a;
 endmodule
 

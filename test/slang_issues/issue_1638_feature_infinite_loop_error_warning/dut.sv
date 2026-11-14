@@ -3,7 +3,8 @@
 // Code block(s) from the issue; harvested by test/slang_issues/harvest.py
 
 // ---- b0.sv
-module Test(input logic clk);
+module Test(input logic clk,
+  output logic [7:0] __o_test_array);
   logic [7:0] test_array;
 
   always_ff @(posedge clk) begin
@@ -11,5 +12,8 @@ module Test(input logic clk);
       test_array[i] <= 1'b0;
     end
   end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_test_array = test_array;
 endmodule
 

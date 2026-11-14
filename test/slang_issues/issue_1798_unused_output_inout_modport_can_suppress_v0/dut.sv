@@ -15,7 +15,7 @@ module status_consumer(
     assign observed_status = intf.status;
 endmodule
 
-module top;
+module top (__i_intf_status, __o_observed_status);
     status_if intf();
     wire observed_status;
 
@@ -26,5 +26,11 @@ module top;
 
     // Expected and actual:
     // warning: status is never driven (-Wundriven-net)
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  input logic __i_intf_status;
+  output logic __o_observed_status;
+  assign intf.status = __i_intf_status;
+  assign __o_observed_status = observed_status;
 endmodule
 

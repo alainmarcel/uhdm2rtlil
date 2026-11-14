@@ -4,7 +4,7 @@
 
 // ---- b0.sv
 `timescale 1 ns / 100 ps
-module crash_yosys();
+module crash_yosys(__o_clk);
 
 // Simulator generated clock & reset
 logic  clk;
@@ -21,5 +21,9 @@ always_ff @(posedge clk) begin
   $stop;
 end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_clk;
+  assign __o_clk = clk;
 endmodule
 

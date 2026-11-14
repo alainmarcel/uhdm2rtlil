@@ -16,9 +16,15 @@ assign t = n1.n;
 r10n n1();
 endmodule
 
-module r10b();
+module r10b(__o_n1_n, __o_t);
 wire t;
 r10n n1();
 assign t = n1.n;
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic __o_n1_n;
+  output logic __o_t;
+  assign __o_n1_n = n1.n;
+  assign __o_t = t;
 endmodule
 
