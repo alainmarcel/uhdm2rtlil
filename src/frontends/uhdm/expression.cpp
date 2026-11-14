@@ -674,6 +674,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             if (bg->Variables()) {
                 for (auto var : *bg->Variables()) {
                     std::string var_name = std::string(var->VpiName());
+                    // A static function local is backed by its register:
+                    // not a fresh per-block wire.
+                    if (active_static_vars_.count(var_name)) continue;
                     int width = get_width(var, current_instance);
                     if (width <= 0) width = 1;
 
@@ -1379,6 +1382,14 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     case uhdmassignment: {
         // Handle assignment
         const assignment* assign = any_cast<const assignment*>(stmt);
+        // The declaration initialiser of a STATIC function local
+        // (`static int slot = 5;`) runs once, not per call: it is the
+        // initial value of the variable's register (see
+        // generate_function_process).
+        if (assign && assign->Lhs() && !active_static_vars_.empty() &&
+            dynamic_cast<const UHDM::variables*>(assign->Lhs()) &&
+            active_static_vars_.count(std::string(assign->Lhs()->VpiName())))
+            break;
         if (assign && assign->Lhs() && assign->Rhs()) {
             if (mode_debug) {
                 log("  process_stmt_to_case: Processing assignment\n");
@@ -7469,6 +7480,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // same guard process_function_with_context already applies.
                 if (all_const && func_def->VpiParent() &&
                     func_def->VpiParent()->UhdmType() == uhdminterface_inst)
+                    all_const = false;
+                // static state (LRM 6.21): a new value on every call
+                if (all_const && !function_static_state_vars(func_def).empty())
                     all_const = false;
                 if (all_const) {
                     // Evaluate function at compile time for optimization.
@@ -18856,6 +18870,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // as 0 (`o_data = packet_if.pack()` became 16'h0000).
                 if (all_const && fdef->VpiParent() &&
                     fdef->VpiParent()->UhdmType() == uhdminterface_inst)
+                    all_const = false;
+                if (all_const && !function_static_state_vars(fdef).empty())
                     all_const = false;
                 if (all_const) {
                     const_eval_module_writes.clear();

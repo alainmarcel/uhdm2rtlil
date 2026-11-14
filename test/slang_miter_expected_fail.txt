@@ -118,3 +118,8 @@ slang_issues/issue_1521_syntaxrewriter_removes_endif_directive_when_repl_v1
 # sel+j > 255 -- X by the LRM; read_uhdm emits X, read_slang a value.  With
 # the index clamped in range the miter PROVES (seq 8).  Not a reader defect.
 slang_issues/issue_1443_overly_conservative_race_detection_for_separate
+# slang#2067 (slang-issues sweep, the issue itself): `static int slot` in an
+# automatic function called from always_ff advances on every call.  read_uhdm
+# keeps it as a register (co-sim PASS, 300 cycles); read_slang folds the call
+# to a constant (its co-sim diverges 159 cycles).  Not a reader defect.
+slang_issues/issue_2067_tryeval_constant_evaluates_calls_to_functions

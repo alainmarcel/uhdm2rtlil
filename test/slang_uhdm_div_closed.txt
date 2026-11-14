@@ -30,3 +30,4 @@ sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r34 # initial-block
 sv-elab-issues/issue_191_release_builds_fail_test_regress_sv_r20 # a constant argument folds into the inlined body and a constant if/else takes one arm: the recursion stops at its depth, 2026-11-13
 sv-elab-issues/issue_168_support_for_tagged_unions_and_pattern # tagged unions + pattern matching (Surelog #4258: tagged, matches in ?: / if / case, &&&, .* / .v; reader tagged.cpp), val reads 2 (was 0), 2026-11-13
 slang-issues/issue_868_error_occurs_when_instantiating_submodule_and # Surelog bump to a7e4464c1d (Surelog #4259: `a #66 inst` lost its port actuals), 2026-11-14
+slang-issues/issue_2067_tryeval_constant_evaluates_calls_to_functions # static function local backed by a register (Surelog #4260: local lifetime from its subroutine), co-sim PASS, 2026-11-14
