@@ -1161,3 +1161,43 @@ Test: initial_nonblocking_swap
 Test: issue_1400_warn_on_mixing_non_blocking_and
     yosys#1400 (sv-yosys-issues sweep).  Same as initial_nonblocking_swap:
     read_uhdm a = 1, b = 0 (LRM); Verilator a = 1, b = 1 (INITIALDLY).
+Test: issue_1475_macro_expansion_with_parameterized_module_instan_v2
+    slang#1475 (slang-issues sweep).  A timing testbench (`always #1 clk =
+    ~clk`, `#2` delays, $monitor, $finish): the RTL simulation follows the
+    delays, a synthesized netlist cannot.  read_slang cannot read it.  A
+    testbench artefact.
+
+Test: issue_2097_speculative_evaluation_of_a_procedural_call
+    slang#2097 (slang-issues sweep).  `p0[p1]` with p1 = 2'b0z: a z bit in an
+    index makes the read X by the LRM; read_uhdm emits X, Verilator reads the z
+    as 0.  read_slang cannot read it.  A simulator artefact.
+
+Test: issue_1652_latch_inferred_warning
+    slang#1652 (slang-issues sweep).  A self-referential latch on test_a with
+    no input: X in the netlist, 0 in Verilator.  Not a reader defect.
+
+Test: issue_1908_registerhasnoreset_not_working
+    slang#1908 (slang-issues sweep).  read_uhdm and read_slang diverge from
+    the RTL identically (1 cycle each): a shared testbench artefact.
+
+Test: issue_2040_writes_through_a_task_called_from
+    slang#2040 (slang-issues sweep).  t and q have multiple drivers in the
+    source (always blocks and tasks from an initial block); both readers
+    diverge from the RTL.  Not a reader defect.
+
+Test: issue_1619_potential_regression_for_loop_unrolling_and
+    slang#1619 (slang-issues sweep).  sig1[(i*8 + j)] indexes past the 16-bit
+    vector for most iterations (out-of-range writes are ignored) and 12 bits
+    are never assigned; both readers diverge from Verilator identically.
+
+Test: issue_179_support_implication_operator_in_always_block
+    sv-elab#179 (sv-elab-issues sweep).  Named events (`-> triggerA`,
+    `always @(triggerA)`) drive counters -- no synthesis meaning.  read_slang
+    cannot read it.  A testbench artefact.
+
+Test: issue_5212_multiple_drivers_on_a_variable_in_h0
+    yosys#5212 (sv-yosys-issues sweep).  A variable with multiple drivers --
+    the issue itself; both readers diverge from the RTL.
+
+Test: issue_5212_multiple_drivers_on_a_variable_in_h1
+    yosys#5212 (sv-yosys-issues sweep), same as h0.

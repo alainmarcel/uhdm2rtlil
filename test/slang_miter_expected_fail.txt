@@ -123,3 +123,23 @@ slang_issues/issue_1443_overly_conservative_race_detection_for_separate
 # keeps it as a register (co-sim PASS, 300 cycles); read_slang folds the call
 # to a constant (its co-sim diverges 159 cycles).  Not a reader defect.
 slang_issues/issue_2067_tryeval_constant_evaluates_calls_to_functions
+# slang#1174 (slang-issues sweep): `c |= a[i] & b[i]` in an always_comb that
+# never initialises c reads c before writing it -- a combinational loop in the
+# source; read_uhdm and read_slang both report the logic loop.  Their co-sims
+# both PASS.  Not a reader defect.
+slang_issues/issue_1174_bitwise_op_parentheses_and_asignments
+# slang#1652 (slang-issues sweep): `case (test_a)` writes test_a itself under
+# a shadowed local; a latch that feeds back on itself with no input.  Both
+# readers model the X loop differently.  Not a reader defect.
+slang_issues/issue_1652_latch_inferred_warning
+# slang#2040 (slang-issues sweep): t and q are driven both by always blocks
+# and by tasks called from an initial block -- multiple drivers in the
+# source; both readers diverge from the RTL.  Not a reader defect.
+slang_issues/issue_2040_writes_through_a_task_called_from
+# yosys#5212 (sv-yosys-issues sweep): the issue is a variable with multiple
+# drivers; both readers diverge from the RTL (read_slang 900, read_uhdm 600).
+yosys_issues/issue_5212_multiple_drivers_on_a_variable_in_h0
+yosys_issues/issue_5212_multiple_drivers_on_a_variable_in_h1
+# sv-elab regress r3 (sv-elab-issues sweep): `m[4-:2] <= 0` drives bits 4:3;
+# the other six bits are never assigned (read_slang X, read_uhdm undriven).
+sv_elab_issues/issue_191_release_builds_fail_test_regress_sv_r3
