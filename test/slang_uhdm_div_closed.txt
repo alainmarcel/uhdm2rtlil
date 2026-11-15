@@ -32,3 +32,4 @@ sv-elab-issues/issue_168_support_for_tagged_unions_and_pattern # tagged unions +
 slang-issues/issue_868_error_occurs_when_instantiating_submodule_and # Surelog bump to a7e4464c1d (Surelog #4259: `a #66 inst` lost its port actuals), 2026-11-14
 slang-issues/issue_2067_tryeval_constant_evaluates_calls_to_functions # static function local backed by a register (Surelog #4260: local lifetime from its subroutine), co-sim PASS, 2026-11-14
 slang-issues/issue_2082_wunsized_concat_should_not_be_thrown # unsized integer literal in a concatenation is 32 bits (Surelog sizes it 64): {1, 2} was 64'h2, 2026-11-14
+slang-issues/issue_1154_variables_in_functions_which_are_used # Surelog bump to 00bdd1d192 (Surelog #4261: `input signed [7:0] a;` non-ANSI function port lost its range and sign), 2026-11-14

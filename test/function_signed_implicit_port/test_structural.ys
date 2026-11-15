@@ -1,0 +1,7 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set x 8'h07 -prove pop 8'd3 -prove id 8'h07
+sat -verify -set x 8'hff -prove pop 8'd8 -prove id 8'hff
+sat -verify -set x 8'h81 -prove pop 8'd2 -prove id 8'h81
