@@ -1822,6 +1822,9 @@ struct UhdmImporter {
     std::vector<const UHDM::variables*> function_static_state_vars(const UHDM::function* f);
     // value of a static-state register within the always_ff being imported
     std::map<RTLIL::Wire*, RTLIL::SigSpec> static_state_inflight_;
+    // initial block (STi): constant value of each blocking write so far,
+    // read by a later NONBLOCKING assignment's RHS (yosys#1400)
+    std::map<std::string, RTLIL::SigSpec> init_blocking_consts_;
     std::set<std::string> active_static_vars_;   // while a body with static state is imported
     bool stmt_contains_return(const UHDM::any* s, int depth = 0);
     // A `break` that belongs to the loop whose body `s` is: nested loops own

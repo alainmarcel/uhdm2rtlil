@@ -1147,3 +1147,17 @@ Test: issue_1443_overly_conservative_race_detection_for_separate
     v[1]), and the read_slang netlist happens to match it.  With sel clamped
     so the index stays in range, the read_uhdm-vs-read_slang miter PROVES
     (seq 8).  A simulator artefact, not a reader defect.
+
+Test: initial_nonblocking_swap
+    yosys#1400 shape.  `a = 0; b = 1; a <= b; b <= a;` in an initial block
+    ends with a = 1, b = 0 (LRM 10.4.2: the nonblocking RHS is read when the
+    statement executes, the write is deferred); read_uhdm sets exactly that,
+    proven by test_structural.ys.  Verilator 5.048 turns an initial-block
+    nonblocking assignment into a blocking one (warning INITIALDLY) and gives
+    a = 1, b = 1 (measured), so the co-sim diverges on b.  read_slang rejects
+    the construct ("non-blocking assignments unsupported in design
+    initialization").  A simulator artefact.
+
+Test: issue_1400_warn_on_mixing_non_blocking_and
+    yosys#1400 (sv-yosys-issues sweep).  Same as initial_nonblocking_swap:
+    read_uhdm a = 1, b = 0 (LRM); Verilator a = 1, b = 1 (INITIALDLY).

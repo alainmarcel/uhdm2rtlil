@@ -6305,6 +6305,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
     pending_sync_seq.clear(); sync_blocking_values.clear();
+    init_blocking_consts_.clear();
 
     // Build the "sync always" and the init sync rule.  We hold off pushing
     // them onto the process until we know whether any actions survive — an
@@ -15147,8 +15148,18 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             // through the compile-time evaluator instead of inlining it
             // (StreamOperatorBitReverseFunction: `{<<{val}}` came out 0).
             bool edge_sync = sync && (sync->type == RTLIL::STp || sync->type == RTLIL::STn);
+            // An initial block's NONBLOCKING assignment reads the values the
+            // block has set so far -- only the write is deferred.  `a = 0;
+            // b = 1; a <= b; b <= a;` ends with a = 1, b = 0; reading the
+            // other side's final driver instead left `a := b`, `b := a`, two
+            // continuous connects aliasing a and b (yosys#1400).  Only the
+            // CONSTANT blocking values are offered, so no function call is
+            // folded through the compile-time evaluator (see above).
+            bool init_nba = sync && sync->type == RTLIL::STi && uhdm_assign &&
+                            !uhdm_assign->VpiBlocking() && !init_blocking_consts_.empty();
             rhs = import_expression(rhs_expr,
-                (edge_sync && !sync_blocking_values.empty()) ? &sync_blocking_values : nullptr);
+                (edge_sync && !sync_blocking_values.empty()) ? &sync_blocking_values
+                : init_nba ? &init_blocking_consts_ : nullptr);
             expression_context_width = prev_ctx;
             rhs = reorder_whole_array_copy(uhdm_assign->Lhs(), rhs_expr, rhs);
             uhdm_trace("            RHS imported: [signal] (size=%d)\n", rhs.size());
@@ -15226,6 +15237,9 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Store in pending assignments (will be added to sync rule later)
         pending_sync_assignments[lhs] = mux_result;
         note_pending_sync(lhs);
+        if (sync && sync->type == RTLIL::STi && lhs.is_wire() &&
+                lhs.as_wire()->name.str()[0] == '\\')
+            init_blocking_consts_.erase(lhs.as_wire()->name.str().substr(1));
         if (uhdm_assign && uhdm_assign->VpiBlocking() && lhs.is_wire() && sync &&
                 (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
                 lhs.as_wire()->name.str()[0] == '\\')
@@ -15237,6 +15251,14 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Store unconditional assignment
         pending_sync_assignments[lhs] = rhs;
         note_pending_sync(lhs);
+        // initial block: remember a blocking write's constant value for the
+        // nonblocking reads after it (a nonblocking write is deferred)
+        if (sync && sync->type == RTLIL::STi && lhs.is_wire() && uhdm_assign &&
+                uhdm_assign->VpiBlocking() && lhs.as_wire()->name.str()[0] == '\\') {
+            std::string ln = lhs.as_wire()->name.str().substr(1);
+            if (rhs.is_fully_const() && rhs.size() == lhs.size()) init_blocking_consts_[ln] = rhs;
+            else init_blocking_consts_.erase(ln);
+        }
         if (uhdm_assign && uhdm_assign->VpiBlocking() && lhs.is_wire() && sync &&
                 (sync->type == RTLIL::STp || sync->type == RTLIL::STn) &&
                 lhs.as_wire()->name.str()[0] == '\\')

@@ -1,0 +1,5 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set-def-inputs -set d 4'h0 -prove y 4'b0010 -prove w 4'd7
