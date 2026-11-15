@@ -1,0 +1,8 @@
+# y0 reads the absolute path (~d), y1 the relative one (d).
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top top
+flatten
+proc
+opt
+sat -verify -set d 4'h3 -prove y0 4'hc -prove y1 4'h3
+sat -verify -set d 4'ha -prove y0 4'h5 -prove y1 4'ha

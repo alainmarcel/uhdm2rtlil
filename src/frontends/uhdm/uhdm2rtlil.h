@@ -1642,6 +1642,8 @@ struct UhdmImporter {
         const std::map<std::string, RTLIL::SigSpec>* input_mapping);
     RTLIL::SigSpec import_child_param_read(const UHDM::hier_path* hp,
         const std::map<std::string, RTLIL::SigSpec>* input_mapping);
+    RTLIL::SigSpec import_xmr_read(const UHDM::hier_path* uhdm_hier);
+    int xmr_leaf_width(const std::vector<std::string>& names, size_t first);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     // `PARAM[idx].field` where PARAM is an unpacked array of structs.  Empty
     // SigSpec when this is not that shape, so callers can fall through.

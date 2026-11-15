@@ -11,6 +11,7 @@
 #include <map>
 #include <cctype>
 #include <algorithm>
+#include <regex>
 #include <uhdm/logic_var.h>
 #include <uhdm/struct_var.h>
 #include <uhdm/union_var.h>
@@ -16804,13 +16805,17 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
         // materialise "subinst.rest" as a driven wire in `child` first, then
         // expose THAT up through this level — so the promotion chains all the
         // way to the leaf signal instead of leaving an undriven placeholder.
-        auto dot = sig.find('.');
-        if (dot != std::string::npos) {
+        // The sub-instance name may itself contain dots: a cell inside a
+        // generate scope is named `gg_inner[0].genblk1.i`.  Try the LONGEST
+        // prefix that names a cell first.
+        for (size_t dot = sig.rfind('.'); dot != std::string::npos && dot > 0;
+             dot = sig.rfind('.', dot - 1)) {
             std::string subinst = sig.substr(0, dot);
             std::string rest = sig.substr(dot + 1);
             if (RTLIL::Cell* subcell = child->cell(RTLIL::escape_id(subinst))) {
                 resolve_xmr_read(child, subcell, rest);
                 cw = child->wire(RTLIL::escape_id(sig));
+                break;
             }
         }
         if (!cw) return;
@@ -17673,7 +17678,217 @@ RTLIL::SigSpec UhdmImporter::import_child_param_read(
     return import_expression(el, input_mapping);
 }
 
+// XMR read (see the call in import_hier_path): returns the reader signal,
+// or an empty SigSpec when the path is not a cross-module reference.
+// Width of the net a dotted XMR path names, found by walking the elaborated
+// instance tree from current_instance: child instances and generate-scope
+// arrays by name (with their index), then the leaf net or variable.  0 if
+// not found.
+int UhdmImporter::xmr_leaf_width(const std::vector<std::string>& names, size_t first) {
+    const UHDM::any* sc = current_instance;
+    for (size_t k = first; sc && k < names.size(); k++) {
+        const std::string& n = names[k];
+        bool last = k + 1 == names.size();
+        const UHDM::any* next = nullptr;
+        auto scan_mods = [&](const UHDM::VectorOfmodule_inst* v) {
+            if (v) for (auto m : *v) if (std::string(m->VpiName()) == n) next = m;
+        };
+        auto scan_gens = [&](const UHDM::VectorOfgen_scope_array* v) {
+            if (!v) return;
+            for (auto ga : *v) {
+                std::string gn(ga->VpiName());
+                if ((gn == n || gn + "[0]" == n) && ga->Gen_scopes() && !ga->Gen_scopes()->empty())
+                    next = (*ga->Gen_scopes())[0];
+            }
+        };
+        if (last) {
+            auto pick = [&](const UHDM::any* o) -> int {
+                return o ? get_width(o, current_instance) : 0;
+            };
+            if (auto mi = dynamic_cast<const UHDM::module_inst*>(sc)) {
+                if (mi->Nets()) for (auto x : *mi->Nets()) if (std::string(x->VpiName()) == n) return pick(x);
+                if (mi->Variables()) for (auto x : *mi->Variables()) if (std::string(x->VpiName()) == n) return pick(x);
+            } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(sc)) {
+                if (gs->Nets()) for (auto x : *gs->Nets()) if (std::string(x->VpiName()) == n) return pick(x);
+                if (gs->Variables()) for (auto x : *gs->Variables()) if (std::string(x->VpiName()) == n) return pick(x);
+            }
+            return 0;
+        }
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(sc)) {
+            scan_mods(mi->Modules());
+            if (!next) scan_gens(mi->Gen_scope_arrays());
+        } else if (auto gs = dynamic_cast<const UHDM::gen_scope*>(sc)) {
+            scan_mods(gs->Modules());
+            if (!next) scan_gens(gs->Gen_scope_arrays());
+        }
+        sc = next;
+    }
+    return 0;
+}
+
+RTLIL::SigSpec UhdmImporter::import_xmr_read(const hier_path* uhdm_hier) {
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        auto& xpe = *uhdm_hier->Path_elems();
+        // A DOWNWARD XMR read `inst0.inst1.….sig` — every element a bare
+        // ref_obj.  Two elements is the common `inst.sig`; deeper chains
+        // (ibex RVFI's cs_registers_i.mcycle_counter_i.counter_val_o,
+        // id_stage_i.controller_i.<sig>) read a signal several instances down.
+        // Treat elem[0] as the child instance and join the rest as the (dotted)
+        // signal path, which resolve_xmr_read promotes recursively.
+        // An element may also be a constant-indexed generate scope
+        // (`gg_inner[0]`, the cell names carry `gg_inner[0].genblk1.i`), and
+        // an ABSOLUTE path starts with this module's own name
+        // (`top.dut.gg_inner[0].genblk1.i.innermost`, slang#1433): drop it.
+        std::vector<std::string> names;
+        bool all_ref = true;
+        for (auto* e : xpe) {
+            if (e->UhdmType() == uhdmref_obj) {
+                names.push_back(std::string(any_cast<const ref_obj*>(e)->VpiName()));
+            } else if (e->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const bit_select*>(e);
+                RTLIL::SigSpec ix = bs->VpiIndex()
+                    ? import_expression(any_cast<const expr*>(bs->VpiIndex())) : RTLIL::SigSpec();
+                if (!ix.is_fully_const() || ix.empty()) { all_ref = false; break; }
+                names.push_back(std::string(bs->VpiName()) + "[" +
+                                std::to_string(ix.as_const().as_int()) + "]");
+            } else {
+                all_ref = false;
+                break;
+            }
+        }
+        // Surelog can cut Path_elems short at an indexed generate scope
+        // (slang#1433: [top, dut, gg_inner] for
+        // `top.dut.gg_inner[0].genblk1.i.innermost`) while the hier_path's
+        // NAME is whole.  Rebuild the path from the name when it is longer and
+        // every segment is an identifier with an optional constant index.
+        {
+            std::string full(uhdm_hier->VpiName());
+            std::vector<std::string> segs;
+            std::string cur;
+            int depth = 0;
+            for (char ch : full) {
+                if (ch == '[') depth++;
+                else if (ch == ']') depth--;
+                if (ch == '.' && depth == 0) { segs.push_back(cur); cur.clear(); }
+                else cur += ch;
+            }
+            segs.push_back(cur);
+            static const std::regex seg_re("^[A-Za-z_][A-Za-z0-9_$]*(\\[[0-9]+\\])?$");
+            // never over an element that is not a name or an index (a
+            // function call `top.blk.incr(...)` is not a signal path)
+            bool ok = all_ref && segs.size() > names.size() && !names.empty() && segs[0] == names[0];
+            for (auto& g : segs) if (!std::regex_match(g, seg_re)) ok = false;
+            if (ok) { names = segs; all_ref = true; }
+        }
+        size_t first = 0;
+        if (all_ref && names.size() >= 3 && module &&
+            RTLIL::escape_id(names[0]) == module->name.str() && !module->cell(RTLIL::escape_id(names[0])))
+            first = 1;
+        if (all_ref && names.size() - first >= 2) {
+            std::string inst = names[first];
+            std::string sig;
+            for (size_t k = first + 1; k < names.size(); k++) {
+                if (k > first + 1) sig += ".";
+                sig += names[k];
+            }
+            const ref_obj* leaf = dynamic_cast<const ref_obj*>(xpe.back());
+            if (!leaf) leaf = any_cast<const ref_obj*>(xpe[0]);
+            RTLIL::Cell* xcell = inst.empty() ? nullptr
+                               : module->cell(RTLIL::escape_id(inst));
+            RTLIL::Module* xchild = xcell ? design->module(xcell->type) : nullptr;
+            if (xchild && !sig.empty()) {
+                // resolve_xmr_read handles both a direct child wire and a nested
+                // subinst.rest path (recursively), so just try it and return the
+                // reader wire if it materialised.
+                resolve_xmr_read(module, xcell, sig);
+                if (RTLIL::Wire* rw =
+                        module->wire(RTLIL::escape_id(inst + "." + sig))) {
+                    uhdm_trace("    XMR read %s.%s: exposed child output port\n",
+                        inst.c_str(), sig.c_str());
+                    return RTLIL::SigSpec(rw);
+                }
+            } else if (!xcell && !inst.empty() && !sig.empty() &&
+                       !module->wire(RTLIL::escape_id(inst)) &&
+                       (first == 1 ||   // an absolute path names an instance
+                        (dynamic_cast<const ref_obj*>(xpe[first]) &&
+                         dynamic_cast<const ref_obj*>(xpe[first])->Actual_group() &&
+                         dynamic_cast<const ref_obj*>(xpe[first])->Actual_group()->UhdmType()
+                             == uhdmmodule_inst))) {
+                // The cell doesn't exist yet — cont_assigns are imported BEFORE
+                // instances.  The first element resolves to a MODULE INSTANCE
+                // (not a parameter `CFG.field`, struct, or interface — those
+                // resolve elsewhere), so this is a genuine XMR.
+                // Record it + create the reader wire now and RETURN it (rather
+                // than falling through, which would leave a spurious same-named
+                // signal in this module); resolve the child port + drive the
+                // reader at the end of import_design once every cell exists.
+                pending_xmr_reads_.push_back({module, inst, sig});
+                int xw = 1;
+                if (auto ag = leaf->Actual_group()) {
+                    int w = get_width(ag, current_instance);
+                    if (w > 0) xw = w;
+                }
+                // The last Path_elem need not be the leaf, or bound to it
+                // (slang#1433: `gg` instead of the 4-bit `innermost`, a 1-bit
+                // reader).  Walk the elaborated instance tree by name to the
+                // leaf net and take its width.
+                if (int w = xmr_leaf_width(names, first); w > 0) xw = w;
+                std::string pn = inst + "." + sig;
+                RTLIL::Wire* pw = module->wire(RTLIL::escape_id(pn));
+                if (!pw) pw = module->addWire(RTLIL::escape_id(pn), xw);
+                uhdm_trace("    XMR read %s.%s: deferred (cell not yet created, width=%d)\n",
+                    inst.c_str(), sig.c_str(), xw);
+                return RTLIL::SigSpec(pw);
+            }
+        }
+    }
+    return RTLIL::SigSpec();
+}
+
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    // An ABSOLUTE path into this module's own hierarchy
+    // (`top.dut.gg_inner[0].genblk1.i.innermost`, slang#1433) is always a
+    // cross-module reference; resolve it before the handlers below read an
+    // indexed generate-scope element as an array element.
+    // The same holds for a RELATIVE path into a child instance whose element
+    // list Surelog cut short at an indexed generate scope (the name has more
+    // segments than Path_elems): the handlers below would read
+    // `dut.gg[1]` as a 1-bit wire.
+    if (module && uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        const any* e0 = (*uhdm_hier->Path_elems())[0];
+        bool absolute = uhdm_hier->Path_elems()->size() >= 3 &&
+            e0->UhdmType() == uhdmref_obj &&
+            RTLIL::escape_id(std::string(e0->VpiName())) == module->name.str() &&
+            !module->wire(module->name) && !module->cell(module->name);
+        bool truncated_into_child = false;
+        if (!absolute && e0->UhdmType() == uhdmref_obj) {
+            std::string full(uhdm_hier->VpiName());
+            int segs = 1, depth = 0;
+            for (char ch : full) {
+                if (ch == '[') depth++;
+                else if (ch == ']') depth--;
+                else if (ch == '.' && depth == 0) segs++;
+            }
+            std::string n0(e0->VpiName());
+            // the path goes through an indexed generate scope (truncated, or
+            // a bit_select element) into a CHILD module instance
+            // (an index on the LAST element is an element select of the
+            // leaf -- `u.P[1]`, a child parameter -- not a generate scope)
+            bool genscope = segs > (int)uhdm_hier->Path_elems()->size();
+            auto& pe = *uhdm_hier->Path_elems();
+            for (size_t k = 0; k + 1 < pe.size(); k++)
+                if (pe[k]->UhdmType() == uhdmbit_select) genscope = true;
+            if (genscope)
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance))
+                    if (mi->Modules())
+                        for (auto c : *mi->Modules())
+                            if (std::string(c->VpiName()) == n0) truncated_into_child = true;
+        }
+        if (absolute || truncated_into_child) {
+            RTLIL::SigSpec x = import_xmr_read(uhdm_hier);
+            if (x.size() > 0) return x;
+        }
+    }
     if (mode_debug)
         uhdm_trace("    Importing hier_path\n");
 
@@ -18541,66 +18756,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // flatten.  Only fires when the first element is genuinely a cell instance
     // (interface-port `sub.clk` and struct-field `s.f` reads fall through: their
     // base is a wire/port, not a cell).
-    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
-        auto& xpe = *uhdm_hier->Path_elems();
-        // A DOWNWARD XMR read `inst0.inst1.….sig` — every element a bare
-        // ref_obj.  Two elements is the common `inst.sig`; deeper chains
-        // (ibex RVFI's cs_registers_i.mcycle_counter_i.counter_val_o,
-        // id_stage_i.controller_i.<sig>) read a signal several instances down.
-        // Treat elem[0] as the child instance and join the rest as the (dotted)
-        // signal path, which resolve_xmr_read promotes recursively.
-        bool all_ref = true;
-        for (auto* e : xpe)
-            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
-        if (all_ref) {
-            std::string inst = std::string(any_cast<const ref_obj*>(xpe[0])->VpiName());
-            std::string sig;
-            for (size_t k = 1; k < xpe.size(); k++) {
-                if (k > 1) sig += ".";
-                sig += std::string(any_cast<const ref_obj*>(xpe[k])->VpiName());
-            }
-            const ref_obj* leaf = any_cast<const ref_obj*>(xpe.back());
-            RTLIL::Cell* xcell = inst.empty() ? nullptr
-                               : module->cell(RTLIL::escape_id(inst));
-            RTLIL::Module* xchild = xcell ? design->module(xcell->type) : nullptr;
-            if (xchild && !sig.empty()) {
-                // resolve_xmr_read handles both a direct child wire and a nested
-                // subinst.rest path (recursively), so just try it and return the
-                // reader wire if it materialised.
-                resolve_xmr_read(module, xcell, sig);
-                if (RTLIL::Wire* rw =
-                        module->wire(RTLIL::escape_id(inst + "." + sig))) {
-                    uhdm_trace("    XMR read %s.%s: exposed child output port\n",
-                        inst.c_str(), sig.c_str());
-                    return RTLIL::SigSpec(rw);
-                }
-            } else if (!xcell && !inst.empty() && !sig.empty() &&
-                       !module->wire(RTLIL::escape_id(inst)) &&
-                       any_cast<const ref_obj*>(xpe[0])->Actual_group() &&
-                       any_cast<const ref_obj*>(xpe[0])->Actual_group()->UhdmType()
-                           == uhdmmodule_inst) {
-                // The cell doesn't exist yet — cont_assigns are imported BEFORE
-                // instances.  The first element resolves to a MODULE INSTANCE
-                // (not a parameter `CFG.field`, struct, or interface — those
-                // resolve elsewhere), so this is a genuine XMR.
-                // Record it + create the reader wire now and RETURN it (rather
-                // than falling through, which would leave a spurious same-named
-                // signal in this module); resolve the child port + drive the
-                // reader at the end of import_design once every cell exists.
-                pending_xmr_reads_.push_back({module, inst, sig});
-                int xw = 1;
-                if (auto ag = leaf->Actual_group()) {
-                    int w = get_width(ag, current_instance);
-                    if (w > 0) xw = w;
-                }
-                std::string pn = inst + "." + sig;
-                RTLIL::Wire* pw = module->wire(RTLIL::escape_id(pn));
-                if (!pw) pw = module->addWire(RTLIL::escape_id(pn), xw);
-                uhdm_trace("    XMR read %s.%s: deferred (cell not yet created, width=%d)\n",
-                    inst.c_str(), sig.c_str(), xw);
-                return RTLIL::SigSpec(pw);
-            }
-        }
+    {
+        RTLIL::SigSpec x = import_xmr_read(uhdm_hier);
+        if (x.size() > 0) return x;
     }
 
     // Hierarchical function call: `module_scope_func_top.incr(10)`.

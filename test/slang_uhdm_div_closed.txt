@@ -34,3 +34,4 @@ slang-issues/issue_2067_tryeval_constant_evaluates_calls_to_functions # static f
 slang-issues/issue_2082_wunsized_concat_should_not_be_thrown # unsized integer literal in a concatenation is 32 bits (Surelog sizes it 64): {1, 2} was 64'h2, 2026-11-14
 slang-issues/issue_1154_variables_in_functions_which_are_used # Surelog bump to 00bdd1d192 (Surelog #4261: `input signed [7:0] a;` non-ANSI function port lost its range and sign), 2026-11-14
 sv-yosys-issues/issue_1400_warn_on_mixing_non_blocking_and # initial-block nonblocking assignment reads the block's values so far (was a<->b continuous connects); co-sim vs Verilator is its INITIALDLY artefact, 2026-11-14
+slang-issues/issue_1433_spurious_unresolved_hierarchical_path_error # absolute / generate-scoped XMR read resolved (was X), 2026-11-14
