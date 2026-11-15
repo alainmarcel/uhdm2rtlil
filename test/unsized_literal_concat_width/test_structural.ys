@@ -1,0 +1,5 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -set foo 4'ha -prove c 64'h0000000100000002 -prove e 36'ha00000000 -prove a 16'haaaa

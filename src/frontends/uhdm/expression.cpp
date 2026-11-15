@@ -11793,6 +11793,26 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // Concatenation operation {a, b, c}
             {
                 log_debug("UHDM: Processing vpiConcatOp with %d operands\n", (int)operands.size());
+                // An UNSIZED integer literal in a concatenation is 32 bits wide
+                // (LRM 5.7.1; every tool warns "unsized integer in concat;
+                // using a width of 32").  Surelog sizes it 64, so `{1, 2}`
+                // became {64'd1, 64'd2} and the 64-bit target kept only the 2
+                // (MikePopoloski/slang#2082: 64'h2 instead of 64'h100000002).
+                if (uhdm_op->Operands()) {
+                    for (size_t i = 0; i < operands.size() && i < uhdm_op->Operands()->size(); i++) {
+                        auto c = dynamic_cast<const UHDM::constant*>((*uhdm_op->Operands())[i]);
+                        if (!c || c->VpiSize() <= 32 || !operands[i].is_fully_const()) continue;
+                        std::string dec(c->VpiDecompile());
+                        if (dec.empty() || dec.find('\'') != std::string::npos ||
+                            dec.find_first_not_of("0123456789_") != std::string::npos)
+                            continue;
+                        RTLIL::Const v = operands[i].as_const();
+                        bool fits = true;
+                        for (int b = 32; b < GetSize(v); b++)
+                            if (v[b] != RTLIL::State::S0) { fits = false; break; }
+                        if (fits) operands[i] = operands[i].extract(0, 32);
+                    }
+                }
                 RTLIL::SigSpec result;
                 // In SystemVerilog concatenation the leftmost item is at the
                 // MSBs, so we append in REVERSE list order (SigSpec::append puts
