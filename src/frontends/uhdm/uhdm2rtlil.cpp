@@ -8047,7 +8047,29 @@ void UhdmImporter::tie_unassigned_two_state_to_zero(const UHDM::module_inst* uhd
             two_state.insert(n); return;
         default: break;
         }
-        if (is_two_state_typespec(ts)) two_state.insert(n);
+        if (is_two_state_typespec(ts)) { two_state.insert(n); return; }
+        // An unpacked array of a 2-state element (`bit [1:2] v1 [1:1];`):
+        // its elements are 2-state too, and read 0 until assigned
+        // (LRM 6.8).  Left undriven they read X, and an `if (v1[i][j])`
+        // folded the latch it guards to 1 (yosys#5837; read_slang
+        // initialises the array to 0).
+        if (obj->UhdmType() == uhdmarray_var) {
+            auto av = any_cast<const UHDM::array_var*>(obj);
+            const UHDM::any* el = (av->Variables() && !av->Variables()->empty())
+                                      ? (*av->Variables())[0] : nullptr;
+            const UHDM::typespec* ets = nullptr;
+            if (ts && ts->UhdmType() == uhdmarray_typespec) {
+                auto ats = any_cast<const UHDM::array_typespec*>(ts);
+                if (ats->Elem_typespec()) ets = ats->Elem_typespec()->Actual_typespec();
+            }
+            bool el2 = false;
+            if (el) switch (el->UhdmType()) {
+                case uhdmbit_var: case uhdmbyte_var: case uhdmshort_int_var:
+                case uhdmint_var: case uhdmlong_int_var: el2 = true; break;
+                default: break;
+            }
+            if (el2 || is_two_state_typespec(ets)) two_state.insert(n);
+        }
     };
     if (uhdm_module->Ports())
         for (auto p : *uhdm_module->Ports()) note(p, p->Typespec());
@@ -8069,7 +8091,11 @@ void UhdmImporter::tie_unassigned_two_state_to_zero(const UHDM::module_inst* uhd
     for (auto w : module->wires()) {
         std::string n = w->name.str();
         if (n.empty() || n[0] != '\\') continue;
-        if (!two_state.count(n.substr(1))) continue;
+        // an element wire of an unpacked array is `\v1[1]`: match its base
+        std::string base = n.substr(1);
+        if (size_t br = base.find('['); br != std::string::npos && !two_state.count(base))
+            base = base.substr(0, br);
+        if (!two_state.count(base)) continue;
         if (w->port_input) continue;
         if (w->attributes.count(RTLIL::escape_id("uhdm_src_lhs"))) continue;
         two_state_tie_candidates_.push_back({module->name, w->name});

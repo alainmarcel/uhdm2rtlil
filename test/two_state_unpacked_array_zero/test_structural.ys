@@ -1,0 +1,5 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+opt
+sat -verify -prove-asserts -set-def-inputs -prove y d -prove z e
