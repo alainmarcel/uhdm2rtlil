@@ -468,3 +468,10 @@ proc_continuous_assign_rejected
 # expected outcome (it used to fail with an internal "Clock signal is empty
 # when creating sync rule"; MikePopoloski/slang#1206, #1660).
 always_ff_no_edge_rejected
+# ---- LRM synthesizable-subset coverage (2026-11-15, sv_lrm_coverage.py) ----
+# 1800-2023 syntax Surelog does not parse yet (SNT:PA0207 at `union soft` and
+# at the `+/-` / `+%-` tolerance ranges).  read_slang reads the soft union with
+# --std latest; it rejects the tolerance range too (slang_frontend.cc:482
+# "vexpr.rangeKind == Simple").
+lrm_soft_union
+lrm_inside_tolerance

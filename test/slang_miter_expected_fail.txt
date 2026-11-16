@@ -143,3 +143,39 @@ yosys_issues/issue_5212_multiple_drivers_on_a_variable_in_h1
 # sv-elab regress r3 (sv-elab-issues sweep): `m[4-:2] <= 0` drives bits 4:3;
 # the other six bits are never assigned (read_slang X, read_uhdm undriven).
 sv_elab_issues/issue_191_release_builds_fail_test_regress_sv_r3
+# ---- LRM synthesizable-subset coverage (2026-11-15, sv_lrm_coverage.py) ----
+# Each entry is a measured read_uhdm / Surelog defect; read_slang matches the
+# LRM (checked against Verilator or a hand computation where it can run).
+# `a -> b` and `a <-> b` (11.4.7) give the wrong truth value.
+lrm_implication_equiv
+lrm_operators_unsigned
+# Surelog UH0700: an assignment pattern as an assignment TARGET (10.8,
+# Assignment_pattern_variable_lvalue) is not translated to UHDM.
+lrm_assign_pattern_lhs
+# Surelog CM0028 "Undefined configuration work@cfg": -cfg cannot select a
+# config declared in the source, so u_op keeps op_add (33.4).
+lrm_config_block
+# foreach over two dimensions at once (12.7.3): wrong element mapping.
+lrm_foreach_2d
+# for with two loop variables and two steps (12.7.1): outputs read all ones.
+lrm_for_multi_init_step
+# generic interface port `interface bus` (25.3.3): the netlist references
+# port `bus.data` on `consumer`, which has none -- the instance is unbuildable.
+lrm_generic_iface_port
+# Surelog CP0340 "Port z of unspecified type": non-ANSI explicit port names
+# .bus({hi, lo}), .y(out[3:0]) (23.2.2.1).
+lrm_header_port_expr
+# bufif1/notif0/notif1 and a pullup on a shared net (28.6, 28.10): the
+# undriven net reads 0 instead of the pullup's 1, and notif outputs are wrong.
+lrm_tristate_gates
+# Surelog UH0700 on type(expr) (6.23): the declared variable, the cast
+# through `localparam type ST = type(s)` and the generate condition are lost.
+lrm_type_operator
+# $unit scope (3.12.1/26.5): $unit::unit_mix(a + $unit::UNIT_K) diverges.
+lrm_unit_scope
+# unpacked array concatenation (10.10) with an array and a slice as items.
+lrm_unpacked_array_concat
+# indexed part-select of an unpacked array arr[i +: 2] / arr[j -: 2] (7.4.6):
+# read_uhdm gives p=1 q=0 r=0 s=0 for a..d = 1..4, i = 2; read_slang and the
+# LRM give 1 2 3 4.
+lrm_unpacked_indexed_slice

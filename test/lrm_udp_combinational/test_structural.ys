@@ -1,0 +1,10 @@
+# No other frontend reads a UDP (read_slang: unsupported, read_verilog: syntax
+# error), so prove the mux table directly: y = s ? b : a, and the x-select row
+# gives the common value when a == b.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -verify -prove y 4'hc -set s 0 -set a 4'hc -set b 4'h3
+sat -verify -prove y 4'h3 -set s 1 -set a 4'hc -set b 4'h3
+sat -verify -prove y 4'h5 -set s 1 -set a 4'ha -set b 4'h5
+sat -verify -prove y 4'ha -set s 0 -set a 4'ha -set b 4'h5

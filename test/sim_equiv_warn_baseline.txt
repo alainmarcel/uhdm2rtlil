@@ -147,3 +147,28 @@ func_local_accumulator_in_ff
 # ---- sv-tests conversion campaign, batch 9 (2026-11-01) -------------------
 # Co-sim rows of tests ratcheted in structural_expected_fail.txt (the netlist
 # IS wrong, so the divergence is expected until the reader fix lands):
+# ---- LRM synthesizable-subset coverage (2026-11-15) ------------------------
+# Co-sim rows of the lrm_* tests ratcheted in slang_miter_expected_fail.txt /
+# structural_expected_fail.txt, plus the rows whose only reference is
+# Verilator (read_slang cannot read them, or agrees with our defect): each
+# divergence is the read_uhdm defect, expected until its fix lands.
+# .sum()/.xor()/.or() with (...) (7.12.3): the with-clause mapping is wrong.
+lrm_array_reduction_with
+# do ... while (12.7.5): the trip count reads 0 (n) and the body result is wrong.
+lrm_do_while
+lrm_foreach_2d
+lrm_for_multi_init_step
+lrm_generic_iface_port
+lrm_implication_equiv
+lrm_operators_unsigned
+# b ** 2'sd2, a constant NEGATIVE signed exponent (Table 11-4): gives b*b, not 0/1/-1.
+lrm_power_variable_exponent
+# ref arguments of an automatic task (13.5.2): the writes through p and q are
+# lost (x = a, y = b); read_slang loses them the same way, Verilator is right.
+lrm_ref_argument
+# supply0 / supply1 nets (6.6.6) read 0; read_slang asserts on them.
+lrm_supply_nets
+lrm_tristate_gates
+lrm_type_operator
+lrm_unit_scope
+lrm_unpacked_array_concat

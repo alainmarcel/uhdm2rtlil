@@ -1,0 +1,6 @@
+# read_slang does not implement .map() and Verilator rejects the assignment,
+# so prove y[i] = arr[i] ^ {2'b01, arr[i][3:2]} directly.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -verify -prove y 16'h5671 -set arr 16'h1234

@@ -1,0 +1,17 @@
+# read_slang refuses a variable inside item and Verilator a non-constant
+# wildcard (inside lowers to ==?), so prove the membership values directly.
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+sat -verify -prove y 1 -set a 8'd7 -set b 8'd7 -set c 8'd9
+sat -verify -prove y 1 -set a 8'd9 -set b 8'd7 -set c 8'd9
+sat -verify -prove y 1 -set a 8'd3 -set b 8'd7 -set c 8'd9
+sat -verify -prove y 0 -set a 8'd4 -set b 8'd7 -set c 8'd9
+# n = !(a inside {b^c, [c:b]}): b^c = 14, range [9:7] is empty (lo > hi)
+sat -verify -prove n 0 -set a 8'd14 -set b 8'd7 -set c 8'd9
+sat -verify -prove n 1 -set a 8'd8 -set b 8'd7 -set c 8'd9
+sat -verify -prove n 0 -set a 8'd8 -set b 8'd9 -set c 8'd7
+# k
+sat -verify -prove k 2'd1 -set a 8'd9 -set b 8'd1 -set c 8'd9
+sat -verify -prove k 2'd2 -set a 8'd4 -set b 8'd5 -set c 8'd0
+sat -verify -prove k 2'd0 -set a 8'd4 -set b 8'd9 -set c 8'd0

@@ -1,0 +1,10 @@
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc; flatten; opt
+# w: only a[7:4] == b[7:4] matters
+sat -verify -prove w 1 -set a 8'h5c -set b 8'h53 -set c 0
+sat -verify -prove w 0 -set a 8'h6c -set b 8'h53 -set c 0
+# v: a[3:2] must be 2'b11 and a[3:0]... {zz11, c[3:0]} compares a[5:4]==11 and a[3:0]==c
+sat -verify -prove v 0 -set a 8'h3a -set c 8'h0a -set b 0
+sat -verify -prove v 1 -set a 8'h2a -set c 8'h0a -set b 0
+sat -verify -prove v 1 -set a 8'h3b -set c 8'h0a -set b 0
