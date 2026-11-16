@@ -163,8 +163,6 @@ lrm_operators_unsigned
 # ref arguments of an automatic task (13.5.2): the writes through p and q are
 # lost (x = a, y = b); read_slang loses them the same way, Verilator is right.
 lrm_ref_argument
-# supply0 / supply1 nets (6.6.6) read 0; read_slang asserts on them.
-lrm_supply_nets
 lrm_tristate_gates
 lrm_type_operator
 lrm_unit_scope

@@ -1963,6 +1963,12 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         w->set_bool_attribute(ID::wand);
     } else if (net_type == vpiWor) {
         w->set_bool_attribute(ID::wor);
+    } else if (net_type == vpiSupply0 || net_type == vpiSupply1) {
+        // supply0 / supply1 nets (LRM 6.6.6) carry a constant 0 / 1 driver of
+        // supply strength; without it every reader saw an undriven net.
+        module->connect(w, RTLIL::SigSpec(net_type == vpiSupply1 ? RTLIL::State::S1
+                                                                 : RTLIL::State::S0,
+                                          w->width));
     }
     
     // Store in maps
