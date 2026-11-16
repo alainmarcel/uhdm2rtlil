@@ -160,8 +160,6 @@ lrm_for_multi_init_step
 lrm_generic_iface_port
 lrm_implication_equiv
 lrm_operators_unsigned
-# b ** 2'sd2, a constant NEGATIVE signed exponent (Table 11-4): gives b*b, not 0/1/-1.
-lrm_power_variable_exponent
 # ref arguments of an automatic task (13.5.2): the writes through p and q are
 # lost (x = a, y = b); read_slang loses them the same way, Verilator is right.
 lrm_ref_argument

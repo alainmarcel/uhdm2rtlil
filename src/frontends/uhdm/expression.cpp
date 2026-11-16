@@ -10757,7 +10757,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // cell.  In CVA6 this produced ~4700 spurious $pow cells (the
                     // reference slang netlist has zero).  Self-determined width;
                     // the caller applies any wider assignment context.
-                    result = RTLIL::const_pow(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                    //
+                    // Each operand keeps its OWN signedness (Table 11-4): a
+                    // signed exponent whose value is negative gives 0, 1 or
+                    // -1, so `b ** 2'sd2` (2'sd2 is -2) must not read as +2.
+                    const UHDM::expr* pb = nullptr;
+                    const UHDM::expr* pe = nullptr;
+                    if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
+                        pb = dynamic_cast<const UHDM::expr*>((*uhdm_op->Operands())[0]);
+                        pe = dynamic_cast<const UHDM::expr*>((*uhdm_op->Operands())[1]);
+                    }
+                    bool bs = pb && is_expr_signed(pb);
+                    bool es = pe && is_expr_signed(pe);
+                    result = RTLIL::const_pow(operands[0].as_const(), operands[1].as_const(), bs, es, -1);
                 }
                 break;
             case vpiLShiftOp:
@@ -11452,10 +11464,18 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // $pow signedness follows the base operand (the exponent only
                 // scales it); a signed base sign-extends.
                 bool is_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
+                // The exponent keeps its OWN signedness (it is self-determined,
+                // Table 11-4): B_SIGNED decides whether `2'b10` is -2 (the
+                // result is then 0, 1 or -1) or +2.  addPow's b_signed
+                // defaulted to false, so `b ** 2'sd2` computed b * b.
+                bool exp_signed = operands[1].is_wire() && operands[1].as_wire()->is_signed;
+                if (!exp_signed && uhdm_op->Operands() && uhdm_op->Operands()->size() == 2)
+                    if (auto pe = dynamic_cast<const UHDM::expr*>((*uhdm_op->Operands())[1]))
+                        exp_signed = is_expr_signed(pe);
 
                 // Use Pow cell for power operation
                 std::string cell_name = generate_cell_name(uhdm_op, "pow");
-                auto c = module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                auto c = module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed, exp_signed);
                 add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
