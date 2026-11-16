@@ -155,8 +155,6 @@ lrm_assign_pattern_lhs
 # Surelog CM0028 "Undefined configuration work@cfg": -cfg cannot select a
 # config declared in the source, so u_op keeps op_add (33.4).
 lrm_config_block
-# foreach over two dimensions at once (12.7.3): wrong element mapping.
-lrm_foreach_2d
 # for with two loop variables and two steps (12.7.1): outputs read all ones.
 lrm_for_multi_init_step
 # generic interface port `interface bus` (25.3.3): the netlist references

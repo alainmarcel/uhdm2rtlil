@@ -7815,6 +7815,21 @@ void UhdmImporter::reverse_unpacked_array_ports() {
         int ew = iw->attributes.at(A_EW).as_int();
         iw->attributes.erase(A_CNT);
         iw->attributes.erase(A_EW);
+        // Per-dim (size, ascending) when the port has several unpacked dims.
+        std::vector<std::pair<int,bool>> geom;
+        const RTLIL::IdString A_GEOM = RTLIL::escape_id("unpacked_dim_geom");
+        if (iw->attributes.count(A_GEOM)) {
+            std::string g = iw->attributes.at(A_GEOM).decode_string();
+            iw->attributes.erase(A_GEOM);
+            for (auto& tok : split_tokens(g, ",")) {
+                size_t c = tok.find(':');
+                if (c == std::string::npos) { geom.clear(); break; }
+                geom.push_back({atoi(tok.substr(0, c).c_str()), tok.substr(c + 1) == "a"});
+            }
+            long long prod = 1;
+            for (auto& d : geom) prod *= d.first;
+            if (prod != cnt) geom.clear();
+        }
         // An INOUT would need the reversal on both halves of a tristate net;
         // leave those alone rather than introduce a second driver.
         if (cnt < 2 || ew < 1 || (long long)cnt * ew != iw->width ||
@@ -7834,9 +7849,28 @@ void UhdmImporter::reverse_unpacked_array_ports() {
         pw->port_id = pid;
         pw->attributes = iw->attributes;
         // Public slot s holds element cnt-1-s, so element 0 lands at the top.
+        // With several dims: slot s (from the LSB) holds the element at
+        // DECLARED-order position p = cnt-1-s, where p is row-major over each
+        // dim's position (i-lo for an ascending dim, hi-i for a descending
+        // one); the body's native layout is row-major over i-lo.  One dim
+        // reduces to the plain reversal.
         RTLIL::SigSpec rev;
-        for (int slot = 0; slot < cnt; slot++)
-            rev.append(RTLIL::SigSpec(iw).extract((cnt - 1 - slot) * ew, ew));
+        for (int slot = 0; slot < cnt; slot++) {
+            int native = cnt - 1 - slot;
+            if (!geom.empty()) {
+                int p = cnt - 1 - slot;
+                std::vector<int> off(geom.size());
+                for (int k = (int)geom.size() - 1; k >= 0; k--) {
+                    int pos = p % geom[k].first;
+                    p /= geom[k].first;
+                    off[k] = geom[k].second ? pos : geom[k].first - 1 - pos;
+                }
+                native = 0;
+                for (size_t k = 0; k < geom.size(); k++)
+                    native = native * geom[k].first + off[k];
+            }
+            rev.append(RTLIL::SigSpec(iw).extract(native * ew, ew));
+        }
         if (is_in)
             module->connect(rev, RTLIL::SigSpec(pw));
         else

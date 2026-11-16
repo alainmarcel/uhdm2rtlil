@@ -902,6 +902,8 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     int unpacked_count = 0;
     // (size, low) of every unpacked range of the port, in declaration order.
     std::vector<std::pair<int,int>> port_dims;
+    // Declared direction of each of those dims (true = ascending `[lo:hi]`).
+    std::vector<bool> port_dim_asc;
     // Outer unpacked dim declared ASCENDING (`[0:N-1]`, or the `[N]`
     // shorthand)?  Then its LEFT index -- element 0 -- takes the MOST
     // significant bits of the flat port wire, the way read_slang and the
@@ -929,7 +931,8 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                     total *= std::abs(ls.as_int() - rs.as_int()) + 1;
                                     port_dims.push_back({std::abs(ls.as_int() - rs.as_int()) + 1,
                                                          std::min(ls.as_int(), rs.as_int())});
-                                } else { total = 0; port_dims.clear(); break; }
+                                    port_dim_asc.push_back(ls.as_int() < rs.as_int());
+                                } else { total = 0; port_dims.clear(); port_dim_asc.clear(); break; }
                             }
                         }
                     }
@@ -1001,7 +1004,8 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 total *= std::abs(ls.as_int() - rs.as_int()) + 1;
                                 port_dims.push_back({std::abs(ls.as_int() - rs.as_int()) + 1,
                                                      std::min(ls.as_int(), rs.as_int())});
-                            } else { total = 0; port_dims.clear(); break; }
+                                port_dim_asc.push_back(ls.as_int() < rs.as_int());
+                            } else { total = 0; port_dims.clear(); port_dim_asc.clear(); break; }
                         }
                     }
                     force_const_fold = saved_fcf;
@@ -1145,11 +1149,29 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
         }
         // Geometry for reverse_unpacked_array_ports(), ASCENDING dims only:
         // there the left index (element 0) belongs at the MSB.
-        if (unpacked_ascending) {
+        // With several dims EACH one is laid out in its declared order (the
+        // LRM stream order, outermost first): an ascending INNER dim under a
+        // descending outer one (`x [3:0][0:2]`) was left descending, and an
+        // ascending outer over a descending inner was reversed whole --
+        // either way the flat port disagreed with read_slang element by
+        // element.  "unpacked_dim_geom" carries every dim's size and
+        // direction for the general permutation.
+        bool any_dim_asc = false;
+        for (bool a : port_dim_asc) any_dim_asc |= a;
+        if (unpacked_ascending || (port_dims.size() >= 2 && any_dim_asc &&
+                                   port_dim_asc.size() == port_dims.size())) {
             w->attributes[RTLIL::escape_id("unpacked_count")] =
                 RTLIL::Const(unpacked_count);
             w->attributes[RTLIL::escape_id("unpacked_elem_width")] =
                 RTLIL::Const(unpacked_elem_w);
+            if (port_dims.size() >= 2 && port_dim_asc.size() == port_dims.size()) {
+                std::string g;
+                for (size_t k = 0; k < port_dims.size(); k++) {
+                    if (!g.empty()) g += ",";
+                    g += std::to_string(port_dims[k].first) + (port_dim_asc[k] ? ":a" : ":d");
+                }
+                w->attributes[RTLIL::escape_id("unpacked_dim_geom")] = RTLIL::Const(g);
+            }
         }
         // A 2-D unpacked port (`input logic [4:0] x [2][2]`): the same
         // geometry the internal 2-D flat arrays carry (uhdm2rtlil.cpp), so

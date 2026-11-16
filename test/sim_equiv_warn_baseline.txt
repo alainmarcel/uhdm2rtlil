@@ -156,7 +156,6 @@ func_local_accumulator_in_ff
 lrm_array_reduction_with
 # do ... while (12.7.5): the trip count reads 0 (n) and the body result is wrong.
 lrm_do_while
-lrm_foreach_2d
 lrm_for_multi_init_step
 lrm_generic_iface_port
 lrm_implication_equiv
