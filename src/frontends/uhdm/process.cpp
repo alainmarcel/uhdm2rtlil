@@ -11082,6 +11082,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiWhile:
             import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), &proc->root_case);
             break;
+        case vpiDoWhile:
+            import_do_while_stmt_comb(any_cast<const UHDM::do_while*>(uhdm_stmt), &proc->root_case, proc);
+            break;
         case vpiRepeat: {
             // `repeat (N) body` with a constant N: unroll, as the clocked path
             // already does.  It fell to the default below and the body was
@@ -20676,7 +20679,31 @@ int UhdmImporter::while_static_bound(const any* cond) {
 // depth is the loop's static bound (`i < WIDTH`), else a capped default.
 void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule* case_rule) {
     if (!ws || !ws->VpiCondition() || !ws->VpiStmt()) return;
-    int bound = while_static_bound(ws->VpiCondition());
+    import_cond_loop_comb(ws->VpiCondition(), ws->VpiStmt(), ws, case_rule);
+}
+
+// `do body while (cond);` (LRM 12.7.5): the body runs once before the
+// condition is first tested, so it is the body followed by
+// `while (cond) body`.  It had no case in either comb statement path and
+// the whole loop was dropped.
+void UhdmImporter::import_do_while_stmt_comb(const UHDM::do_while* dw, RTLIL::CaseRule* case_rule,
+                                             RTLIL::Process* proc) {
+    if (!dw || !dw->VpiCondition() || !dw->VpiStmt()) return;
+    if (body_has_break(dw->VpiStmt()))
+        log_warning("do-while at line %d: a `break` in its first pass is not modelled\n",
+                    dw->VpiLineNo());
+    // At process level the first pass must go through the Process overload,
+    // like any other top-level statement: it is the one that threads the
+    // block's in-flight values (`automatic int i = 0;` -- through the
+    // CaseRule overload the body read the raw `\i` wire and looped).
+    if (proc) import_statement_comb(dw->VpiStmt(), proc);
+    else      import_statement_comb(dw->VpiStmt(), case_rule);
+    import_cond_loop_comb(dw->VpiCondition(), dw->VpiStmt(), dw, case_rule);
+}
+
+void UhdmImporter::import_cond_loop_comb(const UHDM::any* cond_expr, const UHDM::any* body,
+                                         const UHDM::any* ws, RTLIL::CaseRule* case_rule) {
+    int bound = while_static_bound(cond_expr);
     const int kCap = 256;
     if (bound <= 0) {
         log_warning("while loop in comb context has no static bound; unrolling %d iterations\n", kCap);
@@ -20693,15 +20720,15 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
     // cond` with its own break flag (defaulted 0 in the root case, set by
     // vpiBreak under the branches that reach it); an iteration that broke
     // leaves `live` low for every later one.
-    if (current_comb_process && body_has_break(ws->VpiStmt())) {
-        import_symbolic_loop_comb(ws->VpiCondition(), ws->VpiStmt(), nullptr,
+    if (current_comb_process && body_has_break(body)) {
+        import_symbolic_loop_comb(cond_expr, body, nullptr,
                                   case_rule, ws, bound);
         return;
     }
     std::function<void(RTLIL::CaseRule*, int)> emit;
     emit = [&](RTLIL::CaseRule* cr, int left) {
         if (left <= 0) return;
-        RTLIL::SigSpec cond = import_expression(ws->VpiCondition(), comb_read_map());
+        RTLIL::SigSpec cond = import_expression(any_cast<const expr*>(cond_expr), comb_read_map());
         if (cond.size() > 1) {
             if (cond.is_fully_const())
                 cond = cond.as_const().as_bool() ? RTLIL::SigSpec(RTLIL::State::S1)
@@ -20711,7 +20738,7 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
         }
         if (cond.is_fully_const()) {
             if (!cond.as_const().as_bool()) return;     // loop exits here
-            import_statement_comb(ws->VpiStmt(), cr);
+            import_statement_comb(body, cr);
             emit(cr, left - 1);
             return;
         }
@@ -20722,7 +20749,7 @@ void UhdmImporter::import_while_stmt_comb(const while_stmt* ws, RTLIL::CaseRule*
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
         auto saved_ccv = branch_vals();
         auto saved_nb_ccv = current_comb_values;   // NB in-flight chain (ff mode keeps it apart from branch_vals)
-        import_statement_comb(ws->VpiStmt(), true_case);
+        import_statement_comb(body, true_case);
         emit(true_case, left - 1);
         auto then_ccv = branch_vals();
         branch_vals() = saved_ccv;
@@ -23823,6 +23850,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
         case vpiWhile:
             import_while_stmt_comb(any_cast<const while_stmt*>(uhdm_stmt), case_rule);
+            break;
+        case vpiDoWhile:
+            import_do_while_stmt_comb(any_cast<const UHDM::do_while*>(uhdm_stmt), case_rule);
             break;
         case vpiReturn:
             // A bare `return` in an inlined body's arm: the statements it

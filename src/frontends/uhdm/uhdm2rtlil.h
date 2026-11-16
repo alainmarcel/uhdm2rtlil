@@ -980,6 +980,10 @@ struct UhdmImporter {
     bool unpacked_array_concat_geometry(const UHDM::operation* op, int& n, int& ew, bool& asc);
     bool param_assign_is_override(const UHDM::module_inst* inst, const std::string& pname, const UHDM::any* rhs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);
+    void import_do_while_stmt_comb(const UHDM::do_while* dw, RTLIL::CaseRule* case_rule,
+                                   RTLIL::Process* proc = nullptr);
+    void import_cond_loop_comb(const UHDM::any* cond_expr, const UHDM::any* body,
+                               const UHDM::any* src, RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec pending_inflight(const RTLIL::SigSpec& lhs);
     // Canonical bits for overlap detection between pending sync writes: an
     // expanded unpacked array has one flat wire `\arr` and per-element wires

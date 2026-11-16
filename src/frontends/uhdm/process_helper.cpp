@@ -1333,6 +1333,23 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        // A while / do-while / repeat body writes signals like any other
+        // statement.  Without these cases a variable written ONLY inside such
+        // a loop got no `$0\` temp and no in-flight value: a do-while that
+        // increments its own counter read the raw wire and looped (LRM
+        // 12.7.5, test/lrm_do_while).
+        case vpiWhile:
+            if (auto ws = any_cast<const while_stmt*>(stmt))
+                extract_assigned_signals(ws->VpiStmt(), signals);
+            break;
+        case vpiDoWhile:
+            if (auto dw = any_cast<const UHDM::do_while*>(stmt))
+                extract_assigned_signals(dw->VpiStmt(), signals);
+            break;
+        case vpiRepeat:
+            if (auto rp = any_cast<const UHDM::repeat*>(stmt))
+                extract_assigned_signals(rp->VpiStmt(), signals);
+            break;
         case vpiCase: {
             auto case_st = any_cast<const UHDM::case_stmt*>(stmt);
             if (auto items = case_st->Case_items()) {
