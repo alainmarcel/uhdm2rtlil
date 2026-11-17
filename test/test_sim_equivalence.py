@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -974,13 +975,35 @@ def run_verilator(work: Path, paths: dict[str, Path],
         "wrapper.sv", "dut_netlist.v", "tb.sv",
         "tb_main.cpp",
     ]
-    p = subprocess.run(cmd, cwd=work, text=True,
-                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    if p.returncode != 0:
-        return p.returncode, "[verilator build failed]\n" + p.stdout
-    p2 = subprocess.run(["./obj_dir/Vtb"], cwd=work, text=True,
-                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return p2.returncode, p2.stdout
+    rc, out = _run_bounded(cmd, work, VERILATOR_BUILD_TIMEOUT)
+    if rc != 0:
+        return rc, "[verilator build failed]\n" + out
+    return _run_bounded(["./obj_dir/Vtb"], work, VERILATOR_SIM_TIMEOUT)
+
+
+# A DUT can loop for ever by design (slang#1638's `for (logic [2:0] i = 0;
+# i < 8; i++)` never exits), and an unbounded Vtb outlives every caller's
+# timeout: the caller is killed, the simulation is re-parented to init and
+# spins until someone notices -- one ran for two days.  Bound both steps
+# here and kill the whole PROCESS GROUP on expiry, because the build forks
+# make and cc1plus, which a plain Popen.kill() would leave behind.
+VERILATOR_BUILD_TIMEOUT = int(os.environ.get("COSIM_BUILD_TIMEOUT", "1800"))
+VERILATOR_SIM_TIMEOUT = int(os.environ.get("COSIM_SIM_TIMEOUT", "600"))
+
+
+def _run_bounded(cmd, cwd, timeout: int) -> tuple[int, str]:
+    proc = subprocess.Popen(cmd, cwd=cwd, text=True, start_new_session=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        out, _ = proc.communicate(timeout=timeout)
+        return proc.returncode, out
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        out, _ = proc.communicate()
+        return 124, (out or "") + f"\n[{cmd[0]} timed out after {timeout}s]\n"
 
 
 def main() -> int:
