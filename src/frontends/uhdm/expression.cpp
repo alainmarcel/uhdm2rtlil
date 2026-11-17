@@ -14001,8 +14001,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
 // The element wires of an UNPACKED array by name (`name[low]`, `name[low+1]`,
 // ...; the current generate scope first), flattened low index at the LSB --
 // the same probe import_ref_obj uses for a whole-array reference.
-bool UhdmImporter::unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr, int& elem_w, int& low) {
-    if (name.empty() || name_map.count(name)) return false;
+bool UhdmImporter::unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr, int& elem_w, int& low,
+                                        bool allow_flat_wire) {
+    if (name.empty() || (!allow_flat_wire && name_map.count(name))) return false;
     std::string gs = get_current_gen_scope();
     auto find = [&](const std::string& en) -> RTLIL::Wire* {
         if (!gs.empty() && name_map.count(gs + "." + en)) return name_map[gs + "." + en];
@@ -16638,6 +16639,21 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             if (wire) {
                 base = RTLIL::SigSpec(wire);
                 geom_wire = wire;
+                // An unpacked array that ALSO has a flat wire (`logic [7:0]
+                // arr [4]` read whole somewhere) is still selected in
+                // ELEMENTS by `arr[i +: 2]` (LRM 7.4.6), not in bits: when its
+                // `name[k]` element wires tile the flat wire exactly, take the
+                // element geometry from them and keep the flat wire (lowest
+                // index at the LSB) as the base.
+                {
+                    RTLIL::SigSpec elems;
+                    int ew = 0, lo = 0;
+                    if (unpacked_array_elems(base_signal_name, elems, ew, lo, true) &&
+                        ew > 0 && elems.size() == wire->width && elems.size() > ew) {
+                        unp_ew = ew;
+                        unp_low = lo;
+                    }
+                }
                 // Same-cycle in-flight value of a GENERATE-PARENT local: the comb
                 // read map is keyed by the resolved wire name
                 // (`gen_round[0].data_state_sbox`) while the select carries the
@@ -16756,6 +16772,24 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         log_warning("Indexed part-select [%d%s%d] is outside unpacked array '%s'\n",
                     offset, pos_sel ? "+:" : "-:", width, base_signal_name.c_str());
         return RTLIL::SigSpec(RTLIL::State::Sx, std::max(1, width * unp_ew));
+    }
+    if (unp_ew > 0 && width_expr.is_fully_const() && !base_index.is_fully_const()) {
+        // A RUNTIME start: shift the flat array right by whole elements.
+        int width = width_expr.as_const().as_int();
+        bool pos_sel = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
+        if (width > 0) {
+            int bias = unp_low + (pos_sel ? 0 : width - 1);
+            int iw = std::max(base_index.size(), 32);
+            RTLIL::SigSpec idx = base_index;
+            idx.extend_u0(iw, false);
+            RTLIL::SigSpec elem_off = module->Sub(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(bias, iw)), true);
+            RTLIL::SigSpec bit_off = module->Mul(NEW_ID, elem_off, RTLIL::SigSpec(RTLIL::Const(unp_ew, iw)), true);
+            RTLIL::SigSpec out = module->addWire(NEW_ID, width * unp_ew);
+            module->addShiftx(NEW_ID, base, bit_off, out, true);
+            uhdm_trace("    indexed part-select: unpacked elements, runtime start (elem_w=%d, %d elems)\n",
+                       unp_ew, width);
+            return out;
+        }
     }
     if (geom_wire && geom_wire->width == base.size()) {
         auto& ga = geom_wire->attributes;

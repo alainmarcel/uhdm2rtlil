@@ -1149,7 +1149,8 @@ struct UhdmImporter {
     // whole-array reference.  An unpacked array has no wire of its own, so a
     // select of one has to be resolved through these.
     bool unpacked_array_elems(const std::string& name, RTLIL::SigSpec& arr,
-                              int& elem_w, int& low);
+                              int& elem_w, int& low,
+                              bool allow_flat_wire = false);
     // A select whose base is an EXPRESSION rather than a named signal: a
     // nameless bit_select / part_select whose Actual_group is the
     // concatenation (or constant) being sliced, which is how Surelog hands
