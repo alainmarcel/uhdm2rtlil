@@ -11688,8 +11688,24 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         RTLIL::SigSpec am = module->And(NEW_ID, a, RTLIL::Const(mask));
                         res = module->Eq(NEW_ID, am, RTLIL::Const(bdef));
                     } else {
-                        // Non-constant pattern: no compile-time wildcards.
-                        res = module->Eq(NEW_ID, a, b);
+                        // Non-constant pattern: a constant x/z BIT of it is
+                        // still a don't-care wherever it sits -- the operand
+                        // may be a concatenation `{b[7:4], 4'bxxxx}` (LRM
+                        // 11.4.6).  Compare only the other bits; comparing
+                        // all of them against the literal x/z (the old code)
+                        // never matched.  A signal bit is 2-state in the
+                        // netlist, so it is always compared.
+                        RTLIL::SigSpec ac, bc;
+                        for (int i = 0; i < GetSize(b); i++) {
+                            RTLIL::SigBit bb = b[i];
+                            if (!bb.wire && bb.data != RTLIL::State::S0 &&
+                                bb.data != RTLIL::State::S1)
+                                continue;
+                            ac.append(a[i]);
+                            bc.append(bb);
+                        }
+                        res = ac.empty() ? RTLIL::SigSpec(RTLIL::State::S1)
+                                         : module->Eq(NEW_ID, ac, bc);
                     }
                     if (op_type == vpiWildNeqOp)
                         res = module->Not(NEW_ID, res);

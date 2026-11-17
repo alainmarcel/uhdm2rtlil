@@ -38,6 +38,3 @@ lrm_array_map
 # module has no cells.
 lrm_udp_combinational
 lrm_udp_sequential
-# ==? / !=? with a NON-constant right operand (11.4.6): lowered to $eq against
-# the literal x/z bits, so the don't-care bits never match.
-lrm_wildcard_nonconst_rhs
