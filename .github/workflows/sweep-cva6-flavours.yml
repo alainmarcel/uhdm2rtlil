@@ -29,7 +29,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "41 4 * * *"   # nightly 04:41 UTC, after sweep-cva6
+    - cron: "41 4 */2 * *"   # every other day, 04:41 UTC, after sweep-cva6
 
 concurrency:
   group: sweep-cva6-flavours-${{ github.ref }}

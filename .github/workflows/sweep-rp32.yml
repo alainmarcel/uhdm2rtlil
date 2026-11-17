@@ -13,7 +13,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "47 2 * * *"   # nightly 02:47 UTC
+    - cron: "47 2 */2 * *"   # every other day, 02:47 UTC
 
 concurrency:
   group: sweep-rp32-${{ github.ref }}

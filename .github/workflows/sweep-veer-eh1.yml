@@ -19,7 +19,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 3 * * *"   # nightly 03:33 UTC, after scr1's 02:33
+    - cron: "33 3 */2 * *"   # every other day, 03:33 UTC, after scr1's 02:33
 
 concurrency:
   group: sweep-veer-eh1-${{ github.ref }}

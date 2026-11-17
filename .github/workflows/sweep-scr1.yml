@@ -14,7 +14,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 2 * * *"   # nightly 02:33 UTC
+    - cron: "33 2 */2 * *"   # every other day, 02:33 UTC
 
 concurrency:
   group: sweep-scr1-${{ github.ref }}

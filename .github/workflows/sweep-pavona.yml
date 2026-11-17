@@ -13,7 +13,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "47 3 * * *"   # nightly 03:47 UTC
+    - cron: "47 3 */2 * *"   # every other day, 03:47 UTC
 
 concurrency:
   group: sweep-pavona-${{ github.ref }}

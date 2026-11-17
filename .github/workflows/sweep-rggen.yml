@@ -29,7 +29,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "17 8 * * *"   # nightly 08:17 UTC, after fx68k's 07:47
+    - cron: "17 8 */2 * *"   # every other day, 08:17 UTC, after fx68k's 07:47
 
 concurrency:
   group: sweep-rggen-${{ github.ref }}

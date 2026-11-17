@@ -18,7 +18,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "41 5 * * *"   # nightly 05:41 UTC, after sv-elab-issues' 05:11
+    - cron: "41 5 */2 * *"   # every other day, 05:41 UTC, after sv-elab-issues' 05:11
 
 concurrency:
   group: sweep-slang-issues-${{ github.ref }}

@@ -24,7 +24,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "41 4 * * *"   # nightly 04:41 UTC, after sv-synth-tests' 04:11
+    - cron: "41 4 */2 * *"   # every other day, 04:41 UTC, after sv-synth-tests' 04:11
 
 concurrency:
   group: sweep-sv-yosys-issues-${{ github.ref }}

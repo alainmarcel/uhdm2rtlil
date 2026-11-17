@@ -25,7 +25,7 @@ on:
         required: false
         default: "master"
   schedule:
-    - cron: "41 3 * * *"   # nightly 03:41 UTC, after the core sweeps
+    - cron: "41 3 */2 * *"   # every other day, 03:41 UTC, after the core sweeps
 
 concurrency:
   group: sweep-sv-tests-${{ github.ref }}

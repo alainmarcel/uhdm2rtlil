@@ -22,7 +22,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 4 * * *"   # nightly 04:33 UTC, after veer-eh1's 03:33
+    - cron: "33 4 */2 * *"   # every other day, 04:33 UTC, after veer-eh1's 03:33
 
 concurrency:
   group: sweep-rsd-${{ github.ref }}

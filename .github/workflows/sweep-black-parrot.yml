@@ -28,7 +28,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 7 * * *"   # nightly 07:33 UTC, clear of opentitan's 06:37
+    - cron: "33 7 */2 * *"   # every other day, 07:33 UTC, clear of opentitan's 06:37
 
 concurrency:
   group: sweep-black-parrot-${{ github.ref }}
