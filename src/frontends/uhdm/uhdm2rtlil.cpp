@@ -7764,6 +7764,48 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // A non-ANSI port with an explicit name whose internal connection is an
+    // EXPRESSION (IEEE 1800-2023 23.2.2.1): `module sub(.bus({hi, lo}),
+    // .y(out[3:0]));`.  The port has no declaration of its own, so import_port
+    // made a 1-bit wire with nothing behind it.  Its width is the
+    // expression's, and the port is wired to it -- driving the expression
+    // for an input, driven by it for an output.  Done here, once every net
+    // the expression names exists.
+    if (uhdm_module->Ports()) {
+        for (auto p : *uhdm_module->Ports()) {
+            const UHDM::any* lc = p->Low_conn();
+            if (!lc) continue;
+            bool expr_port = false;
+            switch (lc->UhdmType()) {
+                case uhdmoperation:
+                    expr_port = any_cast<const UHDM::operation*>(lc)->VpiOpType() == vpiConcatOp;
+                    break;
+                case uhdmpart_select:
+                case uhdmindexed_part_select:
+                case uhdmbit_select:
+                    expr_port = true;
+                    break;
+                case uhdmref_obj:
+                    expr_port = std::string(any_cast<const UHDM::ref_obj*>(lc)->VpiName()) !=
+                                std::string(p->VpiName());
+                    break;
+                default:
+                    break;
+            }
+            if (!expr_port) continue;
+            RTLIL::Wire* w = module->wire(RTLIL::escape_id(std::string(p->VpiName())));
+            if (!w || w->port_id == 0) continue;
+            RTLIL::SigSpec e = import_expression(any_cast<const UHDM::expr*>(lc));
+            if (e.empty()) continue;
+            w->width = e.size();
+            if (p->VpiDirection() == vpiOutput)
+                module->connect(RTLIL::SigSpec(w), e);
+            else
+                module->connect(e, RTLIL::SigSpec(w));
+            log_debug("UHDM: explicit port %s = expression (%d bits)\n", log_id(w), e.size());
+        }
+    }
+
     // For ports with no direction (dir=0), default to inout before fixup_ports
     // strips them. This handles modules where UHDM doesn't provide port directions
     // (e.g., techmap replacement modules like _TECHMAP_REPLACE_).
