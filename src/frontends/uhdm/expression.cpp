@@ -19045,7 +19045,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // nothing.
             if (!mfc->Function() && uhdm_hier->Path_elems()->size() == 2 &&
                 (func_name == "sum" || func_name == "product" || func_name == "and" ||
-                 func_name == "or" || func_name == "xor")) {
+                 func_name == "or" || func_name == "xor" || func_name == "map")) {
                 const UHDM::any* base_elem = (*uhdm_hier->Path_elems())[0];
                 const UHDM::any* decl = nullptr;
                 if (base_elem->UhdmType() == uhdmref_obj)
@@ -19074,6 +19074,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         for (auto& v : vals) {
                             if (v.empty()) ok = false;
                             else if (v.size() < rw) v.extend_u0(rw, false);
+                        }
+                        // `arr.map() with (expr)` (IEEE 1800-2023 7.12.5): an
+                        // array of the same shape whose element k is the mapped
+                        // value of element k -- laid out like the source, lowest
+                        // index at the LSB.
+                        if (ok && func_name == "map") {
+                            RTLIL::SigSpec out;
+                            for (auto& v : vals) out.append(v);
+                            uhdm_trace("    array map over %d elements -> %d-bit elements\n", an, rw);
+                            return out;
                         }
                         if (ok) {
                             RTLIL::SigSpec acc = vals[0];

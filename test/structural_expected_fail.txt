@@ -31,6 +31,3 @@
 # ---- LRM synthesizable-subset coverage (2026-11-15, sv_lrm_coverage.py) ----
 # No other frontend can be the reference for these, so test_structural.ys
 # proves the values; each entry is a measured read_uhdm defect.
-# array .map() with (7.12.5, new in 2023): "hier_path function 'map' -- no
-# Function()", y comes out equal to arr.
-lrm_array_map
