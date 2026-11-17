@@ -152,7 +152,6 @@ func_local_accumulator_in_ff
 # structural_expected_fail.txt, plus the rows whose only reference is
 # Verilator (read_slang cannot read them, or agrees with our defect): each
 # divergence is the read_uhdm defect, expected until its fix lands.
-lrm_generic_iface_port
 lrm_operators_unsigned
 # ref arguments of an automatic task (13.5.2): the writes through p and q are
 # lost (x = a, y = b); read_slang loses them the same way, Verilator is right.

@@ -146,9 +146,6 @@ sv_elab_issues/issue_191_release_builds_fail_test_regress_sv_r3
 # ---- LRM synthesizable-subset coverage (2026-11-15, sv_lrm_coverage.py) ----
 # Each entry is a measured read_uhdm / Surelog defect; read_slang matches the
 # LRM (checked against Verilator or a hand computation where it can run).
-# generic interface port `interface bus` (25.3.3): the netlist references
-# port `bus.data` on `consumer`, which has none -- the instance is unbuildable.
-lrm_generic_iface_port
 # bufif / notif + pullup on a shared net (28.6, 28.10): read_slang drives the
 # pullup as a STRONG constant driver, so `en_a & !a` reads 1 where the LRM
 # (a pull is weak) and Verilator give 0; read_uhdm folds the pull into the

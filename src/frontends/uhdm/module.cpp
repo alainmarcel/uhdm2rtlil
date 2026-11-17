@@ -60,6 +60,30 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     
     // Get port width
     int width = get_width(uhdm_port, current_instance);
+    // A GENERIC interface port (`interface bus`, IEEE 1800-2023 25.3.3) has
+    // an unsupported_typespec in the definition and measures 1 bit; it is an
+    // interface port when an elaborated instance of this module connects an
+    // interface instance (or modport) to it.
+    if (width >= 0 && uhdm_port->Typespec() && uhdm_port->Typespec()->Actual_typespec() &&
+        uhdm_port->Typespec()->Actual_typespec()->UhdmType() == uhdmunsupported_typespec &&
+        current_instance) {
+        build_elab_index();
+        auto eit = elab_insts_by_def_.find(std::string(current_instance->VpiDefName()));
+        if (eit != elab_insts_by_def_.end())
+            for (auto ei : eit->second) {
+                if (!ei->Ports()) continue;
+                for (auto ep : *ei->Ports()) {
+                    if (std::string(ep->VpiName()) != portname) continue;
+                    auto elc = ep->Low_conn();
+                    const UHDM::any* ea = (elc && elc->UhdmType() == uhdmref_obj)
+                        ? any_cast<const ref_obj*>(elc)->Actual_group() : nullptr;
+                    if (ea && (ea->UhdmType() == uhdminterface_inst || ea->UhdmType() == uhdmmodport))
+                        width = -1;
+                    break;
+                }
+                if (width < 0) break;
+            }
+    }
     
     // Check if this is an interface port.  get_width returns -1 for a single
     // interface port and a more-negative value for an ARRAY of interface ports
@@ -141,6 +165,32 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             break;
                         }
                         if (!ia_type.empty()) break;
+                    }
+                }
+                // A GENERIC interface port, `module consumer(interface bus)`
+                // (IEEE 1800-2023 25.3.3): the definition does not say which
+                // interface it takes -- Surelog types it unsupported_typespec
+                // and binds a fabricated net -- so the port got no member
+                // wires and the parent's `bus.data` connection hit "does not
+                // have a port named 'bus.data'".  The interface is the one an
+                // elaborated instance of this module connects; take it from
+                // that instance's port.
+                if (ia_type.empty() && typespec &&
+                    typespec->UhdmType() == uhdmunsupported_typespec && current_instance) {
+                    build_elab_index();
+                    auto eit = elab_insts_by_def_.find(std::string(current_instance->VpiDefName()));
+                    if (eit != elab_insts_by_def_.end()) {
+                        for (auto ei : eit->second) {
+                            if (!ei->Ports()) continue;
+                            for (auto ep : *ei->Ports()) {
+                                if (std::string(ep->VpiName()) != portname) continue;
+                                auto elc = ep->Low_conn();
+                                if (elc && elc->UhdmType() == uhdmref_obj)
+                                    from_actual(any_cast<const ref_obj*>(elc)->Actual_group());
+                                break;
+                            }
+                            if (!ia_type.empty()) break;
+                        }
                     }
                 }
                 if (!ia_type.empty())
