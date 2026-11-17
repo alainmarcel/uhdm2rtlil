@@ -144,10 +144,16 @@ yosys_issues/issue_5212_multiple_drivers_on_a_variable_in_h1
 # the other six bits are never assigned (read_slang X, read_uhdm undriven).
 sv_elab_issues/issue_191_release_builds_fail_test_regress_sv_r3
 # ---- LRM synthesizable-subset coverage (2026-11-15, sv_lrm_coverage.py) ----
-# Each entry is a measured read_uhdm / Surelog defect; read_slang matches the
-# LRM (checked against Verilator or a hand computation where it can run).
+# Each entry is a measured disagreement between read_uhdm and read_slang; its
+# comment says which one matches the LRM (checked against Verilator or a hand
+# computation where it can run).  Every read_uhdm / Surelog defect found by
+# these tests is fixed; the entries left are read_slang's.
 # bufif / notif + pullup on a shared net (28.6, 28.10): read_slang drives the
 # pullup as a STRONG constant driver, so `en_a & !a` reads 1 where the LRM
 # (a pull is weak) and Verilator give 0; read_uhdm folds the pull into the
 # buffers' mux and passes the co-sim.  read_slang is the one that differs.
 lrm_tristate_gates
+# ref arguments of an automatic task (13.5.2): read_slang loses the writes
+# through p and q (x = a, y = b); read_uhdm and Verilator give x = b + 3,
+# y = a.  read_slang is the one that differs.
+lrm_ref_argument

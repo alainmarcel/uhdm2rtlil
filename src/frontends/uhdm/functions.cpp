@@ -2316,6 +2316,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 }
                 
                 int direction = io_decl->VpiDirection();
+                if (direction == vpiRef) direction = vpiInout;   // a ref formal is copy-in / copy-out
 
                 // UNPACKED-array formal (`logic [7:0] mat_a [8]`): the typespec
                 // width is the ELEMENT width; the unpacked dims live on the
@@ -2654,6 +2655,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     if (func_def->Io_decls()) {
         for (auto io_decl : *func_def->Io_decls()) {
             int direction = io_decl->VpiDirection();
+            if (direction == vpiRef) direction = vpiInout;   // a ref formal is copy-in / copy-out
             // Skip input parameters - they don't need nosync wires with X assignments
             if (direction == vpiInput) {
                 continue;

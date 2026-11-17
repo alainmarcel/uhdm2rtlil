@@ -11559,6 +11559,12 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
 
             std::string param_name = std::string(io->VpiName());
             int direction = io->VpiDirection(); // 1=input, 2=output
+            // A `ref` formal (IEEE 1800-2023 13.5.2) aliases the actual: the
+            // task reads the caller's variable and its writes land there.
+            // Inlined into one process that is copy-in / copy-out, i.e. an
+            // inout.  As neither input nor output, it was mapped to nothing
+            // ("Reference to unknown signal: p") and the writes were lost.
+            if (direction == vpiRef) direction = vpiInout;
             int width = get_width(io, current_instance);
             if (width <= 0) width = 16;
 
@@ -13478,6 +13484,7 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
             auto io = any_cast<const io_decl*>(io_any);
             if (!io) continue;
             int dir = io->VpiDirection();
+            if (dir == vpiRef) dir = vpiInout;   // copy-in / copy-out
             if ((dir == vpiOutput || dir == vpiInout) &&
                 k < (int)fc->Tf_call_args()->size()) {
                 std::string pn = std::string(io->VpiName());
