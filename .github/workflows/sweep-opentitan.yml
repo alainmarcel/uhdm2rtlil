@@ -21,7 +21,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "37 6 */2 * *"   # every other day, 06:37 UTC, clear of the pavona and caliptra sweeps
+    - cron: "37 6 */2 * *"   # odd days, 06:37 UTC, clear of the pavona and caliptra sweeps
 
 concurrency:
   group: sweep-opentitan-${{ github.ref }}

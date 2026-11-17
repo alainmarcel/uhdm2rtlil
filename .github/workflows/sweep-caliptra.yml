@@ -18,7 +18,7 @@ on:
         required: false
         default: "2000"
   schedule:
-    - cron: "17 5 */2 * *"   # every other day, 05:17 UTC, clear of the pavona sweep
+    - cron: "17 5 2-30/2 * *"   # even days, 05:17 UTC, clear of the pavona sweep
 
 concurrency:
   group: sweep-caliptra-${{ github.ref }}

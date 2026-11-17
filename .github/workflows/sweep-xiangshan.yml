@@ -20,7 +20,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "47 4 */2 * *"   # every other day, 04:47 UTC, clear of the ext / pavona sweeps
+    - cron: "47 4 2-30/2 * *"   # even days, 04:47 UTC, clear of the ext / pavona sweeps
 
 concurrency:
   group: sweep-xiangshan-${{ github.ref }}

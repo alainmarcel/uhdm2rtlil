@@ -23,7 +23,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "11 4 */2 * *"   # every other day, 04:11 UTC, after sv-tests' 03:41
+    - cron: "11 4 2-30/2 * *"   # even days, 04:11 UTC, after sv-tests' 03:41
 
 concurrency:
   group: sweep-sv-synth-tests-${{ github.ref }}

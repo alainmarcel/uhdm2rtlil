@@ -29,7 +29,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 8 */2 * *"   # every other day, 08:33 UTC, after rggen's 08:17
+    - cron: "33 8 */2 * *"   # odd days, 08:33 UTC, after rggen's 08:17
 
 concurrency:
   group: sweep-tnoc-${{ github.ref }}

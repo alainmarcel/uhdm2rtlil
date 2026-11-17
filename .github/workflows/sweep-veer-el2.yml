@@ -26,7 +26,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "33 5 */2 * *"   # every other day, 05:33 UTC, after rsd's 04:33
+    - cron: "33 5 */2 * *"   # odd days, 05:33 UTC, after rsd's 04:33
 
 concurrency:
   group: sweep-veer-el2-${{ github.ref }}

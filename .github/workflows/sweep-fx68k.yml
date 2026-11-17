@@ -22,7 +22,7 @@ on:
         required: false
         default: "300"
   schedule:
-    - cron: "47 7 */2 * *"   # every other day, 07:47 UTC, after black-parrot's 07:33
+    - cron: "47 7 2-30/2 * *"   # even days, 07:47 UTC, after black-parrot's 07:33
 
 concurrency:
   group: sweep-fx68k-${{ github.ref }}
