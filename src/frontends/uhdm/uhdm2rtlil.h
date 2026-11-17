@@ -978,6 +978,9 @@ struct UhdmImporter {
     const UHDM::module_inst* override_eval_child_ = nullptr;
     // Geometry of an unpacked-array assignment target for a concat RHS.
     bool unpacked_array_concat_geometry(const UHDM::operation* op, int& n, int& ew, bool& asc);
+    // Index of the element an array reduction's `with` clause is mapping
+    // (-1 outside one): `item.index`.
+    int reduction_item_index_ = -1;
     bool unpacked_decl_geometry(const UHDM::any* decl, int& n, int& ew, bool& asc);
     bool param_assign_is_override(const UHDM::module_inst* inst, const std::string& pname, const UHDM::any* rhs);
     void import_while_stmt_comb(const UHDM::while_stmt* ws, RTLIL::CaseRule* case_rule);

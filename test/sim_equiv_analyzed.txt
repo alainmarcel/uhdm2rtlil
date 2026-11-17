@@ -1201,3 +1201,13 @@ Test: issue_5212_multiple_drivers_on_a_variable_in_h0
 
 Test: issue_5212_multiple_drivers_on_a_variable_in_h1
     yosys#5212 (sv-yosys-issues sweep), same as h0.
+
+Test: lrm_array_reduction_with
+    IEEE 1800-2023 7.12.3/7.12.4.  Only `x = arr.xor() with (item.index[0]
+    ? item : 4'h0)` diverges: Verilator 5.048 evaluates `item.index` inside a
+    reduction's `with` clause as 0 for every element (a standalone check:
+    `arr.sum() with (8'(item.index))` gives 0 where the LRM gives
+    0+1+2+3 = 6; `(item.index % 2 == 1)` fails the same way), so its x is
+    always 0.  read_uhdm gives arr[1] ^ arr[3], the LRM value; s, c and o
+    agree with Verilator.  read_slang cannot read the reduction methods.
+    A Verilator artefact.

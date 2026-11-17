@@ -8748,6 +8748,7 @@ bool UhdmImporter::unpacked_decl_geometry(const UHDM::any* decl, int& n, int& ew
         rt = av->Typespec();
     } else if (auto an = dynamic_cast<const UHDM::array_net*>(decl)) {
         ranges = an->Ranges();
+        if (an->Nets() && !an->Nets()->empty()) inner = (*an->Nets())[0];
         rt = an->Typespec();
     } else if (auto lv = dynamic_cast<const UHDM::logic_var*>(decl)) {
         rt = lv->Typespec();
@@ -18091,6 +18092,22 @@ RTLIL::SigSpec UhdmImporter::import_xmr_read(const hier_path* uhdm_hier) {
 }
 
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
+    // `item.index` / `item.index[b]` inside an array reduction's `with`
+    // clause (IEEE 1800-2023 7.12.3): the index of the element being mapped.
+    if (reduction_item_index_ >= 0 && uhdm_hier && uhdm_hier->Path_elems() &&
+        uhdm_hier->Path_elems()->size() == 2 &&
+        std::string((*uhdm_hier->Path_elems())[0]->VpiName()) == "item" &&
+        std::string((*uhdm_hier->Path_elems())[1]->VpiName()) == "index") {
+        RTLIL::SigSpec idx(RTLIL::Const(reduction_item_index_, 32));
+        const UHDM::any* sel = (*uhdm_hier->Path_elems())[1];
+        if (sel->UhdmType() == uhdmbit_select) {
+            auto bs = any_cast<const UHDM::bit_select*>(sel);
+            RTLIL::SigSpec b = bs->VpiIndex() ? import_expression(bs->VpiIndex(), input_mapping) : RTLIL::SigSpec();
+            if (b.is_fully_const() && b.as_int() >= 0 && b.as_int() < 32)
+                return idx.extract(b.as_int(), 1);
+        }
+        return idx;
+    }
     // An ABSOLUTE path into this module's own hierarchy
     // (`top.dut.gg_inner[0].genblk1.i.innermost`, slang#1433) is always a
     // cross-module reference; resolve it before the handlers below read an
@@ -19018,6 +19035,63 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (last_elem->UhdmType() == uhdmmethod_func_call) {
             auto mfc = any_cast<const UHDM::method_func_call*>(last_elem);
             std::string func_name = std::string(mfc->VpiName());
+            // Array REDUCTION methods (IEEE 1800-2023 7.12.3) on a whole
+            // one-dimensional unpacked array: `arr.sum()`, `.product()`,
+            // `.and()`, `.or()`, `.xor()`, optionally `with (expr)`.  The
+            // `with` expression is evaluated once per element -- `item` is the
+            // element, `item.index` its index -- and its type is the type of
+            // the result (`arr.sum() with (8'(item))` sums at 8 bits).
+            // These have no Function(): without this they imported as
+            // nothing.
+            if (!mfc->Function() && uhdm_hier->Path_elems()->size() == 2 &&
+                (func_name == "sum" || func_name == "product" || func_name == "and" ||
+                 func_name == "or" || func_name == "xor")) {
+                const UHDM::any* base_elem = (*uhdm_hier->Path_elems())[0];
+                const UHDM::any* decl = nullptr;
+                if (base_elem->UhdmType() == uhdmref_obj)
+                    decl = any_cast<const UHDM::ref_obj*>(base_elem)->Actual_group();
+                int an = 0, aew = 0;
+                bool aasc = false;
+                if (decl && unpacked_decl_geometry(decl, an, aew, aasc) && an > 0) {
+                    RTLIL::SigSpec arr = import_expression(any_cast<const UHDM::expr*>(base_elem), input_mapping);
+                    if (arr.size() == an * aew) {
+                        std::vector<RTLIL::SigSpec> vals;
+                        const UHDM::expr* with = mfc->With() ? dynamic_cast<const UHDM::expr*>(mfc->With()) : nullptr;
+                        int saved_idx = reduction_item_index_;
+                        for (int k = 0; k < an; k++) {
+                            RTLIL::SigSpec elem = arr.extract(k * aew, aew);
+                            if (!with) { vals.push_back(elem); continue; }
+                            std::map<std::string, RTLIL::SigSpec> m;
+                            if (input_mapping) m = *input_mapping;
+                            m["item"] = elem;
+                            reduction_item_index_ = k;
+                            vals.push_back(import_expression(with, &m));
+                        }
+                        reduction_item_index_ = saved_idx;
+                        int rw = 0;
+                        for (auto& v : vals) rw = std::max(rw, v.size());
+                        bool ok = rw > 0;
+                        for (auto& v : vals) {
+                            if (v.empty()) ok = false;
+                            else if (v.size() < rw) v.extend_u0(rw, false);
+                        }
+                        if (ok) {
+                            RTLIL::SigSpec acc = vals[0];
+                            for (size_t k = 1; k < vals.size(); k++) {
+                                if (func_name == "sum") acc = module->Add(NEW_ID, acc, vals[k]);
+                                else if (func_name == "product") acc = module->Mul(NEW_ID, acc, vals[k]);
+                                else if (func_name == "and") acc = module->And(NEW_ID, acc, vals[k]);
+                                else if (func_name == "or") acc = module->Or(NEW_ID, acc, vals[k]);
+                                else acc = module->Xor(NEW_ID, acc, vals[k]);
+                                if (acc.size() > rw) acc = acc.extract(0, rw);
+                            }
+                            uhdm_trace("    array reduction %s over %d elements -> %d bits\n",
+                                       func_name.c_str(), an, rw);
+                            return acc;
+                        }
+                    }
+                }
+            }
             const UHDM::function* fdef = mfc->Function();
             // The INSTANCE the call's prefix names -- an interface instance
             // of this module or of one of its generate scopes, or an element
