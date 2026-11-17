@@ -1254,6 +1254,10 @@ struct UhdmImporter {
     // Primitive gate support
     const UHDM::module_inst* primitives_source(const UHDM::module_inst* uhdm_module);
     bool prims_from_unelab_def_ = false;
+    // Pull primitives of the module being imported (net, pull value),
+    // resolved against its three-state gates by resolve_pulls().
+    std::vector<std::pair<RTLIL::SigSpec, RTLIL::State>> pending_pulls_;
+    void resolve_pulls();
     void import_primitives(const UHDM::module_inst* uhdm_module);
     void import_primitive_arrays(const UHDM::module_inst* uhdm_module);
     void import_gate(const UHDM::gate* uhdm_gate, const std::string& instance_name = "");

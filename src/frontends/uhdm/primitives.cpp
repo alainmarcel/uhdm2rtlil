@@ -67,13 +67,53 @@ void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
     // Import primitive gates from module
     if (uhdm_module->Primitives()) {
         uhdm_trace("UHDM: Found %d primitive gates\n", (int)uhdm_module->Primitives()->size());
+        pending_pulls_.clear();
         for (auto prim : *uhdm_module->Primitives()) {
             if (auto gate = dynamic_cast<const UHDM::gate*>(prim)) {
                 std::string instance_name(gate->VpiName());
                 import_gate(gate, instance_name);
             }
         }
+        resolve_pulls();
     }
+}
+
+// `pullup p(bus)` next to `bufif1 g1(bus, a, en_a); bufif1 g2(bus, b, en_b);`
+// (IEEE 1800-2023 28.10): the pull is a weak driver, so the net is the
+// enabled buffer's value, and the pull value only when no buffer is
+// enabled -- bus = en_a ? a : en_b ? b : 1.  Driving the pull as a second
+// strong driver (what read_slang does) makes `en_a & !a` read 1.  Each
+// pulled bit's $_TBUF_ drivers are folded into that mux chain; a pulled bit
+// no three-state gate drives takes the pull value.
+void UhdmImporter::resolve_pulls() {
+    if (pending_pulls_.empty()) return;
+    SigMap sigmap(module);
+    dict<RTLIL::SigBit, std::vector<RTLIL::Cell*>> tbufs;
+    for (auto cell : module->cells())
+        if (cell->type == ID($_TBUF_))
+            tbufs[sigmap(cell->getPort(ID::Y).as_bit())].push_back(cell);
+    for (auto& [net, v] : pending_pulls_) {
+        for (int b = 0; b < net.size(); b++) {
+            RTLIL::SigBit bit = sigmap(net[b]);
+            auto it = tbufs.find(bit);
+            if (it == tbufs.end() || it->second.empty()) {
+                module->connect(net[b], RTLIL::SigBit(v));
+                continue;
+            }
+            RTLIL::SigBit val(v);
+            for (auto cell : it->second) {
+                RTLIL::SigBit a = cell->getPort(ID::A).as_bit();
+                RTLIL::SigBit e = cell->getPort(ID::E).as_bit();
+                RTLIL::SigBit y = module->addWire(NEW_ID);
+                module->addMuxGate(NEW_ID, val, a, e, y);
+                val = y;
+                module->remove(cell);
+            }
+            it->second.clear();
+            module->connect(net[b], val);
+        }
+    }
+    pending_pulls_.clear();
 }
 
 // Import primitive gate arrays from a module
@@ -100,6 +140,49 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
     int prim_type = uhdm_gate->VpiPrimType();
     std::string gate_type_str;
     RTLIL::IdString cell_type;
+
+    // Three-state gates and pull primitives (IEEE 1800-2023 28.6, 28.10):
+    // `bufif1 g(out, in, en)`, `notif0 g(out, in, en)`, `pullup p(net)`.
+    // They were dropped ("Unsupported primitive type"), so a shared bus read
+    // whatever else drove it and a pulled-up net read 0.  Lowered the way
+    // read_slang lowers them, so both frontends describe the same netlist:
+    // a $_TBUF_ per bit (E = enable, inverted for the -if0 forms; data
+    // inverted for notif).  A pull is weak and is resolved separately.
+    if (prim_type == vpiBufif0Prim || prim_type == vpiBufif1Prim ||
+        prim_type == vpiNotif0Prim || prim_type == vpiNotif1Prim ||
+        prim_type == vpiPullupPrim || prim_type == vpiPulldownPrim) {
+        if (!uhdm_gate->Prim_terms() || uhdm_gate->Prim_terms()->empty()) return;
+        std::vector<RTLIL::SigSpec> t;
+        for (auto term : *uhdm_gate->Prim_terms())
+            t.push_back(term->Expr() ? import_expression(term->Expr()) : RTLIL::SigSpec());
+        std::string base = instance_name.empty() ? std::string(uhdm_gate->VpiName()) : instance_name;
+        if (prim_type == vpiPullupPrim || prim_type == vpiPulldownPrim) {
+            // A pull is WEAK: it decides the net only while no three-state
+            // driver is enabled.  Recorded here and resolved once every gate
+            // of the module exists (resolve_pulls).
+            RTLIL::State v = prim_type == vpiPullupPrim ? RTLIL::State::S1 : RTLIL::State::S0;
+            for (auto& net : t)
+                if (!net.empty()) pending_pulls_.push_back({net, v});
+            return;
+        }
+        if (t.size() != 3 || t[0].empty() || t[1].empty() || t[2].empty()) {
+            log_warning("UHDM: three-state gate '%s' needs (out, in, enable)\n", base.c_str());
+            return;
+        }
+        RTLIL::SigSpec out = t[0], in = t[1], en = t[2];
+        if (in.size() < out.size()) in.extend_u0(out.size(), false);
+        if (en.size() > 1) en = module->ReduceBool(NEW_ID, en);
+        if (prim_type == vpiBufif0Prim || prim_type == vpiNotif0Prim) en = module->Not(NEW_ID, en);
+        if (prim_type == vpiNotif0Prim || prim_type == vpiNotif1Prim) in = module->Not(NEW_ID, in.extract(0, out.size()));
+        for (int b = 0; b < out.size(); b++) {
+            RTLIL::Cell* c = module->addCell(
+                (b == 0 && !base.empty()) ? module->uniquify(RTLIL::escape_id(base)) : NEW_ID, ID($_TBUF_));
+            c->setPort(ID::A, in[b]);
+            c->setPort(ID::E, en);
+            c->setPort(ID::Y, out[b]);
+        }
+        return;
+    }
     
     // Map UHDM primitive types to Yosys cell types
     switch (prim_type) {

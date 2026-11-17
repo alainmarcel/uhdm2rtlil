@@ -157,4 +157,3 @@ lrm_operators_unsigned
 # ref arguments of an automatic task (13.5.2): the writes through p and q are
 # lost (x = a, y = b); read_slang loses them the same way, Verilator is right.
 lrm_ref_argument
-lrm_tristate_gates

@@ -149,6 +149,8 @@ sv_elab_issues/issue_191_release_builds_fail_test_regress_sv_r3
 # generic interface port `interface bus` (25.3.3): the netlist references
 # port `bus.data` on `consumer`, which has none -- the instance is unbuildable.
 lrm_generic_iface_port
-# bufif1/notif0/notif1 and a pullup on a shared net (28.6, 28.10): the
-# undriven net reads 0 instead of the pullup's 1, and notif outputs are wrong.
+# bufif / notif + pullup on a shared net (28.6, 28.10): read_slang drives the
+# pullup as a STRONG constant driver, so `en_a & !a` reads 1 where the LRM
+# (a pull is weak) and Verilator give 0; read_uhdm folds the pull into the
+# buffers' mux and passes the co-sim.  read_slang is the one that differs.
 lrm_tristate_gates

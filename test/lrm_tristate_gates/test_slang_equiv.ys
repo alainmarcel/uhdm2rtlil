@@ -1,11 +1,11 @@
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top dut
-flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; opt -fast; tribuf -formal; opt -fast; async2sync; setundef -undriven -zero
 rename dut gold
 design -stash gold
 read_slang  dut.sv --top dut
 hierarchy -check -top dut
-flatten; proc; opt -fast; async2sync; setundef -undriven -zero
+flatten; proc; opt -fast; tribuf -formal; opt -fast; async2sync; setundef -undriven -zero
 rename dut gate
 design -stash gate
 design -copy-from gold -as gold gold
