@@ -4,4 +4,4 @@ read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top dut
 proc; flatten; opt
 select -assert-min 2 t:$dff t:$adff t:$_DFF_P_ t:$dffe %u %u %u
-sat -verify -seq 2 -set-at 1 clk 0 -set-at 2 clk 1 -set-at 1 d 2'b10 -set-at 2 d 2'b10 -prove-at 2 q 2'b10 -set-init-zero
+sat -verify -seq 2 -set-at 1 clk 0 -set-at 2 clk 1 -set-at 1 d 2'b10 -set-at 2 d 2'b10 -prove q 2'b10 -prove-skip 1 -set-init-zero

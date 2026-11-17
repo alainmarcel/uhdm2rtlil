@@ -34,7 +34,3 @@
 # array .map() with (7.12.5, new in 2023): "hier_path function 'map' -- no
 # Function()", y comes out equal to arr.
 lrm_array_map
-# user-defined primitives (29.3 / 29.6): every UDP instance is dropped, the
-# module has no cells.
-lrm_udp_combinational
-lrm_udp_sequential

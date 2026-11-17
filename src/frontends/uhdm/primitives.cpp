@@ -72,6 +72,8 @@ void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
             if (auto gate = dynamic_cast<const UHDM::gate*>(prim)) {
                 std::string instance_name(gate->VpiName());
                 import_gate(gate, instance_name);
+            } else if (auto u = dynamic_cast<const UHDM::udp*>(prim)) {
+                import_udp(u);
             }
         }
         resolve_pulls();
@@ -709,6 +711,172 @@ void UhdmImporter::import_gate_array_element(const gate* gate_template, const st
     }
     
     uhdm_trace("UHDM: Successfully created %s gate element\n", gate_type_str.c_str());
+}
+
+
+// A user-defined primitive instance (IEEE 1800-2023 29).  UDP instances were
+// skipped entirely -- the module was left with no cells for them -- because
+// only `gate` primitives were imported.
+//
+// The table is the definition: each table_entry is a row "in... [: state] :
+// out" (Surelog drops the parentheses of an edge, `(01)` arrives as `01`).
+//  - Combinational (29.3): out = OR over the rows whose output is 1 of the
+//    AND of their input conditions (0, 1, ?/b don't-care).  Rows with an x
+//    input never match a 2-state value; a combination no row covers is x by
+//    the LRM and synthesises to 0.
+//  - Edge-sensitive sequential (29.6): every row with a 0/1 output carries
+//    an edge on ONE column, the clock; q is a $dff on that edge whose D is
+//    the same sum of products over the other inputs and the current state.
+//    Rows with output `-` (hold) need nothing.  A LEVEL-sensitive row with a
+//    0/1 output (a latch, or an asynchronous set / reset) is not lowered: a
+//    warning is printed and the instance is skipped rather than synthesised
+//    wrongly.
+void UhdmImporter::import_udp(const UHDM::udp* inst) {
+    const UHDM::udp_defn* def = inst->Udp_defn();
+    std::string dname = std::string(inst->VpiDefName());
+    if (!def && uhdm_design && uhdm_design->AllUdps())
+        for (auto d : *uhdm_design->AllUdps()) {
+            std::string n = std::string(d->VpiDefName());
+            if (n == dname || n == "work@" + dname) { def = d; break; }
+        }
+    if (!def || !def->Table_entrys() || !inst->Prim_terms()) {
+        log_warning("UHDM: UDP instance '%s' of '%s' has no table; skipped\n",
+                    std::string(inst->VpiName()).c_str(), dname.c_str());
+        return;
+    }
+    std::vector<RTLIL::SigBit> terms;
+    for (auto t : *inst->Prim_terms()) {
+        RTLIL::SigSpec v = t->Expr() ? import_expression(t->Expr()) : RTLIL::SigSpec();
+        if (v.size() < 1) { log_warning("UHDM: UDP '%s' terminal unresolved\n", dname.c_str()); return; }
+        terms.push_back(v[0]);
+    }
+    if (terms.size() < 2) return;
+    RTLIL::SigBit out = terms[0];
+    std::vector<RTLIL::SigBit> ins(terms.begin() + 1, terms.end());
+    const size_t nin = ins.size();
+
+    struct Row { std::vector<std::string> in; std::string state, out; };
+    std::vector<Row> rows;
+    bool sequential = false;
+    for (auto te : *def->Table_entrys()) {
+        std::string v = std::string(te->VpiValue());
+        if (v.rfind("STRING:", 0) == 0) v = v.substr(7);
+        std::vector<std::string> fields;
+        {
+            size_t st = 0, c;
+            while ((c = v.find(':', st)) != std::string::npos) { fields.push_back(v.substr(st, c - st)); st = c + 1; }
+            fields.push_back(v.substr(st));
+        }
+        auto toks = [](const std::string& f) {
+            std::vector<std::string> r; std::string cur;
+            for (char ch : f) {
+                if (ch == ' ' || ch == '\t' || ch == '(' || ch == ')') { if (!cur.empty()) { r.push_back(cur); cur.clear(); } }
+                else cur += ch;
+            }
+            if (!cur.empty()) r.push_back(cur);
+            return r;
+        };
+        Row r;
+        r.in = toks(fields[0]);
+        if (r.in.size() != nin) {            // `0 0 1` written without spaces
+            std::vector<std::string> chars;
+            for (auto& t : r.in) for (char ch : t) chars.push_back(std::string(1, ch));
+            r.in = chars;
+        }
+        if (fields.size() == 3) { sequential = true; auto st = toks(fields[1]); r.state = st.empty() ? "?" : st[0]; }
+        auto o = toks(fields.back());
+        r.out = o.empty() ? "" : o[0];
+        if (r.in.size() != nin || r.out.empty()) {
+            log_warning("UHDM: UDP '%s': cannot read table row '%s'; instance skipped\n", dname.c_str(), v.c_str());
+            return;
+        }
+        rows.push_back(r);
+    }
+
+    // Whether a level symbol can match; the condition bit (1 = always).
+    auto level_cond = [&](const std::string& sym, RTLIL::SigBit b, bool& never) -> RTLIL::SigBit {
+        char ch = std::tolower(sym[0]);
+        if (ch == '0') return module->NotGate(NEW_ID, b);
+        if (ch == '1') return b;
+        if (ch == '?' || ch == 'b') return RTLIL::State::S1;
+        never = true;                       // x: never a 2-state value
+        return RTLIL::State::S0;
+    };
+    auto is_edge = [](const std::string& sym) {
+        if (sym.size() == 2) return true;
+        char ch = std::tolower(sym[0]);
+        return ch == 'r' || ch == 'f' || ch == 'p' || ch == 'n' || ch == '*';
+    };
+    auto rising = [](const std::string& sym) {
+        std::string l; for (char c : sym) l += std::tolower(c);
+        return l == "01" || l == "r" || l == "p" || l == "0x" || l == "x1" || l == "?1";
+    };
+    auto falling = [](const std::string& sym) {
+        std::string l; for (char c : sym) l += std::tolower(c);
+        return l == "10" || l == "f" || l == "n" || l == "1x" || l == "x0" || l == "?0";
+    };
+
+    // Sum of products over `pick` rows, skipping column `skip`; `state`
+    // (when valid) is matched against the rows' current-state column.
+    auto sop = [&](const std::vector<const Row*>& pick, int skip, RTLIL::SigBit state) -> RTLIL::SigBit {
+        RTLIL::SigBit acc = RTLIL::State::S0;
+        for (auto r : pick) {
+            if (r->out != "1") continue;
+            bool never = false;
+            RTLIL::SigBit term = RTLIL::State::S1;
+            for (size_t k = 0; k < nin && !never; k++) {
+                if ((int)k == skip) continue;
+                RTLIL::SigBit c = level_cond(r->in[k], ins[k], never);
+                if (c != RTLIL::State::S1) term = module->AndGate(NEW_ID, term, c);
+            }
+            if (!never && !r->state.empty() && state.wire) {
+                RTLIL::SigBit c = level_cond(r->state, state, never);
+                if (c != RTLIL::State::S1) term = module->AndGate(NEW_ID, term, c);
+            }
+            if (never) continue;
+            acc = acc == RTLIL::State::S0 ? term : module->OrGate(NEW_ID, acc, term);
+        }
+        return acc;
+    };
+
+    std::string iname = std::string(inst->VpiName());
+    if (!sequential) {
+        std::vector<const Row*> all;
+        for (auto& r : rows) all.push_back(&r);
+        RTLIL::SigBit y = sop(all, -1, RTLIL::SigBit());
+        module->connect(out, y);
+        uhdm_trace("UHDM: combinational UDP %s (%s): %d rows\n", iname.c_str(), dname.c_str(), (int)rows.size());
+        return;
+    }
+    int clk_col = -1;
+    bool pos = true;
+    std::vector<const Row*> edge_rows;
+    for (auto& r : rows) {
+        int ec = -1;
+        for (size_t k = 0; k < nin; k++) if (is_edge(r.in[k])) { ec = (int)k; break; }
+        if (r.out == "-") continue;
+        if (ec < 0) {
+            log_warning("UHDM: UDP '%s' has a level-sensitive row with output %s (a latch or an "
+                        "asynchronous set/reset), which is not supported; instance '%s' skipped\n",
+                        dname.c_str(), r.out.c_str(), iname.c_str());
+            return;
+        }
+        bool rp = rising(r.in[ec]), fp = falling(r.in[ec]);
+        if (clk_col < 0) { clk_col = ec; pos = rp; }
+        if (ec != clk_col || (!rp && !fp) || rp != pos) {
+            log_warning("UHDM: UDP '%s' changes state on more than one edge; instance '%s' skipped\n",
+                        dname.c_str(), iname.c_str());
+            return;
+        }
+        edge_rows.push_back(&r);
+    }
+    if (clk_col < 0) { log_warning("UHDM: UDP '%s' never changes state\n", dname.c_str()); return; }
+    RTLIL::Wire* q = module->addWire(NEW_ID);
+    RTLIL::SigBit d = sop(edge_rows, clk_col, RTLIL::SigBit(q));
+    module->addDff(NEW_ID, ins[clk_col], d, RTLIL::SigBit(q), pos);
+    module->connect(out, RTLIL::SigBit(q));
+    uhdm_trace("UHDM: sequential UDP %s (%s): %s-edge on input %d\n", iname.c_str(), dname.c_str(),
+               pos ? "pos" : "neg", clk_col);
 }
 
 YOSYS_NAMESPACE_END
