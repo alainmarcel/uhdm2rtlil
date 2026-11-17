@@ -10513,6 +10513,85 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             }
 
+            // SECONDARY loop variables (LRM 12.7.1): `for (int i = 0, j = 7;
+            // i < 8; i++, j--)` declares and steps more than one variable.
+            // The unroller iterates the first; every other one starts from
+            // its (constant) init and is stepped by folding its own step
+            // statement after each iteration, so the body reads it as a
+            // constant like the primary.  Only the first init/step used to be
+            // read: `j` became an unknown, undriven signal.
+            struct SecLoopVar { std::string name; int64_t val = 0; const any* step = nullptr; bool had = false; int saved = 0; };
+            std::vector<SecLoopVar> fl_sec;
+            auto step_target = [](const any* st) -> std::string {
+                if (!st) return "";
+                if (st->VpiType() == vpiOperation) {
+                    auto o = any_cast<const operation*>(st);
+                    if (o && o->Operands() && !o->Operands()->empty())
+                        return std::string((*o->Operands())[0]->VpiName());
+                } else if (st->VpiType() == vpiAssignment) {
+                    auto a = any_cast<const assignment*>(st);
+                    if (a && a->Lhs()) return std::string(a->Lhs()->VpiName());
+                }
+                return "";
+            };
+            if (fl_can_unroll && !fl_var.empty() && for_loop->VpiForIncStmts() &&
+                for_loop->VpiForIncStmts()->size() > 1)
+                for (auto st : *for_loop->VpiForIncStmts())
+                    if (step_target(st) == fl_var) { fl_inc = st; break; }
+            if (fl_can_unroll && !fl_var.empty() && for_loop->VpiForInitStmts() &&
+                for_loop->VpiForInitStmts()->size() > 1) {
+                for (size_t k = 1; k < for_loop->VpiForInitStmts()->size(); k++) {
+                    auto ia = any_cast<const assignment*>(for_loop->VpiForInitStmts()->at(k));
+                    if (!ia || !ia->Lhs() || ia->Lhs()->VpiName().empty()) { fl_can_unroll = false; break; }
+                    SecLoopVar sv; sv.name = std::string(ia->Lhs()->VpiName());
+                    auto re = dynamic_cast<const expr*>(ia->Rhs());
+                    RTLIL::SigSpec v = re ? import_expression(re) : RTLIL::SigSpec();
+                    if (!v.is_fully_const()) { fl_can_unroll = false; break; }
+                    sv.val = v.as_const().as_int(true);
+                    if (for_loop->VpiForIncStmts())
+                        for (auto st : *for_loop->VpiForIncStmts())
+                            if (step_target(st) == sv.name) sv.step = st;
+                    sv.had = loop_values.count(sv.name) > 0;
+                    sv.saved = sv.had ? loop_values[sv.name] : 0;
+                    fl_sec.push_back(sv);
+                }
+                if (!fl_can_unroll)
+                    log_warning("for loop with several loop variables: a secondary init is not constant; not unrolled\n");
+            }
+            // Publish the secondaries' values for the next iteration's body.
+            auto fl_sec_set = [&]() { for (auto& sv : fl_sec) loop_values[sv.name] = (int)sv.val; };
+            // Fold each secondary's step against the current loop values.
+            auto fl_sec_step = [&]() {
+                for (auto& sv : fl_sec) {
+                    loop_values[sv.name] = (int)sv.val;
+                    const any* st = sv.step;
+                    if (!st) continue;
+                    if (st->VpiType() == vpiOperation) {
+                        int ot = any_cast<const operation*>(st)->VpiOpType();
+                        if (ot == vpiPostIncOp || ot == vpiPreIncOp) { sv.val++; continue; }
+                        if (ot == vpiPostDecOp || ot == vpiPreDecOp) { sv.val--; continue; }
+                    } else if (st->VpiType() == vpiAssignment) {
+                        auto a = any_cast<const assignment*>(st);
+                        auto re = a ? dynamic_cast<const expr*>(a->Rhs()) : nullptr;
+                        RTLIL::SigSpec r = re ? import_expression(re) : RTLIL::SigSpec();
+                        if (r.is_fully_const()) {
+                            int64_t rv = r.as_const().as_int(true);
+                            switch (a->VpiOpType()) {
+                                case vpiAddOp: sv.val += rv; break;
+                                case vpiSubOp: sv.val -= rv; break;
+                                case vpiMultOp: sv.val *= rv; break;
+                                default: sv.val = rv; break;     // plain `j = <expr of j>`
+                            }
+                            continue;
+                        }
+                    }
+                    log_warning("for loop: cannot fold the step of secondary loop variable `%s`\n",
+                                sv.name.c_str());
+                }
+                fl_sec_set();
+            };
+            fl_sec_set();
+
             // An ENCLOSING unrolled loop may be iterating a variable of the
             // SAME name: a void function with its own `for (int i ...)`
             // inlined from the body of a process loop over `i` (RSD
@@ -10829,6 +10908,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     sw->cases.push_back(dead_case);
                     thread_comb_if(guard_sig, cr, nullptr, &saved_ccv, &then_ccv, nullptr);
                     proc->root_case.switches.push_back(sw);
+                    fl_sec_step();
                 }
                 // Post-loop value of the iter var is whatever it would be
                 // after running through `max_iters` iterations; downstream
@@ -10959,6 +11039,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         current_break_flag = saved_bf;
                         current_break_sites = saved_sites;
                         brk_flags.push_back({(int)i, bf_eff});
+                        fl_sec_step();
                         RTLIL::SigSpec nb =
                             module->Not(NEW_ID, RTLIL::SigSpec(bw));
                         live = live_const1
@@ -10970,6 +11051,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     for (int64_t i : fl_iters) {
                         loop_values[fl_var] = (int)i;
                         import_statement_comb(fl_body, proc);
+                        fl_sec_step();
                     }
                 }
                 // Keep post-loop variable value for subsequent statements in the same block

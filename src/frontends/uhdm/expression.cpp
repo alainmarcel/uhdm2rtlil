@@ -8375,6 +8375,7 @@ int UhdmImporter::self_determined_width(const UHDM::any* node,
             case vpiEqOp: case vpiNeqOp: case vpiLtOp: case vpiLeOp:
             case vpiWildEqOp: case vpiWildNeqOp:
             case vpiGtOp: case vpiGeOp: case vpiLogAndOp: case vpiLogOrOp:
+            case vpiImplyOp: case vpiIffOp:
             case vpiNotOp: case vpiUnaryAndOp: case vpiUnaryNandOp:
             case vpiUnaryOrOp: case vpiUnaryNorOp: case vpiUnaryXorOp:
             case vpiUnaryXNorOp:
@@ -10381,6 +10382,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 case vpiUnaryXNorOp: case vpiEqOp: case vpiNeqOp:
                 case vpiCaseEqOp: case vpiCaseNeqOp: case vpiGtOp: case vpiGeOp:
                 case vpiLtOp: case vpiLeOp: case vpiLogAndOp: case vpiLogOrOp:
+                case vpiImplyOp: case vpiIffOp:
                     if (folded.size() > 1)
                         folded = folded.extract(0, 1);
                     break;
@@ -10900,6 +10902,23 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result = RTLIL::const_logic_not(operands[0].as_const(), RTLIL::Const(), false, false, 1);
                 }
                 break;
+            // `a -> b` is `!a || b` and `a <-> b` is `(a != 0) == (b != 0)`
+            // (LRM 11.4.7): both work on the operands' TRUTH values.
+            case vpiImplyOp:
+                if (operands.size() == 2) {
+                    RTLIL::Const na = RTLIL::const_logic_not(operands[0].as_const(), RTLIL::Const(), false, false, 1);
+                    result = RTLIL::const_logic_or(na, operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiIffOp:
+                if (operands.size() == 2) {
+                    RTLIL::Const ta = RTLIL::const_reduce_bool(operands[0].as_const(), RTLIL::Const(), false, false, 1);
+                    RTLIL::Const tb = RTLIL::const_reduce_bool(operands[1].as_const(), RTLIL::Const(), false, false, 1);
+                    result = RTLIL::const_eqx(ta, tb, false, false, 1);
+                    if (!ta.is_fully_def() || !tb.is_fully_def())
+                        result = RTLIL::Const(RTLIL::State::Sx, 1);
+                }
+                break;
             case vpiConditionOp:
                 // A fully-constant `c ? a : b` never folded — it always became
                 // a $mux, so a localparam defined by one ("IN_AW = (AW >= 12) ?
@@ -11096,6 +11115,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 {
                     std::string cell_name = generate_cell_name(uhdm_op, "logic_or");
                     return module->LogicOr(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
+            break;
+        // Logical implication and equivalence (LRM 11.4.7) work on TRUTH
+        // values: a multi-bit operand is true when any bit is 1.  Surelog
+        // emits vpiImplyOp for `->` and vpiIffOp for `<->` (VPI has no
+        // dedicated equivalence operator; `iff` is the same operation).
+        case vpiImplyOp:
+            if (operands.size() == 2)
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "imply");
+                    RTLIL::SigSpec na = module->LogicNot(RTLIL::escape_id(cell_name + "_not"), operands[0]);
+                    return module->LogicOr(RTLIL::escape_id(cell_name), na, operands[1]);
+                }
+            break;
+        case vpiIffOp:
+            if (operands.size() == 2)
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "iff");
+                    RTLIL::SigSpec ta = module->ReduceBool(RTLIL::escape_id(cell_name + "_a"), operands[0]);
+                    RTLIL::SigSpec tb = module->ReduceBool(RTLIL::escape_id(cell_name + "_b"), operands[1]);
+                    return module->Eq(RTLIL::escape_id(cell_name), ta, tb);
                 }
             break;
         case vpiBitAndOp:
