@@ -29,7 +29,7 @@ module Test1;
 endmodule
 
 // No error, just to showcase "result" if using range select with packed array.
-module Test2;
+module Test2 (__o_test_0, __o_test_1);
   parameter DIM1 = 2;
   parameter DIM2 = 4;
 
@@ -51,5 +51,11 @@ module Test2;
   // i == 1, elemRange = {3, 3}, start 3, width 1,              result = {3, 3}
   assign test[1][DIM2-1]   = '0;
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [3:0] __o_test_0;
+  output logic [3:0] __o_test_1;
+  assign __o_test_0 = test[0];
+  assign __o_test_1 = test[1];
 endmodule
 

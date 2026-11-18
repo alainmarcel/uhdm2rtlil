@@ -6,13 +6,16 @@
 module controller #(
     parameter NUM_CHANNELS = 1
 ) (
-    input wire clk
-);
+    input wire clk,
+  output logic [31:0] __o_ar_0);
     reg [31:0] ar [NUM_CHANNELS-1:0];
     always @(clk) begin
         for (int i = 0 ; i < NUM_CHANNELS; i = i + 1) begin
             ar[i] <= 0;
         end
     end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_ar_0 = ar[0];
 endmodule
 

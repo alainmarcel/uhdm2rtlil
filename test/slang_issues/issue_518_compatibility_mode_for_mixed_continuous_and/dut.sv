@@ -7,7 +7,7 @@ module m(output logic a);
     always_comb a = 0;
 endmodule
 
-module top;
+module top (__o_s1_0, __o_s1_1);
 
     typedef struct packed {
         logic a;
@@ -26,5 +26,11 @@ module top;
         m m1(.a(s1[i].a));
     end
 
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  output logic [1:0] __o_s1_0;
+  output logic [1:0] __o_s1_1;
+  assign __o_s1_0 = s1[0];
+  assign __o_s1_1 = s1[1];
 endmodule
 
