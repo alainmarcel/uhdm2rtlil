@@ -5,7 +5,8 @@
 // ---- b0.sv
 // sv-elab tests/various/regress.sv r24
 // test for an edge case from way back
-module r24(input z, input [63:0] x);
+module r24(input z, input [63:0] x,
+  output logic [31:0] __o_y_0);
 	reg [31:0] y[0:0];
 
 	always_comb begin
@@ -17,5 +18,8 @@ module r24(input z, input [63:0] x);
 			end
 		end
 	end
+
+  // controllable/observable ports added by test/yosys_issues/observe.py
+  assign __o_y_0 = y[0];
 endmodule
 

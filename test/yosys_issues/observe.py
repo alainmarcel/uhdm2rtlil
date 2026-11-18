@@ -43,10 +43,14 @@ PLAIN = re.compile(r"^\\[A-Za-z_][A-Za-z0-9_$]*$")
 # `gen.x`): reachable from the module by the same dotted hierarchical name.
 # An indexed scope (`g[0].x`) is left alone.
 DOTTED = re.compile(r"^\\[A-Za-z_][A-Za-z0-9_$]*(\.[A-Za-z_][A-Za-z0-9_$]*)+$")
+# An element of an unpacked array (`y[0]`, read_uhdm's per-element wire) or a
+# member of an interface-array element (`ns_con[0].req`): observable by the
+# same select.  Exposed as an OUTPUT only -- never driven from a port.
+INDEXED = re.compile(r"^\\[A-Za-z_][A-Za-z0-9_$]*(\[[0-9]+\])+(\.[A-Za-z_][A-Za-z0-9_$]*)*$")
 
 
 def _port_name(n):
-    return n.replace(".", "_")
+    return re.sub(r"_+", "_", n.replace(".", "_").replace("[", "_").replace("]", "_")).rstrip("_")
 
 
 def _netlist(d):
@@ -152,7 +156,8 @@ def observe(d):
     ins, outs = [], []
     for n, w in sorted(m["netnames"].items()):
         nm = "\\" + n
-        if not (PLAIN.match(nm) or DOTTED.match(nm)) or n.startswith("__") or n in port_names:
+        indexed = bool(INDEXED.match(nm))
+        if not (PLAIN.match(nm) or DOTTED.match(nm) or indexed) or n.startswith("__") or n in port_names:
             continue
         # a dotted name that is an interface PORT's member is the port itself
         if "." in n and n.split(".")[0] in {q.split(".")[0] for q in port_names}:
@@ -162,8 +167,12 @@ def observe(d):
         width = len(w["bits"])
         # assigned: marked by read_uhdm (plain names), or -- for a member
         # name it does not mark -- driven by a cell or tied to a constant
-        const_bits = any(not isinstance(b, int) for b in w["bits"])
-        assigned = "uhdm_src_lhs" in a or ("." in n and (const_bits or (set(bits) & drv)))
+        # tied to a DEFINED constant: an x / z bit is a signal the source
+        # never assigns (read_slang's undriven X), which has nothing to observe
+        const_bits = any(b in ("0", "1") for b in w["bits"] if not isinstance(b, int))
+        assigned = "uhdm_src_lhs" in a or (("." in n or indexed) and (const_bits or (set(bits) & drv)))
+        if indexed and not assigned:
+            continue
         if assigned:
             if want_out:
                 outs.append((n, width))
