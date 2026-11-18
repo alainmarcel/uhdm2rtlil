@@ -1,0 +1,8 @@
+# The padding must be 51 bits: i lands in o[63:57], r in o[5:0].
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top dut
+proc
+flatten
+opt
+sat -verify -set i 7'h7f -set r 6'h00 -prove o 64'hfe00000000000000
+sat -verify -set i 7'h00 -set r 6'h3f -prove o 64'h000000000000003f

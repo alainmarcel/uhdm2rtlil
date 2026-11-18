@@ -12015,6 +12015,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     for (size_t i = 0; i < operands.size() && i < uhdm_op->Operands()->size(); i++) {
                         auto c = dynamic_cast<const UHDM::constant*>((*uhdm_op->Operands())[i]);
                         if (!c || c->VpiSize() <= 32 || !operands[i].is_fully_const()) continue;
+                        // Only an INTEGER literal can be unsized.  A folded
+                        // replication `{Pad{1'b0}}` arrives as a BIN constant
+                        // whose decompile is just its digits ("000...0") and
+                        // was cut from 51 bits to 32 (OpenTitan
+                        // cheriot_rmw_filter's ECC data_i, 45 bits instead of 64).
+                        int ct = c->VpiConstType();
+                        if (ct != vpiDecConst && ct != vpiIntConst && ct != vpiUIntConst) continue;
                         std::string dec(c->VpiDecompile());
                         if (dec.empty() || dec.find('\'') != std::string::npos ||
                             dec.find_first_not_of("0123456789_") != std::string::npos)
