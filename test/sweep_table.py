@@ -21,7 +21,10 @@ def count(f):
         c=[x.strip() for x in line.strip().strip('|').split('|')]
         if len(c)<len(hdr): continue
         s=c[hdr['slang co-sim vs RTL']]; mod=c[hdr['module']]; formal=c[hdr['formal vs slang']]
-        opt=c[hdr['opt check (undriven)']]; u=c[hdr['co-sim vs RTL']]
+        # A report written without the opt-check column (one sweep emits
+        # only co-sim and formal) has no undriven verdict to count.
+        opt=c[hdr['opt check (undriven)']] if 'opt check (undriven)' in hdr else ''
+        u=c[hdr['co-sim vs RTL']]
         n['rows']+=1
         # A slang divergence is counted the way ours is.  A row where BOTH
         # netlists diverge from the RTL is a testbench artefact the miter

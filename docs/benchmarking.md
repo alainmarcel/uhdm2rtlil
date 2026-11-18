@@ -120,9 +120,12 @@ predicted **1085** rows (BOOM 422, Gemmini 384, Rocket Chip 235, biRISC-V 44),
 while Cheshire reports its full 266, aib-protocols its 397 and OpenPiton its
 852.  The aggregate was then reported as 12322 rows by an older counting
 method; `test/sweep_table.py` gives 11382 for the same 79 reports.  As of
-2026-11-09 (21 workflows, 81 family reports in `build/sweeps/_night1109`) it is
-**11707 rows, 8977 formally proven, `read_uhdm` 9688 co-sim passes,
-`read_slang` 9506**, 0 undriven.
+2026-11-09 (21 workflows, 81 family reports in `build/sweeps/_night1109`) it
+was 11707 rows, 8977 formally proven, `read_uhdm` 9688 co-sim passes,
+`read_slang` 9506.  As of 2026-11-17 (23 workflows, 83 family reports in
+`build/sweeps/_night1117`, runs of 11-13 to 11-17) it is **12026 rows, 9225
+formally proven, `read_uhdm` 9851 co-sim passes, `read_slang` 9675**, 0
+undriven.
 
 Run ids: ibex 40657392141, rp32 40660737218, fx68k 40706997811, scr1
 40660315121, rggen 40713316491, veer-eh1 40668403252, tnoc 40715474861,

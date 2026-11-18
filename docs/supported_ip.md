@@ -48,9 +48,9 @@ proof gap is never mistaken for a bug.
 
 **Benchmarking against the reference frontend.**  Every row also co-simulates
 the `read_slang` netlist, so the reference is measured by the same yardstick:
-over the latest complete nightly of each of the 21 sweeps (2026-11-09, counted
-by `test/sweep_table.py`), **11707 rows, 8977 formally proven, `read_uhdm` 9688
-co-sim passes, `read_slang` 9506**, 0 undriven anywhere.  (The 2026-11-04
+over the latest complete run of each of the 23 sweeps (2026-11-17, counted
+by `test/sweep_table.py`), **12026 rows, 9225 formally proven, `read_uhdm` 9851
+co-sim passes, `read_slang` 9675**, 0 undriven anywhere.  (The 2026-11-04
 paragraph's 12322 was an older counting method; the same script gives 11382
 for those reports.)
 
