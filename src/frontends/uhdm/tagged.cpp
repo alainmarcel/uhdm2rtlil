@@ -67,22 +67,43 @@ const typespec* UhdmImporter::match_typespec_of(const any* e) {
 // A tagged union of the design declaring `member`: the fallback when the
 // matched or assigned value's type is not reachable from the expression.
 const typespec* UhdmImporter::tagged_union_with_member(const std::string& member) {
-    static std::map<const void*, std::vector<const union_typespec*>> cache;
-    auto& unions = cache[uhdm_design];
-    if (unions.empty() && uhdm_design && uhdm_design->GetSerializer()) {
-        for (auto& kv : uhdm_design->GetSerializer()->AllObjects()) {
-            auto o = kv.first;
-            if (o && o->UhdmType() == uhdmunion_typespec) {
-                auto u = any_cast<const union_typespec*>(o);
-                if (u->VpiTagged()) unions.push_back(u);
-            }
-        }
-    }
-    for (auto u : unions)
+    scan_tagged_objects();
+    for (auto u : tagged_unions_)
         if (u->Members())
             for (auto m : *u->Members())
                 if (m->VpiName() == member) return u;
     return nullptr;
+}
+
+// Collect, in ONE AllObjects() walk, everything the tagged-union code looks
+// up design-wide.  The scan used to be redone per call whenever it found no
+// tagged union -- `empty()` doubled as "not scanned yet" -- and Surelog also
+// emits a tagged_pattern for every `'{member: value}` of a struct assignment
+// pattern, so a design with thousands of those and no tagged union at all
+// (OpenTitan top_earlgrey) rebuilt a map of millions of objects thousands of
+// times: over an hour of CPU before the first module was imported.
+void UhdmImporter::scan_tagged_objects() {
+    if (tagged_objects_scanned_) return;
+    tagged_objects_scanned_ = true;
+    if (!uhdm_design || !uhdm_design->GetSerializer()) return;
+    for (auto& kv : uhdm_design->GetSerializer()->AllObjects()) {
+        auto o = kv.first;
+        if (!o) continue;
+        switch (o->UhdmType()) {
+            case uhdmunion_typespec:
+                if (any_cast<const union_typespec*>(o)->VpiTagged())
+                    tagged_unions_.push_back(any_cast<const union_typespec*>(o));
+                break;
+            case uhdmtagged_pattern:
+                tagged_patterns_.push_back((tagged_pattern*)o);
+                break;
+            case uhdmcase_stmt:
+                case_stmts_.push_back((case_stmt*)o);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 // The type an expression is assigned to, for a `tagged m e` RHS.
@@ -441,11 +462,8 @@ static bool replace_value(any* parent, const any* from, any* to) {
 void UhdmImporter::desugar_case_matches() {
     if (!uhdm_design || !uhdm_design->GetSerializer()) return;
     Serializer* s = uhdm_design->GetSerializer();
-    std::vector<tagged_pattern*> values;
-    for (auto& kv : s->AllObjects())
-        if (kv.first && kv.first->UhdmType() == uhdmtagged_pattern)
-            values.push_back((tagged_pattern*)kv.first);
-    for (auto tp : values) {
+    scan_tagged_objects();
+    for (auto tp : tagged_patterns_) {
         any* parent = (any*)tp->VpiParent();
         if (!parent) continue;
         const typespec* ts = nullptr;
@@ -473,9 +491,9 @@ void UhdmImporter::desugar_case_matches() {
         }
     }
     std::vector<case_stmt*> todo;
-    for (auto& kv : s->AllObjects()) {
-        if (!kv.first || kv.first->UhdmType() != uhdmcase_stmt) continue;
-        auto cs = (case_stmt*)kv.first;
+    // The loop above creates operations and ref_typespecs only, never a
+    // case_stmt, so the scan's list is still complete here.
+    for (auto cs : case_stmts_) {
         if (!cs->Case_items()) continue;
         bool matches = false;
         for (auto ci : *cs->Case_items())

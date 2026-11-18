@@ -1242,6 +1242,14 @@ struct UhdmImporter {
         const UHDM::typespec* ts, int case_type);
     RTLIL::SigSpec import_match_operation(const UHDM::operation* op);
     void desugar_case_matches();
+    // One AllObjects() walk, shared: AllObjects() builds a std::map over every
+    // object of the ELABORATED design (millions on OpenTitan top_earlgrey,
+    // ~2 GB each time), so it must never run per pattern.
+    void scan_tagged_objects();
+    bool tagged_objects_scanned_ = false;
+    std::vector<const UHDM::union_typespec*> tagged_unions_;
+    std::vector<UHDM::tagged_pattern*> tagged_patterns_;
+    std::vector<UHDM::case_stmt*> case_stmts_;
     // Pattern variables bound by the most recent match, per module.
     std::map<std::string, RTLIL::SigSpec> pattern_var_binds_;
     RTLIL::Module* pattern_var_binds_module_ = nullptr;
