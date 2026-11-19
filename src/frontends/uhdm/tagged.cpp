@@ -75,7 +75,7 @@ const typespec* UhdmImporter::tagged_union_with_member(const std::string& member
     return nullptr;
 }
 
-// Collect, in ONE AllObjects() walk, everything the tagged-union code looks
+// Collect, in one pass over the serializer, everything the tagged-union code looks
 // up design-wide.  The scan used to be redone per call whenever it found no
 // tagged union -- `empty()` doubled as "not scanned yet" -- and Surelog also
 // emits a tagged_pattern for every `'{member: value}` of a struct assignment
@@ -86,24 +86,20 @@ void UhdmImporter::scan_tagged_objects() {
     if (tagged_objects_scanned_) return;
     tagged_objects_scanned_ = true;
     if (!uhdm_design || !uhdm_design->GetSerializer()) return;
-    for (auto& kv : uhdm_design->GetSerializer()->AllObjects()) {
-        auto o = kv.first;
-        if (!o) continue;
-        switch (o->UhdmType()) {
-            case uhdmunion_typespec:
-                if (any_cast<const union_typespec*>(o)->VpiTagged())
-                    tagged_unions_.push_back(any_cast<const union_typespec*>(o));
-                break;
-            case uhdmtagged_pattern:
-                tagged_patterns_.push_back((tagged_pattern*)o);
-                break;
-            case uhdmcase_stmt:
-                case_stmts_.push_back((case_stmt*)o);
-                break;
-            default:
-                break;
-        }
-    }
+    // Per-type walks: AllObjects() would build a map over EVERY object of
+    // the elaborated design just to find these three kinds (+2 GB at the
+    // peak of OpenTitan top_earlgrey).
+    const Serializer* s = uhdm_design->GetSerializer();
+    s->ForEachObject(uhdmunion_typespec, [this](BaseClass* o) {
+        auto u = static_cast<const union_typespec*>(o);
+        if (u->VpiTagged()) tagged_unions_.push_back(u);
+    });
+    s->ForEachObject(uhdmtagged_pattern, [this](BaseClass* o) {
+        tagged_patterns_.push_back(static_cast<tagged_pattern*>(o));
+    });
+    s->ForEachObject(uhdmcase_stmt, [this](BaseClass* o) {
+        case_stmts_.push_back(static_cast<case_stmt*>(o));
+    });
 }
 
 // The type an expression is assigned to, for a `tagged m e` RHS.
@@ -463,6 +459,7 @@ void UhdmImporter::desugar_case_matches() {
     if (!uhdm_design || !uhdm_design->GetSerializer()) return;
     Serializer* s = uhdm_design->GetSerializer();
     scan_tagged_objects();
+    std::unordered_map<const any*, operation*> casts;
     for (auto tp : tagged_patterns_) {
         any* parent = (any*)tp->VpiParent();
         if (!parent) continue;
@@ -488,7 +485,32 @@ void UhdmImporter::desugar_case_matches() {
         cast->VpiParent(parent);
         if (replace_value(parent, tp, cast)) {
             tp->VpiParent(cast);
+            casts.emplace(tp, cast);
         }
+    }
+    // read_uhdm's elaborator SHARES a tagged_pattern between the module
+    // definition and every instance instead of cloning it (it is cloned only
+    // under uniquifyTypespec, like a typespec), so its VpiParent names ONE
+    // holder and the loop above rewrote only that one.  Every other
+    // assignment / operand still holding the bare pattern gets the same cast:
+    // the cast carries no per-instance state.
+    if (!casts.empty()) {
+        auto fix = [&](BaseClass* holder, const any* v) {
+            if (!v) return;
+            auto it = casts.find(v);
+            if (it != casts.end()) replace_value(holder, v, it->second);
+        };
+        s->ForEachObject(uhdmassignment, [&](BaseClass* o) { fix(o, ((assignment*)o)->Rhs()); });
+        s->ForEachObject(uhdmcont_assign, [&](BaseClass* o) { fix(o, ((cont_assign*)o)->Rhs()); });
+        s->ForEachObject(uhdmreturn_stmt, [&](BaseClass* o) { fix(o, ((return_stmt*)o)->VpiCondition()); });
+        s->ForEachObject(uhdmoperation, [&](BaseClass* o) {
+            auto op = (operation*)o;
+            if (op->VpiOpType() != vpiConditionOp && op->VpiOpType() != vpiConcatOp) return;
+            if (!op->Operands()) return;
+            std::vector<const any*> hits;
+            for (auto x : *op->Operands()) if (casts.count(x)) hits.push_back(x);
+            for (auto x : hits) fix(o, x);
+        });
     }
     std::vector<case_stmt*> todo;
     // The loop above creates operations and ref_typespecs only, never a

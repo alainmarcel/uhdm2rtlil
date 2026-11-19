@@ -2152,6 +2152,12 @@ RTLIL::SigSpec UhdmImporter::extract_function_return_value(const any* stmt, cons
 RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def, const std::string& func_name,
                                                         const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire,
                                                         const func_call* fc) {
+    // The function's own localparams, as the other two inlining paths bind
+    // them.  A local declared over one (`logic [UP_DOWN_VALUE_WIDTH-1:0] v;`)
+    // is measured through a typespec that read_uhdm's elaborator SHARES
+    // rather than clones per instance, and a shared typespec has no parent
+    // chain back to this function -- so the binding has to come from here.
+    FuncParamBind fpb_bind_(this, func_def);
     // Create a unique process for this function call
     // Using incr_autoidx() for all temp wire numbering instead of local counter
     

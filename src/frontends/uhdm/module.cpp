@@ -5128,6 +5128,19 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                             }
                         }
                 }
+                // A typespec SHARED across instances (read_uhdm's elaborator
+                // does not uniquify typespecs) has no parent chain back to the
+                // function; the function being inlined has bound its own
+                // localparams in func_param_binds_.
+                if (!func_param_binds_.empty()) {
+                    auto it = func_param_binds_.back().find(nm);
+                    if (it != func_param_binds_.back().end() && it->second.is_fully_const() &&
+                        it->second.as_int() > 0) {
+                        uhdm_trace("UHDM: unsupported_typespec '%s' = bound function localparam %d\n",
+                                   nm.c_str(), it->second.as_int());
+                        return it->second.as_int();
+                    }
+                }
                 RTLIL::IdString pid = RTLIL::escape_id(nm);
                 if (module && module->parameter_default_values.count(pid) &&
                     module->parameter_default_values.at(pid).size() > 0) {

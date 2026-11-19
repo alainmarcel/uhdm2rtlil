@@ -101,8 +101,21 @@ struct ReadUHDMPass : public Frontend {
         // different process pre-elaboration), then optionally elaborate it:
         if (uhdm_design && (!vpi_get(vpiElaborated, vpi_design))) {
             log("UHDM Elaboration...\n");
+            // debug=false: `true` here was the DEBUG flag, which printed the
+            // elaborator's trace to stdout on every read.
             UHDM::ElaboratorContext* elaboratorContext =
-                new UHDM::ElaboratorContext(&serializer, true);
+                new UHDM::ElaboratorContext(&serializer, false, false);
+            // Share typespecs instead of deep-cloning every module's typedefs
+            // into every instance -- the same setting Surelog's own -elabuhdm
+            // uses.  Cloning them grew OpenTitan top_earlgrey from 9.1M to
+            // 63.9M UHDM objects (+10 GB); shared, 30.2M (+4.5 GB).
+            elaboratorContext->m_elaborator.uniquifyTypespec(false);
+            // A call to a PACKAGE function binds to one shared elaborated copy
+            // instead of a fresh deep clone per calling instance: 278 package
+            // functions became 713,806 function objects (plus their bodies)
+            // in top_earlgrey.  A package function has no instance context to
+            // differ by.
+            elaboratorContext->m_elaborator.sharePackageTaskFuncs(true);
             elaboratorContext->m_elaborator.listenDesigns(designs);
             delete elaboratorContext;
         }
